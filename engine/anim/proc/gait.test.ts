@@ -4,14 +4,15 @@
  * faster body strides farther; six legs walk on tripods; one group lifts at a time through a stop and a turn in place;
  * feet stand on raised ground and grip a wall where one stands between the hip and the spot; in the air every foot
  * tucks, and lands where it is, on the floor after a drop at either rate; 60 and 120 steps a second step alike through
- * a hop and a walk eased in and out; uneven feet tilt the body.
+ * a hop and a walk eased in and out; uneven feet tilt the body; a gait saved mid-step as plain data and loaded into
+ * another steps on alike.
  * @see engine/anim/proc/gait.ts
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
 import type { GroundHit } from '../ik';
 import { rateDrift, STATE_MATRIX } from '../stateMatrix';
-import { LegGait, type GaitBody, type GaitLeg, type GaitProbe } from './gait';
+import { GAIT_FOOT, LegGait, type GaitBody, type GaitLeg, type GaitProbe } from './gait';
 
 /** Four legs, the diagonals in two groups: left front with right back, right front with left back. */
 const QUAD: GaitLeg[] = [-1, 1].flatMap(
@@ -203,5 +204,25 @@ describe('the planted gait', () => {
     const [pitch, roll] = dog.tilt();
     expect(pitch).toBeGreaterThan(0); // nose up
     expect(roll).toBeLessThan(0); // its right side up: the left front's side is −X here
+  });
+
+  it('keeps a gait as plain data: saved mid-step and loaded into another, it steps on alike', () => {
+    const [dog, copy] = [new LegGait({ legs: QUAD }), new LegGait({ legs: QUAD })];
+    const body = { position: new Vector3(), yaw: 0.3, velocity: new Vector3(0.35, 0, 1.15) };
+    const steps = (gaits: LegGait[]) => {
+      body.position.addScaledVector(body.velocity, 1 / 60);
+      for (const gait of gaits) gait.step(1 / 60, body);
+    };
+    for (let i = 0; i < 30 || !dog.feet.some((foot) => foot.t > 0.2 && foot.t < 0.8); i++) steps([dog]); // mid-step
+    const state = JSON.parse(JSON.stringify(dog.save())) as ReturnType<LegGait['save']>;
+    expect(state.feet).toHaveLength(QUAD.length * GAIT_FOOT);
+    expect(copy.load(state).save()).toEqual(state); // every number taken back
+    const feet = (gait: LegGait) => gait.feet.map((foot) => [...foot.position.toArray(), foot.t]);
+    for (let i = 0; i < 90; i++) {
+      if (i === 40) body.velocity.set(0.6, 0, 0.4); // a turn
+      steps([dog, copy]);
+      expect(feet(copy)).toEqual(feet(dog));
+    }
+    expect(copy.save()).toEqual(dog.save());
   });
 });

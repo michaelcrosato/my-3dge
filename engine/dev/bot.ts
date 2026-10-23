@@ -48,7 +48,8 @@ import type { World } from '../sim/world';
 import type { CompiledLevel } from '../world/level/types';
 import type { Site } from '../world/site';
 import type { NavBlock } from '../world/siteNav';
-import { closedDoorAhead, levelBotNav, propObstacles, siteBotNav, tourStream, type BotNav, type BotPoint, type BotWay } from './botNav'; // prettier-ignore
+import { propObstacles } from '../sim/propBlocks';
+import { closedDoorAhead, levelBotNav, siteBotNav, tourStream, type BotNav, type BotPoint, type BotWay } from './botNav'; // prettier-ignore
 
 /** How the bot moves and when it gives up: `new Bot(level, options)` and every run take them. */
 export const BOT_FIELDS = defineSchema({

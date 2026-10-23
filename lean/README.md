@@ -448,6 +448,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Ragdolls (WP 10.2)**: joints as data, a humanoid's body handed off to physics on a hard hit or a death, lying still and getting up the way it lies.
 `addJoint`, `removeJoint`, `hasJoint`, `jointBodies`, `RAGDOLL_SIM`, `RAGDOLL_FIELDS`, `addRagdolls`, `handOff`, `removeRagdollOf`, `standUp`; types `JointKind`, `JointSpec`, `RagdollState`, `RagdollHit`.
 
+**A town's daily round (WP 13.21)**: routes walked on a schedule, and stepping aside for someone in the way.
+`ROUTE_FIELDS`, `followRoute`, `ASIDE`, `stepAside`; types `RouteStop`, `RouteState`, `RouteLeg`.
+
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 
@@ -468,6 +471,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 
 **Sites (WP 13.15)**: levels standing on a terrain, each placed and turned in quarter turns, the terrain cut under them; the queries over all of it, the bodies, the ladders and the navigation over every storey and the terrain.
 `defineSite`, `getSite`, `makeSite`, `SITE_FIELDS`, `toWorld`, `toLocal`, `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`, `siteSolidAt`, `siteClearSight`, `siteRescueGrid`, `createSiteNav`, `addSiteBodies`, `addSiteLadders`; types `Site`, `SiteSpec`, `SiteStructure`, `StructureSpec`, `SiteRescueGrid`, `SiteNav`, `SiteNavOptions`.
+
+**The scene's props as navigation blocks (WP 13.21)**: what a site's walkers go round.
+`propObstacles`.
 
 **Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop), the kinds `usable` and `strikable`, and the body-to-entity lookup.
 `addInteraction`, `defineUsable`, `defineStrikable`, `strikeEntity`, `USE_REACH`, `CARRY_MASS`, `THROW_SPEED`, `propOfBody`; types `UsableSpec`, `InteractorComponent`, `StrikeForce`, `SpawnPropOptions`, `PropHealthComponent`, `PropLightComponent`.

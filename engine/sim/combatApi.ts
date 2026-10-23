@@ -160,3 +160,12 @@ export { addRagdolls } from './ragdolls';
 export { handOff } from './ragdolls';
 export { removeRagdollOf } from './ragdolls';
 export { standUp } from './ragdolls';
+
+// A town's daily round (WP 13.21): routes walked on a schedule, and stepping aside for someone in the way.
+export { ROUTE_FIELDS } from '../world/aiRoutes';
+export type { RouteStop } from '../world/aiRoutes';
+export type { RouteState } from '../world/aiRoutes';
+export type { RouteLeg } from '../world/aiRoutes';
+export { followRoute } from '../world/aiRoutes';
+export { ASIDE } from '../world/aiRoutes';
+export { stepAside } from '../world/aiRoutes';

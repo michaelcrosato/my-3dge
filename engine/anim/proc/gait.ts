@@ -15,8 +15,8 @@
  * - **Where a foot stands** (`GaitProbe`, the world's raycast): where a ray down from above the spot meets the ground;
  *   or, when a wall stands between the hip and the spot, on the wall's face where the ray from the hip meets it (a
  *   spider's leg gripping it). Without a probe, the spot itself.
- * - `fly(dt)` tucks every foot under its hip while the body is in the air; the next `step` lands each where it is,
- *   under the body as that step finds it. `plant` stands every foot on its spot at once (the first step does).
+ * - `fly(dt)` tucks every foot under its hip while the body is in the air; the next `step` lands each under the body as
+ *   that step finds it. `plant` stands every foot on its spot (the first step does); `save`, `load`: plain `GaitState`.
  * - `lifting()`: how much of its weight is off its feet (Σ sin πt over the feet stepping), for a bob; `tilt()`: its
  *   pitch and roll from every foot's height (as shardfall's: one mid-step lifts its side), as uneven ground leans it.
  *
@@ -97,6 +97,18 @@ const [UP, DOWN] = [new Vector3(0, 1, 0), new Vector3(0, -1, 0)];
 const [spot, hip, ray, flat] = [new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 const hit: GroundHit = { point: new Vector3(), normal: new Vector3() };
 const between = { position: new Vector3(), yaw: 0, velocity: new Vector3() };
+
+/** A gait as plain data (`LegGait.save`, `load`): every foot's numbers, whether it stands yet, the last step's body. */
+export interface GaitState {
+  /** Per foot: its position, from, to and normal (x, y, z each), then t and duration: `GAIT_FOOT` numbers a foot. */
+  feet: number[];
+  placed: boolean;
+  /** The body as the last step left it: its position (x, y, z), yaw and velocity (x, y, z). */
+  last: number[];
+}
+
+/** Numbers a foot takes in a `GaitState`. */
+export const GAIT_FOOT = 14;
 
 /** The gait's inner step, s: a 60 Hz step takes two, a 120 Hz one, so both rates step the same feet. */
 export const GAIT_SUBSTEP = 1 / 120;
@@ -242,6 +254,29 @@ export class LegGait {
         foot.t = 2;
       });
     });
+    return this;
+  }
+
+  /** The gait as plain data, into `out` (see `GaitState`): a component holds it, `load` takes it back. */
+  save(out: GaitState = { feet: [], placed: false, last: [] }): GaitState {
+    out.feet.length = 0;
+    for (const f of this.feet) out.feet.push(...f.position.toArray(), ...f.from.toArray(), ...f.to.toArray(), ...f.normal.toArray(), f.t, f.duration); // prettier-ignore
+    out.placed = this.#placed;
+    out.last = [...this.#last.position.toArray(), this.#last.yaw, ...this.#last.velocity.toArray()];
+    return out;
+  }
+
+  /** Takes the gait back from `state` (`save`'s): the same steps then give the same feet. */
+  load(state: Readonly<GaitState>): this {
+    this.feet.forEach((f, i) => {
+      const k = i * GAIT_FOOT;
+      [f.position, f.from, f.to, f.normal].forEach((v, j) => v.fromArray(state.feet, k + 3 * j));
+      [f.t, f.duration] = [state.feet[k + 12], state.feet[k + 13]];
+    });
+    this.#placed = state.placed;
+    this.#last.position.fromArray(state.last, 0);
+    this.#last.yaw = state.last[3];
+    this.#last.velocity.fromArray(state.last, 4);
     return this;
   }
 

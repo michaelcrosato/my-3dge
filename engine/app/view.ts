@@ -219,7 +219,8 @@ export function createRunView(options: RunViewOptions): RunView {
   let doing: CameraPlayer | null = null;
   /** The player's body, which his aim's ray skips; -1 without one. */
   let body = -1;
-  /** Reads the player after a step (`fresh`: after a restart, so nothing he did before counts as a landing). */
+  /** Reads the player after a step (`fresh`: after a restart, so nothing he did before counts as a landing), and the
+   * looks of the other actors' AIs (their heads along them). */
   const readPlayer = (fresh = false) => {
     const run = options.run();
     if (fresh) rig.step(null);
@@ -229,6 +230,12 @@ export function createRunView(options: RunViewOptions): RunView {
     body = entity ? Number((entity.actor as { body?: number }).body ?? -1) : -1;
     const look = run.intents.look; // his head, and his gun, along it (WP 13.11); the sights only with one out (WP 13.20)
     if (entity) stage.actors.look(entity.id, look ? { yaw: look[0], pitch: look[1], aiming: doing?.aiming ?? aiming } : null); // prettier-ignore
+    for (const other of run.world.query('actor')) {
+      const actor = other.actor as { player?: boolean; intents?: { look?: readonly [number, number] } };
+      if (actor.player === true) continue;
+      const along = actor.intents?.look; // an AI's head along the look it gives its actor (WP 13.21: the neighbours)
+      stage.actors.look(other.id, along ? { yaw: along[0], pitch: along[1], aiming: false } : null);
+    }
     rig.step(doing);
   };
   /** Whether the run's registry declares the view setting `path`. */

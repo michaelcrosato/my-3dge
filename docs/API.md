@@ -100,6 +100,7 @@ game agent's manual.
 - `approachRing` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to wait round `to` on a ring of `ring.radius` metres: beyond `radius + band`, in by `followFlow` (straight when `field` is null); inside `radius − band`, straight out at `backoff` of full speed; on the ring, round it at `circle × sway` of full speed (`sway` in [−1, 1]; positive turns about +Y, anticlockwise seen from above).
 - `ApproachRingOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): What `approachRing` takes: the ring's radius, and how an agent moves in, out and round.
 - `ArmState` (interface from [`engine/anim/strike.ts`](../engine/anim/strike.ts)): The arm's state: plain numbers, stepped by `stepArm`, read by `layArm` and `armBlade`.
+- `ASIDE` (const from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): How far ahead (m) someone stands in an agent's way, and how near its line (m), for `stepAside`.
 - `Attack` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
 - `ATTACK_TOKENS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens with every field at its default: 3 tokens, none held.
 - `ATTACK_TOKENS_FIELDS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): The attack tokens' fields, for a scene's component: `defineComponent('tokens', { description, fields: … })`.
@@ -476,6 +477,7 @@ game agent's manual.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowInput` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's input: the devices', the hero (his eye and what he does) and the walls.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
+- `followRoute` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): Where an agent at `at` heads on `stops` at sim time `time` (s), and whether it stays there now: it arrives within `near` metres on the ground, stays the stop's `stay`, then heads for the next, the last leading back to the first.
 - `FollowSpec` (interface from [`engine/gfx/cameras/follow.ts`](../engine/gfx/cameras/follow.ts)): A follow camera's code as data: without the numbers it keeps the heading of the camera before it.
 - `FollowSteps` (interface from [`engine/gfx/cameras/chase.ts`](../engine/gfx/cameras/chase.ts)): What a WP 3.9 camera gives `followCamera`: its pure steps, as `CameraSteps`, and its code and words.
 - `FOOT_LOCK` (const from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): The locks' tuning, in metres and seconds.
@@ -855,6 +857,7 @@ game agent's manual.
 - `PropMeshes` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): The props of a scene, drawn: see the file comment.
 - `PropMeshesOptions` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): What `createPropMeshes` takes.
 - `PropMeshPose` (interface from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A prop's pose: its centre (its body's origin) and its turn, and whether it is on (a switched lamp; true).
+- `propObstacles` (function from [`engine/sim/propBlocks.ts`](../engine/sim/propBlocks.ts)): What a walker goes round on a site (WP 13.18, WP 13.21): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which a walker opens: engine/dev/bot.ts), open, its leaf where it swings to.
 - `propOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
 - `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
 - `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
@@ -953,8 +956,12 @@ game agent's manual.
 - `RoomSpec` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb, as numbers.
 - `roundedBoxGeometry` (function from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box standing on the ground (see the file comment).
 - `RoundedBoxOptions` (interface from [`engine/gfx/geometry/roundedBox.ts`](../engine/gfx/geometry/roundedBox.ts)): A rounded box's size and rounding, in metres.
+- `ROUTE_FIELDS` (const from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): An agent's place on its route, for a scene's component: `defineComponent('route', { description, fields: … })`.
+- `RouteLeg` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): Where `followRoute` has an agent head: the stop, and whether it stays there now.
 - `routeQuery` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): A query for these routes: `?scene=room&cam=iso&time.scale=0.5` (keys in this order, settings last).
 - `Routes` (interface from [`engine/app/routes.ts`](../engine/app/routes.ts)): What a page's query asks for.
+- `RouteState` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): An agent's place on its route (`ROUTE_FIELDS` says what each means).
+- `RouteStop` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): A stop of a route: where (world metres), how long to stay (s), what to do there and the way to face (rad, 0 +Z).
 - `runCourse` (function from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): Plays `course` in a session of its own and judges its measures (see the file comment).
 - `runningBond` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): Where texel (x, y) falls in a running bond of `cell` = [width, height] texels over a texture of `size`: courses (rows) of cells, odd courses shifted half a cell, the whole layout moved by `phase` texels.
 - `runOverWalk` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Whether the run, not the walk, keeps pace with `groundSpeed` (m/s): above √(w·r) × 1.15, or × 0.87 while the run is `running`.
@@ -1083,6 +1090,7 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `stepAside` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): The way (a unit `[x, z]`) for an agent at `self` heading `heading` (rad, 0 along +Z) to step aside for `other` standing in its way, else null (see the file comment): to its right, or to its left when `other` is on its right.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
@@ -1336,6 +1344,7 @@ game agent's manual.
 - `approachRing` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to wait round `to` on a ring of `ring.radius` metres: beyond `radius + band`, in by `followFlow` (straight when `field` is null); inside `radius − band`, straight out at `backoff` of full speed; on the ring, round it at `circle × sway` of full speed (`sway` in [−1, 1]; positive turns about +Y, anticlockwise seen from above).
 - `ApproachRingOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): What `approachRing` takes: the ring's radius, and how an agent moves in, out and round.
 - `ArmState` (interface from [`engine/anim/strike.ts`](../engine/anim/strike.ts)): The arm's state: plain numbers, stepped by `stepArm`, read by `layArm` and `armBlade`.
+- `ASIDE` (const from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): How far ahead (m) someone stands in an agent's way, and how near its line (m), for `stepAside`.
 - `Attack` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): One move played on a timeline: `start` a swing, `update` it one fixed step (its events: `wind`, `active`, `hitOpen`, `hitClose`, `recover`, `end`), tell the body `body`, connect with `hits` once per target per swing while the hit window is open, and read the strike's `sweep` there.
 - `ATTACK_TOKENS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens with every field at its default: 3 tokens, none held.
 - `ATTACK_TOKENS_FIELDS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): The attack tokens' fields, for a scene's component: `defineComponent('tokens', { description, fields: … })`.
@@ -1554,6 +1563,7 @@ game agent's manual.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
+- `followRoute` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): Where an agent at `at` heads on `stops` at sim time `time` (s), and whether it stays there now: it arrives within `near` metres on the ground, stays the stop's `stay`, then heads for the next, the last leading back to the first.
 - `FOOT_LOCK` (const from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): The locks' tuning, in metres and seconds.
 - `FOOT_PLANT` (const from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): `footPlant`'s tuning, in metres and seconds; the locks' is `FOOT_LOCK` (engine/anim/locomotion/locks.ts).
 - `FootLock` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A foot's stance lock: the sole `point` and ground `normal` it holds (the point NaN until the foot is first placed), its `weight` (1 locked, easing to 0), whether it is `stepping` back under the body and that step's `span` (its share of a full step), the seconds its animation has held the sole `still` and on the floor outside its stance (`touch`), and where the animation put it `last`.
@@ -1800,6 +1810,7 @@ game agent's manual.
 - `PropHealthComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
 - `PropKnock` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): How hard a knock is, as engine/physics/bodies.ts's `knock` takes it.
 - `PropLightComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
+- `propObstacles` (function from [`engine/sim/propBlocks.ts`](../engine/sim/propBlocks.ts)): What a walker goes round on a site (WP 13.18, WP 13.21): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which a walker opens: engine/dev/bot.ts), open, its leaf where it swings to.
 - `propOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
 - `PropPart` (type from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): One part of a `prop` entry, filled: see `PROP_PART_FIELDS`.
 - `PropPlacement` (interface from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): A prop placed: `{ prop: 'prop:<id>', at: [x, y, z], yaw }`, its base at `at` (m) and its turn `yaw` about +Y (rad), as `spawnProp` takes it and `levelProps` gives it.
@@ -1869,6 +1880,10 @@ game agent's manual.
 - `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
 - `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
 - `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
+- `ROUTE_FIELDS` (const from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): An agent's place on its route, for a scene's component: `defineComponent('route', { description, fields: … })`.
+- `RouteLeg` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): Where `followRoute` has an agent head: the stop, and whether it stays there now.
+- `RouteState` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): An agent's place on its route (`ROUTE_FIELDS` says what each means).
+- `RouteStop` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): A stop of a route: where (world metres), how long to stay (s), what to do there and the way to face (rad, 0 +Z).
 - `runOverWalk` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Whether the run, not the walk, keeps pace with `groundSpeed` (m/s): above √(w·r) × 1.15, or × 0.87 while the run is `running`.
 - `SAMPLE_STATES` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): Named body states, my-3d2dge's `CHAR_STATES` in metres (moving along +Z); the wind-up, the strike and the follow-through are a slash told as `body` (WP 6.1, as `moveAt` names it).
 - `sampleBaked` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Samples `baked` at `t` seconds: its 23 local rotations into `rotations` (slerped between frames, as three.js's mixer does) and its pelvis into `hips` (lerped).
@@ -1963,6 +1978,7 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `stepAside` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): The way (a unit `[x, z]`) for an agent at `self` heading `heading` (rad, 0 along +Z) to step aside for `other` standing in its way, else null (see the file comment): to its right, or to its left when `other` is on its right.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
@@ -2953,12 +2969,14 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)
 
+- `GAIT_FOOT` (const): Numbers a foot takes in a `GaitState`.
 - `GAIT_SUBSTEP` (const): The gait's inner step, s: a 60 Hz step takes two, a 120 Hz one, so both rates step the same feet.
 - `GaitBody` (interface): The body a gait carries: its ground point, its heading (rad, 0 facing +Z) and its velocity, m/s.
 - `GaitFoot` (interface): A foot: where it is, where its step left from and aims, the surface under it, and how far into its step it is.
 - `GaitLeg` (interface): A leg of a gait (see the file comment): its hip and its foot's rest spot in the body's frame, m, and its group.
 - `GaitOptions` (interface): A gait's numbers (see the file comment); each has a default for a body about half a metre high.
 - `GaitProbe` (type): A ray into the world: from `origin` along unit `direction` up to `distance` m; true with the hit written.
+- `GaitState` (interface): A gait as plain data (`LegGait.save`, `load`): every foot's numbers, whether it stands yet, the last step's body.
 - `LegGait` (class): A planted gait (see the file comment).
 
 ### [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)
@@ -3777,7 +3795,6 @@ For the agents who maintain the engine.
 - `BotWay` (interface): The way to one goal: the walking distance from a point (Infinity where none leads), the unit way to walk, and whether to crouch there (under a low ceiling, or for one a little way along it: a site's attic, a crawlspace's door; never on a level's grid).
 - `closedDoorAhead` (function): Whether `actor`'s interactor (engine/sim/interact.ts) is on a closed door it can open: one shut, not locked, not broken and on no switch (engine/sim/doors.ts).
 - `levelBotNav` (function): A level's grid as the bot reads it, a step climbing at most `climb` metres.
-- `propObstacles` (function): What the bot walks round on a site (WP 13.18): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which the bot opens: engine/dev/bot.ts), open, its leaf where it swings to.
 - `siteBotNav` (function): A site's graph as the bot reads it (see the file comment), a step climbing at most `climb` metres, `blocked` closed.
 - `tourStream` (const): The bot's own stream for a run's tour: `derive(seed, 'bot')`, never the world's.
 
@@ -6158,6 +6175,7 @@ For the agents who maintain the engine.
 - `APPROACH_RING` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `approachRing`'s defaults: the prototype's walker (3 units either side, back at half speed, round at 0.4).
 - `approachRing` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to wait round `to` on a ring of `ring.radius` metres: beyond `radius + band`, in by `followFlow` (straight when `field` is null); inside `radius − band`, straight out at `backoff` of full speed; on the ring, round it at `circle × sway` of full speed (`sway` in [−1, 1]; positive turns about +Y, anticlockwise seen from above).
 - `ApproachRingOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): What `approachRing` takes: the ring's radius, and how an agent moves in, out and round.
+- `ASIDE` (const from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): How far ahead (m) someone stands in an agent's way, and how near its line (m), for `stepAside`.
 - `ATTACK_TOKENS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens with every field at its default: 3 tokens, none held.
 - `ATTACK_TOKENS_FIELDS` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): The attack tokens' fields, for a scene's component: `defineComponent('tokens', { description, fields: … })`.
 - `AttackTokens` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): Attack tokens: who holds one and when the next may be granted (`ATTACK_TOKENS_FIELDS` says what each means).
@@ -6192,6 +6210,7 @@ For the agents who maintain the engine.
 - `FOLLOW` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `followFlow`'s defaults: straight within 4 m in a clear line (emberdeep's 64 units), full speed to the target.
 - `followFlow` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way to walk from `from` to `to` along `field` (a flow field toward the target's tile): straight at `to` within `near` metres when the grid has a clear line for a body (`NavGrid.lineOfSight`), else the field's look-ahead direction (`FlowField.direction`), else, where the field has no way (beyond its reach, or arrived at the goal tile's centre), straight at `to`, as the prototype does.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
+- `followRoute` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): Where an agent at `at` heads on `stops` at sim time `time` (s), and whether it stays there now: it arrives within `near` metres on the ground, stays the stop's `stay`, then heads for the next, the last leading back to the first.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
 - `getWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The weapon `id` of `registry` (the shared one by default); a missing id gives `weapon:gun`, with a warning.
 - `handOff` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Gives actor `id` over to its ragdoll, as `hit` says (see the file comment); returns its component.
@@ -6242,6 +6261,10 @@ For the agents who maintain the engine.
 - `removeJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Removes a joint (a joint to the world leaves its anchor, `jointBodies(…)[0]`).
 - `removeRagdollOf` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Takes actor `id`'s ragdoll out (its parts, if any, and the component); a body without one is left alone.
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
+- `ROUTE_FIELDS` (const from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): An agent's place on its route, for a scene's component: `defineComponent('route', { description, fields: … })`.
+- `RouteLeg` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): Where `followRoute` has an agent head: the stop, and whether it stays there now.
+- `RouteState` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): An agent's place on its route (`ROUTE_FIELDS` says what each means).
+- `RouteStop` (interface from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): A stop of a route: where (world metres), how long to stay (s), what to do there and the way to face (rad, 0 +Z).
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
 - `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `SIGHT` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): `canSee`'s defaults: emberdeep's 150 units of sight and 60 of sense, an eye at 1.5 m on a chest at 1 m.
@@ -6249,6 +6272,7 @@ For the agents who maintain the engine.
 - `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
 - `standUp` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Actor `id`'s ragdoll gets up now, the dead too, the way it lies (as the system's do); false: it has none falling.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `stepAside` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): The way (a unit `[x, z]`) for an agent at `self` heading `heading` (rad, 0 along +Z) to step aside for `other` standing in its way, else null (see the file comment): to its right, or to its left when `other` is on its right.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
@@ -6503,6 +6527,10 @@ For the agents who maintain the engine.
 - `tuneCharacter` (function from [`engine/physics/movement/settings.ts`](../engine/physics/movement/settings.ts)): `character` with `overrides` over its model's values; itself when it has no model or nothing is overridden.
 - `ZiplineSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A zipline, parsed: every field of `ZIPLINE_FIELDS`, its defaults filled.
 
+### [`engine/sim/propBlocks.ts`](../engine/sim/propBlocks.ts)
+
+- `propObstacles` (function): What a walker goes round on a site (WP 13.18, WP 13.21): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which a walker opens: engine/dev/bot.ts), open, its leaf where it swings to.
+
 ### [`engine/sim/props.ts`](../engine/sim/props.ts)
 
 - `definePropKinds` (function): Declares the component `sceneProp` on `registry` (once).
@@ -6618,6 +6646,7 @@ For the agents who maintain the engine.
 - `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
 - `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
+- `propObstacles` (function from [`engine/sim/propBlocks.ts`](../engine/sim/propBlocks.ts)): What a walker goes round on a site (WP 13.18, WP 13.21): every prop's body as the world holds it now, but a hinged door's: shut, nothing (it stands in its doorway, which a walker opens: engine/dev/bot.ts), open, its leaf where it swings to.
 - `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
 - `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
 - `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
@@ -6850,6 +6879,16 @@ For the agents who maintain the engine.
 - `SIGHT` (const): `canSee`'s defaults: emberdeep's 150 units of sight and 60 of sense, an eye at 1.5 m on a chest at 1 m.
 - `SightOptions` (interface): How `canSee` looks.
 - `takeToken` (function): Asks for a token for `id` at sim time `time` (s): true when it holds one now.
+
+### [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)
+
+- `ASIDE` (const): How far ahead (m) someone stands in an agent's way, and how near its line (m), for `stepAside`.
+- `followRoute` (function): Where an agent at `at` heads on `stops` at sim time `time` (s), and whether it stays there now: it arrives within `near` metres on the ground, stays the stop's `stay`, then heads for the next, the last leading back to the first.
+- `ROUTE_FIELDS` (const): An agent's place on its route, for a scene's component: `defineComponent('route', { description, fields: … })`.
+- `RouteLeg` (interface): Where `followRoute` has an agent head: the stop, and whether it stays there now.
+- `RouteState` (interface): An agent's place on its route (`ROUTE_FIELDS` says what each means).
+- `RouteStop` (interface): A stop of a route: where (world metres), how long to stay (s), what to do there and the way to face (rad, 0 +Z).
+- `stepAside` (function): The way (a unit `[x, z]`) for an agent at `self` heading `heading` (rad, 0 along +Z) to step aside for `other` standing in its way, else null (see the file comment): to its right, or to its left when `other` is on its right.
 
 ### [`engine/world/awareness.ts`](../engine/world/awareness.ts)
 
@@ -7628,6 +7667,19 @@ For the agents who maintain the engine.
 - `SPRING` (const): A sparring dummy's spring: its frequency (Hz) and damping ratio, a hit's swing (rad/s) and the most it leans (rad).
 - `standDummies` (function): Stands the ring's dummies (`RING_DUMMIES`): their entities, in order.
 - `standDummy` (function): Stands a sparring dummy on its base at `at` (m), facing `yaw` (rad): its entity.
+
+### [`labs/playground/cast/health.ts`](../labs/playground/cast/health.ts)
+
+- `CAST_HP` (const): As many hit points as one of the cast ever needs: given back at every blow.
+- `castHealth` (const): A cast member's `health`: full, never hit.
+
+### [`labs/playground/cast/neighbours.ts`](../labs/playground/cast/neighbours.ts)
+
+- `Neighbour` (interface): A neighbour: its name, its body's index (`body:neighbour<k>`) and its route.
+- `NEIGHBOUR` (const): How they go about: a stroll (m/s), how far they see and look (m), how near a shove comes (m) and how fast (m/s), how long a step aside, a flinch's rest and a look at a noise last (s), and the noises' carry (m).
+- `NEIGHBOUR_FIELDS` (const): A neighbour's own state: its index, its step aside (until when, which way), its last flinch, whether it looks.
+- `NEIGHBOURS` (const): The neighbours and their rounds (see the file comment): stops in world metres, stays in seconds.
+- `standNeighbours` (function): Stands the neighbours at their routes' first stops and adds their systems (see the file comment); their ids.
 
 ### [`labs/playground/cast/partners.ts`](../labs/playground/cast/partners.ts)
 

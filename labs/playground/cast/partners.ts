@@ -5,7 +5,7 @@
  * blows. A punch or a shot flinches one along the blow (its reactions, engine/sim/reactions.ts); a kick or the
  * uppercut hands it off to its ragdoll (engine/sim/ragdolls.ts `handOff`, `PARTNER_BLOWS`: the kick drives it back
  * off its feet, the uppercut lifts it), and it gets up the way it lies once it lies still. Their hit points come back
- * at every blow (the component `health`, which melee and shots take from: engine/sim/damage.ts), so they never die.
+ * at every blow (the component `health`, labs/playground/cast/health.ts), so they never die.
  * `standPartners(w)` stands them and adds the systems `ragdolls` and `partners` (phase `rules`, after the step's blows
  * landed), last in a scene's setup.
  *
@@ -18,7 +18,8 @@
  * // a kick from the south: the partner flies north off its feet, lies still, then gets up from its back
  * @see labs/playground/cast/partners.test.ts
  */
-import { addRagdolls, createCharacter, defineComponent, handOff, HEALTH_FIELDS, reactTo, spawnActor, Vector3, type Health, type MeleeState, type RagdollState, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { addRagdolls, createCharacter, defineComponent, handOff, reactTo, spawnActor, Vector3, type Health, type MeleeState, type RagdollState, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { CAST_HP, castHealth } from './health';
 
 /** Where the partners stand (m, on the canvas 1 m up) and face: the canvas's south corners, toward the steps. */
 export const RING_PARTNERS: readonly { readonly at: readonly [number, number, number]; readonly yaw: number }[] = [
@@ -32,10 +33,6 @@ export const PARTNER_BLOWS: Readonly<Record<string, { along: number; up: number 
   'move:uppercut': { along: 1.5, up: 4 },
 };
 
-/** A partner's hit points: as many as it ever needs, given back at every blow. */
-const HP = 1000;
-
-defineComponent('health', { description: 'Hit points (the ring’s partners, WP 10.2): melee and shots take from them.', fields: HEALTH_FIELDS }); // prettier-ignore
 defineComponent('sparringPartner', { description: 'One of the ring’s sparring partners (WP 10.2).', fields: {} });
 
 /** A partner and a player as this module reads them. */
@@ -49,7 +46,7 @@ function spar(w: World): void {
   const players = w.query('melee', 'actor') as unknown as Player[];
   for (const p of w.query('sparringPartner', 'health', 'actor') as unknown as Partner[]) {
     if (p.health.hitAt !== w.tick) continue;
-    p.health.hp = HP;
+    p.health.hp = CAST_HP;
     const striker = players.find((player) => player.melee?.hitAt === w.tick && player.melee.struck === p.id);
     const from = striker ?? (w.get(p.health.hitBy) as unknown as Player | undefined);
     if (!from?.actor) continue;
@@ -66,7 +63,7 @@ function spar(w: World): void {
 export function standPartners<C extends object>(world: World<C>): number[] {
   const w = world as unknown as World;
   const ids = RING_PARTNERS.map(({ at, yaw }) => {
-    const components = { health: { hp: HP, hitAt: -1, hitBy: -1 }, sparringPartner: {} };
+    const components = { health: castHealth(), sparringPartner: {} };
     return spawnActor(w, { at: [...at], yaw, character: createCharacter(), player: false, anim: { build: 'build:adult' }, components }); // prettier-ignore
   });
   addRagdolls(w);
