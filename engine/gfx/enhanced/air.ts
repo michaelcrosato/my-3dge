@@ -206,6 +206,7 @@ export function createAirLights(): AirLights {
       let [sunFound, lamps] = [false, 0];
       sunShadow = null;
       air.sky.value.set(0, 0, 0, 0);
+      air.sunColor.value.set(0, 0, 0, 0); // a sun gone (a sky or a tier that casts none) lights the haze no more
       scene.traverseVisible((object) => {
         const light = object as Light & { isDirectionalLight?: boolean; isAmbientLight?: boolean; isHemisphereLight?: boolean; target?: Object3D }; // prettier-ignore
         if (!light.isLight || light.intensity <= 0) return;

@@ -18,7 +18,8 @@
  * projection's scale, the aspect and orthographic cameras: under the box's top-down camera it dropped lights), and a
  * tile holds 16 (r182's 8 left the tiles near the focus darker than the 12 the pool lit without tiles); and each tiled
  * light reaches the lighting model as a light of its own colour (r182 hands over the tiles' node, which has none, so the
- * toon style, which reads a light's colour for its bands, failed to build: engine/gfx/materials/toon.ts).
+ * toon style, which reads a light's colour for its bands, failed to build: engine/gfx/materials/toon.ts). Only lights
+ * that shine are tiled (the pool's empty slots are not), and none wholly behind a perspective camera.
  *
  * Invariants: presentation only, never in the hash; the lights node's shader key holds the non-tiled lights alone, as
  * r182's does; a target past `TILED.width` × `TILED.height` lights its outer tiles with the ordinary lights only.
@@ -30,8 +31,8 @@
  * @see engine/gfx/enhanced/lighting.test.ts
  * @see tests/e2e/enhanced.spec.ts
  */
-import { DataTexture, FloatType, Lighting, LightsNode, RGBAFormat, Vector2, type ComputeNode, type Light, type Node, type NodeBuilder, type NodeFrame } from 'three/webgpu'; // prettier-ignore
-import { attributeArray, Break, directPointLight, float, Fn, If, instanceIndex, int, ivec4, Loop, positionView, renderGroup, Return, screenCoordinate, uniform, vec2 } from 'three/tsl'; // prettier-ignore
+import { DataTexture, FloatType, Lighting, LightsNode, RGBAFormat, Vector2, Vector3, type ComputeNode, type Light, type Node, type NodeBuilder, type NodeFrame, type PointLight } from 'three/webgpu'; // prettier-ignore
+import { attributeArray, Break, directPointLight, float, Fn, If, instanceIndex, int, ivec4, Loop, positionView, renderGroup, Return, screenCoordinate, select, uniform, vec2 } from 'three/tsl'; // prettier-ignore
 import TiledLightsNode, { circleIntersectsAABB } from 'three/addons/tsl/lighting/TiledLightsNode.js';
 import { defineCodes } from '../../core/log';
 import { POOL_SIZES } from '../lights';
@@ -96,24 +97,27 @@ type Fields = {
   _lightIndexes: N;
   _screenTileIndex: N;
   _compute: ComputeNode;
-  _lightsTexture: DataTexture;
-  _lightsCount: N;
+  _lightsTexture: DataTexture & { image: { data: Float32Array; width: number } };
+  _lightsCount: N & { value: number };
   _tileLightCount: number;
   _screenSize: N & { value: Vector2 };
   _cameraProjectionMatrix: N & { value: unknown };
   _cameraViewMatrix: N & { value: unknown };
   getLightData(index: N): { color: N; decay: N; viewPosition: N; distance: N };
-  updateLightsTexture(): void;
 };
 
 const size = new Vector2();
+const at = new Vector3();
 
 /** r182's tiled lights node with the engine's seven changes (see the file comment). */
 class PoolTiledLightsNode extends TiledLightsNode {
   /** The tile grid now: columns (for the compute pass and the fragments) and tiles. */
   readonly columns = uniform(1, 'uint').setGroup(renderGroup);
   readonly columnsF = uniform(1).setGroup(renderGroup);
+  readonly rowsF = uniform(1).setGroup(renderGroup);
   readonly tiles = uniform(1, 'uint').setGroup(renderGroup);
+  /** Whether a fragment's tile is in the grid: past the buffers made, a fragment gets the ordinary lights alone. */
+  private inGrid: N = float(1).greaterThan(0);
 
   constructor() {
     super(TILED.maxLights, TILED.tileSize);
@@ -130,7 +134,8 @@ class PoolTiledLightsNode extends TiledLightsNode {
   getTile(element: N): N {
     const self = this as unknown as Fields;
     const n = int(element);
-    return self._lightIndexes.element(self._screenTileIndex.mul(int(BLOCKS)).add(n.div(int(4)))).element(n.mod(int(4)));
+    const light = self._lightIndexes.element(self._screenTileIndex.mul(int(BLOCKS)).add(n.div(int(4)))).element(n.mod(int(4))); // prettier-ignore
+    return select(this.inGrid, light, int(0));
   }
 
   /** Point lights that cast no shadow go to the tiles; the rest stay ordinary lights (see the file comment). */
@@ -145,6 +150,22 @@ class PoolTiledLightsNode extends TiledLightsNode {
 
   /** The buffers are made once, with the node: a resize changes only the grid's uniforms. */
   updateProgram(): void {}
+
+  /** r182's, packing only the tiled lights that shine: the pool's empty slots (intensity 0) are left out. */
+  updateLightsTexture(): void {
+    const self = this as unknown as Fields;
+    const { data, width } = self._lightsTexture.image;
+    let n = 0;
+    for (const light of self.tiledLights as PointLight[]) {
+      if (!(light.intensity > 0) || n >= self.maxLights) continue;
+      at.setFromMatrixPosition(light.matrixWorld);
+      data.set([at.x, at.y, at.z, light.distance], n * 4);
+      data.set([light.color.r * light.intensity, light.color.g * light.intensity, light.color.b * light.intensity, light.decay], width * 4 + n * 4); // prettier-ignore
+      n++;
+    }
+    self._lightsCount.value = n;
+    self._lightsTexture.needsUpdate = true;
+  }
 
   /** r182's, but each tiled light reaches the lighting model as a light of its own colour (see the file comment). */
   setupLights(builder: NodeBuilder, lightNodes: Node[]): void {
@@ -199,7 +220,8 @@ class PoolTiledLightsNode extends TiledLightsNode {
         const centre = clip.xy.div(clip.w).mul(0.5).add(0.5).flipY().mul(self._screenSize);
         const radius = distance.mul(scale).div(clip.w.max(1e-4));
         const reaches = perspective.and(clip.w.lessThan(distance)); // the camera inside its reach: every tile
-        If(reaches.or(circleIntersectsAABB(centre, radius, minBounds, maxBounds)), () => {
+        const behind = perspective.and(clip.w.add(distance).lessThanEqual(0)); // wholly behind the camera: none
+        If(behind.not().and(reaches.or(circleIntersectsAABB(centre, radius, minBounds, maxBounds))), () => {
           slot(found).assign(i.add(int(1)));
           found.addAssign(int(1));
         });
@@ -210,16 +232,18 @@ class PoolTiledLightsNode extends TiledLightsNode {
     const screenTile = screenCoordinate.div(tileSize).floor().toVar();
     self._bufferSize = new Vector2(TILED.width, TILED.height);
     self._lightIndexes = lightIndexes;
-    self._screenTileIndex = screenTile.x.add(screenTile.y.mul(this.columnsF));
+    const [column, row] = [screenTile.x.min(this.columnsF.sub(1)), screenTile.y.min(this.rowsF.sub(1))];
+    self._screenTileIndex = column.add(row.mul(this.columnsF));
+    this.inGrid = screenTile.x.lessThan(this.columnsF).and(screenTile.y.lessThan(this.rowsF));
     self._compute = compute;
-    self._lightsTexture = lightsTexture;
+    self._lightsTexture = lightsTexture as Fields['_lightsTexture'];
   }
 
   /** Before each render: the lights' data, the camera, the grid, then the compute pass over the grid's tiles. */
   updateBefore(frame: NodeFrame): void {
     const self = this as unknown as Fields;
     const [renderer, camera] = [frame.renderer!, frame.camera!];
-    self.updateLightsTexture();
+    this.updateLightsTexture();
     self._cameraProjectionMatrix.value = camera.projectionMatrix;
     self._cameraViewMatrix.value = camera.matrixWorldInverse;
     const target = renderer.getRenderTarget(); // a pass's or a shot's: its fragments' coordinates are its own
@@ -227,7 +251,7 @@ class PoolTiledLightsNode extends TiledLightsNode {
     else renderer.getDrawingBufferSize(size);
     self._screenSize.value.copy(size);
     const grid = tileGrid(size.x, size.y);
-    [this.columns.value, this.columnsF.value, this.tiles.value] = [grid.columns, grid.columns, grid.tiles];
+    [this.columns.value, this.columnsF.value, this.rowsF.value, this.tiles.value] = [grid.columns, grid.columns, grid.rows, grid.tiles]; // prettier-ignore
     renderer.compute(self._compute, grid.tiles);
   }
 }

@@ -39,7 +39,7 @@
  * @see tests/e2e/post.spec.ts
  */
 import { dot, float, Fn, metalness, mrt, normalView, output, pass, renderGroup, roughness, select, uniform, uniformArray, vec3, vec4, velocity } from 'three/tsl'; // prettier-ignore
-import { Vector4 } from 'three/webgpu';
+import { UnsignedByteType, Vector4 } from 'three/webgpu';
 import type { Camera, Node, NodeBuilder, Object3D, PassNode, Scene, UniformArrayNode, WebGPURenderer } from 'three/webgpu'; // prettier-ignore
 
 /** The parts of the scene a filter can be scoped to. */
@@ -230,7 +230,7 @@ function sceneMrt(table: FlagTable, extra: SceneTargets): Node {
 
 /** The scene pass's targets beyond colour and normals (WP 11.5): metalness and roughness for SSR, motion for TRAA. */
 export interface SceneTargets {
-  /** `metalrough`: (metalness, roughness), for screen-space reflections (`feature:ssr`). */
+  /** `metalrough`: (metalness, roughness), 8 bits each, for screen-space reflections (`feature:ssr`). */
   metalrough?: boolean;
   /** `velocity`: each pixel's motion on screen since the last frame, for TRAA (`feature:traa`). */
   velocity?: boolean;
@@ -251,6 +251,8 @@ export function createScenePass(scene: Scene, camera: Camera, extra: SceneTarget
   // Every attachment before anything compiles for the target (see the file comment).
   for (const name of ['normal', ...Object.keys(extra).filter((key) => extra[key as keyof SceneTargets])])
     scenePass.getTextureNode(name);
+  // 0 to 1 at 8 bits is plenty for both, and half a float target's bandwidth, as three.js's own SSR example keeps it.
+  if (extra.metalrough) scenePass.getTexture('metalrough').type = UnsignedByteType;
   return scenePass;
 }
 

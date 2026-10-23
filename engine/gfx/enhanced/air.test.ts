@@ -2,8 +2,9 @@
  * @file Unit tests for the air's gathering (engine/gfx/enhanced/air.ts): the first visible sun that casts gives the way
  * its light travels and its colour as radiance (intensity ÷ π), and its shadow map once it has one, the widest
  * cascade's when it casts through cascades, its shadow camera read as the display pass draws; ambient and hemisphere
- * lights add up to the sky; up to 64 visible lamps give their place, reach and colour, where they are now even before
- * the scene's matrices are brought up to date. The march itself is tests/e2e/enhanced.spec.ts's.
+ * lights add up to the sky; a sun that stops casting leaves the haze unlit; up to 64 visible lamps give their place,
+ * reach and colour, where they are now even before the scene's matrices are brought up to date. The march itself is
+ * tests/e2e/enhanced.spec.ts's.
  */
 import { AmbientLight, DepthTexture, DirectionalLight, Group, HemisphereLight, Matrix4, PointLight, Scene } from 'three/webgpu'; // prettier-ignore
 import { describe, expect, it } from 'vitest';
@@ -53,6 +54,12 @@ describe("the air's lights", () => {
     draw(air);
     const expected = new Matrix4().multiplyMatrices(sun.shadow.camera.projectionMatrix, sun.shadow.camera.matrixWorldInverse); // prettier-ignore
     expect(air.lightVp.value.equals(expected)).toBe(true);
+    sun.castShadow = false; // the tier casts none, say: the haze has no sun
+    air.gather(scene);
+    expect([near(air.sun.value), near(air.sunColor.value)]).toEqual([
+      [0, -1, 0, 0],
+      [0, 0, 0, 0],
+    ]);
     air.dispose();
   });
 

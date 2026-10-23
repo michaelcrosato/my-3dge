@@ -1,6 +1,7 @@
 /**
  * @file Unit tests for the shadow budget (engine/gfx/shadows.ts): two casters at `high`, one at `medium`, none at
- * `low`, the sun taking the first, and the renderer's one shadow map type.
+ * `low`, the sun taking the first, and the renderer's one shadow map type; a point caster's shadow matrix can be read
+ * as r182 reads it once the light has stopped casting.
  */
 import { PCFShadowMap, PointLight } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
@@ -50,5 +51,16 @@ describe('enableShadows and configurePointCaster', () => {
       -0.002,
     ]);
     expect(light.castShadow).toBe(false);
+  });
+
+  it("lets r182 read a point caster's shadow matrix after it stops casting, which a bare point light throws on", () => {
+    const bare = new PointLight();
+    expect(() => bare.shadow.updateMatrices(bare)).toThrow(/matrixWorld/); // r182's LightShadow reads light.target
+    const caster = new PointLight();
+    configurePointCaster(caster);
+    caster.position.set(2, 3, 4);
+    caster.updateMatrixWorld();
+    expect(() => caster.shadow.updateMatrices(caster)).not.toThrow();
+    expect(caster.shadow.camera.position.toArray()).toEqual([2, 3, 4]);
   });
 });

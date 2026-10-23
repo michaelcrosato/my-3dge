@@ -49,7 +49,7 @@ import type { ToonLook } from '../materials/toon';
 import { qualityBudget, type QualityBudget, type QualitySetting } from '../quality';
 import type { FrameView } from '../renderer';
 import type { Warmup, WarmupPass } from '../warmup';
-import { AA_CHOICE, createAa, gateUpdates, type Aa, type AaKind } from './aa';
+import { AA_CHOICE, aaKindFor, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
 import {
@@ -154,7 +154,7 @@ export function createPost(
   const styles = options.styles;
   const asked = options.aa ?? (settings.get<AaKind>('post.aa') || AA_CHOICE);
   const temporalAa = asked === 'traa' ? temporalAaFor(gfx.features) : null;
-  const aaKind: AaKind = asked === 'traa' && !temporalAa ? 'fxaa' : asked; // feature:traa off: its advice said so
+  const aaKind = aaKindFor(asked, temporalAa !== null); // feature:traa off: its advice said so
   const quality = options.quality ?? (() => qualityBudget(settings.get<QualitySetting>('quality'), false));
   defineLooks(registry);
   const serial = ++chains;

@@ -37,6 +37,9 @@ export type AaKind = (typeof AA_KINDS)[number];
 /** The one the chain uses: the one that measured better (see the file comment). */
 export const AA_CHOICE: AaKind = 'fxaa';
 
+/** What a chain smooths with for `asked`: TRAA only while its feature is on (`temporal`), else FXAA in its place. */
+export const aaKindFor = (asked: AaKind, temporal: boolean): AaKind => (asked === 'traa' && !temporal ? 'fxaa' : asked);
+
 /**
  * What decided it (tests/e2e/post.spec.ts): the mean absolute error, in 0–255 luma levels, over the pixels where the
  * unsmoothed frame differs from the supersampled one by more than 8, of the unsmoothed frame and of each smoothing,

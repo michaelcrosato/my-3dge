@@ -30,7 +30,7 @@ const REPLAYS = globSync(['tests/replays/box-*.replay.json', 'tests/replays/ragd
   .map((file) => basename(file, '.replay.json'))
   .sort();
 /** The box's own looks, by id. */
-const BOX_LOOKS = globSync('labs/box/looks/torch-*.ts', { cwd: ROOT })
+const BOX_LOOKS = globSync(['labs/box/looks/torch-*.ts', 'labs/box/looks/daylight.ts'], { cwd: ROOT })
   .filter((file) => !file.endsWith('.test.ts'))
   .map((file) => `look:${basename(file, '.ts')}`);
 

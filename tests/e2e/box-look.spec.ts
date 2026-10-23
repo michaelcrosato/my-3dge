@@ -9,9 +9,10 @@
  *    first frame; so does the switch back to the stage's own lights (`look:clean`), and the first look in a material
  *    style (`look:torch-toon`), which joins the style set to the warm-up (at the medium tier, as what follows);
  * 3. each of the box's looks, a test of its own, drawn from the start: it warms up before it draws, renders (none
- *    blank, dark or blown out) and sees what the torch-lit hall sees (the same ID pass); and switching between them,
- *    styles included, builds no pipeline: each in turn while the knock replay (tests/replays/box-3-knock.replay.json)
- *    plays its first 180 steps, a frame drawn after each, its goldens hold.
+ *    blank, dark or blown out) and sees what the torch-lit hall sees (the same ID pass); switching between the
+ *    torch-lit looks, styles included, builds no pipeline, before and after a visit to the day, whose casting sun a
+ *    switch to and from warms up for first; each in turn while the knock replay
+ *    (tests/replays/box-3-knock.replay.json) plays its first 180 steps, a frame drawn after each, its goldens hold.
  * No frame builds a pipeline after a warm-up (Done-when 1's toggles). One test per look (after G9): a failure names
  * its look, and each has its own time limit. The scene and the looks it covers are the test's
  * annotations in out/e2e/report.json (`looks`): the hall with its props, every box look. The goldens with a look of
@@ -33,10 +34,12 @@ const KNOCK = readFileSync(join(import.meta.dirname, '../replays/box-3-knock.rep
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
 
-/** The box's looks (labs/box/looks/). */
-const BOX_LOOKS = ['torch-toon', 'torch-lit', 'torch-cel', 'torch-pixel', 'torch-bloom', 'torch-fxaa'].map(
+/** The box's looks (labs/box/looks/): the torch-lit hall's, and the plain day's (WP 11.5) with its cascaded sun. */
+const BOX_LOOKS = ['torch-toon', 'torch-lit', 'torch-cel', 'torch-pixel', 'torch-bloom', 'torch-fxaa', 'daylight'].map(
   (name) => `look:${name}`,
 );
+/** The day's look, the one with a sun that casts. */
+const DAY = 'look:daylight';
 
 /** What `__engine.stats()` gives that this suite reads. */
 interface Stats {
@@ -167,8 +170,9 @@ for (const look of BOX_LOOKS) {
   });
 }
 
-// 3b. Every box look in turn: switching builds nothing, and while the knock replay plays its first 180 steps, a frame
-// after each, through each look in turn, its goldens hold and no frame stalls.
+// 3b. Every box look in turn: switching builds nothing (but to and from the day's casting sun, in warm-ups),
+// and while the knock replay plays its first 180 steps, a frame after each, through each look in turn, its goldens
+// hold and no frame stalls.
 test('every box look in turn: switching builds no pipeline, and the knock replay keeps its goldens through them', async ({
   page,
   harness,
@@ -179,7 +183,17 @@ test('every box look in turn: switching builds no pipeline, and the knock replay
   const toon = await show(page, {});
   for (const look of BOX_LOOKS) {
     const stats = await show(page, { 'post.look': look });
-    expect([look, stats.pipelines, stats.pipelinesAfterWarmUp]).toEqual([look, toon.pipelines, 0]);
+    // The torch-lit looks share one sky: a switch among them builds nothing. The day's sun casts: a switch to it, and
+    // one back, warms up first, never in a frame (r182 frees the pipelines a sky leaves unused and builds them again
+    // when it returns, engine/gfx/pipelines.ts: 43 to the day here and 25 back, each time).
+    const built = look === DAY ? stats.pipelines : toon.pipelines;
+    expect([look, stats.pipelines, stats.pipelinesAfterWarmUp]).toEqual([look, built, 0]);
+  }
+  const back = await show(page, { 'post.look': BOX_LOOKS[0] });
+  expect(back.pipelinesAfterWarmUp).toBe(0);
+  for (const look of BOX_LOOKS.filter((name) => name !== DAY)) {
+    const stats = await show(page, { 'post.look': look }); // and among the torch-lit looks again, nothing
+    expect([look, stats.pipelines, stats.pipelinesAfterWarmUp]).toEqual([look, back.pipelines, 0]);
   }
   const views = BOX_LOOKS.map((look, i) => [i * 30, { set: { 'post.look': look } }]);
   const run = (await page.evaluate(([t, v]) => __engine.replay(t, { until: 180, views: v }), [

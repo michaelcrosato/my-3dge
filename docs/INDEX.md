@@ -896,7 +896,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## engine/gfx/post
 
 - [`aa.ts`](../engine/gfx/post/aa.ts): Edge smoothing (PLAN.md WP 7.4): the `aa` filter, from three.js's TSL display nodes, `FXAANode` or `SMAANode`, whichever measures better (`AA_CHOICE`), or `TRAANode` where the view setting `post.aa` asks for it (WP 11.5: engine/gfx/enhanced/aa.ts, with `feature:traa`).
-  - Exports: `Aa`, `AA_CHOICE`, `AA_KINDS`, `AA_MEASURED`, `AaKind`, `createAa`, `gateUpdates`
+  - Exports: `Aa`, `AA_CHOICE`, `AA_KINDS`, `AA_MEASURED`, `AaKind`, `aaKindFor`, `createAa`, `gateUpdates`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`chain.ts`](../engine/gfx/post/chain.ts): Post-processing (PLAN.md WP 7.4, §6.7, I-46): `createPost` sets up, once, one `PostProcessing` chain (r182) that every frame draws through, and draws the look the view settings name.
   - Exports: `createPost`, `Post`, `PostOptions`, `snapBlock`

@@ -5008,6 +5008,7 @@ For the agents who maintain the engine.
 - `AA_KINDS` (const): The edge smoothing three.js r182 offers as TSL display nodes; `traa` with `feature:traa` (WP 11.5).
 - `AA_MEASURED` (const): What decided it (tests/e2e/post.spec.ts): the mean absolute error, in 0–255 luma levels, over the pixels where the unsmoothed frame differs from the supersampled one by more than 8, of the unsmoothed frame and of each smoothing, and the full-screen passes each adds.
 - `AaKind` (type): An edge smoothing.
+- `aaKindFor` (const): What a chain smooths with for `asked`: TRAA only while its feature is on (`temporal`), else FXAA in its place.
 - `createAa` (function): Smooths `display` with `kind`, while `gate` is above 0.5; SMAA's and TRAA's passes run only while `runs()` (see above).
 - `gateUpdates` (function): Wraps a node's `updateBefore` so its passes run only while `runs()` holds, and in any frame that set it up again.
 

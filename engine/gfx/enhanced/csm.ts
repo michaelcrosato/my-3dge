@@ -7,8 +7,10 @@
  *
  * r182's node takes the camera of the first build and keeps it; the engine's frames change cameras (five camera codes,
  * orthographic ones among them; r182's frustum split handles both), so `follow(camera)`, each frame (the sky's
- * `update`), hands it the frame's camera and splits the cascades again when that camera or its projection changed.
- * The cascades' placeholder lights join the sun's parent on the first frame (r182); they are no lights to the warm-up's
+ * `update`), hands it the frame's camera and splits the cascades again when that camera or its projection changed;
+ * but only after that first build, since r182 makes its cascades only while it has no camera (`CSMShadowNode.js:493`):
+ * handed one earlier (a sky shown before its sun casts), it made none and every sunlit material failed to build. The
+ * cascades' placeholder lights join the sun's parent on the first frame (r182); they are no lights to the warm-up's
  * key.
  *
  * Invariants: presentation only, never in the hash; the sun keeps its `castShadow`, which the shadow budget sets
@@ -69,8 +71,8 @@ export function cascadeSun(sun: DirectionalLight): CascadedSun {
   return {
     node,
     follow(camera) {
+      if (node.mainFrustum === null) return; // r182 makes the cascades at its first build, with that build's camera
       node.camera = camera;
-      if (node.mainFrustum === null) return; // made at its first build, with that build's camera
       const projection = camera.projectionMatrix.elements.join();
       if (split?.camera !== camera || split.projection !== projection) node.updateFrustums();
       split = { camera, projection };

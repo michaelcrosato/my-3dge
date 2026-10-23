@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for tiled lighting (engine/gfx/enhanced/lighting.ts): the split keeps shadow casters as ordinary
  * lights; the tile grid covers the drawing buffer and stops at the buffers made; the node makes its buffers once, so a
- * resize changes its uniforms, never its shader key, and each frame's compute pass covers the grid's tiles alone. The
- * picture is tests/e2e/enhanced.spec.ts's.
+ * resize changes its uniforms, never its shader key, and each frame's compute pass covers the grid's tiles alone; only
+ * the lights that shine are packed for the tiles, a pool's empty slots left out. The picture is
+ * tests/e2e/enhanced.spec.ts's.
  */
 import { PointLight, SpotLight, Vector2, type NodeFrame } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
@@ -44,5 +45,23 @@ describe('tiled lighting', () => {
     expect(node.customCacheKey()).toBe(key);
     expect(dispatched).toEqual([920, 14 * 8]);
     expect(node.tiles.value).toBe(112);
+  });
+
+  it("packs only the lights that shine for the tiles: a pool's empty slots are left out", () => {
+    const [lamp, empty, torch] = [new PointLight('#ffffff', 2, 8), new PointLight('#ffffff', 0), new PointLight('#ff8000', 3, 6)]; // prettier-ignore
+    lamp.position.set(1, 2, 3);
+    torch.position.set(-4, 1, 0);
+    for (const light of [lamp, empty, torch]) light.updateMatrixWorld();
+    const node = new PoolTiledLighting().createNode([lamp, empty, torch]) as unknown as {
+      updateLightsTexture(): void;
+      _lightsCount: { value: number };
+      _lightsTexture: { image: { data: Float32Array; width: number } };
+    };
+    node.updateLightsTexture();
+    const { data, width } = node._lightsTexture.image;
+    expect(node._lightsCount.value).toBe(2);
+    expect([...data.subarray(0, 8)]).toEqual([1, 2, 3, 8, -4, 1, 0, 6]); // positions and reaches, the empty slot out
+    const colour = [...data.subarray(width * 4 + 4, width * 4 + 8)]; // the torch's, second: its colour and decay
+    expect(colour).toEqual([torch.color.r * 3, torch.color.g * 3, torch.color.b * 3, torch.decay].map(Math.fround));
   });
 });

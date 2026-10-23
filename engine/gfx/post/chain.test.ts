@@ -1,11 +1,13 @@
 /**
  * @file Unit tests for the post chain's GPU-free parts (engine/gfx/post/chain.ts): its view settings, declared on the
- * shared registry and on another when asked, are reachable like any other and are kept out of the hash; and the block
- * grid the camera snaps to.
+ * shared registry and on another when asked, are reachable like any other and are kept out of the hash; the block
+ * grid the camera snaps to; and the edge smoothing it draws, TRAA only while `feature:traa` is on (WP 11.5).
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry, registry as sharedRegistry } from '../../core/registry';
 import { createSettings } from '../../core/settings';
+import { temporalAaFor } from '../features';
+import { aaKindFor } from './aa';
 import { snapBlock } from './chain';
 import { definePostSettings, POST_SETTINGS } from './settings';
 import { chainOf } from './filters';
@@ -48,5 +50,15 @@ describe('snapBlock', () => {
     expect(snapBlock(chainOf({ pixel: { scope: 'characters+objects', size: 5 } }))).toBe(1);
     expect(snapBlock(chainOf({ pixel: { scope: 'all', size: 6, snap: false } }))).toBe(1);
     expect(snapBlock(chainOf({ screen: { scope: 'all', pixelate: 3 } }))).toBe(3);
+  });
+});
+
+describe("the chain's edge smoothing", () => {
+  it('draws TRAA where post.aa asks only while feature:traa is on, else FXAA in its place, and the others as asked', () => {
+    const report = (on: string[]) => ({ on, off: [], downgrades: [] });
+    expect(temporalAaFor(report([]))).toBeNull();
+    expect(temporalAaFor(report(['feature:traa']))).not.toBeNull();
+    expect([aaKindFor('traa', false), aaKindFor('traa', true)]).toEqual(['fxaa', 'traa']);
+    expect([aaKindFor('smaa', false), aaKindFor('fxaa', true)]).toEqual(['smaa', 'fxaa']);
   });
 });

@@ -6,7 +6,8 @@
  * position, m), `size w×h×d` (its world bounds, m, for an object with geometry below it), the material (its library
  * id, `userData.material`, else its type; one per group for a multi-material mesh), the triangles one draw takes,
  * and `×n` instances for an instanced mesh. `shadow` marks a light that casts shadows (`shadow ×3 cascades` when it
- * casts through cascades, engine/gfx/enhanced/csm.ts); `entity n` names the sim entity an object stands for.
+ * casts through cascades, engine/gfx/enhanced/csm.ts: the cascades made, 0 before their first build); `entity n`
+ * names the sim entity an object stands for.
  *
  * `filter` keeps the objects whose name or type contains it (any case), with their ancestors for context; `depth`
  * cuts the tree below that depth (the root is depth 0). A cut or filtered subtree is counted on its parent's line.
@@ -79,8 +80,8 @@ function line(object: Object3D, hidden: number): string {
   if (mesh.isInstancedMesh) parts.push(`×${mesh.count}`);
   const light = object as Light;
   if (light.isLight && light.castShadow) {
-    const cascades = (light.shadow?.shadowNode as { cascades?: unknown } | undefined)?.cascades;
-    parts.push(typeof cascades === 'number' ? `shadow ×${cascades} cascades` : 'shadow');
+    const node = light.shadow?.shadowNode as { cascades?: unknown; lights?: unknown[] } | undefined;
+    parts.push(typeof node?.cascades === 'number' ? `shadow ×${node.lights?.length ?? 0} cascades` : 'shadow');
   }
   if (typeof object.userData.entity === 'number') parts.push(`entity ${object.userData.entity}`);
   if (hidden) parts.push(`(+${hidden} below)`);

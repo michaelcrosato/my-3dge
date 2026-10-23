@@ -1588,9 +1588,13 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   feature is on (`lightingFor`, `cascadeSunFor`, `shadingFor`, `temporalAaFor`, `sceneTargetsFor`), and only it may
   import engine/gfx/enhanced/ (ESLint's layer rule). Beyond the plan's Owns: `gi.ts` and `air.ts` (the GI tier and
   the air), engine/gfx/post/shading.ts (the chain's shading stage), engine/gfx/backdrop.ts (split out of sky.ts for the
-  length limit), and extensions to engine/gfx/post/{chain,filters,mrt,aa,settings,looks,presets}.ts and
-  engine/gfx/{lights,sky,stage,stageSky,renderer,sceneDump}.ts. Seven features: `feature:tiledLighting`,
-  `feature:cascadedShadows`, `feature:ao`, `feature:gi`, `feature:air`, `feature:ssr`, `feature:traa`.
+  length limit), and extensions to engine/gfx/post/{chain,filters,mrt,aa,settings,looks,presets}.ts,
+  engine/gfx/{lights,sky,stage,stageSky,renderer,sceneDump,quality}.ts and engine/app/engine.ts (the stage takes the
+  renderer's features); the box's `look:daylight` (labs/box/looks/daylight.ts), the comment of `look:torch-lit` and
+  labs/box/README.md; the advice trap (tests/setup/adviceTrap.ts, its test, tests/baselines/advice/README.md and
+  docs/TESTING.md: below); and box-menu.spec's replay list, which missed WP 10.2's two. Seven features:
+  `feature:tiledLighting`, `feature:cascadedShadows`, `feature:ao`, `feature:gi`, `feature:air`, `feature:ssr`,
+  `feature:traa`.
 - **Tiled lighting** is r182's `TiledLightsNode` with its faults fixed in a subclass (engine/gfx/enhanced/lighting.ts):
   shadow casters stay ordinary lights (r182 tiled them and lost their shadows); its buffers are made once for 4,096²
   and its grid read from uniforms, so a resize rebuilds nothing (r182 baked the size into its shaders); its compute
@@ -1634,3 +1638,35 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   (`look:air/…`) and its bounce light (`look:gi/bounce-light`), and one preset each for the sections it lacked
   (`look:ao/corners`, `look:ssr/metal`): 98 looks. The playground's own looks take the sections in WP 13.24, which owns
   labs/playground/looks/.
+- **Found on the way, and fixed.** Under tiled lighting every toon-style material failed to build (r182 hands its
+  tiled lights to the lighting model as the tiles' node, which has no colour, and the toon style reads one), and r182
+  drew its default material in their place, saying so only through `console.error`: no spec failed. The advice trap
+  now fails a test on r182's `THREE.TSL:` errors. The review found a second: the sun's cascades were never made when
+  the sun first cast after its sky was shown (from `look:torch-lit` to `look:daylight`, or from the low tier to the
+  high), since `follow` handed r182's node a camera before its first build, and r182 makes its cascades only while it
+  has none; `follow` now waits for that build, the scene dump counts the cascades made, and enhanced.spec switches
+  both ways. Also: the shading follows the camera after pixel art's block snap; the air brings its lights up to date
+  before it reads them, reads the shadow camera as the display pass draws, and lets a sun that stops casting go; the
+  tiles leave out the pool's empty slots and lights wholly behind a perspective camera, and a target past the buffers
+  made lights its outer tiles with the ordinary lights alone; the `metalrough` target is 8 bits a channel, as
+  three.js's own SSR example keeps it. And a fault of r182's that the new `look:daylight` showed in box-look.spec's
+  switches, with the features off too: once a point light stops casting, r182 still brings its shadow's matrices up to
+  date (`accessors/Lights.js:47`), reading a `target` that point lights lack, and the warm-up failed; the pool's point
+  casters get a target (engine/gfx/shadows.ts). The same spec's switch between the hall's looks and the day's warms up
+  each way, every time (43 pipelines to the day, 25 back, over three rounds): r182 frees the pipelines a sky leaves
+  unused and builds them again when it returns (engine/gfx/pipelines.ts). Keeping each caster's shadow node across
+  the switch, tried, changed none of it. A switch never builds in a frame, and among the torch-lit looks builds
+  nothing; the spec says so.
+- **Measured** with `x perf labs/box --feature` (GPU ms a frame on SwiftShader, on less off: they rank the techniques
+  here and budget nothing, ADR-0022): tiled lighting −40 on the torch-lit hall (189 against 229, 64 lights against
+  12), cascaded shadows +130 on crowd-100 by day (+24 draw calls), and on the room with its section on, AO +9.9, GI
+  +22, air +68, SSR +20 and TRAA +38 against FXAA. `feature:ssr`'s `metalrough` target is written on every frame its
+  feature is on, the default, even where no look asks for reflections: +1.2 on the room (46.1 against 44.8), with
+  5 textures and 4 pipelines more and no draw call, kept so that a look switching reflections on builds nothing. No
+  run built a pipeline after its warm-up. The governor's part, demoting a technique under load, waits for WP 7.5.
+- **No template for the kind `feature`.** Seven modules now write a feature entry and its advice code by hand, but a
+  feature is engine-internal (a game never defines one: it asks `__engine.info().features`), each needs its own gate
+  in engine/gfx/features.ts and its own measured downgrade, and `x new`'s templates can fill in only an id, a name and
+  a directory, not the upper-case code each feature needs. The kind's schema checks every entry as it is defined
+  (`FEATURE_FIELDS`), and engine/gfx/features.test.ts lists them.
+

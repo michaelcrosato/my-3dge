@@ -9,8 +9,9 @@
  * The chain's settings are declared before the URL is read, so `?post.filters=…` and `?gfx.featuresOff=…` reach it.
  * `window.__engine` is the page's signal with the members the box's has that the specs use: `set(key, value)`,
  * `render(n)`, `stats()` (the renderer's, `pipelinesAfterWarmUp` among them), `shot(options)` (engine/gfx/shot.ts,
- * the frame as the chain draws it) and `camera.set('perspective' | 'orthographic')`; and `metal()`, the boxes on
- * screen (px, the drawing buffer's) of the ball and the plate. So `node x shot tests/pages/shading.html --set
+ * the frame as the chain draws it) and `camera.set('perspective' | 'orthographic')`; `metal()`, the boxes on screen
+ * (px, the drawing buffer's) of the ball and the plate; and `shadow()`, a patch of floor in a pillar's shadow and the
+ * same patch beside it in the sun, as screen polygons. So `node x shot tests/pages/shading.html --set
  * 'post.filters={"ssr":{"scope":"all"}}'` shoots any section.
  *
  * Invariants: `ready` turns true once the warm-up and the first frame are done, never after an error; presentation
@@ -53,7 +54,7 @@ function fail(record: ErrorRecord): void {
 }
 
 /** The corner (see the file comment), and its metal. */
-function corner(): { scene: THREE.Scene; metal: THREE.Mesh[] } {
+function corner(): { scene: THREE.Scene; metal: THREE.Mesh[]; sun: THREE.DirectionalLight } {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#8fb0d0');
   const add = (
@@ -91,8 +92,11 @@ function corner(): { scene: THREE.Scene; metal: THREE.Mesh[] } {
   lamp.name = 'lamp';
   lamp.position.set(-4, 1.5, 4);
   scene.add(sun, sun.target, lamp, new THREE.HemisphereLight('#bcd4ff', '#40382c', 0.8));
-  return { scene, metal: [ball, plate] };
+  return { scene, metal: [ball, plate], sun };
 }
+
+/** Pillar/north's foot and top: its shadow on the floor runs from the foot along the sunlight's way. */
+const PILLAR = { foot: [1, 0, -2], height: 6 } as const;
 
 /** The two cameras, each looking into the corner. */
 function cameras(): Record<'perspective' | 'orthographic', THREE.Camera> {
@@ -121,7 +125,7 @@ async function start(): Promise<void> {
     throw error;
   }
   gfx.renderer.shadowMap.enabled = true;
-  const { scene, metal } = corner();
+  const { scene, metal, sun } = corner();
   const lenses = cameras();
   let camera = lenses.perspective;
   const post = createPost(gfx, { settings });
@@ -156,6 +160,26 @@ async function start(): Promise<void> {
     return [Math.max(0, x0), Math.max(0, y0), Math.min(size.x, x1), Math.min(size.y, y1)];
   };
 
+  /** A world point on screen, in the drawing buffer's pixels. */
+  const onScreen = (point: THREE.Vector3): [number, number] => {
+    const size = gfx.renderer.getDrawingBufferSize(new THREE.Vector2());
+    const p = point.clone().project(camera);
+    return [((p.x + 1) / 2) * size.x, ((1 - p.y) / 2) * size.y];
+  };
+  /** The middle half of pillar/north's shadow on the floor, and the same patch of floor 1.5 m aside, in the sun. */
+  const shadow = () => {
+    const way = sun.target.position.clone().sub(sun.position).normalize(); // the way the sunlight travels
+    const foot = new THREE.Vector3(...PILLAR.foot);
+    const along = way
+      .clone()
+      .multiplyScalar(-PILLAR.height / way.y)
+      .setY(0); // from the foot to the top's shade
+    const across = new THREE.Vector3(-along.z, 0, along.x).normalize();
+    const patch = (aside: number) =>
+      [[0.25, -0.2], [0.75, -0.2], [0.75, 0.2], [0.25, 0.2]].map(([s, t]) => onScreen(foot.clone().addScaledVector(along, s).addScaledVector(across, t + aside))); // prettier-ignore
+    return { shade: patch(0), sun: patch(-1.5) };
+  };
+
   await settle();
   Object.assign(signals, {
     set: (key: string, value: unknown) => settings.set(key, value),
@@ -171,6 +195,7 @@ async function start(): Promise<void> {
       },
     },
     metal: () => metal.map(boxOf),
+    shadow,
     /** `x shot`'s entry: the frame as the chain draws it now. */
     shot: async (options: ShotOptions = {}): Promise<ShotJson> => {
       await settle();
