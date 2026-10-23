@@ -562,7 +562,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AIM_STEEP`, `createCutaway`, `CUT_AIMS`, `CUT_FACING`, `CUT_MARGIN`, `CUT_STEEP`, `Cutaway`, `cutawayAims`, `CutawayOptions`, `CutawayReport`, `CutTarget`, `FADE_AIMS`, `FADE_THIN`, `planCutaway`, `planFade`, `segmentHitsBox`
   - Tests: [`engine/gfx/cutaway.test.ts`](../engine/gfx/cutaway.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
-  - Exports: `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `resolveFeatures`
+  - Exports: `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuTiming`, `gpuTimingFor`, `resolveFeatures`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
 - [`idmarks.ts`](../engine/gfx/idmarks.ts): The ID pass's marks (PLAN.md §8.5, I-28; split from engine/gfx/idpass.ts after G9, ADR-0014 amendment 17): `marksOf` numbers what the pass sees, largest first, and `drawMarks` draws the numbers onto a frame, for `x shot --marks` (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
   - Exports: `drawMarks`, `Mark`, `marksOf`
@@ -709,6 +709,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`shoulder.ts`](../engine/gfx/cameras/shoulder.ts): The shooter's camera (PLAN.md WP 13.8 and WP 13.27, docs/PLAYGROUND.md §4; doctrine: Common ground): over the shoulder, as third-person shooters frame it.
   - Exports: `createShoulderCamera`, `describeShoulder`, `formatShoulderCode`, `parseShoulderCode`, `SHOULDER`, `SHOULDER_EFFECTS`, `SHOULDER_KEEP`, `SHOULDER_LIMITS`, `SHOULDER_ROOM`, `SHOULDER_TURN_SPEED`, `ShoulderInput`, `ShoulderOptions`, `shoulderPose`, `shoulderSpec`, `ShoulderSpec`, `shoulderState`, `ShoulderState`, `stepShoulder`
   - Tests: [`engine/gfx/cameras/shoulder.test.ts`](../engine/gfx/cameras/shoulder.test.ts)
+
+## engine/gfx/enhanced
+
+- [`timing.ts`](../engine/gfx/enhanced/timing.ts): GPU timing (PLAN.md WP 11.2, §4.7; doctrine: Verifiable): how long the GPU spends on a drawn frame, from WebGPU's timestamp queries, where the device has `timestamp-query` (`feature:timestamps`, engine/gfx/features.ts).
+  - Exports: `createGpuTiming`, `GPU_WINDOW`, `GpuTiming`, `TimedRenderer`
+  - Tests: [`engine/gfx/enhanced/timing.test.ts`](../engine/gfx/enhanced/timing.test.ts), [`tests/e2e/timing.spec.ts`](../tests/e2e/timing.spec.ts)
 
 ## engine/gfx/fx
 
@@ -2265,7 +2271,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
 - [`perfBudget.ts`](../tools/lib/perfBudget.ts): Performance budgets and their trend (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5), for `x perf` (tools/cmd/perf.ts, whose file comment says how each way measures).
-  - Exports: `BUDGET_KEYS`, `BUDGET_SHAPE`, `budgetPath`, `Budgets`, `DEFAULT_STEPS`, `LADDER`, `median`, `PAGE_KEYS`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `Section`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
+  - Exports: `BUDGET_KEYS`, `BUDGET_SHAPE`, `budgetPath`, `Budgets`, `DEFAULT_STEPS`, `LADDER`, `median`, `PAGE_KEYS`, `PAGE_TIMES`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `Section`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
   - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
 - [`png.ts`](../tools/lib/png.ts): Decodes the PNGs Chromium's screenshots produce (non-interlaced, 8-bit RGB or RGBA) into RGBA bytes, for the frame reads of the e2e fixture (tests/e2e/fixtures.ts) and `x shot` (tools/cmd/shot.ts).
   - Exports: `decodePng`

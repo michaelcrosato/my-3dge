@@ -1,9 +1,9 @@
 /**
  * @file Unit tests for the pipeline counter (`engine/gfx/pipelines.ts`): it counts the pipelines and shader modules a
- * device builds, forwarding every call; it reads three.js's pipeline cache and advances its node frame only while
- * they have r182's shape, saying so otherwise; and the pin: the installed three.js is r182 and its sources still
- * hold the fields this module reads, so the test fails when an upgrade changes them. The real renderer is pinned
- * the same way by tests/e2e/renderer.spec.ts.
+ * device builds, forwarding every call; it reads three.js's pipeline cache and advances its node frame (and the id
+ * its timestamp queries carry) only while they have r182's shape, saying so otherwise; and the pin: the installed
+ * three.js is r182 and its sources still hold the fields this module reads, so the test fails when an upgrade changes
+ * them. The real renderer is pinned the same way by tests/e2e/renderer.spec.ts.
  */
 import { readFileSync } from 'node:fs';
 import { REVISION, type WebGPURenderer } from 'three/webgpu';
@@ -24,16 +24,18 @@ function device() {
   };
 }
 
-/** A stand-in renderer with r182's internals: `cached` pipelines in the cache, and a node frame. */
+/** A stand-in renderer with r182's internals: `cached` pipelines in the cache, and a node frame with its id. */
 function renderer(cached = 2) {
   const frames = { count: 0 };
+  const nodeFrame = { frameId: 7, update: () => void (frames.count++, nodeFrame.frameId++) };
   const fake = {
     _initialized: true,
     _pipelines: {
       caches: new Map(Array.from({ length: cached }, (_, i) => [`key${i}`, {}])),
       programs: { vertex: new Map(), fragment: new Map(), compute: new Map() },
     },
-    _nodes: { nodeFrame: { update: () => frames.count++ } },
+    _nodes: { nodeFrame },
+    info: { frame: 0 },
   };
   return { frames, fake, renderer: fake as unknown as WebGPURenderer };
 }
@@ -78,10 +80,11 @@ describe('countPipelines', () => {
 });
 
 describe('advanceFrame', () => {
-  it("starts a new node frame through r182's internals, or reports it cannot", () => {
+  it("starts a new node frame through r182's internals, its timestamp queries' id with it, or reports it cannot", () => {
     const { frames, renderer: fake } = renderer();
     expect(advanceFrame(fake)).toBe(true);
     expect(frames.count).toBe(1);
+    expect(fake.info.frame).toBe(8); // the node frame's new id, as r182's own loop sets it
     expect(advanceFrame({} as WebGPURenderer)).toBe(false);
   });
 });
@@ -117,6 +120,11 @@ describe('the pin to r182', () => {
     expect(source('renderers/common/nodes/Nodes.js')).toContain('this.nodeFrame = new NodeFrame();');
     expect(source('nodes/core/NodeFrame.js')).toMatch(/update\(\) \{\s+this\.frameId \+\+;/);
     // A node frame advances only in r182's own requestAnimationFrame loop (and compileAsync): why advanceFrame exists.
-    expect(source('renderers/common/Animation.js')).toContain('this.nodes.nodeFrame.update();');
+    // That loop also sets `info.frame`, which only the timestamp queries' ids read (Backend.updateTimeStampUID).
+    const animation = source('renderers/common/Animation.js');
+    expect(animation).toMatch(
+      /this\.nodes\.nodeFrame\.update\(\);\s+this\.info\.frame = this\.nodes\.nodeFrame\.frameId;/,
+    );
+    expect(source('renderers/common/Backend.js')).toContain('const frame = this.renderer.info.frame;');
   });
 });

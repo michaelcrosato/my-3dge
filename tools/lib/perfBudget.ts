@@ -26,8 +26,10 @@ import { UsageError } from '../x';
 export const BUDGET_KEYS = ['stepMs', 'hashMs', 'captureMs'] as const;
 /** One quantity a Node run measures. */
 export type PerfKey = (typeof BUDGET_KEYS)[number];
-/** What a page measures: `__engine.stats()`'s means, then its counts. */
-export const PAGE_KEYS = ['simMs', 'physicsMs', 'animMs', 'renderMs', ...COUNT_KEYS] as const;
+/** A page's times: `__engine.stats()`'s means, the GPU's where the device has timestamp queries (WP 11.2). */
+export const PAGE_TIMES = ['simMs', 'physicsMs', 'animMs', 'renderMs', 'gpuMs'] as const;
+/** What a page measures: its times, then its counts. */
+export const PAGE_KEYS = [...PAGE_TIMES, ...COUNT_KEYS] as const;
 /** One quantity a page measures. */
 export type PageKey = (typeof PAGE_KEYS)[number];
 /** The crowd ladder's rungs, in agents. */

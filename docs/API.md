@@ -4087,7 +4087,7 @@ For the agents who maintain the engine.
 - `EngineStats` (interface): What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured).
 - `meterOf` (function): The meter `host` carries; throws `DEV_NO_METER` without one.
 - `ProbedSystem` (interface): A system as the probe sees it: its phase, of engine/sim/systems.ts's `PHASES`.
-- `RenderCounts` (type): The renderer's counts the meter reports (engine/gfx/renderer.ts `GfxStats`).
+- `RenderCounts` (type): The renderer's counts the meter reports (engine/gfx/renderer.ts `GfxStats`), and its GPU time where it has one.
 - `STATS_CODES` (const): The codes this module raises, with their fixes.
 - `STATS_WINDOW` (const): How many steps or frames the means cover: the last second at 60 Hz.
 - `StatsHost` (interface): An inspector host that carries a meter (engine/app/headless.ts gives every engine's host one).
@@ -4497,6 +4497,13 @@ For the agents who maintain the engine.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
 
+### [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)
+
+- `createGpuTiming` (function): Makes a renderer's GPU timing, measuring when `on` (see the file comment).
+- `GPU_WINDOW` (const): How many frames the mean covers: as many as `stats()`'s other means.
+- `GpuTiming` (interface): A renderer's GPU timing (see the file comment).
+- `TimedRenderer` (interface): What it reads of a renderer (three.js's `WebGPURenderer`): the timestamp read, the pass counts, the query pools.
+
 ### [`engine/gfx/features.ts`](../engine/gfx/features.ts)
 
 - `defineFeatures` (function): Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them.
@@ -4506,6 +4513,8 @@ For the agents who maintain the engine.
 - `FeatureOff` (interface): One feature that is off: its id, the advice raised and why.
 - `FeatureReport` (interface): What `resolveFeatures` found: the features on, those off and why, and the downgrades as advice codes.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
+- `GpuTiming` (interface from [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)): A renderer's GPU timing (see the file comment).
+- `gpuTimingFor` (function): The GPU timing a renderer gets (engine/gfx/enhanced/timing.ts, WP 11.2): measuring when `feature:timestamps` is on in `report`, which also says whether to make the renderer with `trackTimestamp`; idle (no `gpuMs`) when it is off.
 - `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
 
 ### [`engine/gfx/fx/decals.ts`](../engine/gfx/fx/decals.ts)
@@ -4902,7 +4911,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/pipelines.ts`](../engine/gfx/pipelines.ts)
 
-- `advanceFrame` (function): Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh, also off r182's own animation-frame loop.
+- `advanceFrame` (function): Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh, also off r182's own animation-frame loop, and gives it its own `info.frame`, as that loop does, so its timestamp queries are its own.
 - `checkPinned` (function): What no longer matches the r182 internals this module reads: another three.js revision, `renderer._pipelines` without its `caches` and `programs` maps, or no `renderer._nodes.nodeFrame.update`.
 - `countPipelines` (function): The counter of `device`, made on first call: wraps the device's pipeline and shader-module methods with counting forwarders.
 - `PINNED_REVISION` (const): The three.js release whose internals this module reads.
@@ -9435,7 +9444,8 @@ For the agents who maintain the engine.
 - `DEFAULT_STEPS` (const): The steps each way takes unless its budget section or `--steps` says otherwise.
 - `LADDER` (const): The crowd ladder's rungs, in agents.
 - `median` (function): The middle value (the mean of the two middle ones for an even count).
-- `PAGE_KEYS` (const): What a page measures: `__engine.stats()`'s means, then its counts.
+- `PAGE_KEYS` (const): What a page measures: its times, then its counts.
+- `PAGE_TIMES` (const): A page's times: `__engine.stats()`'s means, the GPU's where the device has timestamp queries (WP 11.2).
 - `PageKey` (type): One quantity a page measures.
 - `PerfBudget` (interface): A budget file, `tests/baselines/perf/<scene id>.json` (see the file comment).
 - `PerfKey` (type): One quantity a Node run measures.

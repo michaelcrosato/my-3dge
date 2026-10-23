@@ -9,8 +9,9 @@
  * by WP 11.2), filtering of 32-bit float textures (r182 samples `FloatType` textures unfiltered without
  * `float32-filterable`, quietly) and the larger storage-buffer limits the device asks for (caps.ts). Later WPs add
  * their techniques with `def('feature', id, { … })` and an advice code of their own; consumers read the report, never
- * the GPU. The view setting `gfx.featuresOff` lists features to treat as missing, to see or test a downgraded look on
- * a GPU that has everything; turning one off never changes the hash (§6.7, parity contract item 3).
+ * the GPU, and reach a technique (engine/gfx/enhanced/) through this module alone: `gpuTimingFor` (WP 11.2). The
+ * view setting `gfx.featuresOff` lists features to treat as missing, to see or test a downgraded look on a GPU that
+ * has everything; turning one off never changes the hash (§6.7, parity contract item 3).
  *
  * Invariants: the report lists features in id order; an entry is off when any need is unmet or the setting lists it,
  * and then its advice is raised once per feature (the subject is the id), with `{feature}`, `{reason}` and
@@ -35,6 +36,7 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../core/r
 import type { Field, Schema } from '../core/schema';
 import { createSettings, defineSettings, type Settings } from '../core/settings';
 import type { GfxCaps } from './caps';
+import { createGpuTiming, type GpuTiming } from './enhanced/timing';
 
 /** The advice codes of the built-in features, with their fixes. */
 export const FEATURES_CODES = defineCodes('gfx', {
@@ -201,3 +203,13 @@ export function resolveFeatures(
   report.downgrades = [...new Set(report.off.map((feature) => feature.advice))].sort();
   return report;
 }
+
+/**
+ * The GPU timing a renderer gets (engine/gfx/enhanced/timing.ts, WP 11.2): measuring when `feature:timestamps` is on
+ * in `report`, which also says whether to make the renderer with `trackTimestamp`; idle (no `gpuMs`) when it is off.
+ */
+export function gpuTimingFor(renderer: Parameters<typeof createGpuTiming>[0], report: FeatureReport): GpuTiming {
+  return createGpuTiming(renderer, report.on.includes('feature:timestamps'));
+}
+
+export type { GpuTiming } from './enhanced/timing';

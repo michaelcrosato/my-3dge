@@ -11,10 +11,11 @@
  * - **page**: `labs/<name>` (with `--scene`) or an `.html` file, opened in Chromium as `x shot` opens it, its clock
  *   real again (the virtual clock's `performance.now` taken away, so the meter times real work), paused, stepped
  *   `--steps` times (120), 60 frames drawn, then `__engine.stats()` read (engine/dev/stats.ts): the means of
- *   sim, physics, anim and render ms, and the last frame's draw calls, triangles, compute calls, textures, geometries
- *   and pipelines (after warm-up). Section: `page: { steps, budgets: { simMs, …, pipelinesAfterWarmUp } }`. With
- *   `--feature <id>` (WP 11.1) it measures the page again with that feature off (`gfx.featuresOff`), its rows `off.…`,
- *   and prints what the feature costs, on less off: a technique's price, compared, never budgeted (no `--budget`).
+ *   sim, physics, anim and render ms, the GPU's (`gpuMs`, WP 11.2: with timestamp queries; else a line says why), and
+ *   the last frame's draw calls, triangles, compute calls, textures, geometries and pipelines (after warm-up).
+ *   Section: `page: { steps, budgets: { simMs, …, pipelinesAfterWarmUp } }`. With `--feature <id>` (WP 11.1) it
+ *   measures the page again with that feature off (`gfx.featuresOff`), its rows `off.…`, and prints what the feature
+ *   costs, on less off: a technique's price, compared, never budgeted (no `--budget`).
  *
  * The budget file `tests/baselines/perf/<scene id>.json` and its trend are tools/lib/perfBudget.ts's. A value is
  * within its budget up to budget × (1 + `tolerance`), 0 by default (0.15 allows 15%). `--budget` fails a
@@ -26,8 +27,9 @@
  * `PERF_TREND` for each that grew over 15% since the run before.
  *
  * Usage: node x perf <scene|page> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--ladder [--agents
- * path]] [--feature id] [--budget]. Exit 0 when measured (and its counts within budget under `--budget`), 1 with a count over its budget, without the section
- * under `--budget`, or when a page fails or has no `stats()`, 2 on a usage error (a malformed budget file included).
+ * path]] [--feature id] [--budget]. Exit 0 when measured (and its counts within budget under `--budget`), 1 with a
+ * count over its budget, without the section under `--budget`, or when a page fails or has no `stats()`, 2 on a usage
+ * error (a malformed budget file included).
  *
  * @example
  * // node x perf fixtures/scenes/kernel --budget
@@ -59,7 +61,7 @@ import {
   DEFAULT_STEPS,
   LADDER,
   median,
-  PAGE_KEYS,
+  PAGE_TIMES,
   readBudget,
   recordTrend,
   withinBudget,
@@ -282,17 +284,19 @@ async function runPage(root: string, page: string, flags: Flags): Promise<Comman
         const values = Object.fromEntries(keys.map((key) => [key, from?.[key] ?? null]));
         return { name, values, limits: prefix ? undefined : section?.budgets, prefix };
       };
-      const rows = [row('ms', PAGE_KEYS.slice(0, 4), stats), row('last frame', COUNT_KEYS, stats)];
+      const rows = [row('ms', PAGE_TIMES, stats), row('last frame', COUNT_KEYS, stats)];
       if (feature === undefined) return rows;
       const quiet = await open(urlOf([`gfx.featuresOff=${JSON.stringify([feature])}`]));
       failures.push(...quiet.failures);
       off = quiet.signals && !quiet.failures.length ? await statsOf(quiet.tab, steps) : null;
-      return [...rows, row(`${feature} off: ms`, PAGE_KEYS.slice(0, 4), off, 'off'), row(`${feature} off: last frame`, COUNT_KEYS, off, 'off')]; // prettier-ignore
+      return [...rows, row(`${feature} off: ms`, PAGE_TIMES, off, 'off'), row(`${feature} off: last frame`, COUNT_KEYS, off, 'off')]; // prettier-ignore
     });
     const on = stats as EngineStats | null;
     const offStats = off as EngineStats | null;
-    const costs = [...PAGE_KEYS.slice(0, 4), ...COUNT_KEYS].flatMap((key) => (on?.[key] != null && offStats?.[key] != null ? [`${key} ${ms(on[key] - offStats[key])}`] : [])); // prettier-ignore
+    const costs = [...PAGE_TIMES, ...COUNT_KEYS].flatMap((key) => (on?.[key] != null && offStats?.[key] != null ? [`${key} ${ms(on[key] - offStats[key])}`] : [])); // prettier-ignore
     if (feature !== undefined) result.lines.push(`${feature} costs, on less off: ${costs.join(', ') || 'nothing measured'}`); // prettier-ignore
+    if (on && on.gpuMs === undefined)
+      result.lines.push('gpuMs: not measured, no timestamp queries (GFX_NO_TIMESTAMPS)');
     failures.push(...(await errors()));
     if (!stats) {
       const message = `${page}'s __engine has no stats(): engine/dev/stats.ts registers it, so the engine must load it (engine/app)`;
