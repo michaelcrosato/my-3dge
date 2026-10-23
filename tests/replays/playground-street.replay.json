@@ -1,0 +1,48 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "The neighbours and the dog (WP 13.21), on the street: the player stands on the north sidewalk while the dog sits by him facing him, steps up to its ball before its paws, picks it up and throws it east along the sidewalk; the dog chases it, picks it up, carries it back and lets it fall by him, and sits; the walker comes along the sidewalk, looks at him and walks by.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "playground:site-street",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 1260,
+  "inputs": [
+    [0, { "cam": 1.5707963267948966, "look": [1.5707963267948966, 0] }],
+    [100, { "move": [0.6, -0.8] }],
+    [106, { "move": null }],
+    [140, { "look": [2.821150202923634, -1.21] }],
+    [150, { "p": ["interact"] }],
+    [170, { "look": [1.5707963267948966, 0.25] }],
+    [190, { "p": ["interact"] }],
+    [200, { "look": [1.5707963267948966, 0] }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "c3c6f6be16f22b20",
+      "60": "802cdcb508f4cf77",
+      "120": "e15affbe0f6a87c0",
+      "180": "6641fd1f4102ec3a",
+      "240": "c7ac4506c53ee997",
+      "300": "7561482b817fb2ff",
+      "360": "3fa9af430d51b9c6",
+      "420": "386057931b4b77f5",
+      "480": "000d4affe40f7a69",
+      "540": "e77f0a3a34c29174",
+      "600": "283c919a158ee10b",
+      "660": "931715df4bb2f235",
+      "720": "21be30a79b4e06c9",
+      "780": "c9bc730fede41169",
+      "840": "825efd293b71ec2b",
+      "900": "15262c90a6d9dba8",
+      "960": "1ff3e43331d60e00",
+      "1020": "5855e4f4ac561e04",
+      "1080": "80072d506c7807bd",
+      "1140": "a55ffce31a3b0cfc",
+      "1200": "d65dd3527141edae",
+      "1260": "86985fc3d63672a8"
+    }
+  }
+}

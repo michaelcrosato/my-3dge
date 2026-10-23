@@ -10,7 +10,8 @@
  * (`addInteraction`), melee (`addMelee`, WP 13.19) and firearms (`addWeapons`, WP 13.20: the player carries the pistol
  * and the rifle, holstered, labs/playground/weapons/guns.ts); the range's pop-up and moving targets
  * (labs/playground/weapons/range.ts); last, the ring's sparring dummies and partners (labs/playground/cast/dummies.ts,
- * partners.ts: WP 10.2's ragdolls). They take
+ * partners.ts: WP 10.2's ragdolls), the neighbours on their rounds and the dog beside the player with its ball
+ * (neighbours.ts, dog.ts: WP 13.21). They take
  * the gym's settings (`playground.gym.*`) and its dev action `place`, so a course or a replay places the player as the
  * gym's do; `roomPlace` says where it puts him in a room, ducked under a low ceiling.
  *
@@ -26,7 +27,9 @@
  * @see labs/playground/scenes/site.test.ts
  */
 import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addMelee, addSiteBodies, addSiteLadders, addSwitch, addWeapons, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, siteSolidAt, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { standDog } from '../cast/dog';
 import { standDummies } from '../cast/dummies';
+import { standNeighbours } from '../cast/neighbours';
 import { standPartners } from '../cast/partners';
 import { spawnPlayer } from '../cast/player';
 import { GARAGE_SWITCHES, HOUSE_FURNITURE, HOUSE_LIGHTS, OUTDOORS, SITE_RIDES } from '../furnish';
@@ -159,8 +162,10 @@ function siteSpec(area: SiteArea) {
       addMelee(w);
       addWeapons(w);
       standRange(w);
-      standDummies(w); // last: the ring's sparring dummies and its two partners
+      standDummies(w); // last: the ring's sparring dummies and its two partners, the neighbours and the dog
       standPartners(w);
+      standNeighbours(w);
+      standDog(w, areaStart(area), SITE_AREAS[area].yaw);
     },
     actions: { place: gym.actions.place },
   };

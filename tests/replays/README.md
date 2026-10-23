@@ -131,3 +131,12 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   first slid into the south wall's foot, the second fell onto the pillar). Their inputs are as they were, and their
   stories the same: each partner falls to its blow and gets up the way it lies, the dead one when the cycle stands it,
   and the hero's blow fells the third between the first two's falls (labs/box/scenes/ragdoll.test.ts).
+- playground-site's, playground-melee's and playground-range's goldens were re-recorded (`--update`, Node ×3 and
+  Chromium ×3 agreeing) with WP 13.21's neighbours and dog (ADR-0025 amendment 28): every site scene stands four
+  neighbours on their rounds (actors with an animator and the components `neighbour`, `route`, `awareness` and
+  `health`), the dog beside the player and facing him (an actor with the components `dog` and `crowdBody`, its feet
+  stood from its first step) and its ball before its paws (a prop), and keeps the boxes its cast's ways go round
+  (`siteWays`), all hashed. Their inputs are as they were, and their
+  stories the same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts,
+  labs/playground/weapons/range.test.ts). playground-street is new with that WP: the dog sits by the player, follows
+  him to its ball, chases the ball he throws, fetches it and lets it fall by him (labs/playground/cast/dog.test.ts).

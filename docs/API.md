@@ -754,6 +754,7 @@ game agent's manual.
 - `NAV_CLIMB` (const from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
 - `NAV_DIRECTIONS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The 8 neighbours, as [columns east, rows south]: east, west, south, north, then the diagonals (bit k of a step).
 - `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
+- `NavBlock` (interface from [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
@@ -1762,6 +1763,7 @@ game agent's manual.
 - `NAV_CLIMB` (const from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
 - `NAV_DIRECTIONS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The 8 neighbours, as [columns east, rows south]: east, west, south, north, then the diagonals (bit k of a step).
 - `NAV_GRID_FIELDS` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): The options of `new NavGrid(level, options)`.
+- `NavBlock` (interface from [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
 - `NavGrid` (class from [`engine/world/nav.ts`](../engine/world/nav.ts)): The walkable grid of a compiled level, and the searches over it (see the file comment).
 - `NavGridOptions` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What `new NavGrid` takes: each field of `NAV_GRID_FIELDS`, optional.
 - `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
@@ -6692,6 +6694,7 @@ For the agents who maintain the engine.
 - `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
 - `makeSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Makes `spec`'s site, named `name`, from the levels and the terrain `registry` holds (see the file comment).
 - `makeTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Makes `spec`'s terrain, named `name` (see the file comment); throws `CORE_BAD_SPEC` naming its problems.
+- `NavBlock` (interface from [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
 - `NavSource` (type from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid is built from: a compiled level, or a surface.
 - `NavSurface` (interface from [`engine/world/nav.ts`](../engine/world/nav.ts)): What a grid walks besides a compiled level: `cols` × `rows` tiles `tile` metres wide from `origin` ([x, z], [0, 0] by default), which are `walkable`, each one's `floor` (m), and whether a body on tile (col, row) steps to (col + dc, row + dr) climbing at most `climb` metres on the way.
 - `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
@@ -7702,10 +7705,23 @@ For the agents who maintain the engine.
 - `HelloView` (interface): A started hello scene.
 - `startHello` (function): Starts the renderer on `canvas` (rejecting with `GfxError` `GFX_NO_WEBGPU` without WebGPU), builds the scene, and draws the first frame, directly or through the post pass; resolves once the GPU has finished it.
 
+### [`labs/playground/bodies/neighbours.ts`](../labs/playground/bodies/neighbours.ts)
+
+- `NEIGHBOUR_BODIES` (const): The four neighbours' bodies, by their index.
+- `NEIGHBOUR_SEED` (const): The first neighbour's seed; the k-th's is this plus k.
+- `neighbourBody` (function): Neighbour `k`'s body: the player's, its slots drawn by its seed (see the file comment).
+
 ### [`labs/playground/bodies/player.ts`](../labs/playground/bodies/player.ts)
 
 - `PLAYER` (const): `body:player`, registered with the shared registry once this module loads.
 - `PLAYER_BODY` (const): The player's body (see the file comment).
+
+### [`labs/playground/cast/dog.ts`](../labs/playground/cast/dog.ts)
+
+- `DOG` (const): How the dog goes about (see the file comment): speeds, distances (m) and times (s).
+- `DOG_FIELDS` (const): The dog's own state (the component `dog`).
+- `DOG_MODES` (const): What the dog does (see the file comment).
+- `standDog` (function): Stands the dog beside the player's spawn `at` (where he faces `yaw`), facing him, its ball before its paws, and adds its systems.
 
 ### [`labs/playground/cast/dummies.ts`](../labs/playground/cast/dummies.ts)
 
@@ -7745,6 +7761,13 @@ For the agents who maintain the engine.
 - `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned.
 - `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m).
 - `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move, carrying `weapons` (ids, in slot order; none by default), holstered.
+
+### [`labs/playground/cast/ways.ts`](../labs/playground/cast/ways.ts)
+
+- `plainWays` (function): The site's navigation without a scene's props, made once (a pure function of the site): for placing in a setup.
+- `replanWays` (function): Makes `w`'s ways again round its props as they stand now (a walker held by what its way does not know).
+- `waysOf` (function): `w`'s navigation of the block round its props (see the file comment).
+- `wayTo` (function): The flow field to `goal` kept under `key` (see the file comment), and the navigation it runs over.
 
 ### [`labs/playground/controls.ts`](../labs/playground/controls.ts)
 

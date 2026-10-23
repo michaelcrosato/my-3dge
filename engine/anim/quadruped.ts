@@ -2,26 +2,26 @@
  * @file The quadruped rig (PLAN.md WP 13.21, on WP 10.1's blocks; docs/PLAYGROUND.md §7.4): a four-legged body (a
  * dog, a fox, a wolf) for a crowd body (engine/sim/crowdBodies.ts), its state plain data as the blob's and the
  * floater's. `step(input)` is the sim's part: its feet on the planted gait (`LegGait`, a trot: the diagonals step
- * together), its heading toward the one it is told (else its travel), its head turning toward what it looks at
- * within bounds (looking about when it stands and has
- * nothing to look at), its tail's wag easing toward the share it is told, its sitting easing in and out. `pose()` is
- * the view's: from the state alone it writes the joints its body is drawn on (engine/gfx/puppets/bodies/quadruped.ts):
- * the torso, the neck, the head and its ears, each leg's bones, the paws, the tail's links, and `mouth`, where it
- * carries something.
+ * together; its first step stands them even told it is aloft, as an actor is before the world's first physics step),
+ * its heading toward the one it is told (else its travel), its head turning toward what it looks at within bounds
+ * (looking about when it stands with nothing to look at), its tail's wag easing toward the share it is told, its
+ * sitting easing in and out. `pose()` is the view's: from the state alone it writes the joints its body is drawn on
+ * (engine/gfx/puppets/bodies/quadruped.ts): the torso and the rump, the neck, the head and its ears, each leg's bones,
+ * the paws, the tail's links, and `mouth`, where it carries something.
  *
- * - **The legs**: the front two of two bones, the elbows bent back; the hind three (`digitigrade`): the stifle
- *   forward, the hock behind the paw, its long foot lying back as it sits.
+ * - **The legs**: the front two of two bones, the elbows back; the hind three (`digitigrade`), the stifle forward.
  * - **The body** rides over its feet: the shoulders over the front feet's ground, the hips over the hind's (a foot
  *   mid-step counted where its step runs, not where it lifts), so a curb tips it.
- * - **Sitting** drops the hips `QUADRUPED.sit.drop` and draws them back, the chest rising a little, the head higher on
- *   the pitched torso but level, the tail lying behind; the paws stay planted.
+ * - **Sitting** drops the hips `QUADRUPED.sit.drop` and draws them back, the rump down on the ground behind them (the
+ *   pelvis tilting), the stifles forward, the chest a little higher, the head level, the tail along the ground.
  * - The state (`QuadrupedState`) is all of it: the gait's (`GaitState`), the heading, the clock, the sitting share,
  *   the head's turn and tilt, the wag's share, the walk's and the run's shares (its ears flop as it walks, its body
  *   lowers as it runs, and bobs `QUADRUPED.bob` with its feet in the air: Σ sin πt, as `LegGait.lifting`).
  *
  * Invariants: metres, seconds, +Y up, facing +Z (x left in its frame); a fixed step `dt`; no random stream (a crowd
- * spreads its clocks); the head eases and the heading turns by `1 − e^(−rate·dt)`, so any step rate eases alike; the
- * pose reads the state and `position` alone, so a view that loads them poses what the sim stepped.
+ * spreads its clocks); the heading and the head follow their targets as an exact first-order lag (a target moving
+ * linearly between steps), the shares ease by `1 − e^(−rate·dt)`, so any step rate follows a smooth target alike;
+ * the pose reads the state and `position` alone, so a view that loads them poses what the sim stepped.
  *
  * Carried from shardfall@fa2dab6 `crates/pav_core/src/rig.rs:173-183` (the legs straight under a raised body),
  * `:237-238` (a hound carries its tail up), `:250-256` (`quad_head`: the head forward of the chest on a raised neck),
@@ -38,7 +38,7 @@
  * dog.pose().paws.length; // 4, each on the planted gait's foot
  * @see engine/anim/quadruped.test.ts
  */
-import { angDiff, lerpAng, MathUtils, Matrix4, Quaternion, smoothDamp, Vector3 } from '../core/math';
+import { angDiff, MathUtils, Matrix4, Quaternion, smoothDamp, Vector3 } from '../core/math';
 import { SIM_DT } from '../core/time';
 import { twoBone } from './ik';
 import { digitigrade, type DigitigradeSolve } from './proc/digitigrade';
@@ -55,10 +55,11 @@ export const QUADRUPED = {
   hock: { stand: 0.35, sit: 1.3 }, // rad: the hind long foot back from upright, standing and sitting
   head: { at: [0, 0.181, 0.399], radius: 0.094 }, // the head from the body's middle (`quad_head`) and its radius
   neck: { at: [0, 0.055, 0.173] }, // the neck's base, over the chest
-  tail: { at: [0, 0.043, -0.343], length: 0.36, links: 3, lift: 0.675, sit: -0.25, droop: 0.12 }, // `lift`: atan(0.8)
+  rump: { at: [0, 0, -0.205], radius: 0.113, back: 0.06 }, // on the torso; sat, on the ground `back` behind the hips
+  // the tail: `at` from the rump, `lift` atan(0.8), `rest` its height over the ground where it lies along it
+  tail: { at: [0, 0.043, -0.138], length: 0.36, links: 3, lift: 0.675, sit: -0.6, droop: 0.12, rest: 0.02 },
   wag: { swing: 0.55, rate: 15, lag: 0.7, ease: 2.5 }, // rad, rad/s, rad a link, per s the share eases
-  sit: { drop: 0.22, back: 0.05, rise: 0.03, time: 0.15, stifle: 1.2 }, // the hips' drop, draw back, the chest's rise;
-  // s; and how much higher the stifles bend as it sits (over the pole's 0.3 up), so they stay off the ground
+  sit: { drop: 0.14, back: 0.08, rise: 0.03, time: 0.15 }, // the hips' drop and draw back, the chest's rise; s
   look: { yaw: 1.1, pitch: 0.6, rate: 7, about: 0.35, aboutRate: 0.7 }, // its bounds and turn; looking about
   turn: { rate: 9, min: 0.25 }, // per s toward its travel, faster than `min` m/s
   bob: 0.025, // m: the body's rise from two feet planted to two mid-step, as it walks
@@ -108,7 +109,7 @@ export interface QuadrupedInput {
   position?: Vector3;
   /** Its velocity, m/s; at rest when absent. */
   velocity?: Vector3;
-  /** Its heading, rad (an actor's); else it turns toward its travel. */
+  /** The heading it turns toward, rad (an actor's, which may snap); else it turns toward its travel. */
   yaw?: number;
   /** Off its feet: they tuck under it (`LegGait.fly`). */
   air?: boolean;
@@ -125,16 +126,19 @@ export interface QuadrupedInput {
 /** A quadruped's state: what `step` writes and `pose` reads, plain data (see the file comment). */
 export interface QuadrupedState {
   gait: GaitState;
-  /** Its heading, rad in [−π, π). */
+  /** Its heading, rad in [−π, π), and the one it turned toward the last step. */
   yaw: number;
+  aim: number;
   /** Seconds on its clock. */
   clock: number;
   /** 0 standing to 1 sitting, and its rate (per s). */
   sit: number;
   sitRate: number;
-  /** The head's turn from the body's heading and its tilt (nose up +), rad. */
+  /** The head's turn from the body's heading and its tilt (nose up +), rad, and those it eased toward the last step. */
   headYaw: number;
   headPitch: number;
+  aimYaw: number;
+  aimPitch: number;
   /** 0 to 1: the wag's share. */
   wag: number;
   /** 0 to 1: the walk's share and the run's. */
@@ -152,6 +156,8 @@ export type QuadrupedBone = `${'fl' | 'fr'}${0 | 1}` | `${'hl' | 'hr'}${0 | 1 | 
 export type QuadrupedPose = { readonly [bone in QuadrupedBone]: Matrix4 } & {
   /** At the torso's middle, turned to its heading and pitched by its shoulders and hips. */
   readonly torso: Matrix4;
+  /** At the rump's middle, turned as the torso: on it standing, down on the ground behind the hips as it sits. */
+  readonly rump: Matrix4;
   /** The head, level unless it looks up or down. */
   readonly head: Matrix4;
   readonly earL: Matrix4;
@@ -166,7 +172,7 @@ const UP = new Vector3(0, 1, 0);
 const X_AXIS = new Vector3(1, 0, 0);
 const ONE = new Vector3(1, 1, 1);
 /** Scratch objects: the pose's, and `bone`'s own. */
-const [ahead, front, hind, centre, root, paw, pole, a, b] = Array.from({ length: 9 }, () => new Vector3());
+const [ahead, front, hind, centre, root, paw, pole, a, b, hips, rump] = Array.from({ length: 11 }, () => new Vector3());
 const [head, headAhead, headUp, headLeft, earUp, earLeft, earAhead, earBase] = Array.from({ length: 8 }, () => new Vector3()); // prettier-ignore
 const [boneX, boneY, boneZ, boneScale, boneMiddle] = Array.from({ length: 5 }, () => new Vector3());
 const [turn, pitch, torsoTurn, headTurn] = Array.from({ length: 4 }, () => new Quaternion());
@@ -174,6 +180,15 @@ const velocity = new Vector3();
 const knee: [Vector3, Vector3] = [new Vector3(), new Vector3()];
 const hindLeg: DigitigradeSolve = { knee: new Vector3(), hock: new Vector3(), toe: new Vector3() };
 const eased = (rate: number, dt: number) => 1 - Math.exp(-rate * dt);
+
+/**
+ * `value` a step of `dt` behind a target moving linearly from `from` to `to` over it, closing on it at `rate` per
+ * second: the first-order lag's exact step, so 60 and 120 steps a second follow a smoothly moving target alike.
+ */
+function lag(value: number, from: number, to: number, rate: number, dt: number): number {
+  const ahead = (to - from) / (rate * dt); // how far ahead of it the target's motion keeps it
+  return to - ahead + (value - from + ahead) * Math.exp(-rate * dt);
+}
 
 /** Writes into `out` the bone from `from` to `to`: at its middle, its +Y along it, scaled by its length along Y. */
 function bone(out: Matrix4, from: Vector3, to: Vector3): Matrix4 {
@@ -201,9 +216,9 @@ export class Quadruped {
     this.dt = options.dt ?? SIM_DT;
     const yaw = angDiff(0, options.yaw ?? 0);
     const gait = this.#gait.save();
-    this.state = { gait, yaw, clock: options.clock ?? 0, sit: 0, sitRate: 0, headYaw: 0, headPitch: 0, wag: 0, walk: 0, run: 0 }; // prettier-ignore
+    this.state = { gait, yaw, clock: options.clock ?? 0, sit: 0, sitRate: 0, headYaw: 0, headPitch: 0, aim: yaw, aimYaw: 0, aimPitch: 0, wag: 0, walk: 0, run: 0 }; // prettier-ignore
     const bones = ['fl0', 'fl1', 'fr0', 'fr1', 'hl0', 'hl1', 'hl2', 'hr0', 'hr1', 'hr2', 'tail0', 'tail1', 'tail2'];
-    const matrices = Object.fromEntries(['torso', 'head', 'neck', 'earL', 'earR', ...bones].map((name) => [name, new Matrix4()])); // prettier-ignore
+    const matrices = Object.fromEntries(['torso', 'rump', 'head', 'neck', 'earL', 'earR', ...bones].map((name) => [name, new Matrix4()])); // prettier-ignore
     const paws = Array.from({ length: 4 }, () => new Vector3());
     this.joints = { ...matrices, paws, mouth: new Vector3() } as unknown as QuadrupedPose;
   }
@@ -216,10 +231,14 @@ export class Quadruped {
     velocity.set(input.velocity?.x ?? 0, input.velocity?.y ?? 0, input.velocity?.z ?? 0);
     const speed = Math.hypot(velocity.x, velocity.z);
     const travel = speed > QUADRUPED.turn.min ? Math.atan2(velocity.x, velocity.z) : s.yaw;
-    s.yaw = angDiff(0, input.yaw ?? lerpAng(s.yaw, travel, eased(QUADRUPED.turn.rate, dt)));
+    const aim = input.yaw ?? travel;
+    const from = s.yaw + angDiff(s.yaw, s.aim); // the last aim, the short way from its heading
+    s.yaw = angDiff(0, lag(s.yaw, from, from + angDiff(s.aim, aim), QUADRUPED.turn.rate, dt));
+    s.aim = angDiff(0, aim);
     const gait = this.#gait.load(s.gait);
     const body = { position: this.position, yaw: s.yaw, velocity };
-    if (input.air) gait.fly(dt, body);
+    // its first step stands it, told it is aloft or not: a world's queries see no ground before its first physics step
+    if (input.air && s.gait.placed) gait.fly(dt, body);
     else gait.step(dt, body, input.probe);
     gait.save(s.gait);
     [s.sit, s.sitRate] = smoothDamp(s.sit, input.sit ? 1 : 0, s.sitRate, QUADRUPED.sit.time, dt);
@@ -236,9 +255,8 @@ export class Quadruped {
       yaw = MathUtils.clamp(angDiff(s.yaw, Math.atan2(b.x, b.z)), -L.yaw, L.yaw);
       tilt = MathUtils.clamp(Math.atan2(b.y, Math.hypot(b.x, b.z)), -L.pitch, L.pitch);
     }
-    const k = eased(L.rate, dt);
-    s.headYaw += (yaw - s.headYaw) * k;
-    s.headPitch += (tilt - s.headPitch) * k;
+    [s.headYaw, s.aimYaw] = [lag(s.headYaw, s.aimYaw, yaw, L.rate, dt), yaw];
+    [s.headPitch, s.aimPitch] = [lag(s.headPitch, s.aimPitch, tilt, L.rate, dt), tilt];
     s.wag += (MathUtils.clamp(input.wag ?? 0, 0, 1) - s.wag) * eased(QUADRUPED.wag.ease, dt);
     return this;
   }
@@ -267,6 +285,7 @@ export class Quadruped {
     J.torso.compose(centre, torsoTurn, ONE);
     const T = (p: readonly number[], out: Vector3) => out.set(p[0], p[1], p[2]).applyQuaternion(torsoTurn).add(centre);
     const half = front.distanceTo(hind) / 2; // the roots over the shoulders and hips, drawn back as it sits
+    hips.set(0, 0, 0);
     QUADRUPED_LEGS.forEach((leg, i) => {
       T([leg.hip[0], -Q.legs.drop, Math.sign(leg.hip[2]) * half], root);
       paw.fromArray(feet, i * GAIT_FOOT);
@@ -278,7 +297,8 @@ export class Quadruped {
         J.paws[i].copy(knee[1]);
       } else {
         const angle = Q.hock.stand + (Q.hock.sit - Q.hock.stand) * s.sit;
-        pole.copy(ahead).addScaledVector(UP, 0.3 + Q.sit.stifle * s.sit);
+        hips.addScaledVector(root, 0.5);
+        pole.copy(ahead).addScaledVector(UP, 0.3); // the stifle forward, sitting too
         digitigrade(root, paw, Q.hind, { forward: ahead, pole }, angle, hindLeg);
         bone(J[`${name}0`], root, hindLeg.knee);
         bone(J[`${name}1`], hindLeg.knee, hindLeg.hock);
@@ -301,12 +321,19 @@ export class Quadruped {
       (side > 0 ? J.earL : J.earR).makeBasis(x, y, earAhead.crossVectors(x, y)).setPosition(earBase);
     }
     J.mouth.fromArray(Q.mouth).applyQuaternion(headTurn).add(head);
+    // the rump on the torso, eased down onto the hind feet's ground behind the hips as it sits: its pelvis tilting
+    const floor = at.y + (ground(2) + ground(3)) / 2;
+    b.copy(hips)
+      .addScaledVector(ahead, -Q.rump.back)
+      .setY(floor + Q.rump.radius);
+    J.rump.compose(T(Q.rump.at, rump).lerp(b, s.sit), torsoTurn, ONE);
     const W = Q.wag;
-    T(Q.tail.at, a);
+    a.fromArray(Q.tail.at).applyQuaternion(torsoTurn).add(rump);
     for (let i = 0; i < Q.tail.links; i++) {
       const yaw = s.yaw + Math.PI + s.wag * W.swing * Math.sin(s.clock * W.rate - i * W.lag);
-      const up = Q.tail.lift + (Q.tail.sit - Q.tail.lift) * s.sit - Q.tail.droop * i;
       const length = Q.tail.length / Q.tail.links;
+      const lies = Math.asin(MathUtils.clamp((floor + Q.tail.rest - a.y) / length, -1, 1)); // along the ground
+      const up = Math.max(lies, Q.tail.lift + (Q.tail.sit - Q.tail.lift) * s.sit - Q.tail.droop * i);
       b.set(Math.sin(yaw) * Math.cos(up), Math.sin(up), Math.cos(yaw) * Math.cos(up))
         .multiplyScalar(length)
         .add(a);
@@ -319,7 +346,7 @@ export class Quadruped {
 
 const SIDES = ['L', 'R'] as const;
 /** The quadruped's points for its rig contract: its frame, its legs (front, then hind), then its head and tail. */
-const NAMES = ['root', 'chest', 'hips', 'neck', ...SIDES.flatMap((s) => [`shoulder${s}`, `elbow${s}`, `pawF${s}`]), ...SIDES.flatMap((s) => [`hip${s}`, `stifle${s}`, `hock${s}`, `pawH${s}`]), 'head', 'nose', 'mouth', 'tail0', 'tail1', 'tail2', 'tail3'] as const; // prettier-ignore
+const NAMES = ['root', 'chest', 'hips', 'neck', ...SIDES.flatMap((s) => [`shoulder${s}`, `elbow${s}`, `pawF${s}`]), ...SIDES.flatMap((s) => [`hip${s}`, `stifle${s}`, `hock${s}`, `pawH${s}`]), 'head', 'nose', 'mouth', 'tail0', 'tail1', 'tail2', 'tail3', 'rump'] as const; // prettier-ignore
 const [START, END] = [new Vector3(0, -0.5, 0), new Vector3(0, 0.5, 0)];
 const ends = (m: Matrix4) => [START.clone().applyMatrix4(m), END.clone().applyMatrix4(m)];
 
@@ -348,7 +375,8 @@ export const QUADRUPED_RIG: ProcRig = {
         const ramp = on ? Math.min(1, time / 0.3, (hold - time) / 0.3) : 0;
         const top = ({ walk: 1.2, trot: 3, run: 5 } as Record<string, number>)[state] ?? 0;
         velocity.set(Math.sin(facing), 0, Math.cos(facing)).multiplyScalar(top * Math.max(0, ramp));
-        const yaw = on && state === 'turn' ? facing + 2 * Math.PI * MathUtils.smoothstep(time, 0, hold) : undefined;
+        const turned = on ? MathUtils.smoothstep(time, 0, hold) : 0; // a whole turn, its heading told at rest too
+        const yaw = state === 'turn' ? facing + 2 * Math.PI * turned : undefined;
         const seen = on && state === 'look' ? look.set(1.5 * Math.cos(facing), 1.2, -1.5 * Math.sin(facing)).add(dog.position) : null; // prettier-ignore
         dog.step({ position: dog.position.clone().addScaledVector(velocity, dt), velocity, yaw, sit: on && state === 'sit', look: seen }); // prettier-ignore
         return dog.position;
@@ -359,7 +387,7 @@ export const QUADRUPED_RIG: ProcRig = {
         const legs = (['fl', 'fr'] as const).flatMap((leg, i) => [...ends(J[`${leg}0`]), J.paws[i].clone()]);
         const hind = (['hl', 'hr'] as const).flatMap((leg, i) => [ends(J[`${leg}0`])[0], ends(J[`${leg}1`])[0], ends(J[`${leg}2`])[0], J.paws[2 + i].clone()]); // prettier-ignore
         const tail = [ends(J.tail0)[0], ...[J.tail0, J.tail1, J.tail2].map((m) => ends(m)[1])];
-        return [dog.position.clone(), at([0, 0.012, 0.173], J.torso), at([0, 0, -0.205], J.torso), ends(J.neck)[0], ...legs, ...hind, at([0, 0, 0], J.head), at([0, -0.019, 0.145], J.head), J.mouth.clone(), ...tail]; // prettier-ignore
+        return [dog.position.clone(), at([0, 0.012, 0.173], J.torso), at(QUADRUPED.rump.at, J.torso), ends(J.neck)[0], ...legs, ...hind, at([0, 0, 0], J.head), at([0, -0.019, 0.145], J.head), J.mouth.clone(), ...tail, at([0, 0, 0], J.rump)]; // prettier-ignore
       },
     };
   },

@@ -241,11 +241,15 @@ export class LegGait {
     });
   }
 
-  /** Lifts every foot off, easing it toward its tuck under the hip (`tuck` of the way from hip to rest), in the air. */
+  /**
+   * Lifts every foot off, easing it toward its tuck under the hip (`tuck` of the way from hip to rest), in the air; a
+   * gait that never stood has its feet there at once, having nowhere they stood to ease from.
+   */
   fly(dt: number, body: GaitBody, tuck = 0.5): this {
-    if (!this.#placed) this.#keep(body); // never stood: it takes off from where it is
+    const never = !this.#placed;
+    if (never) this.#keep(body); // never stood: it takes off from where it is
     this.#through(dt, body, (d, b) => {
-      const [c, s, k] = [Math.cos(b.yaw), Math.sin(b.yaw), 1 - Math.exp(-14 * d)];
+      const [c, s, k] = [Math.cos(b.yaw), Math.sin(b.yaw), never ? 1 : 1 - Math.exp(-14 * d)];
       this.feet.forEach((foot, i) => {
         const { hip: h, rest: r } = this.legs[i];
         const [x, y, z] = [h[0] + (r[0] - h[0]) * tuck, h[1] + (r[1] - h[1]) * tuck, h[2] + (r[2] - h[2]) * tuck];

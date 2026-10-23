@@ -81,3 +81,4 @@ export { addSiteBodies } from './levelBodies';
 export { addSiteLadders } from './rides';
 // The scene's props as navigation blocks (WP 13.21): what a site's walkers go round.
 export { propObstacles } from './propBlocks';
+export type { NavBlock } from '../world/siteNav';

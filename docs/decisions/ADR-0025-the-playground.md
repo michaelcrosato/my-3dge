@@ -1451,3 +1451,77 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   190 as Prettier would lay them out).
 - **The rig template** (tools/templates/rig/, `node x new rig labs/<lab>/rigs/<name>`): a small four-legged walker on
   two diagonals, written once six rigs were written by hand; a start for WP 13.21's dog.
+
+## Amendment 28 (2026-10-23, WP 13.21): the neighbours and the dog
+
+- **The neighbours** (labs/playground/cast/neighbours.ts): four people about the block, each on a round of two stops
+  kept on a schedule (`followRoute`, engine/world/aiRoutes.ts: the stop it walks to and since when it stays, a
+  component), strolling at 1.3 m/s over the site's navigation round its props, a flow field a stop. Each knows the
+  player by WP 10.4's awareness (in sight within 14 m, nothing of the world between their eyes; a shot carrying 40 m,
+  a kick 12) and reacts as §7.4 lists, each reaction an event `neighbour` `{ id, what }`: it looks at him within 6 m
+  (its head along its intents' `look`: engine/app/view.ts turns any AI actor's head so, not the player's alone), steps
+  aside to its right where he stands in its way (`stepAside`, 1.6 m ahead and 0.7 m of its line), flinches when he
+  runs into it (within 0.85 m, closing faster than 1 m/s), startles at a shot or a kick it hears (a light hit away from
+  it and a look), falls to a hard blow (the kick and the jump kick, `PARTNER_BLOWS`, the ring's own: WP 10.2's
+  hand-off) and gets up the way it lies, and flinches at a punch or a shot (a shot puts none down: it was heard first,
+  and the ring's partners fall only to the same blows). Two sit on the benches' stops (`action:sit`, a data action of
+  the playground's: its pelvis back and down onto a seat behind it, its feet planted ahead, until told to rise) and
+  rise when their stay is over. Their hit points come back at every blow (cast/health.ts, shared with the partners).
+- **Their bodies** (labs/playground/bodies/neighbours.ts): the player's body, its parts as they are, its slots drawn
+  from palettes by a seed each (`Rng(2113 + k)`), never in his orange accent, so he stays the one marked from every
+  camera (§3.1); bare-handed, the gloves their skin and the cuffs their jacket's (the player's body names its cuffs
+  `cuff`, in his accent's colour, so a neighbour's hands do not read as gloves in its accent: the frame review). The
+  page registers them with its bodies; tests that draw the site import them as they do the player's.
+- **The dog** (labs/playground/cast/dog.ts) is Biscuit, shardfall's town dog (`arpg/scene.rs:974-981`: the quadruped
+  preset at 0.72, its colours): a new rig in the engine, `Quadruped` (engine/anim/quadruped.ts: its state plain data,
+  for a crowd body), not a fixture or a template's rig, because the stage cannot draw a lab's own mesh (a frame has no
+  scene) and the crowd draws rig bodies on any joints (the blob's and the wisp's way): the crowd body rig `quadruped`
+  (engine/sim/crowdBodies.ts, its feet on the physics ground through `crowdGround`, a raycast through `world`) and its
+  body `QUADRUPED_BODY` (engine/gfx/puppets/bodies/quadruped.ts). Its legs are WP 10.1's planted gait (`LegGait`, two
+  diagonals: `save` and `load` new, a gait as plain data), the front two bones with the elbows back (shardfall's
+  mammal legs), the hind three by `digitigrade` (the stifle forward, the hock back: new, shardfall's are two). Its body
+  rides over its front and hind feet's ground, bobs 2.5 cm with its feet in the air (Σ sin πt, as `lifting`: a spring
+  kicked at each footfall, the biped fixture's way, sagged it 3 cm while it walked instead) and lowers 7 cm as it runs;
+  sitting drops its hips 0.14 m and draws them back 0.08 m, its stifles forward, its long feet flat and its paws
+  planted, and lays its rump on the ground behind them (a joint of its own, `rump`, as a pelvis tilts: on the torso,
+  the frame review found it 9 cm off the ground and the stifles folded back, a crouch), its tail along the ground;
+  its head looks where it is told within 1.1 rad and 0.6 up or down, and looks about while it stands (shardfall's);
+  its tail wags as told. Its heading and head follow their targets as
+  an exact first-order lag (the target moving linearly between steps): an ease of 1 − e^(−rate·dt) toward a moving
+  target parted 60 from 120 steps a second by 4.6 cm in a turn in place.
+- **The dog's gait, tuned to its legs**: WP 10.1's defaults let a planted paw stray past its leg's reach from 2 m/s
+  (shardfall's legs reach 0.17 m across from under their roots), so the dog's strides are shorter (a threshold of
+  0.09 m and 0.015 m more a m/s, a lead of 0.03 s, steps of 0.045 to 0.14 s) and its body lowers as it runs: speeding
+  up at 15 m/s², a planted paw stays on its foot at any steady pace to 6 m/s and within 6 mm in the first half second.
+  The `anim` QA drives it as `rig:quadruped/<state>` (rest, walk, trot, run, a turn in place, sit, look): 7 states,
+  none over a bound. Its drive eases a speed in and out over 0.3 s, as an actor's body speeds up and brakes: a step
+  change of speed parted the two rates by 13 cm at the stop, a discrete choice of which diagonal squares up first.
+- **What the dog does**: it stands beside the player's spawn in every area, facing him from the first, its ball
+  (`prop:playground-ball`, a tennis ball, 58 g, bouncing) 0.45 m before its middle, just before its paws, toward him
+  and off his way (laid before him, the bot's tour kicked it ahead to the front door, where a use took it up instead of
+  the door and the tour went another way; laid ahead of the dog facing his way, it lay by its hips once the dog had
+  turned to him: the frame review). Its first step stands its feet even told it is aloft: an actor is not grounded on
+  its first tick, the world's queries seeing no ground before the first physics step, and its gait, flown from a
+  fresh state, swung its feet from the world's origin (`LegGait.fly` now tucks a gait's feet at once while it has
+  never stood). It trots after him beyond 2.2 m and runs
+  beyond 7 m (shardfall's 2.4 and 7), sits once he has stood still a second, gets out of his way when he walks at it
+  (actors pass through each other, so it is courtesy), chases a ball he throws, slowing as it comes, picks it up lying
+  under its mouth, carries it back pulled to its mouth as a player's carry is, and lets it fall 1.4 m from him. Its
+  capsule is an actor's (it collides with the world and climbs a kerb); its rig steps in `readback`, from where the
+  capsule moved, since the platformer controller snaps an actor's yaw to its move (the rig eases toward it).
+- **The ways** (labs/playground/cast/ways.ts): one navigation of the block a world, round its props, shared by the
+  neighbours and the dog. A scene's setup sees none of its own props (entities spawned there reach queries after it),
+  so the ways are made at the first step that asks, and the boxes they went round are kept in the world (the component
+  `siteWays`, with a count of remakes), so a world restored from a capture makes the same ways the run had then. A
+  walker held by what its ways do not know (a door the bot opened swung its leaf onto the dog in the hall) has them made
+  again round the props as they stand, as the bot does, and the dog backs out the way with the most room; held again
+  (the leaf had swung into its capsule, which a character controller cannot walk out of) it is set down on the clear
+  point of its tile or one beside it on its own floor, and waits 4 s. `plainWays()`, the site's alone, places the dog
+  and its ball in the setup.
+- **Two spots the soak found**: a neighbour's nav built in the setup saw no props, so the porch's walker met the front
+  yard's fence and the gardener the patio's grill (the ways are made at the first step now); and the gardener's second
+  stop stood 0.12 m from the house's back wall, nearer than its capsule can come (moved 0.6 m off it).
+- **Measured**: the house's soak (labs/playground/scenes/site-soak.test.ts) judges the cast through the bot's tour of
+  every room and 15 s after it: no neighbour and not the dog stuck (told to go and not 0.3 m on for 8 s; the dog's one
+  hold, the door's leaf, lasted 6 s), every neighbour at each of its stops, the dog with the player again, and every
+  camera still inside its bounds.

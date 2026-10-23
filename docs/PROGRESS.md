@@ -8,24 +8,23 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - Gate G11 passed (PR #27, 2026-10-22; its row in PLAN.md §14). U-1 Vitest 4 is in (4eb7b89); upload-artifact v5
   (2026-10-24) and checkout v6 (2026-11-20) between stages, when they qualify.
 - G12 runs on `claude/pensive-cray-9pa1n6` from the updated main (PLAN.md §11.1), in Phase 13's table order: 13.27,
-  10.4, 13.19 (melee), 13.20 (firearms) and 10.2 done (ragdolls: `box:ragdoll`, the ring's partners), then 10.1,
-  13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
+  10.4, 13.19 (melee), 13.20 (firearms), 10.2 (ragdolls), 10.1 (procedural blocks) and 13.21 (the neighbours and the
+  dog) done, then 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
 - The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals (`node x esc` when reached). Their
   go-ahead (2026-10-22): a bot may play with infinite health and ammo to get through content faster and more surely.
 
-## Where things stand (2026-10-22)
+## Where things stand (2026-10-23)
 
-- Phases 0–9 are done (PR #2–#11); Phase 13's G10 (#22, #26) and G11 (#27) are merged. The playground (`npm run
-  dev`, /labs/playground/?scene=site) has Apex's movement, rides, five cameras, planted locomotion, traversal, first
-  person, and the block: a house of four storeys, yards, a street, the gym, a hill, a range and a ring, lit, cut by
-  storey, with doors, windows, switches and pickups, melee, firearms, ragdolls; `node x gallery`, `node x eye`.
-  Games: lean/ (ADR-0024). CI (ADR-0023): the quick gate, then main's full run. Vercel is paused: ignore it.
+- Phases 0–9 are done; Phase 13's G10 (PR #22, #26) and G11 (#27) are merged. The playground (`npm run dev`,
+  /labs/playground/?scene=site) moves as Apex, with five cameras, on the block (a house of four storeys, yards, a
+  street, the gym, a hill, a range, a ring) with doors, switches, pickups, melee, firearms, ragdolls, four neighbours
+  and a dog that fetches. Games: lean/ (ADR-0024). CI: the quick gate, then main's full run (ADR-0023). Vercel paused.
 
 ## What waits, by design
 
-- WP 13.23: the crawlspace's light, the street lamps' group; WP 13.22: melee's and the guns' sounds. Amendment 22
-  proposes triangle-mesh terrain. QA baselines: the timelines' knockdown slide (where no scene hands off), WP 8.8's.
-  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs; not run in a browser: labs/game's HUD line.
+- WP 13.23: the crawlspace's light, the street lamps' group; WP 13.22: the sounds of melee, the guns, the neighbours
+  and the dog. Amendment 22 proposes triangle-mesh terrain. QA baselines: the timelines' knockdown slide (where no
+  scene hands off), WP 8.8's. Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs; labs/game's HUD line.
 - At their size cap (395–400 lines), split on the next change: engine/app/engine.ts, world/siteNav.ts, anim/{poses,
   humanoid,locomotion,clip/layer,traversal/plant}.ts, gfx/{sky,instancing,puppets/draw,puppets/crowd}.ts, labs/box/
   menu.ts, tools/{cmd/audio,lib/browser,qa/anim}.ts. The feel kit poses apart from the page: share one.
@@ -35,6 +34,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - Owner: in random play the shooter's camera lost the chest in 4–5% of frames (before WP 13.27; not measured since).
 - Owner, for the G11 playtest (its checklist is in PR #27): amendment 20's calls (the block 113 m deep for the gym;
   the slide-jump's 0.1 s hop window; §2.3's risers dropped; an up-and-over garage door); G10's items (PR #26).
-- The quick gate took 6 min 48 s at G11, over its 5 min (CI_BUDGET): `x feel`'s test runs two courses now (58 s to 10
-  s at WP 13.27); the house's soak (70 s), the eye's tour (52 s) and the bot's tours (100 s) stay in T1. Under load
-  `npm test` can exit 1 on Vitest's RPC timeouts with every test passed. The bot presses use at every drop.
+- The quick gate took 6 min 48 s at G11, over its 5 min (CI_BUDGET): the house's soak (70 s), the eye's tour (52 s)
+  and the bot's tours (100 s) stay in T1. Under load `npm test` can exit 1 on Vitest's RPC timeouts, every test passed.
+- `x shot` and `x film` never get the playground's page ready (it waits for a frame; they freeze the clock first; on
+  main too): its frames are shot by a real-clock script (WP 13.21's row). The bot presses use at every drop.

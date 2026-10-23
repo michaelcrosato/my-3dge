@@ -22,6 +22,7 @@ import { aimPoint } from '../../../engine/input/aim';
 import { playReplay } from '../../../engine/sim/replay';
 import { createSession, type Session } from '../../../engine/sim/session';
 import { CHEST, type WeaponsState } from '../../../engine/sim/weapons';
+import '../bodies/neighbours';
 import '../bodies/player';
 import { SITE_SCENES } from '../scenes/site';
 import { PISTOL, PLAYGROUND_WEAPONS, RIFLE } from './guns';

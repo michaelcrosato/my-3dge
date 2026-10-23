@@ -2,18 +2,18 @@
  * @file The neighbours (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): four people about the block, each on a route of
  * stops kept on a schedule (`NEIGHBOURS`: the north sidewalk end to end, the porch and the front path, the garden
  * bench and the backyard, the bus stop's bench and the south sidewalk; engine/world/aiRoutes.ts `followRoute`),
- * strolling between them over the site's navigation round its props (a flow field a stop: engine/world/siteNav.ts,
- * engine/sim/propBlocks.ts). Each knows the
- * player by WP 10.4's awareness (`sense`: in sight within `NEIGHBOUR.sight` m, nothing of the world between their
- * eyes; a shot or a kick it hears) and reacts:
+ * strolling between them over the site's navigation round its props (a flow field a stop: ways.ts beside it). Each
+ * knows the player by WP 10.4's awareness (`sense`: in sight within `NEIGHBOUR.sight` m, nothing
+ * of the world between their eyes; a shot or a kick it hears) and reacts:
  * - it looks at him (its head along `intents.look`) while he is within `NEIGHBOUR.look` m and in sight, and for a
  *   moment at a noise it heard;
  * - it steps aside, to its right, when he stands in its way (`stepAside`);
  * - it flinches when he shoves into it (he comes within `NEIGHBOUR.shove` m, moving at it);
  * - it startles at a shot or a kick it hears (a flinch away from it, and a look);
  * - a hard blow (a kick or the uppercut, `PARTNER_BLOWS`) hands it off to its ragdoll (WP 10.2), and it gets up the
- *   way it lies; a punch or a shot flinches it. Its hit points come back at every blow (labs/playground/cast/health.ts).
- * Each reaction emits `neighbour` `{ id, what }` (`look`, `aside`, `shoved`, `startle`, `flinch`, `fall`). Each is
+ *   way it lies; a punch or a shot flinches it. Its hit points come back at every blow (health.ts beside it).
+ * Each reaction emits `neighbour` `{ id, what }` (`look`, `aside`, `shoved`, `startle`, `flinch`, `fall`), as do its
+ * sitting down and rising (`sit`, `rise`: `action:sit`, a seat behind it, on the benches' stops). Each is
  * drawn as `body:neighbour<k>` (labs/playground/bodies/neighbours.ts: the player's slots varied by a seed of its own,
  * which the page registers); the sim names it by id only. `standNeighbours(w)` stands them and adds the systems
  * `ragdolls` and `neighbours` (phase `ai`, after the step's blows and shots: engine/sim/melee.ts, weapons.ts).
@@ -28,10 +28,10 @@
  * NEIGHBOURS.map((n) => n.name); // ['walker', 'porch', 'gardener', 'commuter']
  * @see labs/playground/cast/neighbours.test.ts
  */
-import { actOn, addRagdolls, AWARENESS_FIELDS, createCharacter, createSiteNav, defineAction, defineComponent, followRoute, handOff, physicsOf, propObstacles, reactTo, ROUTE_FIELDS, sense, spawnActor, stepAside, Vector3, type Awareness, type Health, type MeleeState, type Noise, type RagdollState, type RouteState, type RouteStop, type SiteNav, type WeaponsState, type World } from '../../../engine/sim-api'; // prettier-ignore
-import { SITE } from '../levels/site';
+import { actOn, addRagdolls, AWARENESS_FIELDS, createCharacter, defineAction, defineComponent, followRoute, handOff, physicsOf, reactTo, ROUTE_FIELDS, sense, spawnActor, stepAside, Vector3, type Awareness, type Health, type MeleeState, type Noise, type RagdollState, type RouteState, type RouteStop, type WeaponsState, type World } from '../../../engine/sim-api'; // prettier-ignore
 import { CAST_HP, castHealth } from './health';
 import { PARTNER_BLOWS } from './partners';
+import { wayTo } from './ways';
 
 /** A neighbour: its name, its body's index (`body:neighbour<k>`) and its route. */
 export interface Neighbour {
@@ -54,7 +54,7 @@ export const NEIGHBOURS: readonly Neighbour[] = [
     ],
   },
   { name: 'porch', body: 1, stops: [{ at: [52.25, 0, 61.75], stay: 12, facing: 0 }, { at: [52.25, KERB, 83.75], stay: 4 }] }, // prettier-ignore
-  { name: 'gardener', body: 2, stops: [{ at: [56.5, 0, 41], stay: 14, doing: 'sit', facing: 0 }, { at: [61.88, 0, 49.88], stay: 4 }] }, // prettier-ignore
+  { name: 'gardener', body: 2, stops: [{ at: [56.5, 0, 41], stay: 14, doing: 'sit', facing: 0 }, { at: [61.75, 0, 49.25], stay: 4 }] }, // prettier-ignore
   { name: 'commuter', body: 3, stops: [{ at: [82.25, KERB, 93.75], stay: 16, doing: 'sit', facing: Math.PI }, { at: [94.25, KERB, SOUTH], stay: 3 }] }, // prettier-ignore
 ];
 
@@ -123,20 +123,6 @@ type Person = {
 type Player = Person['actor'] & { id: number; melee?: MeleeState; weapons?: WeaponsState };
 /** An actor's entity as the query gives it. */
 type Actor = { id: number; actor: Person['actor'] & { player: boolean }; melee?: MeleeState; weapons?: WeaponsState };
-
-/** Each world's navigation of the block, round its props (`propObstacles`), and a flow field to each stop, each made
- * the first time it is needed (derived data: the site and the props as they stood). */
-const WAYS = new WeakMap<World, { nav: SiteNav; fields: Map<RouteStop, Float64Array> }>();
-function wayTo(w: World, stop: RouteStop): { nav: SiteNav; field: Float64Array } {
-  const ways = WAYS.get(w) ?? {
-    nav: createSiteNav(SITE, { climb: 0.4, blocked: propObstacles(w) }),
-    fields: new Map(),
-  };
-  WAYS.set(w, ways);
-  const field = ways.fields.get(stop) ?? ways.nav.flowField([...stop.at]);
-  ways.fields.set(stop, field);
-  return { nav: ways.nav, field };
-}
 
 const [eye, toward, along] = [new Vector3(), new Vector3(), new Vector3()];
 const EYE = 1.6;
@@ -248,7 +234,7 @@ function walk(w: World, n: Person, p: Player | undefined): { move?: [number, num
     }
     return {};
   }
-  const { nav, field } = wayTo(w, leg.stop);
+  const { nav, field } = wayTo(w, leg.stop, leg.stop.at);
   const dir = nav.direction(field, a.x, a.y, a.z) ?? (off > 1e-6 ? { x: dx / off, z: dz / off } : null);
   if (!dir) return {};
   const aside = p ? stepAside(a, Math.atan2(dir.x, dir.z), p) : null;

@@ -35,7 +35,7 @@ export const QUADRUPED_BODY: RigBody = {
   slots: { coat: '#d8aa6a', skin: '#c89a5a', pale: '#f2e2c8', eye: '#2a1e14', nose: '#1e1612' },
   parts: [
     { shape: 'ball', on: 'torso', at: [0, 0.012, 0.173], size: 0.137, slot: 'coat' },
-    { shape: 'ball', on: 'torso', at: [0, 0, -0.205], size: 0.113, slot: 'coat' },
+    { shape: 'ball', on: 'rump', size: 0.113, slot: 'coat' },
     { shape: 'ball', on: 'torso', at: [0, 0.006, -0.016], size: [0.112, 0.115, 0.2], slot: 'coat' },
     { shape: 'ball', on: 'torso', at: [0, -0.05, 0.014], size: [0.08, 0.075, 0.15], slot: 'pale' },
     { shape: 'ball', on: 'torso', at: [0, -0.02, 0.215], size: [0.085, 0.1, 0.08], slot: 'pale' },

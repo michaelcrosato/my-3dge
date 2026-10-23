@@ -15,6 +15,7 @@ import { createHeadless } from '../../../engine/app/headless';
 import { playReplay } from '../../../engine/sim/replay';
 import type { MeleeState } from '../../../engine/sim/melee';
 import { createSession } from '../../../engine/sim/session';
+import '../bodies/neighbours'; // the neighbours' bodies, which the view draws them in
 import '../bodies/player'; // the player's body, which the view draws him in
 import { RING_DUMMIES, type Sparring } from '../cast/dummies';
 import { SITE_SCENES } from './site';

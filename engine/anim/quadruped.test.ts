@@ -1,9 +1,10 @@
 /**
  * @file Unit tests for the quadruped rig (engine/anim/quadruped.ts, PLAN.md WP 13.21): it trots on its diagonals, its
- * planted paws still and on the gait's feet from a walk to 6 m/s (within 6 mm as it starts); it sits, its hips
- * low and its paws where they stood, and stands again; its head turns toward what it looks at within its bounds and
- * looks about only while it stands; its tail wags only when told, its links keeping their length; and its state, as
- * plain data through JSON, poses and steps on alike.
+ * planted paws still and on the gait's feet from a walk to 6 m/s (within 6 mm as it starts); it sits, its rump on the
+ * ground, its stifles forward, its tail along the ground and its paws where they stood, and stands again; it stands
+ * from its first step even told it is aloft, then tucks its feet; its head turns toward what it looks at within its
+ * bounds and looks about only while it stands; its tail wags only when told, its links keeping their length; and its
+ * state, as plain data through JSON, poses and steps on alike.
  * @see engine/anim/quadruped.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -65,25 +66,41 @@ describe('the quadruped', () => {
     }
   });
 
-  it('sits, its hips low and its paws where they stood, and stands again', () => {
+  it('sits, its rump on the ground, its stifles forward, its tail along the ground and its paws where they stood', () => {
     const dog = new Quadruped();
     trot(dog, 1.2, 60);
     trot(dog, 0, 60);
     const standing = dog.pose().paws.map((paw) => paw.clone());
-    const hips = (d: Quadruped) => new Vector3(0, 0, -0.205).applyMatrix4(d.pose().torso).y;
-    const high = hips(dog);
+    const rump = (d: Quadruped) => new Vector3().setFromMatrixPosition(d.pose().rump).y;
+    const high = rump(dog);
+    expect(high).toBeCloseTo(new Vector3(...QUADRUPED.rump.at).applyMatrix4(dog.pose().torso).y, 9); // on the torso
     trot(dog, 0, 45, { sit: true });
     expect(dog.state.sit).toBeGreaterThan(0.99);
-    expect(high - hips(dog)).toBeGreaterThan(0.15);
+    expect(rump(dog)).toBeCloseTo(QUADRUPED.rump.radius, 3); // resting on the ground
     const J = dog.pose();
     J.paws.forEach((paw, i) => expect(paw.distanceTo(standing[i])).toBeLessThan(1e-9));
     for (const leg of ['hl0', 'hl1', 'hl2', 'hr0', 'hr1', 'hr2'] as const) {
       expect(Math.min(heightOf(J[leg], -0.5), heightOf(J[leg], 0.5))).toBeGreaterThanOrEqual(0); // off the ground
     }
-    expect(heightOf(J.tail2, 0.5)).toBeLessThan(0.15); // the tail lies behind it
+    for (const thigh of [J.hl0, J.hr0]) {
+      const [hip, stifle] = [new Vector3(0, -0.5, 0).applyMatrix4(thigh), new Vector3(0, 0.5, 0).applyMatrix4(thigh)];
+      expect(stifle.z - hip.z).toBeGreaterThan(0.05); // forward of the hip (it faces +Z), as a dog's
+      expect(stifle.y).toBeGreaterThan(0.05); // a thigh's thickness off the ground
+    }
+    for (const link of [J.tail0, J.tail1, J.tail2]) expect(heightOf(link, 0.5)).toBeGreaterThanOrEqual(QUADRUPED.tail.rest - 1e-9); // prettier-ignore
+    expect(heightOf(J.tail2, 0.5)).toBeCloseTo(QUADRUPED.tail.rest, 6); // lying along the ground behind it
     trot(dog, 0, 45);
     expect(dog.state.sit).toBeLessThan(0.01);
-    expect(hips(dog)).toBeCloseTo(high, 2);
+    expect(rump(dog)).toBeCloseTo(high, 2);
+  });
+
+  it('stands on its feet from its first step, told it is aloft or not; then aloft, it tucks them', () => {
+    const dog = new Quadruped({ yaw: 1 });
+    dog.step({ position: new Vector3(2, 0, 3), air: true }); // an actor's first tick: no ground under it yet
+    expect(dog.state.gait.placed).toBe(true);
+    dog.pose().paws.forEach((paw) => expect(paw.y).toBeCloseTo(0, 9));
+    for (let i = 0; i < 20; i++) dog.step({ position: new Vector3(2, 0.5, 3), air: true });
+    dog.pose().paws.forEach((paw) => expect(paw.y).toBeGreaterThan(0.5)); // under it, off the ground
   });
 
   it('turns its head toward what it looks at within its bounds, and looks about only while it stands', () => {

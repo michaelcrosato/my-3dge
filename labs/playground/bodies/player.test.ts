@@ -23,7 +23,7 @@ describe('body:player', () => {
     expect(worn).toEqual(Object.keys(PLAYER_BODY.slots!).sort());
   });
 
-  it("gives each garment two tones, and the accent on the yoke, the pack's flap and the cuffs", () => {
+  it("gives each garment two tones, the accent on the yoke and the pack's flap, and the cuffs in its colour", () => {
     for (const pair of [
       ['jacket', 'jacketDark'],
       ['pants', 'pantsDark'],
@@ -34,7 +34,9 @@ describe('body:player', () => {
       expect(PLAYER_BODY.slots![pair[0]]).not.toBe(PLAYER_BODY.slots![pair[1]]);
     }
     const accents = compiled.pieces.filter((piece) => piece.slot === 'accent').map((piece) => piece.part);
-    expect(accents.length).toBeGreaterThanOrEqual(4); // the yoke, the pack's flap, a cuff each side
+    expect(accents.length).toBeGreaterThanOrEqual(4); // the yoke, a shoulder cap each side, the pack's flap
+    expect(compiled.pieces.filter((piece) => piece.slot === 'cuff').length).toBe(2); // a cuff each side
+    expect(PLAYER_BODY.slots!.cuff).toBe(PLAYER_BODY.slots!.accent); // the neighbours wear theirs in their jacket's
   });
 
   it('stands 1.80 m tall on the adult build, its head on top', () => {

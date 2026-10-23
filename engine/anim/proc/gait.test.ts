@@ -3,9 +3,9 @@
  * diagonals apart, one group in the air at a time, and its planted feet still, and squares them up when it stops; a
  * faster body strides farther; six legs walk on tripods; one group lifts at a time through a stop and a turn in place;
  * feet stand on raised ground and grip a wall where one stands between the hip and the spot; in the air every foot
- * tucks, and lands where it is, on the floor after a drop at either rate; 60 and 120 steps a second step alike through
- * a hop and a walk eased in and out; uneven feet tilt the body; a gait saved mid-step as plain data and loaded into
- * another steps on alike.
+ * tucks (at once, a gait that never stood), and lands where it is, on the floor after a drop at either rate; 60 and
+ * 120 steps a second step alike through a hop and a walk eased in and out; uneven feet tilt the body; a gait saved
+ * mid-step as plain data and loaded into another steps on alike.
  * @see engine/anim/proc/gait.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -188,6 +188,17 @@ describe('the planted gait', () => {
       return { z, y: 0, vz: 15 * up - 6 * down, vy: 0, up: false };
     };
     for (const body of [hop, eased]) expect(rateDrift(feet(1 / 60, body), feet(1 / 120, body)).worst).toBeLessThan(STATE_MATRIX.rate); // prettier-ignore
+  });
+
+  it('tucks the feet of a gait that never stood under its hips at once, where it is', () => {
+    const dog = new LegGait({ legs: QUAD });
+    const body = { position: new Vector3(4, 2, -3), yaw: Math.PI / 2, velocity: new Vector3() };
+    dog.fly(1 / 60, body);
+    dog.feet.forEach((foot, i) => {
+      const [h, r] = [QUAD[i].hip, QUAD[i].rest];
+      const [x, y, z] = [0, 1, 2].map((k) => (h[k] + r[k]) / 2); // half way from the hip to its rest: the tuck
+      expect(foot.position.distanceTo(new Vector3(4 + z, 2 + y, -3 - x))).toBeLessThan(1e-12); // turned to face +X
+    });
   });
 
   it('tucks every foot in the air, lands them where they are, and tilts the body by its feet', () => {

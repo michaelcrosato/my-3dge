@@ -33,6 +33,7 @@ import { defineComponent } from '../sim/state';
 import { defineLevel } from '../world/level/level';
 import { PROJECTILE, PROJECTILE_FIELDS } from '../world/projectiles';
 import { GYM_TEXT } from '../../labs/playground/levels/gym';
+import '../../labs/playground/bodies/neighbours';
 import '../../labs/playground/bodies/player';
 import '../../labs/playground/scenes/gym';
 import { BLEND_TIME } from '../gfx/cameras/blend';
