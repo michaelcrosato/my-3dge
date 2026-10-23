@@ -12,7 +12,9 @@
  *   real again (the virtual clock's `performance.now` taken away, so the meter times real work), paused, stepped
  *   `--steps` times (120), 60 frames drawn, then `__engine.stats()` read (engine/dev/stats.ts): the means of
  *   sim, physics, anim and render ms, and the last frame's draw calls, triangles, compute calls, textures, geometries
- *   and pipelines (after warm-up). Section: `page: { steps, budgets: { simMs, …, pipelinesAfterWarmUp } }`.
+ *   and pipelines (after warm-up). Section: `page: { steps, budgets: { simMs, …, pipelinesAfterWarmUp } }`. With
+ *   `--feature <id>` (WP 11.1) it measures the page again with that feature off (`gfx.featuresOff`), its rows `off.…`,
+ *   and prints what the feature costs, on less off: a technique's price, compared, never budgeted (no `--budget`).
  *
  * The budget file `tests/baselines/perf/<scene id>.json` and its trend are tools/lib/perfBudget.ts's. A value is
  * within its budget up to budget × (1 + `tolerance`), 0 by default (0.15 allows 15%). `--budget` fails a
@@ -24,7 +26,7 @@
  * `PERF_TREND` for each that grew over 15% since the run before.
  *
  * Usage: node x perf <scene|page> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--ladder [--agents
- * path]] [--budget]. Exit 0 when measured (and its counts within budget under `--budget`), 1 with a count over its budget, without the section
+ * path]] [--feature id] [--budget]. Exit 0 when measured (and its counts within budget under `--budget`), 1 with a count over its budget, without the section
  * under `--budget`, or when a page fails or has no `stats()`, 2 on a usage error (a malformed budget file included).
  *
  * @example
@@ -33,6 +35,7 @@
  * @see tools/cmd/perf.test.ts
  */
 import { existsSync } from 'node:fs';
+import type { Page } from '@playwright/test';
 import { join } from 'node:path';
 import { didYouMean } from '../../engine/core/log';
 import { show } from '../../engine/core/schema';
@@ -232,44 +235,64 @@ async function runNode(root: string, target: string, flags: Flags, way: 'node' |
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, (...args: unknown[]) => unknown>;
 
+/** A page's stats after `steps` steps and `STATS_WINDOW` frames, timed on the real clock; null without `stats()`. */
+const statsOf = (tab: Page, steps: number) =>
+  tab.evaluate(
+    async ({ steps, frames }) => {
+      if (typeof __engine.stats !== 'function') return null;
+      Reflect.deleteProperty(performance, 'now'); // the virtual clock's (tools/lib/browser.ts): time the real one
+      __engine.pause();
+      __engine.step(steps);
+      await __engine.render(frames);
+      return __engine.stats() as EngineStats;
+    },
+    { steps, frames: STATS_WINDOW },
+  );
+
 /** A page in Chromium (see the file comment). */
 async function runPage(root: string, page: string, flags: Flags): Promise<CommandResult> {
   if (flags.runs !== undefined) throw new UsageError('--runs is for Node runs: a page reports its last 60 steps');
+  const feature = flags.feature as string | undefined;
+  if (feature !== undefined && flags.budget) throw new UsageError('--feature compares a page with a feature off, which no budget holds: drop --budget'); // prettier-ignore
   const { file: html } = resolvePage(page);
   if (!existsSync(join(root, html))) throw new UsageError(`there is no ${html} for ${page}`);
   const seed = flags.seed === undefined ? [] : [`seed=${wholeFlag(flags.seed, 'seed', 1)}`];
-  const path = pageUrl(page, { scene: flags.scene as string | undefined, set: [...setsOf(flags), ...seed] });
+  const urlOf = (off: string[] = []) => pageUrl(page, { scene: flags.scene as string | undefined, set: [...setsOf(flags), ...seed, ...off] }); // prettier-ignore
   const target = `${targetSlug(page)}${flags.scene ? `-${String(flags.scene)}` : ''}`;
   const [server, browser] = [await startVite({ root }), await launchBrowser()];
-  try {
+  const open = async (path: string) => {
     const tab = await browser.newPage({ viewport: VIEWPORT });
     const watch = await preparePage(tab, { seed: 1, root });
     await tab.goto(`${server.url}${path}`);
     const signals = await waitReady(tab, watch, READY_MS);
-    const runtime = browserRuntime(browser.version());
     const errors = async () => (await watch.errors()).map(pageErrorFinding(page));
-    const failures = pageFailures(page, html, signals, await errors());
+    return { tab, errors, failures: pageFailures(page, html, signals, await errors()), signals };
+  };
+  try {
+    const { tab, errors, failures, signals } = await open(urlOf());
+    const runtime = browserRuntime(browser.version());
     if (failures.length || !signals) return { ok: false, summary: `${page} did not start`, target, failures };
     const scene = await tab.evaluate(() => (__engine.info() as { scene: string }).scene);
-    let stats: EngineStats | null = null;
+    const ids = feature === undefined ? [] : (await tab.evaluate(() => __engine.describe('feature') as { ids: string[] })).ids; // prettier-ignore
+    if (feature !== undefined && !ids.includes(feature)) throw new UsageError(`${feature} is not a feature of ${page}${didYouMean(feature, ids)}`); // prettier-ignore
+    let [stats, off]: (EngineStats | null)[] = [null, null];
     const result = await judged(root, flags, 'page', scene, async (steps, section) => {
-      stats = await tab.evaluate(
-        async ({ steps, frames }) => {
-          if (typeof __engine.stats !== 'function') return null;
-          Reflect.deleteProperty(performance, 'now'); // the virtual clock's (tools/lib/browser.ts): time the real one
-          __engine.pause();
-          __engine.step(steps);
-          await __engine.render(frames);
-          return __engine.stats() as EngineStats;
-        },
-        { steps, frames: STATS_WINDOW },
-      );
-      const row = (name: string, keys: readonly PageKey[]): Row => {
-        const values = Object.fromEntries(keys.map((key) => [key, stats?.[key] ?? null]));
-        return { name, values, limits: section?.budgets };
+      stats = await statsOf(tab, steps);
+      const row = (name: string, keys: readonly PageKey[], from: EngineStats | null, prefix?: string): Row => {
+        const values = Object.fromEntries(keys.map((key) => [key, from?.[key] ?? null]));
+        return { name, values, limits: prefix ? undefined : section?.budgets, prefix };
       };
-      return [row('ms', PAGE_KEYS.slice(0, 4)), row('last frame', COUNT_KEYS)];
+      const rows = [row('ms', PAGE_KEYS.slice(0, 4), stats), row('last frame', COUNT_KEYS, stats)];
+      if (feature === undefined) return rows;
+      const quiet = await open(urlOf([`gfx.featuresOff=${JSON.stringify([feature])}`]));
+      failures.push(...quiet.failures);
+      off = quiet.signals && !quiet.failures.length ? await statsOf(quiet.tab, steps) : null;
+      return [...rows, row(`${feature} off: ms`, PAGE_KEYS.slice(0, 4), off, 'off'), row(`${feature} off: last frame`, COUNT_KEYS, off, 'off')]; // prettier-ignore
     });
+    const on = stats as EngineStats | null;
+    const offStats = off as EngineStats | null;
+    const costs = [...PAGE_KEYS.slice(0, 4), ...COUNT_KEYS].flatMap((key) => (on?.[key] != null && offStats?.[key] != null ? [`${key} ${ms(on[key] - offStats[key])}`] : [])); // prettier-ignore
+    if (feature !== undefined) result.lines.push(`${feature} costs, on less off: ${costs.join(', ') || 'nothing measured'}`); // prettier-ignore
     failures.push(...(await errors()));
     if (!stats) {
       const message = `${page}'s __engine has no stats(): engine/dev/stats.ts registers it, so the engine must load it (engine/app)`;
@@ -294,7 +317,7 @@ async function runPage(root: string, page: string, flags: Flags): Promise<Comman
 
 export default {
   usage:
-    'perf <scene|page> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--ladder [--agents path]] [--budget]',
+    'perf <scene|page> [--scene id] [--steps n] [--runs n] [--seed s] [--set k=v…] [--ladder [--agents path]] [--feature id] [--budget]',
   options: {
     scene: { type: 'string' },
     steps: { type: 'string' },
@@ -303,6 +326,7 @@ export default {
     set: { type: 'string', multiple: true },
     ladder: { type: 'boolean' },
     agents: { type: 'string' },
+    feature: { type: 'string' },
     budget: { type: 'boolean' },
   },
   maxPositionals: 1,
@@ -311,9 +335,11 @@ export default {
     if (!target) throw new UsageError('name a scene module (fixtures/scenes/kernel), a scene id, or a page (labs/box)');
     if (values.agents !== undefined && !values.ladder)
       throw new UsageError("--agents names the ladder's setting: add --ladder");
+    if (values.feature !== undefined && values.ladder) throw new UsageError('--feature measures a page: drop --ladder');
     if (values.ladder) return runNode(root, target, values, 'ladder');
     const path = target.split('?')[0]; // a page: an .html file, or labs/<name> without a scene module of its own
     const page = path.endsWith('.html') || (/^labs\/[^/]+\/?$/.test(path) && !existsSync(join(root, path, 'index.ts')));
+    if (!page && values.feature !== undefined) throw new UsageError(`--feature measures a page (labs/box), not the scene ${target}`); // prettier-ignore
     return page ? runPage(root, target, values) : runNode(root, target, values, 'node');
   },
 } satisfies Command;
