@@ -185,6 +185,14 @@ Raised by the clip library (engine/anim/clip/library.ts) when a clip names a sou
 
 Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `preciseHits`. A strike’s span is read from a pose, and the sim poses only animators with `preciseHits` (engine/sim/actors.ts, the system `actors.pose`); any other animator holds whatever the view last drew, nothing headless, so hits read from it would depend on rendering and visibility.
 
+### ANIM_SOCKET_JOINT
+
+- Message: `the socket names the joint {name}, which the rig’s pose lacks{suggestion}; it has {joints}`
+- Fix: name one of the pose’s joints in the socket’s `on`
+- Registered in: [`engine/anim/proc/sockets.ts` line 29](../engine/anim/proc/sockets.ts)
+
+Raised by `socketMatrix` (engine/anim/proc/sockets.ts) for a socket on a joint the pose does not have.
+
 ### ANIM_UNKNOWN_BEAT
 
 - Message: `action {action} has no beat {name}{suggestion}`

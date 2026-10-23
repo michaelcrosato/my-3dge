@@ -493,6 +493,18 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Awareness (WP 10.4)**: beyond WP 5.2's sight, the noises an agent hears and its memory of where it last saw or heard.
 `AWARENESS`, `AWARENESS_FIELDS`, `AWARENESS_STATES`, `sense`, `hears`, `earshot`; types `Awareness`, `AwarenessState`, `Noise`, `SenseInput`, `Sensed`.
 
+**Springs and blends (WP 10.1)**: numbers, vectors and turns on exact damped springs with kicks; named weights eased up and down; the pose stack, angles averaged round the circle, a pitch and a yaw as a direction.
+`Spring1`, `Spring3`, `SpringQuat`, `StateWeights`, `layerPose`, `blendAngles`, `aimDirection`; types `SpringOptions`, `BlendRates`, `PoseLayer`.
+
+**Legs and bodies (WP 10.1)**: the digitigrade leg's reverse knee; sway chains and lagging parts; the planted gait for N legs in groups, its feet on raycast ground or gripping walls; path chains following their head.
+`digitigrade`, `SwayChain`, `LagPart`, `LegGait`, `PathChain`; types `DigitigradeLeg`, `DigitigradeFrame`, `DigitigradeSolve`, `SwayOptions`, `LagOptions`, `GaitLeg`, `GaitOptions`, `GaitFoot`, `GaitProbe`, `GaitBody`, `PathOptions`.
+
+**Faces and floating parts (WP 10.1)**: looking within bounds and blinking from a named stream; hovering, banking, leaning and folding; orbiters and detached parts; pose history played back late; extras on sockets; tip trails.
+`LookAt`, `Blink`, `Hover`, `Orbiters`, `DetachedPart`, `PoseHistory`, `socketMatrix`, `placeExtras`, `along`, `alongDirection`, `TipTrail`; types `LookAtOptions`, `BlinkOptions`, `HoveringOptions`, `OrbitOptions`, `DetachedOptions`, `HistoryOptions`, `Socket`, `SocketJoints`, `TrailOptions`, `TipSample`.
+
+**Reach and the rig contract (WP 10.1)**: an attack's reach measured off its animation; what a procedural rig names (its points, bones, feet and states) and the check it passes, as anim.check holds the humanoid.
+`measureReach`, `driveRig`, `rigCheck`; types `ReachPose`, `ReachOptions`, `Reach`, `ProcRig`, `ProcRigBody`, `RigRun`.
+
 For the page (the browser side), not for code that runs in the sim:
 
 **Headless**: the engine without a page, and its inspector (window.__engine in a page).

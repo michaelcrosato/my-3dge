@@ -1378,3 +1378,40 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `build:adult`) in the canvas's south corners, not two more of amendment 24's dummies (props on springs): a punch or
   a shot flinches one, a kick or the uppercut hands it off, and its hit points come back at every blow. The site's
   three replays (playground-site, -melee, -range) took new goldens for them (hashed), their stories unchanged.
+
+## Amendment 27 (2026-10-23, WP 10.1): procedural building blocks
+
+- **The blocks** (engine/anim/proc/, one concept a file, the techniques of PLAN.md §5.6 as mechanisms): springs with a
+  kick (`Spring1`, `Spring3` and `SpringQuat`, the last new: no source has a turn's spring) stepped by the damped
+  oscillator's exact solution, so 60 and 120 steps a second settle alike and no frequency is too stiff; eased state
+  weights and the pose stack (`StateWeights`, `layerPose`: its angles not wrapped, as the source's); the digitigrade
+  leg; sway chains (`SwayChain`, keeping its links' lengths, which the source's tail did not) and the lagging part
+  (`LagPart`, a sprung tip on its sphere about its pivot: the source's abdomen, driven by the turn rate alone, moved a
+  hundredth of a radian); the planted gait (`LegGait`); path chains; looking (`LookAt`, bounded, the angle left
+  shrinking by e^(−rate dt), a target behind turning it: the source's nlerp had no bounds and stuck there) and
+  blinking (`Blink`, from a named stream, not `Math.random`); hovering; orbiters (their angle integrated: the source's
+  time × rate jumped when the rate changed) and detached parts; pose history (between records, not the one before);
+  extras on sockets; tip trails (by time, with a base for a ribbon); and the measured reach (its last moment exactly 1).
+- **The gait, beyond the sources**, each found by a fixture rig's check: a foot aims its landing past the spot it
+  measures from, not 0.35 of a step past its rest spot (at speed the source's foot landed behind where it measured, so
+  it stepped again at once, and the biped's force rule lifted both its feet); a body standing still squares its feet up
+  (`threshold.still`, shardfall's two-level threshold, so a rig comes back to its rest); and the gait steps in inner
+  steps of 1/120 s (`GAIT_SUBSTEP`), the body moving linearly between its steps, so 60 and 120 steps a second take the
+  same decisions (the hexapod's rate check found its feet 5–7 cm apart). A wall is found by a ray from the hip toward
+  the spot (the source marched tiles); the ground by a ray down from above it.
+- **The path chain lays the body out as its path** at `reset`, so a head rising from rest lifts its neck and leaves
+  the rest lying (the serpent's check found the body hanging below the floor along the newest stretch's direction).
+- **Two blocks the engine had**: the verlet strand is engine/anim/chain.ts's `Chain` (WP 6.2: gravity, drag, wind,
+  iterations, colliders, the floor, a rest shape and a fixed inner step), so WP 10.1 maps its block to it rather than
+  writing a second; and the block the plan calls `Floater` is `Hover` (engine/anim/proc/hover.ts: hover, bank, lean and
+  fold), since engine/anim/floater.ts's `Floater` is the stress world's wisp, kept as it is.
+- **The rig contract** (engine/anim/proc/rig.ts, beyond Owns): `anim.check` is bound to the humanoid's 23 joints
+  (engine/anim/check.ts), so a procedural rig names its own points, bones, feet and states (`ProcRig`) and `rigCheck`
+  holds it to the same contract (finite, bones their length, over the floor, the same every run, the same at half the
+  step). The `anim` QA family drives the six fixture rigs through their states as `rig:<name>/<state>` with its motion
+  metrics too (tools/qa/anim/points.ts, split from tools/qa/anim.ts at its cap, the blob's and the wisp's runs as they
+  were): 25 states, none over its bounds.
+- **Public names**: engine/anim/proc/api.ts, re-exported whole by engine/sim-api.ts as engine/sim/kitsApi.ts is; three
+  names chosen against clashes with the API's own (`LookAtOptions`, `HoveringOptions`, `TipSample`).
+- **The rig template** (tools/templates/rig/, `node x new rig labs/<lab>/rigs/<name>`): a small four-legged walker on
+  two diagonals, written once six rigs were written by hand; a start for WP 13.21's dog.

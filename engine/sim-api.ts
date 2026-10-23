@@ -300,3 +300,6 @@ export * from './sim/siteApi';
 export * from './sim/houseApi';
 // Gameplay kits (WP 10.4): things, projectile patterns, awareness; listed in engine/sim/kitsApi.ts, re-exported whole.
 export * from './sim/kitsApi';
+// Procedural rigs (WP 10.1): the blocks a creature is built of and the rig contract it is checked by; listed in
+// engine/anim/proc/api.ts, re-exported whole.
+export * from './anim/proc/api';

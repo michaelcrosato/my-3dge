@@ -59,6 +59,7 @@ game agent's manual.
 - `AIM_RANGE` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): How far the centre's ray looks (m): one that meets nothing aims this far along it.
 - `AIM_RULES` (const from [`engine/input/aim.ts`](../engine/input/aim.ts)): The aim rules, in the order the docs list them.
 - `AimDevices` (type from [`engine/input/aim.ts`](../engine/input/aim.ts)): What the devices give aiming: the pointer and the right stick (see `AimView`).
+- `aimDirection` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): The unit direction of `pitch` (up +) and `yaw` (left +, from +Z) in a frame facing +Z, into `out`.
 - `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
 - `AimOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `aim` turns.
 - `aimPoint` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): The point the rule aims at this frame (see the file comment), or undefined.
@@ -67,6 +68,8 @@ game agent's manual.
 - `AimRule` (type from [`engine/input/aim.ts`](../engine/input/aim.ts)): What aims a player's look or pointer, by an action map's `aim`: see the file comment.
 - `AimView` (interface from [`engine/input/aim.ts`](../engine/input/aim.ts)): What `aimPoint` aims from: the camera drawn, the picture's aspect, the devices and the world.
 - `airTime` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): How long (s) a body thrown up at `up` m/s flies under `gravity` (m/s², above 0) until it comes down to `rise` metres above where it left (below for a drop): the later root of `rise = up·t − gravity·t²/2`.
+- `along` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The point `t` (0 to 1) of the way along the polyline `points` by its length, into `out`.
+- `alongDirection` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The way the polyline `points` runs `t` of the way along it (unit), into `out`.
 - `Anchor` (type from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): Where a label is: a point read every frame (a `Vector3` the caller moves follows), or a function giving one.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `AnimationClip` (re-export from `three/webgpu`): three.js's animation clip: `AnimationClip.parse(clipJSON(baked, skeleton))` makes one from a baked clip.
@@ -124,9 +127,13 @@ game agent's manual.
 - `BindingsOptions` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): How bindings are made.
 - `BindingsStorage` (interface from [`engine/input/bindings.ts`](../engine/input/bindings.ts)): Where bindings are saved: the `localStorage` shape.
 - `BLEND_TIME` (const from [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)): How long a switch blends, real seconds.
+- `blendAngles` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): The weighted mean of `angles` (rad) round the circle, in (−π, π]; `fallback` when they cancel out.
 - `blendCameras` (function from [`engine/gfx/cameras/blend.ts`](../engine/gfx/cameras/blend.ts)): The pose `w` (0 to 1) of the way from `a` to `b` (see the file comment).
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `BlendRates` (type from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): A weight's rates, per second: one for both ways, or `[up, down]`.
+- `Blink` (class from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): An eye that blinks (see the file comment).
+- `BlinkOptions` (interface from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A blink's timing (see the file comment).
 - `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
 - `BLOB` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's tuning: the source's numbers, lengths ÷ 16 in metres.
 - `BLOB_BODY` (const from [`engine/gfx/puppets/bodies/blob.ts`](../engine/gfx/puppets/bodies/blob.ts)): The slime: a blob with eyes and nothing else.
@@ -389,18 +396,25 @@ game agent's manual.
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `defineWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): Defines a weapon on `registry` (the shared one by default) and returns it.
 - `DEGREES_PER_COUNT` (const from [`engine/input/look.ts`](../engine/input/look.ts)): One mouse count at sensitivity 1, degrees: Source's and Apex's `m_yaw` and `m_pitch`.
+- `DetachedOptions` (interface from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A detached part's spring and its drift (see the file comment).
+- `DetachedPart` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A part following a spot of the body with no chain to it (see the file comment).
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
 - `DeviceKind` (type from [`engine/input/codes.ts`](../engine/input/codes.ts)): The devices input comes from; `virtual` is the inspector's (engine/input/devices/virtual.ts).
 - `deviceOf` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The device a code belongs to.
 - `Dialog` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): The dialog box (see the file comment).
 - `DialogOptions` (interface from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): How a dialog box is made.
 - `DialogPlace` (type from [`engine/ui/dialog.ts`](../engine/ui/dialog.ts)): Where the dialog box stands.
+- `digitigrade` (function from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): Solves the leg `leg` from `hip` to `toe` in `frame`, its long foot `angle` rad back from upright (see the file comment).
+- `DigitigradeFrame` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): The leg's frame: its forward and its up (world +Y by default), and where the knee bends (forward, a little up).
+- `DigitigradeLeg` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A digitigrade leg's bones, metres: the thigh, the shin and the long foot.
+- `DigitigradeSolve` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A solved leg: its knee, its hock and its toe (lifted when out of reach), world metres.
 - `direction` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The unit direction of a heading (rad, 0 along +Z) and a rise above the ground (rad).
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
+- `driveRig` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`).
 - `earshot` (function from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): How far `noise` carries to `ears` for an agent of `hearing` (m): its loudness, half through a wall.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
@@ -483,6 +497,11 @@ game agent's manual.
 - `FxEventPayload` (interface from [`engine/gfx/fx/payload.ts`](../engine/gfx/fx/payload.ts)): What an event carries for its effects (any other keys are left alone).
 - `FxLight` (interface from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): A light of the frame, as three.js's `PointLight` takes it.
 - `FxStats` (interface from [`engine/gfx/fx/effects.ts`](../engine/gfx/fx/effects.ts)): What `stats()` reports.
+- `GaitBody` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): The body a gait carries: its ground point, its heading (rad, 0 facing +Z) and its velocity, m/s.
+- `GaitFoot` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A foot: where it is, where its step left from and aims, the surface under it, and how far into its step it is.
+- `GaitLeg` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A leg of a gait (see the file comment): its hip and its foot's rest spot in the body's frame, m, and its group.
+- `GaitOptions` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A gait's numbers (see the file comment); each has a default for a body about half a metre high.
+- `GaitProbe` (type from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A ray into the world: from `origin` along unit `direction` up to `distance` m; true with the hit written.
 - `GamepadLike` (interface from [`engine/input/devices/gamepad.ts`](../engine/input/devices/gamepad.ts)): The Gamepad API's `Gamepad`, as far as the device reads it (a test stub gives just this).
 - `GeometryEntry` (type from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A `geometry` entry: one builder.
 - `GeometryRef` (interface from [`engine/gfx/geometry/geometry.ts`](../engine/gfx/geometry/geometry.ts)): A geometry by id with parameters: what a prop's or a level's `geometry` field may hold beside a bare id.
@@ -536,6 +555,7 @@ game agent's manual.
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `heldBase` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): The code a held binding waits on (`Hold:PadWest` → `PadWest`), or null for any other code.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
+- `HistoryOptions` (interface from [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)): A history's shape: how many points a pose has, and how long it keeps them, s.
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
@@ -548,7 +568,9 @@ game agent's manual.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
 - `hover` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): A flyer's vertical speed (m/s) that holds its feet at `y` metres `height` over `floor`, bobbing `bob` metres at `bobRate` radians per second of `time` (s; its own clock, or the sim's plus a phase): the gap times `climb`.
+- `Hover` (class from [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)): A floating body's hover, bank, lean and fold (see the file comment).
 - `HOVER` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `hover`'s defaults: the prototype's wisp, 20 units over the floor bobbing ±3 at 2 rad/s, climbing at 6 × the gap.
+- `HoveringOptions` (interface from [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)): A hover's numbers (see the file comment); the defaults are a ghost's, a quarter metre up.
 - `HoverOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `hover` holds a flyer up.
 - `HudOptions` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): How a HUD line is shown.
 - `HudPlace` (type from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): Where a HUD line goes: a corner, or the middle of the top or bottom edge.
@@ -601,12 +623,16 @@ game agent's manual.
 - `Label` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame.
 - `LabelOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a label is made.
 - `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
+- `LagOptions` (interface from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A lagging part's shape (see the file comment).
+- `LagPart` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A part swinging behind its pivot (see the file comment).
 - `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
 - `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
+- `layerPose` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): `base` with each of `layers`, in order, lerped over it by its weight (see the file comment); into `out`.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `LEGACY_FIELDS` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Appendix C's table: each old field of `E.MOVES` and the new field it becomes (`fromLegacy` applies it).
 - `LegacyMove` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A my-3d2dge `E.MOVES` spec, as its fields were written (units of 1/16 m, Appendix C).
+- `LegGait` (class from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A planted gait (see the file comment).
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
 - `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
@@ -648,6 +674,8 @@ game agent's manual.
 - `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
 - `LOOK_SETTING_FIELDS` (const from [`engine/input/look.ts`](../engine/input/look.ts)): The view settings the input reads (see the file comment), as fields; never in the hash.
 - `LOOK_SETTINGS` (const from [`engine/input/look.ts`](../engine/input/look.ts)): The view settings the input reads, declared on the shared registry.
+- `LookAt` (class from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A look turning toward what it looks at (see the file comment).
+- `LookAtOptions` (interface from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A look's bounds and speed (see the file comment).
 - `LookEntry` (type from [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)): A `look` entry.
 - `lookOptions` (function from [`engine/input/look.ts`](../engine/input/look.ts)): The look settings through `get` (a settings store's `get`); a value it lacks is the field's default.
 - `LookOptions` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): The look settings, read: what `scaleLook` takes.
@@ -677,6 +705,7 @@ game agent's manual.
 - `Measure` (interface from [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)): A measure, as a course holds it.
 - `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
+- `measureReach` (function from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): Measures the reach of the move `sample` poses (see the file comment).
 - `MeasureResult` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): One measure's verdict.
 - `MELEE` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Apex's melee (docs/PLAYGROUND.md §3.2): damage, reach (m) and cone (rad), the lunge, the hands back and the stop (s).
 - `MELEE_FIELDS` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The component `melee`'s fields (see the file comment).
@@ -732,6 +761,8 @@ game agent's manual.
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
 - `onFloor` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
 - `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
+- `Orbiters` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): Orbiters round a centre (see the file comment).
+- `OrbitOptions` (interface from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A ring of orbiters (see the file comment).
 - `Outline` (interface from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline: its material and the shells it gives (see the file comment).
 - `OUTLINE_MODES` (const from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): How a shell's vertices are pushed: along their normals, or away from the part's centre.
 - `OutlineMode` (type from [`engine/gfx/materials/outline.ts`](../engine/gfx/materials/outline.ts)): An outline mode (see `OUTLINE_MODES`).
@@ -754,6 +785,8 @@ game agent's manual.
 - `partMatrix` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Where `part` stands in its prop's frame (the base at the origin).
 - `PartOptions` (interface from [`engine/gfx/puppets/grammar.ts`](../engine/gfx/puppets/grammar.ts)): A part's options: the bone it rides (a joint, or `'root'`).
 - `PARTS` (const from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): The parts of the scene a filter can be scoped to.
+- `PathChain` (class from [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)): A chain following its head's path (see the file comment).
+- `PathOptions` (interface from [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)): A path chain's shape: its segments, and how far apart along the path they stand, m.
 - `Pattern` (type from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): One of `PATTERNS`.
 - `PATTERNS` (const from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The ways a volley flies (see the file comment).
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
@@ -769,6 +802,7 @@ game agent's manual.
 - `PillarPart` (interface from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): One part of a pillar: a square slab `width` across, from height `from` to `to` (m).
 - `pillarParts` (function from [`engine/gfx/geometry/pillar.ts`](../engine/gfx/geometry/pillar.ts)): A pillar's parts, bottom to top (see the file comment).
 - `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
+- `placeExtras` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Every extra of `sockets` placed on `joints`, by name.
 - `planCutaway` (function from [`engine/gfx/cutaway.ts`](../engine/gfx/cutaway.ts)): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
@@ -783,6 +817,8 @@ game agent's manual.
 - `POSE_POINTS` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
 - `poseError` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): The largest distance (mm) between matching body points of two decoded poses, the finger helpers left out.
 - `poseForward` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit view direction (three.js's `camera.getWorldDirection()`).
+- `PoseHistory` (class from [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)): Recent poses, played again later (see the file comment).
+- `PoseLayer` (interface from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): A layer of the pose stack: its values and how much of them it takes, 0 to 1.
 - `poseMeanError` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): The average distance (mm) between matching body points of two decoded poses, the finger helpers left out.
 - `PoseName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A pose's name.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
@@ -797,6 +833,8 @@ game agent's manual.
 - `PostTag` (interface from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): What `setPart` records on an object (`userData.post`).
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `ProcRig` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): A procedural rig (see the file comment).
+- `ProcRigBody` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): A body of a rig, made for one run (see the file comment).
 - `profileText` (function from [`engine/dev/feel/profile.ts`](../engine/dev/feel/profile.ts)): The `defineMovement` call of `spec` as `id`, then `camera`'s settings (path → value) as a preset when any differ.
 - `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
 - `PROJECTILE` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
@@ -845,6 +883,9 @@ game agent's manual.
 - `RawLook` (interface from [`engine/input/look.ts`](../engine/input/look.ts)): A frame's raw look: mouse counts `[right, up]` (up for a push away) and the right stick `[x, y]` (y down).
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
+- `Reach` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A move's measured reach (see the file comment).
+- `ReachOptions` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): How a reach is measured: how many steps across the window, and what the stand adds (m).
+- `ReachPose` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A moment of a move, in the body's frame: where its strike point and its head are.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
 - `REACTION_FIELDS` (const from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `reactions`' fields: `Reactions.save()`'s, at rest by default.
 - `ReactionBody` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What a reaction's phase tells the humanoid: a pose, how far down.
@@ -890,12 +931,14 @@ game agent's manual.
 - `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
+- `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `RigInput` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
 - `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
 - `rigOptions` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options from the view settings `cam.*`, read by `get` (a settings store's).
 - `RigOptions` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options (see the file comment).
 - `RigPart` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
 - `RigShape` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A unit shape a rig part draws: any but the limb.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
@@ -997,6 +1040,9 @@ game agent's manual.
 - `SlotName` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot's name.
 - `SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The stack's slots, in order, with what fills each.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `Socket` (interface from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Where an extra sits on a joint (see the file comment).
+- `SocketJoints` (type from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): A rig's pose as sockets read it: each joint a world matrix or a point.
+- `socketMatrix` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The world matrix of the extra `socket` places on `joints` (see the file comment).
 - `SocketName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A socket's name.
 - `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
 - `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
@@ -1021,6 +1067,10 @@ game agent's manual.
 - `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
+- `Spring1` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A number on a spring (see the file comment).
+- `Spring3` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A vector on a spring, each axis its own oscillator of the same shape; `limit` bounds its distance from the target.
+- `SpringOptions` (interface from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A spring's shape: its natural frequency (rad/s), its damping ratio (1: critical) and how far it may stray.
+- `SpringQuat` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A turn on a spring: its error from the target as a rotation vector (see the file comment).
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
@@ -1030,6 +1080,7 @@ game agent's manual.
 - `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
 - `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
+- `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
@@ -1066,6 +1117,8 @@ game agent's manual.
 - `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
+- `SwayChain` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A wave down a chain (see the file comment).
+- `SwayOptions` (interface from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A sway chain's shape (see the file comment).
 - `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
@@ -1130,6 +1183,8 @@ game agent's manual.
 - `TimelinePhase` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One phase of a timeline.
 - `TimelineState` (type from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A timeline's state: the phase index (−1 when idle) and the seconds into that phase.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
+- `TipSample` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A sample of a trail: its tip, its base and its age, s.
+- `TipTrail` (class from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): The streak a tip leaves (see the file comment).
 - `toLocal` (function from [`engine/world/site.ts`](../engine/world/site.ts)): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
 - `TOON_LOOK` (const from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): The default look: three bands (shadow, base, lit) and shardfall's rim.
 - `ToonLook` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look: how many bands of light, and how strong the rim is (0 for none).
@@ -1145,6 +1200,7 @@ game agent's manual.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `TRAIL_TINTS` (const from [`engine/gfx/fx/ribbons.ts`](../engine/gfx/fx/ribbons.ts)): The tints of the Stress test's trails: the hero's blade and the monsters' claws.
 - `TrailName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A part that leaves a trail.
+- `TrailOptions` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A trail's shape (see the file comment).
 - `TRAILS` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): The parts that leave a trail, each with the span its ribbon covers.
 - `TrailSample` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): One trail sample: the part's base and tip, world metres, at the body's `clock`, and its ribbon's weight.
 - `TrailSampleLike` (interface from [`engine/gfx/fx/ribbons.ts`](../engine/gfx/fx/ribbons.ts)): One sample of a trail: where the part's base and tip were, and its ribbon's weight (1).
@@ -1250,9 +1306,12 @@ game agent's manual.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `aim` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): Turns the chain so the gaze (from between the eyes along the head's +Z) points at `target`: each joint takes its share within its limits, then passes from the head down take up the rest.
 - `AIM_CHAIN` (const from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): The default chain, from the body up: about 103° of yaw and 69° of pitch in all.
+- `aimDirection` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): The unit direction of `pitch` (up +) and `yaw` (left +, from +Z) in a frame facing +Z, into `out`.
 - `AimLink` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): One joint of an aim chain: the `joint`, its `share` of the turn (a chain's shares need not add up to 1), and the most it turns the gaze left or right (`yaw`) and up or down (`pitch`), in radians.
 - `AimOptions` (interface from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): How `aim` turns.
 - `airTime` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): How long (s) a body thrown up at `up` m/s flies under `gravity` (m/s², above 0) until it comes down to `rise` metres above where it left (below for a drop): the later root of `rise = up·t − gravity·t²/2`.
+- `along` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The point `t` (0 to 1) of the way along the polyline `points` by its length, into `out`.
+- `alongDirection` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The way the polyline `points` runs `t` of the way along it (unit), into `out`.
 - `angDiff` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The signed angle from `a` to `b` the short way round, in [−π, π).
 - `AnimationClipJSON` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What three.js's `AnimationClip.parse` reads: the clip's name, length and tracks.
 - `Animator` (class from [`engine/anim/character.ts`](../engine/anim/character.ts)): The character animator: a body, its layer stack and the two update paths.
@@ -1291,8 +1350,12 @@ game agent's manual.
 - `bakeClip` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): Bakes `clip` on its source's rest body `R` (see the file comment).
 - `BakedClip` (interface from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): A clip baked to rotation tracks (see the file comment).
 - `Beat` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): One beat of an action.
+- `blendAngles` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): The weighted mean of `angles` (rad) round the circle, in (−π, π]; `fallback` when they cancel out.
 - `BlendOptions` (interface from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): How `blendPoses` blends.
 - `blendPoses` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose `t` of the way from `a` to `b` (0 gives `a`, 1 gives `b`), each joint's share scaled by `options.mask`, written into `out` (a new pose by default; `a` or `b` may be `out`).
+- `BlendRates` (type from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): A weight's rates, per second: one for both ways, or `[up, down]`.
+- `Blink` (class from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): An eye that blinks (see the file comment).
+- `BlinkOptions` (interface from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A blink's timing (see the file comment).
 - `Blob` (class from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): A blob: its state, its skeleton's pose.
 - `BLOB` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's tuning: the source's numbers, lengths ÷ 16 in metres.
 - `BLOB_JOINTS` (const from [`engine/anim/blob.ts`](../engine/anim/blob.ts)): The blob's skeleton, parents first, and what each joint's world matrix places.
@@ -1444,13 +1507,20 @@ game agent's manual.
 - `defineThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Defines a kind of thing on `registry` (the shared one by default) and returns it.
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `defineWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): Defines a weapon on `registry` (the shared one by default) and returns it.
+- `DetachedOptions` (interface from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A detached part's spring and its drift (see the file comment).
+- `DetachedPart` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A part following a spot of the body with no chain to it (see the file comment).
 - `DevActionSpec` (interface from [`engine/sim/devActions.ts`](../engine/sim/devActions.ts)): How a dev action is written: `defineDevAction(name, spec)`.
+- `digitigrade` (function from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): Solves the leg `leg` from `hip` to `toe` in `frame`, its long foot `angle` rad back from upright (see the file comment).
+- `DigitigradeFrame` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): The leg's frame: its forward and its up (world +Y by default), and where the knee bends (forward, a little up).
+- `DigitigradeLeg` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A digitigrade leg's bones, metres: the thigh, the shin and the long foot.
+- `DigitigradeSolve` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A solved leg: its knee, its hock and its toe (lifted when out of reach), world metres.
 - `direction` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The unit direction of a heading (rad, 0 along +Z) and a rise above the ground (rad).
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
+- `driveRig` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`).
 - `earshot` (function from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): How far `noise` carries to `ears` for an agent of `hearing` (m): its loudness, half through a wall.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
@@ -1495,6 +1565,11 @@ game agent's manual.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
+- `GaitBody` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): The body a gait carries: its ground point, its heading (rad, 0 facing +Z) and its velocity, m/s.
+- `GaitFoot` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A foot: where it is, where its step left from and aims, the surface under it, and how far into its step it is.
+- `GaitLeg` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A leg of a gait (see the file comment): its hip and its foot's rest spot in the body's frame, m, and its group.
+- `GaitOptions` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A gait's numbers (see the file comment); each has a default for a body about half a metre high.
+- `GaitProbe` (type from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A ray into the world: from `origin` along unit `direction` up to `distance` m; true with the hit written.
 - `getAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): The action `id` (`action:jump`, or `jump`); a missing one throws `CORE_NO_ENTRY`, naming the closest.
 - `getBuild` (function from [`engine/anim/builds.ts`](../engine/anim/builds.ts)): The build `id` of `registry`; a missing id warns once (`CORE_UNKNOWN_ID`) and gives `build:chibi`.
 - `getClipSet` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): The registered set `id` (`clipset:quaternius`); a missing one throws `CORE_NO_ENTRY`, naming the closest ids.
@@ -1529,6 +1604,7 @@ game agent's manual.
 - `hears` (function from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): Whether an agent at `ears` of `hearing` hears `noise` (see `earshot`).
 - `held` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` is held this step.
 - `hipRatio` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
+- `HistoryOptions` (interface from [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)): A history's shape: how many points a pose has, and how long it keeps them, s.
 - `Hit` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What a raycast or shape cast struck.
 - `hitProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Hits the prop `id` from `from` (m): calls its `hit` hook, whose `knock(more)` knocks its body away from `from` with `strength` under `more` (engine/physics/bodies.ts's `knock`: 4.6875 m/s across, 2.5 m/s up, no twist by default).
 - `HitShape` (interface from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Where a strike can connect, around its body, which faces +Z standing at the origin: metres and radians.
@@ -1538,7 +1614,9 @@ game agent's manual.
 - `hop` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The launch velocity (m/s) that carries a body thrown up at `up` m/s from `from` to land on `to` under `gravity` (m/s²): `up` vertically and the ground distance over `airTime` across, so a jumper hops onto a crate as well as across the floor.
 - `HOP` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): The prototype slime's jumps: `up` (m/s) for a hop of at most `reach` metres, `pounce` (m/s) for its lower, flatter leap at a target.
 - `hover` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): A flyer's vertical speed (m/s) that holds its feet at `y` metres `height` over `floor`, bobbing `bob` metres at `bobRate` radians per second of `time` (s; its own clock, or the sim's plus a phase): the gap times `climb`.
+- `Hover` (class from [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)): A floating body's hover, bank, lean and fold (see the file comment).
 - `HOVER` (const from [`engine/world/steer.ts`](../engine/world/steer.ts)): `hover`'s defaults: the prototype's wisp, 20 units over the floor bobbing ±3 at 2 rad/s, climbing at 6 × the gap.
+- `HoveringOptions` (interface from [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)): A hover's numbers (see the file comment); the defaults are a ghost's, a quarter metre up.
 - `HoverOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `hover` holds a flyer up.
 - `HullCollider` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A convex hull collider (Rapier's convex hull of its points): a ramp's wedge or a dais's frustum, from the ground.
 - `Humanoid` (class from [`engine/anim/humanoid.ts`](../engine/anim/humanoid.ts)): A procedural humanoid: state, effectors, pose.
@@ -1578,12 +1656,16 @@ game agent's manual.
 - `knockbackVelocity` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): The velocity a hit gives `target` away from `from`: `speed` m/s along the ground, plus `up` m/s upward, into `out` (nothing along the ground when they stand on the same spot).
 - `KnockOptions` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): How hard `knock` hits: speeds, the same for every mass.
 - `LadderSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A ladder, parsed: every field of `LADDER_FIELDS`, its defaults filled.
+- `LagOptions` (interface from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A lagging part's shape (see the file comment).
+- `LagPart` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A part swinging behind its pivot (see the file comment).
 - `launch` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Throws an agent or corpse up: its upward speed becomes at least `up` (m/s) and its speed across the ground is multiplied by `carry` (1; the prototype's kill launch: 1.3).
 - `LauncherSpec` (type from [`engine/world/traverse.ts`](../engine/world/traverse.ts)): A jump pad or a trampoline, parsed: every field of `LAUNCHER_FIELDS`, its defaults filled.
 - `LAYER_SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The slots that take layers: those after the solve, each changing the solved pose.
+- `layerPose` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): `base` with each of `layers`, in order, lerped over it by its weight (see the file comment); into `out`.
 - `LayerSlot` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot that takes layers.
 - `LEGACY_FIELDS` (const from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): Appendix C's table: each old field of `E.MOVES` and the new field it becomes (`fromLegacy` applies it).
 - `LegacyMove` (interface from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A my-3d2dge `E.MOVES` spec, as its fields were written (units of 1/16 m, Appendix C).
+- `LegGait` (class from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A planted gait (see the file comment).
 - `lerpAng` (function from [`engine/core/math.ts`](../engine/core/math.ts)): The angle `t` of the way from `a` to `b`, the short way round (`t` = 1 lands on `b` plus whole turns).
 - `LEVEL_FORMAT` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level.
 - `LEVEL_FORMAT_2` (const from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): The format tag of a compiled level written as storeys (WP 13.13).
@@ -1606,6 +1688,8 @@ game agent's manual.
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
 - `LOD` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The detail levels `pose({ lod })` takes, by index: how often it re-solves, in ticks, and which slots run.
 - `LOOK_AHEAD` (const from [`engine/world/nav.ts`](../engine/world/nav.ts)): How many tiles downhill `FlowField.direction` looks ahead (shardfall's 3).
+- `LookAt` (class from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A look turning toward what it looks at (see the file comment).
+- `LookAtOptions` (interface from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A look's bounds and speed (see the file comment).
 - `loose` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The shots of one volley from `from` (m), the emitter facing `facing` (rad): `PROJECTILE`s `muzzle` out along each direction at `speed`, with the emitter's radius, life, gravity, pierce, kind and team.
 - `LooseOptions` (interface from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): Who looses a volley: its entity, which its shots keep as their `source` (−1: none).
 - `Lying` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): How a body lies: on its back (`up`) or on its face (`down`).
@@ -1621,6 +1705,7 @@ game agent's manual.
 - `MatrixState` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): A state the matrix holds: the body states told every step, or a script, for so many seconds.
 - `measureFeel` (function from [`engine/sim/feelCourse.ts`](../engine/sim/feelCourse.ts)): Measures a character's feel on the standard course (the file comment says what each number is).
 - `measureMove` (function from [`engine/anim/moves.ts`](../engine/anim/moves.ts)): Measures where `move`'s strike point (the blade's tip, the fist, the foot's sole) goes through its hit window, on a spare body of `options.build` holding `options.weapon` (`build:chibi` with a sword by default): the hit cone and height window to test targets against (`inHitShape`).
+- `measureReach` (function from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): Measures the reach of the move `sample` poses (see the file comment).
 - `MELEE` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Apex's melee (docs/PLAYGROUND.md §3.2): damage, reach (m) and cone (rad), the lunge, the hands back and the stop (s).
 - `MELEE_FIELDS` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The component `melee`'s fields (see the file comment).
 - `MELEE_MOVES` (const from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): The move of each melee but a target's own: the punch, the kick in the air, the uppercut from a slide.
@@ -1663,9 +1748,13 @@ game agent's manual.
 - `Noise` (interface from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): A noise a step made: where, how far it carries (m), who made it (−1: nobody) and what it was (a shot, a kick).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
 - `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
+- `Orbiters` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): Orbiters round a centre (see the file comment).
+- `OrbitOptions` (interface from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A ring of orbiters (see the file comment).
 - `OverlapOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): An overlap's options.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
 - `parseClipSet` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
+- `PathChain` (class from [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)): A chain following its head's path (see the file comment).
+- `PathOptions` (interface from [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)): A path chain's shape: its segments, and how far apart along the path they stand, m.
 - `Pattern` (type from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): One of `PATTERNS`.
 - `PATTERNS` (const from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The ways a volley flies (see the file comment).
 - `Phase` (type from [`engine/sim/systems.ts`](../engine/sim/systems.ts)): A phase of the step.
@@ -1675,6 +1764,7 @@ game agent's manual.
 - `physicsOf` (function from [`engine/physics/binding.ts`](../engine/physics/binding.ts)): The physics world of a sim world: its bodies and queries.
 - `physicsWalls` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The walls projectiles stop at (engine/world/projectiles.ts `WallTest`): a ball cast (a ray for a radius of 0) through `physics` against the collision groups `groups` (the level and props, `world` and `prop`, by default).
 - `placeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
+- `placeExtras` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Every extra of `sockets` placed on `joints`, by name.
 - `Plane` (re-export from `three/webgpu`): three.js's plane: a unit normal and a constant.
 - `playClip` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `clip` (`SET/Clip`, or bare) on actor `id`, fading in over what plays (the layer's `play`).
 - `POINT_INDEX` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Each point's position in `POSE_POINTS`.
@@ -1684,12 +1774,16 @@ game agent's manual.
 - `Pose` (class from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A skeleton pose: the root transform plus each joint's local rotation.
 - `POSE_POINTS` (const from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
 - `poseError` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): The largest distance (mm) between matching body points of two decoded poses, the finger helpers left out.
+- `PoseHistory` (class from [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)): Recent poses, played again later (see the file comment).
+- `PoseLayer` (interface from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): A layer of the pose stack: its values and how much of them it takes, 0 to 1.
 - `poseMeanError` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): The average distance (mm) between matching body points of two decoded poses, the finger helpers left out.
 - `PoseName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A pose's name.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
 - `pressed` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` was pressed this step: it went down (or was tapped) since the step before.
 - `ProbeOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A probe's options: where the downward ray starts, and the groups that count as ground.
+- `ProcRig` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): A procedural rig (see the file comment).
+- `ProcRigBody` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): A body of a rig, made for one run (see the file comment).
 - `Projectile` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot: what it is, where it flies and what it hit (`PROJECTILE_FIELDS` says what each means).
 - `PROJECTILE` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot with every field at its default: a 5 cm ball at the origin, at rest, flying for 3 s.
 - `PROJECTILE_FIELDS` (const from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's fields, for a scene's component: `defineComponent('bolt', { description, fields: PROJECTILE_FIELDS })`.
@@ -1726,6 +1820,9 @@ game agent's manual.
 - `RampDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A ramp: a filled rectangle of a ramp glyph's tiles (stairs) whose floor rises in a straight slope from `bottom` along the side opposite `rises` to `top` along `rises`, the side whose neighbours stand at its top (a gallery).
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
+- `Reach` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A move's measured reach (see the file comment).
+- `ReachOptions` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): How a reach is measured: how many steps across the window, and what the stand adds (m).
+- `ReachPose` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A moment of a move, in the body's frame: where its strike point and its head are.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
 - `REACTION_FIELDS` (const from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): The component `reactions`' fields: `Reactions.save()`'s, at rest by default.
 - `ReactionBody` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What a reaction's phase tells the humanoid: a pose, how far down.
@@ -1763,7 +1860,9 @@ game agent's manual.
 - `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
 - `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
+- `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
+- `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
 - `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
@@ -1829,6 +1928,9 @@ game agent's manual.
 - `SlotName` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot's name.
 - `SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The stack's slots, in order, with what fills each.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
+- `Socket` (interface from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Where an extra sits on a joint (see the file comment).
+- `SocketJoints` (type from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): A rig's pose as sockets read it: each joint a world matrix or a point.
+- `socketMatrix` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The world matrix of the extra `socket` places on `joints` (see the file comment).
 - `SocketName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A socket's name.
 - `socketPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `socket`: it rides its joint, so it turns with it.
 - `SOCKETS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The sockets: attachment points that turn with their joint (`SOCKET_JOINTS`).
@@ -1844,6 +1946,10 @@ game agent's manual.
 - `spawnThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Stands a thing of `kind` (its id) on its base at `at` (m), turned `yaw` (rad), as its prop, with any further `components` a scene gives it (a dummy's spring: labs/playground/cast/dummies.ts); returns its entity.
 - `Sphere` (re-export from `three/webgpu`): three.js's sphere.
 - `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
+- `Spring1` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A number on a spring (see the file comment).
+- `Spring3` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A vector on a spring, each axis its own oscillator of the same shape; `limit` bounds its distance from the target.
+- `SpringOptions` (interface from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A spring's shape: its natural frequency (rad/s), its damping ratio (1: critical) and how far it may stray.
+- `SpringQuat` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A turn on a spring: its error from the target as a rotation vector (see the file comment).
 - `SQUASH` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The squash spring (my-3d2dge's numbers): its pull and damping per second, and its bound either way.
 - `squashScale` (function from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): The root scale of a squash: 1 + `squash` tall, 1 / √(1 + `squash`) wide and deep, so the volume stays.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
@@ -1853,6 +1959,7 @@ game agent's manual.
 - `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
 - `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
+- `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
@@ -1880,6 +1987,8 @@ game agent's manual.
 - `StructureSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure as a site's spec places it.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
+- `SwayChain` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A wave down a chain (see the file comment).
+- `SwayOptions` (interface from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A sway chain's shape (see the file comment).
 - `Sweep` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A sweep: the striking part's segment at the last step and at this one, world metres: the quad it swept.
 - `sweepHits` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): The targets the swept quad touches (`sweepTouches`), by id, ascending.
 - `sweepTouches` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether the quad a weapon swept in a step (`Attack.sweep`: its segment at the last step and at this one) comes within `target`'s radius plus `thickness` (the blade's half width, m) of its axis: the target was struck.
@@ -1933,11 +2042,14 @@ game agent's manual.
 - `TimelinePhase` (interface from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): One phase of a timeline.
 - `TimelineState` (type from [`engine/anim/timeline.ts`](../engine/anim/timeline.ts)): A timeline's state: the phase index (−1 when idle) and the seconds into that phase.
 - `tipPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of the far end of `joint`'s bone: a leaf's tip (the top of the head, a fingertip, a toe tip), or the joint itself for the others, whose bones end at their children.
+- `TipSample` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A sample of a trail: its tip, its base and its age, s.
+- `TipTrail` (class from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): The streak a tip leaves (see the file comment).
 - `toLocal` (function from [`engine/world/site.ts`](../engine/world/site.ts)): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
 - `toWorld` (function from [`engine/world/site.ts`](../engine/world/site.ts)): World (x, z) from a structure's own (lx, lz): turned `turn` quarter turns, then moved to `at`.
 - `TraceRecord` (interface from [`engine/core/events.ts`](../engine/core/events.ts)): One traced emit.
 - `TrailName` (type from [`engine/anim/states.ts`](../engine/anim/states.ts)): A part that leaves a trail.
+- `TrailOptions` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A trail's shape (see the file comment).
 - `TRAILS` (const from [`engine/anim/states.ts`](../engine/anim/states.ts)): The parts that leave a trail, each with the span its ribbon covers.
 - `TrailSample` (type from [`engine/anim/character.ts`](../engine/anim/character.ts)): One trail sample: the part's base and tip, world metres, at the body's `clock`, and its ribbon's weight.
 - `travelAt` (function from [`engine/anim/clip/bake.ts`](../engine/anim/clip/bake.ts)): How far `baked` has carried the root by `t` seconds, `(x, z)` metres on the source body (a loop's laps added).
@@ -2760,6 +2872,169 @@ For the agents who maintain the engine.
 - `Weapon` (type): A weapon's name.
 - `weaponName` (function): `name` if it is a weapon; otherwise warns once, suggesting the closest, and returns undefined.
 - `WEAPONS` (const): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
+
+### [`engine/anim/proc/api.ts`](../engine/anim/proc/api.ts)
+
+- `aimDirection` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): The unit direction of `pitch` (up +) and `yaw` (left +, from +Z) in a frame facing +Z, into `out`.
+- `along` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The point `t` (0 to 1) of the way along the polyline `points` by its length, into `out`.
+- `alongDirection` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The way the polyline `points` runs `t` of the way along it (unit), into `out`.
+- `blendAngles` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): The weighted mean of `angles` (rad) round the circle, in (−π, π]; `fallback` when they cancel out.
+- `BlendRates` (type from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): A weight's rates, per second: one for both ways, or `[up, down]`.
+- `Blink` (class from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): An eye that blinks (see the file comment).
+- `BlinkOptions` (interface from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A blink's timing (see the file comment).
+- `DetachedOptions` (interface from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A detached part's spring and its drift (see the file comment).
+- `DetachedPart` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A part following a spot of the body with no chain to it (see the file comment).
+- `digitigrade` (function from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): Solves the leg `leg` from `hip` to `toe` in `frame`, its long foot `angle` rad back from upright (see the file comment).
+- `DigitigradeFrame` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): The leg's frame: its forward and its up (world +Y by default), and where the knee bends (forward, a little up).
+- `DigitigradeLeg` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A digitigrade leg's bones, metres: the thigh, the shin and the long foot.
+- `DigitigradeSolve` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A solved leg: its knee, its hock and its toe (lifted when out of reach), world metres.
+- `driveRig` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`).
+- `GaitBody` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): The body a gait carries: its ground point, its heading (rad, 0 facing +Z) and its velocity, m/s.
+- `GaitFoot` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A foot: where it is, where its step left from and aims, the surface under it, and how far into its step it is.
+- `GaitLeg` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A leg of a gait (see the file comment): its hip and its foot's rest spot in the body's frame, m, and its group.
+- `GaitOptions` (interface from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A gait's numbers (see the file comment); each has a default for a body about half a metre high.
+- `GaitProbe` (type from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A ray into the world: from `origin` along unit `direction` up to `distance` m; true with the hit written.
+- `HistoryOptions` (interface from [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)): A history's shape: how many points a pose has, and how long it keeps them, s.
+- `Hover` (class from [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)): A floating body's hover, bank, lean and fold (see the file comment).
+- `HoveringOptions` (interface from [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)): A hover's numbers (see the file comment); the defaults are a ghost's, a quarter metre up.
+- `LagOptions` (interface from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A lagging part's shape (see the file comment).
+- `LagPart` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A part swinging behind its pivot (see the file comment).
+- `layerPose` (function from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): `base` with each of `layers`, in order, lerped over it by its weight (see the file comment); into `out`.
+- `LegGait` (class from [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)): A planted gait (see the file comment).
+- `LookAt` (class from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A look turning toward what it looks at (see the file comment).
+- `LookAtOptions` (interface from [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)): A look's bounds and speed (see the file comment).
+- `measureReach` (function from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): Measures the reach of the move `sample` poses (see the file comment).
+- `Orbiters` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): Orbiters round a centre (see the file comment).
+- `OrbitOptions` (interface from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): A ring of orbiters (see the file comment).
+- `PathChain` (class from [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)): A chain following its head's path (see the file comment).
+- `PathOptions` (interface from [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)): A path chain's shape: its segments, and how far apart along the path they stand, m.
+- `placeExtras` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Every extra of `sockets` placed on `joints`, by name.
+- `PoseHistory` (class from [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)): Recent poses, played again later (see the file comment).
+- `PoseLayer` (interface from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): A layer of the pose stack: its values and how much of them it takes, 0 to 1.
+- `ProcRig` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): A procedural rig (see the file comment).
+- `ProcRigBody` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): A body of a rig, made for one run (see the file comment).
+- `Reach` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A move's measured reach (see the file comment).
+- `ReachOptions` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): How a reach is measured: how many steps across the window, and what the stand adds (m).
+- `ReachPose` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A moment of a move, in the body's frame: where its strike point and its head are.
+- `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
+- `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
+- `Socket` (interface from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Where an extra sits on a joint (see the file comment).
+- `SocketJoints` (type from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): A rig's pose as sockets read it: each joint a world matrix or a point.
+- `socketMatrix` (function from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): The world matrix of the extra `socket` places on `joints` (see the file comment).
+- `Spring1` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A number on a spring (see the file comment).
+- `Spring3` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A vector on a spring, each axis its own oscillator of the same shape; `limit` bounds its distance from the target.
+- `SpringOptions` (interface from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A spring's shape: its natural frequency (rad/s), its damping ratio (1: critical) and how far it may stray.
+- `SpringQuat` (class from [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)): A turn on a spring: its error from the target as a rotation vector (see the file comment).
+- `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
+- `SwayChain` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A wave down a chain (see the file comment).
+- `SwayOptions` (interface from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A sway chain's shape (see the file comment).
+- `TipSample` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A sample of a trail: its tip, its base and its age, s.
+- `TipTrail` (class from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): The streak a tip leaves (see the file comment).
+- `TrailOptions` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A trail's shape (see the file comment).
+
+### [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)
+
+- `aimDirection` (function): The unit direction of `pitch` (up +) and `yaw` (left +, from +Z) in a frame facing +Z, into `out`.
+- `blendAngles` (function): The weighted mean of `angles` (rad) round the circle, in (−π, π]; `fallback` when they cancel out.
+- `BlendRates` (type): A weight's rates, per second: one for both ways, or `[up, down]`.
+- `layerPose` (function): `base` with each of `layers`, in order, lerped over it by its weight (see the file comment); into `out`.
+- `PoseLayer` (interface): A layer of the pose stack: its values and how much of them it takes, 0 to 1.
+- `StateWeights` (class): Named weights easing toward their targets (see the file comment).
+
+### [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)
+
+- `digitigrade` (function): Solves the leg `leg` from `hip` to `toe` in `frame`, its long foot `angle` rad back from upright (see the file comment).
+- `DigitigradeFrame` (interface): The leg's frame: its forward and its up (world +Y by default), and where the knee bends (forward, a little up).
+- `DigitigradeLeg` (interface): A digitigrade leg's bones, metres: the thigh, the shin and the long foot.
+- `DigitigradeSolve` (interface): A solved leg: its knee, its hock and its toe (lifted when out of reach), world metres.
+
+### [`engine/anim/proc/gait.ts`](../engine/anim/proc/gait.ts)
+
+- `GAIT_SUBSTEP` (const): The gait's inner step, s: a 60 Hz step takes two, a 120 Hz one, so both rates step the same feet.
+- `GaitBody` (interface): The body a gait carries: its ground point, its heading (rad, 0 facing +Z) and its velocity, m/s.
+- `GaitFoot` (interface): A foot: where it is, where its step left from and aims, the surface under it, and how far into its step it is.
+- `GaitLeg` (interface): A leg of a gait (see the file comment): its hip and its foot's rest spot in the body's frame, m, and its group.
+- `GaitOptions` (interface): A gait's numbers (see the file comment); each has a default for a body about half a metre high.
+- `GaitProbe` (type): A ray into the world: from `origin` along unit `direction` up to `distance` m; true with the hit written.
+- `LegGait` (class): A planted gait (see the file comment).
+
+### [`engine/anim/proc/history.ts`](../engine/anim/proc/history.ts)
+
+- `HistoryOptions` (interface): A history's shape: how many points a pose has, and how long it keeps them, s.
+- `PoseHistory` (class): Recent poses, played again later (see the file comment).
+
+### [`engine/anim/proc/hover.ts`](../engine/anim/proc/hover.ts)
+
+- `Hover` (class): A floating body's hover, bank, lean and fold (see the file comment).
+- `HoveringOptions` (interface): A hover's numbers (see the file comment); the defaults are a ghost's, a quarter metre up.
+
+### [`engine/anim/proc/look.ts`](../engine/anim/proc/look.ts)
+
+- `Blink` (class): An eye that blinks (see the file comment).
+- `BlinkOptions` (interface): A blink's timing (see the file comment).
+- `LookAt` (class): A look turning toward what it looks at (see the file comment).
+- `LookAtOptions` (interface): A look's bounds and speed (see the file comment).
+
+### [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)
+
+- `DetachedOptions` (interface): A detached part's spring and its drift (see the file comment).
+- `DetachedPart` (class): A part following a spot of the body with no chain to it (see the file comment).
+- `Orbiters` (class): Orbiters round a centre (see the file comment).
+- `OrbitOptions` (interface): A ring of orbiters (see the file comment).
+
+### [`engine/anim/proc/path.ts`](../engine/anim/proc/path.ts)
+
+- `PathChain` (class): A chain following its head's path (see the file comment).
+- `PathOptions` (interface): A path chain's shape: its segments, and how far apart along the path they stand, m.
+
+### [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)
+
+- `measureReach` (function): Measures the reach of the move `sample` poses (see the file comment).
+- `Reach` (interface): A move's measured reach (see the file comment).
+- `ReachOptions` (interface): How a reach is measured: how many steps across the window, and what the stand adds (m).
+- `ReachPose` (interface): A moment of a move, in the body's frame: where its strike point and its head are.
+
+### [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)
+
+- `driveRig` (function): Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`).
+- `hashRigRun` (const): A run's digest over every point of every step.
+- `ProcRig` (interface): A procedural rig (see the file comment).
+- `ProcRigBody` (interface): A body of a rig, made for one run (see the file comment).
+- `rigCheck` (function): Checks every state of `rig` at both facings (see the file comment).
+- `RigRun` (interface): One run of a rig: its root and its points each step, and the steps the state held.
+
+### [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)
+
+- `along` (function): The point `t` (0 to 1) of the way along the polyline `points` by its length, into `out`.
+- `alongDirection` (function): The way the polyline `points` runs `t` of the way along it (unit), into `out`.
+- `placeExtras` (function): Every extra of `sockets` placed on `joints`, by name.
+- `Socket` (interface): Where an extra sits on a joint (see the file comment).
+- `SOCKET_CODES` (const): The codes this module raises, with their fixes.
+- `SocketJoints` (type): A rig's pose as sockets read it: each joint a world matrix or a point.
+- `socketMatrix` (function): The world matrix of the extra `socket` places on `joints` (see the file comment).
+
+### [`engine/anim/proc/springs.ts`](../engine/anim/proc/springs.ts)
+
+- `oscillate` (function): One exact step of the oscillator y″ = −ω²y − 2ζωy′ from offset `y` and velocity `v` over `dt` seconds, with ω `omega` and ζ `zeta`: the offset and the velocity after it.
+- `quatExp` (function): The turn of rotation vector `v` (axis × angle) into `out`.
+- `quatLog` (function): `q`'s rotation vector (axis × angle, the short way round) into `out`.
+- `Spring1` (class): A number on a spring (see the file comment).
+- `Spring3` (class): A vector on a spring, each axis its own oscillator of the same shape; `limit` bounds its distance from the target.
+- `SpringOptions` (interface): A spring's shape: its natural frequency (rad/s), its damping ratio (1: critical) and how far it may stray.
+- `SpringQuat` (class): A turn on a spring: its error from the target as a rotation vector (see the file comment).
+
+### [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)
+
+- `LagOptions` (interface): A lagging part's shape (see the file comment).
+- `LagPart` (class): A part swinging behind its pivot (see the file comment).
+- `SwayChain` (class): A wave down a chain (see the file comment).
+- `SwayOptions` (interface): A sway chain's shape (see the file comment).
+
+### [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)
+
+- `TipSample` (interface): A sample of a trail: its tip, its base and its age, s.
+- `TipTrail` (class): The streak a tip leaves (see the file comment).
+- `TrailOptions` (interface): A trail's shape (see the file comment).
 
 ### [`engine/anim/ragdoll.ts`](../engine/anim/ragdoll.ts)
 
@@ -9028,6 +9303,13 @@ For the agents who maintain the engine.
 - `pops` (function from [`engine/anim/motionMetrics.ts`](../engine/anim/motionMetrics.ts)): Pops: a point that jumps in one step while the steps either side are much shorter (ed-sheet.mjs:122-125).
 - `Track` (interface from [`engine/anim/motionMetrics.ts`](../engine/anim/motionMetrics.ts)): One run as the metrics read it: points per step, world and measured from the body, and what they need besides.
 - `worse` (const from [`engine/anim/motionMetrics.ts`](../engine/anim/motionMetrics.ts)): The worse of two findings.
+
+### [`tools/qa/anim/points.ts`](../tools/qa/anim/points.ts)
+
+- `checkPointRig` (function): A point rig's states, each reported as `prefix` and its name: its own checks, the motion, the hash and the rate.
+- `facingTurn` (const): A direction in the body's frame, turned to its facing.
+- `POINT_RIGS` (const): The point rigs the family drives, and the prefix of their QA ids (none for the blob's and the wisp's own).
+- `Report` (type): Adds what a finding says to the violations, keeping the worst per id and metric.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
 
