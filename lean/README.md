@@ -445,6 +445,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Firearms (WP 13.20)**: the kind `weapon`, a player's weapons drawn and holstered, hip fire and the sights, hitscan shots with spread and a climbing recoil, reloads.
 `WEAPON_FIELDS`, `defineWeapon`, `getWeapon`, `recoilStep`, `spreadOf`, `WEAPONS_FIELDS`, `weaponsFor`, `addWeapons`; types `WeaponKind`, `WeaponSpec`, `WeaponsState`.
 
+**Ragdolls (WP 10.2)**: joints as data, a humanoid's body handed off to physics on a hard hit or a death, lying still and getting up the way it lies.
+`addJoint`, `removeJoint`, `hasJoint`, `jointBodies`, `RAGDOLL_SIM`, `RAGDOLL_FIELDS`, `addRagdolls`, `handOff`, `removeRagdollOf`, `standUp`; types `JointKind`, `JointSpec`, `RagdollState`, `RagdollHit`.
+
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 

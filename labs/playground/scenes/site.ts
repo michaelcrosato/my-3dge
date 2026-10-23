@@ -9,7 +9,8 @@
  * seed; the gym's own props and rides at its place; the block's ziplines, balloon and trampoline; use
  * (`addInteraction`), melee (`addMelee`, WP 13.19) and firearms (`addWeapons`, WP 13.20: the player carries the pistol
  * and the rifle, holstered, labs/playground/weapons/guns.ts); the range's pop-up and moving targets
- * (labs/playground/weapons/range.ts); last, the ring's sparring dummies (labs/playground/cast/dummies.ts). They take
+ * (labs/playground/weapons/range.ts); last, the ring's sparring dummies and partners (labs/playground/cast/dummies.ts,
+ * partners.ts: WP 10.2's ragdolls). They take
  * the gym's settings (`playground.gym.*`) and its dev action `place`, so a course or a replay places the player as the
  * gym's do; `roomPlace` says where it puts him in a room, ducked under a low ceiling.
  *
@@ -26,6 +27,7 @@
  */
 import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addMelee, addSiteBodies, addSiteLadders, addSwitch, addWeapons, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, siteSolidAt, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
 import { standDummies } from '../cast/dummies';
+import { standPartners } from '../cast/partners';
 import { spawnPlayer } from '../cast/player';
 import { GARAGE_SWITCHES, HOUSE_FURNITURE, HOUSE_LIGHTS, OUTDOORS, SITE_RIDES } from '../furnish';
 import { GYM_BALLOON, GYM_LAUNCHERS, GYM_PROPS, GYM_ZIPLINE } from '../levels/gym';
@@ -157,7 +159,8 @@ function siteSpec(area: SiteArea) {
       addMelee(w);
       addWeapons(w);
       standRange(w);
-      standDummies(w); // last: the ring's sparring dummies
+      standDummies(w); // last: the ring's sparring dummies and its two partners
+      standPartners(w);
     },
     actions: { place: gym.actions.place },
   };

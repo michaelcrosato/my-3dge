@@ -143,3 +143,20 @@ export { WEAPONS_FIELDS } from './weapons';
 export type { WeaponsState } from './weapons';
 export { weaponsFor } from './weapons';
 export { addWeapons } from './weapons';
+
+// Ragdolls (WP 10.2): joints as data, a humanoid's body handed off to physics on a hard hit or a death, lying still and
+// getting up the way it lies.
+export type { JointKind } from '../physics/joints';
+export type { JointSpec } from '../physics/joints';
+export { addJoint } from '../physics/joints';
+export { removeJoint } from '../physics/joints';
+export { hasJoint } from '../physics/joints';
+export { jointBodies } from '../physics/joints';
+export { RAGDOLL_SIM } from './ragdolls';
+export { RAGDOLL_FIELDS } from './ragdolls';
+export type { RagdollState } from './ragdolls';
+export type { RagdollHit } from './ragdolls';
+export { addRagdolls } from './ragdolls';
+export { handOff } from './ragdolls';
+export { removeRagdollOf } from './ragdolls';
+export { standUp } from './ragdolls';

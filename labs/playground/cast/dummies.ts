@@ -7,7 +7,7 @@
  * `dummies` (phase `anim`, added with the first) springs each back toward upright, a damped spring (`SPRING`), and
  * drives its body there, leaning about its base (`driveBody`), so the physics step carries it, what strikes it next
  * meets it where it leans, and the view draws it rocking. `standDummies(w)` stands the ring's three (`RING_DUMMIES`),
- * last in a scene's setup. The two that ragdoll on a hard hit and get up are WP 10.2's.
+ * last in a scene's setup. The two that ragdoll on a hard hit and get up are people: partners.ts (WP 10.2).
  *
  * Invariants: everything a dummy is lives in its components; dummies step in id order; no random stream.
  *

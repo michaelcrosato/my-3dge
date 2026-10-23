@@ -14,6 +14,7 @@
  * his body hidden, its shadow kept, his arms posed against it by a lens of their own), or whole for null. `trails()` is
  * each puppet's trail as its last pose sampled it (WP 6.7, oldest first), which the stage's effects draw as ribbons.
  * WP 13.20: the weapon an actor has out stands in its right hand while its hold holds a gun (`carried`, `muzzle`).
+ * WP 10.2: a `ragdoll` (engine/sim/ragdolls.ts) lays its parts on the bones, faded in and out (`layRagdoll`).
  *
  * WP 6.2 in the box (WP 7.8): an actor's `reactions` (engine/sim/reactions.ts) are a `Reactions` layer on its puppet's
  * animator, loaded at every pose (its flinch bends its spine; a body down on its face is drawn so), its `actions` (WP
@@ -31,8 +32,7 @@
  * right for heroes and a few foes; crowds draw through instanced batches (WP 5.4).
  *
  * @example
- * // const actors = createActorPuppets({ materials: library });
- * // stage.scene.add(actors.root);
+ * // const actors = createActorPuppets({ materials: library }); stage.scene.add(actors.root);
  * // const drawn = actors.capture(world.query('actor'), world.dt); // the ids drawn as puppets
  * // actors.draw(0.5);
  * // actors.player()?.eye; // where a first-person camera sits
@@ -47,6 +47,7 @@ import type { WorldPose } from '../../anim/fk';
 import { queryGround } from '../../anim/footPlant';
 import type { GroundProbe } from '../../anim/ik';
 import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
+import { blendRagdollPoses, RAGDOLL_FADE, type RagdollLayer } from '../../anim/ragdoll';
 import { Reactions, type ReactionState } from '../../anim/reactions';
 import { hullOf, rideOf, type TraversalView } from '../../anim/traversal/contacts';
 import { LookPose, type Look } from '../../anim/traversal/hold';
@@ -65,9 +66,36 @@ import type { Warmup } from '../warmup';
 import { createViewmodel, type FirstPersonParts, type Viewmodel, type ViewmodelFrame } from '../viewmodel/body';
 import { createViewmodelLook } from '../viewmodel/material';
 import { gunPose, muzzlePoint, weaponOut, type HeldGun } from '../weapons';
-import { dropLayers, layersFor, type Held, type Layers, type Place } from './actorLayers';
+import { dropLayers, layersFor, type Held, type HeldRagdoll, type Layers, type Place } from './actorLayers';
 import { compileBody } from './compile';
 import { createPuppet, puppetMaterials, type Puppet, type PuppetMaterials } from './draw';
+
+/** What the view reads of an actor's component `ragdoll` (engine/sim/ragdolls.ts). */
+type RagdollView = { poses: number[]; since: number; rise: number };
+
+/** An actor's ragdoll as the view keeps it after a step: its poses then and now, its age and how long it has risen. */
+function heldRagdoll(now: RagdollView | undefined, last: HeldRagdoll | null): HeldRagdoll | null {
+  if (!now || now.poses.length === 0) return null;
+  const same = last !== null && last.since === now.since; // a new hand-off starts afresh
+  const rising = now.rise < 0 ? -1 : same && last.rising >= 0 ? last.rising + 1 : 0;
+  return { before: same ? last.after : [...now.poses], after: [...now.poses], since: now.since, age: same ? last.age + 1 : 0, rising }; // prettier-ignore
+}
+
+/**
+ * Lays `ragdoll` on its layer `alpha` of the way through the step, between its last two steps' poses
+ * (engine/anim/ragdoll.ts `blendRagdollPoses`): faded in over `RAGDOLL_FADE.in` from the hand-off, out over
+ * `RAGDOLL_FADE.out` as it gets up; no ragdoll, no weight.
+ */
+function layRagdoll(layer: RagdollLayer, ragdoll: HeldRagdoll | null, alpha: number, dt: number): void {
+  if (!ragdoll) {
+    [layer.weight, layer.poses.length] = [0, 0];
+    return;
+  }
+  blendRagdollPoses(ragdoll.before, ragdoll.after, alpha, layer.poses);
+  const rising = ragdoll.rising >= 0;
+  const t = ((rising ? ragdoll.rising : ragdoll.age) + alpha) * dt;
+  layer.weight = rising ? Math.max(0, 1 - t / RAGDOLL_FADE.out) : Math.min(1, t / RAGDOLL_FADE.in);
+}
 
 /** The body every animated actor wears (engine/gfx/puppets/bodies/humanoid.ts). */
 export const ACTOR_BODY = 'body:humanoid';
@@ -103,8 +131,8 @@ export interface ActorPuppets {
   hasPlayer(): boolean;
   /** Each puppet's trail as its last pose sampled it, by entity id (its animator's: oldest first, empty for none). */
   trails(): ReadonlyMap<number, readonly TrailSample[]>;
-  /** The view's layers on each puppet's animator, by entity id: its `Reactions` and `Secondary`, when it has them. */
-  layers(): ReadonlyMap<number, { readonly reactions: Reactions | null; readonly secondary: Secondary | null }>;
+  /** The view's layers on each puppet's animator, by entity id: its `Reactions` and `Secondary`, when it has them, and its ragdoll's. */ // prettier-ignore
+  layers(): ReadonlyMap<number, { readonly reactions: Reactions | null; readonly secondary: Secondary | null; readonly ragdoll: RagdollLayer }>; // prettier-ignore
   /** Points actor `id`'s head, and its gun, along `look` from the next draw (the page gives the player's); null: none. */
   look(id: number, look: Look | null): void;
   /**
@@ -225,7 +253,8 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
         const look = (last?.look ?? new LookPose()).update(looks.get(entity.id) ?? null, dt);
         const before = last ? last.after : place;
         const carry = weaponOut(entity, registry) ?? last?.carry ?? null; // holstered, in the hand while the hold lowers it
-        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, actions, secondary, motion, shown, traversal, look, carry }); // prettier-ignore
+        const ragdoll = heldRagdoll(entity.ragdoll as RagdollView | undefined, last?.ragdoll ?? null);
+        held.set(entity.id, { before, after: place, player, data, clips, puppet, reactions, actions, secondary, motion, shown, traversal, look, carry, ragdoll }); // prettier-ignore
         if (puppet) drawn.add(entity.id);
       }
       for (const id of [...held.keys()]) if (!seen.has(id)) held.delete(id);
@@ -272,6 +301,7 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           [own.hold.look, own.hold.busy] = [actor.look.look, actor.traversal.weight]; // its look and its gun
           if (own.reactions && actor.reactions) own.reactions.load(actor.reactions);
           if (own.actions && actor.actions) own.actions.load(actor.actions); // its effectors, flip and squash (WP 13.11)
+          layRagdoll(own.ragdoll, actor.ragdoll, k, step); // its ragdoll's parts, faded in and out (WP 10.2)
           animator.pose({ at, yaw: lerpAng(a.yaw, b.yaw, k) });
           puppet.setPose(animator.body.pose);
           own.chains?.update();

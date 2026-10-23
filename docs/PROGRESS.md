@@ -8,8 +8,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - Gate G11 passed (PR #27, 2026-10-22; its row in PLAN.md §14). U-1 Vitest 4 is in (4eb7b89); upload-artifact v5
   (2026-10-24) and checkout v6 (2026-11-20) between stages, when they qualify.
 - G12 runs on `claude/pensive-cray-9pa1n6` from the updated main (PLAN.md §11.1), in Phase 13's table order: 13.27,
-  10.4, 13.19 (melee, the door kick, the ring) and 13.20 done (a pistol and a rifle, the range's targets), then 10.2,
-  10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
+  10.4, 13.19 (melee), 13.20 (firearms) and 10.2 done (ragdolls: `box:ragdoll`, the ring's partners), then 10.1,
+  13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
 - The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals (`node x esc` when reached). Their
   go-ahead (2026-10-22): a bot may play with infinite health and ammo to get through content faster and more surely.
 
@@ -18,14 +18,14 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - Phases 0–9 are done (PR #2–#11); Phase 13's G10 (#22, #26) and G11 (#27) are merged. The playground (`npm run
   dev`, /labs/playground/?scene=site) has Apex's movement, rides, five cameras, planted locomotion, traversal, first
   person, and the block: a house of four storeys, yards, a street, the gym, a hill, a range and a ring, lit, cut by
-  storey, with doors, windows, switches and pickups, melee and firearms; `node x gallery`, `node x eye` (ADR-0025).
+  storey, with doors, windows, switches and pickups, melee, firearms, ragdolls; `node x gallery`, `node x eye`.
   Games: lean/ (ADR-0024). CI (ADR-0023): the quick gate, then main's full run. Vercel is paused: ignore it.
 
 ## What waits, by design
 
 - WP 13.23: the crawlspace's light, the street lamps' group; WP 13.22: melee's and the guns' sounds. Amendment 22
-  proposes triangle-mesh terrain. QA baseline entries wait on WPs 10.2 and 8.8. Not verifiable here: speakers, touch
-  (ADR-0021), pads (held bindings unit-tested), real GPUs; not run in a browser: labs/game's best-round HUD line.
+  proposes triangle-mesh terrain. QA baselines: the timelines' knockdown slide (where no scene hands off), WP 8.8's.
+  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs; not run in a browser: labs/game's HUD line.
 - At their size cap (395–400 lines), split on the next change: engine/app/engine.ts, world/siteNav.ts, anim/{poses,
   humanoid,locomotion,clip/layer,traversal/plant}.ts, gfx/{sky,instancing,puppets/draw,puppets/crowd}.ts, labs/box/
   menu.ts, tools/{cmd/audio,lib/browser,qa/anim}.ts. The feel kit poses apart from the page: share one.

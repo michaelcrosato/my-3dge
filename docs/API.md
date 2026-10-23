@@ -35,6 +35,7 @@ game agent's manual.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
 - `addDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door (see the file comment) and returns its entity.
 - `addInteraction` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Adds the system `interact` to `w` (once): see the file comment.
+- `addJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Joins two bodies, or a body to the world, as `spec` says (see the file comment); returns the joint's id.
 - `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
@@ -44,6 +45,7 @@ game agent's manual.
 - `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
+- `addRagdolls` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Adds the system `ragdolls` to `w` (once), after the actors' readback: call it in a scene's setup.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
 - `addSiteBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
 - `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
@@ -519,8 +521,10 @@ game agent's manual.
 - `GroundQueries` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What the foot plant asks of the physics ground: the sim's read-only `QueryView` (engine/sim/queryView.ts) has it.
 - `GroupName` (type from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): A collision group's name.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
+- `handOff` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Gives actor `id` over to its ragdoll, as `hit` says (see the file comment); returns its component.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
+- `hasJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Whether the joint exists.
 - `headingTo` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The heading and rise (rad) from `from` to `to`; straight up or down, or onto itself, heads along +Z.
 - `Headless` (type from [`engine/app/headless.ts`](../engine/app/headless.ts)): A headless engine: `__engine`'s members, over a scene running in this process.
 - `HeadlessOptions` (interface from [`engine/app/headless.ts`](../engine/app/headless.ts)): How a headless engine starts.
@@ -575,12 +579,15 @@ game agent's manual.
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
 - `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
 - `isCode` (function from [`engine/input/codes.ts`](../engine/input/codes.ts)): Whether `code` is one a binding may name.
+- `jointBodies` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): The two bodies a joint holds: `a` and `b`, or the anchor and `a` for a joint to the world.
+- `JointKind` (type from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): A joint's kind as data (see the file comment): springs and damping per second², angles in radians.
 - `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
 - `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
 - `jointPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `joint` (a name or an index) in `world`.
 - `JointRef` (type from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A joint, by name or by index in `JOINTS`.
 - `jointRotation` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world rotation of `joint` in `world`.
 - `JOINTS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The 23 joints, parents before children.
+- `JointSpec` (interface from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): A joint as `addJoint` takes it.
 - `jointToWorld` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
 - `keepTokens` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Keeps the tokens of the holders `keep` approves (alive, still attacking), freeing the rest: how many are held.
 - `KeyPose` (type from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The pose between keys, as `keyAt` in-betweens it: every field of the key before, without its time.
@@ -828,6 +835,10 @@ game agent's manual.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
 - `QueryView` (type from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The physics queries, read-only: what presentation code may ask of the sim's physics.
 - `queryViewOf` (function from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The read-only view of a sim world's physics.
+- `RAGDOLL_FIELDS` (const from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The component `ragdoll`'s fields.
+- `RAGDOLL_SIM` (const from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The hand-off's numbers: seconds, m/s, and the tip a push gives (rad/s for each m/s).
+- `RagdollHit` (interface from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): A hit that hands a body off: its push (m/s, added to how it moves), its spin (rad/s), and whether it kills.
+- `RagdollState` (interface from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The component `ragdoll`: an actor's body in physics' hands (see the file comment).
 - `RampDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A ramp: a filled rectangle of a ramp glyph's tiles (stairs) whose floor rises in a straight slope from `bottom` along the side opposite `rises` to `top` along `rises`, the side whose neighbours stand at its top (a gallery).
 - `rampGeometry` (function from [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)): A ramp or wedge standing on the ground, rising towards +Z (see the file comment).
 - `RampOptions` (interface from [`engine/gfx/geometry/ramp.ts`](../engine/gfx/geometry/ramp.ts)): A ramp's sizes in metres.
@@ -851,9 +862,11 @@ game agent's manual.
 - `recolor` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): `compiled` with its slots' colours replaced by `palette`'s (hex), the pieces shared.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
-- `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
+- `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body (its ragdoll's parts too, engine/sim/ragdolls.ts).
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
+- `removeJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Removes a joint (a joint to the world leaves its anchor, `jointBodies(…)[0]`).
 - `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body, its component's `body` −1 at once (inside a step the entity stays to its end).
+- `removeRagdollOf` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Takes actor `id`'s ragdoll out (its parts, if any, and the component); a body without one is left alone.
 - `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
 - `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
@@ -1013,6 +1026,7 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
+- `standUp` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Actor `id`'s ragdoll gets up now, the dead too, the way it lies (as the system's do); false: it has none falling.
 - `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
 - `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
@@ -1215,6 +1229,7 @@ game agent's manual.
 - `addCylinder` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a cylinder prop, standing up (a barrel); returns its id.
 - `addDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): Hangs a door (see the file comment) and returns its entity.
 - `addInteraction` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Adds the system `interact` to `w` (once): see the file comment.
+- `addJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Joins two bodies, or a body to the world, as `spec` says (see the file comment); returns the joint's id.
 - `addLadder` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a ladder (see the file comment); returns its entity.
 - `addLauncher` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places a jump pad or a trampoline (see the file comment); returns its entity.
 - `addLevelBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a level's bodies (one fixed body: the ground slab and its colliders) and returns the body's id; `place` stands it at a site's place, its map's north-west corner at `at`, turned `turn` quarter turns about +Y.
@@ -1224,6 +1239,7 @@ game agent's manual.
 - `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
 - `addPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): `base` with the additive `layer` (from `makeAdditive`) applied at `weight` (0–1, scaled per joint by `mask`): each joint becomes base × slerp(identity, delta, weight), written into `out` (`base` may be `out`).
 - `addProp` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a dynamic body of one `shape` (a hull too: a rock), of `PROP_MATERIAL` unless `spec` says otherwise; its id.
+- `addRagdolls` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Adds the system `ragdolls` to `w` (once), after the actors' readback: call it in a scene's setup.
 - `addSensor` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Adds a body whose one collider is a sensor of `shape`: it blocks nothing and detects bodies.
 - `addSiteBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
 - `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
@@ -1502,8 +1518,10 @@ game agent's manual.
 - `GroundQueries` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): What the foot plant asks of the physics ground: the sim's read-only `QueryView` (engine/sim/queryView.ts) has it.
 - `GroupName` (type from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): A collision group's name.
 - `HAIR` (const from [`engine/anim/secondary.ts`](../engine/anim/secondary.ts)): Hair from behind the head (`behind` and `lift` head radii from its centre), the source's numbers.
+- `handOff` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Gives actor `id` over to its ragdoll, as `hit` says (see the file comment); returns its component.
 - `handTo` (function from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): `twoBoneRot` for the arm of `hand`, bringing its weapon socket (`weaponL`, `weaponR`) to `grip`: returns how far the socket stays from it (0 in reach).
 - `hashPose` (function from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): The pose's 64-bit FNV-1a digest (16 hex digits) over the numbers `toArray` gives: equal numbers, equal hash.
+- `hasJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Whether the joint exists.
 - `headingTo` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The heading and rise (rad) from `from` to `to`; straight up or down, or onto itself, heads along +Z.
 - `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
 - `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
@@ -1540,12 +1558,15 @@ game agent's manual.
 - `Intents` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): One step's intents, as the sim reads them (systems get them as their second argument).
 - `IntentValue` (type from [`engine/input/intents.ts`](../engine/input/intents.ts)): A custom intent's value: plain data, as a replay file holds it.
 - `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
+- `jointBodies` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): The two bodies a joint holds: `a` and `b`, or the anchor and `a` for a joint to the world.
+- `JointKind` (type from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): A joint's kind as data (see the file comment): springs and damping per second², angles in radians.
 - `jointMatrix` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world matrix of `joint` in `world`.
 - `JointName` (type from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A joint's name.
 - `jointPosition` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world position of `joint` (a name or an index) in `world`.
 - `JointRef` (type from [`engine/anim/pose.ts`](../engine/anim/pose.ts)): A joint, by name or by index in `JOINTS`.
 - `jointRotation` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): The world rotation of `joint` in `world`.
 - `JOINTS` (const from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The 23 joints, parents before children.
+- `JointSpec` (interface from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): A joint as `addJoint` takes it.
 - `jointToWorld` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): A point given in `joint`'s own frame, in world space (`localToWorld` for a joint).
 - `keepTokens` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Keeps the tokens of the holders `keep` approves (alive, still attacking), freeing the rest: how many are held.
 - `KeyPose` (type from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): The pose between keys, as `keyAt` in-betweens it: every field of the key before, without its time.
@@ -1698,6 +1719,10 @@ game agent's manual.
 - `QueryOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): What every query takes: the groups it hits, and a body it skips.
 - `QueryView` (type from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The physics queries, read-only: what presentation code may ask of the sim's physics.
 - `queryViewOf` (function from [`engine/sim/queryView.ts`](../engine/sim/queryView.ts)): The read-only view of a sim world's physics.
+- `RAGDOLL_FIELDS` (const from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The component `ragdoll`'s fields.
+- `RAGDOLL_SIM` (const from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The hand-off's numbers: seconds, m/s, and the tip a push gives (rad/s for each m/s).
+- `RagdollHit` (interface from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): A hit that hands a body off: its push (m/s, added to how it moves), its spin (rad/s), and whether it kills.
+- `RagdollState` (interface from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The component `ragdoll`: an actor's body in physics' hands (see the file comment).
 - `RampDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A ramp: a filled rectangle of a ramp glyph's tiles (stairs) whose floor rises in a straight slope from `bottom` along the side opposite `rises` to `top` along `rises`, the side whose neighbours stand at its top (a gallery).
 - `Ray` (re-export from `three/webgpu`): three.js's ray: an origin and a unit direction.
 - `RayOptions` (interface from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A raycast's options.
@@ -1714,9 +1739,11 @@ game agent's manual.
 - `recoilStep` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The kick of shot `n` of a burst (0: the first), [up, right] degrees: its recoil step, the last repeating.
 - `released` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` went up on the buffer's step (a tap shorter than a step included).
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
-- `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body.
+- `removeActor` (function from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): Removes an actor and its body (its ragdoll's parts too, engine/sim/ragdolls.ts).
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
+- `removeJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Removes a joint (a joint to the world leaves its anchor, `jointBodies(…)[0]`).
 - `removeProp` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): Removes a prop: its entity and its body, its component's `body` −1 at once (inside a step the entity stays to its end).
+- `removeRagdollOf` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Takes actor `id`'s ragdoll out (its parts, if any, and the component); a body without one is left alone.
 - `REPEAT_DELAY` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps a button is held before it first repeats: 18, the prototype's 0.3 s at 60 Hz.
 - `REPEAT_RATE` (const from [`engine/input/intents.ts`](../engine/input/intents.ts)): Steps between repeats after the first: 5, the prototype's 0.08 s at 60 Hz, rounded.
 - `repeated` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Whether `button` fires on the buffer's step as a held key repeats: on its press, then after `delay` steps held, then every `rate` steps (menu cursors, puzzle pieces).
@@ -1822,6 +1849,7 @@ game agent's manual.
 - `StanceName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A stance's name.
 - `STANCES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The stances, held while moving.
 - `standingHipHeight` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
+- `standUp` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Actor `id`'s ragdoll gets up now, the dead too, the way it lies (as the system's do); false: it has none falling.
 - `STATE_MATRIX` (const from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix's defaults.
 - `stateMatrix` (function from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): The state matrix: a fresh body from `make(dt)` holds each state at each facing, from rest and back to rest, and the pose after every step is kept.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
@@ -2732,6 +2760,23 @@ For the agents who maintain the engine.
 - `Weapon` (type): A weapon's name.
 - `weaponName` (function): `name` if it is a weapon; otherwise warns once, suggesting the closest, and returns undefined.
 - `WEAPONS` (const): What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used.
+
+### [`engine/anim/ragdoll.ts`](../engine/anim/ragdoll.ts)
+
+- `blendRagdollPoses` (function): The poses `k` (0 to 1) of the way from `a` to `b`, part by part (positions lerped, rotations slerped), into `out`.
+- `PART_NUMBERS` (const): Numbers a part takes in a ragdoll's poses: its position (3) and rotation (4).
+- `RAGDOLL_FADE` (const): Seconds the view fades a ragdoll in at the hand-off, and out as the body gets up (the sim keeps it that long).
+- `RAGDOLL_JOINTS` (const): Each part's joint to its parent (the pelvis has none), at the part's own joint (the spine's at spine2), and its kind.
+- `RAGDOLL_PARTS` (const): The parts, in order: the joint whose frame each takes, its parent part, and its capsules (the head is a ball).
+- `RagdollData` (interface): A ragdoll as plain data (engine/physics/ragdoll.ts `RagdollSpec`, without its velocity and group).
+- `RagdollJointData` (type): A joint of the ragdoll as the physics world takes it (engine/physics/joints.ts `JointKind`).
+- `RagdollJointKind` (type): A joint of the ragdoll as data: a ball, its frame at rest (its X along the child bone, its Y given, its Z their cross) with its limits about each axis (rad, engine/physics/joints.ts), or a hinge about its `LIMBS` hinge.
+- `RagdollLayer` (class): The layer that lays a ragdoll's parts on the bones (see the file comment).
+- `RagdollLayerOptions` (interface): What `new RagdollLayer` takes.
+- `ragdollOf` (function): The ragdoll of a body of `build` posed as `world` (see the file comment).
+- `ragdollRest` (function): How a ragdoll of `build` whose parts are posed as `poses` lies, and where the humanoid lying so stands.
+- `RagdollRest` (interface): How a ragdoll at rest lies, and where the humanoid lying the same way stands (`ragdollRest`).
+- `RagdollShapeData` (interface): A part's capsule or ball in world metres now, and its radius.
 
 ### [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)
 
@@ -4597,6 +4642,7 @@ For the agents who maintain the engine.
 
 - `dropLayers` (function): Takes `layers` off their animator and frees their meshes.
 - `Held` (interface): What the actor puppets keep of one actor.
+- `HeldRagdoll` (interface): A ragdoll as the view keeps it: its parts' poses a step ago and now, its hand-off step, and how long it has lain.
 - `Layers` (interface): The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes.
 - `layersFor` (function): The layers in `layers` of actor `id`, whose puppet animator is `animator` (its clip layer `clips`): made again when what they are made for changed (see the file comment), their chain meshes on `puppet`, drawn with `materials`.
 - `Place` (interface): Where an actor stands: its feet (m) and heading (rad).
@@ -5529,6 +5575,17 @@ For the agents who maintain the engine.
 - `matchHull` (function): Gives `character`'s body the hull of straight middle `height` unless it has it: on the ground keeping the feet; in the `air` growing about the centre where that fits, else from the feet, and shrinking about the centre when the crouch began in the air (`tuck`: the feet tucked up), else from the top.
 - `setHull` (function): Gives `character`'s body a capsule of straight middle `height`, its feet or its centre kept where they are.
 
+### [`engine/physics/joints.ts`](../engine/physics/joints.ts)
+
+- `addJoint` (function): Joins two bodies, or a body to the world, as `spec` says (see the file comment); returns the joint's id.
+- `hasJoint` (function): Whether the joint exists.
+- `JOINT_CODES` (const): The codes this module raises, with their fixes.
+- `jointBodies` (function): The two bodies a joint holds: `a` and `b`, or the anchor and `a` for a joint to the world.
+- `JointKind` (type): A joint's kind as data (see the file comment): springs and damping per second², angles in radians.
+- `joints` (function): Every joint's id, in id order.
+- `JointSpec` (interface): A joint as `addJoint` takes it.
+- `removeJoint` (function): Removes a joint (a joint to the world leaves its anchor, `jointBodies(…)[0]`).
+
 ### [`engine/physics/ledge.ts`](../engine/physics/ledge.ts)
 
 - `findLedge` (function): A ledge on top of `wall` that `character` can mantle onto, within `search.reach` above its feet, or null.
@@ -5704,6 +5761,20 @@ For the agents who maintain the engine.
 - `vec` (function): A vector as Rapier's `{ x, y, z }`, checked.
 - `Vec3Like` (type): A vector: three.js's `Vector3`, `{ x, y, z }` or `[x, y, z]`.
 
+### [`engine/physics/ragdoll.ts`](../engine/physics/ragdoll.ts)
+
+- `addRagdoll` (function): Adds a ragdoll as `spec` says (see the file comment) and returns its ids.
+- `PART_STRIDE` (const): Numbers a part takes in `readRagdoll`: its position (3) and rotation (4).
+- `Ragdoll` (interface): A ragdoll's ids: a body a part, in the spec's order, and its joints.
+- `RAGDOLL` (const): A ragdoll's tuning: its parts' damping (per second) and friction, its default density (kg/m³), and the solver passes its parts take beyond the pinned four (engine/physics/params.ts): over eight measured falls, the worst bends a knee 10° past its limit for a moment (21° without them); an elbow still swings 24° past as a hand strikes the floor.
+- `RagdollJoint` (interface): A joint between two parts, by their indexes: where it holds (world metres now), its kind, and its rest.
+- `RagdollPart` (interface): A part: its frame in the world now (its joint's position, its bone's rotation) and its colliders.
+- `RagdollShape` (interface): A collider of a part: a capsule from `from` to `to`, or a ball at `from` (no `to`), `radius` round; world metres.
+- `RagdollSpec` (interface): A ragdoll as `addRagdoll` takes it.
+- `ragdollSpeed` (function): The fastest part's speed (m/s), counting its spin at `reach` metres from its middle (a head turning slowly is still).
+- `readRagdoll` (function): Every part's pose now, `PART_STRIDE` numbers a part in the parts' order, written into `out`.
+- `removeRagdoll` (function): Removes the ragdoll's bodies, and with them its joints.
+
 ### [`engine/physics/rescue.ts`](../engine/physics/rescue.ts)
 
 - `RescueLevel` (interface): A level as the rescue reads it: a compiled level (engine/world/level) or anything with these per-tile grids.
@@ -5769,7 +5840,7 @@ For the agents who maintain the engine.
 - `defineActorKinds` (function): Declares the components `actor`, `animator`, `puppet`, `clips` (engine/sim/actorClips.ts), `oneWay`, `reactions` and `secondary` (engine/sim/reactions.ts), the setting `physics.characterGravity` and the controls' `input.sprint` and `input.crouch` on `registry`.
 - `placeActor` (function): Puts actor `id` at `at`, its feet on the ground below (just above, outside the skin, as a spawn stands it), facing `yaw` (its own when absent), at rest: no velocity, no jump, dash or landing pending, standing (its hull too); on the shooter model its motion state starts again, holstered as it was, or ducked with `crouch`, its hull crouched from its next step on and kept so until it has headroom, for a place no standing hull fits (a crawlspace).
 - `PuppetComponent` (interface): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
-- `removeActor` (function): Removes an actor and its body.
+- `removeActor` (function): Removes an actor and its body (its ragdoll's parts too, engine/sim/ragdolls.ts).
 - `spawnActor` (function): Spawns an actor in a scene with a physics world: its body, and an entity with the component `actor`.
 
 ### [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)
@@ -5798,7 +5869,9 @@ For the agents who maintain the engine.
 ### [`engine/sim/combatApi.ts`](../engine/sim/combatApi.ts)
 
 - `addAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds a queued agent's body now (`updateCrowd` does it through the queue), its feet at `x`, `y`, `z`, moving at `vx`, `vy`, `vz`; returns its id.
+- `addJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Joins two bodies, or a body to the world, as `spec` says (see the file comment); returns the joint's id.
 - `addMelee` (function from [`engine/sim/melee.ts`](../engine/sim/melee.ts)): Adds the system `melee` to `w` (once): see the file comment.
+- `addRagdolls` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Adds the system `ragdolls` to `w` (once), after the actors' readback: call it in a scene's setup.
 - `addWeapons` (function from [`engine/sim/weapons.ts`](../engine/sim/weapons.ts)): Adds the system `weapons` to `w` (once): see the file comment.
 - `AgentState` (type from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Where an agent is in its life: see `CROWD_AGENT_FIELDS.state`.
 - `airTime` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): How long (s) a body thrown up at `up` m/s flies under `gravity` (m/s², above 0) until it comes down to `rise` metres above where it left (below for a drop): the later root of `rise = up·t − gravity·t²/2`.
@@ -5841,6 +5914,8 @@ For the agents who maintain the engine.
 - `FollowOptions` (interface from [`engine/world/steer.ts`](../engine/world/steer.ts)): How `followFlow` steers.
 - `getTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): The telegraph `id` of `registry` (the shared one by default); a missing id gives `telegraph:arc`, with a warning.
 - `getWeapon` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The weapon `id` of `registry` (the shared one by default); a missing id gives `weapon:gun`, with a warning.
+- `handOff` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Gives actor `id` over to its ragdoll, as `hit` says (see the file comment); returns its component.
+- `hasJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Whether the joint exists.
 - `Health` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health (`HEALTH_FIELDS` says what each field means).
 - `HEALTH` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Health with every field at its default: 1 hit point, never hit.
 - `HEALTH_FIELDS` (const from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): A target's health, for a scene's component: `defineComponent('health', { description, fields: HEALTH_FIELDS })`.
@@ -5855,6 +5930,9 @@ For the agents who maintain the engine.
 - `HurtSet` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Targets for hit tests: a spatial hash of their feet by id (filled this step, engine/world/spatial.ts) and their hurt capsules.
 - `inCone` (function from [`engine/sim/hits.ts`](../engine/sim/hits.ts)): Whether `target` is in the hit cone of `shape` (scaled by `size`) from the feet `from`, facing `yaw` (forward is (sin yaw, 0, cos yaw)): its footprint (a disc of its radius) meets the ground sector the strike reaches, and its height overlaps the strike's height window above the feet.
 - `inTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` overlaps telegraph `t` placed at `place`: what it hits as it goes off.
+- `jointBodies` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): The two bodies a joint holds: `a` and `b`, or the anchor and `a` for a joint to the world.
+- `JointKind` (type from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): A joint's kind as data (see the file comment): springs and damping per second², angles in radians.
+- `JointSpec` (interface from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): A joint as `addJoint` takes it.
 - `keepTokens` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Keeps the tokens of the holders `keep` approves (alive, still attacking), freeing the rest: how many are held.
 - `killAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Kills an agent: its body joins the group `corpse` (the world and props still stop it; the crowd walks through it) with `CROWD_MATERIAL.corpseFriction`, and a flyer falls.
 - `knockback` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Adds `velocity` (m/s) to an agent or corpse in the world, the same for every mass, waking it.
@@ -5874,15 +5952,22 @@ For the agents who maintain the engine.
 - `ProjectileHit` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A shot's hit this step: a target or a wall, where along the move and where the shot's centre was then.
 - `ProjectileState` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Where a shot is in its flight: see `PROJECTILE_FIELDS.state`.
 - `ProjectileStep` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): How `stepProjectiles` steps.
+- `RAGDOLL_FIELDS` (const from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The component `ragdoll`'s fields.
+- `RAGDOLL_SIM` (const from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The hand-off's numbers: seconds, m/s, and the tip a push gives (rad/s for each m/s).
+- `RagdollHit` (interface from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): A hit that hands a body off: its push (m/s, added to how it moves), its spin (rad/s), and whether it kills.
+- `RagdollState` (interface from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): The component `ragdoll`: an actor's body in physics' hands (see the file comment).
 - `recoilStep` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The kick of shot `n` of a burst (0: the first), [up, right] degrees: its recoil step, the last repeating.
 - `releaseToken` (function from [`engine/world/ai.ts`](../engine/world/ai.ts)): Gives `id`'s token back (its attack ended, or was broken off): true when it held one.
 - `removeAgent` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Removes an agent's body now (`updateCrowd` does it for `leaving` agents and old corpses): it is `gone`.
+- `removeJoint` (function from [`engine/physics/joints.ts`](../engine/physics/joints.ts)): Removes a joint (a joint to the world leaves its anchor, `jointBodies(…)[0]`).
+- `removeRagdollOf` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Takes actor `id`'s ragdoll out (its parts, if any, and the component); a body without one is left alone.
 - `requestHitStop` (function from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): Asks the frame clock for a hit-stop of `seconds` (real seconds, before its budget): kept until the run's host takes it after the step (`takeHitStop`), the longest of the step winning.
 - `seek` (function from [`engine/world/steer.ts`](../engine/world/steer.ts)): The way from `from` to `to` on the ground: a unit vector, zero within a millimetre.
 - `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `SIGHT` (const from [`engine/world/ai.ts`](../engine/world/ai.ts)): `canSee`'s defaults: emberdeep's 150 units of sight and 60 of sense, an eye at 1.5 m on a chest at 1 m.
 - `SightOptions` (interface from [`engine/world/ai.ts`](../engine/world/ai.ts)): How `canSee` looks.
 - `spreadOf` (function from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): The cone a shot strays in now (half-angle, deg): the hip's (and the move's, `moving`) toward the sights' by `aim`, 0 to 1.
+- `standUp` (function from [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)): Actor `id`'s ragdoll gets up now, the dead too, the way it lies (as the system's do); false: it has none falling.
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
@@ -6158,6 +6243,18 @@ For the agents who maintain the engine.
 - `queryView` (function): The read-only view of a physics world.
 - `QueryView` (type): The physics queries, read-only: what presentation code may ask of the sim's physics.
 - `queryViewOf` (function): The read-only view of a sim world's physics.
+
+### [`engine/sim/ragdolls.ts`](../engine/sim/ragdolls.ts)
+
+- `addRagdolls` (function): Adds the system `ragdolls` to `w` (once), after the actors' readback: call it in a scene's setup.
+- `defineRagdollKinds` (function): Declares the component `ragdoll` on `registry` (the shared one by default), once.
+- `handOff` (function): Gives actor `id` over to its ragdoll, as `hit` says (see the file comment); returns its component.
+- `RAGDOLL_FIELDS` (const): The component `ragdoll`'s fields.
+- `RAGDOLL_SIM` (const): The hand-off's numbers: seconds, m/s, and the tip a push gives (rad/s for each m/s).
+- `RagdollHit` (interface): A hit that hands a body off: its push (m/s, added to how it moves), its spin (rad/s), and whether it kills.
+- `RagdollState` (interface): The component `ragdoll`: an actor's body in physics' hands (see the file comment).
+- `removeRagdollOf` (function): Takes actor `id`'s ragdoll out (its parts, if any, and the component); a body without one is left alone.
+- `standUp` (function): Actor `id`'s ragdoll gets up now, the dead too, the way it lies (as the system's do); false: it has none falling.
 
 ### [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)
 
@@ -7125,6 +7222,14 @@ For the agents who maintain the engine.
 - `HALL_TEXT` (const): labs/box/levels/hall.txt, as it is (see the file comment).
 - `setupHall` (function): The hall's setup: its level bodies, and the hero at the spawn facing south, tuned by `box.hall.*`, with any further `components` (the fight's); returns his id.
 
+### [`labs/box/scenes/ragdoll.ts`](../labs/box/scenes/ragdoll.ts)
+
+- `default` (default): Ragdolls in the box (PLAN.md WP 10.2): the box room as a physics level (labs/box/scenes/room-hero.ts), the hero at its spawn and four sparring partners (actors on `build:adult`) in a row across the room's south half (`SPOTS`), facing him.
+- `PARTNER` (const): A partner: its index (its blow) and its spot.
+- `ragdoll` (const): The box scene `box:ragdoll`.
+- `RAGDOLL_DEMO` (const): The demo's numbers: the cycle (s), each partner's blow (when, s into the cycle, and its push in units of the `push` setting, +Z south), when the dead one stands (s), and the hero's reach (m).
+- `RAGDOLL_SETTINGS` (const): The scene's settings, read when it starts.
+
 ### [`labs/box/scenes/room-hero.ts`](../labs/box/scenes/room-hero.ts)
 
 - `default` (default): The room with a hero, Box 2 (PLAN.md §9.0, WP 3.10): the box room (labs/box/levels/room.txt: 16 × 12 m inside walls 3 m high, a low wall 0.75 m high, a 2 × 2 m pillar) as a physics level, and the hero (labs/box/cast/hero.ts) at its spawn `@`, facing south into the room.
@@ -7242,6 +7347,12 @@ For the agents who maintain the engine.
 - `SPRING` (const): A sparring dummy's spring: its frequency (Hz) and damping ratio, a hit's swing (rad/s) and the most it leans (rad).
 - `standDummies` (function): Stands the ring's dummies (`RING_DUMMIES`): their entities, in order.
 - `standDummy` (function): Stands a sparring dummy on its base at `at` (m), facing `yaw` (rad): its entity.
+
+### [`labs/playground/cast/partners.ts`](../labs/playground/cast/partners.ts)
+
+- `PARTNER_BLOWS` (const): What each hard blow does, by its move: its push along the blow and up (m/s).
+- `RING_PARTNERS` (const): Where the partners stand (m, on the canvas 1 m up) and face: the canvas's south corners, toward the steps.
+- `standPartners` (function): Stands the ring's partners (`RING_PARTNERS`) and adds the systems that spar with them (see the file comment).
 
 ### [`labs/playground/cast/player.ts`](../labs/playground/cast/player.ts)
 

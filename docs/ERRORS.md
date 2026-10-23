@@ -1169,6 +1169,12 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 - Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
 - Registered in: [`engine/physics/world.ts` line 84](../engine/physics/world.ts)
 
+### PHYSICS_NO_JOINT
+
+- Message: `there is no joint {id}{why}`
+- Fix: use an id addJoint() returned while its joint exists (removing a body removes its joints; joints() lists them)
+- Registered in: [`engine/physics/joints.ts` line 48](../engine/physics/joints.ts)
+
 ### PHYSICS_NONE
 
 - Message: `{what} has no physics world`

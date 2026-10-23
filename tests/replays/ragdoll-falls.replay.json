@@ -1,0 +1,27 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Ragdolls (WP 10.2) in the box: box:ragdoll's first cycle and the start of its second, with no input. The first partner, struck from the front, falls onto its back and gets up from it; the second, struck from behind, onto its face; the third is launched up and a little east; the fourth is killed and lies until the cycle stands it up at 6 s; at 8 s every partner stands on its spot again and the next cycle's first blow lands.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:ragdoll",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 540,
+  "inputs": [],
+  "hashes": {
+    "linux-x64": {
+      "0": "3461ce26404a81ab",
+      "60": "2555c5686d94ab45",
+      "120": "707db4c62b3fca81",
+      "180": "ad07299dbc65c318",
+      "240": "5255b1349a490050",
+      "300": "a79884f58e7ddfc5",
+      "360": "0b5cbee04d5639d6",
+      "420": "d9caa6cd01f89b8c",
+      "480": "e2b7c3aef3be0223",
+      "540": "67245034c4ee3536"
+    }
+  }
+}

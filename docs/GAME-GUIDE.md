@@ -107,6 +107,7 @@ The box (labs/box/, its README says which scene shows what) has a working use of
 | Enemies and crowds             | Crowd bodies (`addAgent`, `updateCrowd`, `knockback`, `killAgent`), steering (`seek`, `followFlow`, `approachRing`), `NavGrid` and `FlowField`, attack tokens, `canSee` | labs/box/cast/walker.ts, labs/box/scenes/crowd-1000.ts |
 | Combat                         | Moves as data (`defineMove`, `Attack`, `Combo`), hit queries (`coneHits`, `sweepHits`), `damage` and `HEALTH`, projectiles, telegraphs, `reactTo`, `requestHitStop` | labs/box/scenes/fight.ts, labs/box/cast/hero.ts |
 | Melee, guns and targets        | `addMelee` (a punch with a lunge, kicks, the door kick), `defineWeapon`, `weaponsFor` and `addWeapons` (hip fire, the sights, a climbing recoil, reloads), `defineThing` and `spawnThing` (targets that fall at a hit and stand again; `node x new thing`) | labs/playground/weapons/, labs/playground/cast/dummies.ts |
+| Ragdolls and joints            | `addJoint` (fixed, ball, hinge, slider, rope, spring, as data), `addRagdolls` and `handOff` (a hard blow or a death gives a person's body to physics; it gets up the way it lies), `standUp` | labs/box/scenes/ragdoll.ts, labs/playground/cast/partners.ts |
 | Animation                      | Actors animate themselves (`spawnActor({ anim: { build } })`); builds, bodies, the animator's body states, actions (`defineAction`, played on an actor with `actOn`), clips from the library (`playClip`) | labs/box/scenes/clips.ts, `node x anim find` |
 | How it looks                   | Materials and textures as data (`defineMaterial`, `defineTexture`), looks (`?post.look=look:cartoon`; `defineLook`), skies, lights | labs/box/looks/torch-lit.ts, `node x describe look` |
 | Effects                        | Emitters as data, bursting on sim events (`defineEmitter`); telegraphs; screen shake      | labs/box/scenes/fight.ts           |
@@ -306,6 +307,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 
 **Firearms (WP 13.20)**: the kind `weapon`, a player's weapons drawn and holstered, hip fire and the sights, hitscan shots with spread and a climbing recoil, reloads.
 `WEAPON_FIELDS`, `defineWeapon`, `getWeapon`, `recoilStep`, `spreadOf`, `WEAPONS_FIELDS`, `weaponsFor`, `addWeapons`; types `WeaponKind`, `WeaponSpec`, `WeaponsState`.
+
+**Ragdolls (WP 10.2)**: joints as data, a humanoid's body handed off to physics on a hard hit or a death, lying still and getting up the way it lies.
+`addJoint`, `removeJoint`, `hasJoint`, `jointBodies`, `RAGDOLL_SIM`, `RAGDOLL_FIELDS`, `addRagdolls`, `handOff`, `removeRagdollOf`, `standUp`; types `JointKind`, `JointSpec`, `RagdollState`, `RagdollHit`.
 
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.

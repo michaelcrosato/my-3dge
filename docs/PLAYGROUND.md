@@ -355,6 +355,10 @@ a slide; their hits land on props, doors, dummies and people; the second kick br
 a shake and a sound sell each one. The ring's dummies spring back; two of them ragdoll on a hard hit
 and get up (WP 10.2).
 
+As built (WP 10.2, ADR-0025 amendment 26): the two that ragdoll are sparring partners, people on the canvas's south
+corners (labs/playground/cast/partners.ts): a punch or a shot flinches one, a kick or the uppercut sends it down as a
+ragdoll, and it gets up the way it lies once it lies still.
+
 ### 7.4 The neighbours and the dog
 
 - **Neighbours** (WP 13.21): a handful of people on routes and schedules (the sidewalk, a porch, the garden bench),

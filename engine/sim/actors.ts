@@ -293,13 +293,16 @@ export function placeActor<C extends object>(
 /** The bodies of the one-way platforms (the component `oneWay`). */
 const oneWayOf = (w: World) => new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
 
-/** Removes an actor and its body. */
+/** Removes an actor and its body (its ragdoll's parts too, engine/sim/ragdolls.ts). */
 export function removeActor<C extends object>(world: World<C>, id: number): void {
   const w = world as unknown as World;
   const actor = (w.get(id) as Partial<ActorComponents> | undefined)?.actor;
   if (!actor)
     throw codeError('SIM_BAD_ARGUMENT', { where: 'removeActor(w, id)', value: String(id), expected: 'an actor’s id' });
-  physicsOf(w).removeBody(actor.body);
+  const physics = physicsOf(w);
+  physics.removeBody(actor.body);
+  const parts = (w.get(id) as { ragdoll?: { bodies: number[] } }).ragdoll?.bodies ?? []; // its ragdoll's, if it lies so
+  for (const body of parts) if (physics.hasBody(body)) physics.removeBody(body);
   w.despawn(id);
 }
 
@@ -313,6 +316,7 @@ function moveActors(w: World, intents: Intents): void {
   const rides = ridesOf(w);
   const controls = { holdSprint: w.settings.get('input.sprint') === 'hold', toggleCrouch: w.settings.get('input.crouch') === 'toggle' }; // prettier-ignore
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
+    if ((e as { ragdoll?: unknown }).ragdoll) continue; // its ragdoll moves it (engine/sim/ragdolls.ts)
     const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
     const input: CharacterInput = {

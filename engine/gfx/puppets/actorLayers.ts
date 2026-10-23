@@ -2,7 +2,8 @@
  * @file What the actor puppets keep of each actor, and the view's own layers on its puppet animator (PLAN.md WP 3.10,
  * split from engine/gfx/puppets/actors.ts at WP 13.12): `Held`, an actor's last two places and the components its
  * pose loads; `Layers`, what the view lays on the animator (its reactions, its actions, its secondary motion and their
- * chain meshes, the foot plant, the traversal plant and the hold, the last three ending the `post` slot), made again
+ * chain meshes, the foot plant, the traversal plant and the hold, the last three ending the `post` slot, and its
+ * ragdoll's parts, last in the `physics` slot, WP 10.2: `HeldRagdoll` keeps the last two steps of them), made again
  * by `layersFor` when what they are made for changes (`layersKey`: reactions, actions, the secondary look, or the clip
  * layer actions ride; or the animator, made again when the weapon changes, the new hold following the old's draw),
  * and taken off with their meshes freed by `dropLayers`.
@@ -22,6 +23,7 @@ import type { ClipsData } from '../../anim/clip/clipsets';
 import type { ClipLayer } from '../../anim/clip/layer';
 import { FootPlant } from '../../anim/footPlant';
 import type { MotionView, MovementPose } from '../../anim/locomotion/motion';
+import { RagdollLayer } from '../../anim/ragdoll';
 import { Reactions, type ReactionState } from '../../anim/reactions';
 import { HoldPlant, type LookPose } from '../../anim/traversal/hold';
 import { TraversalPlant } from '../../anim/traversal/plant';
@@ -66,6 +68,19 @@ export interface Held {
    * hand while its hold holds a gun, so a gun holstered stays there as the hands lower it (`HoldPlant.drawn`).
    */
   carry: WeaponKind | null;
+  /** Its ragdoll (the component `ragdoll`, engine/sim/ragdolls.ts) as the last two steps left it, or null: none. */
+  ragdoll: HeldRagdoll | null;
+}
+
+/** A ragdoll as the view keeps it: its parts' poses a step ago and now, its hand-off step, and how long it has lain. */
+export interface HeldRagdoll {
+  before: number[];
+  after: number[];
+  since: number;
+  /** Steps since its hand-off. */
+  age: number;
+  /** Steps since it got up; −1 while it falls or lies. */
+  rising: number;
 }
 
 /** The view's own layers on one actor's puppet animator: its reactions, its secondary motion and their meshes. */
@@ -84,6 +99,8 @@ export interface Layers {
   traversal: TraversalPlant;
   /** Its head toward its look and its gun held, last (engine/anim/traversal/hold.ts, WP 13.11). */
   hold: HoldPlant;
+  /** Its ragdoll's parts on its bones, last in the physics slot (engine/anim/ragdoll.ts, WP 10.2); weight 0 without one. */
+  ragdoll: RagdollLayer;
 }
 
 /** What an actor's layers are made for: whether it has reactions and actions, and its secondary motion. */
@@ -99,7 +116,7 @@ export function dropLayers(layers: Layers): void {
   if (layers.reactions) layers.animator.drop(layers.reactions.name).drop(layers.reactions.lyingLayer.name);
   if (layers.actions) layers.animator.drop(layers.actions.name).drop(layers.actions.flipLayer.name);
   if (layers.secondary) layers.animator.drop(layers.secondary.name);
-  layers.animator.drop(layers.plant.name).drop(layers.traversal.name).drop(layers.hold.name);
+  layers.animator.drop(layers.plant.name).drop(layers.traversal.name).drop(layers.hold.name).drop(layers.ragdoll.name);
   layers.chains?.dispose();
 }
 
@@ -134,7 +151,8 @@ export function layersFor(
     const plant = new FootPlant({ name: 'view:footPlant' }).attach(animator);
     const traversal = new TraversalPlant({ name: 'view:traversal' }).attach(animator);
     const hold = Object.assign(new HoldPlant({ name: 'view:hold' }).follow(own?.hold).attach(animator), { contacts: traversal }); // prettier-ignore
-    own = { animator, key, reactions, actions, clips, secondary, chains, plant, traversal, hold };
+    const ragdoll = new RagdollLayer({ name: 'view:ragdoll' }).attach(animator); // after the reactions' lying layer
+    own = { animator, key, reactions, actions, clips, secondary, chains, plant, traversal, hold, ragdoll };
     layers.set(id, own);
   }
   const meshes = own.chains?.meshes ?? [];

@@ -1026,7 +1026,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   engine/gfx/props.ts, at its cap, gave its texture and materials to engine/gfx/propLooks.ts.
 - **The playground**: the library gains the chair (6 kg), what the owner's playtest throws; the cottage
   (labs/playground/levels/cottage.ts, scenes/interact.ts) holds a door, two windows, the kitchen's lamp and switch and
-  chairs to throw, and its replay (tests/replays/playground-interact.replay.json) opens the door, switches the light
+  chairs to throw, and its replay (playground-interact, retired with the cottage at WP 13.18) opens the door, switches the light
   off and on, closes the door, bursts it open and breaks it, and throws a chair through a pane. The house's doors,
   windows, lamps by room (`room:<name>`, amendment 18's light groups), the garage and its door (whose storey must hold
   the door's 2.2 m slide up) and the bot through closed doors are WP 13.18's; doors, glass and switches have no
@@ -1332,3 +1332,40 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   the backstop, a reload and the holster; its story is labs/playground/weapons/range.test.ts. Writing it found the
   first recoil numbers too steep (a rifle burst climbing 4° in seven rounds, over the 3 m backstop): the guns' kicks
   were halved (the pistol 0.9° a shot, the rifle 0.5° falling to 0.2°).
+
+## Amendment 26 (2026-10-22, WP 10.2): ragdolls
+
+- **Joints as data** (engine/physics/joints.ts, beyond the WP's Owns: §5.8's port of shardfall's joints): fixed, ball,
+  hinge, slider, rope and spring, to another body or to the world (a fixed anchor body of its own), in SI. Ours: a
+  joint's frames are set so it rests at `rest`, `b`'s rotation relative to `a`'s (theirs at the hand-off by default),
+  so a hinge's limits and every spring measure from there, whatever the pose a joint is made in. Two traps of Rapier
+  0.21's JS, measured: it hands a ball joint back typed as a generic one (its motors missing), so a ball's springs go
+  through its own class over the same handle; and it has no limits for a ball, which its joint set's raw per-axis call
+  (what a hinge's `setLimits` calls) gives: exact for a turn about one axis, the quaternion's share about each for a
+  turn about several. Not ported: shardfall's chain and bridge builders (nothing here needs them yet).
+- **The ragdoll** (engine/physics/ragdoll.ts, engine/anim/ragdoll.ts): eleven parts at their bones' frames (the pelvis
+  with the hips, the chest with the shoulders, the head, the arms' and legs' two segments, the hands and feet on the
+  forearms and shins), capsules at `bodyCapsules`' radii, in the group `corpse`; balls at the spine, the neck, the
+  shoulders and the hips within a body's limits (the spine and neck sprung toward straight), hinges at the elbows and
+  knees about the IK's own hinges, each joint at rest in the T-pose. A first build without limits folded a neck 174°
+  and a knee to its stop; with them, over eight measured falls, a knee goes 10° past its limit for a moment (21°
+  without the parts' four extra solver passes: engine/physics/world.ts `solverIterations`) and an elbow still swings
+  24° past as a hand strikes the floor. A fall lies still (its fastest part under 0.3 m/s, a turn counted at 0.1 m)
+  1.7 to 4 s after the blow; it gets up after 0.5 s still, or 5 s after the blow however it lies.
+- **The hand-off** (engine/sim/ragdolls.ts, beyond Owns: the sim's half): the body posed from its animator's data
+  where it stands, every part moving as it did plus the blow's push and a tip over it; its reactions down for as long
+  as it takes (or dead); its capsule kept under the pelvis, so the cameras follow, and the actor moving nothing
+  meanwhile (engine/sim/actors.ts skips it, and `removeActor` takes its parts). It gets up where the humanoid lying as
+  it lies would stand (its pelvis the ragdoll's, measured over 4 s of the lying body's breath and sway, ±2 cm), facing
+  as it would, and its reactions get up the way its chest lies. A scene adds the system `ragdolls` in its setup
+  (`addRagdolls`): one added at the first hand-off made a capture taken after it unrestorable into a fresh world.
+- **The view** (engine/gfx/puppets/actors.ts): a ragdoll layer last in the physics slot of every puppet, the parts
+  between their last two steps, faded in over 0.1 s and out over 0.3 s as the get-up shows (`RAGDOLL_FADE`).
+- **The box's setting** (labs/box/scenes/ragdoll.ts, `box:ragdoll`): four partners in the room fall on an 8 s cycle
+  to a blow from the front, one from behind, a launch and a death; `box.ragdoll.handOff` off, they fall through their
+  timelines instead. Its replays are tests/replays/ragdoll-falls.replay.json and ragdoll-strike.replay.json (the
+  hero's attack). The box's crowd (the fight's walkers) does not ragdoll: they are crowd bodies, not actors.
+- **The ring's partners** (labs/playground/cast/partners.ts): the two of §7.3 that ragdoll are people (actors on
+  `build:adult`) in the canvas's south corners, not two more of amendment 24's dummies (props on springs): a punch or
+  a shot flinches one, a kick or the uppercut hands it off, and its hit points come back at every blow. The site's
+  three replays (playground-site, -melee, -range) took new goldens for them (hashed), their stories unchanged.

@@ -115,3 +115,9 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts). playground-range is new with that WP:
   the range's story (labs/playground/weapons/range.test.ts), its inputs written from a scripted run that aimed each
   shot at its target's plate as the sim had it.
+- playground-site's, playground-melee's and playground-range's goldens were re-recorded (`--update`, Node ×3 and
+  Chromium ×3 agreeing) with WP 10.2's ragdolls (ADR-0025 amendment 26): the ring stands two sparring partners
+  (actors with an animator, `health` and the component `sparringPartner`, hashed) and the site adds the systems
+  `ragdolls` and `partners`. No run strikes them: their inputs are as they were, and their stories the same, event for
+  event (labs/playground/scenes/site.test.ts, ring.test.ts, labs/playground/weapons/range.test.ts). ragdoll-falls and
+  ragdoll-strike are new with that WP: the box's ragdolls (labs/box/scenes/ragdoll.test.ts).

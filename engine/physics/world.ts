@@ -131,6 +131,8 @@ export interface BodySpec {
   canSleep?: boolean;
   /** How much of the world's gravity it feels (1). */
   gravityScale?: number;
+  /** Solver passes beyond the pinned ones for its island (0): a ragdoll's joints hold better (engine/physics/ragdoll.ts). */
+  solverIterations?: number;
 }
 
 /** A body's state, copied: changing it changes nothing. */
@@ -294,7 +296,8 @@ export function createPhysics(): Physics {
         .setAngularDamping(num(spec.angularDamping, 0, 'addBody({ angularDamping })'))
         .setGravityScale(num(spec.gravityScale, 1, 'addBody({ gravityScale })', -Infinity))
         .setCcdEnabled(spec.ccd ?? false)
-        .setCanSleep(spec.canSleep ?? true);
+        .setCanSleep(spec.canSleep ?? true)
+        .setAdditionalSolverIterations(num(spec.solverIterations, 0, 'addBody({ solverIterations })', 0, 16));
       const group = spec.group ?? (type === 'dynamic' ? 'prop' : 'world');
       groupBits(group); // an unknown group throws before anything is added
       const colliders = spec.colliders ?? [];
