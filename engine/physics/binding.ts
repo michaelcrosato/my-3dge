@@ -3,7 +3,7 @@
  * (`scenePhysics`, declaring `physics.gravity` on its registry if it lacks it); `attachPhysics` binds it to the sim
  * world and adds the system `physics`, in the phase of that name, after `ai` and `anim` and before `readback`; and
  * `physicsOf(w)` returns the bound world (engine/physics/world.ts `Physics`: its bodies and queries), or throws
- * `PHYSICS_NONE` naming the fix.
+ * `PHYSICS_NONE` naming the fix; `hasPhysics(w)` says whether there is one.
  *
  * Invariants: a sim world has at most one physics world, held weakly by the sim world (`bindPhysics`), so nothing here
  * keeps a finished run alive or enters the hash; the physics world's own state is hashed and captured through the sim
@@ -36,6 +36,11 @@ const bound = new WeakMap<object, Physics>();
 /** Binds a physics world to a sim world, so `physicsOf(w)` finds it (the scene does this when it starts). */
 export function bindPhysics(owner: object, physics: Physics): void {
   bound.set(owner, physics);
+}
+
+/** Whether a sim world has a physics world bound to it. */
+export function hasPhysics(w: object): boolean {
+  return bound.has(w);
 }
 
 /** The physics world of a sim world: its bodies and queries. Throws `PHYSICS_NONE` for a scene without physics. */

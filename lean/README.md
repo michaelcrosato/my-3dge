@@ -403,6 +403,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Clip sets in the registry (WP 8.9)**: the kind clipset, one entry per set of readable clips, which a page or tool registers from data/anim/sets/ (defineClipSet), and the clip layer of an entity kept as plain data, loaded from it at every use (ClipLayerPool), as an actor's component clips holds it.
 `defineClipSet`, `clipSetFromFiles`, `getClipSet`, `clipSetId`, `clipSetIds`, `defineSetBuild`, `CLIPSET_FIELDS`, `CLIPS_FIELDS`, `emptyClipState`, `ClipLayerPool`; types `ClipSetEntry`, `ClipsData`.
 
+**The quadruped rig (WP 13.21)**: a dog on the planted gait for a crowd body (the rig `quadruped`), its state plain data, its pose the joints its body is drawn on, and its rig contract for the anim QA.
+`Quadruped`, `QUADRUPED`, `QUADRUPED_LEGS`, `QUADRUPED_RIG`; types `QuadrupedOptions`, `QuadrupedInput`, `QuadrupedState`, `QuadrupedPose`, `QuadrupedBone`.
+
 **Physics (WP 3.1)**: Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id, raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads it through the read-only QueryView.
 `physicsOf`, `COLLISION_GROUPS`, `PHYSICS_SETTINGS`, `addLevelBodies`, `queryViewOf`; types `Physics`, `BodySpec`, `ColliderSpec`, `BodyState`, `BodyChange`, `BodyType`, `Shape`, `Vec3Like`, `QuatLike`, `Hit`, `Ground`, `QueryOptions`, `RayOptions`, `ShapeCastOptions`, `OverlapOptions`, `ProbeOptions`, `GroupName`, `QueryView`.
 
@@ -450,6 +453,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 
 **A town's daily round (WP 13.21)**: routes walked on a schedule, and stepping aside for someone in the way.
 `ROUTE_FIELDS`, `followRoute`, `ASIDE`, `stepAside`; types `RouteStop`, `RouteState`, `RouteLeg`.
+
+**A crowd body's ground (WP 13.21)**: the physics world's, for a gait's feet (a quadruped's).
+`crowdGround`.
 
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
@@ -574,7 +580,7 @@ types `EngineFrame`, `FrameWorld`, `CameraPose`.
 `createPropMeshes`, `FLICKER`, `buildPropPart`, `partMatrix`; types `PropMeshes`, `PropMeshesOptions`, `PropMeshPose`, `PropLight`.
 
 **Crowd rendering and pose LOD (WP 5.4)**: thousands of humanoids, blobs and floaters in a few dozen draw calls over the instancing service, each body seen through bands of detail by its distance (the animator's pose level, capes), culled by the view; the blob and floater bodies as data.
-`createCrowd`, `createCrowdLod`, `CROWD_LOD`, `BLOB_BODY`, `blobBody`, `FLOATER_BODY`; types `Crowd`, `CrowdDraw`, `CrowdRigDraw`, `CrowdStats`, `RigBody`, `RigPart`, `RigJoints`, `RigShape`, `CrowdLod`, `CrowdLodOptions`, `CrowdLodCounts`, `CrowdBand`, `CrowdBandSpec`, `BlobFeatures`.
+`createCrowd`, `createCrowdLod`, `CROWD_LOD`, `BLOB_BODY`, `blobBody`, `FLOATER_BODY`, `QUADRUPED_BODY`; types `Crowd`, `CrowdDraw`, `CrowdRigDraw`, `CrowdStats`, `RigBody`, `RigPart`, `RigJoints`, `RigShape`, `CrowdLod`, `CrowdLodOptions`, `CrowdLodCounts`, `CrowdBand`, `CrowdBandSpec`, `BlobFeatures`.
 
 **Performance counters (WP 5.5)**: what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
 types `EngineStats`.

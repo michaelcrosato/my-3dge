@@ -328,6 +328,7 @@ export { BLOB_BODY } from './gfx/puppets/bodies/blob';
 export { blobBody } from './gfx/puppets/bodies/blob';
 export type { BlobFeatures } from './gfx/puppets/bodies/blob';
 export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
+export { QUADRUPED_BODY } from './gfx/puppets/bodies/quadruped';
 // Performance counters (WP 5.5): what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
 export type { EngineStats } from './dev/stats';
 // The texture library (v2, WP 7.3): a level's whole floor as a texture generator (define it under a game's id), with

@@ -335,6 +335,7 @@ game agent's manual.
 - `CrowdBodyInput` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): What a crowd body's rig is told each step (see the file comment).
 - `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
 - `CrowdDraw` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow.
+- `crowdGround` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The ground for a crowd body's feet in `w`'s physics world: a raycast through the group `world` (a `GaitProbe`).
 - `CrowdLod` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A crowd's level of detail (see the file comment).
 - `CrowdLodCounts` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): A frame's counts so far: bodies drawn in each band, and those culled by the view, the distance and `near`.
 - `CrowdLodOptions` (interface from [`engine/gfx/puppets/lod.ts`](../engine/gfx/puppets/lod.ts)): How a crowd's level of detail is made.
@@ -869,6 +870,16 @@ game agent's manual.
 - `PuppetBatches` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Instanced parts for crowds (see the file comment).
 - `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `PuppetMaterials` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Where materials come from: the page's material library.
+- `Quadruped` (class from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped: its state, its pose.
+- `QUADRUPED` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): The quadruped's build, m (shardfall's Biscuit: its quadruped preset at 0.72), and its tuning.
+- `QUADRUPED_BODY` (const from [`engine/gfx/puppets/bodies/quadruped.ts`](../engine/gfx/puppets/bodies/quadruped.ts)): The dog (see the file comment).
+- `QUADRUPED_LEGS` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): Its legs on the gait: the front left and right, the hind left and right; the diagonals step together.
+- `QUADRUPED_RIG` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): The quadruped's rig (engine/anim/proc/rig.ts): its points, its bones' lengths, its paws, and its states.
+- `QuadrupedBone` (type from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's bones: the front legs' two (`fl0`, `fl1`, `fr0`, `fr1`), the hind legs' three, the tail's links.
+- `QuadrupedInput` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): What a quadruped is told each step; every field is optional.
+- `QuadrupedOptions` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): What a quadruped is made from: its heading and clock at first, and the fixed step.
+- `QuadrupedPose` (type from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's pose: each joint a world matrix or a list of points, the rig body's joints.
+- `QuadrupedState` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's state: what `step` writes and `pose` reads, plain data (see the file comment).
 - `Quantize` (type from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where a change lands: the next bar line, the next beat, or at once.
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
@@ -1483,6 +1494,7 @@ game agent's manual.
 - `CrowdBody` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): A crowd body: what `CROWD_BODY_FIELDS` holds.
 - `CrowdBodyInput` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): What a crowd body's rig is told each step (see the file comment).
 - `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
+- `crowdGround` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The ground for a crowd body's feet in `w`'s physics world: a raycast through the group `world` (a `GaitProbe`).
 - `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
 - `CrowdRig` (type from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rigs a crowd body can have.
 - `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
@@ -1819,6 +1831,15 @@ game agent's manual.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
 - `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
 - `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
+- `Quadruped` (class from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped: its state, its pose.
+- `QUADRUPED` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): The quadruped's build, m (shardfall's Biscuit: its quadruped preset at 0.72), and its tuning.
+- `QUADRUPED_LEGS` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): Its legs on the gait: the front left and right, the hind left and right; the diagonals step together.
+- `QUADRUPED_RIG` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): The quadruped's rig (engine/anim/proc/rig.ts): its points, its bones' lengths, its paws, and its states.
+- `QuadrupedBone` (type from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's bones: the front legs' two (`fl0`, `fl1`, `fr0`, `fr1`), the hind legs' three, the tail's links.
+- `QuadrupedInput` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): What a quadruped is told each step; every field is optional.
+- `QuadrupedOptions` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): What a quadruped is made from: its heading and clock at first, and the fixed step.
+- `QuadrupedPose` (type from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's pose: each joint a world matrix or a list of points, the rig body's joints.
+- `QuadrupedState` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's state: what `step` writes and `pose` reads, plain data (see the file comment).
 - `Quaternion` (re-export from `three/webgpu`): three.js's quaternion: every rotation in the engine.
 - `QuatLike` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A rotation: three.js's `Quaternion`, `{ x, y, z, w }` or `[x, y, z, w]`.
 - `queryGround` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A `GroundProbe` over the physics ground, through `queries.probe` (the level and props, never an actor): a ray that starts inside a body finds no ground, so a sole inside a wall never climbs onto it.
@@ -2347,6 +2368,15 @@ For the agents who maintain the engine.
 - `PoseName` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A pose's name.
 - `PoseOptions` (interface from [`engine/anim/character.ts`](../engine/anim/character.ts)): Where and how `pose` draws the body.
 - `POSES` (const from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): The held poses, each with what it shows.
+- `Quadruped` (class from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped: its state, its pose.
+- `QUADRUPED` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): The quadruped's build, m (shardfall's Biscuit: its quadruped preset at 0.72), and its tuning.
+- `QUADRUPED_LEGS` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): Its legs on the gait: the front left and right, the hind left and right; the diagonals step together.
+- `QUADRUPED_RIG` (const from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): The quadruped's rig (engine/anim/proc/rig.ts): its points, its bones' lengths, its paws, and its states.
+- `QuadrupedBone` (type from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's bones: the front legs' two (`fl0`, `fl1`, `fr0`, `fr1`), the hind legs' three, the tail's links.
+- `QuadrupedInput` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): What a quadruped is told each step; every field is optional.
+- `QuadrupedOptions` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): What a quadruped is made from: its heading and clock at first, and the fixed step.
+- `QuadrupedPose` (type from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's pose: each joint a world matrix or a list of points, the rig body's joints.
+- `QuadrupedState` (interface from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped's state: what `step` writes and `pose` reads, plain data (see the file comment).
 - `queryGround` (function from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): A `GroundProbe` over the physics ground, through `queries.probe` (the level and props, never an actor): a ray that starts inside a body finds no ground, so a sole inside a wall never climbs onto it.
 - `REACTION` (const from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): Every constant of the reactions: rates per second, times in seconds.
 - `ReactionBody` (type from [`engine/anim/reactions.ts`](../engine/anim/reactions.ts)): What a reaction's phase tells the humanoid: a pose, how far down.
@@ -3058,6 +3088,18 @@ For the agents who maintain the engine.
 - `TipSample` (interface): A sample of a trail: its tip, its base and its age, s.
 - `TipTrail` (class): The streak a tip leaves (see the file comment).
 - `TrailOptions` (interface): A trail's shape (see the file comment).
+
+### [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)
+
+- `Quadruped` (class): A quadruped: its state, its pose.
+- `QUADRUPED` (const): The quadruped's build, m (shardfall's Biscuit: its quadruped preset at 0.72), and its tuning.
+- `QUADRUPED_LEGS` (const): Its legs on the gait: the front left and right, the hind left and right; the diagonals step together.
+- `QUADRUPED_RIG` (const): The quadruped's rig (engine/anim/proc/rig.ts): its points, its bones' lengths, its paws, and its states.
+- `QuadrupedBone` (type): A quadruped's bones: the front legs' two (`fl0`, `fl1`, `fr0`, `fr1`), the hind legs' three, the tail's links.
+- `QuadrupedInput` (interface): What a quadruped is told each step; every field is optional.
+- `QuadrupedOptions` (interface): What a quadruped is made from: its heading and clock at first, and the fixed step.
+- `QuadrupedPose` (type): A quadruped's pose: each joint a world matrix or a list of points, the rig body's joints.
+- `QuadrupedState` (interface): A quadruped's state: what `step` writes and `pose` reads, plain data (see the file comment).
 
 ### [`engine/anim/ragdoll.ts`](../engine/anim/ragdoll.ts)
 
@@ -4985,6 +5027,10 @@ For the agents who maintain the engine.
 - `mannequinBody` (function): `body` (a set's measured figure) as a body for `build`, the rest body `R`'s own (see the file comment).
 - `MannequinData` (interface): A set's `body`, as the importer measured it (mm).
 
+### [`engine/gfx/puppets/bodies/quadruped.ts`](../engine/gfx/puppets/bodies/quadruped.ts)
+
+- `QUADRUPED_BODY` (const): The dog (see the file comment).
+
 ### [`engine/gfx/puppets/chains.ts`](../engine/gfx/puppets/chains.ts)
 
 - `ChainMeshes` (interface): The meshes of one `Secondary`'s chains (see the file comment).
@@ -5746,6 +5792,7 @@ For the agents who maintain the engine.
 - `attachPhysics` (function): Binds `physics` to a sim world and steps it there: the system `physics`, in the phase of that name.
 - `BINDING_CODES` (const): The codes this module raises, with their fixes.
 - `bindPhysics` (function): Binds a physics world to a sim world, so `physicsOf(w)` finds it (the scene does this when it starts).
+- `hasPhysics` (function): Whether a sim world has a physics world bound to it.
 - `physicsOf` (function): The physics world of a sim world: its bodies and queries.
 - `scenePhysics` (function): For a scene that asks for physics: a new physics world, with `physics.gravity` declared on `registry` if it lacks it.
 
@@ -6195,6 +6242,7 @@ For the agents who maintain the engine.
 - `CrowdBody` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): A crowd body: what `CROWD_BODY_FIELDS` holds.
 - `CrowdBodyInput` (interface from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): What a crowd body's rig is told each step (see the file comment).
 - `CrowdChanges` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What one `updateCrowd` changed: indices into the list it was given, in order.
+- `crowdGround` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The ground for a crowd body's feet in `w`'s physics world: a raycast through the group `world` (a `GaitProbe`).
 - `CrowdOptions` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): How `updateCrowd` runs.
 - `CrowdRig` (type from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rigs a crowd body can have.
 - `CrowdStepper` (interface from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): What the crowd's calls read from the sim: the step length (s).
@@ -6301,6 +6349,7 @@ For the agents who maintain the engine.
 - `CROWD_BODY_FIELDS` (const): A crowd body's fields, for the component `crowdBody`: its rig and look, where it stands, its rig's state.
 - `CrowdBody` (interface): A crowd body: what `CROWD_BODY_FIELDS` holds.
 - `CrowdBodyInput` (interface): What a crowd body's rig is told each step (see the file comment).
+- `crowdGround` (function): The ground for a crowd body's feet in `w`'s physics world: a raycast through the group `world` (a `GaitProbe`).
 - `CrowdRig` (type): The rigs a crowd body can have.
 - `stepCrowdBody` (function): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
 

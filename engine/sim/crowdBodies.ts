@@ -1,7 +1,8 @@
 /**
  * @file Crowd bodies, sim-side (PLAN.md WP 5.7 core proposal, ADR-0008 amendment 6; §6.4; ADR-0009): what a member of
  * a crowd looks like, and its rig's step. An entity with the component `crowdBody` (`CROWD_BODY_FIELDS`) names its rig
- * (a humanoid in a build, a blob, a floater), where it stands and the rig's state as plain data; the stage draws it
+ * (a humanoid in a build, a blob, a floater, a quadruped), where it stands and the rig's state as plain data; the
+ * stage draws it
  * through a crowd (engine/gfx/stageCrowd.ts: instanced batches, each body posed at its band's detail), instead of a
  * stand-in.
  *
@@ -9,14 +10,17 @@
  * for a system in the phase `anim`: it loads the rig from `body.state`, steps it with `input` and saves it back, and
  * moves the body to `input.at`. A humanoid's is its animator's (engine/anim/character.ts: the body states, its
  * breathing phase drawn from `rng.entity(id, 'anim')` at its first step, as an actor's); a blob's and a floater's are
- * theirs (engine/anim/blob.ts, floater.ts), the floater's clock spread from the same stream. The first step fills an
+ * theirs (engine/anim/blob.ts, floater.ts), the floater's clock spread from the same stream; a quadruped's is its own
+ * (engine/anim/quadruped.ts, WP 13.21: its clock spread so, its feet on the world's ground where the world has
+ * physics, a raycast through the group `world`, `crowdGround`). The first step fills an
  * empty `state` (a spawned body's default) with the rig at rest, turned to `body.yaw`. The rigs are pooled per world
  * and loaded at every step, so they keep no state of their own: a restore continues exactly.
  *
  * - `rig`: `humanoid` (its `look` is a build id, `build:chibi` when empty), `blob` (its `look` names its features:
- *   `horns`, `ears` or `wings`, none when empty; `size` its radius at rest, `BLOB.radius` when 0) or `floater`.
- * - `x`, `y`, `z` (m): a humanoid's or a blob's feet, a floater's core; `yaw` (rad): where it faces (a humanoid's from
- *   `input.yaw`, a blob's look and a floater's heading from their rigs).
+ *   `horns`, `ears` or `wings`, none when empty; `size` its radius at rest, `BLOB.radius` when 0), `floater` or
+ *   `quadruped` (told `input.quadruped`: to sit, what to look at and how hard to wag).
+ * - `x`, `y`, `z` (m): a humanoid's, a blob's or a quadruped's feet, a floater's core; `yaw` (rad): where it faces
+ *   (a humanoid's from `input.yaw`, a blob's look, a floater's and a quadruped's heading from their rigs).
  *
  * Invariants: everything a crowd body is in the sim is its component; the step writes only the component; footsteps
  * are not emitted (a crowd's would flood the events). The view poses rigs it loads from the component and never
@@ -35,31 +39,34 @@
 import { AnimatorPool, ANIMATOR_FIELDS, type AnimatorData } from '../anim/character';
 import { Blob, type BlobInput, type BlobState } from '../anim/blob';
 import { Floater, type FloaterState } from '../anim/floater';
+import type { GaitProbe } from '../anim/proc/gait';
+import { Quadruped, type QuadrupedState } from '../anim/quadruped';
 import { STEP } from '../anim/humanoid';
 import type { AnimatorInput } from '../anim/states';
 import { codeError } from '../core/log';
 import { Vector3 } from '../core/math';
 import { copyValue, defineSchema } from '../core/schema';
+import { hasPhysics, physicsOf } from '../physics/binding';
 import type { Vec3Like } from '../physics/queries';
 import { defineComponent } from './state';
 import type { World } from './world';
 
 /** The rigs a crowd body can have. */
-export type CrowdRig = 'humanoid' | 'blob' | 'floater';
+export type CrowdRig = 'humanoid' | 'blob' | 'floater' | 'quadruped';
 
 /** A crowd body's fields, for the component `crowdBody`: its rig and look, where it stands, its rig's state. */
 export const CROWD_BODY_FIELDS = defineSchema({
   rig: {
     type: 'string',
-    enum: ['humanoid', 'blob', 'floater'],
+    enum: ['humanoid', 'blob', 'floater', 'quadruped'],
     default: 'humanoid',
-    description: 'Its rig: a humanoid (an animator), a blob or a floater.',
+    description: 'Its rig: a humanoid (an animator), a blob, a floater or a quadruped.',
   },
   look: {
     type: 'string',
     default: '',
     description:
-      'What it wears: a humanoid’s build id (build:chibi when empty), a blob’s features (horns, ears or wings; none when empty); a floater has none.',
+      'What it wears: a humanoid’s build id (build:chibi when empty), a blob’s features (horns, ears or wings; none when empty); a floater and a quadruped have none.',
   },
   size: {
     type: 'number',
@@ -73,7 +80,7 @@ export const CROWD_BODY_FIELDS = defineSchema({
     type: 'number',
     default: 0,
     unit: 'm',
-    description: 'Where it stands, east: a humanoid’s or blob’s feet, a floater’s core.',
+    description: 'Where it stands, east: a humanoid’s, blob’s or quadruped’s feet, a floater’s core.',
   },
   y: { type: 'number', default: 0, unit: 'm', description: 'Where it stands, up.' },
   z: { type: 'number', default: 0, unit: 'm', description: 'Where it stands, south.' },
@@ -82,7 +89,7 @@ export const CROWD_BODY_FIELDS = defineSchema({
     type: 'object',
     default: {},
     description:
-      'Its rig’s state as plain data, written by stepCrowdBody: the animator’s data, the blob’s state or the floater’s; empty until its first step.',
+      'Its rig’s state as plain data, written by stepCrowdBody: the animator’s data, the blob’s state, the floater’s or the quadruped’s; empty until its first step.',
   },
 });
 
@@ -101,7 +108,7 @@ export interface CrowdBody {
 /** The component `crowdBody`: an entity the stage draws through a crowd. */
 export const CROWD_BODY = defineComponent('crowdBody', {
   description:
-    'A crowd member’s look and rig: a humanoid, blob or floater, where it stands, and its rig’s state, stepped by stepCrowdBody and drawn through a crowd.',
+    'A crowd member’s look and rig: a humanoid, blob, floater or quadruped, where it stands, and its rig’s state, stepped by stepCrowdBody and drawn through a crowd.',
   fields: CROWD_BODY_FIELDS,
 });
 
@@ -121,6 +128,8 @@ export interface CrowdBodyInput {
   blob?: Omit<BlobInput, 'position'> & { kick?: number };
   /** A floater's swell, 0 to 1. */
   swell?: number;
+  /** A quadruped's: sitting, a world point it looks at, how hard it wags (0 to 1); `air` tucks its feet. */
+  quadruped?: { sit?: boolean; look?: Vec3Like | null; wag?: number };
 }
 
 /** A world's rigs: loaded from the components at every step, so they keep no state of their own. */
@@ -128,10 +137,12 @@ interface Rigs {
   animators: AnimatorPool;
   blobs: Map<number, Blob>;
   floater: Floater;
+  quadruped: Quadruped;
+  ground: GaitProbe | null;
   pruned: number;
 }
 const pools = new WeakMap<World, Rigs>();
-const [at, velocity, look] = [new Vector3(), new Vector3(), new Vector3()];
+const [at, velocity, look, seen] = [new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 
 /** The rigs of `w`; the animators of despawned entities forgotten once a step. */
 function rigsOf(w: World): Rigs {
@@ -139,7 +150,7 @@ function rigsOf(w: World): Rigs {
   if (!rigs)
     pools.set(
       w,
-      (rigs = { animators: new AnimatorPool(), blobs: new Map(), floater: new Floater({ dt: w.dt }), pruned: -1 }),
+      (rigs = { animators: new AnimatorPool(), blobs: new Map(), floater: new Floater({ dt: w.dt }), quadruped: new Quadruped({ dt: w.dt }), ground: null, pruned: -1 }), // prettier-ignore
     );
   if (rigs.pruned !== w.tick) {
     rigs.animators.prune((id) => w.has(id));
@@ -205,6 +216,15 @@ export function stepCrowdBody<C extends object>(
     blob.step({ look: velocity.lengthSq() > 0 ? look.copy(velocity) : undefined, ...told, position: at });
     Object.assign(body.state, blob.state);
     body.yaw = Math.atan2(blob.state.lookX, blob.state.lookZ);
+  } else if (body.rig === 'quadruped') {
+    const dog = rigs.quadruped;
+    if (empty) body.state = { ...new Quadruped({ yaw: body.yaw, clock: w.rng.entity(id, 'anim').next() * STEP.clockSpread }).state }; // prettier-ignore
+    dog.state = body.state as unknown as QuadrupedState; // stepped in place
+    const told = input.quadruped ?? {};
+    const sees = told.look ? pointOf(told.look, 'input.quadruped.look', where, seen) : null;
+    const probe = hasPhysics(w) ? (rigs.ground ??= crowdGround(w)) : undefined;
+    dog.step({ position: at, velocity, yaw: input.yaw, air: input.air, sit: told.sit, look: sees, wag: told.wag, probe }); // prettier-ignore
+    body.yaw = dog.state.yaw;
   } else {
     const floater = rigs.floater;
     if (empty)
@@ -217,4 +237,16 @@ export function stepCrowdBody<C extends object>(
     body.yaw = floater.state.yaw;
   }
   [body.x, body.y, body.z] = [at.x, at.y, at.z];
+}
+
+/** The ground for a crowd body's feet in `w`'s physics world: a raycast through the group `world` (a `GaitProbe`). */
+export function crowdGround<C extends object>(world: World<C>): GaitProbe {
+  const physics = physicsOf(world);
+  return (origin, direction, distance, hit) => {
+    const found = physics.raycast(origin, direction, { maxDistance: distance, groups: ['world'] });
+    if (!found) return false;
+    hit.point.copy(found.point);
+    hit.normal.copy(found.normal);
+    return true;
+  };
 }

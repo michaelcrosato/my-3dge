@@ -169,3 +169,6 @@ export type { RouteLeg } from '../world/aiRoutes';
 export { followRoute } from '../world/aiRoutes';
 export { ASIDE } from '../world/aiRoutes';
 export { stepAside } from '../world/aiRoutes';
+
+// A crowd body's ground (WP 13.21): the physics world's, for a gait's feet (a quadruped's).
+export { crowdGround } from './crowdBodies';

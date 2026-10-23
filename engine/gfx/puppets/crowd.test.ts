@@ -14,16 +14,18 @@ import { Matrix4, PerspectiveCamera, Quaternion, Vector3, type InstancedMesh } f
 import { describe, expect, it } from 'vitest';
 import { Blob, BLOB } from '../../anim/blob';
 import { Floater } from '../../anim/floater';
+import { Quadruped } from '../../anim/quadruped';
 import { Pose } from '../../anim/pose';
 import { toLinear } from '../../core/color';
 import { createRegistry } from '../../core/registry';
 import { createMaterialLibrary } from '../materials/library';
 import { BLOB_BODY, BLOB_BODY_RADIUS, blobBody } from './bodies/blob';
 import { FLOATER_BODY } from './bodies/floater';
+import { QUADRUPED_BODY } from './bodies/quadruped';
 import { HUMANOID_BODY } from './bodies/humanoid';
 import { BLOB_SHADOW, blobScale } from './blobShadow';
 import { compileBody } from './compile';
-import { createCrowd, HUMANOID_SHADOW, type Crowd, type RigBody } from './crowd';
+import { createCrowd, HUMANOID_SHADOW, type Crowd, type RigBody, type RigJoints } from './crowd';
 import { createPuppetBatches } from './draw';
 import { defineBody } from './grammar';
 
@@ -221,6 +223,25 @@ describe('floaters', () => {
     });
     expect(crowd.shadows!.batch.count, 'a wisp casts no blob shadow').toBe(0);
     expect(FLOATER_BODY.shadow).toBeUndefined();
+  });
+
+  it('draws the dog on a quadruped’s joints, a paw on each foot of its gait, and its shadow under it', () => {
+    const dog = new Quadruped();
+    const v = new Vector3(0, 0, 1.5);
+    for (let i = 0; i < 40; i++) dog.step({ position: dog.position.clone().addScaledVector(v, 1 / 60), velocity: v, wag: 1 }); // prettier-ignore
+    const pose = dog.pose() as RigJoints & ReturnType<Quadruped['pose']>;
+    const parts = QUADRUPED_BODY.parts.reduce((n, part) => n + (part.on === 'paws' ? 4 : 1), 0);
+    const crowd = drawn((c) => expect(c.rig(QUADRUPED_BODY, pose, { floor: 0 })).toBe(parts));
+    const paws = QUADRUPED_BODY.parts.findIndex((part) => part.on === 'paws');
+    const before = QUADRUPED_BODY.parts.slice(0, paws).filter((part) => part.shape === 'ball').length;
+    pose.paws.forEach((paw, i) => near32(instance(crowd, 'ball', before + i).at, paw.clone().add(new Vector3(0, 0.026, 0)), `paw ${i}`)); // prettier-ignore
+    const neck = instance(
+      crowd,
+      'ball',
+      QUADRUPED_BODY.parts.findIndex((part) => part.on === 'neck'),
+    );
+    expect(neck.sizes[1]).toBeCloseTo(0.55 * new Vector3().setFromMatrixColumn(pose.neck, 1).length(), 5); // along its bone
+    expect(crowd.shadows!.batch.count).toBe(1);
   });
 
   it('draws the halo see-through, without depth or shadow; eyes unlit; lit parts casting shadows', () => {

@@ -1,8 +1,8 @@
 /**
  * @file The `anim` QA family's point rigs (PLAN.md §8.6, WP 6.6, WP 10.1): the bodies that are not a humanoid, each a
  * procedural rig (engine/anim/proc/rig.ts `ProcRig`): the blob and the wisp (engine/anim/blob.ts, floater.ts; their QA
- * ids are their states', `blob:<state>`, `floater:<state>`) and the six fixture rigs of fixtures/rigs/ (WP 10.1;
- * `<rig id>/<state>`, `rig:biped/walk`). `checkPointRig` drives each state at both facings (`driveRig`), from rest
+ * ids are their states', `blob:<state>`, `floater:<state>`), the quadruped (engine/anim/quadruped.ts, WP 13.21:
+ * `rig:quadruped/<state>`) and the six fixture rigs of fixtures/rigs/ (WP 10.1; `<rig id>/<state>`, `rig:biped/walk`). `checkPointRig` drives each state at both facings (`driveRig`), from rest
  * and back to rest, and reports their points not finite (`nan`) or under the floor (`underFloor`), their bones off
  * their length (`stretch`), the motion metrics (`pop`, `footSlide` for the feet a rig names, `loopClosure` for the
  * first points it closes, `rigClosed`), another run giving other points (`unstableHash`) and points straying at half
@@ -18,6 +18,7 @@ import { Fnv64 } from '../../../engine/core/hash';
 import { Vector3 } from '../../../engine/core/math';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../../engine/anim/blob';
 import { Floater, FLOATER } from '../../../engine/anim/floater';
+import { QUADRUPED_RIG } from '../../../engine/anim/quadruped';
 import { driveRig, rigClosed, type ProcRig } from '../../../engine/anim/proc/rig';
 import { rateDrift, STATE_MATRIX } from '../../../engine/anim/stateMatrix';
 import { BIPED } from '../../../fixtures/rigs/biped';
@@ -167,5 +168,6 @@ function stretch(rig: ProcRig, t: Track): Found {
 export const POINT_RIGS: readonly { readonly rig: ProcRig; readonly prefix: string }[] = [
   { rig: BLOB_RIG, prefix: '' },
   { rig: FLOATER_RIG, prefix: '' },
+  { rig: QUADRUPED_RIG, prefix: `${QUADRUPED_RIG.id}/` },
   ...[BIPED, HEXAPOD, SERPENT, FLOATER_FIXTURE, MULTIARM, TENTACLE].map((rig) => ({ rig, prefix: `${rig.id}/` })),
 ];
