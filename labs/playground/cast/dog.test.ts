@@ -39,7 +39,7 @@ describe('the dog', () => {
     expect(apart(me, him)).toBeLessThan(DOG.near);
     expect(me.yaw).toBeCloseTo(Math.atan2(him.x - me.x, him.z - me.z), 5); // facing him from the first (as settled)
     const [x, z] = [ball().x - me.x, ball().z - me.z];
-    expect(x * Math.sin(me.yaw) + z * Math.cos(me.yaw)).toBeCloseTo(DOG.ball, 4); // before its paws (0.23 m ahead)
+    expect(x * Math.sin(me.yaw) + z * Math.cos(me.yaw)).toBeCloseTo(DOG.ball[0], 4); // before its paws (0.23 m ahead)
     expect(x * Math.cos(me.yaw) - z * Math.sin(me.yaw)).toBeCloseTo(0, 4);
     for (let k = 0; k < 75; k++) session.step({});
     expect([dog().dog!.mode, story()]).toEqual(['sit', ['sit']]);

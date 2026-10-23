@@ -35,7 +35,8 @@
  * DOG.near; // 2.2: farther, it follows
  * @see labs/playground/cast/dog.test.ts
  */
-import { ASIDE, createCharacter, defineComponent, physicsOf, placeActor, Quadruped, spawnActor, spawnProp, stepAside, stepCrowdBody, Vector3, type CrowdBody, type QuadrupedState, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { ASIDE, createCharacter, defineComponent, physicsOf, placeActor, Quadruped, siteFloorBelow, spawnActor, spawnProp, stepAside, stepCrowdBody, Vector3, type CrowdBody, type QuadrupedState, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { SITE } from '../levels/site';
 import { plainWays, replanWays, waysOf, wayTo } from './ways';
 
 /** How the dog goes about (see the file comment): speeds, distances (m) and times (s). */
@@ -46,8 +47,10 @@ export const DOG = {
   far: 7,
   sitAfter: 1,
   stand: 0.3, // m/s: slower, the player stands
-  beside: [1.2, 0.6], // where it stands at first: to the player's left and ahead
-  ball: 0.45, // m before its middle where its ball lies at first: before its paws, toward him and off his way ahead
+  // where it stands at first, m to the player's left and ahead (else his right, farther off, behind): the first where
+  // it and its ball before its paws lie flat, clear of a kerb or a step (the street's sidewalk, 2 m wide, has no room)
+  beside: [[1.2, 0.6], [-1.2, 0.6], [1.8, 0.5], [-1.8, 0.5], [1.2, -0.6], [-1.2, -0.6]], // prettier-ignore
+  ball: [0.45, 0.3], // m before its middle where its ball lies at first, toward him
   reach: 0.3,
   low: 0.3,
   flies: 2, // m/s: a ball let go faster than this was thrown
@@ -280,17 +283,18 @@ export function standDog<C extends object>(
     const node = nav.nodeAt(x, at[1], z);
     return node >= 0 ? nav.clearAt(node) : new Vector3(x, at[1], z);
   };
-  const [side, front] = DOG.beside;
-  const stand = clear(at[0] + left[0] * side + ahead[0] * front, at[2] + left[1] * side + ahead[1] * front);
-  const facing = Math.atan2(at[0] - stand.x, at[2] - stand.z); // toward him: it faces him as it stands by him
-  const [bx, bz] = [stand.x + Math.sin(facing) * DOG.ball, stand.z + Math.cos(facing) * DOG.ball];
-  const there = nav.nodeAt(bx, stand.y, bz);
-  const floor = there >= 0 ? nav.clearAt(there).y : NaN;
-  // on the dog's own floor; else its tile's clear point
-  const lies = Math.abs(floor - stand.y) < 0.05 ? new Vector3(bx, floor, bz) : clear(bx, bz);
+  const floor = (x: number, z: number) => siteFloorBelow(SITE, x, at[1] + 0.5, z) ?? NaN;
+  /** Whether the ground `r` round (x, z) lies at `y`: no kerb or step there to trip on or to hide a ball. */
+  const flat = (x: number, z: number, y: number, r: number) => [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]].every(([dx, dz]) => Math.abs(floor(x + dx, z + dz) - y) < 0.02); // prettier-ignore
+  const facing = (s: Vector3) => Math.atan2(at[0] - s.x, at[2] - s.z); // toward him: it faces him as it stands by him
+  const before = (s: Vector3, d: number) => new Vector3(s.x + Math.sin(facing(s)) * d, s.y, s.z + Math.cos(facing(s)) * d); // prettier-ignore
+  const spots = DOG.beside.map(([side, front]) => clear(at[0] + left[0] * side + ahead[0] * front, at[2] + left[1] * side + ahead[1] * front)); // prettier-ignore
+  const pairs = spots.flatMap((stand) => (flat(stand.x, stand.z, stand.y, 0.3) ? DOG.ball.map((d) => ({ stand, lies: before(stand, d) })) : [])); // prettier-ignore
+  const { stand, lies } = pairs.find((p) => flat(p.lies.x, p.lies.z, p.stand.y, 0.25)) ?? { stand: spots[0], lies: before(spots[0], DOG.ball[1]) }; // prettier-ignore
+  const yaw0 = facing(stand);
   const ball = spawnProp(w, { prop: 'prop:playground-ball', at: [lies.x, lies.y, lies.z], yaw: 0 });
-  const components = { dog: { ball }, crowdBody: { rig: 'quadruped', x: stand.x, y: stand.y, z: stand.z, yaw: facing } }; // prettier-ignore
-  const id = spawnActor(w, { at: [stand.x, stand.y, stand.z], yaw: facing, character: createCharacter(CHARACTER), player: false, components }); // prettier-ignore
+  const components = { dog: { ball }, crowdBody: { rig: 'quadruped', x: stand.x, y: stand.y, z: stand.z, yaw: yaw0 } }; // prettier-ignore
+  const id = spawnActor(w, { at: [stand.x, stand.y, stand.z], yaw: yaw0, character: createCharacter(CHARACTER), player: false, components }); // prettier-ignore
   if (!w.systems.has('dog')) w.systems.add('dog', stepDogs, { phase: 'ai' });
   if (!w.systems.has('dog.body')) w.systems.add('dog.body', poseDogs, { phase: 'readback' });
   return id;
