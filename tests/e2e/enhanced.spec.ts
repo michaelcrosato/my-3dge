@@ -9,8 +9,8 @@
  * 2. cascaded shadows, in the crowd arena under `look:daylight`: the sky's sun casts through three cascades (the scene
  *    dump counts those made; one map with the feature off), the picture renders, the same entities are in the ID pass,
  *    and no pipeline is built after the warm-up; and the cascades are made when the sun first casts after the sky was
- *    shown, from the torch-lit hall's sky and from the low tier, which casts none (they were not, and every sunlit
- *    material failed to build: the advice trap fails r182's `THREE.TSL:` errors);
+ *    shown, from the torch-lit hall's sky and on a page opened at the low tier, which casts none (they were not, and
+ *    every sunlit material failed to build: the advice trap fails r182's `THREE.TSL:` errors);
  * 3. the chain's shading (engine/gfx/post/shading.ts) in the box's room, through an orthographic camera and a
  *    perspective one: the sections `ao`, `gi` and `air` laid on by `post.filters` each change the picture against the
  *    chain with them off (occlusion only darkens it), and `ssr` changes nothing, the box drawing no metal; the same
@@ -150,7 +150,9 @@ test('cascaded shadows after a switch: from the torch-lit sky to daylight, and f
   await show('post.look', 'look:daylight');
   expect(await sun()).toEqual([expect.stringMatching(/ shadow ×3 cascades$/)]);
   expect((await look(page)).blank).toBe(false);
-  await show('quality', 'low'); // no shadow casters at all
+  expect(harness.advice()).toEqual([]);
+  // A page opened by day at the low tier, which casts no shadow, so the sun first casts when the tier rises.
+  await open(page, harness, 'scene=crowd-100&post.look=look:daylight&quality=low');
   expect(await sun()).toEqual([expect.not.stringMatching(/shadow/)]);
   const low = await look(page);
   await show('quality', 'high');

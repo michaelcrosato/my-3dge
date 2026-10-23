@@ -22,7 +22,8 @@
  * that shine are tiled (the pool's empty slots are not), and none wholly behind a perspective camera.
  *
  * Invariants: presentation only, never in the hash; the lights node's shader key holds the non-tiled lights alone, as
- * r182's does; a target past `TILED.width` × `TILED.height` lights its outer tiles with the ordinary lights only.
+ * r182's does; a target past `TILED.width` × `TILED.height` lights its outer tiles with the ordinary lights only, and
+ * says so once a size (`GFX_TILES_PAST`).
  *
  * @example
  * // engine/gfx/features.ts: renderer.lighting = new PoolTiledLighting(); // before the first frame
@@ -34,7 +35,7 @@
 import { DataTexture, FloatType, Lighting, LightsNode, RGBAFormat, Vector2, Vector3, type ComputeNode, type Light, type Node, type NodeBuilder, type NodeFrame, type PointLight } from 'three/webgpu'; // prettier-ignore
 import { attributeArray, Break, directPointLight, float, Fn, If, instanceIndex, int, ivec4, Loop, positionView, renderGroup, Return, screenCoordinate, select, uniform, vec2 } from 'three/tsl'; // prettier-ignore
 import TiledLightsNode, { circleIntersectsAABB } from 'three/addons/tsl/lighting/TiledLightsNode.js';
-import { defineCodes } from '../../core/log';
+import { defineCodes, log as sharedLog, type Log } from '../../core/log';
 import { POOL_SIZES } from '../lights';
 
 /** Its advice code, raised by the feature registry when it is off. */
@@ -43,6 +44,11 @@ export const LIGHTING_CODES = defineCodes('gfx', {
     template: '{feature} is off: {reason}; {downgrade}',
     fix: 'nothing to do for play; take the feature out of gfx.featuresOff if it is listed there',
     doc: 'Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is off: the light pool lights only its 12 lights nearest the focus.',
+  },
+  GFX_TILES_PAST: {
+    template: "a {width} × {height} px target is past tiled lighting's {max} px buffers: its outer tiles draw the ordinary lights alone", // prettier-ignore
+    fix: "draw at {max} px or less (a shot's size, the resolution setting); nothing to do for play",
+    doc: "Advice from tiled lighting (engine/gfx/enhanced/lighting.ts), once a size: the tiles' buffers are made once for `TILED.width` × `TILED.height`, so a larger target's outer tiles get the lights that are not tiled (the shadow casters) and none of the pool's others.", // prettier-ignore
   },
 });
 
@@ -119,8 +125,12 @@ class PoolTiledLightsNode extends TiledLightsNode {
   /** Whether a fragment's tile is in the grid: past the buffers made, a fragment gets the ordinary lights alone. */
   private inGrid: N = float(1).greaterThan(0);
 
-  constructor() {
+  /** Where `GFX_TILES_PAST` goes (r182's nodes have a method `log`: the TSL logarithm). */
+  private readonly advice: Pick<Log, 'warnOnce'>;
+
+  constructor(advice: Pick<Log, 'warnOnce'> = sharedLog) {
     super(TILED.maxLights, TILED.tileSize);
+    this.advice = advice;
     const self = this as unknown as Fields;
     self._tileLightCount = TILED.perTile;
     // Each frame's, so the render group: an object-group uniform refreshes only when its object or material changes,
@@ -250,15 +260,26 @@ class PoolTiledLightsNode extends TiledLightsNode {
     if (target) size.set(target.width, target.height);
     else renderer.getDrawingBufferSize(size);
     self._screenSize.value.copy(size);
+    if (size.x > TILED.width || size.y > TILED.height) {
+      const [width, height] = [size.x, size.y];
+      this.advice.warnOnce('GFX_TILES_PAST', { width, height, max: `${TILED.width} × ${TILED.height}` }, `${width}×${height}`); // prettier-ignore
+    }
     const grid = tileGrid(size.x, size.y);
     [this.columns.value, this.columnsF.value, this.rowsF.value, this.tiles.value] = [grid.columns, grid.columns, grid.rows, grid.tiles]; // prettier-ignore
     renderer.compute(self._compute, grid.tiles);
   }
 }
 
-/** The renderer's lighting with tiled point lights (see the file comment), as `renderer.lighting`. */
+/** The renderer's lighting with tiled point lights (see the file comment), as `renderer.lighting`; `log` its advice's. */
 export class PoolTiledLighting extends Lighting {
+  private readonly advice: Pick<Log, 'warnOnce'>;
+
+  constructor(advice: Pick<Log, 'warnOnce'> = sharedLog) {
+    super();
+    this.advice = advice;
+  }
+
   createNode(lights: Light[] = []): LightsNode {
-    return new PoolTiledLightsNode().setLights(lights);
+    return new PoolTiledLightsNode(this.advice).setLights(lights);
   }
 }

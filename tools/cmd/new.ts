@@ -8,8 +8,9 @@
  * do after writing one, printed in place of the generic "replace the placeholder text, then node x docs --write"; in a
  * game, where `x docs` is the engine's own, `nextIn` names the game's checks instead) and `games` (for a kind that
  * makes no entry in a game, ADR-0024, what a game does instead: `x new` says it there and writes nothing).
- * Template files, targets and `next` hold `{{id}}` (the id as given), `{{name}}` (its last segment) and `{{dir}}`
- * (the rest); any other placeholder, or any other manifest key, is an error. Written files are formatted by Prettier,
+ * Template files, targets and `next` hold `{{id}}` (the id as given), `{{name}}` (its last segment), `{{NAME}}` (the
+ * name in upper case, words split by `_`: an advice code's or a constant's, `tiledLighting` → `TILED_LIGHTING`) and
+ * `{{dir}}` (the rest); any other placeholder, or any other manifest key, is an error. Written files are formatted by Prettier,
  * and each doc comment paragraph a filled-in id runs past 120 columns is rewrapped, since Prettier never rewraps one.
  *
  * Checks, run on the new files only: `types` (TypeScript's diagnostics, with tsconfig.json's options), `lint`
@@ -116,11 +117,13 @@ export function listKinds(root: string): Kind[] {
     });
 }
 
-/** Fills `{{id}}`, `{{name}}` and `{{dir}}` in `text`; throws on any other placeholder. */
+/** Fills `{{id}}`, `{{name}}`, `{{NAME}}` and `{{dir}}` in `text`; throws on any other placeholder. */
 export function fill(text: string, id: string, where: string): string {
-  const values: Record<string, string> = { id, name: posix.basename(id), dir: posix.dirname(id) };
+  const name = posix.basename(id);
+  const NAME = name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+  const values: Record<string, string> = { id, name, NAME, dir: posix.dirname(id) };
   return text.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
-    if (!(key in values)) throw new Error(`${where} holds {{${key}}}: templates know {{id}}, {{name}} and {{dir}}`);
+    if (!(key in values)) throw new Error(`${where} holds {{${key}}}: templates know {{id}}, {{name}}, {{NAME}} and {{dir}}`); // prettier-ignore
     return values[key];
   });
 }

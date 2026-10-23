@@ -1589,12 +1589,14 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   import engine/gfx/enhanced/ (ESLint's layer rule). Beyond the plan's Owns: `gi.ts` and `air.ts` (the GI tier and
   the air), engine/gfx/post/shading.ts (the chain's shading stage), engine/gfx/backdrop.ts (split out of sky.ts for the
   length limit), and extensions to engine/gfx/post/{chain,filters,mrt,aa,settings,looks,presets}.ts,
-  engine/gfx/{lights,sky,stage,stageSky,renderer,sceneDump,quality}.ts and engine/app/engine.ts (the stage takes the
-  renderer's features); the box's `look:daylight` (labs/box/looks/daylight.ts), the comment of `look:torch-lit` and
-  labs/box/README.md; the advice trap (tests/setup/adviceTrap.ts, its test, tests/baselines/advice/README.md and
-  docs/TESTING.md: below); and box-menu.spec's replay list, which missed WP 10.2's two. Seven features:
-  `feature:tiledLighting`, `feature:cascadedShadows`, `feature:ao`, `feature:gi`, `feature:air`, `feature:ssr`,
-  `feature:traa`.
+  engine/gfx/{lights,sky,stage,stageSky,renderer,sceneDump,quality,shadows}.ts and engine/app/engine.ts (the stage
+  takes the renderer's features); the box's `look:daylight` (labs/box/looks/daylight.ts), the comment of
+  `look:torch-lit` and labs/box/README.md; the advice trap (tests/setup/adviceTrap.ts, its test,
+  tests/baselines/advice/README.md and docs/TESTING.md: below);
+  tests/e2e/{post,renderer,box-look,box-menu,parity}.spec.ts and tests/pages/post.ts (the looks' counts, TRAA's
+  measure, the features' ids, the day look), box-menu's replay list among them, which missed WP 10.2's two; and the
+  kind `feature`'s template (below). Seven features: `feature:tiledLighting`, `feature:cascadedShadows`,
+  `feature:ao`, `feature:gi`, `feature:air`, `feature:ssr`, `feature:traa`.
 - **Tiled lighting** is r182's `TiledLightsNode` with its faults fixed in a subclass (engine/gfx/enhanced/lighting.ts):
   shadow casters stay ordinary lights (r182 tiled them and lost their shadows); its buffers are made once for 4,096²
   and its grid read from uniforms, so a resize rebuilds nothing (r182 baked the size into its shaders); its compute
@@ -1653,10 +1655,13 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   switches, with the features off too: once a point light stops casting, r182 still brings its shadow's matrices up to
   date (`accessors/Lights.js:47`), reading a `target` that point lights lack, and the warm-up failed; the pool's point
   casters get a target (engine/gfx/shadows.ts). The same spec's switch between the hall's looks and the day's warms up
-  each way, every time (43 pipelines to the day, 25 back, over three rounds): r182 frees the pipelines a sky leaves
-  unused and builds them again when it returns (engine/gfx/pipelines.ts). Keeping each caster's shadow node across
-  the switch, tried, changed none of it. A switch never builds in a frame, and among the torch-lit looks builds
-  nothing; the spec says so.
+  each way, every time (over three rounds, 43 pipelines to the day and 25 back, then 36 and 25): r182 frees the
+  pipelines a sky leaves unused and builds them again when it returns (engine/gfx/pipelines.ts). Keeping each
+  caster's shadow node across the switch, tried, changed none of it. A switch never builds in a frame, among the
+  torch-lit looks builds nothing, and a second round trip to the day costs no more than the first; the spec says so,
+  and its knock replay now plays through the day too (its view at step 180, the replay's last, never applied). Tiled
+  lighting's buffers are made for 4,096²: a larger target's outer tiles draw the ordinary lights alone, and say so once
+  a size (`GFX_TILES_PAST`).
 - **Measured** with `x perf labs/box --feature` (GPU ms a frame on SwiftShader, on less off: they rank the techniques
   here and budget nothing, ADR-0022): tiled lighting −40 on the torch-lit hall (189 against 229, 64 lights against
   12), cascaded shadows +130 on crowd-100 by day (+24 draw calls), and on the room with its section on, AO +9.9, GI
@@ -1664,9 +1669,10 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   feature is on, the default, even where no look asks for reflections: +1.2 on the room (46.1 against 44.8), with
   5 textures and 4 pipelines more and no draw call, kept so that a look switching reflections on builds nothing. No
   run built a pipeline after its warm-up. The governor's part, demoting a technique under load, waits for WP 7.5.
-- **No template for the kind `feature`.** Seven modules now write a feature entry and its advice code by hand, but a
-  feature is engine-internal (a game never defines one: it asks `__engine.info().features`), each needs its own gate
-  in engine/gfx/features.ts and its own measured downgrade, and `x new`'s templates can fill in only an id, a name and
-  a directory, not the upper-case code each feature needs. The kind's schema checks every entry as it is defined
-  (`FEATURE_FIELDS`), and engine/gfx/features.test.ts lists them.
-
+- **The kind `feature` has its template.** Seven techniques wrote their entries and advice codes by hand, the
+  third time and more, so `node x new feature engine/gfx/enhanced/<name>` writes the module of a new one: its entry,
+  its advice code `GFX_NO_<NAME>` (x new's new placeholder `{{NAME}}`, the name in upper case, words split by `_`) and
+  a unit test that reads both through the registry, the feature turned off; `x new --test-all` keeps it working. A
+  feature is engine-internal (a game turns one off, never defines one: the manifest's `games`), and its gate in
+  engine/gfx/features.ts stays by hand, each technique handed out its own way (the manifest's `next` says so). The
+  kind's schema checks every entry as it is defined (`FEATURE_FIELDS`), and engine/gfx/features.test.ts lists them.

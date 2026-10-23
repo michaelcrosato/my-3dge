@@ -871,7 +871,7 @@ Advice from the feature registry (engine/gfx/features.ts) when screen-space refl
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/enhanced/lighting.ts` line 42](../engine/gfx/enhanced/lighting.ts)
+- Registered in: [`engine/gfx/enhanced/lighting.ts` line 43](../engine/gfx/enhanced/lighting.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is off: the light pool lights only its 12 lights nearest the focus.
 
@@ -994,6 +994,14 @@ Advice from the feature registry (engine/gfx/features.ts) when the device cannot
 - Registered in: [`engine/gfx/textures/codes.ts` line 16](../engine/gfx/textures/codes.ts)
 
 Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for a default size that is not a whole number of pattern tiles (a running bond needs whole cells across and an even number of courses), or is not 2 to 4096 texels on a side: such a texture would show a seam where it repeats.
+
+### GFX_TILES_PAST
+
+- Message: `a {width} × {height} px target is past tiled lighting's {max} px buffers: its outer tiles draw the ordinary lights alone`
+- Fix: draw at {max} px or less (a shot's size, the resolution setting); nothing to do for play
+- Registered in: [`engine/gfx/enhanced/lighting.ts` line 48](../engine/gfx/enhanced/lighting.ts)
+
+Advice from tiled lighting (engine/gfx/enhanced/lighting.ts), once a size: the tiles' buffers are made once for `TILED.width` × `TILED.height`, so a larger target's outer tiles get the lights that are not tiled (the shadow casters) and none of the pool's others.
 
 ### GFX_UNKNOWN_CAMERA
 

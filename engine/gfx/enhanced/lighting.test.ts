@@ -2,11 +2,12 @@
  * @file Unit tests for tiled lighting (engine/gfx/enhanced/lighting.ts): the split keeps shadow casters as ordinary
  * lights; the tile grid covers the drawing buffer and stops at the buffers made; the node makes its buffers once, so a
  * resize changes its uniforms, never its shader key, and each frame's compute pass covers the grid's tiles alone; only
- * the lights that shine are packed for the tiles, a pool's empty slots left out. The picture is
- * tests/e2e/enhanced.spec.ts's.
+ * the lights that shine are packed for the tiles, a pool's empty slots left out; a target past the buffers made says
+ * so once a size. The picture is tests/e2e/enhanced.spec.ts's.
  */
 import { PointLight, SpotLight, Vector2, type NodeFrame } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
+import { createLog } from '../../core/log';
 import { PoolTiledLighting, splitLights, TILED, tileGrid } from './lighting';
 
 describe('tiled lighting', () => {
@@ -45,6 +46,19 @@ describe('tiled lighting', () => {
     expect(node.customCacheKey()).toBe(key);
     expect(dispatched).toEqual([920, 14 * 8]);
     expect(node.tiles.value).toBe(112);
+  });
+
+  it('says once a size when a target is past the buffers made: its outer tiles draw the ordinary lights alone', () => {
+    const printed: string[] = [];
+    const log = createLog({ console: { warn: (line) => printed.push(line), error: () => {} } });
+    const node = new PoolTiledLighting(log).createNode([new PointLight()]) as unknown as { updateBefore(frame: NodeFrame): void }; // prettier-ignore
+    const frame = (width: number, height: number) =>
+      ({ renderer: { getRenderTarget: () => ({ width, height }), compute: () => {} }, camera: { projectionMatrix: {}, matrixWorldInverse: {} } }) as unknown as NodeFrame; // prettier-ignore
+    node.updateBefore(frame(TILED.width, TILED.height));
+    expect(printed).toEqual([]);
+    node.updateBefore(frame(6000, 3000));
+    node.updateBefore(frame(6000, 3000));
+    expect(printed).toEqual([expect.stringMatching(/GFX_TILES_PAST.*6000 × 3000 px target.*4096 × 4096/)]);
   });
 
   it("packs only the lights that shine for the tiles: a pool's empty slots are left out", () => {

@@ -1,0 +1,29 @@
+/**
+ * @file Unit tests for the technique `feature:{{name}}` ({{id}}.ts): its entry passes the kind's checks, and turned
+ * off (the view setting `gfx.featuresOff`) it is reported off, its advice said once with what the picture loses.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createLog } from '../../../engine/core/log';
+import { createRegistry } from '../../../engine/core/registry';
+import { createSettings } from '../../../engine/core/settings';
+import { defineFeatures, resolveFeatures } from '../../../engine/gfx/features';
+import { {{NAME}}_FEATURE } from './{{name}}';
+
+describe('feature:{{name}}', () => {
+  it('is a feature entry, and off it says what the picture loses', () => {
+    const registry = createRegistry();
+    defineFeatures(registry);
+    const { id, ...spec } = {{NAME}}_FEATURE;
+    registry.def('feature', id, spec);
+    const settings = createSettings({ registry });
+    settings.set('gfx.featuresOff', [id]);
+    const printed: string[] = [];
+    const log = createLog({ console: { warn: (line) => printed.push(line), error: () => {} } });
+    const adapter = { vendor: '', architecture: '', device: '', description: '', fallback: false };
+    const report = resolveFeatures({ adapter, features: [], limits: {} }, { registry, settings, log });
+    const off = report.off.find((feature) => feature.id === id);
+    expect(off).toEqual({ id, advice: spec.advice, reason: 'gfx.featuresOff lists it' });
+    expect(printed.filter((line) => line.includes(spec.advice))).toEqual([expect.stringContaining(spec.downgrade)]);
+  });
+});

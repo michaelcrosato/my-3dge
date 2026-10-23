@@ -73,10 +73,12 @@ describe('kinds', () => {
     expect(() => listKinds(root)).toThrow(problem);
   });
 
-  it('fills {{id}}, {{name}} and {{dir}}, and rejects any other placeholder', () => {
+  it('fills {{id}}, {{name}}, {{NAME}} and {{dir}}, and rejects any other placeholder', () => {
     expect(fill('{{dir}} / {{name}} / {{id}}', 'engine/core/clock', 't')).toBe(
       'engine/core / clock / engine/core/clock',
     );
+    expect(fill('GFX_NO_{{NAME}}', 'engine/gfx/enhanced/tiledLighting', 't')).toBe('GFX_NO_TILED_LIGHTING');
+    expect(fill('{{NAME}}', 'a/ssr2x', 't')).toBe('SSR2X');
     expect(() => fill('{{nmae}}', 'a/b', 'tools/templates/x/y')).toThrow('tools/templates/x/y holds {{nmae}}');
   });
 });

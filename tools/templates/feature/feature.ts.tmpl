@@ -1,0 +1,30 @@
+/**
+ * @file The technique `feature:{{name}}`: what it draws (replace this text; `x docs` puts the first sentence in INDEX),
+ * made only while its feature is on: engine/gfx/features.ts registers the entry and hands the technique out. What its
+ * frames cost goes in its WP's ledger row (`node x perf <lab> --feature feature:{{name}}`), and what the picture
+ * loses while it is off in `downgrade`, which its advice says.
+ *
+ * Invariants: presentation only, never in the hash; nothing but engine/gfx/features.ts imports it.
+ *
+ * @example
+ * {{NAME}}_FEATURE.id; // 'feature:{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineCodes } from '../../../engine/core/log';
+
+/** Its advice code, raised by the feature registry when it is off. */
+export const {{NAME}}_CODES = defineCodes('gfx', {
+  GFX_NO_{{NAME}}: {
+    template: '{feature} is off: {reason}; {downgrade}',
+    fix: 'nothing to do for play; take the feature out of gfx.featuresOff if it is listed there',
+    doc: 'Advice from the feature registry (engine/gfx/features.ts) while the technique is off: what it loses.',
+  },
+});
+
+/** Its feature entry (engine/gfx/features.ts registers it). */
+export const {{NAME}}_FEATURE = {
+  id: 'feature:{{name}}',
+  description: 'What the technique draws, in a sentence (replace this text).',
+  advice: 'GFX_NO_{{NAME}}',
+  downgrade: 'what the picture loses while it is off',
+} as const;

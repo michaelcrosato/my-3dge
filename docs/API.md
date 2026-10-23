@@ -4551,7 +4551,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/enhanced/lighting.ts`](../engine/gfx/enhanced/lighting.ts)
 
 - `LIGHTING_CODES` (const): Its advice code, raised by the feature registry when it is off.
-- `PoolTiledLighting` (class): The renderer's lighting with tiled point lights (see the file comment), as `renderer.lighting`.
+- `PoolTiledLighting` (class): The renderer's lighting with tiled point lights (see the file comment), as `renderer.lighting`; `log` its advice's.
 - `splitLights` (function): Which lights the tiles carry (point lights that cast no shadow) and which stay ordinary lights.
 - `TILED` (const): The numbers: the pool's most lights, the node's, the tile size (px), lights a tile and the largest buffer (px).
 - `TILED_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
@@ -9047,7 +9047,7 @@ For the agents who maintain the engine.
 - `CheckName` (type): One check's name.
 - `CHECKS` (const): The checks a kind may ask for.
 - `default` (default): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
-- `fill` (function): Fills `{{id}}`, `{{name}}` and `{{dir}}` in `text`; throws on any other placeholder.
+- `fill` (function): Fills `{{id}}`, `{{name}}`, `{{NAME}}` and `{{dir}}` in `text`; throws on any other placeholder.
 - `Kind` (interface): A kind, as its manifest declares it.
 - `listKinds` (function): Reads and validates every kind under `tools/templates/`; throws naming the first problem.
 - `NEXT` (const): What to do after writing an entry of a kind whose manifest has no `next`.
