@@ -3,7 +3,9 @@
  * spots (the hall's 30 torches, engine/world/level); every lit shader would pay for each light in the scene, and
  * adding or removing one rebuilds every lit pipeline (r182's lights node keys shaders on the light list). So the pool
  * makes `size` point lights once (8 to 16; 12 by default), never adds or removes one, and on each frame's `update`
- * gives them to the light sources that matter most near the focus: the shaders never rebuild as the focus moves.
+ * gives them to the light sources that matter most near the focus: the shaders never rebuild as the focus moves. On a
+ * renderer with tiled lighting (`feature:tiledLighting`, engine/gfx/enhanced/lighting.ts) it may hold up to 64
+ * (`tiled`), since a lit shader then pays for the lights of its screen tile alone.
  *
  * Choosing: a source's rank is its distance from the focus divided by its kind's `priority` (a light of priority 2
  * counts as if it were half as far), ties going to the earlier source; the `size` best take the slots in rank order,
@@ -45,7 +47,7 @@ import { configurePointCaster, MAX_SHADOW_CASTERS } from './shadows';
 export const LIGHTS_CODES = defineCodes('gfx', {
   GFX_BAD_LIGHT_POOL: {
     template: 'a light pool of {size} lights: it holds {min} to {max}',
-    fix: 'give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)',
+    fix: 'give createLightPool a whole size from 8 to 16 (12 by default), or to 64 with tiled: true on a renderer with tiled lighting (feature:tiledLighting, WP 11.5)',
   },
 });
 
@@ -108,8 +110,8 @@ export interface PoolSlot {
   intensity: number;
 }
 
-/** The pool's sizes: the fewest and most lights, and the default. */
-export const POOL_SIZES = { min: 8, max: 16, default: 12 } as const;
+/** The pool's sizes: the fewest and most lights, the default, and the most with tiled lighting (WP 11.5). */
+export const POOL_SIZES = { min: 8, max: 16, default: 12, tiled: 64 } as const;
 
 /** Phases (s) without a stream: the golden angle's step, so neighbouring sources never flicker in step. */
 const GOLDEN = 2.399963229728653;
@@ -219,11 +221,15 @@ export interface LightPool {
   dispose(): void;
 }
 
-/** Makes a light pool of `size` lights (8 to 16; 12 by default). Throws `GFX_BAD_LIGHT_POOL`. */
-export function createLightPool(options: { size?: number; registry?: Registry } = {}): LightPool {
+/**
+ * Makes a light pool of `size` lights (8 to 16, or to 64 on a renderer with tiled lighting, `tiled`; 12 by default).
+ * Throws `GFX_BAD_LIGHT_POOL`.
+ */
+export function createLightPool(options: { size?: number; tiled?: boolean; registry?: Registry } = {}): LightPool {
   const { size = POOL_SIZES.default, registry = sharedRegistry } = options;
-  if (!Number.isInteger(size) || size < POOL_SIZES.min || size > POOL_SIZES.max) {
-    throw codeError('GFX_BAD_LIGHT_POOL', { size: String(size), min: POOL_SIZES.min, max: POOL_SIZES.max });
+  const max = options.tiled ? POOL_SIZES.tiled : POOL_SIZES.max;
+  if (!Number.isInteger(size) || size < POOL_SIZES.min || size > max) {
+    throw codeError('GFX_BAD_LIGHT_POOL', { size: String(size), min: POOL_SIZES.min, max });
   }
   const group = new Group();
   group.name = 'lights:pool';

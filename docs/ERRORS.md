@@ -659,7 +659,7 @@ Raised by `__engine.stats()` (engine/dev/stats.ts) on an inspector whose host wa
 
 - Message: `the frame alpha must be a number from 0 to 1, not {alpha}`
 - Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
-- Registered in: [`engine/gfx/renderer.ts` line 74](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 75](../engine/gfx/renderer.ts)
 
 ### GFX_BAD_BODY
 
@@ -704,8 +704,8 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 ### GFX_BAD_LIGHT_POOL
 
 - Message: `a light pool of {size} lights: it holds {min} to {max}`
-- Fix: give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)
-- Registered in: [`engine/gfx/lights.ts` line 46](../engine/gfx/lights.ts)
+- Fix: give createLightPool a whole size from 8 to 16 (12 by default), or to 64 with tiled: true on a renderer with tiled lighting (feature:tiledLighting, WP 11.5)
+- Registered in: [`engine/gfx/lights.ts` line 48](../engine/gfx/lights.ts)
 
 ### GFX_BAD_SHOT_SIZE
 
@@ -717,7 +717,7 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 
 - Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`
 - Fix: register what the frame drew for the first time with gfx.warmup.register(id, { objects }), or add what changed to the shader key with gfx.warmup.keyPart(name, part), so the warm-up builds it first
-- Registered in: [`engine/gfx/renderer.ts` line 65](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 66](../engine/gfx/renderer.ts)
 
 Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
 
@@ -741,7 +741,7 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 
 - Message: `the GPU device was lost ({reason}): {message}`
 - Fix: reload the page; the sim runs on the CPU and is intact (capture it first with __engine.capture()), but nothing draws until the renderer starts again
-- Registered in: [`engine/gfx/renderer.ts` line 61](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 62](../engine/gfx/renderer.ts)
 
 ### GFX_DUPLICATE_WARMUP
 
@@ -767,7 +767,7 @@ Raised by `levelFloorTexture` (engine/gfx/textures/contactShadow.ts) when a tile
 
 - Message: `WebGPU refused a call ({kind}): {message}`
 - Fix: fix the resource or pipeline the message names; GPU errors never change play, but what that call draws is missing or wrong
-- Registered in: [`engine/gfx/renderer.ts` line 56](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 57](../engine/gfx/renderer.ts)
 
 Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
 
@@ -811,11 +811,19 @@ Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
+### GFX_NO_CASCADED_SHADOWS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/csm.ts` line 30](../engine/gfx/enhanced/csm.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows are off: the sky's sun casts one shadow map over the whole level.
+
 ### GFX_NO_FLOAT32_FILTERING
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 48](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 52](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
 
@@ -827,11 +835,19 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names.
 
+### GFX_NO_TILED_LIGHTING
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/lighting.ts` line 39](../engine/gfx/enhanced/lighting.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is off: the light pool lights only its 12 lights nearest the focus.
+
 ### GFX_NO_TIMESTAMPS
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 43](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 47](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
 
@@ -839,7 +855,7 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 - Message: `WebGPU is unavailable: {reason}`
 - Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
-- Registered in: [`engine/gfx/renderer.ts` line 47](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 48](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
 
@@ -919,7 +935,7 @@ Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 53](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 57](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
 
@@ -959,7 +975,7 @@ Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material:
 
 - Message: `the warm-up failed: {message}`
 - Fix: the cause is recorded with this error; frames draw without a warm-up meanwhile, building pipelines as they meet them
-- Registered in: [`engine/gfx/renderer.ts` line 70](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 71](../engine/gfx/renderer.ts)
 
 ## input
 

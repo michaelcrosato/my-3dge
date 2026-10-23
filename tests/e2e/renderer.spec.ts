@@ -12,7 +12,9 @@
  */
 import { chromium, type Page } from '@playwright/test';
 import type { Log } from '../../engine/core/log';
+import { createRegistry } from '../../engine/core/registry';
 import type { Settings } from '../../engine/core/settings';
+import { defineFeatures } from '../../engine/gfx/features';
 import type { FrameReport, FrameView, Gfx, GfxInfo } from '../../engine/gfx/renderer';
 import type { WarmupProgress, WarmupReport } from '../../engine/gfx/warmup';
 import { chromiumPath, preparePage, VIEWPORT, type GpuLog } from '../../tools/lib/browser';
@@ -41,6 +43,13 @@ declare global {
 }
 
 const PAGE = 'tests/pages/scene.html';
+
+/** The feature registry's ids, as every page's registry holds them (engine/gfx/features.ts). */
+const FEATURE_IDS = (() => {
+  const registry = createRegistry();
+  defineFeatures(registry);
+  return registry.list('feature').map((entry) => entry.id);
+})();
 
 /** A 16:9 viewport whose three resolution modes all differ: pixels 427 × 240, balanced 640 × 360, full itself. */
 const WIDE = { width: 1280, height: 720 };
@@ -90,7 +99,7 @@ test('starts on WebGPU; info() reports the adapter, its features and limits, and
   // The device has the adapter's limits, beyond WebGPU's defaults (a 128 MB storage binding by default).
   expect(info.limits).toEqual(adapterLimits);
   expect(info.limits.maxStorageBufferBindingSize).toBeGreaterThan(134217728);
-  expect(info.enabled).toEqual(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps']);
+  expect(info.enabled).toEqual(FEATURE_IDS); // this adapter has every feature the registry holds
 
   // The startup warm-up: one step per registered pool between the scene and the warm frame, with progress.
   expect(progress).toEqual([
@@ -270,7 +279,9 @@ test('a feature that gfx.featuresOff lists is off, with its advice code; play an
       stats: gfx.stats(),
     };
   });
-  expect(info.enabled).toEqual(['feature:float32Filtering']);
+  expect(info.enabled).toEqual(
+    FEATURE_IDS.filter((id) => !['feature:timestamps', 'feature:largeBuffers'].includes(id)),
+  );
   expect(info.downgrades).toEqual(['GFX_NO_TIMESTAMPS', 'GFX_SMALL_BUFFERS']);
   expect(advice).toEqual([
     {

@@ -23,6 +23,12 @@ function caps(features: string[], limits: Record<string, number> = {}): GfxCaps 
 /** Everything the built-in features need. */
 const FULL = ['float32-filterable', 'timestamp-query'];
 
+/** The techniques' features (WP 11.5), declared by their modules in engine/gfx/enhanced/: they need nothing more. */
+const TECHNIQUES = ['feature:cascadedShadows', 'feature:tiledLighting'];
+
+/** Feature ids in the registry's order (by id). */
+const sorted = (ids: string[]) => [...ids].sort();
+
 /** A fresh registry with the features, a store over it, and a log that records what it prints. */
 function setup(off: string[] = []) {
   const registry = createRegistry();
@@ -36,11 +42,9 @@ function setup(off: string[] = []) {
 
 describe('the feature kind', () => {
   it('declares the built-in features and gfx.featuresOff on the shared registry', () => {
-    expect(sharedRegistry.describe('feature').ids).toEqual([
-      'feature:float32Filtering',
-      'feature:largeBuffers',
-      'feature:timestamps',
-    ]);
+    expect(sharedRegistry.describe('feature').ids).toEqual(
+      sorted(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps', ...TECHNIQUES]),
+    );
     const setting = sharedRegistry.get('setting', 'gfx.featuresOff');
     expect(setting).toMatchObject({ view: true, default: [] });
   });
@@ -54,7 +58,7 @@ describe('the feature kind', () => {
   it('defines everything once, however often it is called', () => {
     const { registry } = setup();
     defineFeatures(registry);
-    expect(registry.list('feature')).toHaveLength(3);
+    expect(registry.list('feature')).toHaveLength(3 + TECHNIQUES.length);
   });
 });
 
@@ -63,7 +67,7 @@ describe('resolveFeatures', () => {
     const { registry, settings, log, printed } = setup();
     const report = resolveFeatures(caps(FULL), { registry, settings, log });
     expect(report).toEqual({
-      on: ['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps'],
+      on: sorted(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps', ...TECHNIQUES]),
       off: [],
       downgrades: [],
     });
@@ -74,7 +78,7 @@ describe('resolveFeatures', () => {
     const { registry, settings, log, printed } = setup();
     const small = caps(['float32-filterable'], { maxStorageBufferBindingSize: 134217728 });
     const report = resolveFeatures(small, { registry, settings, log });
-    expect(report.on).toEqual(['feature:float32Filtering']);
+    expect(report.on).toEqual(sorted(['feature:float32Filtering', ...TECHNIQUES]));
     expect(report.off).toEqual([
       {
         id: 'feature:largeBuffers',

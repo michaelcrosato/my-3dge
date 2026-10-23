@@ -74,12 +74,13 @@ material style, builds nothing after its warm-up and keeps the knock replay's go
 
 | Look | What it draws |
 |---|---|
-| `look:torch-lit` (`labs/box/looks/torch-lit.ts`) | The torch-lit hall: the sky `sky:hall`, dark but for the torches, 12 of the hall's 30 nearest the hero, each flickering on its own, the nearest casting shadows, and fog from 12 m past him. |
+| `look:torch-lit` (`labs/box/looks/torch-lit.ts`) | The torch-lit hall: the sky `sky:hall`, dark but for the torches (all 30 with tiled lighting, else the 12 nearest the hero), each flickering on its own, the nearest casting shadows, and fog from 12 m past him. |
 | `look:torch-toon` (`labs/box/looks/torch-toon.ts`) | Toon shading in it: three bands of light with a rim, the characters and objects inked. |
 | `look:torch-cel` (`labs/box/looks/torch-cel.ts`) | The prototype's comic cel in it: four flat bands, pushed colour, ink lines. |
 | `look:torch-pixel` (`labs/box/looks/torch-pixel.ts`) | The prototype's pixel look in it: 4 px blocks, 8 shades a channel, dithered. |
 | `look:torch-bloom` (`labs/box/looks/torch-bloom.ts`) | Bloom in it: the flames, coals, runes and sparks glow (off at the `low` tier). |
 | `look:torch-fxaa` (`labs/box/looks/torch-fxaa.ts`) | FXAA in it: every edge smoothed. |
+| `look:daylight` (`labs/box/looks/daylight.ts`) | A plain day: the sky `sky:daylight`, its sun casting through three cascades on a renderer with cascaded shadows; `tests/e2e/enhanced.spec.ts` draws it on the crowd arena. |
 
 Switch with `?post.look=look:torch-toon` (`labs/box/?scene=fight&cam3=chase&post.look=look:torch-toon`), with
 `node x set post.look look:torch-toon` in an inspect session, or with `__engine.set('post.look', 'look:torch-toon')`;

@@ -353,7 +353,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const budget = () => qualityBudget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false);
     parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget });
     post.attach(gfx.warmup);
-    viewNow().stage.register(gfx.warmup);
+    viewNow().stage.register(gfx.warmup, gfx.features);
     await warmBoth();
     await settle(1, 0);
   } catch (error) {

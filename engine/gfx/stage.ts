@@ -61,6 +61,7 @@ import { createStageProps, type StageProps } from './stageProps';
 import { createStageRides, RIDE_KINDS, type StageRides } from './stageRides';
 import { createStageSite, type StageSite } from './stageSite';
 import { groundMesh } from './stageGround';
+import type { FeatureReport } from './features';
 import { createStageSky, type StageSky } from './stageSky';
 import { aboveStorey, createStoreyCut, cutPlace } from './storeyCut';
 import { createTerrainMeshes, type TerrainMeshes } from './terrain';
@@ -145,8 +146,11 @@ export interface Stage {
   draw(alpha: number): void;
   /** Runs the cutaways for `pose` and the player's `feet`: the fade with `fade`, the cut by storey in a classic `view`. */
   frame(pose: CameraPose, feet: Vec3, options?: { fade?: boolean; view?: boolean }): void;
-  /** Registers the level and the stand-ins with `warmup` (see the file comment); `dispose()` undoes it. */
-  register(warmup: Pick<Warmup, 'register' | 'keyPart'>): { dispose(): void };
+  /**
+   * Registers the level and the stand-ins with `warmup` (see the file comment); `dispose()` undoes it. `features`,
+   * the renderer's report (engine/gfx/features.ts), sizes the sky shown after it (engine/gfx/stageSky.ts).
+   */
+  register(warmup: Pick<Warmup, 'register' | 'keyPart'>, features?: FeatureReport): { dispose(): void };
   /** Frees the geometries it made and empties the scene. */
   dispose(): void;
 }
@@ -350,7 +354,7 @@ export function createStage(options: StageOptions): Stage {
       const guns = props.carry(actors.carried()); // first person took a gun into its arms, or gave it back
       if (props.hide(own ?? (site ? site.hides : null), cutKey) || guns) props.draw(drawnAlpha); // the cut moved: its props go
     },
-    register(warmup) {
+    register(warmup, features) {
       const registrations = [
         warmup.register('stage:ground', { objects: () => [ground] }),
         ...(meshes ? [meshes.register(warmup, 'stage:level')] : []),
@@ -365,7 +369,7 @@ export function createStage(options: StageOptions): Stage {
         rides.register(warmup),
         crowd.register(warmup),
         fx.register(warmup),
-        lights.register(warmup),
+        lights.register(warmup, features),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },

@@ -555,6 +555,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`atmosphere.ts`](../engine/gfx/atmosphere.ts): The atmosphere (PLAN.md WP 7.1): the fog and the ambient light a sky preset gives (engine/gfx/sky.ts).
   - Exports: `AMBIENT_FIELDS`, `AmbientSpec`, `Atmosphere`, `createAtmosphere`, `FOG_FIELDS`, `fogAt`, `FogReport`, `FogSpec`
   - Tests: [`engine/gfx/atmosphere.test.ts`](../engine/gfx/atmosphere.test.ts)
+- [`backdrop.ts`](../engine/gfx/backdrop.ts): A sky's backdrop strip (PLAN.md WP 7.1; engine/gfx/sky.ts draws it): silhouette layers round the horizon, baked on the CPU into one strip (`bakeBackdrop`, RGBA bytes, row 0 at the bottom), its layers drawn far to near: ridged `mountains`, smooth `hills` and a `forest` tree line, each a sum of sines with whole cycles across the strip, so it tiles, shaded darker toward its foot and hazed toward the preset's haze colour.
+  - Exports: `BACKDROP`, `BACKDROP_KINDS`, `BackdropLayers`, `bakeBackdrop`
+  - Tests: [`engine/gfx/sky.test.ts`](../engine/gfx/sky.test.ts)
 - [`caps.ts`](../engine/gfx/caps.ts): What the GPU offers (PLAN.md §6.7, WP 2.1): `requestDevice` asks the adapter for a device with every optional feature it has and its best limits, since everything WebGPU offers is available to rendering (doctrine: Quality under the hood); `readCaps` reports the adapter's identity and the device's features and limits as plain data, for `__engine.info()` and the feature registry (engine/gfx/features.ts).
   - Exports: `adapterLimits`, `CAPS_CODES`, `GfxCaps`, `readCaps`, `requestDevice`
   - Tests: [`engine/gfx/caps.test.ts`](../engine/gfx/caps.test.ts)
@@ -562,7 +565,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AIM_STEEP`, `createCutaway`, `CUT_AIMS`, `CUT_FACING`, `CUT_MARGIN`, `CUT_STEEP`, `Cutaway`, `cutawayAims`, `CutawayOptions`, `CutawayReport`, `CutTarget`, `FADE_AIMS`, `FADE_THIN`, `planCutaway`, `planFade`, `segmentHitsBox`
   - Tests: [`engine/gfx/cutaway.test.ts`](../engine/gfx/cutaway.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
-  - Exports: `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuTiming`, `gpuTimingFor`, `resolveFeatures`
+  - Exports: `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `resolveFeatures`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
 - [`idmarks.ts`](../engine/gfx/idmarks.ts): The ID pass's marks (PLAN.md §8.5, I-28; split from engine/gfx/idpass.ts after G9, ADR-0014 amendment 17): `marksOf` numbers what the pass sees, largest first, and `drawMarks` draws the numbers onto a frame, for `x shot --marks` (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
   - Exports: `drawMarks`, `Mark`, `marksOf`
@@ -606,7 +609,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Readback`, `readPixels`, `rowBytes`, `shot`, `SHOT_CODES`, `shotForJson`, `ShotGfx`, `ShotJson`, `ShotOptions`, `ShotResult`, `stripRowPadding`, `toBase64`
   - Tests: [`engine/gfx/shot.test.ts`](../engine/gfx/shot.test.ts), [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
 - [`sky.ts`](../engine/gfx/sky.ts): Skies (PLAN.md WP 7.1, §6.6 kind `sky`): what surrounds and lights a level, as presets of data, and `createSky`, which puts a preset on a scene.
-  - Exports: `BACKDROP`, `BACKDROP_KINDS`, `BackdropSpec`, `bakeBackdrop`, `createSky`, `defineSkies`, `defineSky`, `Sky`, `SKY_FIELDS`, `SkyEntry`, `SkyReport`, `SkySpec`
+  - Exports: `BACKDROP`, `BACKDROP_KINDS`, `BackdropSpec`, `bakeBackdrop`, `createSky`, `defineSkies`, `defineSky`, `Sky`, `SKY_FIELDS`, `SkyEntry`, `SkyOptions`, `SkyReport`, `SkySpec`
   - Tests: [`engine/gfx/sky.test.ts`](../engine/gfx/sky.test.ts), [`tests/e2e/lights.spec.ts`](../tests/e2e/lights.spec.ts)
 - [`stage.ts`](../engine/gfx/stage.ts): The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data with no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`).
   - Exports: `createStage`, `placeableKinds`, `placeOf`, `Stage`, `StageOptions`, `StandInPlace`
@@ -712,6 +715,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx/enhanced
 
+- [`csm.ts`](../engine/gfx/enhanced/csm.ts): Cascaded shadows (PLAN.md WP 11.5): the sky's sun casts through r182's `CSMShadowNode` addon, over `CASCADES.count` cascades that split the view's first `CASCADES.far` m, each its own `CASCADES.map`² shadow map.
+  - Exports: `CascadedSun`, `CASCADES`, `cascadeSun`, `CSM_CODES`, `CSM_FEATURE`
+  - Tests: [`engine/gfx/enhanced/csm.test.ts`](../engine/gfx/enhanced/csm.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
+- [`lighting.ts`](../engine/gfx/enhanced/lighting.ts): Tiled lighting (PLAN.md WP 11.5, I-17): every lamp lit at once, not only the light pool's nearest 12.
+  - Exports: `LIGHTING_CODES`, `PoolTiledLighting`, `splitLights`, `TILED`, `TILED_FEATURE`, `tileGrid`
+  - Tests: [`engine/gfx/enhanced/lighting.test.ts`](../engine/gfx/enhanced/lighting.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`timing.ts`](../engine/gfx/enhanced/timing.ts): GPU timing (PLAN.md WP 11.2, §4.7; doctrine: Verifiable): how long the GPU spends on a drawn frame, from WebGPU's timestamp queries, where the device has `timestamp-query` (`feature:timestamps`, engine/gfx/features.ts).
   - Exports: `createGpuTiming`, `GPU_WINDOW`, `GpuTiming`, `TimedRenderer`
   - Tests: [`engine/gfx/enhanced/timing.test.ts`](../engine/gfx/enhanced/timing.test.ts), [`tests/e2e/timing.spec.ts`](../tests/e2e/timing.spec.ts)
@@ -1547,6 +1556,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/box/looks
 
+- [`daylight.ts`](../labs/box/looks/daylight.ts): The look `look:daylight`: the box under a plain day (PLAN.md WP 11.5): the sky `sky:daylight` over the scene's own style with no filter, its sun casting shadows across the scene.
+  - Exports: `look`
+  - Tests: [`labs/box/looks/daylight.test.ts`](../labs/box/looks/daylight.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`hall-floor.ts`](../labs/box/looks/hall-floor.ts): The hall's floor (PLAN.md WP 7.8, from WP 7.3): flagstones with the rune circle glowing on the dais, moss creeping in from the foot of the walls and contact shadows along them, baked once over the whole hall as the prototype baked it (`levelFloorTexture`, engine/gfx/textures/contactShadow.ts).
   - Exports: `HALL_FLOOR`, `HALL_FLOOR_TEXTURE`, `HALL_MATERIALS`
   - Tests: [`labs/box/looks/hall-floor.test.ts`](../labs/box/looks/hall-floor.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)

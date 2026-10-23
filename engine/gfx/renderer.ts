@@ -18,7 +18,8 @@
  * stats. A frame that builds a pipeline after the warm-up raises `GFX_COLD_PIPELINE`: it stalled. `stats()` gives
  * `renderer.info`'s counts with the pipeline counts, and `gpuMs`, the GPU's milliseconds a frame where the device has
  * timestamp queries (WP 11.2: the features resolve before the renderer is made, so it tracks timestamps when
- * `feature:timestamps` is on; engine/gfx/enhanced/timing.ts reads them). Draw with `render()`, never `renderAsync()`
+ * `feature:timestamps` is on; engine/gfx/enhanced/timing.ts reads them), and tiled lighting is its lighting when
+ * `feature:tiledLighting` is (WP 11.5). Draw with `render()`, never `renderAsync()`
  * (deprecated since r181; docs/THREE-DELTA.md). Game code meets none of this (doctrine: Quality under the hood).
  *
  * Invariants: a `Gfx` exists only on the WebGPU backend; every failure to get there is a `GfxError` with its code and
@@ -37,7 +38,7 @@ import { codeError, defineCodes, log as sharedLog, type Log } from '../core/log'
 import type { Registry } from '../core/registry';
 import { createSettings, type Settings } from '../core/settings';
 import { readCaps, requestDevice, type GfxCaps } from './caps';
-import { gpuTimingFor, resolveFeatures, type FeatureReport, type GpuTiming } from './features';
+import { gpuTimingFor, lightingFor, resolveFeatures, type FeatureReport, type GpuTiming } from './features';
 import { advanceFrame, checkPinned, countPipelines, type PipelineCounter } from './pipelines';
 import { createResolution, type Resolution, type ResolutionMode } from './resolution';
 import { createWarmup, type Warmup, type WarmupView } from './warmup';
@@ -256,6 +257,7 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
   const features = resolveFeatures(caps, { registry: options.registry, settings, log });
   const trackTimestamp = features.on.includes('feature:timestamps');
   const renderer = new WebGPURenderer({ canvas, device, antialias: options.antialias ?? false, trackTimestamp });
+  lightingFor(renderer, features); // tiled lighting, when its feature is on (WP 11.5)
   await renderer.init();
   if ((renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend !== true) {
     renderer.dispose();

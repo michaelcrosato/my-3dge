@@ -33,6 +33,7 @@ import type { Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
 import type { CompiledLevel } from '../world/level/types';
 import type { QualityBudget } from './quality';
+import type { FeatureReport } from './features';
 import { createSky, type Sky, type SkyReport } from './sky';
 import type { Warmup } from './warmup';
 
@@ -65,7 +66,11 @@ export interface StageSky {
   /** Follows the camera and the focus (m), flickering at `time` (s), while a sky shows; call it each frame. */
   update(view: { camera: Camera; focus: readonly number[]; time: number }): void;
   /** Registers the sky with `warmup`, now or when it is made; `dispose()` undoes it. */
-  register(warmup: Pick<Warmup, 'register' | 'keyPart'>): { dispose(): void };
+  /**
+   * Registers the sky's parts with `warmup` (and the sky made later); `features`, the renderer's report
+   * (engine/gfx/features.ts), sizes the sky made after it (tiled lighting's pool, the sun's cascades).
+   */
+  register(warmup: Pick<Warmup, 'register' | 'keyPart'>, features?: FeatureReport): { dispose(): void };
   /** What draws now: the preset, and the sky's report while it shows. */
   report(): { shown: string; sky: SkyReport | null };
   /** Takes the sky out of the scene and frees it. */
@@ -106,6 +111,7 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
   let budget: Pick<QualityBudget, 'shadowCasters'> = { shadowCasters: null };
   let warmup: Pick<Warmup, 'register' | 'keyPart'> | null = null;
   let registered: { dispose(): void } | null = null;
+  let features: FeatureReport | undefined;
   const background = () => {
     if (scene.background instanceof Color) scene.background.set(options.background);
     else scene.background = new Color(options.background);
@@ -117,6 +123,7 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
       level: options.level ?? undefined,
       rng: options.rng?.(),
       registry: options.registry,
+      features,
     });
     made.budget(budget);
     if (warmup) registered = made.register(warmup as Warmup);
@@ -154,7 +161,8 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
     update(view) {
       if (shown && sky) sky.update(view);
     },
-    register(given) {
+    register(given, report) {
+      features = report ?? features;
       warmup = given;
       if (sky && !registered) registered = sky.register(given as Warmup);
       return {

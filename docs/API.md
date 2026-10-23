@@ -4107,6 +4107,13 @@ For the agents who maintain the engine.
 - `FogReport` (interface): What the fog does now.
 - `FogSpec` (interface): The fog a sky preset gives; see the file comment.
 
+### [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)
+
+- `BACKDROP` (const): The backdrop strip's size in texels, and its band round the camera (m): radius, height, foot below the eye.
+- `BACKDROP_KINDS` (const): The kinds of backdrop layer.
+- `BackdropLayers` (interface): A backdrop as a `sky` entry gives it (engine/gfx/sky.ts `BackdropSpec`): the haze colour and the layers.
+- `bakeBackdrop` (function): Bakes a backdrop into RGBA bytes, `width` × `height`, row 0 at the bottom; above the skylines is clear.
+
 ### [`engine/gfx/cameras/api.ts`](../engine/gfx/cameras/api.ts)
 
 - `AnyCamera` (type from [`engine/gfx/cameras/place.ts`](../engine/gfx/cameras/place.ts)): Any camera `createCamera` makes: codes.ts's (`Camera`), or a follow camera, whose inputs add the hero's.
@@ -4497,6 +4504,23 @@ For the agents who maintain the engine.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
 
+### [`engine/gfx/enhanced/csm.ts`](../engine/gfx/enhanced/csm.ts)
+
+- `CascadedSun` (interface): A sun casting through cascades (see the file comment).
+- `CASCADES` (const): The cascades: how many, how far they reach (m), the margin behind them toward the sun (m), each map's size (px).
+- `cascadeSun` (function): Makes `sun` cast through cascades (see the file comment).
+- `CSM_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `CSM_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+
+### [`engine/gfx/enhanced/lighting.ts`](../engine/gfx/enhanced/lighting.ts)
+
+- `LIGHTING_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `PoolTiledLighting` (class): The renderer's lighting with tiled point lights (see the file comment): `renderer.lighting = new PoolTiledLighting()`.
+- `splitLights` (function): Which lights the tiles carry (point lights that cast no shadow) and which stay ordinary lights.
+- `TILED` (const): The numbers: the pool's most lights, the node's, the tile size (px), lights a tile and the largest buffer (px).
+- `TILED_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+- `tileGrid` (function): The tile grid a drawing buffer of `width` × `height` px covers, clamped to the buffers made.
+
 ### [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)
 
 - `createGpuTiming` (function): Makes a renderer's GPU timing, measuring when `on` (see the file comment).
@@ -4506,6 +4530,8 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/features.ts`](../engine/gfx/features.ts)
 
+- `CascadedSun` (interface from [`engine/gfx/enhanced/csm.ts`](../engine/gfx/enhanced/csm.ts)): A sun casting through cascades (see the file comment).
+- `cascadeSunFor` (function): Makes `sun` cast through cascades (engine/gfx/enhanced/csm.ts, WP 11.5) when `feature:cascadedShadows` is on in `report`; null otherwise (and with no report), so it casts its one shadow map.
 - `defineFeatures` (function): Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them.
 - `FEATURE_FIELDS` (const): The fields of a `feature` entry.
 - `FEATURE_SETTINGS` (const): The gfx settings this module reads; all are view settings, never in the hash.
@@ -4515,6 +4541,9 @@ For the agents who maintain the engine.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
 - `GpuTiming` (interface from [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)): A renderer's GPU timing (see the file comment).
 - `gpuTimingFor` (function): The GPU timing a renderer gets (engine/gfx/enhanced/timing.ts, WP 11.2): measuring when `feature:timestamps` is on in `report`, which also says whether to make the renderer with `trackTimestamp`; idle (no `gpuMs`) when it is off.
+- `lightingFor` (function): Gives `renderer` tiled lighting (engine/gfx/enhanced/lighting.ts, WP 11.5) when `feature:tiledLighting` is on in `report`, before its first frame; returns the light pool a sky on it may make: `TILED.pool` lights tiled, else the pool's default.
+- `lightPoolOf` (function): The light pool a sky may make on a renderer whose features are `report` (none: the pool's default).
+- `LightPoolSize` (interface): The light pool a renderer lights: how many lights, and whether tiled lighting lets it pass `POOL_SIZES.max`.
 - `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
 
 ### [`engine/gfx/fx/decals.ts`](../engine/gfx/fx/decals.ts)
@@ -4813,7 +4842,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)
 
-- `createLightPool` (function): Makes a light pool of `size` lights (8 to 16; 12 by default).
+- `createLightPool` (function): Makes a light pool of `size` lights (8 to 16, or to 64 on a renderer with tiled lighting, `tiled`; 12 by default).
 - `defineLight` (function): Declares a light kind (`light:<tag>`, the tag a level's light spots carry); see `LIGHT_FIELDS`.
 - `defineLights` (function): Declares the kind `light` and the built-in light kinds on `registry`, unless it has them.
 - `FADE` (const): The share of the cut-off rank over which the last lights chosen fade out.
@@ -4825,7 +4854,7 @@ For the agents who maintain the engine.
 - `LIGHTS_CODES` (const): The codes this module raises, with their fixes.
 - `LightSource` (interface): A light source the pool may light: a `light` entry's id and where it shines (m).
 - `lightSources` (function): The light sources of a compiled level: one per light spot, of the kind `light:<tag>`.
-- `POOL_SIZES` (const): The pool's sizes: the fewest and most lights, and the default.
+- `POOL_SIZES` (const): The pool's sizes: the fewest and most lights, the default, and the most with tiled lighting (WP 11.5).
 - `PoolSlot` (interface): One slot of the pool, as the last `update` left it.
 - `Ranking` (interface): What `rankSources` chose: the sources best first, their ranks, and the rank of the first left out.
 - `rankSources` (function): The `count` sources that matter most at `focus` (see the file comment); `priorities` default to 1.
@@ -5275,16 +5304,17 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)
 
-- `BACKDROP` (const): The backdrop strip's size in texels, and its band round the camera (m): radius, height, foot below the eye.
-- `BACKDROP_KINDS` (const): The kinds of backdrop layer.
+- `BACKDROP` (const from [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)): The backdrop strip's size in texels, and its band round the camera (m): radius, height, foot below the eye.
+- `BACKDROP_KINDS` (const from [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)): The kinds of backdrop layer.
 - `BackdropSpec` (type): A backdrop as a `sky` entry gives it.
-- `bakeBackdrop` (function): Bakes a backdrop into RGBA bytes, `width` × `height`, row 0 at the bottom; above the skylines is clear.
+- `bakeBackdrop` (function from [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)): Bakes a backdrop into RGBA bytes, `width` × `height`, row 0 at the bottom; above the skylines is clear.
 - `createSky` (function): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
 - `defineSkies` (function): Declares the kind `sky` and the built-in presets on `registry`, unless it has them.
 - `defineSky` (function): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `Sky` (interface): A sky on a scene; see the file comment.
 - `SKY_FIELDS` (const): The fields of a `sky` entry; see the file comment.
 - `SkyEntry` (type): A `sky` entry.
+- `SkyOptions` (interface): How `createSky` makes a sky.
 - `SkyReport` (interface): What a sky shows now.
 - `SkySpec` (type): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
 
@@ -7540,6 +7570,10 @@ For the agents who maintain the engine.
 ### [`labs/box/library.ts`](../labs/box/library.ts)
 
 - `loadLibrary` (function): Registers the sets in `files` (path → its text, loaded on demand), then the mannequin from the Quaternius set.
+
+### [`labs/box/looks/daylight.ts`](../labs/box/looks/daylight.ts)
+
+- `look` (const): The look `look:daylight`: the box under a plain day: the sky `sky:daylight` over the scene's own style.
 
 ### [`labs/box/looks/hall-floor.ts`](../labs/box/looks/hall-floor.ts)
 
