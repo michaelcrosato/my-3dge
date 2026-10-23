@@ -19,6 +19,7 @@ import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import type { Field } from '../../core/schema';
 import { defineSettings } from '../../core/settings';
 import { QUALITY_SETTINGS } from '../quality';
+import { AA_CHOICE, AA_KINDS } from './aa';
 import { POST_SHOW } from './composite';
 import { FILTER_FIELDS, partialSchema } from './filters';
 
@@ -76,6 +77,15 @@ export const POST_SETTINGS = {
     default: 'picture',
     view: true,
     description: "What the chain draws: the 'picture', or what its MRT holds: 'parts', 'normals' or 'groups'.",
+  },
+  'post.aa': {
+    type: 'string',
+    enum: AA_KINDS,
+    default: AA_CHOICE,
+    view: true,
+    when: 'scene',
+    description:
+      "The aa filter's edge smoothing, read when the chain is made: 'fxaa' (the one that measured better), 'smaa', or 'traa' (temporal, with feature:traa).",
   },
 } as const satisfies Record<string, Field>;
 

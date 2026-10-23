@@ -15,7 +15,7 @@
  * No frame builds a pipeline after a warm-up (Done-when 1's toggles). One test per look (after G9): a failure names
  * its look, and each has its own time limit. The scene and the looks it covers are the test's
  * annotations in out/e2e/report.json (`looks`): the hall with its props, every box look. The goldens with a look of
- * each material style in the box page are tests/e2e/parity.spec.ts's (Box 3, props); every one of the engine's 86
+ * each material style in the box page are tests/e2e/parity.spec.ts's (Box 3, props); every one of the engine's 98
  * looks with no pipeline built and the hash unchanged, and what each filter does to the pixels, are
  * tests/e2e/post.spec.ts's.
  *

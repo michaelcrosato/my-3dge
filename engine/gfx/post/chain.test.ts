@@ -23,11 +23,13 @@ describe('the chain’s settings', () => {
     expect(settings.get('quality')).toBeDefined();
   });
 
-  it('are view settings: a look id, part of a filter chain, what to show', () => {
+  it('are view settings: a look id, part of a filter chain, what to show, the edge smoothing', () => {
     const registry = createRegistry();
     definePostSettings(registry);
     const settings = createSettings({ registry });
-    expect(Object.keys(POST_SETTINGS)).toEqual(['post.look', 'post.filters', 'post.show']);
+    expect(Object.keys(POST_SETTINGS)).toEqual(['post.look', 'post.filters', 'post.show', 'post.aa']);
+    expect(() => settings.set('post.aa', 'msaa')).toThrow(/traa/);
+    settings.set('post.aa', 'traa');
     expect(settings.setText('post.filters', '{"pixel":{"scope":"environment","size":6}}').value).toEqual({
       pixel: { scope: 'environment', size: 6 },
     });

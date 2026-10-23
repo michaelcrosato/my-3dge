@@ -6,7 +6,7 @@
  * fragment loops over its tile's lights: what a shader costs no longer grows with the lights, and lights come and go
  * without rebuilding a shader. Off, the pool's 12 point lights are in every lit shader, as before.
  *
- * Built on r182's `TiledLightsNode` addon, with six of its habits changed, each measured against what the engine
+ * Built on r182's `TiledLightsNode` addon, with seven of its habits changed, each measured against what the engine
  * keeps: a light that casts shadows stays an ordinary light, since the tiles carry no shadow maps (r182 tiles every
  * point light, so the pool's two shadow casters lost their shadows); the tile buffers are made once for the largest
  * drawing buffer, `TILED.width` × `TILED.height`, with the tile grid in uniforms (r182 bakes the size into the
@@ -16,7 +16,9 @@
  * more (r182 dispatches width × height / 32 invocations, 32 times its tiles). A light joins the tiles its reach
  * covers in pixels, from the projection (r182 takes reach / depth as a radius in screen units, which misses the
  * projection's scale, the aspect and orthographic cameras: under the box's top-down camera it dropped lights), and a
- * tile holds 16 (r182's 8 left the tiles near the focus darker than the 12 the pool lit without tiles).
+ * tile holds 16 (r182's 8 left the tiles near the focus darker than the 12 the pool lit without tiles); and each tiled
+ * light reaches the lighting model as a light of its own colour (r182 hands over the tiles' node, which has none, so the
+ * toon style, which reads a light's colour for its bands, failed to build: engine/gfx/materials/toon.ts).
  *
  * Invariants: presentation only, never in the hash; the lights node's shader key holds the non-tiled lights alone, as
  * r182's does; a target past `TILED.width` × `TILED.height` lights its outer tiles with the ordinary lights only.
@@ -28,8 +30,8 @@
  * @see engine/gfx/enhanced/lighting.test.ts
  * @see tests/e2e/enhanced.spec.ts
  */
-import { DataTexture, FloatType, Lighting, LightsNode, RGBAFormat, Vector2, type ComputeNode, type Light, type Node, type NodeFrame } from 'three/webgpu'; // prettier-ignore
-import { attributeArray, float, Fn, If, instanceIndex, int, ivec4, Loop, renderGroup, Return, screenCoordinate, uniform, vec2 } from 'three/tsl'; // prettier-ignore
+import { DataTexture, FloatType, Lighting, LightsNode, RGBAFormat, Vector2, type ComputeNode, type Light, type Node, type NodeBuilder, type NodeFrame } from 'three/webgpu'; // prettier-ignore
+import { attributeArray, Break, directPointLight, float, Fn, If, instanceIndex, int, ivec4, Loop, positionView, renderGroup, Return, screenCoordinate, uniform, vec2 } from 'three/tsl'; // prettier-ignore
 import TiledLightsNode, { circleIntersectsAABB } from 'three/addons/tsl/lighting/TiledLightsNode.js';
 import { defineCodes } from '../../core/log';
 import { POOL_SIZES } from '../lights';
@@ -100,13 +102,13 @@ type Fields = {
   _screenSize: N & { value: Vector2 };
   _cameraProjectionMatrix: N & { value: unknown };
   _cameraViewMatrix: N & { value: unknown };
-  getLightData(index: N): { viewPosition: N; distance: N };
+  getLightData(index: N): { color: N; decay: N; viewPosition: N; distance: N };
   updateLightsTexture(): void;
 };
 
 const size = new Vector2();
 
-/** r182's tiled lights node with the engine's six changes (see the file comment). */
+/** r182's tiled lights node with the engine's seven changes (see the file comment). */
 class PoolTiledLightsNode extends TiledLightsNode {
   /** The tile grid now: columns (for the compute pass and the fragments) and tiles. */
   readonly columns = uniform(1, 'uint').setGroup(renderGroup);
@@ -143,6 +145,30 @@ class PoolTiledLightsNode extends TiledLightsNode {
 
   /** The buffers are made once, with the node: a resize changes only the grid's uniforms. */
   updateProgram(): void {}
+
+  /** r182's, but each tiled light reaches the lighting model as a light of its own colour (see the file comment). */
+  setupLights(builder: NodeBuilder, lightNodes: Node[]): void {
+    const self = this as unknown as Fields;
+    const lights = builder as unknown as { context: { reflectedLight: Record<string, N & { toStack(): void }> }; lightsNode: { setupDirectLight(builder: NodeBuilder, light: object, data: unknown): void } }; // prettier-ignore
+    const { directDiffuse, directSpecular } = lights.context.reflectedLight;
+    directDiffuse.toStack(); // declared before the loop, as r182 does
+    directSpecular.toStack();
+    (LightsNode.prototype as unknown as { setupLights(b: NodeBuilder, l: Node[]): void }).setupLights.call(this, builder, lightNodes); // prettier-ignore
+    Fn(() => {
+      Loop(self._tileLightCount, ({ i }: { i: N }) => {
+        const index = this.getTile(i);
+        If(index.equal(int(0)), () => {
+          Break();
+        });
+        const { color, decay, viewPosition, distance } = self.getLightData(index.sub(1));
+        const light = { colorNode: color, baseColorNode: null, light: null };
+        // r182 reads `lightVector` (src/nodes/lighting/PointLightNode.js:7); its type declarations name another key.
+        const point = { color, lightVector: viewPosition.sub(positionView), cutoffDistance: distance, decayExponent: decay }; // prettier-ignore
+        const data = directPointLight(point as unknown as Parameters<typeof directPointLight>[0]);
+        lights.lightsNode.setupDirectLight(builder, light, data);
+      });
+    }, 'void')();
+  }
 
   /** The buffers and the compute pass, for `TILED.width` × `TILED.height` (see the file comment). */
   create(): void {
@@ -206,7 +232,7 @@ class PoolTiledLightsNode extends TiledLightsNode {
   }
 }
 
-/** The renderer's lighting with tiled point lights (see the file comment): `renderer.lighting = new PoolTiledLighting()`. */
+/** The renderer's lighting with tiled point lights (see the file comment), as `renderer.lighting`. */
 export class PoolTiledLighting extends Lighting {
   createNode(lights: Light[] = []): LightsNode {
     return new PoolTiledLightsNode().setLights(lights);

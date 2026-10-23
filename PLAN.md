@@ -3456,7 +3456,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Verify:** `node x perf labs/box --scene crowd-5000 --feature gpu-crowds --budget`
 
 #### WP-11.5 Lighting and shading upgrades
-- **Owns:** `engine/gfx/enhanced/{lighting,ao,ssr,aa,csm}.ts`, using three.js's `TiledLighting`, `GTAONode`, `SSRNode`, `TRAANode` and `CSMShadowNode` addons
+- **Owns:** `engine/gfx/enhanced/{lighting,ao,ssr,aa,csm,gi,air}.ts`, `engine/gfx/post/shading.ts`, `tests/pages/shading.html`, using three.js's `TiledLighting`, `GTAONode`, `SSRNode`, `TRAANode` and `CSMShadowNode` addons; extends `engine/gfx/post/{chain,filters,mrt,aa,looks,presets}.ts` and `engine/gfx/{features,lights,sky,renderer}.ts` (ADR-0025 amendment 30)
 - **Needs:** WP 11.1
 - **Size:** L
 - **Trigger:** a look the box needs that the standard path cannot give: more lights than the pool, ambient occlusion, reflections, or cascaded shadows outdoors (§9.1). Fired 2026-10-17 by the playground (ADR-0025): the house's lights beyond the pool, cascaded shadows over the yard, ambient occlusion indoors.

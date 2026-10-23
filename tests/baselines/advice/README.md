@@ -1,8 +1,9 @@
 # Advice baselines
 
 The advice codes and warnings a test may print. The advice trap (`tests/setup/adviceTrap.ts`, PLAN.md WP 0.5) fails
-any test, in Vitest and in the e2e fixture, that prints an engine advice code, a `console.warn` or a three.js
-deprecation that no file here lists. Its file comment has the exact rules.
+any test, in Vitest and in the e2e fixture, that prints an engine advice code, a `console.warn`, a three.js
+deprecation or a shader three.js could not build (`THREE.TSL: …`) that no file here lists. Its file comment has the
+exact rules.
 
 - One file per area, `<area>.json`, owned by the WP that adds its entries (PLAN.md §9.3). The trap reads every
   `*.json` file in this directory.

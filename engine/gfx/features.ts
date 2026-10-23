@@ -37,8 +37,13 @@ import type { Field, Schema } from '../core/schema';
 import { createSettings, defineSettings, type Settings } from '../core/settings';
 import type { DirectionalLight, WebGPURenderer } from 'three/webgpu';
 import type { GfxCaps } from './caps';
+import { createTemporalAa, TRAA_FEATURE } from './enhanced/aa';
+import { AIR_FEATURE, createAirLights, shadeAir } from './enhanced/air';
+import { AO_FEATURE, createOcclusion } from './enhanced/ao';
 import { cascadeSun, CSM_FEATURE, type CascadedSun } from './enhanced/csm';
+import { GI_FEATURE, giScale, shadeGi } from './enhanced/gi';
 import { PoolTiledLighting, TILED, TILED_FEATURE } from './enhanced/lighting';
+import { createReflections, SSR_FEATURE } from './enhanced/ssr';
 import { createGpuTiming, type GpuTiming } from './enhanced/timing';
 import { POOL_SIZES } from './lights';
 
@@ -126,7 +131,7 @@ export interface FeatureReport {
 }
 
 /** The techniques' entries (WP 11.5), each declared by its module in engine/gfx/enhanced/. */
-const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE];
+const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE, AO_FEATURE, GI_FEATURE, AIR_FEATURE, SSR_FEATURE, TRAA_FEATURE];
 
 /** Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them. */
 export function defineFeatures(registry: Registry = sharedRegistry): void {
@@ -251,5 +256,43 @@ export function cascadeSunFor(sun: DirectionalLight, report?: FeatureReport): Ca
   return report?.on.includes(CSM_FEATURE.id) ? cascadeSun(sun) : null;
 }
 
+/** The post chain's shading techniques a renderer whose features are `report` has (engine/gfx/post/shading.ts). */
+export interface ShadingTechniques {
+  /** Ambient occlusion (engine/gfx/enhanced/ao.ts), with `feature:ao`. */
+  occlusion: typeof createOcclusion | null;
+  /** Bounce light, the WGSL and its screen scale (engine/gfx/enhanced/gi.ts), with `feature:gi`. */
+  gi: { shade: typeof shadeGi; scale: typeof giScale } | null;
+  /** The air, the WGSL and its gathering (engine/gfx/enhanced/air.ts), with `feature:air`. */
+  air: { shade: typeof shadeAir; lights: typeof createAirLights } | null;
+  /** Screen-space reflections (engine/gfx/enhanced/ssr.ts), with `feature:ssr`. */
+  reflections: typeof createReflections | null;
+}
+
+/** The shading techniques whose features are on in `report` (none without a report). */
+export function shadingFor(report?: FeatureReport): ShadingTechniques {
+  const on = (feature: { id: string }) => report?.on.includes(feature.id) ?? false;
+  return {
+    occlusion: on(AO_FEATURE) ? createOcclusion : null,
+    gi: on(GI_FEATURE) ? { shade: shadeGi, scale: giScale } : null,
+    air: on(AIR_FEATURE) ? { shade: shadeAir, lights: createAirLights } : null,
+    reflections: on(SSR_FEATURE) ? createReflections : null,
+  };
+}
+
+/** TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA). */
+export function temporalAaFor(report?: FeatureReport): typeof createTemporalAa | null {
+  return report?.on.includes(TRAA_FEATURE.id) ? createTemporalAa : null;
+}
+
+/** The scene pass's extra targets the techniques on in `report` read, for a chain smoothing with `aa` (mrt.ts). */
+export function sceneTargetsFor(report?: FeatureReport, aa?: string): { metalrough: boolean; velocity: boolean } {
+  const on = (feature: { id: string }) => report?.on.includes(feature.id) ?? false;
+  return { metalrough: on(SSR_FEATURE), velocity: aa === 'traa' && on(TRAA_FEATURE) };
+}
+
+export type { TemporalAa } from './enhanced/aa';
+export type { AirLights } from './enhanced/air';
+export type { Occlusion } from './enhanced/ao';
 export type { CascadedSun } from './enhanced/csm';
+export type { Reflections } from './enhanced/ssr';
 export type { GpuTiming } from './enhanced/timing';

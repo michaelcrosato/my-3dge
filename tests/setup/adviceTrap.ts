@@ -1,14 +1,17 @@
 /**
- * @file The advice trap (PLAN.md §8.2, WP 0.5): a test fails when it prints an engine advice code, a `console.warn` or
- * a three.js deprecation that no file under `tests/baselines/advice/` lists. One module serves both harnesses:
- * Vitest runs it as its setup file (vite.config.ts), and the e2e fixture (tests/e2e/fixtures.ts) checks each page's
- * console with `findUnlisted`.
+ * @file The advice trap (PLAN.md §8.2, WP 0.5): a test fails when it prints an engine advice code, a `console.warn`, a
+ * three.js deprecation or a TSL error that no file under `tests/baselines/advice/` lists. One module serves both
+ * harnesses: Vitest runs it as its setup file (vite.config.ts), and the e2e fixture (tests/e2e/fixtures.ts) checks each
+ * page's console with `findUnlisted`.
  *
  * What it traps:
  * - **an engine advice line**, at any console level: the message starts with `[CODE]`, where CODE is upper-case
  *   words joined by `_`, area first: `[GFX_NO_TIMESTAMP] timestamp-query is missing: gpuMs is absent`. The engine's
  *   log (WP 1.2) prints advice in this form, through `console.warn`;
  * - **a three.js deprecation**, at any level: `THREE.…deprecated…` (r182 prints them through `console.warn`);
+ * - **a shader three.js could not build**, at the error level: `THREE.TSL: …` (r182 prints it through
+ *   `console.error` and draws a plain default material in its place, so a page goes on with the wrong picture: WP
+ *   11.5's toon style under tiled lighting did, through every spec that drew it);
  * - **any `console.warn`**, from the engine, a dependency or the browser.
  *
  * **The allow list** is every `*.json` file in `tests/baselines/advice/`: one file per area, owned by the WP that
@@ -46,6 +49,9 @@ export const ADVICE_CODE = /^\s*\[([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)\]/;
 /** A three.js deprecation, whatever its level: three.js prefixes its messages with `THREE.`. */
 export const THREE_DEPRECATION = /^\s*THREE\.[\s\S]*\bdeprecated\b/i;
 
+/** A shader three.js could not build (r182's `Nodes.getForRender` prints it as an error, then draws a default). */
+export const THREE_TSL_ERROR = /^\s*THREE\.TSL:/;
+
 /** A console message the trap caught. */
 export interface Warning {
   /** The console method: `warn`, `log`, `info`, `debug` or `error` (a browser's `warning` reads as `warn`). */
@@ -76,11 +82,12 @@ export interface ConsoleLine {
   line?: number;
 }
 
-/** The trap's verdict on one console message: a `Warning` when it is advice, a deprecation or a `console.warn`. */
+/** The trap's verdict on one message: a `Warning` when it is advice, a deprecation, a TSL error or a `console.warn`. */
 export function trap(type: string, text: string, where?: string): Warning | undefined {
   const level = type === 'warning' ? 'warn' : type;
   const code = ADVICE_CODE.exec(text)?.[1];
-  if (code === undefined && level !== 'warn' && !THREE_DEPRECATION.test(text)) return undefined;
+  const three = THREE_DEPRECATION.test(text) || (level === 'error' && THREE_TSL_ERROR.test(text));
+  if (code === undefined && level !== 'warn' && !three) return undefined;
   return { level, text, ...(code === undefined ? {} : { code }), ...(where === undefined ? {} : { where }) };
 }
 

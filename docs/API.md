@@ -453,7 +453,7 @@ game agent's manual.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `FeelRow` (interface from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): A row of the panel: a setting's path, value and declared range, as `__engine.tune.settings()` reads it.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
-- `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (bloom and aa run before it).
+- `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (the shading's, bloom and aa run before it).
 - `FilterChain` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter chain: every filter with its scope and numbers.
 - `FilterName` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's name.
 - `FilterSpec` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
@@ -4504,6 +4504,33 @@ For the agents who maintain the engine.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
 
+### [`engine/gfx/enhanced/aa.ts`](../engine/gfx/enhanced/aa.ts)
+
+- `createTemporalAa` (function): Makes the smoothing (see the file comment).
+- `STEADY` (const): The projection the motion target reads: the camera's without the jitter (see the file comment).
+- `TemporalAa` (interface): The smoothing (see the file comment).
+- `TemporalInputs` (interface): What the smoothing reads: the picture (a rendered texture), the scene pass's depth and motion, the camera.
+- `TRAA` (const): The jitter: r182's Halton sequence, a step a frame the filter runs.
+- `TRAA_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `TRAA_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+
+### [`engine/gfx/enhanced/air.ts`](../engine/gfx/enhanced/air.ts)
+
+- `AIR` (const): The march's steps, the farthest it marches (m), the most lamps with halos, and the shadow test's bias.
+- `AIR_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `AIR_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+- `AirLights` (interface): What the march reads of the scene, as uniforms and textures, gathered each frame (see the file comment).
+- `createAirLights` (function): Makes the gathering (see the file comment).
+- `shadeAir` (const): The air between the camera and the surface at `px` (shardfall's `air_light`): rgb the light it adds, a how much of the surface shows through.
+
+### [`engine/gfx/enhanced/ao.ts`](../engine/gfx/enhanced/ao.ts)
+
+- `AO` (const): The pass: its resolution (a share of the picture's) and samples.
+- `AO_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `AO_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+- `createOcclusion` (function): Makes the occlusion pass over `depth` and the view normals `normal`, seen by `camera` (see the file comment).
+- `Occlusion` (interface): The occlusion pass (see the file comment).
+
 ### [`engine/gfx/enhanced/csm.ts`](../engine/gfx/enhanced/csm.ts)
 
 - `CascadedSun` (interface): A sun casting through cascades (see the file comment).
@@ -4512,14 +4539,32 @@ For the agents who maintain the engine.
 - `CSM_CODES` (const): Its advice code, raised by the feature registry when it is off.
 - `CSM_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
 
+### [`engine/gfx/enhanced/gi.ts`](../engine/gfx/enhanced/gi.ts)
+
+- `GI` (const): The spiral: taps a pixel, and the least and most radius on screen (px), shardfall's.
+- `GI_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `GI_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+- `giScale` (const): The pixels a metre one metre away, for a `height` px picture and a projection whose y scale is `yScale`.
+- `shadeGi` (const): The bounce light and occlusion at `px` (rgb, a), shardfall's spiral: `gi` = (strength, radius m, px a metre at 1 m, frame), `lens.x` 1 for an orthographic camera.
+- `shadeViewPos` (const): A pixel's view-space position from the depth buffer (shardfall's `view_pos`, WebGPU's 0–1 depth).
+
 ### [`engine/gfx/enhanced/lighting.ts`](../engine/gfx/enhanced/lighting.ts)
 
 - `LIGHTING_CODES` (const): Its advice code, raised by the feature registry when it is off.
-- `PoolTiledLighting` (class): The renderer's lighting with tiled point lights (see the file comment): `renderer.lighting = new PoolTiledLighting()`.
+- `PoolTiledLighting` (class): The renderer's lighting with tiled point lights (see the file comment), as `renderer.lighting`.
 - `splitLights` (function): Which lights the tiles carry (point lights that cast no shadow) and which stay ordinary lights.
 - `TILED` (const): The numbers: the pool's most lights, the node's, the tile size (px), lights a tile and the largest buffer (px).
 - `TILED_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
 - `tileGrid` (function): The tile grid a drawing buffer of `width` × `height` px covers, clamped to the buffers made.
+
+### [`engine/gfx/enhanced/ssr.ts`](../engine/gfx/enhanced/ssr.ts)
+
+- `createReflections` (function): Makes the reflections over the scene pass's `inputs` (see the file comment).
+- `ReflectionInputs` (interface): What the reflections read of the scene pass: its colour, depth, view normals and (metalness, roughness).
+- `Reflections` (interface): The reflections (see the file comment).
+- `SSR` (const): The passes: their resolution (a share of the picture's) and r182's quality knob (0 to 1).
+- `SSR_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `SSR_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
 
 ### [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)
 
@@ -4530,6 +4575,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/features.ts`](../engine/gfx/features.ts)
 
+- `AirLights` (interface from [`engine/gfx/enhanced/air.ts`](../engine/gfx/enhanced/air.ts)): What the march reads of the scene, as uniforms and textures, gathered each frame (see the file comment).
 - `CascadedSun` (interface from [`engine/gfx/enhanced/csm.ts`](../engine/gfx/enhanced/csm.ts)): A sun casting through cascades (see the file comment).
 - `cascadeSunFor` (function): Makes `sun` cast through cascades (engine/gfx/enhanced/csm.ts, WP 11.5) when `feature:cascadedShadows` is on in `report`; null otherwise (and with no report), so it casts its one shadow map.
 - `defineFeatures` (function): Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them.
@@ -4544,7 +4590,14 @@ For the agents who maintain the engine.
 - `lightingFor` (function): Gives `renderer` tiled lighting (engine/gfx/enhanced/lighting.ts, WP 11.5) when `feature:tiledLighting` is on in `report`, before its first frame; returns the light pool a sky on it may make: `TILED.pool` lights tiled, else the pool's default.
 - `lightPoolOf` (function): The light pool a sky may make on a renderer whose features are `report` (none: the pool's default).
 - `LightPoolSize` (interface): The light pool a renderer lights: how many lights, and whether tiled lighting lets it pass `POOL_SIZES.max`.
+- `Occlusion` (interface from [`engine/gfx/enhanced/ao.ts`](../engine/gfx/enhanced/ao.ts)): The occlusion pass (see the file comment).
+- `Reflections` (interface from [`engine/gfx/enhanced/ssr.ts`](../engine/gfx/enhanced/ssr.ts)): The reflections (see the file comment).
 - `resolveFeatures` (function): Checks every `feature` entry against `caps` and `gfx.featuresOff`, raises each off feature's advice once, and reports what is on and off.
+- `sceneTargetsFor` (function): The scene pass's extra targets the techniques on in `report` read, for a chain smoothing with `aa` (mrt.ts).
+- `shadingFor` (function): The shading techniques whose features are on in `report` (none without a report).
+- `ShadingTechniques` (interface): The post chain's shading techniques a renderer whose features are `report` has (engine/gfx/post/shading.ts).
+- `TemporalAa` (interface from [`engine/gfx/enhanced/aa.ts`](../engine/gfx/enhanced/aa.ts)): The smoothing (see the file comment).
+- `temporalAaFor` (function): TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA).
 
 ### [`engine/gfx/fx/decals.ts`](../engine/gfx/fx/decals.ts)
 
@@ -4952,10 +5005,10 @@ For the agents who maintain the engine.
 
 - `Aa` (interface): The smoothing's output, and its passes' gate for `updateBefore`.
 - `AA_CHOICE` (const): The one the chain uses: the one that measured better (see the file comment).
-- `AA_KINDS` (const): The edge smoothing three.js r182 offers as TSL display nodes.
+- `AA_KINDS` (const): The edge smoothing three.js r182 offers as TSL display nodes; `traa` with `feature:traa` (WP 11.5).
 - `AA_MEASURED` (const): What decided it (tests/e2e/post.spec.ts): the mean absolute error, in 0–255 luma levels, over the pixels where the unsmoothed frame differs from the supersampled one by more than 8, of the unsmoothed frame and of each smoothing, and the full-screen passes each adds.
 - `AaKind` (type): An edge smoothing.
-- `createAa` (function): Smooths `display` with `kind`, while `gate` is above 0.5; SMAA's passes run only while `runs()` (see above).
+- `createAa` (function): Smooths `display` with `kind`, while `gate` is above 0.5; SMAA's and TRAA's passes run only while `runs()` (see above).
 - `gateUpdates` (function): Wraps a node's `updateBefore` so its passes run only while `runs()` holds, and in any frame that set it up again.
 
 ### [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)
@@ -4978,7 +5031,7 @@ For the agents who maintain the engine.
 - `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
 - `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
 - `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
-- `FILTER_NAMES` (const): Every filter, in the composite's order (bloom and aa run before it).
+- `FILTER_NAMES` (const): Every filter, in the composite's order (the shading's, bloom and aa run before it).
 - `FilterChain` (type): A filter chain: every filter with its scope and numbers.
 - `FilterName` (type): A filter's name.
 - `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
@@ -5011,7 +5064,7 @@ For the agents who maintain the engine.
 
 - `clearMrt` (function): Turns any MRT off, as the frame's own drawing expects.
 - `createFlagTable` (function): Makes an empty flag table: each drawable object gets a slot, for life, and `write` puts every object's flags at its slot, in one render-group uniform array the GPU reads at the slot.
-- `createScenePass` (function): The scene pass: `scene` through `camera` into colour, normals with flags, and depth (the fixed MRT).
+- `createScenePass` (function): The scene pass: `scene` through `camera` into colour, normals with flags, and depth (the fixed MRT), and the `extra` targets the page's features ask for, fixed from then on.
 - `FLAG_BITS` (const): The packed value's bits: +512 on characters, +1024 on characters and objects.
 - `FLAG_SLOTS` (const): Slots in a flag table: four to a `vec4`, 4,096 of them, 64 KiB (WebGPU's smallest uniform buffer limit).
 - `Flags` (interface): A tag as the composite reads it.
@@ -5024,6 +5077,7 @@ For the agents who maintain the engine.
 - `PART_BITS` (const): Each part's bit in a filter's scope mask (engine/gfx/post/filters.ts).
 - `PARTS` (const): The parts of the scene a filter can be scoped to.
 - `PostTag` (interface): What `setPart` records on an object (`userData.post`).
+- `SceneTargets` (interface): The scene pass's targets beyond colour and normals (WP 11.5): metalness and roughness for SSR, motion for TRAA.
 - `setPart` (function): Tags `object` (and what it holds) with a part of the scene, an outline group and the pixel-art flag.
 - `unpackFlags` (function): The part, group and pixel-art flag of a packed value; 0 or 1 (the cleared background) is the environment.
 - `useSceneMrt` (function): Turns the scene pass's MRT on for what the renderer compiles or draws next (the warm-up's compile steps).
@@ -5071,6 +5125,12 @@ For the agents who maintain the engine.
 - `postPaint` (const): Oil paint at pixel `c` (see the file comment); `mask` is the filter's scope mask (7 lets every sample in).
 - `postSketch` (const): Pencil on paper over the picture `s` at `p`; `bp` is the picture there before the outline; `time` in seconds.
 - `postStylize` (const): A style (1 paint, 2 halftone, 3 ASCII, 4 pencil) over the picture `s` at `p`; `size` in px, `keep` the colour kept, `mask` the scope mask, `time` in seconds.
+
+### [`engine/gfx/post/shading.ts`](../engine/gfx/post/shading.ts)
+
+- `createShading` (function): Makes the stage over `scenePass` (see the file comment).
+- `Shading` (interface): The chain's shading stage (see the file comment).
+- `SHADING_CODES` (const): The codes this module raises, with their fixes.
 
 ### [`engine/gfx/post/snap.ts`](../engine/gfx/post/snap.ts)
 
@@ -8427,6 +8487,10 @@ For the agents who maintain the engine.
 - `SceneDescription` (interface): A scene as data.
 - `ShapeSpec` (interface): A shape: a box of `size`, a sphere of radius `size[0]`, or a plane of `size[0]` × `size[1]`.
 
+### [`tests/pages/shading.ts`](../tests/pages/shading.ts)
+
+- `ScreenBox` (type): A box on screen in the drawing buffer's pixels, `[x0, y0, x1, y1]`, y down.
+
 ### [`tests/setup/adviceTrap.ts`](../tests/setup/adviceTrap.ts)
 
 - `ADVICE_CODE` (const): An engine advice line: `[AREA_WORDS] message`; group 1 is the code.
@@ -8438,7 +8502,8 @@ For the agents who maintain the engine.
 - `listing` (function): The entry that lists `warning`: its code exactly for an advice line, a contained text for any other warning.
 - `loadAllowList` (function): Reads and checks every `*.json` file in `dir`; a malformed file throws, naming the file, the entry and the fix.
 - `THREE_DEPRECATION` (const): A three.js deprecation, whatever its level: three.js prefixes its messages with `THREE.`.
-- `trap` (function): The trap's verdict on one console message: a `Warning` when it is advice, a deprecation or a `console.warn`.
+- `THREE_TSL_ERROR` (const): A shader three.js could not build (r182's `Nodes.getForRender` prints it as an error, then draws a default).
+- `trap` (function): The trap's verdict on one message: a `Warning` when it is advice, a deprecation, a TSL error or a `console.warn`.
 - `Warning` (interface): A console message the trap caught.
 - `watchConsole` (function): Wraps `target`'s methods so each trapped message reaches `sink` before it prints; returns the unwrap function.
 

@@ -18,7 +18,7 @@
  *    only when it crosses half a block, then by a whole block; without the snap every slide shimmers;
  * 5. bloom is off at the `low` quality tier, with advice `GFX_POST_NO_BLOOM`;
  * 6. the edge smoothing that measures better (engine/gfx/post/aa.ts records it): FXAA and SMAA against the frame
- *    drawn at 4 × 4 the size and averaged down;
+ *    drawn at 4 × 4 the size and averaged down, and TRAA (WP 11.5) after 64 still frames, held to smoothing;
  * 7. URL parameters reach the chain (the route `node x shot tests/pages/post.html --set post.look=…` takes): the page
  *    opened with `?post.look=look:game-boy` draws that look, and `__engine.shot`, which `x shot` calls, shoots it with
  *    the clean frame's ID pass;
@@ -95,7 +95,7 @@ interface PostPage {
     looks: string[],
   ): Promise<{ hashes: Record<string, string>; built: number[]; during: Counts }>;
   slide(fractions: number[], snap: boolean): Promise<string[]>;
-  measureAa(): Promise<Record<'none' | 'fxaa' | 'smaa' | 'reference', Shot>>;
+  measureAa(): Promise<Record<'none' | 'fxaa' | 'smaa' | 'traa' | 'reference', Shot>>;
 }
 
 declare const __postPage: PostPage;
@@ -265,7 +265,7 @@ test('every look builds 0 pipelines after the warm-up and recompiles nothing, an
   test.setTimeout(400_000);
   await open(page, harness);
   const looks = await page.evaluate(() => __postPage.looks());
-  expect(looks.length).toBe(86);
+  expect(looks.length).toBe(98);
   await page.evaluate(() => __postPage.setLook('look:clean'));
   const ids = idsOf(await page.evaluate(() => __postPage.shoot({ ids: true, pixels: false })));
   // A shot draws into a target of its own: its first frame straight (above) and through the chain (the parts view)
@@ -361,11 +361,15 @@ test('the edge smoothing that measures better is the one the chain uses', async 
     none: edgeError(none, none, reference),
     fxaa: edgeError(rgba(shots.fxaa), none, reference),
     smaa: edgeError(rgba(shots.smaa), none, reference),
+    traa: edgeError(rgba(shots.traa), none, reference),
   };
   console.log(`edge smoothing, mean luma error on edges: ${JSON.stringify(errors)}`);
   const other = AA_CHOICE === 'fxaa' ? 'smaa' : 'fxaa';
   expect(errors[AA_CHOICE], JSON.stringify(errors)).toBeLessThan(errors.none);
   expect(errors[AA_CHOICE], JSON.stringify(errors)).toBeLessThanOrEqual(errors[other]);
+  // TRAA smooths a still picture by gathering frames, which a single frame of play never has: it is held to smoothing,
+  // and offered where post.aa asks for it, never chosen by this still measure (engine/gfx/post/aa.ts).
+  expect(errors.traa, JSON.stringify(errors)).toBeLessThan(errors.none);
 });
 
 test('URL parameters reach the chain, and x shot shoots what it draws', async ({ page, harness }) => {

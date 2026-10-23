@@ -13,7 +13,8 @@
  * and pencil); `grade` (temperature, tint, contrast, brightness, saturation); then the screen: `scanlines`, `grain`
  * and `chroma` (colour fringes) by scope, and `screen` (CRT curvature, vignette, low resolution) over everything.
  * `bloom` runs before the composite, on the scene's light, and is never scoped; `aa` (engine/gfx/post/aa.ts) smooths
- * the picture before the filters, so blocks, dots and dither stay crisp. Those three take only `off` or `all`.
+ * the picture before the filters, so blocks, dots and dither stay crisp. Those three take only `off` or `all`, and so
+ * do the shading's (WP 11.5, engine/gfx/post/shading.ts: `ao`, `gi`, `ssr` and `air`), on the scene's light first.
  *
  * Shardfall's lessons, kept: levels per channel are 0 (off) or 8 and more (24 suits pixel art), since fewer shift the
  * hue of dull colours (`shardfall:docs/HISTORY.md:424-426`; a grey floor went pink at 5–6 levels); the pixel filter
@@ -63,8 +64,12 @@ export const PALETTES = ['none', 'gameboy', 'pico8', 'cga', '1bit', 'amber'] as 
 /** The painterly and print styles. */
 export const STYLIZE_KINDS = ['paint', 'halftone', 'ascii', 'sketch'] as const;
 
-/** Every filter, in the composite's order (bloom and aa run before it). */
+/** Every filter, in the composite's order (the shading's, bloom and aa run before it). */
 export const FILTER_NAMES = [
+  'ao',
+  'gi',
+  'ssr',
+  'air',
   'bloom',
   'aa',
   'cel',
@@ -111,6 +116,33 @@ const filter = <const P extends Schema>(description: string, properties: P) => {
 
 /** The filters of a chain; see the file comment. Sizes are in the picture's own pixels (px). */
 export const FILTER_FIELDS = {
+  ao: filter('Ambient occlusion (GTAO, engine/gfx/post/shading.ts): creases and corners darken; never scoped.', {
+    scope: scope(true),
+    strength: num('How dark the occlusion gets (1 is its full measure).', 1, 0, 2),
+    radius: num('How far round a point it looks for what hides it.', 0.6, 0.05, 4, 'm'),
+  }),
+  gi: filter(
+    'Bounce light (12 taps a pixel): lit surfaces colour their neighbours, with soft occlusion; never scoped.',
+    {
+      scope: scope(true),
+      strength: num('How much bounced light adds.', 1, 0, 4),
+      radius: num('How far light bounces.', 1.6, 0.1, 6, 'm'),
+    },
+  ),
+  ssr: filter('Screen-space reflections on metal surfaces (SSRNode), blurred on rough ones; never scoped.', {
+    scope: scope(true),
+    strength: num('How strongly reflections show, 0 to 1.', 1, 0, 1),
+    distance: num('How far a reflected ray travels.', 6, 0.5, 50, 'm'),
+    thickness: num('How thick a surface counts as, for a ray passing behind it.', 0.15, 0.01, 2, 'm'),
+  }),
+  air: filter('Hazy air with light shafts where the sun breaks through, and halos round lamps; never scoped.', {
+    scope: scope(true),
+    haze: num('How thick the haze is.', 0.35, 0, 3),
+    height: num('How high the haze reaches above the ground before it thins.', 4, 0.2, 20, 'm'),
+    shafts: num('How bright sunlight shines through the haze (cut by shadows: light shafts).', 1, 0, 3),
+    forward: num('How much the haze scatters light forward, toward the sun (0 evenly).', 0.4, -0.9, 0.95),
+    halos: num('How strongly lamps glow in the air round them.', 0.3, 0, 3),
+  }),
   bloom: filter("Bright parts glow (three.js's BloomNode), before the composite, never scoped.", {
     scope: scope(true),
     strength: num('How strongly the glow adds.', 0.6, 0, 3),

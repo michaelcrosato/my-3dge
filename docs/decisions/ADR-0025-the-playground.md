@@ -1580,3 +1580,57 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   0.78 once its shots play at 0.8); the house replay's timeline gives 55 sounds, hash `017481cb37c16edc`, in Node, as
   Chromium must (tests/e2e/playground-audio.spec.ts); the coverage test plays every playground replay and hears every
   event but the two quiet kinds.
+
+## Amendment 30 (2026-10-23, WP 11.5): lighting and shading upgrades
+
+- **Where they live.** Each technique is a module of engine/gfx/enhanced/ that declares its feature and advice code
+  (`<X>_FEATURE`, `<X>_CODES`) and makes it; engine/gfx/features.ts registers them and hands each out only while its
+  feature is on (`lightingFor`, `cascadeSunFor`, `shadingFor`, `temporalAaFor`, `sceneTargetsFor`), and only it may
+  import engine/gfx/enhanced/ (ESLint's layer rule). Beyond the plan's Owns: `gi.ts` and `air.ts` (the GI tier and
+  the air), engine/gfx/post/shading.ts (the chain's shading stage), engine/gfx/backdrop.ts (split out of sky.ts for the
+  length limit), and extensions to engine/gfx/post/{chain,filters,mrt,aa,settings,looks,presets}.ts and
+  engine/gfx/{lights,sky,stage,stageSky,renderer,sceneDump}.ts. Seven features: `feature:tiledLighting`,
+  `feature:cascadedShadows`, `feature:ao`, `feature:gi`, `feature:air`, `feature:ssr`, `feature:traa`.
+- **Tiled lighting** is r182's `TiledLightsNode` with its faults fixed in a subclass (engine/gfx/enhanced/lighting.ts):
+  shadow casters stay ordinary lights (r182 tiled them and lost their shadows); its buffers are made once for 4,096²
+  and its grid read from uniforms, so a resize rebuilds nothing (r182 baked the size into its shaders); its compute
+  pass covers the grid's tiles alone (r182's dispatched 32 times too many); the grid follows the render target, not
+  the canvas; the reach test is in pixels from the projection, right for any aspect and for orthographic cameras; a
+  tile holds 16 lights, not 8. The decisive one: r182's uniforms are object-group uniforms, written only when an
+  object's own uniforms update, so still objects drew with a stale light list (the hall came out darker than with the
+  pool); they are render-group uniforms now. With it the light pool holds 64 lights (`POOL_SIZES.tiled`), else 12.
+- **Cascaded shadows** (csm.ts): the sky's sun casts through r182's `CSMShadowNode`, three cascades over the view's
+  first 90 m at 1,024² each; the node takes its camera at its first build, so `follow` hands it each frame's camera
+  and splits the cascades again only when the camera or its projection changed. The scene dump says `×3 cascades`.
+- **The chain's shading stage** (engine/gfx/post/shading.ts) lays the look's new sections on the scene's light, before
+  bloom: `ao` (r182's `GTAONode`, half resolution, 16 samples) multiplies it; `ssr` mixes reflections over metal;
+  `gi` and `air` run inside the display pass, a part of its WGSL included only while the feature is on, behind
+  render-group uniforms. The AO and SSR passes run only in frames that ask for them (and the warm-up's), so switching
+  any section builds no pipeline. The techniques see each frame's camera through a lens whose matrices copy it, after
+  pixel art's block snap has moved it: r182's nodes keep the camera they are made with, and the chain draws through
+  any of the five camera codes, orthographic ones among them.
+- **GI is shardfall's 12-tap spiral** (gi.ts, its "Bounce light"), with its radius in metres at the pixel's depth and
+  the orthographic case added; r182's `SSGINode`, the plan's tier above, reads a perspective camera's field of view and
+  waits for a look that needs it (the Build line's "when a look needs it"; none does yet).
+- **The air is shardfall's haze march** (air.ts): 32 steps through haze thick at its base, sunlight scattered toward
+  the camera by a Henyey–Greenstein phase where the sun's shadow map says it reaches (shafts), the sky's light in the
+  haze, and lamp halos in closed form. three.js's intensities are taken as radiance times π (its BRDF divides by π):
+  read raw, 86% of the arena's pixels came out white. The shadow map is read and compared by hand (WGSL `textureLoad`),
+  the widest cascade's when the sun casts through cascades; the lamps and the sun are brought up to date before they
+  are read (the gathering runs before the scene pass), and the shadow camera's matrix is read as the display pass
+  draws, after the scene pass has moved it. The quality tiers turn bounce light and shafts off below `high` and halos
+  at `low`; a look that asks for one there gets `GFX_POST_TIER` once.
+- **Reflections** (ssr.ts) are r182's `SSRNode`, which decides at build time whether its camera is perspective: two
+  passes, one per kind of lens, only the frame camera's running. The scene pass writes (metalness, roughness) into a
+  `metalrough` target only while `feature:ssr` is on, and the mix is gated by the pixel's own metalness, since r182's
+  blurred levels spread a reflection past a metal surface's edge. The box draws no metal (its materials are Lambert
+  unless a look draws them in the pbr style, and its iron is on props it never places), so the reflections are shown
+  on a fixture page of their own, tests/pages/shading.html, with a steel ball and plate.
+- **TRAA** (aa.ts) is r182's `TRAANode`, chosen by the new view setting `post.aa` (`fxaa`, `smaa`, `traa`; the chain
+  reads it when made), never by default: it smooths a still picture by gathering frames, which a single frame of play
+  never has. The camera is jittered by r182's Halton steps only in frames the filter runs; the scene pass writes
+  motion (`velocity`) only for it.
+- **Looks**: shardfall's Sunbeams and Lamplit fog (`look:sunbeams`, `look:lamplit-fog`), its seven air presets
+  (`look:air/…`) and its bounce light (`look:gi/bounce-light`), and one preset each for the sections it lacked
+  (`look:ao/corners`, `look:ssr/metal`): 98 looks. The playground's own looks take the sections in WP 13.24, which owns
+  labs/playground/looks/.

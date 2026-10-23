@@ -10,9 +10,9 @@
  * The entries are seeded from shardfall's tuned presets (`shardfall:crates/pav_view/src/looks.toml`, with
  * `look.rs:100-353`), keys renamed: its whole looks are here (`look:hd-2d`, `look:game-boy`…), and its one-section
  * presets are looks of their own, grouped by the filter they set (`look:palette/game-boy`, `look:stylize/oil-paint`,
- * engine/gfx/post/presets.ts). Its "objects" (characters and objects) is the scope `characters+objects`. Left out:
- * the haze, light shafts, halos and bounce light (its `air` section, the `gi` preset and the looks Sunbeams and
- * Lamplit fog), which arrive with WP 11.5; styles that differ by part and the knobs WP 7.2's styles lack
+ * engine/gfx/post/presets.ts). Its "objects" (characters and objects) is the scope `characters+objects`. Its air and
+ * bounce light came with WP 11.5 (the `air` and `gi` sections, engine/gfx/post/shading.ts): the looks Sunbeams and
+ * Lamplit fog, and their presets. Left out: styles that differ by part and the knobs WP 7.2's styles lack
  * (`flat_shadow`, `specular`, `exposure`), so four looks keep the scene's style where shardfall styled the parts
  * apart. One rename for the lesson: "64 colours" posterized to 4 levels, which shifts the hue of dull colours, so it
  * is `look:palette/512-colours`, at 8.
@@ -26,7 +26,7 @@
  * const registry = createRegistry();
  * defineLooks(registry);
  * registry.get('look', 'look:game-boy').filters.palette.palette; // 'gameboy'
- * registry.list('look').length; // 86
+ * registry.list('look').length; // 98
  * @see engine/gfx/post/looks.test.ts
  * @see tests/e2e/post.spec.ts
  */
@@ -229,6 +229,20 @@ export const LOOKS: Record<string, LookSpec> = {
     filters: {
       stylize: { scope: 'environment', style: 'sketch', size: 4, color: 1 },
       outline: { scope: 'characters+objects', width: 2, darken: 0.1 },
+    },
+  },
+  'look:sunbeams': {
+    description: 'Dusty air, sunlight streaming through the gaps, a soft glow.',
+    filters: {
+      air: { scope: 'all', haze: 0.7, height: 6, shafts: 2.4, forward: 0.6, halos: 0.3 },
+      bloom: { scope: 'all', strength: 0.6, threshold: 1 },
+    },
+  },
+  'look:lamplit-fog': {
+    description: 'A foggy night where every lamp glows in the air.',
+    filters: {
+      air: { scope: 'all', haze: 0.9, height: 3, shafts: 0.4, forward: 0.3, halos: 1.8 },
+      grade: { scope: 'all', temperature: -0.25, brightness: 0.9 },
     },
   },
 };

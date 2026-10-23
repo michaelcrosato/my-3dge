@@ -36,7 +36,7 @@ setting from the settings below.
 | `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget. | `node x perf labs/box --scene crowd-5000 --ladder --budget` |
 | `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off; Box 6: its blows through the bodies' reactions (flinch, knockdown, get-up, death) and the hero's cape, which the ID pass sees. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
 | `labs/box/scenes/fight-1000.ts` | Box 6: the benchmark, the fight at 100, 1,000 and 5,000, within budget. | `node x perf labs/box --scene fight-1000 --ladder --budget` |
-| `labs/box/scenes/hall-props.ts`, every look | Box 6: every box look, and one of the engine's looks in each material style, renders on the hall with its props with no pipeline built after a warm-up, across every toggle, the knock replay's goldens unchanged (Looks, below); the engine's 86 looks each build nothing and keep the hash on the room (`tests/e2e/post.spec.ts`). Each test lists the scene and the looks it covered as its annotations (`looks`) in out/e2e/report.json. | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
+| `labs/box/scenes/hall-props.ts`, every look | Box 6: every box look, and one of the engine's looks in each material style, renders on the hall with its props with no pipeline built after a warm-up, across every toggle, the knock replay's goldens unchanged (Looks, below); the engine's 98 looks each build nothing and keep the hash on the room (`tests/e2e/post.spec.ts`). Each test lists the scene and the looks it covered as its annotations (`looks`) in out/e2e/report.json. | `npm run e2e -- tests/e2e/box-look.spec.ts tests/e2e/parity.spec.ts` |
 | `labs/box/sounds/page.ts` | Phase 9: the box plays its sim events as sounds, spatialized and ducked, with torch ambience and a demo song; the fight replay's sound timeline hashes the same in Node and in Chromium. | `npm run e2e -- tests/e2e/box-audio.spec.ts` |
 | `labs/box/scenes/clips.ts` | Clip mode (Phase 8): the hero and the mannequin play any clip of the library's 1,218 through the clip layer, over the hero's own rig; the clip a setting names is the one `x anim show` prints, frame for frame; its replay's goldens are the same in Node and in Chromium, drawn or not (`node x replay tests/replays/box-8-clips.replay.json --browser page`). | `npm run e2e -- tests/e2e/box-clips.spec.ts` |
 | `labs/box/scenes/ragdoll.ts` | Ragdolls (WP 10.2): a blow from the front, from behind, a launch and a death hand four partners off to their ragdolls, joints as data on Rapier, and each gets up the way it lies (the dead one when the cycle stands it), its goldens the same in Node and in Chromium; `box.ragdoll.handOff` off, they fall through their reactions' timelines instead. | `node x replay tests/replays/ragdoll-falls.replay.json tests/replays/ragdoll-strike.replay.json --browser sim` |
@@ -67,10 +67,10 @@ with its level of detail from Box 4 (engine/gfx/stageCrowd.ts).
 
 A look is how the page draws a scene, as data (`node x describe look`): the sky that lights it, a material style and a
 filter chain; a look never changes play, so any scene can show any look. The box's own (`labs/box/looks/`) are the
-torch-lit hall and the prototype's looks over it; the engine's 86 (`look:cartoon`, `look:game-boy`, the one-filter
+torch-lit hall and the prototype's looks over it; the engine's 98 (`look:cartoon`, `look:game-boy`, the one-filter
 presets…) show in the box too. What is proved, on the hall with its props: every box look, and one engine look of each
 material style, builds nothing after its warm-up and keeps the knock replay's goldens (`tests/e2e/box-look.spec.ts`,
-`tests/e2e/parity.spec.ts`); each of the engine's 86 does the same on the room (`tests/e2e/post.spec.ts`).
+`tests/e2e/parity.spec.ts`); each of the engine's 98 does the same on the room (`tests/e2e/post.spec.ts`).
 
 | Look | What it draws |
 |---|---|
@@ -88,6 +88,11 @@ Switch with `?post.look=look:torch-toon` (`labs/box/?scene=fight&cam3=chase&post
 SwiftShader, about a minute for the hall in a style under the sky; a GPU takes a moment); from then on a switch builds
 nothing. `quality` sets how many torches cast shadows: 2 at `high`, 1 at `medium`, none at `low`. A new look comes
 from `node x new look labs/box/looks/<name>`; the page imports every module under `labs/box/looks/`.
+
+The chain's shading (WP 11.5: `ao`, `gi`, `air` and `ssr`, laid on any look with `post.filters`, as in
+`labs/box/?scene=room&post.filters={"air":{"scope":"all"}}`, or by the looks `look:sunbeams`, `look:lamplit-fog` and
+the engine's air presets) is measured on the room by `tests/e2e/enhanced.spec.ts`. The box draws no metal, so its
+reflections show on `tests/pages/shading.html` instead.
 
 ## Sound
 

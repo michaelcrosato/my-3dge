@@ -565,7 +565,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `AIM_STEEP`, `createCutaway`, `CUT_AIMS`, `CUT_FACING`, `CUT_MARGIN`, `CUT_STEEP`, `Cutaway`, `cutawayAims`, `CutawayOptions`, `CutawayReport`, `CutTarget`, `FADE_AIMS`, `FADE_THIN`, `planCutaway`, `planFade`, `segmentHitsBox`
   - Tests: [`engine/gfx/cutaway.test.ts`](../engine/gfx/cutaway.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
-  - Exports: `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `resolveFeatures`
+  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `TemporalAa`, `temporalAaFor`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
 - [`idmarks.ts`](../engine/gfx/idmarks.ts): The ID pass's marks (PLAN.md §8.5, I-28; split from engine/gfx/idpass.ts after G9, ADR-0014 amendment 17): `marksOf` numbers what the pass sees, largest first, and `drawMarks` draws the numbers onto a frame, for `x shot --marks` (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
   - Exports: `drawMarks`, `Mark`, `marksOf`
@@ -715,12 +715,27 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx/enhanced
 
+- [`aa.ts`](../engine/gfx/enhanced/aa.ts): Temporal edge smoothing, TRAA (PLAN.md WP 11.5): r182's `TRAANode` addon as the chain's `aa` filter when the view setting `post.aa` is `traa` (engine/gfx/post/aa.ts, read when the chain is made).
+  - Exports: `createTemporalAa`, `STEADY`, `TemporalAa`, `TemporalInputs`, `TRAA`, `TRAA_CODES`, `TRAA_FEATURE`
+  - Tests: [`engine/gfx/enhanced/aa.test.ts`](../engine/gfx/enhanced/aa.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
+- [`air.ts`](../engine/gfx/enhanced/air.ts): Hazy air, light shafts and lamp halos (PLAN.md WP 11.5, §5.8): shardfall's volumetric light, for the look's `air` section, laid on the scene's light inside the display pass (engine/gfx/post/shading.ts) behind a uniform.
+  - Exports: `AIR`, `AIR_CODES`, `AIR_FEATURE`, `AirLights`, `createAirLights`, `shadeAir`
+  - Tests: [`engine/gfx/enhanced/air.test.ts`](../engine/gfx/enhanced/air.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
+- [`ao.ts`](../engine/gfx/enhanced/ao.ts): Ambient occlusion (PLAN.md WP 11.5): r182's `GTAONode` addon (ground-truth ambient occlusion) over the post chain's scene pass, its depth and its view normals (engine/gfx/post/mrt.ts), for the look's `ao` section (engine/gfx/post/shading.ts lays it on the scene's light): creases, corners and the ground under things darken, indoors most of all.
+  - Exports: `AO`, `AO_CODES`, `AO_FEATURE`, `createOcclusion`, `Occlusion`
+  - Tests: [`engine/gfx/enhanced/ao.test.ts`](../engine/gfx/enhanced/ao.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`csm.ts`](../engine/gfx/enhanced/csm.ts): Cascaded shadows (PLAN.md WP 11.5): the sky's sun casts through r182's `CSMShadowNode` addon, over `CASCADES.count` cascades that split the view's first `CASCADES.far` m, each its own `CASCADES.map`² shadow map.
   - Exports: `CascadedSun`, `CASCADES`, `cascadeSun`, `CSM_CODES`, `CSM_FEATURE`
   - Tests: [`engine/gfx/enhanced/csm.test.ts`](../engine/gfx/enhanced/csm.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
+- [`gi.ts`](../engine/gfx/enhanced/gi.ts): Bounce light (PLAN.md WP 11.5): screen-space global illumination, shardfall's 12-tap spiral (its "Bounce light" preset), for the look's `gi` section.
+  - Exports: `GI`, `GI_CODES`, `GI_FEATURE`, `giScale`, `shadeGi`, `shadeViewPos`
+  - Tests: [`engine/gfx/enhanced/gi.test.ts`](../engine/gfx/enhanced/gi.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`lighting.ts`](../engine/gfx/enhanced/lighting.ts): Tiled lighting (PLAN.md WP 11.5, I-17): every lamp lit at once, not only the light pool's nearest 12.
   - Exports: `LIGHTING_CODES`, `PoolTiledLighting`, `splitLights`, `TILED`, `TILED_FEATURE`, `tileGrid`
   - Tests: [`engine/gfx/enhanced/lighting.test.ts`](../engine/gfx/enhanced/lighting.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
+- [`ssr.ts`](../engine/gfx/enhanced/ssr.ts): Screen-space reflections (PLAN.md WP 11.5): r182's `SSRNode` addon for the look's `ssr` section: a ray from each metal pixel, reflected about its normal, marched through the depth buffer, takes the colour where it lands, fading with distance and growing at grazing angles; rougher surfaces read a blurrier level of the result.
+  - Exports: `createReflections`, `ReflectionInputs`, `Reflections`, `SSR`, `SSR_CODES`, `SSR_FEATURE`
+  - Tests: [`engine/gfx/enhanced/ssr.test.ts`](../engine/gfx/enhanced/ssr.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`timing.ts`](../engine/gfx/enhanced/timing.ts): GPU timing (PLAN.md WP 11.2, §4.7; doctrine: Verifiable): how long the GPU spends on a drawn frame, from WebGPU's timestamp queries, where the device has `timestamp-query` (`feature:timestamps`, engine/gfx/features.ts).
   - Exports: `createGpuTiming`, `GPU_WINDOW`, `GpuTiming`, `TimedRenderer`
   - Tests: [`engine/gfx/enhanced/timing.test.ts`](../engine/gfx/enhanced/timing.test.ts), [`tests/e2e/timing.spec.ts`](../tests/e2e/timing.spec.ts)
@@ -880,7 +895,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/gfx/post
 
-- [`aa.ts`](../engine/gfx/post/aa.ts): Edge smoothing (PLAN.md WP 7.4): the `aa` filter, from three.js's TSL display nodes, `FXAANode` or `SMAANode`, whichever measures better (`AA_CHOICE`).
+- [`aa.ts`](../engine/gfx/post/aa.ts): Edge smoothing (PLAN.md WP 7.4): the `aa` filter, from three.js's TSL display nodes, `FXAANode` or `SMAANode`, whichever measures better (`AA_CHOICE`), or `TRAANode` where the view setting `post.aa` asks for it (WP 11.5: engine/gfx/enhanced/aa.ts, with `feature:traa`).
   - Exports: `Aa`, `AA_CHOICE`, `AA_KINDS`, `AA_MEASURED`, `AaKind`, `createAa`, `gateUpdates`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`chain.ts`](../engine/gfx/post/chain.ts): Post-processing (PLAN.md WP 7.4, §6.7, I-46): `createPost` sets up, once, one `PostProcessing` chain (r182) that every frame draws through, and draws the look the view settings name.
@@ -896,14 +911,17 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`mrt.ts`](../engine/gfx/post/mrt.ts): The one fixed MRT of post-processing (PLAN.md WP 7.4, §6.7, I-46): the scene pass draws, once per frame and always the same way, the colour (`output`) and the view normals (`normal`), whose spare channel `w` carries what the composite needs to know about each pixel's object: its outline group, its part of the scene (a character, an object or the environment) and whether it is drawn as pixel art.
-  - Exports: `clearMrt`, `createFlagTable`, `createScenePass`, `FLAG_BITS`, `FLAG_SLOTS`, `Flags`, `flagsOf`, `FlagTable`, `foldGroup`, `GROUPS`, `packFlags`, `Part`, `PART_BITS`, `PARTS`, `PostTag`, `setPart`, `unpackFlags`, `useSceneMrt`, `writeFlags`
+  - Exports: `clearMrt`, `createFlagTable`, `createScenePass`, `FLAG_BITS`, `FLAG_SLOTS`, `Flags`, `flagsOf`, `FlagTable`, `foldGroup`, `GROUPS`, `packFlags`, `Part`, `PART_BITS`, `PARTS`, `PostTag`, `SceneTargets`, `setPart`, `unpackFlags`, `useSceneMrt`, `writeFlags`
   - Tests: [`engine/gfx/post/mrt.test.ts`](../engine/gfx/post/mrt.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
-- [`presets.ts`](../engine/gfx/post/presets.ts): One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-500`), keys renamed (engine/gfx/post/looks.ts says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/ 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA).
+- [`presets.ts`](../engine/gfx/post/presets.ts): One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-462`), keys renamed (engine/gfx/post/looks.ts says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/ 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA).
   - Exports: `PRESETS`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts)
 - [`settings.ts`](../engine/gfx/post/settings.ts): The post chain's codes and settings (PLAN.md WP 7.4, WP 3.12): the advice engine/gfx/post/chain.ts gives (`POST_CODES`: bloom off at a tier, too few levels, the flag table full, a style without a style set) and the view settings it reads (`POST_SETTINGS`: `post.look`, `post.filters`, `post.show`), declared with the setting `quality` by `definePostSettings`.
   - Exports: `definePostSettings`, `POST_CODES`, `POST_SETTINGS`
   - Tests: [`engine/gfx/post/chain.test.ts`](../engine/gfx/post/chain.test.ts)
+- [`shading.ts`](../engine/gfx/post/shading.ts): The chain's shading stage (PLAN.md WP 11.5): the look's `ao`, `gi`, `air` and `ssr` sections laid on the scene's light before bloom and the display colours (engine/gfx/post/chain.ts builds `apply` into its output graph once).
+  - Exports: `createShading`, `Shading`, `SHADING_CODES`
+  - Tests: [`engine/gfx/post/shading.test.ts`](../engine/gfx/post/shading.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`snap.ts`](../engine/gfx/post/snap.ts): Snapping the camera to pixel art's block grid (PLAN.md WP 7.4; shardfall's lesson, `shardfall:docs/ HISTORY.md:478-479`): the composite cuts the picture into blocks fixed to the screen, so a camera sliding by less than a block changes what every block shows, and the pixel art shimmers.
   - Exports: `blockSize`, `SNAP_FALLBACK_DEPTH`, `snapToBlocks`
   - Tests: [`engine/gfx/post/snap.test.ts`](../engine/gfx/post/snap.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
@@ -1960,14 +1978,17 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/e2e/renderer.spec.ts`](../tests/e2e/renderer.spec.ts)
 - [`sceneFixture.ts`](../tests/pages/sceneFixture.ts): The scene page's fixture (tests/pages/scene.html): a small scene as plain data, and `buildScene`, which turns a description into three.js objects.
   - Exports: `buildScene`, `BuiltScene`, `FIXTURE`, `LightSpec`, `MaterialSpec`, `MeshSpec`, `PoolSpec`, `SceneDescription`, `ShapeSpec`
+- [`shading.ts`](../tests/pages/shading.ts): The shading page's module (tests/pages/shading.html, PLAN.md WP 11.5): a small lit corner drawn through the post chain (engine/gfx/post/chain.ts), for what its shading sections do where the box has nothing to show them on: a steel ball and a steel plate on the floor (metalness 1: the box draws no metal; its iron is on props it never places), before a red wall and a blue one meeting in a corner with a white block in it, a sun that casts, two pillars cutting its light, and a lamp.
+  - Exports: `ScreenBox`
+  - Tests: [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`shot.ts`](../tests/pages/shot.ts): The shot page's module (tests/pages/shot.html): a fixture scene made for the ID pass and the look metrics, drawn by the engine's renderer (engine/gfx/renderer.ts), and `window.__engine` with `ready`, `errors`, `info()` and `shot(options)`: engine/gfx/shot.ts's `shot`, returned as JSON through `shotForJson`, the member `x shot` calls (WP 2.7 registers the engine's own, §8.3).
   - Tests: [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
 - [`ui.ts`](../tests/pages/ui.ts): The UI widgets page's module (tests/pages/ui.html), the browser half of tests/e2e/ui.spec.ts (PLAN.md WP 10.6): the overlay (engine/ui/overlay.ts) over the page's canvas with a health bar and hearts in the top-left place, a quest box in the top-right one, a dialog, a pause menu and a settings panel (`#panel`) the gamepad's cursor works (engine/ui/{widgets,dialog,menu}.ts), all reading the page's real input (engine/input/input.ts) over its window, with gamepads through a stubbed `navigator.getGamepads` whose slots the tests fill with scripted pads.
 
 ## tests/setup
 
-- [`adviceTrap.ts`](../tests/setup/adviceTrap.ts): The advice trap (PLAN.md §8.2, WP 0.5): a test fails when it prints an engine advice code, a `console.warn` or a three.js deprecation that no file under `tests/baselines/advice/` lists.
-  - Exports: `ADVICE_CODE`, `ADVICE_DIR`, `AllowEntry`, `ConsoleLine`, `describeUnlisted`, `findUnlisted`, `listing`, `loadAllowList`, `THREE_DEPRECATION`, `trap`, `Warning`, `watchConsole`
+- [`adviceTrap.ts`](../tests/setup/adviceTrap.ts): The advice trap (PLAN.md §8.2, WP 0.5): a test fails when it prints an engine advice code, a `console.warn`, a three.js deprecation or a TSL error that no file under `tests/baselines/advice/` lists.
+  - Exports: `ADVICE_CODE`, `ADVICE_DIR`, `AllowEntry`, `ConsoleLine`, `describeUnlisted`, `findUnlisted`, `listing`, `loadAllowList`, `THREE_DEPRECATION`, `THREE_TSL_ERROR`, `trap`, `Warning`, `watchConsole`
   - Tests: [`tests/e2e/adviceTrap.spec.ts`](../tests/e2e/adviceTrap.spec.ts), [`tests/setup/adviceTrap.test.ts`](../tests/setup/adviceTrap.test.ts), [`tests/setup/harnesses.test.ts`](../tests/setup/harnesses.test.ts)
 - [`trapOutcomes.ts`](../tests/setup/trapOutcomes.ts): What the advice trap's fixture tests must give in either harness (WP 0.5): every `passes:` test passed, and every `fails:` test failed through the trap, naming what it printed and the allow-list fix.
   - Exports: `expectTrapOutcomes`, `PRINTED`, `TrapExpect`, `TrapOutcome`

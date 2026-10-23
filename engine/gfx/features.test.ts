@@ -24,7 +24,15 @@ function caps(features: string[], limits: Record<string, number> = {}): GfxCaps 
 const FULL = ['float32-filterable', 'timestamp-query'];
 
 /** The techniques' features (WP 11.5), declared by their modules in engine/gfx/enhanced/: they need nothing more. */
-const TECHNIQUES = ['feature:cascadedShadows', 'feature:tiledLighting'];
+const TECHNIQUES = [
+  'feature:air',
+  'feature:ao',
+  'feature:cascadedShadows',
+  'feature:gi',
+  'feature:ssr',
+  'feature:tiledLighting',
+  'feature:traa',
+];
 
 /** Feature ids in the registry's order (by id). */
 const sorted = (ids: string[]) => [...ids].sort();

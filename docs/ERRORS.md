@@ -811,6 +811,22 @@ Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
+### GFX_NO_AIR
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/air.ts` line 38](../engine/gfx/enhanced/air.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the air is off: a look's `air` section (haze, light shafts, lamp halos) draws nothing.
+
+### GFX_NO_AO
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/ao.ts` line 25](../engine/gfx/enhanced/ao.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when ambient occlusion is off: a look's `ao` section draws nothing.
+
 ### GFX_NO_CASCADED_SHADOWS
 
 - Message: `{feature} is off: {reason}; {downgrade}`
@@ -823,9 +839,17 @@ Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 52](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 57](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
+
+### GFX_NO_GI
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/gi.ts` line 32](../engine/gfx/enhanced/gi.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when bounce light is off: a look's `gi` section draws nothing.
 
 ### GFX_NO_MANNEQUIN
 
@@ -835,11 +859,19 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names.
 
+### GFX_NO_SSR
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/ssr.ts` line 31](../engine/gfx/enhanced/ssr.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when screen-space reflections are off: a look's `ssr` section draws nothing.
+
 ### GFX_NO_TILED_LIGHTING
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/enhanced/lighting.ts` line 39](../engine/gfx/enhanced/lighting.ts)
+- Registered in: [`engine/gfx/enhanced/lighting.ts` line 41](../engine/gfx/enhanced/lighting.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is off: the light pool lights only its 12 lights nearest the focus.
 
@@ -847,9 +879,17 @@ Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 47](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 52](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
+
+### GFX_NO_TRAA
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/aa.ts` line 37](../engine/gfx/enhanced/aa.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when temporal edge smoothing is off: the chain smooths edges with FXAA even where post.aa asks for 'traa'.
 
 ### GFX_NO_WEBGPU
 
@@ -887,7 +927,7 @@ Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipel
 
 - Message: `post.filters.outline.color is {color}, which is no colour: the outline darkens the surface instead`
 - Fix: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface
-- Registered in: [`engine/gfx/post/settings.ts` line 37](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 38](../engine/gfx/post/settings.ts)
 
 Advice from the post chain when `post.filters` sets an outline colour that is none; looks are checked when they are defined.
 
@@ -895,7 +935,7 @@ Advice from the post chain when `post.filters` sets an outline colour that is no
 
 - Message: `{where} asks for {levels} levels per channel; the chain draws 8`
 - Fix: posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)
-- Registered in: [`engine/gfx/post/settings.ts` line 32](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 33](../engine/gfx/post/settings.ts)
 
 Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.
 
@@ -903,7 +943,7 @@ Advice from the post chain when `post.filters` sets 1–7 levels; looks are chec
 
 - Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
 - Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
-- Registered in: [`engine/gfx/post/settings.ts` line 42](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 43](../engine/gfx/post/settings.ts)
 
 Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
 
@@ -911,7 +951,7 @@ Advice from the post chain: more live drawable objects than the fixed MRT’s fl
 
 - Message: `bloom is off at the {tier} quality tier: {look} draws without its glow`
 - Fix: raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes
-- Registered in: [`engine/gfx/post/settings.ts` line 27](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 28](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).
 
@@ -919,9 +959,17 @@ Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, 
 
 - Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
 - Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
-- Registered in: [`engine/gfx/post/settings.ts` line 47](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 48](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
+
+### GFX_POST_TIER
+
+- Message: `{effect} is off at the '{tier}' quality tier, though the look {look} asks for it`
+- Fix: nothing to do for play; set the view setting quality to 'high' to draw it
+- Registered in: [`engine/gfx/post/shading.ts` line 39](../engine/gfx/post/shading.ts)
+
+Advice from the chain's shading stage (engine/gfx/post/shading.ts): the quality tier turns bounce light and light shafts off below `high`, and lamp halos at `low` (engine/gfx/quality.ts).
 
 ### GFX_RIG_BODY
 
@@ -935,7 +983,7 @@ Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 57](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 62](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
 

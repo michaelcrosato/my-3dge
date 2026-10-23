@@ -51,6 +51,13 @@ describe('trap', () => {
     expect(trap('error', 'THREE.WebGPURenderer: .renderAsync() has been deprecated')).toBeDefined();
   });
 
+  it("catches a shader three.js could not build: r182's `THREE.TSL:` error, which it follows with a default", () => {
+    const text = "THREE.TSL: TypeError: Cannot read properties of undefined (reading 'mul')";
+    expect(trap('error', text)).toEqual({ level: 'error', text });
+    expect(trap('error', '  THREE.TSL: Invalid generated code')).toBeDefined();
+    expect(trap('error', 'THREE.WebGPURenderer: a failure of its own')).toBeUndefined();
+  });
+
   it('lets other output through: plain logs and errors, bracketed words that are not codes', () => {
     expect(trap('log', 'a log line')).toBeUndefined();
     expect(trap('error', 'a failure, reported by the test itself')).toBeUndefined();
