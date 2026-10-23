@@ -1387,7 +1387,9 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   average, 3.1 before), but for one launch at 7 m/s whose trunk rolled again (5 s). More solver passes (8, 12 and 16 a
   step) and more damping (the parts' or the joints') changed the limbs' swing and the hip's overshoot only within the
   falls' scatter, so they stay as they were. The first partner slid into the south wall's foot, where the cutaway hides
-  it, and the second fell onto the pillar: they stand where each falls on open floor in view, the dead one too.
+  it, and the second fell onto the pillar: they stand where each falls on open floor in view, the dead one too. Filmed
+  again, the third, launched up and a little east, came to rest along the low wall's foot: it is launched to the
+  south-east, away from it, and lies 2 m clear.
 
 ## Amendment 27 (2026-10-23, WP 10.1): procedural building blocks
 

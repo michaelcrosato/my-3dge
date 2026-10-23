@@ -3,7 +3,7 @@
  * at its spawn and four sparring partners (actors on `build:adult`) in a row across the room's south half (`SPOTS`),
  * facing him.
  * Every `RAGDOLL_DEMO.cycle` seconds a blow lands on each in turn (`RAGDOLL_DEMO.blows`): the first from the front,
- * onto its back; the second from behind, onto its face; the third a launch, up and a little east; the fourth a
+ * onto its back; the second from behind, onto its face; the third a launch, up and to the south-east; the fourth a
  * killing one. With `box.ragdoll.handOff` on (the default) each falls as a ragdoll (engine/sim/ragdolls.ts `handOff`)
  * and gets up the way it lies, the dead one lying until the cycle stands it up (`standUp`); off, each falls through
  * its reactions' timelines instead (`knockDown`, `die`, then `getUp`), as the fight's walkers do. At each cycle's start
@@ -50,7 +50,7 @@ export const RAGDOLL_DEMO = {
   blows: [
     { at: 0.5, push: [0, 0.25, 1], dead: false }, // from the front (the hero's side): onto its back
     { at: 1.5, push: [0, 0.25, -1], dead: false }, // from behind: onto its face
-    { at: 2.5, push: [0.25, 1.5, 0], dead: false }, // a launch, up and a little east
+    { at: 2.5, push: [0.25, 1.5, 0.25], dead: false }, // a launch, up and to the south-east, away from the low wall
     { at: 3.5, push: [0, 0.1, 0.75], dead: true }, // a killing one
   ],
   stand: 6,
@@ -60,7 +60,7 @@ export const RAGDOLL_DEMO = {
 /**
  * Where the partners stand (x, z), facing north to the hero, in their blows' order, each with room to fall its own way
  * on open floor the room's camera sees: the first back, south, west of the low wall; the second forward, north, 4.5 m
- * short of the pillar; the third up and a little east, just behind the low wall; the last back, south, east of it.
+ * short of the pillar; the third, just behind the low wall, up and away from it; the last back, south, east of it.
  */
 const SPOTS = [[2.5, 6], [13, 9.5], [6.5, 7.5], [11, 6.5]] as const; // prettier-ignore
 const NORTH = Math.PI;

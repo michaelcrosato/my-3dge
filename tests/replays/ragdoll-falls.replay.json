@@ -1,6 +1,6 @@
 {
   "format": "my3dge-replay/1",
-  "description": "Ragdolls (WP 10.2) in the box: box:ragdoll's first cycle and the start of its second, with no input. The first partner, struck from the front, falls onto its back and gets up from it; the second, struck from behind, onto its face; the third is launched up and a little east; the fourth is killed and lies until the cycle stands it up at 6 s; at 8 s every partner stands on its spot again and the next cycle's first blow lands.",
+  "description": "Ragdolls (WP 10.2) in the box: box:ragdoll's first cycle and the start of its second, with no input. The first partner, struck from the front, falls onto its back and gets up from it; the second, struck from behind, onto its face; the third is launched up and to the south-east; the fourth is killed and lies until the cycle stands it up at 6 s; at 8 s every partner stands on its spot again and the next cycle's first blow lands.",
   "engine": "0.0.0",
   "three": "0.182.0",
   "rapier": "simd-compat 0.21.0",
@@ -15,11 +15,11 @@
       "0": "76942c2f27535b64",
       "60": "5ef55848bf5a4cf1",
       "120": "605c73596a11b621",
-      "180": "30e26233b4c59231",
-      "240": "15ec10e181d3aa7c",
-      "300": "5acef25b85b7790f",
-      "360": "9cbf1797f6783f26",
-      "420": "5200688f5b7fdf38",
+      "180": "70423e68cbb9e9c0",
+      "240": "9b363e535221f928",
+      "300": "23ee055e10fc93eb",
+      "360": "794e1aca25340cad",
+      "420": "73901f88c6f3ce8a",
       "480": "1865595d0680443c",
       "540": "1e6a0a865501033f"
     }
