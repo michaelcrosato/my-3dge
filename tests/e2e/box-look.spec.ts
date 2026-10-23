@@ -2,16 +2,16 @@
  * @file T2 for the Stress Box, stage 6 (PLAN.md §9.0, WP 7.8): the box's looks (labs/box/looks/) on WebGPU, in the
  * hall with its props (labs/box/?scene=hall-props), the sim paused, every toggle drawn:
  * 1. the torch-lit hall (`look:torch-lit`): the stage's own lights give way to the sky `sky:hall`, its light pool lit
- *    from the hall's torch spots; the torches flicker (frames drawn a third of a second apart differ over much of the
- *    picture, where the clean look's differ only at the braziers' flames); the floor is the hall's bake, its runes
- *    glowing on the dais;
+ *    from the hall's torch spots (64 lights with tiled lighting); the torches flicker (frames drawn a third of a second
+ *    apart differ over much of the picture, where the clean look's differ only at the braziers' flames); the floor is
+ *    the hall's bake, its runes glowing on the dais;
  * 2. the quality tiers: each casts fewer shadows (fewer draw calls) and builds its pipelines in a warm-up before its
  *    first frame; so does the switch back to the stage's own lights (`look:clean`), and the first look in a material
  *    style (`look:torch-toon`), which joins the style set to the warm-up (at the medium tier, as what follows);
  * 3. each of the box's looks, a test of its own, drawn from the start: it warms up before it draws, renders (none
- *    blank, dark or blown out) and sees what the torch-lit hall sees (the same ID pass); and switching between them, styles
- *    included, builds no pipeline: each in turn while the knock replay (tests/replays/box-3-knock.replay.json) plays
- *    its first 180 steps, a frame drawn after each, its goldens hold.
+ *    blank, dark or blown out) and sees what the torch-lit hall sees (the same ID pass); and switching between them,
+ *    styles included, builds no pipeline: each in turn while the knock replay (tests/replays/box-3-knock.replay.json)
+ *    plays its first 180 steps, a frame drawn after each, its goldens hold.
  * No frame builds a pipeline after a warm-up (Done-when 1's toggles). One test per look (after G9): a failure names
  * its look, and each has its own time limit. The scene and the looks it covers are the test's
  * annotations in out/e2e/report.json (`looks`): the hall with its props, every box look. The goldens with a look of
@@ -112,7 +112,7 @@ test('look:torch-lit: the hall flickers on its rune floor, and every tier and th
   // 1. The torch-lit hall.
   const lights = await dumped(page, 'light');
   const pool = lights.filter((line) => /lights:pool\/\d+ PointLight/.test(line) && !line.includes('hidden'));
-  expect(pool).toHaveLength(12);
+  expect(pool).toHaveLength(64); // tiled lighting's pool (WP 11.5); tests/e2e/enhanced.spec.ts has the 12 without it
   expect(lights.find((line) => line.includes('light:sky HemisphereLight'))).toContain('hidden');
   expect(lights.find((line) => line.includes('light:sun DirectionalLight'))).toContain('hidden');
   expect((await dumped(page, 'level:hall/floor')).join('\n')).toMatch(/level:hall\/floor Mesh .*material:hallFloor/);
