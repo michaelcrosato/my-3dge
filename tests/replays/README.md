@@ -125,3 +125,9 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   (ADR-0025 amendment 25): a burst's kick falls away after it (`recover`) instead of vanishing, and the kick and the
   cone turn a shot in its aim's own frame. Its inputs are as they were, and its story the same, event for event, the
   same 10 of its 20 rounds striking (labs/playground/weapons/range.test.ts); the site's and the ring's fire no shot.
+- ragdoll-falls' and ragdoll-strike's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) at WP
+  10.2's film review (ADR-0025 amendment 26): a ragdoll gets up once its trunk has lain still, not its every limb (one
+  swinging lay up to 2.8 s longer), and the partners stand where each falls on open floor the room's camera sees (the
+  first slid into the south wall's foot, the second fell onto the pillar). Their inputs are as they were, and their
+  stories the same: each partner falls to its blow and gets up the way it lies, the dead one when the cycle stands it,
+  and the hero's blow fells the third between the first two's falls (labs/box/scenes/ragdoll.test.ts).

@@ -67,7 +67,7 @@ describe('box:ragdoll', () => {
 
   it('knocks down the partner in front of the hero when he attacks', () => {
     const { world, story } = started();
-    placeActor(world, 1, [2.5, 0, 5.8], 0); // 1.7 m north of the first partner, facing it
+    placeActor(world, 1, [2.5, 0, 4.3], 0); // 1.7 m north of the first partner, facing it
     world.step({ b: ['attack'], p: ['attack'] }); // pressed this step, as a session marks it
     expect(story()).toEqual(['ragdoll#2']);
   }, 120_000);

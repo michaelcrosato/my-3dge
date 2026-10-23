@@ -1378,6 +1378,16 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `build:adult`) in the canvas's south corners, not two more of amendment 24's dummies (props on springs): a punch or
   a shot flinches one, a kick or the uppercut hands it off, and its hit points come back at every blow. The site's
   three replays (playground-site, -melee, -range) took new goldens for them (hashed), their stories unchanged.
+- **The film's review** (2026-10-23): the box's film showed partners lying motionless 2 s and more before rising. A limb
+  went on swinging after the body lay still: an arm standing on its hand, toppling and springing back up off the floor,
+  or a leg trapped under a launched body, its hip 1.4 rad past its twist limit and coming back. It lay still by every
+  part up to 3.4 s after its trunk did (1.1 s on average). A ragdoll now gets up once its trunk (the pelvis and the
+  chest) has lain still 0.5 s, the limbs' last poses laid into the get-up as the ragdoll fades. Over 24 measured falls
+  (the three living partners' blows at eight pushes from 2.5 to 8 m/s) it gets up 1.5 to 3.6 s after the blow (2.2 s on
+  average, 3.1 before), but for one launch at 7 m/s whose trunk rolled again (5 s). More solver passes (8, 12 and 16 a
+  step) and more damping (the parts' or the joints') changed the limbs' swing and the hip's overshoot only within the
+  falls' scatter, so they stay as they were. The first partner slid into the south wall's foot, where the cutaway hides
+  it, and the second fell onto the pillar: they stand where each falls on open floor in view, the dead one too.
 
 ## Amendment 27 (2026-10-23, WP 10.1): procedural building blocks
 

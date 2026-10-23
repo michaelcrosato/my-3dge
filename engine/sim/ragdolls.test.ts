@@ -1,9 +1,9 @@
 /**
  * @file Unit tests for ragdolls in the sim (engine/sim/ragdolls.ts, PLAN.md WP 10.2's Done when): an actor handed off
  * falls the way it is pushed, onto its face pushed from behind and onto its back pushed from the front, its capsule
- * under its pelvis while it falls; it lies still and gets up the way it lies (getUpFront or getUpBack), standing where
- * it lay, facing as the humanoid lying so would (as it stood: it fell straight), the ragdoll faded out and gone after `RAGDOLL_SIM.rise`, and it
- * moves again; a push while it falls adds to every part, a killing one keeps it down; a dead one lies until removed,
+ * under its pelvis while it falls; its trunk lies still half a second, well before the longest fall, and it gets up
+ * the way it lies (getUpFront or getUpBack), standing where it lay, facing as the humanoid lying so would (as it stood:
+ * it fell straight), the ragdoll faded out and gone after `RAGDOLL_SIM.rise`, and it moves again; a push while it falls adds to every part, a killing one keeps it down; a dead one lies until removed,
  * and removing the actor takes its parts; the same hashes every run, and a capture mid-fall or mid-get-up restores
  * into a world that steps on exactly; a world without the system is refused.
  * @see engine/sim/ragdolls.ts
@@ -70,7 +70,9 @@ describe('ragdolls in the sim', () => {
         else expect(Math.hypot(doll().actor.x - r.poses[0], doll().actor.z - r.poses[2])).toBeLessThan(1e-6); // under its pelvis
       }
       expect(gotUp).toBeGreaterThan(30); // it fell, then lay still half a second
+      expect(gotUp).toBeLessThan(Math.round(RAGDOLL_SIM.longest * 60) - 1); // as its trunk came to rest, not at the last
       const r = doll().ragdoll!;
+      expect(r.still).toBe(Math.round(RAGDOLL_SIM.settle * 60)); // its trunk lay still half a second
       expect([r.lying, r.bodies, doll().reactions.playing]).toEqual([lying, [], getUp]);
       expect(Math.sign(r.poses[2])).toBe(Math.sign(push[2])); // it fell the way it was pushed
       expect(Math.hypot(doll().actor.x - r.poses[0], doll().actor.z - r.poses[2])).toBeLessThan(0.5); // up where it lay

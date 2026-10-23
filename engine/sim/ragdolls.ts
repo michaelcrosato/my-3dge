@@ -10,8 +10,9 @@
  * The system `ragdolls` (phase `readback`; `addRagdolls(w)` adds it in a scene's setup, so a capture restores into a
  * world of the same schedule, and `handOff` refuses a world without it) reads every ragdoll's parts into its
  * component once the world has stepped (the view lays them on the bones), keeps its actor's capsule under its pelvis
- * (the cameras follow it, and the actor does not move itself meanwhile: engine/sim/actors.ts), and counts the steps it
- * has lain still (`RAGDOLL_SIM.speed`). Alive, once it has lain still `RAGDOLL_SIM.settle` or fallen for
+ * (the cameras follow it, and the actor does not move itself meanwhile: engine/sim/actors.ts), and counts the steps its
+ * trunk (the pelvis and the chest) has lain still (`RAGDOLL_SIM.speed`): a limb still swinging is laid into the get-up as
+ * the ragdoll fades out. Alive, once its trunk has lain still `RAGDOLL_SIM.settle` or it has fallen for
  * `RAGDOLL_SIM.longest`, it gets up: its parts leave the physics world, the actor stands where the humanoid lying as
  * it lies would and faces as it would (`ragdollRest`), and its reactions get up the way its chest lies
  * (`Reactions.getUp`); event `getUp` `{ id, lying }`. The component stays `RAGDOLL_SIM.rise` more, its last poses
@@ -49,9 +50,9 @@ import type { World } from './world';
 
 /** The hand-off's numbers: seconds, m/s, and the tip a push gives (rad/s for each m/s). */
 export const RAGDOLL_SIM = {
-  /** Below this speed (m/s, the fastest part's, engine/physics/ragdoll.ts `ragdollSpeed`) it lies still. */
+  /** Below this speed (m/s, its trunk's fastest part's, engine/physics/ragdoll.ts `ragdollSpeed`) it lies still. */
   speed: 0.3,
-  /** Seconds lying still before it gets up. */
+  /** Seconds its trunk lies still before it gets up. */
   settle: 0.5,
   /** Seconds after which it gets up however it lies. */
   longest: 5,
@@ -67,7 +68,7 @@ export const RAGDOLL_FIELDS = defineSchema({
   joints: { type: 'array', items: { type: 'number' }, default: [], description: 'The joints between its parts.' },
   poses: { type: 'array', items: { type: 'number' }, default: [], description: 'Its parts’ poses as the last step left them, 7 numbers a part: position, then rotation (x, y, z, w).' }, // prettier-ignore
   since: { type: 'number', default: 0, description: 'The step it was handed off on.' },
-  still: { type: 'number', default: 0, description: 'Steps it has lain still.' },
+  still: { type: 'number', default: 0, description: 'Steps its trunk (the pelvis and the chest) has lain still.' },
   rise: { type: 'number', default: -1, description: 'The step it got up on; −1 while it falls or lies dead.' },
   dead: { type: 'boolean', default: false, description: 'Dead: it lies until it is removed.' },
   lying: { type: 'string', enum: ['up', 'down'], default: 'up', description: 'How it lay as it got up: on its back (up) or its face (down).' }, // prettier-ignore
@@ -112,6 +113,8 @@ defineRagdollKinds();
 const pools = new WeakMap<World, AnimatorPool>();
 const [UP, push3, spin3, feet] = [new Vector3(0, 1, 0), new Vector3(), new Vector3(), new Vector3()];
 const ticks = (w: World, seconds: number) => Math.round(seconds / w.dt);
+/** How many of `RAGDOLL_PARTS` (engine/anim/ragdoll.ts) the trunk is: the pelvis and the chest, its first two. */
+const TRUNK = 2;
 
 /** Adds the system `ragdolls` to `w` (once), after the actors' readback: call it in a scene's setup. */
 export function addRagdolls<C extends object>(world: World<C>): void {
@@ -183,7 +186,8 @@ function stepRagdolls(w: World): void {
       continue;
     }
     readRagdoll(physics, ragdoll, ragdoll.poses);
-    ragdoll.still = ragdollSpeed(physics, ragdoll) < RAGDOLL_SIM.speed ? ragdoll.still + 1 : 0;
+    const trunk = ragdollSpeed(physics, { bodies: ragdoll.bodies.slice(0, TRUNK), joints: [] });
+    ragdoll.still = trunk < RAGDOLL_SIM.speed ? ragdoll.still + 1 : 0;
     const [x, y, z] = ragdoll.poses;
     const floor = physics.raycast([x, y, z], [0, -1, 0], { maxDistance: 4, groups: ['world', 'prop'] });
     const ground = floor ? y - floor.distance : y - 0.15;

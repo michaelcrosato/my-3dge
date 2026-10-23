@@ -58,11 +58,11 @@ export const RAGDOLL_DEMO = {
 } as const;
 
 /**
- * Where the partners stand (x, z), facing north to the hero, in their blows' order: a row 3.5 m short of the south
- * wall, just behind the low wall, each with room to fall its own way (the first and the last back, south; the second forward, north, east of
- * the low wall; the third up and a little east).
+ * Where the partners stand (x, z), facing north to the hero, in their blows' order, each with room to fall its own way
+ * on open floor the room's camera sees: the first back, south, west of the low wall; the second forward, north, 4.5 m
+ * short of the pillar; the third up and a little east, just behind the low wall; the last back, south, east of it.
  */
-const SPOTS = [[2.5, 7.5], [13, 7.5], [6.5, 7.5], [10, 7.5]] as const; // prettier-ignore
+const SPOTS = [[2.5, 6], [13, 9.5], [6.5, 7.5], [11, 6.5]] as const; // prettier-ignore
 const NORTH = Math.PI;
 
 /** A partner: its index (its blow) and its spot. */
