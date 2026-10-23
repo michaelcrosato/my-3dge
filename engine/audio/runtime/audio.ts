@@ -21,8 +21,9 @@
  * `bind(type, id)` plays its stinger on the beat.
  *
  * Invariants: presentation only: nothing here changes the sim, and the QueryView only answers occlusion rays. An
- * unknown id throws `CORE_NO_ENTRY` naming the closest, when it is asked for, locked or not. Renders are cached per effect and variant at the context's
- * rate; a voice disconnects its nodes when it ends.
+ * unknown id throws `CORE_NO_ENTRY` naming the closest, when it is asked for, locked or not. Renders are cached per
+ * effect and variant at the context's rate (played looped, an effect with a `loop` pass is its render folded onto it:
+ * buffers.ts `foldLoop`, so it has no seam); a voice disconnects its nodes when it ends.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:3708-3786` (`ChipAudio`: the lazy context, resume on a gesture, the
  * buses and their levels, `sfx` with its per-sound rule, `music`), on pre-rendered buffers.
@@ -45,9 +46,9 @@ import { onGesture, type GestureTarget } from './gesture';
 import { BUS_VOLUMES, createMixer, type AudioBus, type Mixer, type MixerInfo } from './mixer';
 import { createMusic, type Music, type MusicChange, type MusicPosition } from './music';
 import { roomSpec, type RoomName, type RoomSpec } from './reverb';
-import { toBuffer } from './buffers';
+import { foldLoop, toBuffer } from './buffers';
 import { checkPlay, createVoice, type PlayOptions, type Sound, type RuntimeSound } from './sound';
-import { occluded, placeListener, type ListenerPose, type Vec3 } from './spatial';
+import { placeListener, wallsBetween, type ListenerPose, type Vec3 } from './spatial';
 import { createVoicePool, type VoiceLimits } from './voices';
 
 /** The runtime's codes, with their fixes. */
@@ -189,12 +190,13 @@ export function createAudio(options: AudioOptions = {}): Audio {
     } else if (target) stopListening = onGesture(target, gesture);
   }
 
-  const bufferOf = (entry: Sfx, variant: number, c: BaseAudioContext) => {
-    const key = `${entry.id}#${variant}`;
+  const bufferOf = (entry: Sfx, variant: number, c: BaseAudioContext, looped: boolean) => {
+    const fold = looped && entry.loop > 0 ? Math.max(1, Math.round(entry.loop * c.sampleRate)) : 0;
+    const key = `${entry.id}#${variant}${fold ? ' looped' : ''}`;
     let buffer = buffers.get(key);
     if (!buffer) {
       const samples = renderSfx(entry, { variant, seed: options.seed ?? 0, rate: c.sampleRate, registry });
-      buffers.set(key, (buffer = toBuffer(c, samples, c.sampleRate)));
+      buffers.set(key, (buffer = toBuffer(c, fold ? foldLoop(samples, fold) : samples, c.sampleRate)));
     }
     return buffer;
   };
@@ -213,7 +215,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
     }
     const turn = turns.get(id) ?? 0;
     turns.set(id, turn + 1);
-    const buffer = bufferOf(entry, opts.variant ?? turn % entry.variants, c);
+    const buffer = bufferOf(entry, opts.variant ?? turn % entry.variants, c, opts.loop === true);
     const bus = opts.bus ?? entry.bus;
     const input = mixer.input(bus);
     const voice: RuntimeSound = createVoice(c, {
@@ -225,7 +227,7 @@ export function createAudio(options: AudioOptions = {}): Audio {
       options: opts,
       onEnded: () => pool.remove(voice),
     });
-    if (voice.position && pose && queries) voice.occlude(occluded(queries, pose.position, voice.position), false);
+    if (voice.position && pose && queries) voice.occlude(wallsBetween(queries, pose.position, voice.position), false);
     pool.add(voice);
     if (opts.duck && !voice.loop) mixer.duck(buffer.duration / (opts.pitch ?? 1), when);
     return voice;
@@ -278,8 +280,8 @@ export function createAudio(options: AudioOptions = {}): Audio {
       if (!queries) return;
       for (const voice of pool.voices) {
         if (!voice.position) continue;
-        const now = occluded(queries, pose.position, voice.position);
-        if (now !== voice.occluded) voice.occlude(now, true);
+        const now = wallsBetween(queries, pose.position, voice.position);
+        if (now !== voice.walls) voice.occlude(now, true);
       }
     },
     volume(bus, value) {

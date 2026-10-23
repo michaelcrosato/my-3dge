@@ -11,6 +11,7 @@ game agent's manual.
 
 ### [`engine/index.ts`](../engine/index.ts)
 
+- `ABSORPTION` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The share of a sound a surface soaks up (its absorption coefficient), at the mids (500 Hz to 1 kHz) and the highs (4 kHz), by a footstep's tag (engine/world/footsteps.ts); `'*'` for any other.
 - `Action` (type from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): An `action` entry.
 - `ACTION` (const from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Every constant: `out`, the seconds the channels ease back to rest after an action; `pivot`, the flip's pivot above the ground, a share of the hip height (`heroRoll`'s `cz`); `arm` and `leg`, the metres hand and foot targets are written for (the reference arm, moves-data.ts; `build:chibi`'s thigh and shin).
 - `actionCheck` (function from [`engine/anim/actions-check.ts`](../engine/anim/actions-check.ts)): The action's check: a state of the matrix (check.ts) that plays it as `check` says, on the animator's build with a clip layer over `libraries` (its clip beats' sets), signalling at its times and lifting the body by `lift` (times the build's size).
@@ -270,6 +271,7 @@ game agent's manual.
 - `consume` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up `button`'s latest press, so `buffered` is false until it is pressed again (a jump done, say).
 - `consumeAll` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Uses up every pending press, so closing a menu does not also attack with the press that closed it.
 - `ContactShadowOptions` (interface from [`engine/gfx/textures/contactShadow.ts`](../engine/gfx/textures/contactShadow.ts)): How the contact shadow at the foot of a block looks.
+- `CONTENTS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): How much a furnished room's contents soak up at the mids, as a share of its floor's area; the highs 1.4 times it.
 - `Course` (type from [`engine/dev/feel/course.ts`](../engine/dev/feel/course.ts)): A course, as the registry holds it.
 - `CourseResult` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): What `runCourse` gives: every measure's verdict, whether all but the watched passed, the final hash and the samples.
 - `CourseSample` (interface from [`engine/dev/feel/run.ts`](../engine/dev/feel/run.ts)): The first player actor's state after a step: what a move measure reads.
@@ -489,6 +491,7 @@ game agent's manual.
 - `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
 - `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
 - `FootPlantState` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
+- `footstepSound` (function from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): The step a foot on `surface` plays at `gait`: its effect, gain and pitch ratio; null when the gait has none.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `FrameWorld` (type from [`engine/app/engine.ts`](../engine/app/engine.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
@@ -749,6 +752,7 @@ game agent's manual.
 - `MOVER_FIELDS` (const from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A mover's fields, for a scene's component: `defineComponent('platform', { description, fields: MOVER_FIELDS })`.
 - `moverPose` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a mover is at `time` (s): back and forth along its offset, turning at its spin (shardfall's `amount`).
 - `MoveSpec` (type from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): What `defineMove` takes: any field, `time` and `body` field by field; the others keep a plain strike's values.
+- `muffling` (function from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): The lowpass cutoff (Hz) and the gain a sound behind `walls` walls goes through: open at 0 (see the file comment).
 - `MusicChange` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): When and how a change happens.
 - `MusicPosition` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where the music is.
 - `NAV_CLIMB` (const from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): The default climb limit between neighbouring tiles' floors (m): the prototype's `CLIMB`, 3.5 units.
@@ -763,6 +767,7 @@ game agent's manual.
 - `nearMiss` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Whether a body at `point` with `radius` stands outside telegraph `t` but within its `near` metres (scaled).
 - `Noise` (interface from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): A noise a step made: where, how far it carries (m), who made it (−1: nobody) and what it was (a shot, a kick).
 - `normalizedLens` (function from [`engine/anim/clip/lens.ts`](../engine/anim/clip/lens.ts)): `clip` with every angle of every key folded to (−180°, 180°], for reading (see the file comment).
+- `OCCLUSION` (const from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): How an occluded sound is muffled, and how occlusion is tested.
 - `onFloor` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): Where `ray` meets the level plane at height `y` ahead of its start, or null (level with it, or pointing away).
 - `OpeningDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A door or a window: a filled rectangle of an opening glyph's tiles in a wall.
 - `Orbiters` (class from [`engine/anim/proc/orbit.ts`](../engine/anim/proc/orbit.ts)): Orbiters round a centre (see the file comment).
@@ -960,8 +965,10 @@ game agent's manual.
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
 - `RoofDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A roof over a storey (its block's `roof` key): its shape, footprint and heights.
+- `roomAcoustics` (function from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb from what it is made of (see the file comment): a `RoomSpec`.
 - `roomAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The room at (x, y, z): the room of the tile under it on `storeyBelow`'s storey (a hall's stairs are the hall's to their top), or null (outside every room, on a roof, or a level without rooms).
 - `RoomDescriptor` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A room: the floor a room marker's tile reaches inside walls and doors (docs/PLAYGROUND.md §6.2).
+- `RoomMake` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): What `roomAcoustics` hears a room as: its floor's area (m²), its height (m) and its surfaces' tags.
 - `RoomName` (type from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A preset's name.
 - `roomReverb` (function from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The preset for a level's room (WP 13.15: rooms as data for sound): by its volume, its `area` (m², the room descriptor's) times `height` (m, its storey's clear height): `small` under 30 m³, `room` under 200 m³, `hall` past.
 - `ROOMS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The room presets, from no reverb to a cave.
@@ -1102,8 +1109,11 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `STEP_GAITS` (const from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): Gait → a step's gain and pitch ratio, or null: no step (see the file comment).
 - `stepAside` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): The way (a unit `[x, z]`) for an agent at `self` heading `heading` (rad, 0 along +Z) to step aside for `other` standing in its way, else null (see the file comment): to its right, or to its left when `other` is on its right.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+- `stepGait` (function from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): The gait a walker moving at `speed` m/s has when nothing tells it (see the file comment).
+- `StepGait` (type from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): A walker's gait, as a step hears it: the movement model's (engine/physics/movement/model.ts `GAITS`) on its feet.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 - `stepThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Moves `thing` on to `time` (s), a step of `dt` seconds: one down for its kind's `rise` stands back up, its hit points whole (returns true then); one standing slides along its track at its kind's speed, turning back at each end.
@@ -1136,6 +1146,7 @@ game agent's manual.
 - `StyleSet` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
 - `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
+- `SURFACE_STEPS` (const from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): Surface tag → the step it plays (see the file comment); `'*'` for any other tag.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `SwayChain` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A wave down a chain (see the file comment).
@@ -1261,6 +1272,7 @@ game agent's manual.
 - `VolleyAim` (interface from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): What a volley aims by besides the emitter's facing: where it stands, its target, the stream `random` draws from.
 - `walkRate` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): The rate that plays a loop of `pace` m/s at `groundSpeed` m/s: within 0.4–2.5; 1 without a pace.
 - `WallContact` (interface from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall a shot struck: the share of its move where it touched, the body (−1: none) and the surface's normal.
+- `wallsBetween` (function from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): How many walls of the level stand between `from` (the listener) and `to` (the sound), up to `most`: a ray to each wall, another from inside it to its far side (`solid: false`), on from just past it; stopping `OCCLUSION.margin` short of the sound, as `occluded` does.
 - `WallTest` (type from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): A wall test: the first wall a ball of `radius` meets moving from `from` by `delta` (m), or null.
 - `Weapon` (type from [`engine/anim/poses.ts`](../engine/anim/poses.ts)): A weapon's name.
 - `WEAPON_FIELDS` (const from [`engine/world/weapons.ts`](../engine/world/weapons.ts)): A `weapon` kind's fields (see the file comment).
@@ -1585,6 +1597,7 @@ game agent's manual.
 - `FootPlantLayerOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): The `FootPlant` layer's options.
 - `FootPlantOptions` (interface from [`engine/anim/footPlant.ts`](../engine/anim/footPlant.ts)): How `footPlant` plants.
 - `FootPlantState` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
+- `footstepSound` (function from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): The step a foot on `surface` plays at `gait`: its effect, gain and pitch ratio; null when the gait has none.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
@@ -2001,8 +2014,11 @@ game agent's manual.
 - `StateMatrixOptions` (interface from [`engine/anim/stateMatrix.ts`](../engine/anim/stateMatrix.ts)): What `stateMatrix` runs.
 - `StateWeights` (class from [`engine/anim/proc/blend.ts`](../engine/anim/proc/blend.ts)): Named weights easing toward their targets (see the file comment).
 - `SteerPoint` (type from [`engine/world/steer.ts`](../engine/world/steer.ts)): A point in the world (m): x east, y up, z south.
+- `STEP_GAITS` (const from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): Gait → a step's gain and pitch ratio, or null: no step (see the file comment).
 - `stepAside` (function from [`engine/world/aiRoutes.ts`](../engine/world/aiRoutes.ts)): The way (a unit `[x, z]`) for an agent at `self` heading `heading` (rad, 0 along +Z) to step aside for `other` standing in its way, else null (see the file comment): to its right, or to its left when `other` is on its right.
 - `stepCrowdBody` (function from [`engine/sim/crowdBodies.ts`](../engine/sim/crowdBodies.ts)): The rig's sim step for the crowd body `body` of entity `id` (see the file comment): loads it from `body.state` (filling an empty one with the rig at rest), steps it with `input`, saves it back and moves the body to `input.at`.
+- `stepGait` (function from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): The gait a walker moving at `speed` m/s has when nothing tells it (see the file comment).
+- `StepGait` (type from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): A walker's gait, as a step hears it: the movement model's (engine/physics/movement/model.ts `GAITS`) on its feet.
 - `stepProjectiles` (function from [`engine/world/projectiles.ts`](../engine/world/projectiles.ts)): Steps every flying shot once (`step.dt`): gravity, then its move swept against its targets and the walls.
 - `stepReactions` (function from [`engine/sim/reactions.ts`](../engine/sim/reactions.ts)): Steps reactions `state` one tick of `dt` s, in place; returns what the phase playing tells the body.
 - `stepThing` (function from [`engine/world/things.ts`](../engine/world/things.ts)): Moves `thing` on to `time` (s), a step of `dt` seconds: one down for its kind's `rise` stands back up, its hit points whole (returns true then); one standing slides along its track at its kind's speed, turning back at each end.
@@ -2026,6 +2042,7 @@ game agent's manual.
 - `strikeThing` (function from [`engine/sim/things.ts`](../engine/sim/things.ts)): Hits the thing `id` for `amount` points from `from` (m) at the world's time (see the file comment): returns what the hit did, or null (no thing there, or one that is down).
 - `strikeTime` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): When `clip`'s strike lands, seconds from its start, decoded on rest body `R` (see the file comment).
 - `StructureSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure as a site's spec places it.
+- `SURFACE_STEPS` (const from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): Surface tag → the step it plays (see the file comment); `'*'` for any other tag.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
 - `SwayChain` (class from [`engine/anim/proc/sway.ts`](../engine/anim/proc/sway.ts)): A wave down a chain (see the file comment).
@@ -3397,6 +3414,58 @@ For the agents who maintain the engine.
 
 - `AppHost` (interface): What the view's members work on: the inspector's host, plus the view, the drawing and the stats meter.
 
+### [`engine/audio/api.ts`](../engine/audio/api.ts)
+
+- `ABSORPTION` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The share of a sound a surface soaks up (its absorption coefficient), at the mids (500 Hz to 1 kHz) and the highs (4 kHz), by a footstep's tag (engine/world/footsteps.ts); `'*'` for any other.
+- `Audio` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): A page's sound (see the file comment).
+- `AudioBus` (type from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): One of the buses.
+- `AudioInfo` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): What `info()` reports: plain data.
+- `AudioOptions` (interface from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): How `createAudio` is set up; in a page every field has its default.
+- `AudioState` (type from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): The runtime's state: `locked` until a gesture, then the context's; `off` without Web Audio.
+- `BUS_VOLUMES` (const from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): The starting volumes, the master's included.
+- `CONTENTS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): How much a furnished room's contents soak up at the mids, as a share of its floor's area; the highs 1.4 times it.
+- `createAudio` (function from [`engine/audio/runtime/audio.ts`](../engine/audio/runtime/audio.ts)): Makes a page's sound (see the file comment).
+- `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
+- `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
+- `GestureTarget` (type from [`engine/audio/runtime/gesture.ts`](../engine/audio/runtime/gesture.ts)): Where gestures arrive: `window`, or any `EventTarget`.
+- `getSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `getSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song `id` of `registry`; a missing id throws `CORE_NO_ENTRY`, naming the closest ids.
+- `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
+- `MixerInfo` (interface from [`engine/audio/runtime/mixer.ts`](../engine/audio/runtime/mixer.ts)): What `info()` reports.
+- `muffling` (function from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): The lowpass cutoff (Hz) and the gain a sound behind `walls` walls goes through: open at 0 (see the file comment).
+- `MusicChange` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): When and how a change happens.
+- `MusicPosition` (interface from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where the music is.
+- `OCCLUSION` (const from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): How an occluded sound is muffled, and how occlusion is tested.
+- `PlayOptions` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): How `play` plays one effect.
+- `Quantize` (type from [`engine/audio/runtime/music.ts`](../engine/audio/runtime/music.ts)): Where a change lands: the next bar line, the next beat, or at once.
+- `renderSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as mono samples (engine/audio/dsp/render.ts): one variant, its layers mixed in.
+- `renderSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as mono samples (engine/audio/dsp/render.ts): at least the pass's length, so passes played back to back every `songTiming(song).seconds` keep time, plus the last notes' tails; silence when no track plays at the intensity asked for.
+- `roomAcoustics` (function from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb from what it is made of (see the file comment): a `RoomSpec`.
+- `RoomMake` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): What `roomAcoustics` hears a room as: its floor's area (m²), its height (m) and its surfaces' tags.
+- `RoomName` (type from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A preset's name.
+- `roomReverb` (function from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The preset for a level's room (WP 13.15: rooms as data for sound): by its volume, its `area` (m², the room descriptor's) times `height` (m, its storey's clear height): `small` under 30 m³, `room` under 200 m³, `hall` past.
+- `ROOMS` (const from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): The room presets, from no reverb to a cave.
+- `RoomSpec` (interface from [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)): A room's reverb, as numbers.
+- `Sfx` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): An `sfx` entry: the spec with its defaults filled, frozen.
+- `SfxBus` (type from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): One of the buses.
+- `SfxLayer` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Another effect mixed into this one.
+- `SfxRenderOptions` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): How `renderSfx` renders: which variant, from which seed, at which rate, from which registry.
+- `SfxSpec` (interface from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): What `defineSfx` takes: voices, layers or both, and every other field optional.
+- `sfxVoices` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): The effect as one flat voice list, its layers resolved and placed: what `renderSfx` renders for variant 0.
+- `Song` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): A `song` entry: the spec with its defaults filled, frozen.
+- `SongRenderOptions` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): How `songVoices` and `renderSong` play a song.
+- `SongSpec` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): What `defineSong` takes: the tracks, and every other field optional.
+- `songTiming` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): The song's step and bar lengths, and one pass's.
+- `SongTiming` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): How long a step and a bar are, and how long one pass of the song is.
+- `SongTrack` (interface from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One track of a song.
+- `songVoices` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): One pass of the song as a voice list, track by track: what `renderSong` renders.
+- `Sound` (interface from [`engine/audio/runtime/sound.ts`](../engine/audio/runtime/sound.ts)): A sound playing.
+- `SoundDef` (type from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): A sound: one voice, or several played together.
+- `Voice` (interface from [`engine/audio/dsp/voice.ts`](../engine/audio/dsp/voice.ts)): One voice of a sound: every field is optional.
+- `VOICE_LIMITS` (const from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): The default limits.
+- `VoiceLimits` (interface from [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)): How many voices may play.
+- `wallsBetween` (function from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): How many walls of the level stand between `from` (the listener) and `to` (the sound), up to `most`: a ray to each wall, another from inside it to its far side (`solid: false`), on from just past it; stopping `OCCLUSION.margin` short of the sound, as `occluded` does.
+
 ### [`engine/audio/data/drums.ts`](../engine/audio/data/drums.ts)
 
 - `DRUM_KIT` (const): The drum kit: a `drums` track's tokens (kick, snare, hat, open hat, crash, tom) and the drums they play.
@@ -3405,6 +3474,10 @@ For the agents who maintain the engine.
 ### [`engine/audio/data/effects.ts`](../engine/audio/data/effects.ts)
 
 - `EFFECTS` (const): The engine's effects by id.
+
+### [`engine/audio/data/foley.ts`](../engine/audio/data/foley.ts)
+
+- `FOLEY` (const): The foley by id.
 
 ### [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)
 
@@ -3416,7 +3489,7 @@ For the agents who maintain the engine.
 - `SFX_CODES` (const): The codes the effects raise beyond the DSP's own, with their fixes.
 - `SFX_FIELDS` (const): The kind's fields.
 - `SfxBus` (type): One of the buses.
-- `sfxKind` (function): Declares the `sfx` kind on `registry` with the engine's effects and drums (once).
+- `sfxKind` (function): Declares the `sfx` kind on `registry` with the engine's effects, drums and foley (once).
 - `SfxLayer` (interface): Another effect mixed into this one.
 - `sfxProblems` (function): The problems of an effect beyond its fields' own: voices `render` refuses, or nothing to play ([] when fine).
 - `SfxRenderOptions` (interface): How `renderSfx` renders: which variant, from which seed, at which rate, from which registry.
@@ -3532,6 +3605,7 @@ For the agents who maintain the engine.
 
 ### [`engine/audio/runtime/buffers.ts`](../engine/audio/runtime/buffers.ts)
 
+- `foldLoop` (function): `samples` (one pass of `pass` samples, then tails) folded onto one pass: what every pass sounds like looped.
 - `loopLayout` (function): `samples` (one pass of `pass` samples, then tails) as the head pass followed by the folded loop pass.
 - `passSamples` (function): The samples of one pass of `song` at `rate`.
 - `renderLayers` (function): Each layer of `song` rendered at `rate`, laid out to loop when the song loops (else as rendered).
@@ -3573,8 +3647,12 @@ For the agents who maintain the engine.
 
 ### [`engine/audio/runtime/reverb.ts`](../engine/audio/runtime/reverb.ts)
 
+- `ABSORPTION` (const): The share of a sound a surface soaks up (its absorption coefficient), at the mids (500 Hz to 1 kHz) and the highs (4 kHz), by a footstep's tag (engine/world/footsteps.ts); `'*'` for any other.
+- `CONTENTS` (const): How much a furnished room's contents soak up at the mids, as a share of its floor's area; the highs 1.4 times it.
 - `impulseResponse` (function): The room's stereo impulse response at `rate` samples per second, or null when it has no reverb.
 - `REVERB_CODES` (const): The codes the rooms raise, with their fixes.
+- `roomAcoustics` (function): A room's reverb from what it is made of (see the file comment): a `RoomSpec`.
+- `RoomMake` (interface): What `roomAcoustics` hears a room as: its floor's area (m²), its height (m) and its surfaces' tags.
 - `RoomName` (type): A preset's name.
 - `roomReverb` (function): The preset for a level's room (WP 13.15: rooms as data for sound): by its volume, its `area` (m², the room descriptor's) times `height` (m, its storey's clear height): `small` under 30 m³, `room` under 200 m³, `hall` past.
 - `ROOMS` (const): The room presets, from no reverb to a cave.
@@ -3596,12 +3674,14 @@ For the agents who maintain the engine.
 
 - `listenerAxes` (function): The listener's forward and up directions (unit vectors) for `pose`.
 - `ListenerPose` (interface): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
+- `muffling` (function): The lowpass cutoff (Hz) and the gain a sound behind `walls` walls goes through: open at 0 (see the file comment).
 - `occluded` (function): Whether a wall of the level stands between `from` (the listener) and `to` (the sound).
 - `OCCLUSION` (const): How an occluded sound is muffled, and how occlusion is tested.
 - `PANNER` (const): How every placed sound is panned and fades with distance (`PannerNode`'s options).
 - `placeListener` (function): Puts the context's listener at `pose` at `time`.
 - `placePanner` (function): Puts `panner` at `position` at `time`.
 - `Vec3` (type): A point or a direction, world space, m: `[x, y, z]`.
+- `wallsBetween` (function): How many walls of the level stand between `from` (the listener) and `to` (the sound), up to `most`: a ray to each wall, another from inside it to its far side (`solid: false`), on from just past it; stopping `OCCLUSION.margin` short of the sound, as `occluded` does.
 
 ### [`engine/audio/runtime/voices.ts`](../engine/audio/runtime/voices.ts)
 
@@ -5855,6 +5935,7 @@ For the agents who maintain the engine.
 - `createCharacter` (function): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createCharacterState` (function): A character's state at rest, every field at its default.
 - `feetOf` (function from [`engine/physics/characterBody.ts`](../engine/physics/characterBody.ts)): Where a character's feet are: the bottom of its capsule as it is now (a crouch shrinks it, engine/physics/hull.ts), less the skin (on flat ground, the ground's height).
+- `MoveEntered` (type): A move entered: a mode of the model's (a mantle, a climb, a ladder, a zipline, a skydive), a slide, a crouch or standing up.
 - `stepCharacter` (function): One sim tick of a character: `steer` turns its intents into a velocity and a move (engine/physics/feel.ts), the controller makes the move (`moveCharacter`), `settle` fixes the velocity from what happened, walls stop the velocity going into them, it pushes what it walked into (both leave at (push·v + m·u)/(push + m)), probes the ground under it and presses a dynamic floor with push × world gravity.
 - `StepOptions` (interface): What `stepCharacter` needs beside the character: the step length, the gravities and the one-way platforms.
 
@@ -6956,6 +7037,14 @@ For the agents who maintain the engine.
 - `Sensed` (interface): What `sense` found: what the agent knows now, and whether this step woke it (it knew nothing a step ago).
 - `SenseInput` (interface): What `sense` reads in a step: the time, the agent's ears, whether it sees its target and where, the noises.
 
+### [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)
+
+- `footstepSound` (function): The step a foot on `surface` plays at `gait`: its effect, gain and pitch ratio; null when the gait has none.
+- `STEP_GAITS` (const): Gait → a step's gain and pitch ratio, or null: no step (see the file comment).
+- `stepGait` (function): The gait a walker moving at `speed` m/s has when nothing tells it (see the file comment).
+- `StepGait` (type): A walker's gait, as a step hears it: the movement model's (engine/physics/movement/model.ts `GAITS`) on its feet.
+- `SURFACE_STEPS` (const): Surface tag → the step it plays (see the file comment); `'*'` for any other tag.
+
 ### [`engine/world/level/colliders.ts`](../engine/world/level/colliders.ts)
 
 - `groundSlab` (function): The slab under the whole level, one tile wider than the map all round, from 1 m down to y 0.
@@ -8025,6 +8114,63 @@ For the agents who maintain the engine.
 - `siteHill` (const): The block, the player at the hill's foot.
 - `street` (const): The block, the player on the street's sidewalk.
 
+### [`labs/playground/sounds/effects.ts`](../labs/playground/sounds/effects.ts)
+
+- `bark` (const): The dog's bark: a voiced fall through a mouth's resonance, its breath, and a short second one.
+- `bounce` (const): The dog's ball let fall: three bounces, each lower and sooner.
+- `creak` (const): A bench taking a sitter's weight: the wood's low creak.
+- `gasp` (const): A neighbour startled: a sharp breath in and a short rising voice.
+- `grunt` (const): A neighbour struck or getting up: a short low grunt.
+- `hey` (const): A neighbour shoved: "hey", two vowels rising through their resonances.
+- `hm` (const): A neighbour noticing him: a soft, closed hum.
+- `huff` (const): The dog's breath out through its nose: a short, soft puff.
+- `indoors` (const): The house indoors, looped on the ambience bus: a quiet room tone and a fridge's far hum.
+- `outdoors` (const): The block outdoors, looped on the ambience bus: a breeze under scattered birdsong.
+- `sigh` (const): A neighbour sitting down: a long breath out, falling, through a relaxed mouth.
+- `tags` (const): The dog's collar tags jingling as it trots off.
+- `whine` (const): The dog held and waiting: a thin whine rising and falling.
+
+### [`labs/playground/sounds/events.ts`](../labs/playground/sounds/events.ts)
+
+- `createSoundReader` (function): A reader that reads each event of a world once, on `ground` (see the file comment).
+- `IMPACTS` (const): Each make's impact.
+- `levelGround` (const): A level's ground: its surface tags (engine/world/level `surfaceBelow`), no rooms.
+- `Make` (type): What a thing sounds as when struck.
+- `MAKES` (const): Materials (engine/gfx/materials) by make; any other is concrete's.
+- `PlaygroundGround` (interface): A scene's ground: the footstep surface under feet at (x, y, z), and the room there (null in the open air).
+- `PlaygroundRoom` (interface): What a room is made of, for `roomAcoustics` (engine/audio/runtime/reverb.ts `RoomMake`), and its name.
+- `PlaygroundSound` (interface): One sound the playground plays for a sim event.
+- `playgroundSounds` (function): A scene's `sounds` hook on `ground`: each event's effects and gains, as the page plays them.
+- `Point` (type): A point in the world, metres.
+- `propMake` (function): What prop `id` sounds as: its biggest part's material's make (`MAKES`: wood, metal, concrete, glass or soft).
+- `SOUND_EVENTS` (const): The event types that play sounds, in the order the file comment gives them.
+- `SoundReader` (interface): Reads a world's new events as sounds (see the file comment).
+- `soundsOf` (function): The sounds one traced event plays in `world` on `ground` (read at `world.tick`): none for most events' quiet kinds.
+- `SoundWorld` (interface): What the reader reads of a world: its step, its event trace and its entities.
+- `SURFACE_MAKES` (const): Surface tags by make, where a shot strikes the ground; any other is concrete's.
+- `terrainGround` (const): A terrain's ground: its surface (grass, rock where steep), no rooms.
+- `timelineHash` (function): A timeline's hash: FNV-1a, 64 bits, over its JSON's UTF-16 code units, as 16 hex digits.
+
+### [`labs/playground/sounds/ground.ts`](../labs/playground/sounds/ground.ts)
+
+- `BARE` (const): What a bare room's contents soak up (a share of its floor's area): a basement's boxes, a garage's car.
+- `roomUnder` (function): The room at (x, y, z), feet at y, as `roomAcoustics` takes it; null in the open air (see the file comment).
+- `SITE_GROUND` (const): The site's ground, for the site's scenes' sound map (events.ts) and the page's listener.
+- `surfaceUnder` (function): The footstep surface under (x, y, z), feet at y (see the file comment).
+
+### [`labs/playground/sounds/page.ts`](../labs/playground/sounds/page.ts)
+
+- `BEDS` (const): The ambience: each place's bed, its level and the seconds a crossfade takes.
+- `createPlaygroundSound` (function): Makes the playground's sound: `audio` to play into (a page's `createAudio()` by default), published unless told not.
+- `EARS` (const): How high his ears are over his feet, m.
+- `groundOf` (function): A scene's ground: the site's for the block's scenes, else its terrain's or its level's.
+- `LOG_SIZE` (const): How many sound events `info().log` keeps.
+- `PlaygroundSound` (interface): The playground's sound in a page (see the file comment).
+- `PlaygroundSoundInfo` (interface): What `info()` reports: plain data.
+- `SoundFrame` (interface): What `frame` reads each drawn frame (the engine's `onFrame` gives it): never a way to change play.
+- `WIND` (const): The wind past his ears: none below `from` m/s, full (`vol`) at `full`, in twentieths, eased over `ease` s.
+- `ZIP` (const): The zipline's hum while he rides, its level.
+
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
 - `cameraMode` (function): The camera mode a code opens, by its type and view (`cam3=chase` of `cam3=chase,0,-20.63,5.5`); else undefined.
@@ -8197,6 +8343,12 @@ For the agents who maintain the engine.
 - `LOOKS` (const): The comparison's looks: v1's Lambert, the toon bands, the baseline's gradient map.
 - `PARTS` (const): The parts: place, turn (rad about x, y, z) and size, metres; far from the batch's origin, each its own way.
 - `PARTS_SHOT` (const): The ID pass's size for `part`.
+
+### [`tests/pages/playgroundAudioTimeline.ts`](../tests/pages/playgroundAudioTimeline.ts)
+
+- `SITE_TIMELINE` (const): The house replay (tests/replays/playground-site.replay.json) and its timeline's golden: how many sounds, their hash.
+- `soundTimeline` (function): Plays a replay's text and reads its sounds after every step, on its scene's `ground` (see the file comment).
+- `Timeline` (interface): A replay's sound timeline: its sounds, their hash, the world's hash at the end, the events missed (0) and where the player's feet are at the end (the room the page's reverb is then in).
 
 ### [`tests/pages/post.ts`](../tests/pages/post.ts)
 
@@ -9442,6 +9594,7 @@ For the agents who maintain the engine.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
 
+- `asHeard` (function): `samples`, a render of effect `id`, as it plays: folded onto its `loop` pass when it has one (engine/audio/runtime/ buffers.ts `foldLoop`), what a looped play repeats; else as rendered.
 - `AUDIO_LIMITS` (const): The levels and limits the checks use (see the file comment).
 - `checkSounds` (function): The violations of every sound on `registry` (or those of `ids`): effects, then songs, each in id order.
 - `dbfs` (const): `x` in decibels relative to full scale, one decimal.

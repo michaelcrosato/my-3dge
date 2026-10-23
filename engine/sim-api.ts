@@ -303,3 +303,9 @@ export * from './sim/kitsApi';
 // Procedural rigs (WP 10.1): the blocks a creature is built of and the rig contract it is checked by; listed in
 // engine/anim/proc/api.ts, re-exported whole.
 export * from './anim/proc/api';
+// Footsteps (WP 13.22): which step a surface tag plays at a gait, sound data a scene's sound map reads sim-side.
+export { footstepSound } from './world/footsteps';
+export { stepGait } from './world/footsteps';
+export { SURFACE_STEPS } from './world/footsteps';
+export { STEP_GAITS } from './world/footsteps';
+export type { StepGait } from './world/footsteps';

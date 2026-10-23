@@ -1527,3 +1527,56 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   every room and 15 s after it: no neighbour and not the dog stuck (told to go and not 0.3 m on for 8 s; the dog's one
   hold, the door's leaf, lasted 6 s), every neighbour at each of its stops, the dog with the player again, and every
   camera still inside its bounds.
+
+## Amendment 29 (2026-10-23, WP 13.22): the playground's sound
+
+- **The map** (labs/playground/sounds/events.ts): every event the playground emits plays a sound, from the engine's
+  foley (engine/audio/data/foley.ts, 41 effects: steps on seven surfaces, the moves, doors and windows, blows, impacts
+  by material, the guns, the wind) and its own (labs/playground/sounds/effects.ts: the dog's bark, whine, huff, tags and
+  bouncing ball, people's wordless voices, the bench's creak, and the two beds). It asks the entries, never the ids: a
+  weapon names its shot (`sound`, a new field of the kind `weapon`, which the sim never plays), a move its limb (a
+  kick's blow or a punch's), a prop its make (its biggest part's material: the dummy's pad is soft, the target's plate
+  metal, a door's planks wood), a thing its prop, a door how it opens (a window and the garage's tilting door slide),
+  the ground its surface under the feet. One event can sound twice (a shot at the muzzle and where it strikes), so a
+  scene's `sounds` hook may give a list (engine/sim/scene.ts; `x audio --replay` reads each). Quiet by design: a
+  slide's footsteps (its scrape is the `move` it begins) and a hit that downs its thing (its `thingDown` sounds once:
+  with both, the range's mix peaked at 1.03 and clipped); a gunshot at a thing leaves its impact to the thing's own.
+- **Footsteps by surface and gait** live in engine/world/footsteps.ts, not the planned engine/audio/runtime/: the
+  scenes' sound map is sim-side and reads them through engine/sim-api.ts, which may re-export sim-side layers only
+  (audio/runtime is a page's; audio/data registers its effects when it loads). The gait is the movement model's
+  (`motion.gait`), else by speed (a walk under 2.6 m/s, a run under 5.4, then a sprint).
+- **The ground** (labs/playground/sounds/ground.ts, `SITE_GROUND`): a house room sounds as the floor `HOUSE_ROOMS`
+  names; the playground's sidewalks and road line carry tags of their own (concrete, asphalt: labs/playground/levels/
+  street.ts); a structure's floors as `FLOORS` names them (the street's asphalt, the path's flagstones, the shed's,
+  the treehouse's and the lookout's wood, the ring's canvas as carpet); off them the terrain's (grass, rock where
+  steep). A flat paving's box is no taller than its top, so it is found by its footprint. The shed and the treehouse are
+  small wooden rooms only where their own floor is underfoot (among the treehouse's stilts is the lawn: its test).
+- **Movement foley** needs the sim to say what a move began: the character's step names it (`entered`:
+  engine/physics/character.ts) and the actors' system emits `move` `{ id, what }` (mantle, climb, ladder, zipline,
+  skydive, slide, crouch, stand). An actor's body events (`footstep`, `jump`, `land`, `dash`, `launch`, `move`) now
+  carry its feet as the step began (`at`), a footstep its movement model's gait: the page reads the events once a
+  frame, and a step read late took the floor he had reached by then (the porch's concrete heard as the hall's wood:
+  the browser spec found it, the page reading every 20 steps). Events are not hashed, so no golden changed; the box's
+  map still reads where its actors are when it reads (box content, its timeline's golden unchanged).
+- **Rooms and walls** (engine/audio/runtime/reverb.ts `roomAcoustics`, spatial.ts `wallsBetween`): a room's reverb is
+  worked out of its make by Sabine's RT60 = 0.161 V / A, the room taken as square, its contents soaking up a quarter of
+  its floor's area at the mids (a bare room a tenth): the carpeted bedrooms 0.56 s, the tiled kitchen 0.95, the hall
+  0.90, the attic 1.31, the bare garage 1.56 and the basement's concrete rooms 1.8 to 2.15, the shed 0.68; the open
+  air is `ROOMS.outdoor`. Up to three walls between the listener and a sound muffle it, each halving the lowpass's
+  cutoff from 900 Hz and taking its gain by 0.6; a sound eases between counts (`Sound.occlude`). The mixer, named in the
+  plan's Owns, needed nothing: it already takes a room's numbers.
+- **The page** (labs/playground/sounds/page.ts): the listener is at the player's head, turned as the camera looks,
+  so every camera hears what he hears (the isometric camera, high over a cutaway, would hear the house through its
+  walls); the reverb follows his room, the beds crossfade over 1.5 s (the block's breeze and birds out of doors, the
+  house's hum in a room), the wind past his ears rises from 3 m/s to full at 12, and the zipline's run hums while he
+  rides. `Sound.volume(vol, ease)` sets a loop's level.
+- **Loops without a seam**: a looped effect that fades in and out at its ends dips at every repeat (18 to 30 dB for the
+  wind, the zipline and the beds: a pulse). An effect now names the pass it repeats (`loop`, a field of the kind
+  `sfx`), and played looped the runtime folds what sounds past it over its start (engine/audio/runtime/buffers.ts
+  `foldLoop`, the songs' fold alone), a fading voice crossfading into itself: the deepest dip is now 1 to 4 dB. A
+  tone in a loop turns a whole number of times a pass (the zipline's 190 Hz and its 9 Hz vibrato in 2 s, the hum's
+  120 Hz in 3 s), so the fold adds it to itself in phase. The box's torch keeps its fades: box content, unchanged.
+- **Measured**: `x audio --replay` mixes all eight playground replays unclipped (peaks 0.24 to 0.78, the range's at
+  0.78 once its shots play at 0.8); the house replay's timeline gives 55 sounds, hash `017481cb37c16edc`, in Node, as
+  Chromium must (tests/e2e/playground-audio.spec.ts); the coverage test plays every playground replay and hears every
+  event but the two quiet kinds.

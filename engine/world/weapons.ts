@@ -7,9 +7,10 @@
  * the last shot the burst ends and its kick falls away, `recover` its time constant), its magazine and its two
  * reloads (a tactical one, and one from empty), its sights' lens
  * (`zoom`, at Apex's 70° field) and how fast they come up, how long it takes to draw and put away, where its shots
- * leave it (`muzzle`, in its frame) and the prop it is drawn as (`prop`: its parts in its frame, +Z along the barrel
- * from the grip, +Y up, so `node x gallery prop` shows it). engine/sim/weapons.ts fires them, engine/gfx/weapons.ts
- * draws them, and `recoilStep` and `spreadOf` are the numbers both read.
+ * leave it (`muzzle`, in its frame), the prop it is drawn as (`prop`: its parts in its frame, +Z along the barrel
+ * from the grip, +Y up, so `node x gallery prop` shows it) and the sound of its shot (`sound`, an `sfx` entry a game's
+ * sound map plays for its `gunshot`, WP 13.22). engine/sim/weapons.ts fires them, engine/gfx/weapons.ts draws them,
+ * and `recoilStep` and `spreadOf` are the numbers both read.
  *
  * Invariants: data and pure functions only; angles in degrees as the fields say, seconds and metres. Problems raise
  * `CORE_BAD_SPEC`; a missing id gets `weapon:gun` after a warning.
@@ -47,6 +48,7 @@ export const WEAPON_FIELDS = defineSchema({
   draw: num(0.3, 0, 's', 'How long it takes to draw, and to put away.'),
   muzzle: { type: 'array', items: { type: 'number' }, default: [0, 0.06, 0.3], unit: 'm', description: 'Where shots leave it, in its frame: +Z along the barrel from the grip, +Y up.' }, // prettier-ignore
   prop: { type: 'string', default: '', description: 'The prop it is drawn as, in its frame ("": none).' },
+  sound: { type: 'string', default: 'sfx:pistolShot', description: 'The sound of its shot, an sfx entry (the sim never plays it).' }, // prettier-ignore
 });
 
 /** A `weapon` entry (see the file comment). */

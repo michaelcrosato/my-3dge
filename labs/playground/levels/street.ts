@@ -24,8 +24,8 @@ export const STREET = { width: 55, depth: 12, road: [2, 10] } as const;
 /** The sidewalk's height over the road (m): its curb a step. */
 export const CURB = 0.15;
 
-defineGlyph('glyph:playground-sidewalk', { char: ',', description: `A sidewalk, ${CURB} m over the road: its curb is a step.`, floor: CURB, top: CURB, collider: 'box', mesh: 'gallery' }); // prettier-ignore
-defineGlyph('glyph:playground-roadLine', { char: '-', description: "A dash of the road's middle line: the road, painted.", mesh: 'roadLine' }); // prettier-ignore
+defineGlyph('glyph:playground-sidewalk', { char: ',', description: `A sidewalk, ${CURB} m over the road: its curb is a step.`, floor: CURB, top: CURB, collider: 'box', mesh: 'gallery', surface: 'concrete' }); // prettier-ignore
+defineGlyph('glyph:playground-roadLine', { char: '-', description: "A dash of the road's middle line: the road, painted.", mesh: 'roadLine', surface: 'asphalt' }); // prettier-ignore
 
 /** A paving level's text: one storey of `map` on 0.5 m tiles. */
 const paved = (description: string, plan: Plan) => `---\ndescription: ${description}\ntile: ${PAVING_TILE}\n---\n${plan.map}\n`; // prettier-ignore

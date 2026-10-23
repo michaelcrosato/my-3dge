@@ -25,6 +25,7 @@
 import { addLauncher, addLevelBodies, addLevelLadders, addZipline, compileLevel, defineScene, defineSettings, physicsOf, placeActor, spawnProp, type ActorComponents } from '../../../engine/sim-api'; // prettier-ignore
 import { APEX_JUMP, APEX_RUN, spawnPlayer } from '../cast/player';
 import { GYM_BALLOON, GYM_LAUNCHERS, GYM_PROPS, GYM_TEXT, GYM_ZIPLINE } from '../levels/gym';
+import { levelGround, playgroundSounds } from '../sounds/events';
 
 /** The gym, compiled: its colliders for the physics, its tiles and spawn for the scene. */
 export const GYM = compileLevel(GYM_TEXT, { file: 'labs/playground/levels/gym.ts', name: 'gym' });
@@ -61,6 +62,7 @@ export const gym = defineScene('playground:gym', {
     "The playground's gym: calibrated features to measure the player's movement against (docs/PLAYGROUND.md §2.3).",
   level: 'level:gym',
   physics: true,
+  sounds: playgroundSounds(levelGround(GYM)), // its events' sounds, for x audio --replay (WP 13.22)
   setup(w) {
     addLevelBodies(physicsOf(w), GYM);
     const speed = w.settings.get<number>('playground.gym.speed');

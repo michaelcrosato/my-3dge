@@ -248,6 +248,20 @@ export interface CharacterStep {
   moving: boolean;
   /** A launcher set it off this tick (engine/physics/movement/ride.ts's `launch`). */
   launched: boolean;
+  /** The move a character on a movement model entered this tick, for its sound (actors.ts: the event `move`); ''. */
+  entered: MoveEntered;
+}
+
+/** A move entered: a mode of the model's (a mantle, a climb, a ladder, a zipline, a skydive), a slide, a crouch or standing up. */ // prettier-ignore
+export type MoveEntered = '' | 'mantle' | 'climb' | 'ladder' | 'zipline' | 'skydive' | 'slide' | 'crouch' | 'stand';
+
+const ENTERED_MODES: readonly string[] = ['mantle', 'climb', 'ladder', 'zipline', 'skydive'];
+
+/** The move `motion` entered since it was `[mode, gait, stance]`: a mode first, then a slide, then a change of stance. */
+function enteredMove([mode, gait, stance]: readonly string[], motion: MotionState): MoveEntered {
+  if (motion.mode !== mode && ENTERED_MODES.includes(motion.mode)) return motion.mode as MoveEntered;
+  if (motion.gait === 'slide' && gait !== 'slide') return 'slide';
+  return motion.stance === stance ? '' : motion.stance === 'crouch' ? 'crouch' : 'stand';
 }
 
 /** How far below the skin the ground probe looks (m). */
@@ -282,6 +296,7 @@ export function stepCharacter(
   const launched = rides.launchers.length > 0 && launch(rides, feetOf(physics, body, character).toArray(), character, state, motion, dt, g); // prettier-ignore
   const wasGrounded = state.grounded;
   const model = character.movement !== undefined;
+  const was = model && motion ? [motion.mode, motion.gait, motion.stance] : [];
   check(!model || motion !== undefined, 'stepCharacter(motion)', motion, 'the character’s MotionState (createMotionState(), the component motion an actor keeps): it has a movement model'); // prettier-ignore
   const { oneWay } = options;
   const plan = model ? steerMotion(character, state, motion!, input, dt, g, roomOf(physics, body, character, oneWay), rides) : steer(character, state, input, dt, g); // prettier-ignore
@@ -310,7 +325,8 @@ export function stepCharacter(
   afterMove(physics, world, body, character, state, move, options);
   const { moved } = move;
   rigid.setLinvel({ x: moved.x / dt, y: moved.y / dt, z: moved.z / dt }, true);
-  return { desired: plan.desired, moved, jumped: plan.jumped, landed, dashed: plan.dashed, moving: !idle, launched };
+  const entered = model ? enteredMove(was, motion!) : '';
+  return { desired: plan.desired, moved, jumped: plan.jumped, landed, dashed: plan.dashed, moving: !idle, launched, entered }; // prettier-ignore
 }
 
 /** Whether `id` names a fixed body of `world`. */

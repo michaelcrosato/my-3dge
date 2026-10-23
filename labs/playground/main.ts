@@ -21,7 +21,9 @@
  * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), what using the thing in reach does, with the key
  * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), the player's weapon, its rounds, his
  * hits and his accuracy, and the crosshair while the screen's centre aims one (labs/playground/weapons/hud.ts, WP
- * 13.20), and the keys of the map in use as its prompts give them (`keysLine`). It reads the run and never changes it.
+ * 13.20), and the keys of the map in use as its prompts give them (`keysLine`); and it plays the frame's sound
+ * (labs/playground/sounds/page.ts, WP 13.22: the run's events, the room's reverb, the ambience, the wind), silent until
+ * the first key, click or touch. It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
@@ -43,6 +45,7 @@ import { SITE, SITE_STRUCTURES } from './levels/site';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
+import { createPlaygroundSound } from './sounds/page';
 import { showsCrosshair, weaponLine, type WeaponsView } from './weapons/hud';
 
 /** How near the player a sign shows (m): the features around him, not the whole gym at once. */
@@ -170,6 +173,7 @@ function onView(action: string): void {
 }
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
+const sound = createPlaygroundSound(); // published as window.__playgroundSound
 engine = await createEngine({
   canvas,
   actionMap: playgroundMap,
@@ -178,7 +182,10 @@ engine = await createEngine({
   levels,
   replays,
   search: `?${search}`,
-  onFrame: showFrame,
+  onFrame: (frame) => {
+    showFrame(frame);
+    sound.frame(frame);
+  },
 });
 if (engine.inspector) mountFeelPanel(document, engine.inspector, search);
 

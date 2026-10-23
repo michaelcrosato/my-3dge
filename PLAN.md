@@ -3782,7 +3782,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Verify:** `npm test -- engine/world/ai && node x replay tests/replays/playground-street.replay.json --browser page`
 
 #### WP-13.22 The playground's sound
-- **Owns:** `engine/audio/runtime/footsteps.ts`, extends `engine/audio/runtime/{reverb,spatial,mixer}.ts`, `engine/audio/data/effects.ts`, `labs/playground/sounds/`
+- **Owns:** `engine/world/footsteps.ts` (sim-side, for the scenes' sound map: ADR-0025 amendment 29), extends `engine/audio/runtime/{reverb,spatial,sound,buffers}.ts`, `engine/audio/data/foley.ts` (the foley beside `effects.ts`'s chip effects), `labs/playground/sounds/`
 - **Needs:** WP 13.15, WP 13.16, WP 13.6
 - **Size:** M
 - **Build** (docs/PLAYGROUND.md §8.1): footsteps by surface and gait; movement foley (slide, landings, mantle, climb, zipline, ladder, crouch); doors, windows, switches, impacts and weapons; reverb from the room the listener is in; indoor and outdoor ambience; occlusion through walls; wind with speed.

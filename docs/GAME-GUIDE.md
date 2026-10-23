@@ -380,6 +380,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Reach and the rig contract (WP 10.1)**: an attack's reach measured off its animation; what a procedural rig names (its points, bones, feet and states) and the check it passes, as anim.check holds the humanoid.
 `measureReach`, `driveRig`, `rigCheck`, `rigClosed`; types `ReachPose`, `ReachOptions`, `Reach`, `ProcRig`, `ProcRigBody`, `RigRun`.
 
+**Footsteps (WP 13.22)**: which step a surface tag plays at a gait, sound data a scene's sound map reads sim-side.
+`footstepSound`, `stepGait`, `SURFACE_STEPS`, `STEP_GAITS`; types `StepGait`.
+
 Pages only, from engine/index.ts:
 
 **Headless**: the engine without a page, and its inspector (window.__engine in a page).
@@ -405,6 +408,9 @@ Pages only, from engine/index.ts:
 
 **The audio runtime (WP 9.3)**: a page's sound through Web Audio, started by the first gesture: buses with ducking and voice limits, sounds placed in 3D and occluded through the QueryView, room reverb, and music in intensity layers that change on the beat and the bar line.
 `createAudio`, `BUS_VOLUMES`, `ROOMS`, `roomReverb`, `VOICE_LIMITS`; types `Audio`, `AudioOptions`, `AudioState`, `AudioInfo`, `PlayOptions`, `Sound`, `ListenerPose`, `GestureTarget`, `AudioBus`, `MixerInfo`, `MusicChange`, `MusicPosition`, `Quantize`, `RoomName`, `RoomSpec`, `VoiceLimits`.
+
+**Sound for places (WP 13.22)**: a room's reverb out of its size and what it is made of (Sabine's RT60), the walls between a sound and the listener counted, each muffling it more.
+`roomAcoustics`, `ABSORPTION`, `CONTENTS`, `wallsBetween`, `muffling`, `OCCLUSION`; types `RoomMake`.
 
 **The engine in a page (WP 2.7)**: createEngine reads the routes, starts the scene with its view, publishes window.__engine, warms up and runs the frame loop; createHeadless({ view: true }) builds the same view in Node.
 `createEngine`, `parseRoutes`, `routeQuery`; types `Engine`, `EngineOptions`, `Routes`, `CameraInfo`, `PlayResult`, `PlayIntoOptions`, `ViewChange`.

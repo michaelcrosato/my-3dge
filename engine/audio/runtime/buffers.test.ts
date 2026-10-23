@@ -1,15 +1,26 @@
 /**
  * @file Unit tests for the samples (engine/audio/runtime/buffers.ts): a song splits into one layer per intensity,
  * each a whole pass long; the layers' renders add up to the song's; the loop layout's passes are the head and the
- * folded tails, so the passes played back to back are exact; a song that does not loop is left as rendered.
+ * folded tails, so the passes played back to back are exact; a song that does not loop is left as rendered; an
+ * effect's loop pass folds its tail over its start, so the engine's looped foley never dips at its seam.
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
+import { getSfx, renderSfx } from '../data/sfx';
 import { defineSong, renderSong, songTiming } from '../data/song';
-import { loopLayout, passSamples, renderLayers, songLayers } from './buffers';
+import { DEFAULT_RATE } from '../dsp/render';
+import { foldLoop, loopLayout, passSamples, renderLayers, songLayers } from './buffers';
 import { nextLine } from './music';
 
 const RATE = 8000;
+
+/** How far the quietest 0.1 s of a loop, played round (its seam among them), falls below the whole loop's level, dB. */
+function deepestDip(pass: Float32Array, rate: number): number {
+  const rms = (from: number, n: number) => Math.sqrt(Array.from({ length: n }, (_, i) => pass[(from + i) % pass.length] ** 2).reduce((a, b) => a + b, 0) / n); // prettier-ignore
+  const [whole, n] = [rms(0, pass.length), Math.round(0.1 * rate)];
+  const quietest = Math.min(...Array.from({ length: Math.ceil(pass.length / (n / 2)) }, (_, k) => rms((k * n) / 2, n)));
+  return 20 * Math.log10(whole / quietest);
+}
 
 /** A registry with a two-layer song: a bass bar (intensity 0) and a half-bar lead from 0.5. */
 function layered() {
@@ -68,6 +79,16 @@ describe('loopLayout', () => {
     let worst = 0;
     for (let i = 0; i < 3 * pass; i++) worst = Math.max(worst, Math.abs(looped[i] - overlapped[i]));
     expect(worst).toBeLessThan(1e-6);
+  });
+
+  it('folds an effect’s loop pass, its tail over its start, so a looped bed never dips at its seam', () => {
+    expect([...foldLoop(new Float32Array([1, 2, 3, 4, 5]), 2)]).toEqual([9, 6]);
+    for (const id of ['sfx:zipRun', 'sfx:wind']) {
+      const sfx = getSfx(id);
+      const pass = foldLoop(renderSfx(sfx), Math.round(sfx.loop * DEFAULT_RATE));
+      expect(pass.length / DEFAULT_RATE, id).toBeCloseTo(sfx.loop, 4);
+      expect(deepestDip(pass, DEFAULT_RATE), id).toBeLessThan(6); // dB: a crossfade, never a fade to silence
+    }
   });
 
   it('leaves a song that plays once as rendered', () => {

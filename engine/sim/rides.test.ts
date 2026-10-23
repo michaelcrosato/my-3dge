@@ -123,6 +123,7 @@ describe('rides', () => {
     for (let k = 0; k < 10; k++) world.step({});
     const me = player(world);
     for (let k = 0; k < 120 && !world.events.trace().some((r) => r.type === 'launch'); k++) world.step({ move: [-0.7, 0.4] }); // prettier-ignore
-    expect(world.events.trace().find((r) => r.type === 'launch')?.payload).toEqual({ id: me.id });
+    const launch = world.events.trace().find((r) => r.type === 'launch')?.payload as { id: number; at: number[] };
+    expect(launch).toEqual({ id: me.id, at: [expect.any(Number), expect.any(Number), expect.any(Number)] }); // its feet
   });
 });

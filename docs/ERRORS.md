@@ -349,7 +349,7 @@ Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a p
 
 - Message: `{option} is {value}, not {expected}`
 - Fix: pass {expected} as {option}
-- Registered in: [`engine/audio/runtime/sound.ts` line 29](../engine/audio/runtime/sound.ts)
+- Registered in: [`engine/audio/runtime/sound.ts` line 30](../engine/audio/runtime/sound.ts)
 
 Raised by `audio.play` and `Sound.move` (engine/audio/runtime/sound.ts) for a volume, pitch, variant or position out of range.
 
@@ -365,7 +365,7 @@ Raised by `render` (engine/audio/dsp/render.ts).
 
 - Message: `room {room} is not a preset{hint}`
 - Fix: name one of the ROOMS presets ({names}), or pass { decay, predelay, damping, wet }
-- Registered in: [`engine/audio/runtime/reverb.ts` line 29](../engine/audio/runtime/reverb.ts)
+- Registered in: [`engine/audio/runtime/reverb.ts` line 36](../engine/audio/runtime/reverb.ts)
 
 Raised by `impulseResponse` and `audio.room` (engine/audio/runtime/reverb.ts) for a room name that is not in `ROOMS`, or numbers out of range.
 
@@ -389,7 +389,7 @@ Raised by `render` (engine/audio/dsp/render.ts) for a value of the wrong type or
 
 - Message: `{id} has variants 0 to {last}; {variant} is not one of them`
 - Fix: ask for a whole number from 0 to {last}, or give the effect more variants
-- Registered in: [`engine/audio/data/sfx.ts` line 51](../engine/audio/data/sfx.ts)
+- Registered in: [`engine/audio/data/sfx.ts` line 55](../engine/audio/data/sfx.ts)
 
 Raised by `renderSfx` (engine/audio/data/sfx.ts).
 
@@ -397,7 +397,7 @@ Raised by `renderSfx` (engine/audio/data/sfx.ts).
 
 - Message: `{id} contains itself through its layers: {path}`
 - Fix: remove one layer of the cycle: a layer mixes another effect in, which cannot contain the first
-- Registered in: [`engine/audio/data/sfx.ts` line 46](../engine/audio/data/sfx.ts)
+- Registered in: [`engine/audio/data/sfx.ts` line 50](../engine/audio/data/sfx.ts)
 
 Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following layers leads back to an effect already on the path.
 
@@ -405,7 +405,7 @@ Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following 
 
 - Message: `sound is off: {reason}`
 - Fix: open the page in a browser with Web Audio (every current one has it); the game runs on in silence
-- Registered in: [`engine/audio/runtime/audio.ts` line 55](../engine/audio/runtime/audio.ts)
+- Registered in: [`engine/audio/runtime/audio.ts` line 56](../engine/audio/runtime/audio.ts)
 
 Advice from `createAudio` (engine/audio/runtime/audio.ts) when there is no Web Audio, or the context could not be made.
 
@@ -1247,7 +1247,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 47](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 48](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 

@@ -2,7 +2,8 @@
  * @file Tests for `x audio` (tools/cmd/audio.ts): a sound's metrics within 20 lines, its WAV and spectrogram on
  * request (a valid 16-bit PCM file; a picture whose brightest row is the tone's pitch), usage errors naming the
  * closest; a replay's sound events read from the sim events that name an `sfx`, at their step's time, variants in
- * turn, bad ones reported; their mix, the sum of the rendered effects, judged for clipping; a real replay played
+ * turn, bad ones reported, each of a list a scene's `sounds` gives one event (a shot and where it strikes); their
+ * mix, the sum of the rendered effects, judged for clipping; a real replay played
  * against its goldens; and the box fight's sounds through its scene's `sounds`, the page's timeline step for step.
  * @see tools/cmd/audio.ts
  */
@@ -134,6 +135,30 @@ describe('a replay’s sound events', () => {
       'step 50, event hit: "sfx:fixtureBlep" is not an sfx entry: did you mean sfx:fixtureBlip?',
     ]);
     expect(timeline.hashes['90']).toBe(replay.hashes['linux-x64'][90]);
+  });
+
+  it("are each of the sounds in a list a scene's sounds gives one event, in its order", () => {
+    const registry = createRegistry();
+    defineFixtureSounds(registry);
+    const pair = [{ sfx: 'sfx:fixtureBlip' }, { sfx: 'sfx:fixtureTone', vol: 0.3 }];
+    defineScene(
+      'pairs',
+      {
+        setup: () => {},
+        step: (w) => void (w.tick === 10 && w.emit('shot', { at: [1, 0, 2] })),
+        sounds: (record) => (record.type === 'shot' ? pair : null),
+      },
+      registry,
+    );
+    const session = createSession('pairs', { seed: 1, registry });
+    for (let k = 0; k < 20; k++) session.step({});
+    const replay = { ...session.record(), hashes: { 'linux-x64': { 20: session.world.hash() } } };
+    const timeline = replaySoundEvents(replay, registry);
+    expect(timeline.events.map((event) => [event.step, event.type, event.sfx, event.vol])).toEqual([
+      [10, 'shot', 'sfx:fixtureBlip', 1],
+      [10, 'shot', 'sfx:fixtureTone', 0.3],
+    ]);
+    expect(timeline.problems).toEqual([]);
   });
 
   it('mix into the sum of the rendered effects, which the chord pushes past full scale', () => {

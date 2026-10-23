@@ -38,6 +38,8 @@ import { SITE, SITE_AREAS, SITE_STRUCTURES, type SiteArea } from '../levels/site
 import { DECK_HEIGHT } from '../levels/yard';
 import '../props/house';
 import '../props/outdoors';
+import { playgroundSounds } from '../sounds/events';
+import { SITE_GROUND } from '../sounds/ground';
 import { PLAYGROUND_WEAPONS } from '../weapons/guns';
 import { standRange } from '../weapons/range';
 import { gym } from './gym';
@@ -168,6 +170,7 @@ function siteSpec(area: SiteArea) {
       standDog(w, areaStart(area), SITE_AREAS[area].yaw);
     },
     actions: { place: gym.actions.place },
+    sounds: playgroundSounds(SITE_GROUND), // its events' sounds, for x audio --replay (WP 13.22)
   };
 }
 

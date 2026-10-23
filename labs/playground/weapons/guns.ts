@@ -9,7 +9,8 @@
  * - **The rifle** (`weapon:playground-rifle`, the R-301's): automatic at 13.5 shots a second, 14 points a shot, 18
  *   rounds, 2.4 s to reload, 3.2 s from empty, a wider cone from the hip, a burst climbing up and to the right, then
  *   left, its sights 55° at Apex's 70° lens (WP 13.8's rifles').
- * The player carries both, holstered (`PLAYGROUND_WEAPONS`, labs/playground/cast/player.ts): 1 and 2 draw them, 3 or
+ * Each names its shot's sound (`sfx:pistolShot`, `sfx:rifleShot`: engine/audio/data/foley.ts), which the playground's
+ * sound map plays for its `gunshot` (labs/playground/sounds/events.ts, WP 13.22). The player carries both, holstered (`PLAYGROUND_WEAPONS`, labs/playground/cast/player.ts): 1 and 2 draw them, 3 or
  * Y held holsters (labs/playground/controls.ts).
  *
  * Game code, sim-side: it imports only engine/sim-api.ts.
@@ -77,6 +78,7 @@ export const PISTOL = defineWeapon('weapon:playground-pistol', {
   draw: 0.25,
   muzzle: [0, 0.056, 0.157],
   prop: 'prop:playground-pistol',
+  sound: 'sfx:pistolShot',
 });
 
 /** The rifle (see the file comment). */
@@ -95,6 +97,7 @@ export const RIFLE = defineWeapon('weapon:playground-rifle', {
   draw: 0.4,
   muzzle: [0, 0.03, 0.64],
   prop: 'prop:playground-rifle',
+  sound: 'sfx:rifleShot',
 });
 
 /** What the player carries, by slot: the pistol, then the rifle. */

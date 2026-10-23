@@ -5,8 +5,9 @@
  *
  * Sim-side means `engine/{core,sim,physics,anim,world}`, `engine/input/intents.ts`, `engine/audio/{dsp,data}`,
  * `engine/dev/bot.ts` and the gallery's scene (`engine/dev/galleryScene.ts`), every lab's scenes and cast (the box's,
- * the starter game's, a game's own), the box's sound events (labs/box/sounds/events.ts, the scenes' `sounds`), and the
- * fixture scenes; `*.test.ts` files are exempt. The standard `Math` stays allowed, `Math.sin` and `Math.cos` included:
+ * the starter game's, a game's own), the box's and the playground's sound events (labs/box/sounds/events.ts,
+ * labs/playground/sounds/{events,ground}.ts: the scenes' `sounds`), and the fixture scenes; `*.test.ts` files are
+ * exempt. The standard `Math` stays allowed, `Math.sin` and `Math.cos` included:
  * the sim swaps in fdlibm ports while it steps (§6.5). `core/math.ts` alone imports three.js, for its math
  * classes (layers.ts limits it to them).
  *
@@ -53,6 +54,8 @@ export const SIM_SIDE = [
   'labs/*/scenes/**',
   'labs/*/cast/**',
   'labs/box/sounds/events.ts',
+  'labs/playground/sounds/events.ts',
+  'labs/playground/sounds/ground.ts',
   'fixtures/scenes/**',
 ];
 

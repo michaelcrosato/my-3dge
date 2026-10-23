@@ -1,13 +1,14 @@
 /**
  * @file Unit tests for sound in 3D (engine/audio/runtime/spatial.ts): the listener's axes follow the engine's camera
  * pose (unit, orthogonal, its right the camera's right), and occlusion through a real physics world's `QueryView`:
- * a wall of the level between hides a sound, a clear line, a prop or a sound on the wall's own face does not.
+ * a wall of the level between hides a sound, a clear line, a prop or a sound on the wall's own face does not; the
+ * walls between are counted (WP 13.22), up to `OCCLUSION.walls`, each muffling it an octave lower and fainter.
  */
 import { describe, expect, it } from 'vitest';
 import { createSettings } from '../../core/settings';
 import { createPhysics } from '../../physics/world';
 import { queryView } from '../../sim/queryView';
-import { listenerAxes, occluded, type Vec3 } from './spatial';
+import { listenerAxes, muffling, occluded, OCCLUSION, wallsBetween, type Vec3 } from './spatial';
 
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: Vec3, b: Vec3): Vec3 => [
@@ -77,5 +78,32 @@ describe('occluded', () => {
     expect(occluded(view, ear, [0, 1.5, -8])).toBe(false);
     expect(occluded(view, ear, [0, 1.5, 3.7])).toBe(false);
     expect(occluded(view, ear, [0, 1.6, 0.1])).toBe(false);
+  });
+});
+
+describe('the walls between', () => {
+  /** Walls of the level 0.5 m thick across +Z at `zs`, 4 m wide and 3 m high, seen once the world has stepped. */
+  function walls(...zs: number[]) {
+    const physics = createPhysics();
+    for (const z of zs) physics.addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [4, 3, 0.5] } }], position: [0, 1.5, z] }); // prettier-ignore
+    physics.step({ dt: 1 / 60, settings: createSettings().sim });
+    return queryView(physics);
+  }
+  const ear: Vec3 = [0, 1.5, 0];
+
+  it('are counted one by one along the line, up to OCCLUSION.walls, none in the clear or within the margin', () => {
+    const view = walls(4, 8, 12, 16, 20);
+    expect([2, 6, 10, 14, 30].map((z) => wallsBetween(view, ear, [0, 1.5, z]))).toEqual([0, 1, 2, 3, 3]);
+    expect(wallsBetween(view, ear, [0, 1.5, 30], 9)).toBe(5);
+    expect(wallsBetween(view, ear, [20, 1.5, 30], 9)).toBe(0); // past their ends
+    expect(wallsBetween(view, ear, [0, 1.5, 3.8])).toBe(0); // on the first one's face
+    expect(wallsBetween(view, ear, [0, 1.5, 6])).toBe(occluded(view, ear, [0, 1.5, 6]) ? 1 : 0);
+  });
+
+  it('muffle a sound an octave lower and fainter for each, open with none', () => {
+    expect(muffling(0)).toEqual({ cutoff: OCCLUSION.open, gain: 1 });
+    expect(muffling(1)).toEqual({ cutoff: OCCLUSION.cutoff, gain: OCCLUSION.gain });
+    expect(muffling(2)).toEqual({ cutoff: OCCLUSION.cutoff / 2, gain: OCCLUSION.gain ** 2 });
+    expect(muffling(9)).toEqual(muffling(OCCLUSION.walls));
   });
 });

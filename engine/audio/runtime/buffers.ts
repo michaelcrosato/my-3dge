@@ -10,6 +10,8 @@
  * (nothing rings before the song starts), then `n` samples of the render folded onto one pass (`loop[j] = Σ render[j +
  * k·n]`), which is what every later pass sounds like, the last notes' tails ringing into the next pass. A source
  * plays it with `loopStart = n / rate` and `loopEnd = 2n / rate`: the exact sum of the passes played back to back.
+ * An effect played looped with a `loop` pass (engine/audio/data/sfx.ts, WP 13.22) is that folded pass alone
+ * (`foldLoop`): a bed's voices fading out past the pass crossfade into the same voices fading in at its start.
  *
  * Invariants: pure functions of the song and the rate (the DSP's reproducibility holds); buffers are mono, at the
  * rate they were rendered at.
@@ -18,6 +20,7 @@
  * import { getSong } from '../data/song';
  * const layers = songLayers(getSong('song:boss')); // [{ intensity: 0, song }]: every engine song is one layer
  * loopLayout(new Float32Array([1, 2, 3, 4, 5]), 2); // [1, 2, 9, 6]: the head, then 1+3+5 and 2+4
+ * foldLoop(new Float32Array([1, 2, 3, 4, 5]), 2); // [9, 6]: the loop pass alone
  * @see engine/audio/runtime/buffers.test.ts
  */
 import { renderSong, songTiming, type Song } from '../data/song';
@@ -42,11 +45,18 @@ export function songLayers(song: Song): SongLayer[] {
   }));
 }
 
+/** `samples` (one pass of `pass` samples, then tails) folded onto one pass: what every pass sounds like looped. */
+export function foldLoop(samples: Float32Array, pass: number): Float32Array {
+  const out = new Float32Array(pass);
+  for (let i = 0; i < samples.length; i++) out[i % pass] += samples[i];
+  return out;
+}
+
 /** `samples` (one pass of `pass` samples, then tails) as the head pass followed by the folded loop pass. */
 export function loopLayout(samples: Float32Array, pass: number): Float32Array {
   const out = new Float32Array(2 * pass);
   out.set(samples.subarray(0, pass));
-  for (let i = 0; i < samples.length; i++) out[pass + (i % pass)] += samples[i];
+  out.set(foldLoop(samples, pass), pass);
   return out;
 }
 
