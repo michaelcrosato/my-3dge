@@ -40,8 +40,8 @@ export const GUN_PROPS: Readonly<Record<string, PropDefinition>> = {
       box('slide', [0.028, 0.032, 0.19], IRON, [0, 0.04, 0.062]),
       box('sights', [0.022, 0.007, 0.012], IRON, [0, 0.072, -0.018]),
       box('guard', [0.008, 0.008, 0.05], PAINT, [0, -0.012, 0.04], '#262626'),
-      box('guardFront', [0.008, 0.027, 0.008], PAINT, [0, -0.012, 0.061], '#262626'), // closing the loop up to the frame
-      box('trigger', [0.006, 0.013, 0.005], PAINT, [0, 0.002, 0.04], '#262626'),
+      box('guardFront', [0.008, 0.019, 0.008], PAINT, [0, -0.004, 0.061], '#262626'), // on the bar's end, up to the frame
+      box('trigger', [0.006, 0.013, 0.005], PAINT, [0, 0.002, 0.046], '#262626'), // clear of the grip
     ],
     body: { type: 'none' },
   },
