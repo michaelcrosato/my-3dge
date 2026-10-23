@@ -140,3 +140,7 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   stories the same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts,
   labs/playground/weapons/range.test.ts). playground-street is new with that WP: the dog sits by the player, follows
   him to its ball, chases the ball he throws, fetches it and lets it fall by him (labs/playground/cast/dog.test.ts).
+  playground-site's and -street's were re-recorded again (Node ×3, Chromium ×3, the street's in the page ×3) when the
+  dog and its ball moved to where both lie flat: on the street the dog stands on the driveway, its ball 0.34 m from
+  the sidewalk's edge, and the street's pick-up was retuned to the ball's new place, its story unchanged; in the front
+  yard the dog stands where it did and only its ball moved, laid at the dog's floor height, no longer its spot's.

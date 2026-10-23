@@ -1501,7 +1501,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   off his way (laid before him, the bot's tour kicked it ahead to the front door, where a use took it up instead of the
   door and the tour went another way; laid ahead of the dog facing his way, it lay by its hips once the dog had turned
   to him: the frame review), at the first of six spots beside him where the dog's paws and its ball lie flat, clear of a
-  kerb or a step (the street's sidewalk, 2 m wide, leaves none: there the dog stands on the lawn, its ball 0.34 m from
+  kerb or a step (the street's sidewalk, 2 m wide, leaves none: there the dog stands on the driveway, its ball 0.34 m from
   the sidewalk's edge, whose foot hid a ball laid against it: the second frame review). Its first step stands its feet
   even told it is aloft: an actor is not grounded on its first tick, the world's queries seeing no ground before the
   first physics step, and its gait, flown from a fresh state, swung its feet from the world's origin (`LegGait.fly` now
