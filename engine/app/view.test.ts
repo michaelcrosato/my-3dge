@@ -16,7 +16,8 @@
  * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
  * frame the old camera's, halfway far from both) and a plain one cuts; the gym's rides are drawn (WP 13.7). WP 13.9:
  * the aim from the camera drawn last, the centre's ray past the player's own body and the pointer at his chest's
- * height, where a level shot runs.
+ * height, where a level shot runs. WP 13.23: the props' lamps that are on light the stage's pool, and its sky shows the
+ * hour of the scene's clock.
  * @see engine/app/view.ts
  */
 import { readFileSync } from 'node:fs';
@@ -27,7 +28,10 @@ import { JOINTS } from '../anim/skeleton';
 import { poseTarget, type CameraPose } from '../gfx/cameras/pose';
 import { VIEW_LIFT } from '../gfx/cameras/presets';
 import { createRegistry, registry } from '../core/registry';
+import { setDaytime } from '../sim/lights';
+import { spawnProp } from '../sim/props';
 import { defineScene } from '../sim/scene';
+import { switchGroup } from '../sim/switches';
 import { CHEST } from '../sim/weapons';
 import { defineComponent } from '../sim/state';
 import { defineLevel } from '../world/level/level';
@@ -248,6 +252,29 @@ describe('createHeadless({ view: true })', () => {
     expect(first.every((slot) => slot.source >= 0 && slot.intensity > 0)).toBe(true); // 12 torches near the middle
     view.frame({ alpha: 1, dt: 0.25, aspect: 16 / 9 });
     expect(slots().map((slot) => slot.intensity)).not.toEqual(first.map((slot) => slot.intensity));
+  });
+
+  it("lights the props' lamps that are on, and shows the hour's sky by the scene's clock", async () => {
+    if (!registry.has('scene', 'view:lamp')) {
+      defineScene('view:lamp', {
+        setup(w) {
+          spawnProp(w, { prop: 'prop:lamp', at: [2, 2.6, 2], yaw: 0 }, { group: 'room:a' });
+          setDaytime(w, { hour: 21 });
+        },
+        actions: { lamp: (w, on) => switchGroup(w, 'room:a', on === true) },
+      });
+    }
+    const engine = await createHeadless({ scene: 'view:lamp', view: true });
+    const view = (headlessHost(engine) as AppHost).view!;
+    view.stage.sky.show('sky:daylight');
+    const lit = () => {
+      view.frame({ alpha: 1, dt: 0.1, aspect: 16 / 9 });
+      const report = view.stage.sky.report().sky!;
+      return [report.preset, report.slots.filter((slot) => slot.light === 'light:lamp' && slot.intensity > 0).length];
+    };
+    expect(lit()).toEqual(['daylight@21.00', 1]);
+    headlessHost(engine).session.act('lamp', false); // a dev action: the view reads the world again
+    expect(lit()).toEqual(['daylight@21.00', 0]);
   });
 
   it('moves the camera on by frames that draw nothing (camera.advance): a view catches up with a hero a dev action moved', async () => {

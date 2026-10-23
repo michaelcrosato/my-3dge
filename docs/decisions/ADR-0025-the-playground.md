@@ -1676,3 +1676,52 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   feature is engine-internal (a game turns one off, never defines one: the manifest's `games`), and its gate in
   engine/gfx/features.ts stays by hand, each technique handed out its own way (the manifest's `next` says so). The
   kind's schema checks every entry as it is defined (`FEATURE_FIELDS`), and engine/gfx/features.test.ts lists them.
+
+## Amendment 31 (2026-10-23, WP 13.23): light and time
+
+- **Where it lives.** The clock is sim state (engine/sim/lights.ts): `setDaytime(w, { hour, rate })` sets the world's
+  clock (the component `daytime`, one a world), `lightsAtDusk(w, group, { on, off })` a rule (the component `dusk`)
+  that switches a light group (engine/sim/switches.ts) as the clock passes its hours, and the system `daytime` moves
+  the clock on and switches at the crossings; the names reach game code through engine/sim/houseApi.ts. The view's
+  side is engine/gfx/daylight.ts: four key skies (`sky:night`, `sky:dawn`, `sky:noon`, `sky:dusk`), the sky at an hour
+  eased between them (`daylightAt`), and the light's arc (`lightAt`). Beyond the plan's Owns: engine/gfx/sceneDump.ts (a light's intensity, `lit n`,
+  so a dump says which lamps shine), engine/app/view.ts (the hour and the frame's lamps to the stage's lights), the
+  playground's site scenes, furnish.ts and the streetlight's description, and the four site replays' goldens.
+- **The house's lamps lit nothing until now.** WP 13.16 drew a lamp's shade on or off by its switch, but nothing gave
+  the props' light spots to the light pool (engine/gfx/props.ts `lights()` had no caller), and the playground's looks
+  show `sky:daylight`, whose pool is out (`pointLights` 0). The pool now ranks the frame's lamps beside the level's
+  spots (`update(focus, time, lamps)`), each with its own colour, intensity and reach, a declared `light:<tag>` giving
+  its priority; the view hands it the props' lamps that are on. A lamp standing on one of the level's spots of its
+  kind is that spot's light, lit once: the box's hall stands a brazier, its torch light where the spot is, on each of
+  its 30 torch spots, and would have lit every torch twice.
+- **The clock sets the rules on the step after.** What a scene's setup spawns is in the world only once the setup is
+  over (engine/sim/world.ts: spawns wait for the step's boundary), so a rule made there could not switch its group at
+  once: the system puts each new rule's group as the hour has it on its first step (`dusk.set`), and again after the
+  clock is set by hand; between its hours a player's switch holds. No event: the rule's switching is the switches'.
+  Found by the page's test, whose virtual clock never stepped: a frame drawn before the first step showed the street
+  lit at noon. So the block spawns its dusk groups' lamps and switches as the starting hour has them (site.ts
+  `litAtStart`), and the rule's first step changes nothing there; a test that sets the hour steps once after.
+- **One shader key all day.** Who casts shadows is part of every lit shader's key, and r182 builds the pipelines
+  again on each change (amendment 30's box-look switches: 43 and 25 each time), so the day never changes it: the sky's
+  light never goes out (the moon by night, a twenty-fifth of the key's light where sun and moon swap, so the light's
+  jump from west to east goes unseen), and every key lights the pool (`pointLights` 1): a lamp shines by its switch,
+  not the hour. The light is held 7° above the horizon at least, so no shadow stretches across the site.
+- **The sky follows the clock over the look's.** While a scene runs a clock, the stage's sky shows the hour's sky in
+  place of the preset its look names (a look naming none keeps the stage's own lights); it is shown again when the
+  hour has moved a minute, and from the look's first show once the view knows the hour, so the warm-up compiles what
+  the frames draw. The backdrop's silhouettes darken by a tint (`backdrop.tint`, a new field of `sky`, white by
+  default: the material's colour, a uniform), and the strip is baked again only when its silhouettes change. Found
+  on the way: on a stage with no level (a site, a terrain) the sky's sun was fitted to 16 m round the origin, so with
+  its cascades off the block had shadows in one corner; it covers the terrain's ground now, as the stage's own sun.
+- **The block.** The street's four lamps are the light group `street`, lit at dusk (18:30) and put out at dawn
+  (06:30); the porch has a lamp over the front door, its switch inside, lit at dusk too (`room:porch`); the
+  crawlspace has its lamp under its 1.4 m ceiling and its switch at 0.9 m by its low door (PROGRESS's wait since WP
+  13.18). Its scenes start at `playground.hour` (12) and pass a day in `playground.day` minutes (0 holds it); their dev
+  actions `daytime { hour, rate }` and `lights { group, on }` set the clock and switch a group, so an agent or a test
+  reaches any hour without a restart.
+- **Measured.** From the street at cam iso (480 × 270), the luma mean at noon, dusk and night is 0.484, 0.106 and
+  0.097 in the cel look and 0.483, 0.123 and 0.115 in the pixel look, at most 31% near-black and nothing blown after
+  dusk; 0 pipelines are built through the hours and both looks once a shot in each has built the shot's own passes;
+  the street's four lamps shine in the pool at dusk and night and not at noon, the moon and the nearest lamp casting
+  (tests/e2e/lights.spec.ts). Dusk and night are dim and flat (luma spreads 0.13 to 0.16, the pixel look 36 to 39
+  colours): WP 13.24 tunes both looks by night.

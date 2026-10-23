@@ -1,10 +1,11 @@
 /**
  * @file Unit tests for engine/gfx/sceneDump.ts (T1, PLAN.md §8.3's `scene.dump`, WP 2.7): one line per object with
- * its name or type and id, type, hidden flag, position, size, material, triangles, instances and entity; `depth` cuts
+ * its name or type and id, type, hidden flag, position, size, material, triangles, instances and entity, a light's
+ * intensity and whether it casts (WP 13.23); `depth` cuts
  * the tree and counts what it cut; `filter` keeps matches with their ancestors; the dump never changes the tree.
  * @see engine/gfx/sceneDump.ts
  */
-import { BoxGeometry, Group, InstancedMesh, Mesh, MeshBasicMaterial, Scene } from 'three/webgpu';
+import { BoxGeometry, Group, InstancedMesh, Mesh, MeshBasicMaterial, PointLight, Scene } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { dumpScene } from './sceneDump';
 
@@ -28,6 +29,16 @@ function scene() {
 }
 
 describe('dumpScene', () => {
+  it("gives a light's intensity, 0 for one put out, and marks one that casts", () => {
+    const root = new Group();
+    root.name = 'lights';
+    const [lamp, out] = [new PointLight('#ffffff', 3.256), new PointLight('#ffffff', 0)];
+    Object.assign(lamp, { name: 'lamp' });
+    Object.assign(out, { name: 'out', castShadow: true });
+    root.add(lamp, out);
+    expect(dumpScene(root).split('\n').slice(1)).toEqual(['  lamp PointLight at 0,0,0 lit 3.26', '  out PointLight at 0,0,0 lit 0 shadow']); // prettier-ignore
+  });
+
   it('writes one line per object, indented by depth', () => {
     const root = scene();
     const lines = dumpScene(root).split('\n');

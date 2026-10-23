@@ -3790,7 +3790,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Verify:** `npm test -- engine/audio && node x audio --replay tests/replays/playground-site.replay.json`
 
 #### WP-13.23 Light and time
-- **Owns:** `engine/gfx/daylight.ts`, `engine/sim/lights.ts`, extends `engine/gfx/{lights,sky,atmosphere,stageSky}.ts`
+- **Owns:** `engine/gfx/daylight.ts`, `engine/sim/lights.ts`, extends `engine/gfx/{lights,sky,atmosphere,stageSky}.ts` (ADR-0025 amendment 31)
 - **Needs:** WP 11.5, WP 13.15, WP 13.16
 - **Size:** M
 - **Build** (docs/PLAYGROUND.md §8.2): the time of day as sim state a scene sets and runs; the sky, sun, fog and ambience following it in the view (blended presets); switchable lights as sim components the light pool reads each frame (room lights, streetlights at dusk, the porch light); shadows indoors and out.

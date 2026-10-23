@@ -66,7 +66,7 @@ export const OUTDOOR_PROPS = {
   },
   'prop:playground-streetlight': {
     description:
-      'A street lamp, its pole 4.5 m high and its head over the road, always lit (no light group yet: WP 13.23). Fixed.',
+      'A street lamp, its pole 4.5 m high and its head over the road, lit with its group (the street: at dusk). Fixed.',
     parts: [upright('pole', 0.07, 4.5, IRON, [0, 0, 0], '#3a3f45'), part('arm', [0.08, 0.08, 1.2], IRON, [0, 4.42, 0.6], '#3a3f45'), { ...part('head', [0.35, 0.12, 0.5], GLOW, [0, 4.32, 1.1], '#fff3c8'), shadow: false, lit: true }], // prettier-ignore
     body: { type: 'fixed', shape: 'cylinder', radius: 0.08, height: 4.5 },
     light: { tag: 'streetlight', color: '#ffe8b0', intensity: 10, distance: 14, decay: 1, position: [0, 4.2, 1.1] },

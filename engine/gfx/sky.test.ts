@@ -1,11 +1,12 @@
 /**
  * @file Unit tests for skies (engine/gfx/sky.ts): the presets as data, the backdrop bake (reproducible, tiling,
  * clear above its skylines), and a sky on the hall whose presets and quality tiers change only who casts shadows,
- * never how many lights the scene holds.
+ * never how many lights the scene holds; an entry shown as a preset is (the hour's sky, WP 13.23), its backdrop tinted
+ * and baked again only when its silhouettes change.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PerspectiveCamera, Scene, type Object3D } from 'three/webgpu';
+import { PerspectiveCamera, Scene, type MeshBasicNodeMaterial, type Object3D } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { hashNumbers } from '../core/hash';
 import { createRegistry } from '../core/registry';
@@ -96,7 +97,7 @@ describe('createSky', () => {
     defineSkies(registry);
     const scene = new Scene();
     const sky = createSky(scene, { level: HALL, rng: new Rng(1), registry });
-    return { scene, sky };
+    return { scene, sky, registry };
   };
 
   it('switches presets and tiers without adding or removing a light: only who casts changes', () => {
@@ -135,6 +136,20 @@ describe('createSky', () => {
     expect(sky.report().fog.near).toBeCloseTo(Math.hypot(12 - 0.5, 16) + 12, 9);
     expect(slots.filter((slot) => slot.source >= 0)).toHaveLength(12);
     expect(slots.slice(0, 2).every((slot) => slot.castShadow && slot.intensity > 0)).toBe(true);
+  });
+
+  it('shows an entry as a preset, tints the backdrop, and bakes it again only when its silhouettes change', () => {
+    const { sky, registry } = make();
+    const day = registry.get('sky', 'sky:daylight') as SkyEntry;
+    sky.set('sky:daylight');
+    const material = sky.backdrop.material as MeshBasicNodeMaterial;
+    const bytes = () => (material.map!.image as { data: Uint8Array }).data;
+    const baked = bytes();
+    const dusk = { ...day, id: 'dusk', ambient: { ...day.ambient, intensity: 0.5 }, backdrop: { ...day.backdrop, tint: '#806040' } }; // prettier-ignore
+    expect(sky.show(dusk)).toBe(dusk);
+    expect([sky.preset.id, sky.atmosphere.ambient.intensity, `#${material.color.getHexString()}`, bytes() === baked]).toEqual(['dusk', 0.5, '#806040', true]); // prettier-ignore
+    sky.show({ ...dusk, backdrop: { ...dusk.backdrop, layers: day.backdrop.layers.slice(1) } });
+    expect(bytes() === baked).toBe(false);
   });
 
   it('registers the dome and the backdrop with the warm-up, and the fog in its key', () => {

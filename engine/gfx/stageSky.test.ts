@@ -4,7 +4,9 @@
  * given, and registered with the warm-up given before; showing it hides the stage's lights and installs the fog, and
  * the visible lights (what the warm-up keys) are the sky's; showing `''` hides the sky and its parts, takes the fog out
  * and puts the background back, leaving exactly the first visible lights; the quality tier's budget reaches the sky,
- * before or after it is made; `update` follows the focus only while the sky shows; `dispose` takes it all out.
+ * before or after it is made; `update` follows the focus only while the sky shows; given the scene's hour, the sky
+ * shows the hour's (WP 13.23) from the first show, again when the hour moves a minute, never changing who casts, and
+ * the preset once the hour is gone; `dispose` takes it all out.
  * @see engine/gfx/stageSky.ts
  */
 import { readFileSync } from 'node:fs';
@@ -111,6 +113,34 @@ describe('the stage sky', () => {
     lights.show('');
     lights.update({ camera, focus: [2, 0, 2], time: 2 });
     expect(lights.sky!.pool.slots()).toEqual(later); // hidden: left as it was
+  });
+
+  it("shows the hour's sky while the scene has a clock, again when it moves a minute, and the preset without one", () => {
+    const { lights } = hall();
+    const view = (hour: number | null) => ({ camera: new PerspectiveCamera(), focus: [32, 0, 24], time: 0, hour });
+    lights.update(view(21)); // known before the first show: the warm-up compiles the night
+    lights.show('sky:daylight');
+    const shows = () => lights.report().sky!;
+    expect(shows().preset).toBe('daylight@21.00');
+    const casters = shows().casters;
+    lights.update(view(21.01)); // under a minute: as it was
+    expect(shows().preset).toBe('daylight@21.00');
+    lights.update(view(12));
+    expect([shows().preset, shows().casters]).toEqual(['daylight@12.00', casters]); // noon casts as the night does
+    lights.update(view(null));
+    expect(shows().preset).toBe('sky:daylight');
+  });
+
+  it("fits the sky's sun to a terrain's ground when the stage has no level", () => {
+    const registry = createRegistry();
+    defineSkies(registry);
+    defineLights(registry);
+    const area = { corner: [10, 20] as const, size: [40, 60] as const };
+    const lights = createStageSky(new Scene(), { level: null, area, registry, background: BACKGROUND });
+    lights.show('sky:daylight');
+    const { sun } = lights.sky!;
+    expect(sun.target.position.toArray()).toEqual([30, 0, 50]); // the ground's middle, not the origin's 16 m square
+    expect(sun.shadow.camera.right).toBeCloseTo(Math.hypot(40, 60) / 2 + 2, 9);
   });
 
   it('takes everything out of the scene when disposed', () => {

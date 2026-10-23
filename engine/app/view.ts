@@ -54,6 +54,7 @@ import { createStage, type Stage } from '../gfx/stage';
 import type { FirstPersonParts } from '../gfx/viewmodel/body';
 import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
+import { daytimeOf } from '../sim/lights';
 import { CHEST } from '../sim/weapons';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
@@ -130,7 +131,10 @@ export interface RunView {
   stepped(): void;
   /** The run started again, or its world changed between steps: forget the old places and snap to the new ones. */
   restarted(): void;
-  /** Moves the camera by one rendered frame and the stand-ins to `alpha`; returns what to draw. */
+  /**
+   * Moves the camera by one rendered frame and the stand-ins to `alpha`; returns what to draw. The stage's sky follows,
+   * lit by the hour of the scene's clock (engine/sim/lights.ts) and lighting the props' lamps that are on (WP 13.23).
+   */
   frame(frame: ViewFrame): FrameView;
   /** The camera now. */
   cameraInfo(): CameraInfo;
@@ -309,7 +313,8 @@ export function createRunView(options: RunViewOptions): RunView {
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
       time += frame.dt;
-      stage.sky.update({ camera: drawn, focus: stage.actors.player()?.feet ?? stage.centre, time });
+      const [hour, lamps] = [daytimeOf(options.run().world), stage.props.lights()]; // WP 13.23
+      stage.sky.update({ camera: drawn, focus: stage.actors.player()?.feet ?? stage.centre, time, hour, lamps });
       drawCrowd();
       stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
       return { scene: stage.scene, camera: drawn, alpha: frame.alpha };

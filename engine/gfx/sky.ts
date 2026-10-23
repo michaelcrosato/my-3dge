@@ -6,11 +6,11 @@
  * light pool's point lights shine (engine/gfx/lights.ts). The presets: `sky:hall`, the torch-lit hall (dark, torches,
  * fog past the focus), and `sky:daylight`, a plain day for fixtures. Others arrive when a scene needs one.
  *
- * Switching presets changes uniforms, colours and visibility only: the dome and the backdrop are always in the scene
- * and registered with the warm-up, the sun and the pool's lights are made once, and the fog node stays installed. The
- * one exception is who casts shadows (engine/gfx/shadows.ts): a preset with a sun gives the sun the first caster,
- * which changes the shader key, so the renderer warms up again before the next frame instead of stalling it. Nothing
- * here touches the sim, so no preset changes the hash.
+ * Switching presets, or showing the hour's sky (engine/gfx/daylight.ts), changes uniforms, colours and visibility
+ * only: the dome and the backdrop stay in the scene, registered with the warm-up, the sun and the pool's lights are
+ * made once, and the fog node stays installed. The one exception is who casts shadows (engine/gfx/shadows.ts): a
+ * preset with a sun gives the sun the first caster, which changes the shader key, so the renderer warms up again
+ * before the next frame instead of stalling it. Nothing here touches the sim, so no preset changes the hash.
  *
  * The backdrop is baked on the CPU into one strip (engine/gfx/backdrop.ts `bakeBackdrop`), which wraps three times
  * round an open cylinder that follows the camera, its foot just under eye level, drawn at the far plane like the
@@ -65,7 +65,7 @@ import type { CompiledLevel } from '../world/level/types';
 import { AMBIENT_FIELDS, createAtmosphere, FOG_FIELDS, type Atmosphere, type FogReport } from './atmosphere';
 import { BACKDROP, BACKDROP_KINDS, bakeBackdrop } from './backdrop';
 import { cascadeSunFor, lightPoolOf, type FeatureReport } from './features';
-import { createLightPool, lightSources, type LightPool, type PoolSlot } from './lights';
+import { createLightPool, lightSources, type LightPool, type PoolLamp, type PoolSlot } from './lights';
 import type { QualityBudget } from './quality';
 import { shadowCasters, splitCasters, type Casters } from './shadows';
 import type { Warmup } from './warmup';
@@ -108,6 +108,7 @@ export const SKY_FIELDS = {
   ),
   backdrop: group('Silhouettes round the horizon, far layers first; no layers draws no backdrop.', {
     haze: text('The colour hazed layers fade toward, hex.', '#c8e4f8'),
+    tint: text('A colour the silhouettes are drawn through, hex: white as baked; the night darkens them.', '#ffffff'),
     layers: {
       type: 'array',
       default: [],
@@ -196,10 +197,18 @@ export interface Sky {
   readonly preset: SkyEntry;
   /** Shows the preset `id` (kind `sky`); returns it. */
   set(id: string): SkyEntry;
+  /**
+   * Shows `entry`, a sky as the kind's entries hold one (engine/gfx/daylight.ts's blend); returns it. The backdrop's
+   * silhouettes are drawn through its `tint` (the night darkens them) and baked again only when they change.
+   */
+  show(entry: SkyEntry): SkyEntry;
   /** Takes a quality tier's shadow budget (engine/gfx/quality.ts). */
   budget(budget: Pick<QualityBudget, 'shadowCasters'>): void;
-  /** Follows the camera and the focus (m), flickering at `time` (s); call it each frame. Returns the pool's slots. */
-  update(view: { camera: Camera; focus: readonly number[]; time: number }): PoolSlot[];
+  /**
+   * Follows the camera and the focus (m), flickering at `time` (s), the frame's `lamps` among the pool's sources
+   * (engine/gfx/lights.ts); call it each frame. Returns the pool's slots.
+   */
+  update(view: { camera: Camera; focus: readonly number[]; time: number; lamps?: readonly PoolLamp[] }): PoolSlot[];
   /** Registers the dome, the backdrop and the fog with the warm-up; `dispose()` takes them out. */
   register(warmup: Warmup): { dispose(): void };
   report(): SkyReport;
@@ -229,6 +238,8 @@ function atFarPlane(material: MeshBasicNodeMaterial): void {
 export interface SkyOptions {
   /** The level whose light spots light the pool and whose bounds the sun's shadow covers. */
   level?: Pick<CompiledLevel, 'lights' | 'bounds'>;
+  /** Without a level, the ground the sun's shadow covers (a terrain's or a site's), as a level's bounds. */
+  bounds?: CompiledLevel['bounds'];
   /** The pool's size (engine/gfx/lights.ts); by default what the renderer's `features` afford. */
   poolSize?: number;
   /** The visual stream the flicker phases are drawn from. */
@@ -252,7 +263,7 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
   sun.target.name = 'sky/sun/target';
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.bias = -0.0005;
-  const { min, max } = options.level?.bounds ?? { min: [-8, 0, -8], max: [8, 4, 8] };
+  const { min, max } = options.level?.bounds ?? options.bounds ?? { min: [-8, 0, -8], max: [8, 4, 8] };
   const centre = [(min[0] + max[0]) / 2, min[1], (min[2] + max[2]) / 2] as const;
   const half = Math.hypot(max[0] - min[0], max[2] - min[2]) / 2 + 2;
   Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 3 * half + 60 });
@@ -292,6 +303,7 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
   scene.add(sun, sun.target, dome, backdrop);
 
   let preset = registry.get('sky', 'sky:daylight') as SkyEntry;
+  let baked = ''; // the backdrop baked into the strip, as its spec's text
   let casters = shadowCasters({ shadowCasters: null });
   let split: Casters = { sun: false, points: 0 };
   const applyCasters = () => {
@@ -309,8 +321,9 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
     get preset() {
       return preset;
     },
-    set(id) {
-      preset = registry.get('sky', id) as SkyEntry;
+    set: (id) => sky.show(registry.get('sky', id) as SkyEntry),
+    show(entry) {
+      preset = entry;
       if (scene.background instanceof Color) scene.background.set(preset.background);
       else scene.background = new Color(preset.background);
       pool.scale = preset.pointLights;
@@ -329,9 +342,12 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
       dome.mieDirectionalG.value = preset.dome.mieDirectionalG;
       exposure.value = preset.dome.exposure;
       backdrop.visible = preset.backdrop.layers.length > 0;
-      if (backdrop.visible) {
+      material.color.set(preset.backdrop.tint);
+      const strips = JSON.stringify([preset.backdrop.haze, preset.backdrop.layers]);
+      if (backdrop.visible && strips !== baked) {
         strip.image.data = bakeBackdrop(preset.backdrop);
         strip.needsUpdate = true;
+        baked = strips;
       }
       applyCasters();
       return preset;
@@ -340,13 +356,13 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
       casters = shadowCasters(budget);
       applyCasters();
     },
-    update({ camera, focus, time }) {
+    update({ camera, focus, time, lamps }) {
       const eye = camera.position;
       dome.position.copy(eye);
       backdrop.position.set(eye.x, eye.y - BACKDROP.foot + BACKDROP.band / 2, eye.z);
       atmosphere.follow(eye.toArray(), focus);
       cascades?.follow(camera);
-      return pool.update(focus, time);
+      return pool.update(focus, time, lamps);
     },
     register(warmup) {
       const parts = [warmup.register('sky', { objects: () => [dome, backdrop] }), atmosphere.register(warmup)];

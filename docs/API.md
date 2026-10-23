@@ -360,6 +360,9 @@ game agent's manual.
 - `DamageOptions` (interface from [`engine/ui/labels.ts`](../engine/ui/labels.ts)): How a damage number is shown.
 - `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
+- `DAWN` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go off unless it says: dawn, at 06:30 (hours).
+- `DaytimeComponent` (interface from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The component `daytime`: the world's clock.
+- `daytimeOf` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The world's hour (0 up to 24), or null when it has no clock.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines an action on `registry` (the shared one).
@@ -419,6 +422,8 @@ game agent's manual.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `driveRig` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`).
+- `DUSK` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go on unless it says: dusk, at 18:30 (hours).
+- `DuskComponent` (interface from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The component `dusk`: a light group the clock switches.
 - `earshot` (function from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): How far `noise` carries to `ears` for an agent of `hearing` (m): its loudness, half through a wall.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
@@ -659,6 +664,7 @@ game agent's manual.
 - `LevelShape` (type from [`engine/gfx/level/recipes.ts`](../engine/gfx/level/recipes.ts)): How a recipe draws its pieces, with what each material slot draws: - `surface`: one welded surface over the pieces at their bottom height, facing up, UVs in metres along X and -Z (one draw call): the floor.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
 - `LightEntry` (type from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): A `light` entry.
+- `lightsAtDusk` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Switches light group `group` on as the clock passes `on` and off as it passes `off` (hours: dusk and dawn by default); the step after, its group is put as the hour has it.
 - `LightSource` (interface from [`engine/gfx/lights.ts`](../engine/gfx/lights.ts)): A light source the pool may light: a `light` entry's id and where it shines (m).
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
@@ -673,6 +679,7 @@ game agent's manual.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `ListenerPose` (interface from [`engine/audio/runtime/spatial.ts`](../engine/audio/runtime/spatial.ts)): Where the listener is and where it looks: the engine's camera pose (engine/gfx/cameras/pose.ts) satisfies it.
 - `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
+- `litAt` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Whether a rule's lights are on at `hour`: from `on` until `off`, through midnight when `off` comes first.
 - `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
@@ -1017,6 +1024,7 @@ game agent's manual.
 - `SenseInput` (interface from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): What `sense` reads in a step: the time, the agent's ears, whether it sees its target and where, the noises.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
+- `setDaytime` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Sets the world's clock to `hour` (0 up to 24), running at `rate` hours a sim second (0 holds it), making it the first time (once in a setup: the clock it spawns is in the world after it); the next step puts every rule's group as the hour has it.
 - `setPart` (function from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): Tags `object` (and what it holds) with a part of the scene, an outline group and the pixel-art flag.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
 - `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
@@ -1519,6 +1527,9 @@ game agent's manual.
 - `DamageEvents` (type from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): The events this module emits, for a world's event map: `World<Components, DamageEvents & MyEvents>`.
 - `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
 - `DamageTarget` (interface from [`engine/sim/damage.ts`](../engine/sim/damage.ts)): What a hit lands on: the entity (named in the events), its health and its crowd body, either optional.
+- `DAWN` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go off unless it says: dawn, at 06:30 (hours).
+- `DaytimeComponent` (interface from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The component `daytime`: the world's clock.
+- `daytimeOf` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The world's hour (0 up to 24), or null when it has no clock.
 - `decodePose` (function from [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)): Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it.
 - `def` (function from [`engine/core/registry.ts`](../engine/core/registry.ts)): Defines an entry on the shared registry (`Registry.def`).
 - `defineAction` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines an action on `registry` (the shared one).
@@ -1556,6 +1567,8 @@ game agent's manual.
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
 - `driveMover` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Drives a mover's body toward its pose at `sim.time` (the end of the step being run): `driveMover(physics, m, w)`.
 - `driveRig` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`).
+- `DUSK` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go on unless it says: dusk, at 18:30 (hours).
+- `DuskComponent` (interface from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The component `dusk`: a light group the clock switches.
 - `earshot` (function from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): How far `noise` carries to `ears` for an agent of `hearing` (m): its loudness, half through a wall.
 - `ease` (const from [`engine/core/math.ts`](../engine/core/math.ts)): Easing curves over u in [0, 1], each 0 at 0 and 1 at 1: `outCubic`, `outQuad`, `inQuad`, `inOut` (quadratic in and out) and `outBack`, which overshoots to about 1.12 at u ≈ 0.55 (c1 = 1.9; easings.net's easeOutBack uses 1.70158).
 - `easeWeight` (function from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): One fixed step of easing: `value` moves toward `target` at `rates[0]` (+ `gain` × value) rising, `rates[1]` falling.
@@ -1712,6 +1725,7 @@ game agent's manual.
 - `LevelProblem` (interface from [`engine/world/level/problems.ts`](../engine/world/level/problems.ts)): One problem with a level: its code, where it is (from 1, in the whole file) and the sentence naming its fix.
 - `levelProps` (function from [`engine/world/props/place.ts`](../engine/world/props/place.ts)): The placements `level` makes for the props of `registry` (the shared one by default); see the file comment.
 - `LevelSource` (interface from [`engine/world/level/validate.ts`](../engine/world/level/validate.ts)): Where a level comes from, for messages, and the legend to read it with.
+- `lightsAtDusk` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Switches light group `group` on as the clock passes `on` and off as it passes `off` (hours: dusk and dawn by default); the step after, its group is put as the hour has it.
 - `LightSpot` (interface from [`engine/world/level/types.ts`](../engine/world/level/types.ts)): A light spot: a tile's centre, `lightHeight` above its top.
 - `Limb` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A two-bone limb: the joint it hangs from (`upper`: hip or shoulder), its hinge (`middle`: knee or elbow), and the hinge's axis in the upper joint's frame (`hinge`; a positive turn bends the shin back and the forearm forward).
 - `LimbEnd` (type from [`engine/anim/ik.ts`](../engine/anim/ik.ts)): A joint that ends a two-bone limb: an ankle or a wrist.
@@ -1720,6 +1734,7 @@ game agent's manual.
 - `LimbSide` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A side of the body.
 - `Listener` (type from [`engine/core/events.ts`](../engine/core/events.ts)): A listener of one event type.
 - `listMovements` (function from [`engine/physics/movement/profile.ts`](../engine/physics/movement/profile.ts)): Every movement profile, sorted by id.
+- `litAt` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Whether a rule's lights are on at `hour`: from `on` until `off`, through midnight when `off` comes first.
 - `loadActions` (function from [`engine/anim/actions-data.ts`](../engine/anim/actions-data.ts)): Defines the actions of files read from data/anim/actions/ (each `{ "action": "<name>", …spec }`, as `action:<name>`) and returns them.
 - `loadClipLibrary` (function from [`engine/anim/clip/library.ts`](../engine/anim/clip/library.ts)): Loads a set (its text or object, read by validate.ts `parseClipSet`, which throws its `ANIM_CLIP_*` codes).
 - `locomoteClips` (function from [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)): Plays `loops.idle`, `walk` or `run` on actor `id` by its ground speed, each at that speed; null stops them.
@@ -1946,6 +1961,7 @@ game agent's manual.
 - `SenseInput` (interface from [`engine/world/awareness.ts`](../engine/world/awareness.ts)): What `sense` reads in a step: the time, the agent's ears, whether it sees its target and where, the noises.
 - `sensorHits` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): The dynamic and kinematic bodies a body's sensors overlapped at the last step, in id order.
 - `SensorSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Where a sensor goes and how it moves.
+- `setDaytime` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Sets the world's clock to `hour` (0 up to 24), running at `rate` hours a sim second (0 holds it), making it the first time (once in a setup: the clock it spawns is in the world after it); the next step puts every rule's group as the hour has it.
 - `SettingValue` (type from [`engine/core/settings.ts`](../engine/core/settings.ts)): A setting's value: plain data.
 - `setVelocity` (function from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): Moves a living agent's velocity toward `want` by at most `acceleration × dt` this step: across the ground (a flyer: up and down too), keeping the vertical speed gravity and the solver gave it.
 - `Shape` (type from [`engine/physics/queries.ts`](../engine/physics/queries.ts)): A shape, sized like three.js's geometries (see the file comment).
@@ -4504,6 +4520,14 @@ For the agents who maintain the engine.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
 
+### [`engine/gfx/daylight.ts`](../engine/gfx/daylight.ts)
+
+- `DAYLIGHT` (const): The key skies by the hour (0 to 24): between two, the sky eases from one to the next.
+- `daylightAt` (function): The sky at `hour` (see the file comment): the key skies about it blended, the light where `lightAt` puts it.
+- `defineDaylight` (function): Declares the key skies on `registry`, unless it has them, the backdrop sky:daylight's under each key's tint.
+- `lightAt` (function): Where the light stands at `hour` (radians, as a sky's sun takes them), how strongly it shines (0 to 1), and whose.
+- `SUN` (const): The sun's day (hours): it rises at `rise` and sets at `set`; the moon has the rest.
+
 ### [`engine/gfx/enhanced/aa.ts`](../engine/gfx/enhanced/aa.ts)
 
 - `createTemporalAa` (function): Makes the smoothing (see the file comment).
@@ -4908,6 +4932,7 @@ For the agents who maintain the engine.
 - `LightSource` (interface): A light source the pool may light: a `light` entry's id and where it shines (m).
 - `lightSources` (function): The light sources of a compiled level: one per light spot, of the kind `light:<tag>`.
 - `POOL_SIZES` (const): The pool's sizes: the fewest and most lights, the default, and the most with tiled lighting (WP 11.5).
+- `PoolLamp` (interface): A lamp the pool may light this frame: a prop's light spot in the world (engine/gfx/props.ts `PropLight`).
 - `PoolSlot` (interface): One slot of the pool, as the last `update` left it.
 - `Ranking` (interface): What `rankSources` chose: the sources best first, their ranks, and the rank of the first left out.
 - `rankSources` (function): The `count` sources that matter most at `focus` (see the file comment); `priorities` default to 1.
@@ -5433,6 +5458,7 @@ For the agents who maintain the engine.
 - `createStageSky` (function): Makes the stage's lights on `scene` (see the file comment); the stage's own show until a sky is asked for.
 - `StageSky` (interface): The stage's lights (see the file comment).
 - `StageSkyOptions` (interface): What the stage's lights are made from.
+- `StageSkyView` (interface): What a frame gives the stage's lights: the camera, the focus (m), the time (s), the hour and the frame's lamps.
 
 ### [`engine/gfx/storeyCut.ts`](../engine/gfx/storeyCut.ts)
 
@@ -6620,17 +6646,25 @@ For the agents who maintain the engine.
 - `breakProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Breaks the prop `id` (see the file comment), its pieces knocked away from `from`.
 - `CARRY_MASS` (const from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The heaviest prop a player carries (kg): a chair, a box, a crate.
 - `damageProp` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): Takes `amount` hit points from the breakable prop `id` (none from one without health); breaks it at 0.
+- `DAWN` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go off unless it says: dawn, at 06:30 (hours).
+- `DaytimeComponent` (interface from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The component `daytime`: the world's clock.
+- `daytimeOf` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The world's hour (0 up to 24), or null when it has no clock.
 - `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
 - `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
+- `DUSK` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go on unless it says: dusk, at 18:30 (hours).
+- `DuskComponent` (interface from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The component `dusk`: a light group the clock switches.
 - `entityOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose body is `body` (a body id; −1 for none): a prop's (`propOfBody`), else an actor's; −1 for neither.
 - `flipSwitch` (function from [`engine/sim/switches.ts`](../engine/sim/switches.ts)): Turns switch `id` over: its group on or off, its door open or shut.
 - `InteractorComponent` (interface from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): The component `interactor`: what a player would use, its prompt, what it carries, and when it last used.
+- `lightsAtDusk` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Switches light group `group` on as the clock passes `on` and off as it passes `off` (hours: dusk and dawn by default); the step after, its group is put as the hour has it.
+- `litAt` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Whether a rule's lights are on at `hour`: from `on` until `off`, through midnight when `off` comes first.
 - `PropHealthComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propHealth` (WP 13.16): the hit points a breakable prop has left, spawned only on one with health.
 - `PropLightComponent` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): The component `propLight` (WP 13.16): a switchable prop's state, spawned only on one given a group or off.
 - `propOfBody` (function from [`engine/sim/props.ts`](../engine/sim/props.ts)): The entity whose prop `body` is (a `sceneProp`'s), or −1: the body-to-entity lookup uses and hits read (WP 13.16).
+- `setDaytime` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): Sets the world's clock to `hour` (0 up to 24), running at `rate` hours a sim second (0 holds it), making it the first time (once in a setup: the clock it spawns is in the world after it); the next step puts every rule's group as the hour has it.
 - `SpawnPropOptions` (interface from [`engine/sim/props.ts`](../engine/sim/props.ts)): How `spawnProp` stands a prop beyond its placement (WP 13.16): a spawn inside a step or a setup joins the world at its end, so a door's or a switch's own component comes with it here.
 - `strikeBody` (function from [`engine/sim/breakables.ts`](../engine/sim/breakables.ts)): A bolt's or a shot's strike on `body` from `from`: the prop or door it is, struck; a dynamic one knocked.
 - `strikeDoor` (function from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
@@ -6716,6 +6750,18 @@ For the agents who maintain the engine.
 - `addSiteBodies` (function): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
 - `addTerrainBody` (function): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
 - `LEVEL_FRICTION` (const): The level's friction: the prototype's hall.
+
+### [`engine/sim/lights.ts`](../engine/sim/lights.ts)
+
+- `DAWN` (const): When a rule's lights go off unless it says: dawn, at 06:30 (hours).
+- `DaytimeComponent` (interface): The component `daytime`: the world's clock.
+- `daytimeOf` (function): The world's hour (0 up to 24), or null when it has no clock.
+- `DUSK` (const): When a rule's lights go on unless it says: dusk, at 18:30 (hours).
+- `DuskComponent` (interface): The component `dusk`: a light group the clock switches.
+- `lightsAtDusk` (function): Switches light group `group` on as the clock passes `on` and off as it passes `off` (hours: dusk and dawn by default); the step after, its group is put as the hour has it.
+- `litAt` (function): Whether a rule's lights are on at `hour`: from `on` until `off`, through midnight when `off` comes first.
+- `passed` (function): Whether the clock passed hour `at` going from `from` to `to` (below `from`: it passed midnight on the way).
+- `setDaytime` (function): Sets the world's clock to `hour` (0 up to 24), running at `rate` hours a sim second (0 holds it), making it the first time (once in a setup: the clock it spawns is in the world after it); the next step puts every rule's group as the hour has it.
 
 ### [`engine/sim/melee.ts`](../engine/sim/melee.ts)
 
@@ -8084,11 +8130,11 @@ For the agents who maintain the engine.
 
 - `GARAGE_SWITCHES` (const): The garage door's switches, in the house's metres: inside on its east wall, and outside beside it.
 - `HOUSE_FURNITURE` (const): The house's furniture, room by room (see the file comment).
-- `HOUSE_LIGHTS` (const): Each room's lamp and switch (see the file comment); the crawlspace has neither, the attic's lamp hangs from its ridge.
+- `HOUSE_LIGHTS` (const): Each room's lamp and switch (see the file comment); the attic's lamp hangs from its ridge.
 - `OUTDOORS` (const): The outdoor things (see the file comment).
 - `Outside` (type): One thing outside: its prop, where its base stands (x, y, z, world metres) and its yaw.
 - `Placed` (type): One thing in the house: its prop, where it stands (x, z, in the house's metres), its yaw and its storey.
-- `RoomLight` (interface): A room's lamp (where it hangs, x and z) and switch (x, z and the way it faces), in the house's metres.
+- `RoomLight` (interface): A room's lamp (where it hangs, x and z) and switch (x, z and the way it faces), in the house's metres; the lamp's top over its floor (`ceiling`, 2.7 m) and the switch's height (`plate`, 1.2 m) when a low ceiling wants others.
 - `SITE_RIDES` (const): The block's rides (engine/world/traverse.ts's specs), but the lookout's, which stands on the hill's height.
 
 ### [`labs/playground/ground.ts`](../labs/playground/ground.ts)
@@ -8214,6 +8260,7 @@ For the agents who maintain the engine.
 - `roomPlace` (function): Where the `place` action puts the player in one of a structure's rooms: at its marker, on its floor, ducked where a standing player's head would be in something solid (the crawlspace's 1.4 m ceiling).
 - `site` (const): The block, the player in the front yard: `playground:site`, the site's own scene.
 - `SITE_SCENES` (const): The block's scenes by area: the front yard's is `playground:site`, every other `playground:site-<area>`.
+- `SITE_SETTINGS` (const): The block's time of day (WP 13.23): each reachable through `x set`, URL parameters and `__engine.set`.
 - `siteGym` (const): The block, the player at the gym's spawn.
 - `siteHill` (const): The block, the player at the hill's foot.
 - `street` (const): The block, the player on the street's sidewalk.

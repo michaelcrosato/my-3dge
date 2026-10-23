@@ -131,6 +131,8 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
 |---|---|
 | `playground.gym.speed` | The player's run speed in the gym with a weapon out, m/s (4.41, Apex's; empty-handed, the player runs 1.15 times as fast), when the scene starts. Changes play: recorded in replays. |
 | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
+| `playground.hour` | The hour the block's scenes start at, 0 to 24 (12, noon; 18.5 dusk, when the street's lamps and the porch's come on; 22 night), when the scene starts: the sky, the sun or the moon and the fog follow it. Changes play: recorded in replays. |
+| `playground.day` | How many minutes of play a day on the block takes (0, the default, holds the hour), when the scene starts. Changes play: recorded in replays. |
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
 | `movement.gaits.run` | One of the shooter model's numbers, live: every number and switch of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them; `movement.mantle.boost` turns on the mantle boost), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
@@ -142,7 +144,9 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
 | `time.scale` | Sim seconds per real second (1). A view setting. |
 
 Set one with `node x set playground.gym.speed 6`, as a URL parameter (`labs/playground/?playground.gym.speed=6`), or
-with `__engine.set('playground.gym.speed', 6)`.
+with `__engine.set('playground.gym.speed', 6)`. On the block, the dev actions `daytime` (`{ hour, rate }`, the rate in
+hours a sim second) and `lights` (`{ group, on }`: `room:kitchen`, `room:porch`, `street`…) set the clock and switch a
+light group at once, with no restart: `__engine.actions.run('daytime', { hour: 22 })`.
 
 ## Feel courses and the feel panel
 

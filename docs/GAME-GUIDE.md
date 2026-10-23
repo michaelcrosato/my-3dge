@@ -359,6 +359,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Strikes (WP 13.19)**: a strikable entry by entity (the move a melee plays on it: a door's kick), what takes one, and whose a body is (a prop's or an actor's, WP 13.20).
 `strikeEntry`, `takesStrike`, `entityOfBody`; types `StrikeEntry`.
 
+**Light and time (WP 13.23)**: the world's clock, and the light groups it switches at dusk and dawn.
+`setDaytime`, `daytimeOf`, `lightsAtDusk`, `litAt`, `DUSK`, `DAWN`; types `DaytimeComponent`, `DuskComponent`.
+
 **Things (WP 10.4)**: what can be hit, as a range's targets and a ring's dummies: the kind `thing` (its prop, hit points, rise, track and hooks), a thing's state (hits, down and up, its place on its track), and things in a scene (spawned as their prop, struck as hits, stood back up and driven along their tracks by the system `things`).
 `defineThing`, `getThing`, `thingState`, `hitThing`, `stepThing`, `thingAt`, `THING_FIELDS`, `THING_KIND_FIELDS`, `spawnThing`, `strikeThing`; types `Thing`, `ThingKind`, `ThingSpec`, `ThingTouch`, `ThingHit`, `ThingOutcome`, `ThingStanding`.
 

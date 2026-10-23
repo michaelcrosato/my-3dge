@@ -144,3 +144,11 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   dog and its ball moved to where both lie flat: on the street the dog stands on the driveway, its ball 0.34 m from
   the sidewalk's edge, and the street's pick-up was retuned to the ball's new place, its story unchanged; in the front
   yard the dog stands where it did and only its ball moved, laid at the dog's floor height, no longer its spot's.
+- playground-site's, -street's, -melee's and -range's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3
+  agreeing) with WP 13.23's light and time (ADR-0025 amendment 31): every site scene stands the block's clock (an
+  entity with the component `daytime`, noon by `playground.hour`, held), its two rules (`dusk`: the street's lamps and
+  the porch's), the porch's lamp and switch and the crawlspace's (after the attic's, so every entity after them is
+  four ids on), and gives the street's four lamps their group (`propLight`), spawned with the porch's lamp and
+  switch as the starting hour has them (dark at noon), all hashed. Their inputs are as they were, and their stories
+  the same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts, labs/playground/weapons/range.test.ts,
+  labs/playground/cast/dog.test.ts).

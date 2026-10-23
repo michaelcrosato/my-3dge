@@ -13,6 +13,9 @@
  * Lights near the cut-off fade out over the last `FADE` of the rank (the rank of the first source left out), so a
  * source handed from one frame's choice to the next never pops. A slot with no source shines with intensity 0.
  *
+ * Lamps (WP 13.23): `update` also ranks the frame's lamps, the props' lights that are on (engine/gfx/props.ts), each
+ * with its own colour, intensity and reach; one standing on a level's spot of its kind is that spot's, lit once.
+ *
  * Light kinds (registry kind `light`): what a level's light-spot tag means, as three.js's `PointLight` parameters
  * (`color`, `intensity` in candela, `distance`, `decay`) plus the pool's `priority` and how much it `flicker`s; the
  * spot tag `torch` is `light:torch`. Flicker is the prototype's torch flicker (`FLICKER`, about ±13% round 0.9), each
@@ -99,9 +102,21 @@ export interface LightSource {
   readonly position: readonly [number, number, number];
 }
 
+/** A lamp the pool may light this frame: a prop's light spot in the world (engine/gfx/props.ts `PropLight`). */
+export interface PoolLamp {
+  /** Its kind's tag: a `light:<tag>` declared gives its priority. */
+  readonly tag: string;
+  readonly position: readonly [number, number, number];
+  readonly color: string;
+  /** Its intensity this frame (cd), its own flicker included. */
+  readonly intensity: number;
+  readonly distance: number;
+  readonly decay: number;
+}
+
 /** One slot of the pool, as the last `update` left it. */
 export interface PoolSlot {
-  /** The source it lights (an index into the pool's sources), or -1. */
+  /** The source it lights (an index into the pool's sources, then into the frame's lamps after them), or -1. */
   source: number;
   /** The source's light kind, or `''`. */
   light: string;
@@ -199,6 +214,15 @@ export function fadeOf(rank: number, cutoff: number): number {
   return span > 0 ? Math.min(1, Math.max(0, (cutoff - rank) / span)) : 0;
 }
 
+/** How near (m) a lamp stands to a level's spot of its kind to be that spot's light. */
+const ON_SPOT = 0.05;
+
+/** Whether `lamp` stands on one of `sources` of its kind (see the file comment). */
+function onSpot(sources: readonly LightSource[], lamp: PoolLamp): boolean {
+  const kind = `light:${lamp.tag}`;
+  return sources.some(({ light, position: [x, y, z] }) => light === kind && Math.hypot(x - lamp.position[0], y - lamp.position[1], z - lamp.position[2]) < ON_SPOT); // prettier-ignore
+}
+
 /** A fixed pool of point lights; see the file comment. */
 export interface LightPool {
   /** Its lights, under one group: add it to the scene once. */
@@ -213,8 +237,13 @@ export interface LightPool {
   /** The sources it chooses from, each given a flicker phase from `rng` (a visual stream, `world.fxRng`), else spread. */
   setSources(sources: readonly LightSource[], rng?: Rng): void;
   readonly sources: readonly LightSource[];
-  /** Gives the slots to the sources that matter most at `focus` (m), flickering at `time` (s); returns the slots. */
-  update(focus: readonly number[], time: number): PoolSlot[];
+  /**
+   * Gives the slots to the sources and the frame's `lamps` that matter most at `focus` (m), flickering at `time` (s);
+   * returns the slots. A lamp is a prop's light spot that is on (a room's lamp its switch turned on, a street lamp
+   * lit at dusk), its flicker in its intensity, a declared `light:<tag>` giving its priority; one standing on one of
+   * the level's spots of its kind (a brazier on its torch spot, where the level places it) is that spot's light.
+   */
+  update(focus: readonly number[], time: number, lamps?: readonly PoolLamp[]): PoolSlot[];
   /** The slots as the last `update` left them. */
   slots(): PoolSlot[];
   /** Takes the group out of its parent; the lights hold no GPU memory of their own. */
@@ -266,12 +295,15 @@ export function createLightPool(options: { size?: number; tiled?: boolean; regis
     get sources() {
       return sources;
     },
-    update(focus, time) {
+    update(focus, time, given = []) {
+      const lamps = given.filter((lamp) => !onSpot(sources, lamp));
+      const kinds = lamps.map((lamp) => `light:${lamp.tag}`);
+      const priority = (kind: string) => (registry.has('light', kind) ? (registry.get('light', kind) as LightEntry).priority : 1); // prettier-ignore
       const ranking = rankSources(
-        sources,
+        [...sources, ...lamps.map((lamp, i) => ({ light: kinds[i], position: lamp.position }))],
         focus,
         size,
-        entries.map((entry) => entry.priority),
+        [...entries.map((entry) => entry.priority), ...kinds.map(priority)],
       );
       slots = lights.map((light, i) => {
         const source = ranking.order[i] ?? -1;
@@ -279,8 +311,17 @@ export function createLightPool(options: { size?: number; tiled?: boolean; regis
           light.intensity = 0;
           return { source, light: '', castShadow: light.castShadow, intensity: 0 };
         }
-        const entry = entries[source];
         const fade = fadeOf(ranking.ranks[i], ranking.cutoff);
+        if (source >= sources.length) {
+          const lamp = lamps[source - sources.length];
+          light.position.fromArray(lamp.position);
+          light.color.set(lamp.color);
+          light.distance = lamp.distance;
+          light.decay = lamp.decay;
+          light.intensity = lamp.intensity * pool.scale * fade;
+          return { source, light: kinds[source - sources.length], castShadow: light.castShadow, intensity: light.intensity }; // prettier-ignore
+        }
+        const entry = entries[source];
         light.position.fromArray(sources[source].position);
         light.color.set(entry.color);
         light.distance = entry.distance;

@@ -11,9 +11,13 @@
  * and the rifle, holstered, labs/playground/weapons/guns.ts); the range's pop-up and moving targets
  * (labs/playground/weapons/range.ts); last, the ring's sparring dummies and partners (labs/playground/cast/dummies.ts,
  * partners.ts: WP 10.2's ragdolls), the neighbours on their rounds and the dog beside the player with its ball
- * (neighbours.ts, dog.ts: WP 13.21). They take
+ * (neighbours.ts, dog.ts: WP 13.21); and the block's clock (WP 13.23): the hour `playground.hour`, a day passing in
+ * `playground.day` minutes (0 holds it), the street's lamps and the porch's lit at dusk and put out at dawn (spawned
+ * as the starting hour has them, so the first frame is right before the clock's first step). They take
  * the gym's settings (`playground.gym.*`) and its dev action `place`, so a course or a replay places the player as the
- * gym's do; `roomPlace` says where it puts him in a room, ducked under a low ceiling.
+ * gym's do; `roomPlace` says where it puts him in a room, ducked under a low ceiling. Their own dev actions: `daytime`
+ * `{ hour, rate }` sets the clock, `lights` `{ group, on }` switches a light group (`room:kitchen`, `street`) as its
+ * switches would.
  *
  * The site is data (`site:block`): the view draws it from the scene's `site` (engine/gfx/stageSite.ts), each building
  * in its level's own looks, the terrain in the playground's ground materials.
@@ -26,7 +30,7 @@
  * SITE_SCENES.house.id; // 'playground:site-house'
  * @see labs/playground/scenes/site.test.ts
  */
-import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addMelee, addSiteBodies, addSiteLadders, addSwitch, addWeapons, addZipline, defineScene, physicsOf, scatterTerrain, siteFloorBelow, siteSolidAt, spawnProp, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
+import { addDoor, addInteraction, addLauncher, addLevelDoors, addLevelWindows, addMelee, addSiteBodies, addSiteLadders, addSwitch, addWeapons, addZipline, DAWN, defineScene, defineSettings, DUSK, lightsAtDusk, litAt, physicsOf, scatterTerrain, setDaytime, siteFloorBelow, siteSolidAt, spawnProp, switchGroup, terrainHeight, toWorld, type World } from '../../../engine/sim-api'; // prettier-ignore
 import { standDog } from '../cast/dog';
 import { standDummies } from '../cast/dummies';
 import { standNeighbours } from '../cast/neighbours';
@@ -78,6 +82,28 @@ const LOOKOUT_DECK = LOOKOUT.at[1] + DECK_HEIGHT.lookout;
 const LOOKOUT_LINE = { from: [89, LOOKOUT_DECK + 3, 47.2], to: [68, 3, 26], feet: [LOOKOUT_DECK, 0] } as const;
 const BALLOON = { from: [84, ground(84, 70), 70], to: [84, ground(84, 70) + 60, 70], balloon: true } as const;
 
+/** The block's time of day (WP 13.23): each reachable through `x set`, URL parameters and `__engine.set`. */
+export const SITE_SETTINGS = defineSettings({
+  'playground.hour': {
+    type: 'number',
+    default: 12,
+    minimum: 0,
+    maximum: 23.99,
+    unit: 'h',
+    when: 'scene',
+    description: "The hour the block's scenes start at: 12 is noon, 18.5 dusk (the street's lamps come on), 22 night.",
+  },
+  'playground.day': {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    maximum: 1440,
+    unit: 'min',
+    when: 'scene',
+    description: 'How many minutes of play a day on the block takes; 0 holds the hour the scene starts at.',
+  },
+});
+
 /** The house's things (see the file comment). */
 function furnishHouse(w: World): void {
   const place = { at: HOUSE.at, turn: HOUSE.turn };
@@ -93,18 +119,19 @@ function furnishHouse(w: World): void {
     const group = `room:${room}`;
     if (light.lamp) {
       const [x, z] = light.lamp;
-      const top = light.storey === 3 ? atticCeiling(z) : base + 2.7;
-      spawnProp(w, { prop: 'prop:lamp', at: inHouse(x, top, z), yaw: 0 }, { group });
+      const top = light.storey === 3 ? atticCeiling(z) : base + (light.ceiling ?? 2.7);
+      spawnProp(w, { prop: 'prop:lamp', at: inHouse(x, top, z), yaw: 0 }, { group, on: litAtStart(w, group) });
     }
     const [x, z, yaw] = light.switch;
-    addSwitch(w, { at: inHouse(x, base + 1.2, z), yaw, group });
+    addSwitch(w, { at: inHouse(x, base + (light.plate ?? 1.2), z), yaw, group, on: litAtStart(w, group) });
   }
   for (const [prop, x, z, yaw, storey] of HOUSE_FURNITURE) spawnProp(w, { prop, at: inHouse(x, floorOf(storey), z), yaw }); // prettier-ignore
 }
 
 /** The outdoor things, the hill's trees and rocks, the gym's props and every ride (see the file comment). */
 function furnishOutdoors(w: World): void {
-  for (const [prop, x, y, z, yaw] of OUTDOORS) spawnProp(w, { prop, at: [x, y, z], yaw });
+  for (const [prop, x, y, z, yaw, group] of OUTDOORS)
+    spawnProp(w, { prop, at: [x, y, z], yaw }, group ? { group, on: litAtStart(w, group) } : {});
   const onHill = (place: { x: number; z: number }) => place.x > 74 && place.z < 80 && Math.hypot(place.x - 90.5, place.z - 48.5) > 6 && Math.hypot(place.x - 84, place.z - 70) > 3; // prettier-ignore
   for (const [prop, salt, density] of [
     ['prop:playground-tree', 1, 0.025],
@@ -122,6 +149,27 @@ function furnishOutdoors(w: World): void {
   addZipline(w, BALLOON);
   addLauncher(w, SITE_RIDES.trampoline);
 }
+
+/** The light groups the block's clock lights at dusk and puts out at dawn. */
+const DUSK_GROUPS = ['street', 'room:porch'];
+
+/**
+ * Whether light group `group` is lit when the scene starts: a dusk group as `playground.hour` has it, so the first
+ * frame shows what the clock's rule puts on the first step (engine/sim/lights.ts), any other on.
+ */
+function litAtStart(w: World, group: string): boolean {
+  return !DUSK_GROUPS.includes(group) || litAt({ on: DUSK, off: DAWN }, w.settings.get<number>('playground.hour'));
+}
+
+/** The block's clock at `playground.hour`, a day in `playground.day` minutes, and the lamps it lights at dusk. */
+function startClock(w: World): void {
+  const day = w.settings.get<number>('playground.day');
+  setDaytime(w, { hour: w.settings.get<number>('playground.hour'), rate: day > 0 ? 24 / (day * 60) : 0 });
+  for (const group of DUSK_GROUPS) lightsAtDusk(w, group);
+}
+
+/** The light groups the block has: its rooms', the porch's and the street's. */
+const LIGHT_GROUPS = [...Object.keys(HOUSE_LIGHTS).map((room) => `room:${room}`), 'street'];
 
 /** Where `area`'s spawn stands: its point, on the highest floor at or under it. */
 export function areaStart(area: SiteArea): [number, number, number] {
@@ -168,8 +216,19 @@ function siteSpec(area: SiteArea) {
       standPartners(w);
       standNeighbours(w);
       standDog(w, areaStart(area), SITE_AREAS[area].yaw);
+      startClock(w);
     },
-    actions: { place: gym.actions.place },
+    actions: {
+      place: gym.actions.place,
+      /** Sets the block's clock: `{ hour, rate }`, the rate in hours a sim second (0 holds it). */
+      daytime: (w: World, args: unknown) => void setDaytime(w, args as { hour: number; rate?: number }),
+      /** Switches the light group `group` on or off, as its switches would: `{ group: 'room:kitchen', on: false }`. */
+      lights(w: World, args: unknown) {
+        const { group, on = true } = (args ?? {}) as { group?: string; on?: boolean };
+        if (!group || !LIGHT_GROUPS.includes(group)) throw new Error(`lights: no light group '${group}' on the block: give one of ${LIGHT_GROUPS.join(', ')}`); // prettier-ignore
+        switchGroup(w, group, on);
+      },
+    },
     sounds: playgroundSounds(SITE_GROUND), // its events' sounds, for x audio --replay (WP 13.22)
   };
 }

@@ -281,7 +281,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 66](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 67](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -293,7 +293,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 70](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 71](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -705,7 +705,7 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 
 - Message: `a light pool of {size} lights: it holds {min} to {max}`
 - Fix: give createLightPool a whole size from 8 to 16 (12 by default), or to 64 with tiled: true on a renderer with tiled lighting (feature:tiledLighting, WP 11.5)
-- Registered in: [`engine/gfx/lights.ts` line 48](../engine/gfx/lights.ts)
+- Registered in: [`engine/gfx/lights.ts` line 51](../engine/gfx/lights.ts)
 
 ### GFX_BAD_SHOT_SIZE
 
