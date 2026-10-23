@@ -5,14 +5,14 @@
  * (`stance:<name>`), move (`move:<name>`, played by an `Attack`), reaction (`reaction:<name>`) and action
  * (`action:<name>`, each of data/anim/actions/ played by its own check, engine/anim/actions-check.ts `actionCheck`, WP
  * 8.7) at both facings, from rest and back to rest; the point rigs hold theirs (tools/qa/anim/points.ts: the blob,
- * `blob:<state>`, the floater, `floater:<state>`, and WP 10.1's fixture rigs, `rig:<name>/<state>`). A build with a `kind` reports under ids of its own (`adult/state:run`, the playground's player), so its
- * accepted exceptions (tests/baselines/qa-anim-adult.json) never loosen the others', and a `plantedStride` build holds
- * every movement state too (`motion:<name>`, engine/anim/locomotion/matrix.ts, WP 13.10) and every traversal and
- * holding state (`traversal:<name>`, `hold:<name>`, engine/anim/traversal/matrix.ts, WP 13.11); the rest share each id,
- * valued by their worst. The first build also runs its matrix twice and at half the step, and so does every point
- * rig. Then every library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build
- * (tools/qa/anim/clips.ts, WP 8.6, with its metrics; baseline tests/baselines/qa-anim-library.json): about 40 s, so T1
- * plays a sample.
+ * `blob:<state>`, the floater, `floater:<state>`, and WP 10.1's fixture rigs, `rig:<name>/<state>`). A build with a
+ * `kind` reports under ids of its own (`adult/state:run`, the playground's player), so its accepted exceptions
+ * (tests/baselines/qa-anim-adult.json) never loosen the others', and a `plantedStride` build holds every movement state
+ * too (`motion:<name>`, engine/anim/locomotion/matrix.ts, WP 13.10) and every traversal and holding state
+ * (`traversal:<name>`, `hold:<name>`, engine/anim/traversal/matrix.ts, WP 13.11); the rest share each id, valued by
+ * their worst. The first build also runs its matrix twice and at half the step, and so does every point rig. Then every
+ * library clip (`clip:<SET>/<Clip>`, `set:<SET>`), as data and on every build (tools/qa/anim/clips.ts, WP 8.6, with its
+ * metrics; baseline tests/baselines/qa-anim-library.json): about 40 s, so T1 plays a sample.
  *
  * Metrics, one violation per id and metric, valued by the worst case (larger is worse) and naming where it happened:
  * - `nan` (1), `stretch`, `underFloor`, `reach` (metres): `animCheck`'s finite values, bone lengths, feet at or

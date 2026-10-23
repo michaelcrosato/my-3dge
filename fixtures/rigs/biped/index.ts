@@ -79,7 +79,7 @@ export class Biped {
       const shoulder = at(chest, this.turn, 0.07 * side, -0.02, 0);
       return [shoulder, shoulder.clone().addScaledVector(aimDirection(pitch, yaw * side).applyQuaternion(this.turn), BIPED_SIZE.arm)]; // prettier-ignore
     });
-    this.#points = [this.root.clone(), pelvis, chest, head, eye, ...legs, ...tail, ...arms];
+    this.#points = [this.root.clone(), pelvis, chest, head, eye, ...legs, ...arms, ...tail];
     return this;
   }
 
@@ -89,7 +89,7 @@ export class Biped {
   }
 }
 
-const NAMES = ['root', 'pelvis', 'chest', 'head', 'eye', ...['L', 'R'].flatMap((s) => ['hip', 'knee', 'hock', 'toe'].map((j) => j + s)), ...[0, 1, 2, 3, 4, 5].map((i) => `tail${i}`), 'shoulderL', 'handL', 'shoulderR', 'handR']; // prettier-ignore
+const NAMES = ['root', 'pelvis', 'chest', 'head', 'eye', ...['L', 'R'].flatMap((s) => ['hip', 'knee', 'hock', 'toe'].map((j) => j + s)), 'shoulderL', 'handL', 'shoulderR', 'handR', ...[0, 1, 2, 3, 4, 5].map((i) => `tail${i}`)]; // prettier-ignore
 
 /** The biped's rig: its points, its bones, its toes as its feet, and its states. */
 export const BIPED: ProcRig = {
@@ -97,7 +97,7 @@ export const BIPED: ProcRig = {
   names: NAMES,
   bones: [['pelvis', 'chest'], ['chest', 'head'], ['head', 'eye'], ...['L', 'R'].flatMap((s) => [[`hip${s}`, `knee${s}`], [`knee${s}`, `hock${s}`], [`hock${s}`, `toe${s}`]] as [string, string][]), ...[0, 1, 2, 3, 4].map((i) => [`tail${i}`, `tail${i + 1}`] as [string, string]), ['shoulderL', 'handL'], ['shoulderR', 'handR']], // prettier-ignore
   feet: ['toeL', 'toeR'],
-  closed: NAMES.indexOf('tail0'),
+  closed: NAMES.indexOf('tail0'), // all but its tail, whose wave runs on where it left off
   states: { rest: 1, walk: 2, run: 2, crouch: 1, look: 1 },
   make(state, facing, dt) {
     const raptor = new Biped({ yaw: facing, dt });

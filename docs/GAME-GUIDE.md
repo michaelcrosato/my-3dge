@@ -366,7 +366,7 @@ types `EventMap`, `Listener`, `TraceRecord`.
 `LookAt`, `Blink`, `Hover`, `Orbiters`, `DetachedPart`, `PoseHistory`, `socketMatrix`, `placeExtras`, `along`, `alongDirection`, `TipTrail`; types `LookAtOptions`, `BlinkOptions`, `HoveringOptions`, `OrbitOptions`, `DetachedOptions`, `HistoryOptions`, `Socket`, `SocketJoints`, `TrailOptions`, `TipSample`.
 
 **Reach and the rig contract (WP 10.1)**: an attack's reach measured off its animation; what a procedural rig names (its points, bones, feet and states) and the check it passes, as anim.check holds the humanoid.
-`measureReach`, `driveRig`, `rigCheck`; types `ReachPose`, `ReachOptions`, `Reach`, `ProcRig`, `ProcRigBody`, `RigRun`.
+`measureReach`, `driveRig`, `rigCheck`, `rigClosed`; types `ReachPose`, `ReachOptions`, `Reach`, `ProcRig`, `ProcRigBody`, `RigRun`.
 
 Pages only, from engine/index.ts:
 

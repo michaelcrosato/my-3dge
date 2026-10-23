@@ -2,10 +2,11 @@
  * @file The `anim` QA family's point rigs (PLAN.md §8.6, WP 6.6, WP 10.1): the bodies that are not a humanoid, each a
  * procedural rig (engine/anim/proc/rig.ts `ProcRig`): the blob and the wisp (engine/anim/blob.ts, floater.ts; their QA
  * ids are their states', `blob:<state>`, `floater:<state>`) and the six fixture rigs of fixtures/rigs/ (WP 10.1;
- * `<rig id>/<state>`, `rig:biped/walk`). `checkPointRig` drives each state at both facings, from rest and back to rest, and
- * reports their points not finite (`nan`) or under the floor (`underFloor`), their bones off their length
- * (`stretch`), the motion metrics (`pop`, `footSlide` for the feet a rig names, `loopClosure` for its first `closed`
- * points), another run giving other points (`unstableHash`) and points straying at half the step (`rateDrift`).
+ * `<rig id>/<state>`, `rig:biped/walk`). `checkPointRig` drives each state at both facings (`driveRig`), from rest
+ * and back to rest, and reports their points not finite (`nan`) or under the floor (`underFloor`), their bones off
+ * their length (`stretch`), the motion metrics (`pop`, `footSlide` for the feet a rig names, `loopClosure` for the
+ * first points it closes, `rigClosed`), another run giving other points (`unstableHash`) and points straying at half
+ * the step (`rateDrift`).
  *
  * Split from tools/qa/anim.ts to keep each under 400 lines (ADR-0014 amendment 16).
  *
@@ -17,7 +18,7 @@ import { Fnv64 } from '../../../engine/core/hash';
 import { Vector3 } from '../../../engine/core/math';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../../engine/anim/blob';
 import { Floater, FLOATER } from '../../../engine/anim/floater';
-import type { ProcRig } from '../../../engine/anim/proc/rig';
+import { driveRig, rigClosed, type ProcRig } from '../../../engine/anim/proc/rig';
 import { rateDrift, STATE_MATRIX } from '../../../engine/anim/stateMatrix';
 import { BIPED } from '../../../fixtures/rigs/biped';
 import { FLOATER as FLOATER_FIXTURE } from '../../../fixtures/rigs/floater';
@@ -100,17 +101,11 @@ const FLOATER_RIG: ProcRig = {
   },
 };
 
-/** One run of a point rig: the state held at a facing, from rest and back to rest (or at rest throughout). */
+/** A point rig's run as a track (engine/anim/proc/rig.ts `driveRig`): from rest and back, or at rest throughout. */
 function drive(rig: ProcRig, state: string, facing: number, dt: number, rest = false): Track {
-  const body = rig.make(state, facing, dt);
-  const steps = (s: number) => Math.round(s / dt);
-  const [lead, end] = [steps(STATE_MATRIX.lead), steps(STATE_MATRIX.lead) + Math.max(1, steps(rig.states[state]))];
-  const [world, at]: [Vector3[][], Vector3[]] = [[], []];
-  for (let i = 0; i < end + steps(STATE_MATRIX.after); i++) {
-    at.push(body.step(!rest && i >= lead && i < end ? (i - lead) * dt : undefined).clone());
-    world.push(body.points());
-  }
-  return motionTrack({ where: `facing ${facing}`, dt, names: rig.names, world, positions: at, held: [lead, end], feet: (rig.feet ?? []).map((name) => rig.names.indexOf(name)) }); // prettier-ignore
+  const { world, positions, held } = driveRig(rig, state, facing, dt, rest);
+  const feet = (rig.feet ?? []).map((name) => rig.names.indexOf(name));
+  return motionTrack({ where: `facing ${facing}`, dt, names: rig.names, world, positions, held, feet });
 }
 
 /** A track's digest over every point of every step. */
@@ -142,7 +137,7 @@ export function checkPointRig(rig: ProcRig, prefix: string, keep: (id: string) =
       report(state, 'stretch', stretch(rig, t));
       report(state, 'pop', pops(t));
       report(state, 'footSlide', footSlide(t));
-      report(state, 'loopClosure', closure(t, drive(rig, name, facing, 1 / 60, true), rig.closed));
+      report(state, 'loopClosure', closure(t, drive(rig, name, facing, 1 / 60, true), rigClosed(rig, name)));
       if (hashTrack(drive(rig, name, facing, 1 / 60)) !== hashTrack(t)) {
         report(state, 'unstableHash', { value: 1, message: `${t.where}: running it again gave other points; look for module state` }); // prettier-ignore
       }
@@ -154,12 +149,12 @@ export function checkPointRig(rig: ProcRig, prefix: string, keep: (id: string) =
   }
 }
 
-/** The farthest a rig's bone strays from its length in the run's first frame, past 1 mm. */
+/** The farthest a rig's bone strays from the length it gives, or else its length in the first frame, past 1 mm. */
 function stretch(rig: ProcRig, t: Track): Found {
   let found: Found;
-  for (const [a, b] of rig.bones ?? []) {
+  for (const [a, b, given] of rig.bones ?? []) {
     const [i, j] = [rig.names.indexOf(a), rig.names.indexOf(b)];
-    const length = t.world[0][i].distanceTo(t.world[0][j]);
+    const length = given ?? t.world[0][i].distanceTo(t.world[0][j]);
     t.world.forEach((points, k) => {
       const off = Math.abs(points[i].distanceTo(points[j]) - length);
       if (off > 0.001) found = worse(found, { value: off, message: `${t.where}: at frame ${k}, the bone ${a}–${b} is ${m(off)} m off its length` }); // prettier-ignore

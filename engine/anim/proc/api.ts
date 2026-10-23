@@ -80,3 +80,4 @@ export type { ProcRigBody } from './rig';
 export type { RigRun } from './rig';
 export { driveRig } from './rig';
 export { rigCheck } from './rig';
+export { rigClosed } from './rig';

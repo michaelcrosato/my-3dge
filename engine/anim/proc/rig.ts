@@ -3,9 +3,11 @@
  * one check runs every such rig as `anim.check` runs the humanoid (engine/anim/check.ts) and the `anim` QA family
  * measures their motion (tools/qa/anim.ts). A `ProcRig` names:
  * - `names`: its points (world metres), what the view draws on and the checks measure;
- * - `bones`: pairs of points that keep their distance (a leg's bones, a tail's links), held to the run's first frame;
+ * - `bones`: pairs of points that keep their distance (a leg's bones, a tail's links), held to the length a bone
+ *   gives or else the run's first frame;
  * - `feet`: the points that plant, which must not slide while on the floor (the QA's foot slide);
- * - `closed`: how many of its first points come back at rest (the rest cycle: motes, a wave);
+ * - `closed`: how many of its first points come back at rest (the rest cycle: motes, a wave), for every state or by
+ *   state (`rigClosed`: a state not named closes every point);
  * - `states`: what it does, each held some seconds;
  * - `make(state, facing, dt)`: a fresh body facing `facing`, stepped at `dt`: `step(time)` takes it `time` seconds
  *   into the state (undefined: at rest) and returns where its root is; `points()` gives its points.
@@ -16,7 +18,9 @@
  * `STATE_MATRIX.rate` at half the step, beyond a step of their own motion (`rate`).
  *
  * Invariants: read-only and deterministic: the same rig gives the same report; a problem is reported once per check,
- * state and point, naming its first frame, how many frames have it and the worst value.
+ * state and point, naming its first frame, how many frames have it and the worst value. A rig that breaks its own
+ * contract (a bone, a foot or a closure naming what it lacks, a state it has not, points() not one a name) throws
+ * `ANIM_BAD_RIG`.
  *
  * @example
  * import { Vector3 } from '../../core/math';
@@ -25,9 +29,19 @@
  * @see engine/anim/proc/rig.test.ts
  */
 import { Fnv64 } from '../../core/hash';
+import { codeError, defineCodes, didYouMean } from '../../core/log';
 import type { Vector3 } from '../../core/math';
 import type { AnimCheckName, AnimCheckReport, AnimProblem } from '../check';
 import { rateDrift, STATE_MATRIX } from '../stateMatrix';
+
+/** The codes this module raises, with their fixes. */
+export const RIG_CODES = defineCodes('anim', {
+  ANIM_BAD_RIG: {
+    template: 'the rig {id} {problem}{suggestion}',
+    fix: 'name only its own points in its bones and feet, its own states in closed and runs, and return a point a name',
+    doc: 'Raised by `driveRig` and `rigCheck` (engine/anim/proc/rig.ts) for a rig that breaks its own contract.',
+  },
+});
 
 /** A body of a rig, made for one run (see the file comment). */
 export interface ProcRigBody {
@@ -39,9 +53,9 @@ export interface ProcRigBody {
 export interface ProcRig {
   readonly id: string;
   readonly names: readonly string[];
-  readonly bones?: readonly (readonly [string, string])[];
+  readonly bones?: readonly (readonly [a: string, b: string, length?: number])[];
   readonly feet?: readonly string[];
-  readonly closed?: number;
+  readonly closed?: number | Readonly<Record<string, number>>;
   readonly states: Readonly<Record<string, number>>;
   make(state: string, facing: number, dt: number): ProcRigBody;
 }
@@ -53,15 +67,41 @@ export interface RigRun {
   readonly held: readonly [number, number];
 }
 
+/** How many of `rig`'s first points come back at rest after `state` (see the file comment). */
+export function rigClosed(rig: ProcRig, state: string): number {
+  const closed = rig.closed;
+  return typeof closed === 'number' ? closed : (closed?.[state] ?? rig.names.length);
+}
+
+/** Throws `ANIM_BAD_RIG` for `rig`: `problem`, with the names closest to `wanted` among `among`. */
+function badRig(rig: ProcRig, problem: string, wanted = '', among: readonly string[] = []): never {
+  throw codeError('ANIM_BAD_RIG', { id: rig.id, problem, suggestion: wanted ? didYouMean(wanted, among) : '' });
+}
+
+/** Throws `ANIM_BAD_RIG` for a bone, a foot or a closure naming what `rig` lacks, or a `state` it has not. */
+function checkRig(rig: ProcRig, state?: string): void {
+  const states = Object.keys(rig.states);
+  for (const name of [...(rig.bones ?? []).flatMap(([a, b]) => [a, b]), ...(rig.feet ?? [])]) {
+    if (!rig.names.includes(name)) badRig(rig, `names ${JSON.stringify(name)} in its bones or feet, not one of its points`, name, rig.names); // prettier-ignore
+  }
+  for (const name of typeof rig.closed === 'object' ? Object.keys(rig.closed) : []) {
+    if (!states.includes(name)) badRig(rig, `closes ${JSON.stringify(name)}, not one of its states`, name, states);
+  }
+  if (state !== undefined && !states.includes(state)) badRig(rig, `has no state ${JSON.stringify(state)}`, state, states); // prettier-ignore
+}
+
 /** Runs `state` of `rig` at `facing` and step `dt`: rest, the state, rest (or rest throughout with `rest`). */
 export function driveRig(rig: ProcRig, state: string, facing: number, dt: number, rest = false): RigRun {
+  checkRig(rig, state);
   const body = rig.make(state, facing, dt);
   const steps = (s: number) => Math.round(s / dt);
   const [lead, end] = [steps(STATE_MATRIX.lead), steps(STATE_MATRIX.lead) + Math.max(1, steps(rig.states[state]))];
   const [positions, world]: [Vector3[], Vector3[][]] = [[], []];
   for (let i = 0; i < end + steps(STATE_MATRIX.after); i++) {
     positions.push(body.step(!rest && i >= lead && i < end ? (i - lead) * dt : undefined).clone());
-    world.push(body.points().map((p) => p.clone()));
+    const points = body.points();
+    if (points.length !== rig.names.length) badRig(rig, `has points() give ${points.length} for its ${rig.names.length} names`); // prettier-ignore
+    world.push(points.map((p) => p.clone()));
   }
   return { positions, world, held: [lead, end] };
 }
@@ -75,9 +115,10 @@ const m = (value: number) => String(Math.round(value * 1e4) / 1e4);
 /** Checks every state of `rig` at both facings (see the file comment). */
 export function rigCheck(rig: ProcRig, options: { tolerance?: number; floor?: number } = {}): AnimCheckReport {
   const { tolerance = 0.001, floor = 0 } = options;
+  checkRig(rig);
   const found = new Map<string, AnimProblem>();
   const index = (name: string) => rig.names.indexOf(name);
-  const bones = (rig.bones ?? []).map(([a, b]) => [index(a), index(b), `${a}–${b}`] as const);
+  const bones = (rig.bones ?? []).map(([a, b, length]) => [index(a), index(b), `${a}–${b}`, length] as const);
   let frames = 0;
   const add = (state: string, check: AnimCheckName, point: string, frame: number, worst: number, message: string) => {
     const key = `${state}\u0000${check}\u0000${point}`;
@@ -90,7 +131,7 @@ export function rigCheck(rig: ProcRig, options: { tolerance?: number; floor?: nu
       const run = driveRig(rig, state, facing, 1 / 60);
       const where = `${rig.id}, ${state} facing ${facing}`;
       frames += run.world.length;
-      const first = bones.map(([a, b]) => run.world[0][a].distanceTo(run.world[0][b]));
+      const first = bones.map(([a, b, , length]) => length ?? run.world[0][a].distanceTo(run.world[0][b]));
       run.world.forEach((points, i) => {
         points.forEach((p, k) => {
           if (![p.x, p.y, p.z].every(Number.isFinite)) add(state, 'finite', rig.names[k], i, NaN, `${where}: frame ${i}: ${rig.names[k]} is not a finite point`); // prettier-ignore

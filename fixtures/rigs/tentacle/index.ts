@@ -74,7 +74,6 @@ export const TENTACLE: ProcRig = {
   id: 'rig:tentacle',
   names: ['root', 'core', 'sac', ...[0, 1, 2, 3, 4].map((k) => `waver ${k}`), ...ARM_NAMES],
   bones: [['core', 'sac'], ...[0, 1, 2, 3].map((k) => [`waver ${k}`, `waver ${k + 1}`] as [string, string])],
-  closed: 3,
   states: { rest: 1, crawl: 2, wave: 1.5 },
   make(state, facing, dt) {
     const octopus = new Tentacled({ yaw: facing, dt });

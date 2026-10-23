@@ -1403,8 +1403,9 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   time × rate jumped when the rate changed) and detached parts; pose history (between records, not the one before);
   extras on sockets; tip trails (by time, with a base for a ribbon); and the measured reach (its last moment exactly 1).
 - **The gait, beyond the sources**, each found by a fixture rig's check: a foot aims its landing past the spot it
-  measures from, not 0.35 of a step past its rest spot (at speed the source's foot landed behind where it measured, so
-  it stepped again at once, and the biped's force rule lifted both its feet); a body standing still squares its feet up
+  measures from, the rest spot `lead` ahead and 0.35 of its step further, as the source's (`BST_Crawler`; the first
+  port left the lead out, and at speed its foot landed behind where it measured, so it stepped again at once, and the
+  biped's force rule lifted both its feet); a body standing still squares its feet up
   (`threshold.still`, shardfall's two-level threshold, so a rig comes back to its rest); and the gait steps in inner
   steps of 1/120 s (`GAIT_SUBSTEP`), the body moving linearly between its steps, so 60 and 120 steps a second take the
   same decisions (the hexapod's rate check found its feet 5–7 cm apart). A wall is found by a ray from the hip toward
@@ -1423,5 +1424,20 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   were): 25 states, none over its bounds.
 - **Public names**: engine/anim/proc/api.ts, re-exported whole by engine/sim-api.ts as engine/sim/kitsApi.ts is; three
   names chosen against clashes with the API's own (`LookAtOptions`, `HoveringOptions`, `TipSample`).
+- **The review** (2026-10-23, the verifier at 9b5ebf7): the force rule measured its bypass against the standing
+  threshold (1 cm), so feet 2.3 cm off stepped whatever the others did: the hexapod lifted both tripods in 50 of its
+  turn's 138 frames and the biped both feet as it stopped. It is measured against the moving threshold now (`base` and
+  its speed's share), as the source's; and the feet waiting start the farthest first, for in a turn in place the first
+  tripod, landing, stepped again before the other could and starved it. `fly` now leaves the gait where the body is, and
+  feet in the air land under the body as the step ends (they landed 0.5 m up after a 1 m drop at 60 Hz). The serpent's
+  rise wrote its head's height into its path, so its neck stood on in a column after it lowered (`closed: 3` hid it):
+  its neck now curls up by a lift fading down six segments, as the source's, and its rig closes every point but in its
+  slither. A rig naming a point or a state it lacks threw a bare TypeError: `ANIM_BAD_RIG` now, its fix and the closest
+  names. A bone may give its length (the multi-arm's do); `closed` may be given by state (`rigClosed`); the QA reads its
+  runs through `driveRig`, cloned; and T1's QA test holds the fixture rigs' ids too. The multi-arm's blades go on by
+  `placeExtras` and the serpent wears a crest by `along`, so the blocks the README credits are the ones the rigs use
+  (`blendAngles`, round the circle, in its unit tests only). Kept: the fixtures' one-statement lines over 120 columns,
+  the codebase's own `prettier-ignore` idiom, so their 87 to 119 lines are counted as written (114 to 190 as Prettier
+  would lay them out).
 - **The rig template** (tools/templates/rig/, `node x new rig labs/<lab>/rigs/<name>`): a small four-legged walker on
   two diagonals, written once six rigs were written by hand; a start for WP 13.21's dog.

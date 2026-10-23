@@ -932,6 +932,7 @@ game agent's manual.
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
 - `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
+- `rigClosed` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): How many of `rig`'s first points come back at rest after `state` (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `RigInput` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
 - `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
@@ -1861,6 +1862,7 @@ game agent's manual.
 - `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
 - `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
+- `rigClosed` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): How many of `rig`'s first points come back at rest after `state` (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
@@ -2917,6 +2919,7 @@ For the agents who maintain the engine.
 - `ReachOptions` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): How a reach is measured: how many steps across the window, and what the stand adds (m).
 - `ReachPose` (interface from [`engine/anim/proc/reach.ts`](../engine/anim/proc/reach.ts)): A moment of a move, in the body's frame: where its strike point and its head are.
 - `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
+- `rigClosed` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): How many of `rig`'s first points come back at rest after `state` (see the file comment).
 - `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
 - `Socket` (interface from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): Where an extra sits on a joint (see the file comment).
 - `SocketJoints` (type from [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)): A rig's pose as sockets read it: each joint a world matrix or a point.
@@ -3000,7 +3003,9 @@ For the agents who maintain the engine.
 - `hashRigRun` (const): A run's digest over every point of every step.
 - `ProcRig` (interface): A procedural rig (see the file comment).
 - `ProcRigBody` (interface): A body of a rig, made for one run (see the file comment).
+- `RIG_CODES` (const): The codes this module raises, with their fixes.
 - `rigCheck` (function): Checks every state of `rig` at both facings (see the file comment).
+- `rigClosed` (function): How many of `rig`'s first points come back at rest after `state` (see the file comment).
 - `RigRun` (interface): One run of a rig: its root and its points each step, and the steps the state held.
 
 ### [`engine/anim/proc/sockets.ts`](../engine/anim/proc/sockets.ts)

@@ -5,29 +5,29 @@
  * ground under the body's origin) and a group: the feet of one group step together, and none starts while a foot of
  * another group is in the air, so groups alternate (two diagonals trot, two tripods walk an insect).
  * - **When a foot steps**: a planted foot steps once it lies farther than the threshold from its rest spot (turned by
- *   the body's yaw, `lead` seconds ahead along its velocity), measured across the ground; the threshold is `base` plus
- *   `perSpeed` a metre a second of the body's speed, so a fast body takes longer strides, and `still` while the body
- *   stands (slower than `stand` m/s), so it squares its feet up under it when it stops. Past `force` thresholds a
- *   foot steps whatever the other groups do (a sharp turn, a shove).
+ *   the body's yaw, `lead` seconds ahead along its velocity), measured across the ground: `base` plus `perSpeed` a
+ *   metre a second of the body's speed (a fast body strides farther), `still` while it stands (slower than `stand`
+ *   m/s: it squares its feet up when it stops). Past `force` moving thresholds (`base` and its speed's share, even
+ *   standing) a foot steps whatever the others do (a sharp turn, a shove), so a body turning in place alternates too.
  * - **The step**: `0.75 ×` the threshold over the speed (within `stepTime`'s bounds) long; it aims at the spot it
  *   measured from carried `0.35` of the step further, found again every step (so a fast foot lands ahead of where it
  *   measures, not behind it), eased in and out, lifted `lift` (more when faster) at its middle on a half sine.
  * - **Where a foot stands** (`GaitProbe`, the world's raycast): where a ray down from above the spot meets the ground;
  *   or, when a wall stands between the hip and the spot, on the wall's face where the ray from the hip meets it (a
  *   spider's leg gripping it). Without a probe, the spot itself.
- * - `fly(dt)` lifts every foot off and tucks it under its hip while the body is in the air; the next `step` lands each
- *   where it is and steps it out from there. `plant` stands every foot on its spot at once (the first step does).
- * - `lifting()` is how much of the body's weight is off its feet (Σ sin πt over the feet in flight), for its bob;
- *   `tilt()` its pitch and roll from its planted feet's heights, as uneven ground leans it.
+ * - `fly(dt)` tucks every foot under its hip while the body is in the air; the next `step` lands each where it is,
+ *   under the body as that step finds it. `plant` stands every foot on its spot at once (the first step does).
+ * - `lifting()`: how much of its weight is off its feet (Σ sin πt over the feet stepping), for a bob; `tilt()`: its
+ *   pitch and roll from every foot's height (as shardfall's: one mid-step lifts its side), as uneven ground leans it.
  *
- * Invariants: world space, metres, seconds; legs step in their order (the first breaks a tie), and every count is
- * taken as feet start, so the same steps give the same feet; inner steps of `GAIT_SUBSTEP` (1/120 s), the body moving
- * on linearly between its steps, so 60 and 120 steps a second take the same decisions; no clock, no random stream.
+ * Invariants: world space, metres, seconds; the feet waiting to step start the farthest from their spots first (by the
+ * millimetre, the first leg breaking a tie), and every count is taken as feet start, so the same steps give the same
+ * feet; inner steps of `GAIT_SUBSTEP` (1/120 s), the body moving on linearly between its steps, so 60 and 120 steps a
+ * second take the same decisions; no clock, no random stream.
  *
  * Carried from `my-3d2dge:src/emberdeep/33-beasts.js:81-153, 238-244` (`BST_Crawler`: the groups, the threshold
  * growing with speed, the step's length, the lead, the arc and the wall grip; there its tiles, here a raycast) and
- * shardfall@fa2dab6 `crates/pav_core/src/rig.rs:295-450` (the tuck in the air, the body's tilt from its feet), as
- * mechanisms.
+ * shardfall@fa2dab6 `crates/pav_core/src/rig.rs:295-450` (the tuck in the air, the tilt from the feet), as mechanisms.
  *
  * @example
  * import { Vector3 } from '../../core/math';
@@ -51,7 +51,7 @@ export interface GaitLeg {
 /** A gait's numbers (see the file comment); each has a default for a body about half a metre high. */
 export interface GaitOptions {
   readonly legs: readonly GaitLeg[];
-  /** How far a planted foot strays before it steps: `base` m standing, `perSpeed` m more per m/s, up to `maxSpeed`. */
+  /** How far a planted foot strays before it steps, moving: `base` m, `perSpeed` m more per m/s, up to `maxSpeed`. */
   readonly threshold?: {
     readonly base: number;
     readonly perSpeed: number;
@@ -66,7 +66,7 @@ export interface GaitOptions {
   readonly lift?: { readonly base: number; readonly perSpeed: number };
   /** How far ahead along the velocity a planted foot measures its spot, s. */
   readonly lead?: number;
-  /** How many thresholds away a foot steps whatever the other groups do. */
+  /** How many moving thresholds away (`base` and its speed's share, standing too) a foot steps whatever others do. */
   readonly force?: number;
 }
 
@@ -131,7 +131,7 @@ export class LegGait {
     }));
   }
 
-  /** Where leg `i`'s foot should stand for `body`, `ahead` s along its velocity, into `out` and its surface's normal. */
+  /** Where leg `i`'s foot should stand for `body`, `ahead` s along its velocity, into `out` and its surface normal. */
   spot(i: number, body: GaitBody, ahead: number, probe: GaitProbe | undefined, out: Vector3, normal: Vector3): Vector3 {
     const [c, s] = [Math.cos(body.yaw), Math.sin(body.yaw)];
     const turn = (p: readonly number[], to: Vector3) => to.set(p[0] * c + p[2] * s, p[1], p[2] * c - p[0] * s).add(body.position); // prettier-ignore
@@ -168,6 +168,7 @@ export class LegGait {
   /** One step of `dt` seconds of `body`'s gait, in inner steps of `GAIT_SUBSTEP` (see the file comment). */
   step(dt: number, body: GaitBody, probe?: GaitProbe): this {
     if (!this.#placed) return this.plant(body, probe);
+    for (const foot of this.feet) if (foot.t === 2) this.#land(foot, body, probe); // under the body as it is now
     const n = Math.max(1, Math.round(dt / GAIT_SUBSTEP));
     for (let k = 1; k <= n; k++) {
       between.position.lerpVectors(this.#last.position, body.position, k / n);
@@ -184,26 +185,30 @@ export class LegGait {
   #inner(dt: number, body: GaitBody, probe: GaitProbe | undefined): void {
     const { threshold, stepTime, lift, lead, force } = this.options;
     const speed = Math.hypot(body.velocity.x, body.velocity.z);
-    const reach = speed < threshold.stand ? threshold.still : threshold.base + threshold.perSpeed * Math.min(speed, threshold.maxSpeed); // prettier-ignore
+    const moving = threshold.base + threshold.perSpeed * Math.min(speed, threshold.maxSpeed);
+    const reach = speed < threshold.stand ? threshold.still : moving;
     const busy = new Map<number, number>(); // feet stepping, by group, counted as feet start
     const start = (group: number) => busy.set(group, (busy.get(group) ?? 0) + 1);
     this.feet.forEach((foot, i) => {
-      if (foot.t >= 0 && foot.t < 2) start(this.legs[i].group);
+      if (foot.t >= 0) start(this.legs[i].group);
     });
+    const waiting = this.feet.flatMap((foot, i) => {
+      if (foot.t >= 0) return [];
+      this.spot(i, body, lead, probe, spot, foot.normal);
+      const off = flat.copy(foot.position).sub(spot).setY(0).length();
+      return [{ i, off, rank: Math.round(off * 1000) }]; // whole millimetres: mirror-image feet tie, whatever the rate
+    });
+    waiting.sort((a, b) => b.rank - a.rank || a.i - b.i); // the farthest first: a group just landed yields to one waiting
+    for (const { i, off } of waiting) {
+      const [foot, group] = [this.feet[i], this.legs[i].group];
+      const others = [...busy].some(([g, n]) => g !== group && n > 0);
+      if (!((off > reach && !others) || off > force * moving)) continue;
+      [foot.t, foot.duration] = [0, Math.max(stepTime.min, Math.min(stepTime.max, (0.75 * reach) / Math.max(speed, stepTime.speed)))]; // prettier-ignore
+      foot.from.copy(foot.position);
+      start(group);
+    }
     this.feet.forEach((foot, i) => {
-      const group = this.legs[i].group;
-      if (foot.t === 2) this.#land(foot, body, probe);
-      if (foot.t < 0) {
-        this.spot(i, body, lead, probe, spot, foot.normal);
-        const off = flat.copy(foot.position).sub(spot).setY(0).length();
-        const others = [...busy].some(([g, n]) => g !== group && n > 0);
-        if ((off > reach && !others) || off > force * reach) {
-          [foot.t, foot.duration] = [0, Math.max(stepTime.min, Math.min(stepTime.max, (0.75 * reach) / Math.max(speed, stepTime.speed)))]; // prettier-ignore
-          foot.from.copy(foot.position);
-          start(group);
-        }
-        if (foot.t < 0) return;
-      }
+      if (foot.t < 0) return;
       foot.t = Math.min(1, foot.t + dt / foot.duration);
       this.spot(i, body, lead + foot.duration * 0.35, probe, foot.to, foot.normal); // past the spot it measures from
       const arc = Math.sin(Math.PI * foot.t) * (lift.base + lift.perSpeed * speed);
@@ -225,6 +230,8 @@ export class LegGait {
       foot.position.lerp(spot, k);
       foot.t = 2;
     });
+    this.#last.position.copy(body.position); // the next step lands its feet under the body as it finds it
+    this.#last.yaw = body.yaw;
     return this;
   }
 

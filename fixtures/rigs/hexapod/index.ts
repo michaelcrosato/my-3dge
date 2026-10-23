@@ -99,9 +99,8 @@ const LEG_NAMES = HEXAPOD_LEGS.map((_, i) => `leg${i}`);
 export const HEXAPOD: ProcRig = {
   id: 'rig:hexapod',
   names: ['root', 'body', 'head', 'waist', 'abdomen', ...LEG_NAMES.flatMap((leg) => [`${leg} hip`, `${leg} knee`, `${leg} foot`])], // prettier-ignore
-  bones: [['body', 'head'], ['waist', 'abdomen'], ...LEG_NAMES.flatMap((leg) => [[`${leg} hip`, `${leg} knee`], [`${leg} knee`, `${leg} foot`]] as [string, string][])], // prettier-ignore
+  bones: [['body', 'head'], ['body', 'waist'], ['waist', 'abdomen'], ...LEG_NAMES.flatMap((leg) => [[`${leg} hip`, `${leg} knee`], [`${leg} knee`, `${leg} foot`]] as [string, string][])], // prettier-ignore
   feet: LEG_NAMES.map((leg) => `${leg} foot`),
-  closed: 4,
   states: { rest: 1, walk: 2, turn: 1.5, wall: 2 },
   make(state, facing, dt) {
     const bug = new Hexapod({ yaw: facing, dt, probe: hexapodWorld(facing, state === 'wall' ? 0.2 : Infinity) });

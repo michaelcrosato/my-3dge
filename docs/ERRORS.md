@@ -47,6 +47,14 @@ Raised by `Animator.use` (engine/anim/character.ts) for a slot that takes no lay
 
 Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
 
+### ANIM_BAD_RIG
+
+- Message: `the rig {id} {problem}{suggestion}`
+- Fix: name only its own points in its bones and feet, its own states in closed and runs, and return a point a name
+- Registered in: [`engine/anim/proc/rig.ts` line 39](../engine/anim/proc/rig.ts)
+
+Raised by `driveRig` and `rigCheck` (engine/anim/proc/rig.ts) for a rig that breaks its own contract.
+
 ### ANIM_BAD_STATE
 
 - Message: `body state {name} is {value}, not {expected}{suggestion}; it is ignored`

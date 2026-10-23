@@ -1,10 +1,12 @@
 /**
  * @file A serpent (PLAN.md WP 10.1; fixtures/rigs/README.md): a snake of the procedural blocks alone
  * (engine/sim-api.ts). Its body is a path chain (`PathChain`): ten segments following the way its head went, so it
- * winds where its head wound; its head rises like a cobra's and lowers again, its neck following up the path; its head
- * flinches back along its body on a spring a hit kicks (`Spring1`); its eye looks where it is told within bounds
- * (`LookAt`); and its tail's tip leaves a trail (`TipTrail`) while it moves. `SERPENT` is its rig
- * (engine/anim/proc/rig.ts): rest, slither (winding ahead at 1.4 m/s), rise and flinch.
+ * winds where its head wound; its head rises like a cobra's on a spring (`Spring1`) and lowers again, its neck curling
+ * up behind it (a lift fading down its first six segments, as the source's curl, never written into the path, so its
+ * body lies back down where it lay); its head flinches back along its body on a spring a hit kicks; its eye looks where
+ * it is told within bounds (`LookAt`); a crest of three spines stands along its back, each leaning back the way its
+ * body runs there (`along`, `alongDirection`); and its tail's tip leaves a trail (`TipTrail`) while it moves. `SERPENT`
+ * is its rig (engine/anim/proc/rig.ts): rest, slither (winding ahead at 1.4 m/s), rise and flinch.
  *
  * Invariants: metres, seconds, +Y up, facing +Z; a fixed step; nothing random.
  *
@@ -15,10 +17,11 @@
  * snake.points()[1].z > 0.8; // true: its head gone on, its body after it
  * @see fixtures/rigs/serpent/index.test.ts
  */
-import { LookAt, PathChain, Quaternion, Spring1, TipTrail, Vector3, type ProcRig } from '../../../engine/sim-api'; // prettier-ignore
+import { along, alongDirection, LookAt, PathChain, Quaternion, Spring1, TipTrail, Vector3, type ProcRig } from '../../../engine/sim-api'; // prettier-ignore
 
-/** Its sizes, m: its segments' gap, its head's height lying and risen, its eye. */
-export const SERPENT_SIZE = { gap: 0.18, count: 10, low: 0.08, high: 0.45, eye: 0.05 } as const;
+/** Its sizes, m: its segments' gap, its head's height lying and risen, its eye; how many segments its rise lifts;
+ * where along its body its crest's spines stand, and how tall. */
+export const SERPENT_SIZE = { gap: 0.18, count: 10, low: 0.08, high: 0.45, eye: 0.05, curl: 6, crest: [0.25, 0.4, 0.55], spine: 0.06 } as const; // prettier-ignore
 
 const UP = new Vector3(0, 1, 0);
 
@@ -58,17 +61,22 @@ export class Serpent {
     const velocity = input.velocity ?? new Vector3();
     this.root.addScaledVector(velocity, dt);
     if (input.flinch) this.flinch.kick(input.flinch);
-    const height = SERPENT_SIZE.low + (SERPENT_SIZE.high - SERPENT_SIZE.low) * this.lift.step(dt, input.rise ?? 0);
-    this.body.step(this.root.clone().setY(height));
-    const along = this.body.tangents[0];
-    const head = this.body.points[0].clone().addScaledVector(along, -Math.max(0, this.flinch.step(dt, 0)) * 0.3);
+    const rise = (SERPENT_SIZE.high - SERPENT_SIZE.low) * this.lift.step(dt, input.rise ?? 0);
+    this.body.step(this.root.clone().setY(SERPENT_SIZE.low)); // its path along the ground: the rise no part of it
+    const curl = this.body.points.map((p, k) => {
+      const share = Math.max(0, 1 - k / SERPENT_SIZE.curl);
+      return p.clone().addScaledVector(UP, rise * share * share);
+    });
+    const tangent = this.body.tangents[0];
+    const head = curl[0].clone().addScaledVector(tangent, -Math.max(0, this.flinch.step(dt, 0)) * 0.3);
     head.y = Math.max(head.y, SERPENT_SIZE.low);
-    const flat = along.clone().setY(0);
+    const flat = tangent.clone().setY(0);
     if (flat.lengthSq() > 1e-4) this.turn.setFromUnitVectors(new Vector3(0, 0, 1), flat.normalize()); // its neck upright: as it was
     const eye = head.clone().addScaledVector(this.look.step(dt, head, input.look ?? null, this.turn), SERPENT_SIZE.eye);
     const tail = this.body.points[SERPENT_SIZE.count - 1];
     this.trail.step(dt, tail, tail, velocity.lengthSq() > 0.01);
-    this.#points = [this.root.clone(), head, eye, ...this.body.points.slice(1).map((p) => p.clone())];
+    const crest = SERPENT_SIZE.crest.map((t) => along(curl, t).addScaledVector(UP, SERPENT_SIZE.spine).addScaledVector(alongDirection(curl, t), -0.03)); // prettier-ignore
+    this.#points = [this.root.clone(), head, eye, ...curl.slice(1), ...crest];
     return this;
   }
 
@@ -81,9 +89,9 @@ export class Serpent {
 /** The serpent's rig: its points, its eye on its head, and its states. */
 export const SERPENT: ProcRig = {
   id: 'rig:serpent',
-  names: ['root', 'head', 'eye', ...Array.from({ length: SERPENT_SIZE.count - 1 }, (_, k) => `segment${k + 1}`)],
+  names: ['root', 'head', 'eye', ...Array.from({ length: SERPENT_SIZE.count - 1 }, (_, k) => `segment${k + 1}`), 'spine0', 'spine1', 'spine2'], // prettier-ignore
   bones: [['head', 'eye']],
-  closed: 3,
+  closed: { slither: 3 }, // slithered, its body lies along the way it went; every other state lies back where it lay
   states: { rest: 1, slither: 2, rise: 1.5, flinch: 0.6 },
   make(state, facing, dt) {
     const snake = new Serpent({ yaw: facing, dt });

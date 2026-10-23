@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for the planted gait (engine/anim/proc/gait.ts, PLAN.md WP 10.1): a four-legged walk keeps its
  * diagonals apart, one group in the air at a time, and its planted feet still, and squares them up when it stops; a
- * faster body strides farther; six legs walk on tripods; feet stand on raised ground and grip a wall where one stands
- * between the hip and the spot; in the air every foot tucks, and lands where it is; uneven feet tilt the body.
+ * faster body strides farther; six legs walk on tripods; one group lifts at a time through a stop and a turn in place;
+ * feet stand on raised ground and grip a wall where one stands between the hip and the spot; in the air every foot
+ * tucks, and lands where it is, on the floor after a drop at either rate; uneven feet tilt the body.
  * @see engine/anim/proc/gait.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -121,6 +122,44 @@ describe('the planted gait', () => {
     const right = bug.feet.filter((foot, i) => HEX[i].rest[0] < 0 && foot.t < 0);
     expect(right.length).toBeGreaterThan(0);
     for (const foot of right) expect([foot.position.x, foot.normal.x]).toEqual([expect.closeTo(-0.25, 9), 1]); // on its face
+  });
+
+  it('lifts one group at a time as it stops and as it turns where it stands, at 60 and 120 steps a second', () => {
+    const together = (gait: LegGait, legs: GaitLeg[]) => new Set(gait.feet.flatMap((foot, i) => (foot.t >= 0 ? [legs[i].group] : []))).size > 1; // prettier-ignore
+    for (const dt of [1 / 60, 1 / 120]) {
+      const dog = new LegGait({ legs: QUAD });
+      const body = { position: new Vector3(), yaw: 0, velocity: new Vector3(0, 0, 1.2) };
+      let [both, turned] = [0, 0];
+      for (let i = 0; i < Math.round(2 / dt); i++) {
+        if (i === Math.round(1 / dt)) body.velocity.set(0, 0, 0); // it stops after a second
+        dog.step(dt, { ...body, position: body.position.addScaledVector(body.velocity, dt) });
+        if (together(dog, QUAD)) both++;
+      }
+      const bug = new LegGait({ legs: HEX });
+      const still = { position: new Vector3(), yaw: 0, velocity: new Vector3() };
+      for (let i = 0; i < Math.round(2 / dt); i++) {
+        still.yaw += 2 * dt; // 2 rad/s where it stands
+        bug.step(dt, still);
+        if (together(bug, HEX)) both++;
+        turned += bug.lifted() > 0 ? 1 : 0;
+      }
+      expect(both).toBe(0);
+      expect(turned).toBeGreaterThan(Math.round(1 / dt)); // it kept stepping round
+    }
+  });
+
+  it('lands from a drop on the floor under it, at 60 and 120 steps a second alike', () => {
+    for (const dt of [1 / 60, 1 / 120]) {
+      const dog = new LegGait({ legs: QUAD });
+      const body = { position: new Vector3(0, 1, 0), yaw: 0, velocity: new Vector3(0, 0, 1) }; // on a ledge 1 m up
+      for (let i = 0; i < Math.round(0.5 / dt); i++) dog.step(dt, { ...body, position: body.position.addScaledVector(body.velocity, dt) }); // prettier-ignore
+      for (let time = dt; body.position.y > 0; time += dt) {
+        body.position.addScaledVector(body.velocity, dt).y = Math.max(0, 1 - 4.905 * time * time); // off it, falling
+        if (body.position.y > 0) dog.fly(dt, body);
+      }
+      dog.step(dt, body); // on the floor
+      expect(dog.feet.map((foot) => foot.position.y)).toEqual([0, 0, 0, 0]);
+    }
   });
 
   it('tucks every foot in the air, lands them where they are, and tilts the body by its feet', () => {

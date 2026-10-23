@@ -1,10 +1,10 @@
 /**
- * @file A floater (PLAN.md WP 10.1; fixtures/rigs/README.md): a ghost of the procedural blocks alone (engine/sim-api.ts).
- * It hovers over its floor, bobbing, banks into a sideways drift, leans back into a glide and folds its limbs in
- * (`Hover`); three motes orbit it, spinning up at a spin and out at a flare (`Orbiters`); its hands float free at its
- * sides with no arms, trailing as it moves (`DetachedPart`); it turns on a spring (`SpringQuat`) to a heading it is
- * given; its eyes blink (`Blink`, its own stream). `FLOATER` is its rig (engine/anim/proc/rig.ts): rest, drift (to its
- * right), glide (ahead), fold, spin and turn.
+ * @file A floater (PLAN.md WP 10.1; fixtures/rigs/README.md): a ghost of the procedural blocks alone
+ * (engine/sim-api.ts). It hovers over its floor, bobbing, banks into a sideways drift, leans back into a glide and
+ * folds its limbs in (`Hover`); three motes orbit it, spinning up at a spin and out at a flare (`Orbiters`); its hands
+ * float free at its sides with no arms, trailing as it moves (`DetachedPart`); it turns on a spring (`SpringQuat`) to a
+ * heading it is given; its eyes blink (`Blink`, its own stream). `FLOATER` is its rig (engine/anim/proc/rig.ts): rest,
+ * drift (to its right), glide (ahead), fold, spin and turn.
  *
  * Invariants: metres, seconds, +Y up, facing +Z; a fixed step; its blink from `Rng(seed)`, nothing else random.
  *

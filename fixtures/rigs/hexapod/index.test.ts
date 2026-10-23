@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the hexapod (fixtures/rigs/hexapod/index.ts, PLAN.md WP 10.1): its rig passes the check in
- * every state; it walks on alternate tripods, its planted feet still; along a wall its right feet grip the wall's face;
- * its abdomen swings out behind as it turns; its body tilts up a step its front feet stand on.
+ * every state; it walks on alternate tripods, its planted feet still, and turns where it stands on them too; along a
+ * wall its right feet grip the wall's face; its abdomen swings out behind as it turns; its body tilts up a step its
+ * front feet stand on.
  * @see fixtures/rigs/hexapod/index.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -29,6 +30,8 @@ describe('the hexapod', () => {
     let swung = 0;
     for (let i = 0; i < 40; i++) {
       spinner.step({ spin: 3 });
+      const up = spinner.gait.feet.flatMap((foot, k) => (foot.t >= 0 ? [HEXAPOD_LEGS[k].group] : []));
+      expect(new Set(up).size).toBeLessThanOrEqual(1); // one tripod at a time, turning where it stands too
       const [waist, tip] = [spinner.points()[3], spinner.points()[4]];
       const behind = new Vector3(-Math.sin(spinner.yaw), 0, -Math.cos(spinner.yaw));
       const out = tip.clone().sub(waist).setY(0).normalize();
