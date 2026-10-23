@@ -9,7 +9,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   (2026-10-24) and checkout v6 (2026-11-20) between stages, when they qualify.
 - G12 runs on `claude/pensive-cray-9pa1n6` from the updated main (PLAN.md §11.1), in Phase 13's table order: 13.27,
   10.4, 13.19 (melee), 13.20 (firearms), 10.2 (ragdolls), 10.1 (procedural blocks), 13.21 (the neighbours and the
-  dog) and 13.22 (sound) done, then 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13, the tech demo.
+  dog), 13.22 (sound) and 11.1 (the feature matrix) done, then 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8. Then G13.
 - The owner's: the Quaternius GLBs (WP 8.8), model access for WP 12.2's live evals (`node x esc` when reached). Their
   go-ahead (2026-10-22): a bot may play with infinite health and ammo to get through content faster and more surely.
 
@@ -36,5 +36,5 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   the slide-jump's 0.1 s hop window; §2.3's risers dropped; an up-and-over garage door); G10's items (PR #26).
 - The quick gate took 6 min 48 s at G11, over its 5 min (CI_BUDGET): the house's soak (70 s), the eye's tour (52 s)
   and the bot's tours (100 s) stay in T1. Under load `npm test` can exit 1 on Vitest's RPC timeouts, every test passed.
-- `x shot` and `x film` never get the playground's page ready (it waits for a frame; they freeze the clock first; on
-  main too): its frames are shot by a real-clock script (WP 13.21's row). The bot presses use at every drop.
+- The box room's page budget is over (28 pipelines against 24: WP 11.1's row), held by no CI run. `x shot` and `x
+  film` never get the playground's page ready (they freeze its clock): a script shoots it. The bot uses at each drop.
