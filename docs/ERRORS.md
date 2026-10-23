@@ -50,7 +50,7 @@ Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number
 ### ANIM_BAD_RIG
 
 - Message: `the rig {id} {problem}{suggestion}`
-- Fix: name only its own points in its bones and feet, its own states in closed and runs, and return a point a name
+- Fix: use its own names in bones, feet, closed and runs; give one point a name, bones and states sizes above 0
 - Registered in: [`engine/anim/proc/rig.ts` line 39](../engine/anim/proc/rig.ts)
 
 Raised by `driveRig` and `rigCheck` (engine/anim/proc/rig.ts) for a rig that breaks its own contract.

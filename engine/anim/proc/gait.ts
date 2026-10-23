@@ -20,10 +20,10 @@
  * - `lifting()`: how much of its weight is off its feet (Σ sin πt over the feet stepping), for a bob; `tilt()`: its
  *   pitch and roll from every foot's height (as shardfall's: one mid-step lifts its side), as uneven ground leans it.
  *
- * Invariants: world space, metres, seconds; the feet waiting to step start the farthest from their spots first (by the
- * millimetre, the first leg breaking a tie), and every count is taken as feet start, so the same steps give the same
- * feet; inner steps of `GAIT_SUBSTEP` (1/120 s), the body moving on linearly between its steps, so 60 and 120 steps a
- * second take the same decisions; no clock, no random stream.
+ * Invariants: world space, metres, seconds; waiting feet start the farthest from their spots first (by the millimetre,
+ * the first leg breaking a tie), every count taken as feet start; inner steps of `GAIT_SUBSTEP` (1/120 s), aground and
+ * aloft, the body's place, heading and velocity moving on linearly between steps, so 60 and 120 steps a second take
+ * the same decisions for a body moving so; no clock, no random stream.
  *
  * Carried from `my-3d2dge:src/emberdeep/33-beasts.js:81-153, 238-244` (`BST_Crawler`: the groups, the threshold
  * growing with speed, the step's length, the lead, the arc and the wall grip; there its tiles, here a raycast) and
@@ -108,7 +108,7 @@ export class LegGait {
   readonly options: Required<Omit<GaitOptions, 'legs'>>;
   #placed = false;
   /** The body as the last step left it: inner steps move it on linearly from there. */
-  readonly #last = { position: new Vector3(), yaw: 0 };
+  readonly #last = { position: new Vector3(), yaw: 0, velocity: new Vector3() };
 
   /** A gait of `options.legs` (see `GaitOptions` for the rest). */
   constructor(options: GaitOptions) {
@@ -160,24 +160,34 @@ export class LegGait {
       foot.to.copy(foot.position);
     });
     this.#placed = true;
+    this.#keep(body);
+    return this;
+  }
+
+  /** Keeps `body` as the last step left it. */
+  #keep(body: GaitBody): void {
     this.#last.position.copy(body.position);
     this.#last.yaw = body.yaw;
-    return this;
+    this.#last.velocity.copy(body.velocity);
+  }
+
+  /** Runs `inner` over `dt` in inner steps of `GAIT_SUBSTEP`, the body moving on linearly from the last step's. */
+  #through(dt: number, body: GaitBody, inner: (dt: number, body: GaitBody) => void): void {
+    const n = Math.max(1, Math.round(dt / GAIT_SUBSTEP));
+    for (let k = 1; k <= n; k++) {
+      between.position.lerpVectors(this.#last.position, body.position, k / n);
+      between.yaw = lerpAng(this.#last.yaw, body.yaw, k / n);
+      between.velocity.lerpVectors(this.#last.velocity, body.velocity, k / n);
+      inner(dt / n, between);
+    }
+    this.#keep(body);
   }
 
   /** One step of `dt` seconds of `body`'s gait, in inner steps of `GAIT_SUBSTEP` (see the file comment). */
   step(dt: number, body: GaitBody, probe?: GaitProbe): this {
     if (!this.#placed) return this.plant(body, probe);
     for (const foot of this.feet) if (foot.t === 2) this.#land(foot, body, probe); // under the body as it is now
-    const n = Math.max(1, Math.round(dt / GAIT_SUBSTEP));
-    for (let k = 1; k <= n; k++) {
-      between.position.lerpVectors(this.#last.position, body.position, k / n);
-      between.yaw = lerpAng(this.#last.yaw, body.yaw, k / n);
-      between.velocity.copy(body.velocity);
-      this.#inner(dt / n, between, probe);
-    }
-    this.#last.position.copy(body.position);
-    this.#last.yaw = body.yaw;
+    this.#through(dt, body, (d, b) => this.#inner(d, b, probe));
     return this;
   }
 
@@ -198,7 +208,7 @@ export class LegGait {
       const off = flat.copy(foot.position).sub(spot).setY(0).length();
       return [{ i, off, rank: Math.round(off * 1000) }]; // whole millimetres: mirror-image feet tie, whatever the rate
     });
-    waiting.sort((a, b) => b.rank - a.rank || a.i - b.i); // the farthest first: a group just landed yields to one waiting
+    waiting.sort((a, b) => b.rank - a.rank || a.i - b.i); // the farthest first: a group just landed yields
     for (const { i, off } of waiting) {
       const [foot, group] = [this.feet[i], this.legs[i].group];
       const others = [...busy].some(([g, n]) => g !== group && n > 0);
@@ -221,17 +231,17 @@ export class LegGait {
 
   /** Lifts every foot off, easing it toward its tuck under the hip (`tuck` of the way from hip to rest), in the air. */
   fly(dt: number, body: GaitBody, tuck = 0.5): this {
-    const [c, s] = [Math.cos(body.yaw), Math.sin(body.yaw)];
-    const k = 1 - Math.exp(-14 * dt);
-    this.feet.forEach((foot, i) => {
-      const { hip: h, rest: r } = this.legs[i];
-      const [x, y, z] = [h[0] + (r[0] - h[0]) * tuck, h[1] + (r[1] - h[1]) * tuck, h[2] + (r[2] - h[2]) * tuck];
-      spot.set(x * c + z * s, y, z * c - x * s).add(body.position);
-      foot.position.lerp(spot, k);
-      foot.t = 2;
+    if (!this.#placed) this.#keep(body); // never stood: it takes off from where it is
+    this.#through(dt, body, (d, b) => {
+      const [c, s, k] = [Math.cos(b.yaw), Math.sin(b.yaw), 1 - Math.exp(-14 * d)];
+      this.feet.forEach((foot, i) => {
+        const { hip: h, rest: r } = this.legs[i];
+        const [x, y, z] = [h[0] + (r[0] - h[0]) * tuck, h[1] + (r[1] - h[1]) * tuck, h[2] + (r[2] - h[2]) * tuck];
+        spot.set(x * c + z * s, y, z * c - x * s).add(b.position);
+        foot.position.lerp(spot, k);
+        foot.t = 2;
+      });
     });
-    this.#last.position.copy(body.position); // the next step lands its feet under the body as it finds it
-    this.#last.yaw = body.yaw;
     return this;
   }
 

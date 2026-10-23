@@ -1438,8 +1438,16 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   names. A bone may give its length (the multi-arm's do); `closed` may be given by state (`rigClosed`); the QA reads its
   runs through `driveRig`, cloned; and T1's QA test holds the fixture rigs' ids too. The multi-arm's blades go on by
   `placeExtras` and the serpent wears a crest by `along`, so the blocks the README credits are the ones the rigs use
-  (`blendAngles`, round the circle, in its unit tests only). Kept: the fixtures' one-statement lines over 120 columns,
-  the codebase's own `prettier-ignore` idiom, so their 87 to 119 lines are counted as written (114 to 190 as Prettier
-  would lay them out).
+  (`blendAngles`, round the circle, in its unit tests only). Its second reading (at 8ad16fd) passed, with notes, three
+  taken at once: a flight eased once a step parted 60 Hz from 120 Hz by 0.36 m after a hop, and a body easing its speed
+  by up to 0.15 m in 30 of 54 runs (the inner steps held the step's end velocity), so the gait eases a flight in inner
+  steps too and moves the body's velocity on linearly between steps as its place (3 of 54 runs left over the bound, by a
+  threshold met an inner step apart); a rig's numbers are checked (a bone's length, a closure, a state's seconds); and
+  the serpent's spines lean back, toward its tail. Left as they are: feet in a fast turn in place, 4 rad/s, can still
+  lift both tripods for a few frames (the corners of one land and start again before its middle leg is down); a standing
+  body squares its feet up to 1 cm, so a turn in place shuffles (a feel question for WP 13.21's dog, whose gait sets its
+  own); the serpent's curl stretches its neck's first link 18%, as the source's. Kept: the fixtures' one-statement lines
+  over 120 columns, the codebase's own `prettier-ignore` idiom, so their 86 to 118 lines are counted as written (114 to
+  190 as Prettier would lay them out).
 - **The rig template** (tools/templates/rig/, `node x new rig labs/<lab>/rigs/<name>`): a small four-legged walker on
   two diagonals, written once six rigs were written by hand; a start for WP 13.21's dog.

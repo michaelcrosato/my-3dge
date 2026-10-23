@@ -3,12 +3,14 @@
  * diagonals apart, one group in the air at a time, and its planted feet still, and squares them up when it stops; a
  * faster body strides farther; six legs walk on tripods; one group lifts at a time through a stop and a turn in place;
  * feet stand on raised ground and grip a wall where one stands between the hip and the spot; in the air every foot
- * tucks, and lands where it is, on the floor after a drop at either rate; uneven feet tilt the body.
+ * tucks, and lands where it is, on the floor after a drop at either rate; 60 and 120 steps a second step alike through
+ * a hop and a walk eased in and out; uneven feet tilt the body.
  * @see engine/anim/proc/gait.ts
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
 import type { GroundHit } from '../ik';
+import { rateDrift, STATE_MATRIX } from '../stateMatrix';
 import { LegGait, type GaitBody, type GaitLeg, type GaitProbe } from './gait';
 
 /** Four legs, the diagonals in two groups: left front with right back, right front with left back. */
@@ -160,6 +162,31 @@ describe('the planted gait', () => {
       dog.step(dt, body); // on the floor
       expect(dog.feet.map((foot) => foot.position.y)).toEqual([0, 0, 0, 0]);
     }
+  });
+
+  it('steps alike at 60 and 120 a second through a hop and through a walk eased in and out', () => {
+    /** The feet each step for 3 s of a body at `body(t)` (its place along +Z, its height, their speeds, and whether it is up). */ // prettier-ignore
+    const feet = (dt: number, body: (t: number) => { z: number; y: number; vz: number; vy: number; up: boolean }) => {
+      const dog = new LegGait({ legs: QUAD });
+      return Array.from({ length: Math.round(3 / dt) }, (_, i) => {
+        const b = body((i + 1) * dt);
+        const at = { position: new Vector3(0, b.y, b.z), yaw: 0, velocity: new Vector3(0, b.vy, b.vz) };
+        if (b.up) dog.fly(dt, at);
+        else dog.step(dt, at);
+        return dog.feet.map((foot) => foot.position.clone());
+      });
+    };
+    const hop = (t: number) => {
+      const [tau, y] = [t - 0.5, 2.5 * (t - 0.5) - 4.905 * (t - 0.5) ** 2]; // off at 2.5 m/s up after 0.5 s
+      const air = tau > 0 && y > 0; // down the step its arc meets the floor: a step apart at the two rates
+      return { z: 1.2 * t, y: air ? y : 0, vz: 1.2, vy: air ? 2.5 - 9.81 * tau : 0, up: air };
+    };
+    const eased = (t: number) => {
+      const [up, held, down] = [Math.min(t, 0.2), Math.max(0, Math.min(t - 0.2, 1)), Math.max(0, Math.min(t - 1.2, 0.5))]; // prettier-ignore
+      const z = 7.5 * up * up + 3 * held + 3 * down - 3 * down * down; // 0.2 s up to 3 m/s, 1 s at it, 0.5 s down
+      return { z, y: 0, vz: 15 * up - 6 * down, vy: 0, up: false };
+    };
+    for (const body of [hop, eased]) expect(rateDrift(feet(1 / 60, body), feet(1 / 120, body)).worst).toBeLessThan(STATE_MATRIX.rate); // prettier-ignore
   });
 
   it('tucks every foot in the air, lands them where they are, and tilts the body by its feet', () => {

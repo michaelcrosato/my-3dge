@@ -38,7 +38,7 @@ import { rateDrift, STATE_MATRIX } from '../stateMatrix';
 export const RIG_CODES = defineCodes('anim', {
   ANIM_BAD_RIG: {
     template: 'the rig {id} {problem}{suggestion}',
-    fix: 'name only its own points in its bones and feet, its own states in closed and runs, and return a point a name',
+    fix: 'use its own names in bones, feet, closed and runs; give one point a name, bones and states sizes above 0',
     doc: 'Raised by `driveRig` and `rigCheck` (engine/anim/proc/rig.ts) for a rig that breaks its own contract.',
   },
 });
@@ -87,6 +87,16 @@ function checkRig(rig: ProcRig, state?: string): void {
   for (const name of typeof rig.closed === 'object' ? Object.keys(rig.closed) : []) {
     if (!states.includes(name)) badRig(rig, `closes ${JSON.stringify(name)}, not one of its states`, name, states);
   }
+  const counts =
+    typeof rig.closed === 'object' ? Object.values(rig.closed) : rig.closed === undefined ? [] : [rig.closed];
+  const count = counts.find((n) => !(Number.isInteger(n) && n >= 0 && n <= rig.names.length));
+  if (count !== undefined) badRig(rig, `closes ${count} points, not a whole number from 0 to its ${rig.names.length}`);
+  const bone = (rig.bones ?? []).find(
+    ([, , length]) => length !== undefined && !(Number.isFinite(length) && length > 0),
+  );
+  if (bone) badRig(rig, `gives its bone ${bone[0]}–${bone[1]} the length ${bone[2]}, not a finite length above 0`);
+  const held = states.find((name) => !(Number.isFinite(rig.states[name]) && rig.states[name] > 0));
+  if (held !== undefined) badRig(rig, `holds its state ${JSON.stringify(held)} ${rig.states[held]} s, not a finite time above 0`); // prettier-ignore
   if (state !== undefined && !states.includes(state)) badRig(rig, `has no state ${JSON.stringify(state)}`, state, states); // prettier-ignore
 }
 

@@ -47,7 +47,8 @@ describe('the procedural rigs’ contract', () => {
     expect(stretched.message).toMatch(
       /^rig:post, sway facing 0: frame \d+: the bone foot–top is [\d.]+ m off its length$/,
     );
-    expect(checks({ ...post(() => new Vector3(0, 1, 0)), bones: [['foot', 'top', 1.2]] })).toEqual(['length']); // not the length it gives
+    const short = post(() => new Vector3(0, 1, 0)); // its bone 1 m long, not the 1.2 m it gives
+    expect(checks({ ...short, bones: [['foot', 'top', 1.2]] })).toEqual(['length']);
   });
 
   it('refuses a rig naming what it lacks or giving points without names, and closes its points by state', () => {
@@ -58,6 +59,9 @@ describe('the procedural rigs’ contract', () => {
     expect(() => driveRig(sound, 'swat', 0, 1 / 60)).toThrow(/has no state "swat" \(did you mean "sway"\?\)/);
     const short: ProcRig = { ...sound, make: () => ({ step: () => new Vector3(), points: () => [new Vector3()] }) };
     expect(() => rigCheck(short)).toThrow(/has points\(\) give 1 for its 2 names/);
+    expect(() => rigCheck({ ...sound, closed: 3 })).toThrow(/closes 3 points, not a whole number from 0 to its 2/);
+    expect(() => rigCheck({ ...sound, bones: [['foot', 'top', Number.NaN]] })).toThrow(/the length NaN, not a finite length/); // prettier-ignore
+    expect(() => rigCheck({ ...sound, states: { sway: Infinity } })).toThrow(/holds its state "sway" Infinity s/);
     expect([rigClosed(sound, 'sway'), rigClosed({ ...sound, closed: 1 }, 'sway'), rigClosed({ ...sound, closed: { sway: 0 } }, 'sway')]).toEqual([2, 1, 0]); // prettier-ignore
   });
 });

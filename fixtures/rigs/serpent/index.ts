@@ -75,7 +75,7 @@ export class Serpent {
     const eye = head.clone().addScaledVector(this.look.step(dt, head, input.look ?? null, this.turn), SERPENT_SIZE.eye);
     const tail = this.body.points[SERPENT_SIZE.count - 1];
     this.trail.step(dt, tail, tail, velocity.lengthSq() > 0.01);
-    const crest = SERPENT_SIZE.crest.map((t) => along(curl, t).addScaledVector(UP, SERPENT_SIZE.spine).addScaledVector(alongDirection(curl, t), -0.03)); // prettier-ignore
+    const crest = SERPENT_SIZE.crest.map((t) => along(curl, t).addScaledVector(UP, SERPENT_SIZE.spine).addScaledVector(alongDirection(curl, t), 0.03)); // prettier-ignore
     this.#points = [this.root.clone(), head, eye, ...curl.slice(1), ...crest];
     return this;
   }
