@@ -1,7 +1,8 @@
 /**
  * @file T2 for the hello page (`labs/hello/`, PLAN.md WP 0.8): three.js r182 draws a lit cube on WebGPU (SwiftShader
  * here), directly and through one `PostProcessing` pass, with no warning in the console; Vite resolves `three/webgpu`
- * and `three/tsl` in the browser and sends a bare `three` to the same module; without WebGPU the page reports
+ * and `three/tsl` in the browser and sends a bare `three` to the same module, and the addons the engine's GPU features
+ * import (engine/gfx/enhanced/) link to that build too; without WebGPU the page reports
  * `GFX_NO_WEBGPU` and does nothing else; a scene that fails to load shows on the page.
  *
  * Invariants: the fixture's advice trap is on for every test that uses its `page`, so any unlisted warning fails it.
@@ -124,11 +125,30 @@ test('Vite resolves three/webgpu and three/tsl in the browser, and sends a bare 
   );
   expect(linked).toEqual({ extendsWebGPUBuild: true, renderer: 'function' });
 
-  // The page holds one three.js build, the WebGPU one, and three/tsl; never the WebGL build.
+  // The page holds one three.js build, the WebGPU one, and three/tsl; never the WebGL build. The engine's GPU
+  // features (engine/gfx/enhanced/) pre-bundle their addons too, and each of those links to the same build: one of
+  // its classes extends one of that build's.
   const loaded = await page.evaluate(() => performance.getEntriesByType('resource').map((entry) => entry.name));
-  const deps = loaded.map((url) => new URL(url).pathname).filter((path) => path.includes('/.vite/deps/three'));
-  expect(deps.sort()).toEqual(['/node_modules/.vite/deps/three_tsl.js', '/node_modules/.vite/deps/three_webgpu.js']);
+  const deps = loaded.filter((url) => new URL(url).pathname.includes('/.vite/deps/three'));
+  const isAddon = (url: string) => new URL(url).pathname.startsWith('/node_modules/.vite/deps/three_addons_');
+  const builds = deps.filter((url) => !isAddon(url)).map((url) => new URL(url).pathname);
+  expect(builds.sort()).toEqual(['/node_modules/.vite/deps/three_tsl.js', '/node_modules/.vite/deps/three_webgpu.js']);
   expect(loaded.filter((url) => /three\.module\.js|three\.cjs/.test(url))).toEqual([]);
+  const unlinked = await page.evaluate(
+    async ([addonUrls, webgpuUrl]) => {
+      const bases = new Set(Object.values(await import(webgpuUrl)).filter((value) => typeof value === 'function'));
+      const linked = (value: unknown) => {
+        for (let p = typeof value === 'function' ? Object.getPrototypeOf(value) : null; p; p = Object.getPrototypeOf(p))
+          if (bases.has(p)) return true;
+        return false;
+      };
+      const out: string[] = [];
+      for (const url of addonUrls) if (!Object.values(await import(url)).some(linked)) out.push(url);
+      return out;
+    },
+    [deps.filter(isAddon), webgpu as string] as const,
+  );
+  expect(unlinked, 'pre-bundled addons that extend no class of three/webgpu: a second three.js build').toEqual([]);
 });
 
 test('the startup test: without the WebGPU flags the page reports GFX_NO_WEBGPU and does nothing else', async ({

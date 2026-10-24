@@ -15,8 +15,9 @@
  * always, so a target of another size read other tiles' lights); and the compute pass covers the grid's tiles, no
  * more (r182 dispatches width × height / 32 invocations, 32 times its tiles). A light joins the tiles its reach
  * covers in pixels, from the projection (r182 takes reach / depth as a radius in screen units, which misses the
- * projection's scale, the aspect and orthographic cameras: under the box's top-down camera it dropped lights), and a
- * tile holds 16 (r182's 8 left the tiles near the focus darker than the 12 the pool lit without tiles); and each tiled
+ * projection's scale, the aspect and orthographic cameras: under the box's top-down camera it dropped lights); a light
+ * with no limit, three.js's distance 0, joins every tile (as a radius of 0 it lit none, and a lamp left at three.js's
+ * default went dark); and a tile holds 16 (r182's 8 left the tiles near the focus darker than the 12 the pool lit without tiles); and each tiled
  * light reaches the lighting model as a light of its own colour (r182 hands over the tiles' node, which has none, so the
  * toon style, which reads a light's colour for its bands, failed to build: engine/gfx/materials/toon.ts). Only lights
  * that shine are tiled (the pool's empty slots are not), and none wholly behind a perspective camera.
@@ -229,8 +230,9 @@ class PoolTiledLightsNode extends TiledLightsNode {
         const clip = projection.mul(viewPosition);
         const centre = clip.xy.div(clip.w).mul(0.5).add(0.5).flipY().mul(self._screenSize);
         const radius = distance.mul(scale).div(clip.w.max(1e-4));
-        const reaches = perspective.and(clip.w.lessThan(distance)); // the camera inside its reach: every tile
-        const behind = perspective.and(clip.w.add(distance).lessThanEqual(0)); // wholly behind the camera: none
+        const endless = distance.lessThanEqual(0); // three.js's distance 0: no limit, so every tile
+        const reaches = endless.or(perspective.and(clip.w.lessThan(distance))); // or the camera inside its reach
+        const behind = endless.not().and(perspective).and(clip.w.add(distance).lessThanEqual(0)); // wholly behind: none
         If(behind.not().and(reaches.or(circleIntersectsAABB(centre, radius, minBounds, maxBounds))), () => {
           slot(found).assign(i.add(int(1)));
           found.addAssign(int(1));

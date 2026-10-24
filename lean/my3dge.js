@@ -28119,8 +28119,8 @@ class Gse extends Y6 {
         Ln(v.greaterThanEqual(t._tileLightCount).or(Ke(b).greaterThanEqual(Ke(t._lightsCount))), () => {
           pl();
         });
-        const { viewPosition: x, distance: k } = t.getLightData(b), A = g.mul(x), _ = A.xy.div(A.w).mul(0.5).add(0.5).flipY().mul(t._screenSize), M = k.mul(y).div(A.w.max(1e-4)), S = w.and(A.w.lessThan(k)), O = w.and(A.w.add(k).lessThanEqual(0));
-        Ln(O.not().and(S.or(X6(_, M, p, m))), () => {
+        const { viewPosition: x, distance: k } = t.getLightData(b), A = g.mul(x), _ = A.xy.div(A.w).mul(0.5).add(0.5).flipY().mul(t._screenSize), M = k.mul(y).div(A.w.max(1e-4)), S = k.lessThanEqual(0), O = S.or(w.and(A.w.lessThan(k))), $ = S.not().and(w).and(A.w.add(k).lessThanEqual(0));
+        Ln($.not().and(O.or(X6(_, M, p, m))), () => {
           l(v).assign(b.add(Ke(1))), v.addAssign(Ke(1));
         });
       });
@@ -29866,28 +29866,29 @@ function j$(e = {}) {
       return r(u, c), c.add(u), u;
     },
     batch(a) {
-      const c = [], l = /* @__PURE__ */ new Set(), u = {
+      const c = [], l = [], u = /* @__PURE__ */ new Set(), d = {
         shells: c,
         sync() {
-          a.pages.forEach((d, h) => {
-            c[h] ??= r(D$(d, o), d), c[h].parent !== a.root && a.root.add(c[h]), c[h].count = d.count, c[h].visible = d.visible;
+          a.pages.forEach((h, f) => {
+            const p = c[f] ??= r(D$(h, o), h);
+            p.parent !== a.root && a.root.add(p), (h.boundingBox === null || h.boundingBox !== l[f]) && (p.boundingBox = p.boundingSphere = null), l[f] = h.boundingBox, p.count = h.count, p.visible = h.visible;
           });
         },
-        register(d, h = `outline:${a.name}`) {
-          const f = d.register(h, { objects: () => c }), p = {
+        register(h, f = `outline:${a.name}`) {
+          const p = h.register(f, { objects: () => c }), m = {
             dispose() {
-              f.dispose(), l.delete(p);
+              p.dispose(), u.delete(m);
             }
           };
-          return l.add(p), p;
+          return u.add(m), m;
         },
         dispose() {
-          for (const d of [...l]) d.dispose();
-          for (const d of c) d.removeFromParent();
+          for (const h of [...u]) h.dispose();
+          for (const h of c) h.removeFromParent();
           c.length = 0;
         }
       };
-      return u.sync(), u;
+      return d.sync(), d;
     },
     dispose() {
       o.dispose();

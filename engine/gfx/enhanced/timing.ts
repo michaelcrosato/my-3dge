@@ -21,8 +21,8 @@
  * queries, but its times are a CPU's emulating a GPU (§4.7): a measure to compare runs, not hardware.
  *
  * @example
- * // browser: a page's renderer (tests/e2e/timing.spec.ts runs it)
- * const timing = createGpuTiming(renderer, gfx.features.on.includes('feature:timestamps'));
+ * // browser: it needs a page's renderer (tests/e2e/timing.spec.ts runs it)
+ * // const timing = createGpuTiming(renderer, gfx.features.on.includes('feature:timestamps'));
  * // after each drawn frame: timing.afterFrame(); then timing.gpuMs(); // 0.84: the last frames' mean, ms
  * @see engine/gfx/enhanced/timing.test.ts
  * @see tests/e2e/timing.spec.ts
