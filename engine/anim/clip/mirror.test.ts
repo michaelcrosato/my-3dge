@@ -90,9 +90,12 @@ describe('mirrorClip', () => {
     }
   });
 
-  it("decodes format 2's hands to the reflected hands, every finger point with them", () => {
+  it("decodes format 2's keys to the reflected body, every hand, spine and toe point with it", () => {
     const { blade: _blade, ...free } = busy(0);
-    const hands = { handL: [20, -10, 35], handR: [-15, 25, -40], gripL: 80, gripR: 30 } as const;
+    const hands = {
+      ...{ handL: [20, -10, 35], handR: [-15, 25, -40], gripL: 80, gripR: 30 },
+      ...{ spine: [12, 30, -9], rollL: 20, rollR: -15, footL: [25, 10, 35], footR: [-10, -5, -20] },
+    } as const;
     const clip = clipOf([{ ...free, ...hands } as ClipKey, { ...standing(1), ...hands } as ClipKey]);
     const other = (name: string) => name.replace(/[LR]$/, (side) => (side === 'L' ? 'R' : 'L'));
     for (const t of [0, 0.4, 1]) {

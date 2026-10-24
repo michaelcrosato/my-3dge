@@ -2631,6 +2631,12 @@ For the agents who maintain the engine.
 - `measure` (function): A body's rest measurements (plain, rounded data, saved in the set) from its own captures: proportions and rest offsets from the T-pose clip `tposeName` (else the first clip's first frame), and how much of the hips-to-chest turn each spine bone takes (and the neck of the chest-to-head turn), fitted from about six frames of every clip.
 - `reduce` (function): The key frames (Ramer–Douglas–Peucker over whole poses): in-betweening the rest stays within `tol` mm.
 
+### [`engine/anim/clip/feet.ts`](../engine/anim/clip/feet.ts)
+
+- `encodeRoll` (function): The roll and the toes' angle off the ankle-to-ball line `d` (both degrees) that point the toes along `toe`, in the foot's upright plane with normal `down` (format 1's).
+- `footLine` (function): A key's ankle-to-ball line and its upright plane's `down`, as the decode builds them from the pelvis frame `RP` and the foot's `[down, out]` (degrees; `abPitch`, the rest body's ankle-to-ball pitch).
+- `rolledToe` (function): The toes' direction, unit: `delta` degrees from the ankle-to-ball line `d` toward `down`, the foot's upright plane's normal to `d` on the sole's side (format 1's toe plane), that plane turned about `d` by side `s`'s `roll`.
+
 ### [`engine/anim/clip/frames.ts`](../engine/anim/clip/frames.ts)
 
 - `add` (const): `a + b`.
@@ -2644,15 +2650,17 @@ For the agents who maintain the engine.
 - `len` (const): The length of `a`.
 - `Limb` (type): A limb kind: an arm (shoulder, elbow, fist) or a leg (hip, knee, ankle).
 - `limbEnd` (const): Where a limb from `root` ends: direction `v` in frame `M` (mirrored for side `s`) at distance `l`.
+- `MIDDLE` (const): The spine bones format 2's `spine` override turns: the two between `spine1` and the chest.
 - `mul` (const): `a` scaled by `k`.
 - `norm` (function): `a` at length 1 (a zero vector stays zero).
 - `qFromTo` (const): The rotation that takes rest frame A to frame B, as a quaternion.
+- `qmul` (const): The quaternion product `a b`: `b`'s turn, then `a`'s.
 - `qrot` (const): `v` turned by quaternion `q`.
 - `qslerp` (function): The quaternion a fraction `t` of the shortest way from `a` to `b`.
 - `reachOf` (const): A two-bone limb's root-to-end distance for a bend (degrees, 0 = straight).
 - `SG` (const): Each side's sign across the body: left −1, right 1.
 - `sub` (const): `a − b`.
-- `torso` (function): The torso and head frames of key pose `k` on rest body `R`, and the joints placed from them.
+- `torso` (function): A key pose's torso on rest body `R`: the pelvis, chest and head frames, the spine's points (format 2's `spine` turning its middle bones), the neck and head, and the shoulders and hips the limbs hang from.
 - `V` (type): A vector `[f, r, z]` (mm, or a direction), or a quaternion `[x, y, z, w]`.
 - `wld` (const): A local vector `l` of frame `M` (axes F, R, U as columns) in the parent's coordinates.
 
@@ -2666,6 +2674,19 @@ For the agents who maintain the engine.
 - `HandPose` (type): A hand's turn at the wrist, degrees: toward the palm, toward the thumb, the thumb toward the palm.
 - `HandSizes` (interface): The rest body's hand lengths: wrist to middle knuckle, and wrist to the fist point with the fingers straight.
 - `placeHand` (function): The hand's points from the wrist `wr` and the forearm `F` (unit), as `pose` turns it and `grip` closes it.
+
+### [`engine/anim/clip/inverse.ts`](../engine/anim/clip/inverse.ts)
+
+- `bendOf` (const): The bend at a two-bone limb's middle joint (degrees, 0 = straight) for a root-to-end distance (`reachOf` back).
+- `bodyFrames` (const): The pelvis, chest and head frames `[F, R, U]` of the body points `p` reads.
+- `euler` (function): `[turn, lean, tilt]` degrees of a frame: yaw about up, then pitch about right (+ forward), then roll.
+- `frameFR` (function): A frame `[F, R, U]` from a right and a forward direction (f × r = u).
+- `frameUF` (function): A frame `[F, R, U]` from an up and a forward direction.
+- `loc` (const): `v` in frame `M`'s own coordinates (the inverse of `wld`).
+- `poleOf` (function): The signed angle (degrees) round axis `d` from hint `h` to the bend direction `b`.
+- `pt` (const): Body point `name` of the decoded or captured points `X`.
+- `rel` (const): Frame `child` relative to frame `parent` (the inverse of `compose`).
+- `unwrap` (const): An angle moved by whole turns to continue from the one before (none: unchanged).
 
 ### [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)
 
@@ -2742,6 +2763,12 @@ For the agents who maintain the engine.
 - `RetargetOptions` (interface): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
 - `standingHipHeight` (const): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
+
+### [`engine/anim/clip/spine.ts`](../engine/anim/clip/spine.ts)
+
+- `SPINE_MISS` (const): How far (mm) the spine's shares may miss a capture's neck before format 2 writes the `spine` override: half the importer's 30 mm tolerance, past which the shares alone spend most of a key's error.
+- `spineMiss` (function): The worst miss (mm) over a capture's frames between its neck and the neck the spine's shares rebuild from its pelvis point and its pelvis and chest frames: past `SPINE_MISS`, the importer writes format 2's `spine` override.
+- `spineOf` (function): Format 2's `spine` for key `k` (its hips, body and chest written) on the body points `p` reads: the turn of the spine's middle bones, relative to the body, that takes the decoded `spine1` toward the captured chest, its twist about the spine the shares' own (two bones lying almost in line say little about it).
 
 ### [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)
 

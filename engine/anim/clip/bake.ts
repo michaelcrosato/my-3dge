@@ -22,7 +22,9 @@
  *   thigh takes −Y to hip-to-knee and +Z to the knee's pole; elbows and knees turn about their hinges only (ik.ts
  *   `LIMBS`); a hand runs on along the forearm (the decode keeps it straight) and turns +Z (the weapon socket's
  *   blade side) to the decode's across direction (the blade, or the chest's right);
- * - a foot turns +Z to where the key points it, by the pelvis frame, its out and its down; a toe adds its bend.
+ * - a foot turns +Z to where the key points it, by the pelvis frame, its out and its down; a toe adds its bend;
+ * - format 2 (WP 8.8) turns the hand to its `hand` frame, the middle spine joints by `spine`, a foot by its `roll`
+ *   (`keyRotations`); the skeleton has no fingers, so a `grip` closes only the decoded fist.
  *
  * Invariants: rotations are unit quaternions, in Float32 as stored, each frame's sign kept on the side of the last.
  * Places are metres on the source body, engine axes, from the root on the ground. Every library's last spine share
@@ -38,6 +40,8 @@
  */
 import { Matrix4, Quaternion, Vector3 } from '../../core/math';
 import { JOINT_COUNT, JOINTS, PARENTS, type JointName } from '../skeleton';
+import { MIDDLE } from './frames';
+import { handFrame, type HandPose } from './hands';
 import { keyAt, moveAt, type Clip, type ClipContact, type KeyPose } from './readable';
 import type { RestBody } from './validate';
 
@@ -131,7 +135,7 @@ function solveLimb(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, L1: number, L2:
   const h = len(h0) < 1e-4 ? [n[1], -n[0], 0] : norm(h0);
   const x = (L1 * L1 - L2 * L2 + dist * dist) / (2 * dist);
   const upper = add(mul(n, x), mul(h, Math.sqrt(Math.max(0, L1 * L1 - x * x))));
-  return { d1: norm(upper), d2: norm(sub(mul(n, dist), upper)), h };
+  return { d1: norm(upper), d2: norm(sub(mul(n, dist), upper)), h, hint };
 }
 
 /* ---- engine space ---- */
@@ -169,9 +173,9 @@ const shareOf = (a: Quaternion, b: Quaternion, t: number, rest: Quaternion, out:
   out.slerpQuaternions(a, b, t).multiply(rest);
 
 /** The arm or leg of side `s`: its upper, middle and end joints' world rotations into `W`. */
-function limbFrames(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, R: RestBody, across?: V) {
+function limbFrames(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, R: RestBody, across?: V, turn?: HandPose) {
   const [L1, L2] = kind === 'arm' ? [R.up, R.fore + R.fist] : [R.thigh, R.shin];
-  const { d1, d2, h } = solveLimb(M, s, kind, v, L1, L2);
+  const { d1, d2, h, hint } = solveLimb(M, s, kind, v, L1, L2);
   const [upper, middle] = kind === 'arm' ? [`upperArm${s}`, `forearm${s}`] : [`thigh${s}`, `shin${s}`];
   const [bone, pole] = kind === 'arm' ? [ARM[s], ARM.pole] : [LEG.bone, LEG.pole];
   const parent = W[PARENTS[index[upper as JointName]]];
@@ -192,6 +196,12 @@ function limbFrames(M: Frame, s: Side, kind: 'arm' | 'leg', v: V, R: RestBody, a
   const angle = Math.atan2(ve.crossVectors(va, vd).dot(axis), va.dot(vd));
   const wm = W[index[middle as JointName]].setFromAxisAngle(axis, angle).multiply(wu);
   if (kind === 'leg' || !across) return;
+  if (turn) {
+    // format 2's hand: the bone along the hand's turned direction, its blade side (+Z) toward the thumb (hands.ts)
+    const { H, T } = handFrame(d2, hint, s, turn);
+    turnPair(bone, Z_AXIS, rigToEngine(H, vb), rigToEngine(T, ve), W[index[`hand${s}`]]);
+    return;
+  }
   // the hand: the bone along the forearm, its blade side (+Z) toward `across`; as `across` nears the forearm's line
   // (within ~11.5°), it eases back to the forearm's own roll, so the hand never spins about a line it barely leaves
   const hand = W[index[`hand${s}`]].copy(wm);
@@ -214,7 +224,10 @@ function footFrame(s: Side, out: number, down: number, target: Quaternion) {
 
 /**
  * Writes key pose `k`'s joints, rebuilt on rest body `R`, into `rotations` (23 local rotations, from `offset`) and the
- * pelvis into `hips` (metres, engine axes). The frames follow the file comment.
+ * pelvis into `hips` (metres, engine axes). The frames follow the file comment; format 2's: a `hand` turns the hand
+ * bone to its hand frame, +Z toward the thumb (hands.ts); the `spine` override sets the two middle spine joints' frame
+ * in their shares' place; a `roll` turns the foot about its ankle-to-ball line (the toe joint's rest offset), the toes
+ * with it.
  */
 export function keyRotations(R: RestBody, k: KeyPose, rotations: Float32Array, offset = 0, hips = new Vector3()) {
   const RP = fromEuler(k.body as V);
@@ -229,6 +242,9 @@ export function keyRotations(R: RestBody, k: KeyPose, rotations: Float32Array, o
   W[index.pelvis].copy(qRP);
   const spine = ['spine0', 'spine1', 'spine2', 'chest'] as const;
   spine.forEach((joint, i) => shareOf(qP, qC, R.spineW[i], qPr, W[index[joint]]));
+  // format 2's spine override: the middle bones take its frame, relative to the body, in their shares' place
+  if (k.spine) frameQuaternion(compose(RP, fromEuler(k.spine as V)), tq2);
+  if (k.spine) spine.forEach((joint, i) => MIDDLE[i] && W[index[joint]].copy(tq2));
   shareOf(qC, qH, R.neckW, qPr, W[index.neck]);
   W[index.head].copy(qH).multiply(qPr);
   const blade = k.blade ? norm(wld(RC, k.blade)) : null;
@@ -242,11 +258,19 @@ export function keyRotations(R: RestBody, k: KeyPose, rotations: Float32Array, o
     const swing = [Math.cos(el) * Math.sin(az), SG[s] * Math.cos(el) * Math.cos(az), Math.sin(el)];
     tq2.setFromUnitVectors(rigToEngine(v0, va).normalize(), rigToEngine(swing, vb).normalize());
     W[index[`clavicle${s}`]].copy(qRC).multiply(tq2).multiply(tq.copy(qCr).invert()).multiply(qPr);
-    limbFrames(RC, s, 'arm', k[`arm${s}`] as V, R, s === 'R' && blade ? blade : RC[1]);
+    const hand = k[`hand${s}`] ?? (k[`grip${s}`] === undefined ? undefined : ([0, 0, 0] as HandPose));
+    limbFrames(RC, s, 'arm', k[`arm${s}`] as V, R, s === 'R' && blade ? blade : RC[1], hand);
     limbFrames(RP, s, 'leg', k[`leg${s}`] as V, R);
     const ft = k[`foot${s}`] ?? [0, 0, 0];
     footFrame(s, ft[1], ft[0], W[index[`foot${s}`]]);
     footFrame(s, ft[1], ft[0] - (ft[2] || 0), W[index[`toe${s}`]]);
+    const roll = k[`roll${s}`];
+    if (roll !== undefined) {
+      // format 2's roll: the foot turns about its ankle-to-ball line (the toe joint's rest offset), the toes with it
+      const line = vc.set(0, -Math.sin(R.abPitch * DG), Math.cos(R.abPitch * DG));
+      W[index[`foot${s}`]].multiply(tq2.setFromAxisAngle(line, SG[s] * roll * DG));
+      W[index[`toe${s}`]].copy(W[index[`foot${s}`]]).multiply(tq2.setFromAxisAngle(X_AXIS, -(ft[2] || 0) * DG));
+    }
   }
   for (let j = 0; j < JOINT_COUNT; j++) {
     const local = PARENTS[j] < 0 ? tq.copy(W[j]) : tq.copy(W[PARENTS[j]]).invert().multiply(W[j]);

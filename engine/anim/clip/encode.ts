@@ -26,9 +26,7 @@
 import {
   add,
   compose,
-  cross,
   DG,
-  dot,
   fromEuler,
   hintFor,
   len,
@@ -45,8 +43,11 @@ import {
   type Frame,
   type V,
 } from './frames';
+import { encodeRoll, footLine } from './feet';
 import { encodeHand } from './hands';
-import { armOf, POINT_COUNT, POINT_INDEX, samplePose, type Clip, type ClipKey, type KeyPose } from './readable';
+import { bendOf, bodyFrames, euler, loc, poleOf, pt, rel, unwrap } from './inverse';
+import { armOf, POINT_COUNT, samplePose, type Clip, type ClipKey, type KeyPose } from './readable';
+import { spineOf } from './spine';
 import { poseError, poseMeanError, type RestBody } from './validate';
 
 /** A captured clip, the importer's input: `n` frames at `fps` of the 36 body points (mm, rig frame). */
@@ -75,57 +76,13 @@ export interface EncodeExtra {
   blade?: boolean;
   /** Format 2: write each hand's turn and grip (engine/anim/clip/hands.ts), the arm reaching a straight hand's fist. */
   hands?: boolean;
+  /** Format 2: write the spine override on every key (the importer's call: `spineMiss` past `SPINE_MISS`). */
+  spine?: boolean;
+  /** Format 2: write each foot's roll (engine/anim/clip/feet.ts), its toes bent in the rolled plane. */
+  feet?: boolean;
 }
 
-/* ---- the encode's own frame math, the inverses of frames.ts's (which it shares with the decode) ---- */
-/** A frame `[F, R, U]` from a right and a forward direction (f × r = u). */
-function frameFR(right: V, fwd: V): Frame {
-  const R = norm(right);
-  const F = norm(sub(fwd, mul(R, dot(fwd, R))));
-  return [F, R, cross(F, R)];
-}
-/** A frame `[F, R, U]` from an up and a forward direction. */
-function frameUF(up: V, fwd: V): Frame {
-  const U = norm(up);
-  const F = norm(sub(fwd, mul(U, dot(fwd, U))));
-  return [F, cross(U, F), U];
-}
-const loc = (M: Frame, v: V): V => [dot(v, M[0]), dot(v, M[1]), dot(v, M[2])];
-const rel = (parent: Frame, child: Frame): Frame => child.map((axis) => loc(parent, axis));
-/** `[turn, lean, tilt]` degrees of a frame: yaw about up, then pitch about right (+ forward), then roll. */
-function euler(M: Frame): V {
-  const [F, , U] = M;
-  const yaw = Math.atan2(F[1], F[0]);
-  const pitch = Math.asin(Math.max(-1, Math.min(1, -F[2])));
-  const [cy, sy] = [Math.cos(yaw), Math.sin(yaw)];
-  const u1 = [U[0] * cy + U[1] * sy, -U[0] * sy + U[1] * cy, U[2]];
-  const [cp, sp] = [Math.cos(pitch), Math.sin(pitch)];
-  const u2 = [u1[0] * cp - u1[2] * sp, u1[1], u1[0] * sp + u1[2] * cp];
-  return [yaw / DG, pitch / DG, -Math.atan2(-u2[1], u2[2]) / DG];
-}
-/** The bend at a two-bone limb's middle joint (degrees, 0 = straight) for a root-to-end distance (`reachOf` back). */
-const bendOf = (dist: number, L1: number, L2: number) =>
-  180 - Math.acos(Math.max(-1, Math.min(1, (L1 * L1 + L2 * L2 - dist * dist) / (2 * L1 * L2)))) / DG;
-/** An angle moved by whole turns to continue from the one before (none: unchanged). */
-const unwrap = (v: number, prev: number | undefined) =>
-  prev === undefined ? v : v + 360 * Math.round((prev - v) / 360);
 const r0 = Math.round;
-/** The signed angle (degrees) round axis `d` from hint `h` to the bend direction `b`. */
-function poleOf(d: V, h: V, b: V): number {
-  const hn = norm(sub(h, mul(d, dot(h, d))));
-  const bn = norm(sub(b, mul(d, dot(b, d))));
-  return Math.atan2(dot(cross(hn, bn), d), dot(hn, bn)) / DG;
-}
-const pt = (X: ArrayLike<number>, name: string): V => {
-  const i = POINT_INDEX[name] * 3;
-  return [X[i], X[i + 1], X[i + 2]];
-};
-/** The pelvis, chest and head frames `[F, R, U]` of the body points `p` reads. */
-const bodyFrames = (p: (name: string) => V): Frame[] => [
-  frameFR(sub(p('hipR'), p('hipL')), sub(p('pelvisF'), p('pelvis'))),
-  frameUF(sub(p('neck'), p('chest')), sub(p('chestF'), p('chest'))),
-  frameUF(sub(p('headTop'), p('head')), sub(p('faceF'), p('head'))),
-];
 
 /* ---- captures ---- */
 const SIZE = POINT_COUNT * 3;
@@ -252,7 +209,7 @@ export function encodePose(
   R: RestBody,
   X: ArrayLike<number>,
   prev?: KeyPose | null,
-  opts: { hands?: boolean } = {},
+  opts: { hands?: boolean; spine?: boolean; feet?: boolean } = {},
 ): KeyPose {
   const [lower, p, k, pr] = [R.fore + R.fist, (name: string) => pt(X, name), {} as Key, (prev ?? {}) as Key];
   const uw = (a: V, b: V | undefined) => a.map((v, i) => r0(unwrap(v, b && b[i])));
@@ -271,6 +228,7 @@ export function encodePose(
   k.chest = ue(euler(rel(fromEuler(k.body), RCx)), pr.chest);
   const RC = compose(fromEuler(k.body), fromEuler(k.chest));
   k.head = ue(euler(rel(RC, RHx)), pr.head);
+  if (opts.spine) k.spine = ue(spineOf(R, k, p), pr.spine);
   for (const s of ['L', 'R'] as const) {
     const [v, v0] = [loc(RC, sub(p(`sh${s}`), p(`clav${s}`))), R.cv[s]];
     const az = (a: V) => Math.atan2(a[0], a[1] * SG[s]) / DG;
@@ -305,6 +263,14 @@ export function encodePose(
     const [pf, down] = [pr[`foot${s}`] as V | undefined, Math.asin(Math.max(-1, Math.min(1, -fd[2]))) / DG];
     const toes = down - Math.asin(Math.max(-1, Math.min(1, -td[2]))) / DG - (R.abPitch - R.btPitch);
     k[`foot${s}`] = [r0(down - R.abPitch), r0(unwrap(Math.atan2(fd[1] * SG[s], fd[0]) / DG, pf && pf[1])), r0(toes)];
+    if (opts.feet) {
+      // format 2: the toes' plane rolls about the decoded ankle-to-ball line, their bend measured in it
+      const { d, down: below } = footLine(tq.RP, k[`foot${s}`], R.abPitch, s);
+      const before = (pr as Record<string, unknown>)[`roll${s}`] as number | undefined;
+      const { roll, delta } = encodeRoll(d, below, norm(sub(p(`toe${s}`), p(`ball${s}`))), s, before);
+      k[`foot${s}`][2] = r0(R.btPitch - R.abPitch - delta);
+      (k as Record<string, unknown>)[`roll${s}`] = r0(unwrap(roll, before));
+    }
   }
   if (opts.hands) {
     for (const s of ['L', 'R'] as const) {
@@ -325,7 +291,7 @@ export function encodeClip(R: RestBody, cap: Capture, kf: readonly number[], ext
   for (const f of kf) {
     capSample(cap, f / cap.fps, X);
     // (to the millisecond: a key lands on its frame)
-    const pose = encodePose(R, X, prev, { hands: extra.hands });
+    const pose = encodePose(R, X, prev, { hands: extra.hands, spine: extra.spine, feet: extra.feet });
     const k = Object.assign({ t: Math.round((f / cap.fps) * 1000) / 1000 }, pose) as ClipKey;
     if (extra.blade) {
       const aim = loc(compose(fromEuler(k.body), fromEuler(k.chest)), norm(sub(pt(X, 'indexR'), pt(X, 'pinkyR'))));

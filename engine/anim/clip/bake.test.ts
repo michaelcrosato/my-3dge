@@ -1,7 +1,7 @@
 /**
  * @file Tests for the baker (WP 8.4): the frames on format 1's key grid, FK parity with the format-1 decode (exact on
  * a key, a mean of 1 mm or less over every set at 30 fps and the 60 Hz midpoints, and at each clip's own key times, the
- * worst cases in tests/baselines/anim-clips.json), the hand's roll, the singular poses (a deep fold bending forward
+ * worst cases in tests/baselines/anim-clips.json), format 2's keys (hands, spine, roll), the hand's roll, the singular poses (a deep fold bending forward
  * among them: WP 8.6), and the root's travel.
  */
 import { describe, expect, it } from 'vitest';
@@ -42,10 +42,10 @@ function rigidError(a: Float64Array, b: Float64Array): number {
   return worst;
 }
 
-/** The angle (degrees) between the hand's +Z and the decode's index-to-pinky line, across the forearm. */
+/** The angle (degrees) between the hand's +Z and the decode's index-to-pinky line, across the hand. */
 function rollError(world: ReturnType<typeof createWorldPose>, decoded: Float64Array, side: 'L' | 'R'): number {
   const at = (p: string) => new Vector3(-decoded[POINT_INDEX[p] * 3 + 1], decoded[POINT_INDEX[p] * 3 + 2], decoded[POINT_INDEX[p] * 3]); // prettier-ignore
-  const along = at(`fist${side}`)
+  const along = at(`knuck${side}`)
     .sub(at(`wrist${side}`))
     .normalize();
   const across = at(`index${side}`).sub(at(`pinky${side}`));
@@ -92,6 +92,21 @@ describe('bakeClip', () => {
       expect(rollError(world, decoded, 'L')).toBeLessThan(1e-3);
       expect(rollError(world, decoded, 'R')).toBeLessThan(1e-3);
     }
+  });
+
+  it("rebuilds format 2's keys: the hands turned, the spine's middle overridden, the feet rolled", () => {
+    const k: ClipKey = {
+      ...busy(0),
+      ...{ handL: [25, -15, 40], handR: [-30, 20, -60], gripL: 0, gripR: 0, spine: [10, 25, -8] },
+      ...{ rollL: 20, rollR: -15, footL: [25, 10, 35], footR: [-10, -5, -20] },
+    };
+    const decoded = decodePose(REST, k, new Float64Array(108));
+    const { points, world } = bakedPoints(k);
+    expect(rigidError(points, decoded)).toBeLessThan(1e-3);
+    expect(rollError(world, decoded, 'L')).toBeLessThan(1e-3);
+    expect(rollError(world, decoded, 'R')).toBeLessThan(1e-3);
+    // a grip closes the decoded fist; the skeleton, which has no fingers, holds a straight hand's
+    expect(rigidError(bakedPoints({ ...k, gripL: 80, gripR: 40 }).points, decoded)).toBeLessThan(1e-3);
   });
 
   it('writes unit rotations, each frame on the side of the sphere of the frame before', () => {

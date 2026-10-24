@@ -11,7 +11,8 @@
  *
  * Invariants: a format-1 key decodes as the source's does; format 2's key fields are carried, in-betweened, mirrored
  * and printed, and decoded with the encode that writes them (WP 8.8, ADR-0010 amendment 7): a hand's turn and grip
- * place its four points (hands.ts). The frame math and `torso` are frames.ts's, which the encode (encode.ts)
+ * place its four points (hands.ts), a foot's roll its toes (feet.ts), the spine override the spine's middle bones
+ * (frames.ts `torso`). The frame math and `torso` are frames.ts's, which the encode (encode.ts)
  * shares, as the source shares them. Points are millimetres in the rig frame: f forward, r right, z up. validate.ts
  * reads clips and sets in (and types the `RestBody` their sources measured); lens.ts prints them; mirror.ts mirrors
  * them.
@@ -25,6 +26,7 @@
  * @see engine/anim/clip/readable.test.ts
  */
 import { add, cross, DG, dot, hintFor, len, limbEnd, mul, norm, reachOf, SG, sub, torso, wld, type V } from './frames';
+import { rolledToe } from './feet';
 import { placeHand } from './hands';
 import { KEY_ARRAYS, KEY_NUMBERS } from './lens';
 import type { RestBody } from './validate';
@@ -241,7 +243,9 @@ export function decodePose<T extends PointArray>(R: RestBody, k: KeyPose, out: T
     const dir = (q: number) => wld(RP, [Math.cos(q) * Math.cos(yw), SG[s] * Math.cos(q) * Math.sin(yw), -Math.sin(q)]);
     const ball = add(an, mul(dir(pa), R.ab));
     set(`ball${s}`, ball);
-    set(`toe${s}`, add(ball, mul(dir(pb), R.bt)));
+    const roll = k[`roll${s}`];
+    const toe = roll === undefined ? dir(pb) : rolledToe(dir(pa), dir(pa + Math.PI / 2), (pb - pa) / DG, roll, s);
+    set(`toe${s}`, add(ball, mul(toe, R.bt)));
   }
   return out;
 }

@@ -123,7 +123,29 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   straight hand would hold, on the captured forearm's line, so the elbow and the wrist decode where the capture had
   them and the hand's own turn is written apart. A key without `hand` and `grip` decodes as format 1 does, bit for
   bit (the oracle tests).
+- **The spine override: `spine [turn, lean, tilt]`** (engine/anim/clip/spine.ts; decoded in frames.ts `torso`)
+  turns the spine's two middle bones together, relative to the body, in place of their shares. Its bend takes the
+  decoded `spine1` to the captured chest; its twist about the spine is the shares' own, since the two bones lie almost
+  in line and say little about it. The importer writes it on every key of a clip whose shares miss the capture's neck
+  by more than `SPINE_MISS` (15 mm, half the importer's tolerance), on none of the others, since `keyAt` holds a field
+  the next key lacks. Measured on Mesh2Motion: the shares miss by more than 15 mm in 72 of 178 clips, up to 129 mm
+  (`Bow`); fitted with hands and the override, `Bow`'s worst frame falls from 184 to 34 mm, `Angry`'s from 170 to 35.
+- **Foot roll: `rollL`/`rollR`** (engine/anim/clip/feet.ts) turn the toes' plane about the decoded ankle-to-ball line,
+  + turning the sole inward, and the toes bend in the rolled plane. The ankle, ball and toe are not in line (the toes
+  lie about 30° off the ankle-to-ball line at rest), so the 36 body points show the roll and the importer reads it
+  from them: no extra capture data. Format 2 writes it on every key. Mesh2Motion's feet roll 20 to 35° in their
+  strides and crouches; with the roll, `Land_Three_Point`'s worst toe falls from 101 to 46 mm.
+- **The baker follows** (bake.ts): a key's hand turns the hand joint to the hand frame and its +Z toward the thumb,
+  the override sets the middle spine joints, the roll turns the foot joint about its rest ankle-to-ball line and the
+  toe with it. The skeleton has no fingers, so a grip closes only the decoded fist; FK parity holds against the decode
+  with its grips open.
+- **Call: no root yaw.** No source this session can read turns its root: Mesh2Motion's 177 clips keep their root's
+  heading within 0.5° (their turns, `Turn_Left_90` among them, are in the body), and CMU's root is its pelvis. So the
+  importer writes no `yaw`, and its decode waits for a source that turns its root (the Quaternius GLBs' root-motion
+  clips may: ESC-0003); the field stays carried, mirrored and printed as before.
 - Evidence: engine/anim/clip/hands.test.ts (random turns and grips back to the degree and the whole, either side; the
   mirror image; a capture with turning, closing hands fitted within 30 mm and its hands within 15 mm, more than three
-  times closer than format 1), engine/anim/clip/mirror.test.ts (a mirrored clip with hands decodes to the reflected
-  body, every finger point with it).
+  times closer than format 1), engine/anim/clip/feet.test.ts, engine/anim/clip/spine.test.ts,
+  engine/anim/clip/mirror.test.ts (a mirrored format-2 clip decodes to the reflected body, every hand, spine and toe
+  point with it), engine/anim/clip/bake.test.ts (FK of a format-2 key rebuilds every rigid point; a flipped roll sign
+  misses by 57 mm).

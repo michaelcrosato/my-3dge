@@ -201,12 +201,18 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`encode.ts`](../engine/anim/clip/encode.ts): The importer half of the readable codec (PLAN.md §10, WP 8.5; ADR-0010 amendment 1): a captured clip, 36 body points a frame, turned into readable key poses.
   - Exports: `capSample`, `Capture`, `encodeClip`, `EncodeExtra`, `encodePose`, `fitClip`, `Fitted`, `measure`, `reduce`
   - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts)
+- [`feet.ts`](../engine/anim/clip/feet.ts): Format 2's foot roll (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `rollL`/`rollR` turn each foot about its ankle-to-ball line, + turning the sole inward.
+  - Exports: `encodeRoll`, `footLine`, `rolledToe`
+  - Tests: [`engine/anim/clip/feet.test.ts`](../engine/anim/clip/feet.test.ts)
 - [`frames.ts`](../engine/anim/clip/frames.ts): The readable codec's frame math (PLAN.md §10.2, WP 8.2 and WP 8.5; ADR-0010 amendment 4): vectors, frames `[F, R, U]` (forward, right and up as columns), quaternions `[x, y, z, w]`, `[turn, lean, tilt]` degrees, the hint a limb's twist is measured from, and `torso`, which places a key pose's spine, neck, head, shoulders and hips on a rest body.
-  - Exports: `add`, `compose`, `cross`, `DG`, `dot`, `Frame`, `fromEuler`, `hintFor`, `len`, `Limb`, `limbEnd`, `mul`, `norm`, `qFromTo`, `qrot`, `qslerp`, `reachOf`, `SG`, `sub`, `torso`, `V`, `wld`
+  - Exports: `add`, `compose`, `cross`, `DG`, `dot`, `Frame`, `fromEuler`, `hintFor`, `len`, `Limb`, `limbEnd`, `MIDDLE`, `mul`, `norm`, `qFromTo`, `qmul`, `qrot`, `qslerp`, `reachOf`, `SG`, `sub`, `torso`, `V`, `wld`
   - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts), [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
 - [`hands.ts`](../engine/anim/clip/hands.ts): Format 2's hands (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `handL`/`handR` `[flex, side, roll]` turn the hand at the wrist, and `gripL`/`gripR` (0–100) close it.
   - Exports: `encodeHand`, `HALF_SPAN`, `handBase`, `handFrame`, `HandPoints`, `HandPose`, `HandSizes`, `placeHand`
   - Tests: [`engine/anim/clip/hands.test.ts`](../engine/anim/clip/hands.test.ts)
+- [`inverse.ts`](../engine/anim/clip/inverse.ts): The encode's own frame math (PLAN.md §10.2, WP 8.5; ADR-0010 amendment 4): the inverses of frames.ts's, which the decode and the encode share.
+  - Exports: `bendOf`, `bodyFrames`, `euler`, `frameFR`, `frameUF`, `loc`, `poleOf`, `pt`, `rel`, `unwrap`
+  - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts)
 - [`layer.ts`](../engine/anim/clip/layer.ts): The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7, engine/anim/weights.ts), stacked, the last played on top (`current`), each fading in over what plays under it.
   - Exports: `CLIP_LAYER`, `ClipLayer`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerState`, `ClipPlay`, `ClipSlot`, `ClipStepInput`
   - Tests: [`engine/anim/clip/layer-play.test.ts`](../engine/anim/clip/layer-play.test.ts), [`engine/anim/clip/layer.test.ts`](../engine/anim/clip/layer.test.ts)
@@ -228,6 +234,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`retarget.ts`](../engine/anim/clip/retarget.ts): Retargeting (PLAN.md §10.4, WP 8.4): a baked clip (bake.ts) played on a skeleton.
   - Exports: `AnimationClipJSON`, `clipJSON`, `hipRatio`, `RETARGET`, `RetargetOptions`, `retargetPose`, `standingHipHeight`
   - Tests: [`engine/anim/clip/retarget.test.ts`](../engine/anim/clip/retarget.test.ts)
+- [`spine.ts`](../engine/anim/clip/spine.ts): Format 2's spine override, encoded (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `spine [turn, lean, tilt]` turns the spine's two middle bones together, relative to the body, in place of the library's shares, which turn each bone a measured fraction of the way from the pelvis to the chest (validate.ts `RestBody.spineW`).
+  - Exports: `SPINE_MISS`, `spineMiss`, `spineOf`
+  - Tests: [`engine/anim/clip/spine.test.ts`](../engine/anim/clip/spine.test.ts)
 - [`validate.ts`](../engine/anim/clip/validate.ts): Reading clips in, and checking them (PLAN.md §10.2, WP 8.2): `parseClip` and `parseClipSet` turn text or objects into clips and sets of format 1 or 2, refusing a broken one with an error that names the clip, the key, its time and the field, and the fix; `validateClip` then warns about poses that read but play badly.
   - Exports: `CLIP_CODES`, `ClipCode`, `ClipSet`, `ClipSource`, `ClipWarning`, `parseClip`, `parseClipSet`, `poseError`, `poseMeanError`, `RestBody`, `validateClip`
   - Tests: [`engine/anim/clip/validate.test.ts`](../engine/anim/clip/validate.test.ts)
