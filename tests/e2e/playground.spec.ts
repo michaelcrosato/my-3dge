@@ -79,8 +79,11 @@ const ACCENT_PX = 6;
  * The accent's pixels on the player that read as orange: pixels of `picture` in the accent's lit or middle band where
  * `parts`, the parts view of the same frame, shows a character (red). The accent (`#ff7f2a`: hue 24°, saturation 0.84)
  * keeps its hue and saturation through the bands and the pixel look's shades: hue 12–36°, saturation above 0.75, value
- * at least 0.55, which leaves out its dark band and the ink's tint of it (dark brown, WP 13.2's review). The skin
- * (0.37), the hair (0.49) and the boots (0.53) are less saturated.
+ * at least 0.45, which leaves out its dark band and the ink's tint of it (dark brown, WP 13.2's review). The skin
+ * (0.37), the hair (0.49) and the boots (0.53) are less saturated. The value floor, measured on WP 13.24's ramps (the
+ * gym at noon, every camera): the pixel look's four steps of the accent stand at 0.91–1, 0.74–0.78, 0.48–0.52 and
+ * 0.27 on its 24 levels a channel, its ink and rims at 0.44 and below; the cel look's dark band at 0.36–0.38. At WP
+ * 13.2's 0.55 the floor left out the pixel look's third step, a middle band, and its isometric view read 5.
  */
 function accentOnPlayer(picture: Pixels, parts: Pixels): number {
   const [rgb, mask] = [Buffer.from(picture.pixels, 'base64'), Buffer.from(parts.pixels, 'base64')];
@@ -89,7 +92,7 @@ function accentOnPlayer(picture: Pixels, parts: Pixels): number {
     if (mask[p] < 128 || mask[p + 1] > 64 || mask[p + 2] > 64) continue;
     const [r, g, b] = [rgb[p], rgb[p + 1], rgb[p + 2]];
     const low = Math.min(g, b);
-    if (r < g || r < b || r < 0.55 * 255 || r - low <= 0.75 * r) continue;
+    if (r < g || r < b || r < 0.45 * 255 || r - low <= 0.75 * r) continue;
     const hue = (60 * (g - b)) / (r - low);
     if (hue >= 12 && hue <= 36) n++;
   }
