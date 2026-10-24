@@ -65,6 +65,11 @@ export const FEATURES_CODES = defineCodes('gfx', {
     fix: 'nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there',
     doc: 'Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.',
   },
+  GFX_NO_SHELLS: {
+    template: '{feature} is off: {reason}; {downgrade}',
+    fix: "nothing to do for play; take feature:shells out of gfx.featuresOff to see the looks' outline shells again",
+    doc: "Advice from the feature registry (engine/gfx/features.ts) when `feature:shells` is off, which only `gfx.featuresOff` does: the stage makes no outline shell (engine/gfx/stageShells.ts), so a look's shells are left out and `x perf --feature feature:shells` prices them.",
+  },
 });
 
 /** The fields of a `feature` entry. */
@@ -161,6 +166,12 @@ export function defineFeatures(registry: Registry = sharedRegistry): void {
     needs: ['float32-filterable'],
     advice: 'GFX_NO_FLOAT32_FILTERING',
     downgrade: 'three.js samples 32-bit float textures without filtering, blocky up close',
+  });
+  feature('feature:shells', {
+    description:
+      "Outline shells round the stage's props and bodies, for the looks that ask for them (engine/gfx/stageShells.ts): an inverted hull, a draw call each, for every prop page and every puppet.",
+    advice: 'GFX_NO_SHELLS',
+    downgrade: "the looks that ask for shells outline with the chain's ink alone",
   });
   feature('feature:largeBuffers', {
     description:
@@ -286,6 +297,11 @@ export function shadingFor(report?: FeatureReport): ShadingTechniques {
  */
 export function gpuParticlesFor(report?: FeatureReport): typeof createGpuParticles | null {
   return report?.on.includes(PARTICLES_FEATURE.id) ? createGpuParticles : null;
+}
+
+/** Whether the stage makes outline shells (engine/gfx/stageShells.ts): `feature:shells` on in `report`, or no report. */
+export function shellsOn(report?: FeatureReport): boolean {
+  return report === undefined || report.on.includes('feature:shells');
 }
 
 /** TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA). */

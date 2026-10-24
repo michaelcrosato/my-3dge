@@ -1,7 +1,7 @@
 /*! my3dge: the my-3dge engine as one ES module (https://github.com/michaelcrosato/my-3dge, MIT; it carries @stdlib functions, Apache-2.0: see LICENSE). It imports three.js and Rapier by name: lean/README.md gives the import map. Written by node x docs --write from engine/index.ts. */
 import de from "@dimforge/rapier3d-simd-compat";
 import { Vector3 as z, Quaternion as J, Matrix4 as le, MathUtils as G, Plane as JN, Euler as H$, Color as it, DataTexture as Qf, RGBAFormat as Zf, UnsignedByteType as jv, RepeatWrapping as W$, NearestFilter as QN, LinearFilter as Hw, NearestMipmapLinearFilter as ZN, LinearMipmapLinearFilter as e8, SRGBColorSpace as Vh, NoColorSpace as yk, DoubleSide as ju, BackSide as Du, FrontSide as ka, MeshBasicMaterial as t8, MeshLambertMaterial as n8, Vector2 as fr, Group as tn, BoxGeometry as ep, Mesh as fn, BufferGeometry as vr, BufferAttribute as Zt, REVISION as Xl, InstanceNode as U$, InstancedBufferAttribute as wk, InstancedMesh as tp, Float32BufferAttribute as Ra, Vector4 as La, MeshBasicNodeMaterial as Gs, OneMinusSrcAlphaFactor as $i, OneFactor as Ti, CustomBlending as np, PlaneGeometry as Cu, PerspectiveCamera as sp, OrthographicCamera as Dv, WebGPUCoordinateSystem as s8, Box3 as po, SphereGeometry as Ww, Bone as bk, SkinnedMesh as V$, Skeleton as o8, Sphere as K$, CylinderGeometry as Cv, ConeGeometry as Y$, MeshToonNodeMaterial as r8, MeshPhongNodeMaterial as i8, MeshStandardNodeMaterial as X$, MeshLambertNodeMaterial as Fv, DynamicDrawUsage as a8, CircleGeometry as c8, Frustum as J$, DepthTexture as Q$, FloatType as Z$, Object3D as l8, PointLight as u8, Lighting as d8, LightsNode as vk, Scene as oc, AdditiveBlending as h8, SkinningNode as f8, LOD as p8, HemisphereLight as eT, DirectionalLight as tT, ClampToEdgeWrapping as m8, PhongLightingModel as nT, PassNode as sT, PostProcessing as g8, RenderTarget as Uw, ColorManagement as y8, WebGPURenderer as w8 } from "three/webgpu";
-import { AnimationClip as cge, AnimationMixer as lge, Box3 as uge, Color as dge, Euler as hge, MathUtils as fge, Matrix4 as pge, Plane as mge, Quaternion as gge, Ray as yge, Sphere as wge, Vector3 as bge } from "three/webgpu";
+import { AnimationClip as lge, AnimationMixer as uge, Box3 as dge, Color as hge, Euler as fge, MathUtils as pge, Matrix4 as mge, Plane as gge, Quaternion as yge, Ray as wge, Sphere as bge, Vector3 as vge } from "three/webgpu";
 import { NodeUpdateType as b8, pass as v8, uniformArray as x8, renderGroup as ve, uniform as me, dot as Pa, vec4 as je, Fn as Hs, normalView as Vw, vec3 as Pt, metalness as k8, roughness as M8, mrt as A8, output as S8, select as En, float as we, velocity as oT, attribute as Kh, positionLocal as n0, varyingProperty as _8, modelWorldMatrix as O8, modelWorldMatrixInverse as rT, wgslFn as E8, texture as Yh, int as Ye, Loop as xk, If as jn, Break as $8, positionView as iT, directPointLight as T8, attributeArray as z8, instanceIndex as Jo, Return as $l, vec2 as Ps, ivec4 as I8, screenCoordinate as aT, uv as Fu, pow as cT, max as at, instancedArray as kk, uint as Ht, sin as Kw, cos as lT, clamp as Tl, mix as en, cameraWorldMatrix as Yw, length as op, positionGeometry as ga, depth as R8, screenUV as qv, Discard as vh, fwidth as Na, abs as uT, sign as L8, min as P8, normalGeometry as Mk, transformNormal as N8, modelViewMatrix as Ak, cameraProjectionMatrix as ld, screenSize as s0, step as ja, round as j8, cross as o0, positionWorld as Da, normalWorld as D8, smoothstep as Ns, fog as C8, cameraPosition as F8, modelViewProjection as q8, luminance as Sk, BRDF_Lambert as Xw, diffuseColor as Jw, positionViewDirection as B8, floor as rc, saturation as G8, rtt as dT, renderOutput as H8, frontFacing as _k } from "three/tsl";
 import { ConvexHull as W8 } from "three/addons/math/ConvexHull.js";
 import { traa as U8 } from "three/addons/tsl/display/TRAANode.js";
@@ -438,7 +438,7 @@ function yo(e, t) {
   return !1;
 }
 const q = yT();
-function jfe(e, t) {
+function Dfe(e, t) {
   return q.defineKind(e, t);
 }
 function vc(e, t, n) {
@@ -693,7 +693,7 @@ function Ut(e, t) {
 function Wv(e, t, n) {
   return e + Ut(e, t) * n;
 }
-function Dfe(e, t, n) {
+function Cfe(e, t, n) {
   const s = Ut(e, t);
   return Math.abs(s) <= n ? t : e + Math.sign(s) * n;
 }
@@ -5207,7 +5207,7 @@ const g2 = Object.freeze({
   vz: { type: "number", default: 0, unit: "m/s", description: "Its velocity, south." },
   grounded: { type: "boolean", default: !1, description: "On its feet after the last step (a flyer: always)." },
   dead: { type: "integer", default: 0, minimum: 0, description: "Steps since it died, as a corpse." }
-}), Cfe = jt(
+}), Ffe = jt(
   Object.fromEntries(
     Object.entries(dz).map(([e, t]) => [e, ot(t.default)])
   )
@@ -5242,7 +5242,7 @@ function XF(e, t) {
 function JF(e, t) {
   Ac(e, t, "removeAgent(agent)") && e.removeBody(t.body), [t.body, t.state] = [-1, "gone"];
 }
-function Ffe(e, t, n, s) {
+function qfe(e, t, n, s) {
   const o = Ac(e, t, "setVelocity(agent)"), r = Ae(n, "setVelocity(want)"), i = fz(s, "setVelocity({ dt })"), a = s.acceleration ?? t.acceleration;
   if (ne(Number.isFinite(a) && a >= 0, "setVelocity({ acceleration })", a, "an acceleration of 0 or more"), !o || t.state !== "alive" || !t.grounded) return !1;
   const c = t.flyer ? r.y : 0;
@@ -5279,7 +5279,7 @@ function e9(e, t, n) {
   const i = n ? t.y - n(t.x, t.z) < gy.height : !1, a = Math.abs(t.vy) < gy.speed && (i || Math.abs(t.vy - r) < gy.settle);
   t.grounded = t.flyer && t.state !== "corpse" || a;
 }
-function qfe(e, t, n, s = {}) {
+function Bfe(e, t, n, s = {}) {
   const o = fz(n, "updateCrowd(sim)");
   ne(Array.isArray(t), "updateCrowd(agents)", t, "a list of crowd agents");
   const { spawnLimit: r = r5.spawnLimit, corpseCap: i = r5.corpseCap, floor: a } = s;
@@ -5651,7 +5651,7 @@ function ee(e, t, n = new z()) {
 function Ze(e, t, n = new J()) {
   return n.fromArray(e.rotations, ce(t) * 4);
 }
-function Bfe(e, t, n = new le()) {
+function Gfe(e, t, n = new le()) {
   return n.fromArray(e.matrices, ce(t) * 16);
 }
 function v2(e, t, n, s, o, r) {
@@ -6459,7 +6459,7 @@ function M2(e) {
   }
 }
 M2(q);
-function Gfe(e, t, n = q) {
+function Hfe(e, t, n = q) {
   return M2(n), n.def("move", e, t);
 }
 function af(e, t = q) {
@@ -6483,7 +6483,7 @@ function Y9(e, t) {
 function wy(e, t, n) {
   return e.rootMotion !== "apply" || t === void 0 || t === "wind" ? 0 : t === "active" ? e.body.lunge * sr.outCubic(Math.min(1, Math.max(0, n))) : e.body.lunge;
 }
-const Hfe = {
+const Wfe = {
   a0: "arc[0], radians, unchanged (+ toward the right hand)",
   a1: "arc[1], radians, unchanged; absent, it is a0",
   z0: "height[0] = z0 / 16 metres from the shoulder centre (rest −7 units); kicks: kickHeight[0], unchanged (rest 0.1)",
@@ -6508,7 +6508,7 @@ const Hfe = {
   hitAt: "hitAt, a share of active (0.35 for every move, from a name or a spec)",
   rel: "dropped: every move is relative to the shoulders; heights above the ground (rel false) have no counterpart"
 }, vd = (e, t, n) => Math.min(n, Math.max(t, e)), To = (e) => Math.round(e / Sz * 1e9) / 1e9;
-function Wfe(e) {
+function Ufe(e) {
   const t = e.kick === !0, n = {};
   if (t && (n.limb = "footR"), e.hand && e.hand !== "R" && (n.hand = e.hand), e.plane === "side" && (n.plane = "vertical"), n.arc = [e.a0 ?? 0, e.a1 ?? e.a0 ?? 0], e.spin && (n.spin = 1), e.plane !== "side") {
     const i = t ? 0.1 : -7, [a, c] = [e.z0 ?? i, e.z1 ?? e.z0 ?? i];
@@ -7515,20 +7515,20 @@ function Rz(e, t, n = "intents") {
   return cu(s, e, n);
 }
 const zq = 9, Iq = 18, Rq = 5;
-function Ufe() {
+function Vfe() {
   return { tick: 0, held: [], released: [], pressedAt: {}, consumed: {} };
 }
-function Vfe(e, t, n) {
+function Kfe(e, t, n) {
   const s = [...t.b ?? []], o = new Set(e.held), r = new Set(s), i = new Set(e.held.filter((a) => !r.has(a)));
   for (const a of s) o.has(a) || (e.pressedAt[a] = n);
   for (const a of t.p ?? [])
     e.pressedAt[a] = n, r.has(a) || i.add(a);
   return e.tick = n, e.held = s, e.released = [...i].sort(lc), e;
 }
-function Kfe(e, t) {
+function Yfe(e, t) {
   return e.released.includes(t);
 }
-function Yfe(e, t, n = zq) {
+function Xfe(e, t, n = zq) {
   const s = e.pressedAt[t];
   return s !== void 0 && e.tick - s <= n && e.consumed[t] !== s;
 }
@@ -7536,10 +7536,10 @@ function Lq(e, t) {
   const n = e.pressedAt[t];
   n !== void 0 && (e.consumed[t] = n);
 }
-function Xfe(e) {
+function Jfe(e) {
   for (const t of Object.keys(e.pressedAt)) Lq(e, t);
 }
-function Jfe(e, t, n = Iq, s = Rq) {
+function Qfe(e, t, n = Iq, s = Rq) {
   const o = e.pressedAt[t];
   if (o === void 0) return !1;
   const r = e.tick - o;
@@ -8099,7 +8099,7 @@ function nB(e, t, n = q) {
 function Cz(e, t = q) {
   return kp(t), t.get("movement", e);
 }
-function Qfe(e = q) {
+function Zfe(e = q) {
   return kp(e), e.list("movement");
 }
 function sB(e, t = q) {
@@ -9175,7 +9175,7 @@ function dG(e) {
   }
   return t;
 }
-function Zfe(e) {
+function epe(e) {
   return { ...e, keys: e.keys.map(dG) };
 }
 const du = [
@@ -9574,7 +9574,7 @@ function HG(e, t) {
   return Math.acos(Math.max(-1, Math.min(1, o))) * 180 / Math.PI;
 }
 const WG = ["armL", "armR", "legL", "legR"];
-function epe(e, t = e.clip) {
+function tpe(e, t = e.clip) {
   const n = ff(t), s = [];
   return e.keys.forEach((o, r) => {
     const i = { where: n, key: r + 1, t: o.t };
@@ -9601,7 +9601,7 @@ function epe(e, t = e.clip) {
   }), s;
 }
 const Rb = du.map((e, t) => /^(index|pinky)/.test(e) ? -1 : t * 3).filter((e) => e >= 0);
-function tpe(e, t) {
+function npe(e, t) {
   let n = 0;
   for (const s of Rb) {
     const [o, r, i] = [e[s] - t[s], e[s + 1] - t[s + 1], e[s + 2] - t[s + 2]];
@@ -9609,7 +9609,7 @@ function tpe(e, t) {
   }
   return Math.sqrt(n);
 }
-function npe(e, t) {
+function spe(e, t) {
   let n = 0;
   for (const s of Rb) n += Math.hypot(e[s] - t[s], e[s + 1] - t[s + 1], e[s + 2] - t[s + 2]);
   return n / Rb.length;
@@ -9811,7 +9811,7 @@ function XG(e) {
   };
 }
 const pS = /* @__PURE__ */ new WeakMap(), [Fc, JG, QG] = [new z(), new z(), new J()];
-function spe(e, t, n) {
+function ope(e, t, n) {
   let s = pS.get(e);
   s || pS.set(e, s = XG(e));
   for (let o = 0; o < h6; o++) {
@@ -9906,7 +9906,7 @@ function kS(e, t, n, s = new ut(), o = {}) {
   }
   return o.blade && aH(n, s, r, o.blade), s;
 }
-function ope(e, t, n = {}) {
+function rpe(e, t, n = {}) {
   const [s, o, r, i] = [e.frames, V2(e.rest, t), new ut(), Array.from(e.times)], [a, c] = [ie.map(() => new Array(s * 4)), new Array(s * 3)];
   for (let h = 0; h < s; h++)
     Qr.local.set(e.rotations.subarray(h * fe * 4, (h + 1) * fe * 4)), A6(o, Qr, r), a.forEach((f, p) => f.splice(h * 4, 4, ...r.local.subarray(p * 4, p * 4 + 4))), Pb(o, e, h, jl), n.travel && jl.add(zb(e, i[h], dr).multiplyScalar(o.ratio)), jl.toArray(c, h * 3);
@@ -10116,7 +10116,7 @@ _p(q);
 function fH(e) {
   return `clipset:${e.toLowerCase()}`;
 }
-function rpe(e, t = {}) {
+function ipe(e, t = {}) {
   const n = t.registry ?? q;
   _p(n);
   const s = W2(e), o = fH(s.set);
@@ -10126,7 +10126,7 @@ function rpe(e, t = {}) {
   }
   return n.def("clipset", o, s);
 }
-function ipe(e, t = "the set") {
+function ape(e, t = "the set") {
   const { [Fy]: n, ...s } = e;
   if (n === void 0) throw j("ANIM_CLIP_BAD_HEADER", { where: t, field: Fy, value: "missing", shape: "the set’s header" });
   let o;
@@ -10146,10 +10146,10 @@ function ipe(e, t = "the set") {
 function S6(e, t = q) {
   return _p(t), t.get("clipset", e);
 }
-function ape(e = q) {
+function cpe(e = q) {
   return _p(e), e.list("clipset").map((t) => t.id);
 }
-function cpe(e, t, n = {}) {
+function lpe(e, t, n = {}) {
   const s = n.registry ?? q;
   if (Gu(s), s.has("build", e)) return Ks(e, s);
   const { set: o, sources: r = {} } = S6(t, s), i = n.source ?? Object.keys(r)[0], a = r[i]?.rest;
@@ -10251,7 +10251,7 @@ function $6(e, t, n) {
   const { clip: a, ...c } = typeof t.play == "string" ? { clip: t.play } : t.play, l = new K2({ library: r, build: n, dt: s.dt, ik: i.ik, blade: i.blade }).play(a, c);
   return { ...i, state: l.save() };
 }
-function lpe(e, t, n) {
+function upe(e, t, n) {
   const s = e, o = s.get(t);
   if (!o?.actor || !o.animator)
     throw j("SIM_BAD_ARGUMENT", { where: "addClips(w, id, spec)", value: String(t), expected: "a live animated actor’s id" });
@@ -10261,16 +10261,16 @@ function Ep(e, t, n, s) {
   const { animator: o, clips: r } = E6(e, t, n), i = Op(e).get(t, r, o.build, e.dt);
   return s(i), r.state = i.save();
 }
-function upe(e, t, n, s) {
+function dpe(e, t, n, s) {
   return Ep(e, t, "playClip(w, id, clip)", (o) => o.play(n, s));
 }
-function dpe(e, t, n) {
+function hpe(e, t, n) {
   return Ep(e, t, "stopClip(w, id)", (s) => s.stop(n));
 }
-function hpe(e, t, n) {
+function fpe(e, t, n) {
   return Ep(e, t, "locomoteClips(w, id, loops)", (s) => s.locomote(n));
 }
-function fpe(e, t, n) {
+function ppe(e, t, n) {
   return Ep(e, t, "seekClip(w, id, t)", (s) => {
     const o = s.current;
     if (!o) return;
@@ -10413,7 +10413,7 @@ function kH(e, t, n = q) {
 function Th(e, t = q) {
   return $p(t), t.get("action", e.includes(":") ? e : `action:${e}`);
 }
-function ppe(e, t = q) {
+function mpe(e, t = q) {
   return $p(t), e.map((n) => {
     const { action: s, ...o } = Z(n) ? n : {}, r = "an action file";
     if (typeof s != "string" || !s)
@@ -10751,7 +10751,7 @@ function R6(e, t, n) {
 function L6(e, t) {
   return e.clips && t.clips && (e.clips.state = t.clips.save()), Object.assign(e.actions, t.save());
 }
-function mpe(e, t, n) {
+function gpe(e, t, n) {
   const s = e, o = s.get(t);
   if (!o?.actor || !o.animator)
     throw j("SIM_BAD_ARGUMENT", { where: "actOn(w, id, act)", value: String(t), expected: "an animated actor’s id" });
@@ -11551,7 +11551,7 @@ function J2(e) {
   }
 }
 J2(q);
-function gpe(e, t, n = q) {
+function ype(e, t, n = q) {
   return J2(n), n.def("glyph", e, t);
 }
 function sW(e = q) {
@@ -11799,11 +11799,11 @@ function Z6(e, t, n) {
   const s = e.roofs?.find((o) => o.kind !== "flat");
   return s ? Math.min(e.fullTop, Vu(s, t, n)) : e.fullTop;
 }
-function ype(e, t, n) {
+function wpe(e, t, n) {
   const s = Rp(e, t, n);
   return s ? s.dais?.surface ?? s.glyph.surface : "";
 }
-function wpe(e, t, n) {
+function bpe(e, t, n) {
   const s = Ip(e, t, n);
   return s ? e.solid[s.row * e.cols + s.col] : !0;
 }
@@ -12512,7 +12512,7 @@ function FW(e, t, n) {
   const [s, o] = [n + e.first[1], e.first[0] + 1], { char: r, id: i, top: a, edge: c } = e.glyph, l = { at: Vn(t, s, o), char: r, glyph: i, why: e.why, top: a, edge: c };
   return st(e.shape === "ramp" ? "LEVEL_BAD_RAMP" : "LEVEL_BAD_DAIS", l, s, o);
 }
-function bpe(e, t = {}) {
+function vpe(e, t = {}) {
   const { parsed: n, glyphs: s, ramps: o, daises: r, storeys: i, problems: a } = nx(e, t);
   if (a.length) return a;
   const c = t.climb ?? wu;
@@ -13145,7 +13145,7 @@ function yI(e, t, n) {
   const { fu: o, fv: r, h00: i, h10: a, h01: c, h11: l } = s, u = e.cell;
   return o + r <= 1 ? [(a - i) / u, (c - i) / u] : [(l - c) / u, (l - a) / u];
 }
-function vpe(e, t, n, s = new z()) {
+function xpe(e, t, n, s = new z()) {
   const o = yI(e, t, n);
   return o ? s.set(-o[0], 1, -o[1]).normalize() : null;
 }
@@ -13161,7 +13161,7 @@ function pU(e, t, n, s, o) {
   let r = or(e ^ Math.imul(t + 1, 2654435769));
   return r = or(r ^ Math.imul(n, 2246822507)), r = or(r ^ Math.imul(s, 3266489909)), or(r ^ Math.imul(o + 1, 668265263)) / 4294967296;
 }
-function xpe(e, t) {
+function kpe(e, t) {
   const { density: n, salt: s = 0, grade: o = e.steep, clear: r = 0, scale: i = [1, 1] } = t, { cols: a, rows: c, cell: l, origin: u, seed: d } = e, h = [];
   for (let f = 0; f < c; f++)
     for (let p = 0; p < a; p++) {
@@ -13183,7 +13183,7 @@ function ix(e) {
   });
 }
 ix(q);
-function kpe(e, t, n = q) {
+function Mpe(e, t, n = q) {
   return ix(n), n.def("terrain", e, t);
 }
 function mU(e, t = q) {
@@ -13284,7 +13284,7 @@ function ax(e) {
   });
 }
 ax(q);
-function Mpe(e, t, n = q) {
+function Ape(e, t, n = q) {
   return ax(n), n.def("site", e, t);
 }
 function cx(e, t = q) {
@@ -13403,7 +13403,7 @@ function AI(e = q) {
   e.kinds().includes("component") && e.has("component", "zipline") || (De("zipline", { description: "A zipline: a cable between two anchors, ridden either way (engine/world/traverse.ts).", fields: s1(xI) }, e), De("ladder", { description: "A ladder against a wall (engine/world/traverse.ts).", fields: s1(lx) }, e), De("launcher", { description: "A jump pad or a trampoline (engine/world/traverse.ts).", fields: s1(kI) }, e));
 }
 AI();
-function Ape(e, t) {
+function Spe(e, t) {
   const n = e, s = ux("zipline", t, "addZipline(spec)");
   return s.poles && !s.balloon && [s.from, s.to].forEach(([o, r, i], a) => {
     const [c, l] = [s.feet[a], r - s.feet[a]], u = { type: "cylinder", radius: SU, height: l };
@@ -13413,7 +13413,7 @@ function Ape(e, t) {
 function SI(e, t) {
   return e.spawn({ ladder: ux("ladder", t, "addLadder(spec)") });
 }
-function Spe(e, t) {
+function _pe(e, t) {
   const n = e, s = ux("launcher", t, "addLauncher(spec)");
   if (s.solid && s.at[1] > 0.01) {
     const [o, r, i] = s.at, a = [s.size[0], r, s.size[1]];
@@ -13421,10 +13421,10 @@ function Spe(e, t) {
   }
   return n.spawn({ launcher: s });
 }
-function _pe(e, t) {
+function Ope(e, t) {
   return MI(t).map((n) => SI(e, n));
 }
-function Ope(e, t) {
+function Epe(e, t) {
   return t.structures.flatMap(
     (n) => MI(n.level).map((s) => {
       const [o, r, i] = s.foot, [a, c] = Li(n, o, i), l = bI(n.turn, ...s.normal);
@@ -13613,19 +13613,19 @@ function Np(e, t, n = {}) {
     ]
   });
 }
-function Epe(e, t, n) {
+function $pe(e, t, n) {
   return Np(e, { type: "box", size: t }, n);
 }
-function $pe(e, t, n) {
+function Tpe(e, t, n) {
   return Np(e, { type: "ball", radius: t }, n);
 }
-function Tpe(e, t, n, s) {
+function zpe(e, t, n, s) {
   return Np(e, { type: "capsule", radius: t, height: n }, s);
 }
-function zpe(e, t, n, s) {
+function Ipe(e, t, n, s) {
   return Np(e, { type: "cylinder", radius: t, height: n }, s);
 }
-function Ipe(e, t, n) {
+function Rpe(e, t, n) {
   Ku(e, t).applyTorqueImpulse(Ae(n, "applyTorqueImpulse(torque)"), !0);
 }
 const o_ = 40 / 256, CU = 60 / 256;
@@ -13655,7 +13655,7 @@ const FU = ke({
   smooth: { type: "boolean", default: !0, description: "Eases in and out; false: constant speed." },
   yaw: { type: "number", default: 0, unit: "rad", description: "Its heading about +Y at time 0." },
   spin: { type: "number", default: 0, unit: "rad/s", description: "How fast it turns about +Y." }
-}), Rpe = jt(
+}), Lpe = jt(
   Object.fromEntries(
     Object.entries(FU).map(([e, t]) => [e, ot(t.default)])
   )
@@ -13672,11 +13672,11 @@ function hx(e, t, n, s, o) {
   const [c, l] = [vo(s, "driveBody(rotation)"), r.rotation()], u = new J(c.x, c.y, c.z, c.w).multiply(new J(-l.x, -l.y, -l.z, l.w)), d = u.w < 0 ? -1 : 1, h = Math.hypot(u.x, u.y, u.z), f = h > 1e-9 ? 2 * Math.atan2(h, d * u.w) / (h * o) : 0;
   r.setAngvel({ x: d * u.x * f, y: d * u.y * f, z: d * u.z * f }, !0);
 }
-function Lpe(e, t, n) {
+function Ppe(e, t, n) {
   const { position: s, rotation: o } = BU(t, n.time);
   hx(e, t.body, s, o, n.dt);
 }
-function Ppe(e, t, n = {}) {
+function Npe(e, t, n = {}) {
   ne(Z(n), "addSensor(spec)", n, "a sensor: { type?, position?, rotation?, group? }");
   const { type: s = "fixed", position: o, rotation: r, group: i } = n;
   ne(s === "fixed" || s === "kinematic", "addSensor({ type })", s, "'fixed' or 'kinematic'");
@@ -13698,7 +13698,7 @@ function GU(e, t) {
   }
   return [...r].sort((i, a) => i - a);
 }
-const Npe = ke({
+const jpe = ke({
   body: { type: "integer", default: -1, minimum: -1, description: "Its sensor body (addSensor)." },
   inside: {
     type: "array",
@@ -13707,7 +13707,7 @@ const Npe = ke({
     description: "The bodies inside it after the last step, in id order."
   }
 });
-function jpe(e, t) {
+function Dpe(e, t) {
   const n = GU(e, t.body), [s, o] = [new Set(t.inside), new Set(n)], r = t.inside.filter((i) => !o.has(i));
   return t.inside = n, { entered: n.filter((i) => !s.has(i)), left: r };
 }
@@ -14147,7 +14147,7 @@ function Yu(e) {
   for (const [n, s] of Object.entries(t)) e.def("prop", n, { ...s });
 }
 Yu(q);
-function Dpe(e, t, n = q) {
+function Cpe(e, t, n = q) {
   return Yu(n), n.def("prop", e, { ...t });
 }
 function gt(e, t = q) {
@@ -14157,7 +14157,7 @@ function vu(e) {
   const { type: t, shape: n, size: s, radius: o, height: r } = e.body;
   return t === "none" ? 0 : n === "box" ? s[1] / 2 : n === "ball" ? o : n === "capsule" ? r / 2 + o : r / 2;
 }
-function Cpe(e, t = q) {
+function Fpe(e, t = q) {
   Yu(t);
   const n = t.list("prop"), s = [];
   for (const o of e.spawns)
@@ -14415,7 +14415,7 @@ function pV(e, t) {
   const n = _e(e, t, vs()), s = ie.map((a, c) => new z().fromArray(n.positions, c * 3)), o = ie.map((a, c) => xs(e, n, c)), r = lt.map((a) => Oe(e, n, a)), i = Is(n, "head", new z(0, e.headRadius, 0));
   return { joints: s, tips: o, sockets: r, head: i, root: t.rootPos.clone() };
 }
-function Fpe(e, t = {}) {
+function qpe(e, t = {}) {
   const n = t.skeleton ?? xr(), s = t.views ?? ["front", "side"], o = t.cell ?? 160, r = e.map(
     (v, b) => v instanceof ut ? { pose: v, label: `#${b}` } : { pose: v.pose, label: v.label ?? `#${b}` }
   ), i = Math.max(1, Math.min(r.length, t.columns ?? Math.max(1, Math.floor(8 / s.length)))), a = Math.ceil(r.length / i), c = s.length * o, l = t.title ? wn.title : 0, u = i * c + (i + 1) * wn.gap, d = l + a * (wn.label + o) + (a + 1) * wn.gap, h = s.map(fV), f = r.map((v) => pV(n, v.pose)), p = h.map(([v, b]) => {
@@ -14524,7 +14524,7 @@ function qI(e, t) {
   }
   return n;
 }
-const qpe = {
+const Bpe = {
   /** How a body stands: from the front, from its right and three-quarters. */
   body: ["front", "side", "threeQuarter"],
   /** A strike: its arc from the side, from above and three-quarters. */
@@ -14653,7 +14653,7 @@ function vV(e) {
   );
   return { ok: f.length === 0, frames: e.poses.length, problems: f };
 }
-function Bpe(e, t = {}) {
+function Gpe(e, t = {}) {
   const n = r1(e, t), s = [], o = (u, d) => s.push({ ...d, state: u.state, message: `${u.state} facing ${u.facing}: ${d.message}` }), { rigid: r, floor: i, tolerance: a } = t;
   for (const u of n)
     for (const d of vV({ poses: u.poses, skeleton: u.skeleton, rigid: r, floor: i, tolerance: a }).problems)
@@ -14914,7 +14914,7 @@ function OV(e, t, n = px, s = { forward: 0, lift: 0, squash: 0 }) {
   }
   return s;
 }
-function Gpe(e, t = px) {
+function Hpe(e, t = px) {
   const n = UI[e], { wind: s, active: o, recover: r } = n.time;
   return { hit: s + ya(n, t, "hit") * o, end: s + o + r };
 }
@@ -15082,7 +15082,7 @@ Q("anim", {
   }
 });
 const [Ji, jV, l1] = Array.from({ length: 3 }, () => new z()), DV = new J();
-function Wpe(e, t = 0.5, n = "active") {
+function Upe(e, t = 0.5, n = "active") {
   return { move: yp(e), phase: n, u: t };
 }
 function VI(e, t) {
@@ -15122,11 +15122,11 @@ function HV(e, t, n, s, o, r = 0) {
   const [i, a] = [n.x - e.x, n.z - e.z];
   return Math.hypot(i, a) <= s + r && Math.abs(Ut(t, Math.atan2(i, a))) <= o;
 }
-function Upe(e, t, n, s, o = 0, r = 1) {
+function Vpe(e, t, n, s, o = 0, r = 1) {
   const i = s.y - e.y;
   return i < n.yMin * r - o || i > n.yMax * r + o ? !1 : HV(e, t, s, n.range * r, n.halfAngle, o);
 }
-function Vpe(e, t, n, s = 0, o = new z()) {
+function Kpe(e, t, n, s = 0, o = new z()) {
   const [r, i] = [t.x - e.x, t.z - e.z], a = Math.hypot(r, i) || 1;
   return o.set(r / a * n, s, i / a * n);
 }
@@ -15265,7 +15265,7 @@ class bf {
   }
 }
 const UV = 0.12, A_ = 1e9;
-class Kpe {
+class Ype {
   /** The attacks, in order. */
   attacks;
   /** Seconds after a hit ends that a press still chains. */
@@ -15686,7 +15686,7 @@ function nK(e, t) {
   const [[s, o], [r, i]] = [e[n - 1], e[n]];
   return G.lerp(o, i, (t - s) / Math.max(1e-9, r - s));
 }
-function Ype(e, t = {}) {
+function Xpe(e, t = {}) {
   const n = t.registry ?? q, s = typeof e == "string" ? Th(e, n) : e, { seconds: o, signals: r, lift: i } = s.check, a = s.beats.reduce((c, l) => c + (l.until === "next" ? 0 : l.seconds), 0);
   return {
     seconds: o || Math.max(0, ...r.map((c) => c.at)) + a + so.out,
@@ -16048,7 +16048,7 @@ function kK(e, t) {
       t[u * n + d] || c.push(l(d, u), l(d, u + 1), l(d + 1, u), l(d + 1, u), l(d, u + 1), l(d + 1, u + 1));
   return { type: "trimesh", vertices: a, indices: c };
 }
-function Xpe(e, t) {
+function Jpe(e, t) {
   const n = t.terrain ? [xK(e, t.terrain, t.cut)] : [];
   for (const s of t.structures) n.push(vK(e, s.level, { at: s.at, turn: s.turn }));
   return n;
@@ -16428,7 +16428,7 @@ const TK = ke({
   cell: { type: "number", default: 2, minimum: 0, unit: "m", description: "The cells’ width: about the usual radius." },
   capacity: { type: "integer", default: 64, minimum: 1, description: "The points it has room for at first." }
 }), _1 = (e, t, n) => (Math.imul(e, 2376512323) ^ Math.imul(t, 3625334849)) & n;
-class Jpe {
+class Qpe {
   /** The cells' width (m). */
   cell;
   #e = 0;
@@ -16574,7 +16574,7 @@ function jK(e, t, n) {
   }
   return s;
 }
-function Qpe(e, t, n = {}) {
+function Zpe(e, t, n = {}) {
   const s = IK(n.depth, RK, "rescueLost({ depth })"), { tile: o, cols: r, rows: i } = t;
   ne(o > 0 && t.floor.length === r * i, "rescueLost(level)", t, "a compiled level");
   const a = Et(e), [c, l] = t.origin ?? [0, 0], u = [];
@@ -16599,7 +16599,7 @@ const kf = 1e-3, O1 = Object.freeze({ near: 4, slowing: 0 }), E1 = Object.freeze
   bob: 0.1875,
   bobRate: 2,
   climb: 6
-}), Zpe = Object.freeze({ up: 9.375, reach: 2.75, pounce: 5.3125 });
+}), e0e = Object.freeze({ up: 9.375, reach: 2.75, pounce: 5.3125 });
 function Jb(e, t, n = new z(), s = 0) {
   const o = t.x - e.x, r = t.z - e.z, i = Math.sqrt(o * o + r * r);
   if (i < kf) return n.set(0, 0, 0);
@@ -16610,7 +16610,7 @@ function DK(e, t, n, s = new z(), o = O1) {
   const r = o.near ?? O1.near, i = o.slowing ?? O1.slowing, a = n.x - t.x, c = n.z - t.z;
   return a * a + c * c < r * r && e.grid.lineOfSight(t.x, t.z, n.x, n.z) ? Jb(t, n, s, i) : e.direction(t.x, t.z, s) ?? Jb(t, n, s, i);
 }
-function e0e(e, t, n, s, o = 0, r = new z()) {
+function t0e(e, t, n, s, o = 0, r = new z()) {
   const i = s.band ?? E1.band, a = n.x - t.x, c = n.z - t.z, l = Math.sqrt(a * a + c * c);
   if (l > s.radius + i) return e ? DK(e, t, n, r) : Jb(t, n, r);
   if (l < kf) return r.set(0, 0, 0);
@@ -16621,7 +16621,7 @@ function e0e(e, t, n, s, o = 0, r = new z()) {
   const u = (s.circle ?? E1.circle) * o / l;
   return r.set(-c * u, 0, a * u);
 }
-function t0e(e, t, n, s = Xc) {
+function n0e(e, t, n, s = Xc) {
   const o = s.height ?? Xc.height, r = s.bob ?? Xc.bob, i = s.bobRate ?? Xc.bobRate;
   return (t + o + r * Math.sin(n * i) - e) * (s.climb ?? Xc.climb);
 }
@@ -16636,7 +16636,7 @@ function CK(e, t, n = 0) {
   const o = (e + Math.sqrt(s)) / t;
   return o >= 0 ? o : 1 / 0;
 }
-function n0e(e, t, n, s, o = new z()) {
+function s0e(e, t, n, s, o = new z()) {
   const r = CK(n, s, t.y - e.y), i = t.x - e.x, a = t.z - e.z;
   return r === 1 / 0 ? null : r === 0 ? i * i + a * a < kf * kf ? o.set(0, n, 0) : null : o.set(i / r, n, a / r);
 }
@@ -16662,7 +16662,7 @@ const FK = ke({
     default: [],
     description: "The ids holding a token, oldest grant first."
   }
-}), s0e = jt(
+}), o0e = jt(
   Object.fromEntries(
     Object.entries(FK).map(([e, t]) => [e, ot(t.default)])
   )
@@ -16671,25 +16671,25 @@ function wx(e) {
   const t = Math.max(0, e.cap);
   e.holders.length > t && (e.holders.length = t);
 }
-function o0e(e, t) {
+function r0e(e, t) {
   const n = e.holders.indexOf(t);
   return n >= 0 && n < e.cap;
 }
-function r0e(e, t, n, s) {
+function i0e(e, t, n, s) {
   return wx(e), e.holders.includes(t) ? !0 : e.holders.length >= e.cap || n < e.next ? !1 : (e.holders.push(t), e.next = n + e.gapMin + (e.gapMax - e.gapMin) * s.next(), !0);
 }
-function i0e(e, t) {
+function a0e(e, t) {
   wx(e);
   const n = e.holders.indexOf(t);
   return n >= 0 && e.holders.splice(n, 1), n >= 0;
 }
-function a0e(e, t) {
+function c0e(e, t) {
   wx(e);
   const n = e.holders.filter((s) => t(s));
   return e.holders.length = 0, e.holders.push(...n), n.length;
 }
 const Jc = Object.freeze({ range: 9.375, near: 3.75, eye: 1.5, aim: 1 });
-function c0e(e, t, n, s = Jc) {
+function l0e(e, t, n, s = Jc) {
   const o = s.range ?? Jc.range, r = s.near ?? Jc.near, i = n.x - t.x, a = n.z - t.z, c = i * i + a * a;
   if (!(c <= o * o)) return !1;
   if (c < r * r) return !0;
@@ -16753,7 +16753,7 @@ const BK = ke({
     default: {},
     description: "Its rig’s state as plain data, written by stepCrowdBody: the animator’s data, the blob’s state, the floater’s or the quadruped’s; empty until its first step."
   }
-}), l0e = De("crowdBody", {
+}), u0e = De("crowdBody", {
   description: "A crowd member’s look and rig: a humanoid, blob, floater or quadruped, where it stands, and its rig’s state, stepped by stepCrowdBody and drawn through a crowd.",
   fields: BK
 }), D_ = /* @__PURE__ */ new WeakMap(), [Ir, oa, GK, HK] = [new z(), new z(), new z(), new z()];
@@ -16778,7 +16778,7 @@ function UK(e) {
   );
   return t.build = e.look || "build:chibi", t;
 }
-function u0e(e, t, n, s) {
+function d0e(e, t, n, s) {
   const o = e, r = `stepCrowdBody(w, ${t})`;
   if (!o.has(t))
     throw j("CORE_BAD_SPEC", { where: r, problems: `entity ${t} does not live: give the id of a live entity` });
@@ -16887,13 +16887,13 @@ function bx(e) {
   }
 }
 bx(q);
-function d0e(e, t, n = q) {
+function h0e(e, t, n = q) {
   return bx(n), n.def("telegraph", e, { ...t });
 }
 function ZK(e, t = q) {
   return bx(t), t.get("telegraph", e);
 }
-function h0e(e) {
+function f0e(e) {
   const { range: t, halfAngle: n, yMin: s, yMax: o } = e;
   return { shape: "cone", radius: t, halfAngle: n, yMin: s, yMax: Math.max(o, s + 1e-3) };
 }
@@ -16923,10 +16923,10 @@ function ZI(e, t, n, s = 0) {
   const [o, r, i] = gs(t.position), [a, c, l] = gs(n), u = t.size ?? 1, [d, h] = [a - o, l - i], [f, p] = [Math.sin(t.yaw), Math.cos(t.yaw)], m = nY(e, d * f + h * p, h * f - d * p, u), g = c - r, y = Math.max(e.yMin * u - g, g - e.yMax * u);
   return (y > 0 ? Math.hypot(Math.max(m, 0), y) : m) - s;
 }
-function f0e(e, t, n, s = 0) {
+function p0e(e, t, n, s = 0) {
   return ZI(e, t, n, s) <= 0;
 }
-function p0e(e, t, n, s = 0) {
+function m0e(e, t, n, s = 0) {
   const o = ZI(e, t, n, s);
   return o > 0 && o <= e.near * (t.size ?? 1);
 }
@@ -17017,7 +17017,7 @@ function cY(e, t, n) {
   }
   return i.sort((a, c) => a[0] - c[0] || a[1] - c[1]);
 }
-function m0e(e, t) {
+function g0e(e, t) {
   const n = t?.dt;
   aY(
     Number.isFinite(n) && n > 0,
@@ -17060,7 +17060,7 @@ function lY(e, t, n, s, o = 1) {
   const u = n.range * o, [d, h] = [s.x - r, s.z - a], f = d * d + h * h;
   return f > (u + c) * (u + c) ? !1 : f <= c * c || n.halfAngle >= Math.PI || Math.abs(Ut(t, Math.atan2(d, h))) <= n.halfAngle ? !0 : F_(d, h, t + n.halfAngle, u, c) || F_(d, h, t - n.halfAngle, u, c);
 }
-function g0e(e, t, n, s, o = 1) {
+function y0e(e, t, n, s, o = 1) {
   const [r, , i] = kx(t, "coneHits(from)");
   Dp(Number.isFinite(n), "coneHits(yaw)", n, "a facing in radians");
   const a = [];
@@ -17124,7 +17124,7 @@ function yY(e, t, n = 0) {
   const { base0: s, tip0: o, base1: r, tip1: i } = e, a = dY.set(t.x, t.y + t.radius, t.z), c = hY.copy(a).setY(a.y + xx(t)), l = Math.min(B_(a, c, s, o, i), B_(a, c, s, i, r)), u = t.radius + n;
   return l <= u * u;
 }
-function y0e(e, t, n = 0) {
+function w0e(e, t, n = 0) {
   const s = [t.base0, t.tip0, t.base1, t.tip1], o = s.reduce((c, l) => c + l.x, 0) / 4, r = s.reduce((c, l) => c + l.z, 0) / 4, i = Math.max(...s.map((c) => Math.hypot(c.x - o, c.z - r))), a = [];
   for (const c of vx(e, o, r, i + n)) {
     const l = e.hurt(c);
@@ -17132,7 +17132,7 @@ function y0e(e, t, n = 0) {
   }
   return a.sort((c, l) => c - l);
 }
-function w0e(e, t = ["world", "prop"]) {
+function b0e(e, t = ["world", "prop"]) {
   return (n, s, o) => {
     const r = Math.sqrt(s.x * s.x + s.y * s.y + s.z * s.z);
     if (!(r > 0)) return null;
@@ -17166,7 +17166,7 @@ const bY = ke({
     description: "The step it was last hit (w.tick; −1: never): flinches, stuns and flashes count from it."
   },
   hitBy: { type: "integer", default: -1, minimum: -1, description: "Who hit it last (an entity id; −1: unknown)." }
-}), b0e = jt(
+}), v0e = jt(
   Object.fromEntries(
     Object.entries(bY).map(([e, t]) => [e, ot(t.default)])
   )
@@ -17273,7 +17273,7 @@ Sx();
 function rR(e, t) {
   Sx(), q.def("usable", e, t);
 }
-function v0e(e) {
+function x0e(e) {
   const t = e;
   t.systems.has("interact") || t.systems.add("interact", RY, { phase: "intents" });
 }
@@ -17421,7 +17421,7 @@ const LY = Math.PI / 180, Hn = Object.freeze({
   // prettier-ignore
 });
 De("melee", { description: "A player’s melee swing (WP 13.19).", fields: PY });
-function x0e(e) {
+function k0e(e) {
   const t = e;
   t.systems.has("melee") || t.systems.add("melee", qY, { phase: "intents" });
 }
@@ -17535,7 +17535,7 @@ function Cp(e) {
   }), e.def("weapon", "weapon:gun", {}));
 }
 Cp(q);
-function k0e(e, t, n = q) {
+function M0e(e, t, n = q) {
   return Cp(n), n.def("weapon", e, { ...t });
 }
 function Ju(e, t = q) {
@@ -17568,12 +17568,12 @@ const Y_ = Math.PI / 180, UY = ke({
   aim: { type: "number", default: 0, minimum: 0, maximum: 1, description: "How far the sights are up, 0 to 1." }
 });
 De("weapons", { description: "The weapons a player carries and how they stand (WP 13.20).", fields: UY });
-function M0e(e, t = -1) {
+function A0e(e, t = -1) {
   if (!e.length || t < -1 || t >= e.length) throw j("CORE_BAD_SPEC", { where: "weaponsFor(slots, drawn)", problems: `${JSON.stringify(e)}, ${t}: give a weapon or more and a slot of them (−1: holstered)` });
   const n = e.map((s) => Ju(s).magazine);
   return { slots: [...e], slot: t, last: Math.max(0, t), mags: n, ready: 0, next: 0, reload: -1, burst: 0, kick: [0, 0], shot: -1, shots: 0, hits: 0, aim: 0 };
 }
-function A0e(e) {
+function S0e(e) {
   const t = e;
   t.systems.has("weapons") || t.systems.add("weapons", ZY, { phase: "intents" });
 }
@@ -17708,13 +17708,13 @@ function uR(e, t) {
   const s = Number.isInteger(t) && t >= 0 ? ": it was removed, or its body was" : ": ids are whole numbers from 0";
   throw j("PHYSICS_NO_JOINT", { id: U(t), why: s });
 }
-function S0e(e, t) {
+function _0e(e, t) {
   Et(e).removeImpulseJoint(uR(e, t), !0);
 }
-function _0e(e, t) {
+function O0e(e, t) {
   return lR(Et(e), t) !== null;
 }
-function O0e(e, t) {
+function E0e(e, t) {
   const n = uR(e, t);
   return [bs(n.body1().handle), bs(n.body2().handle)];
 }
@@ -17937,11 +17937,11 @@ function kX(e = q) {
 }
 kX();
 const hO = /* @__PURE__ */ new WeakMap(), [MX, AX, fO, SX] = [new z(0, 1, 0), new z(), new z(), new z()], D1 = (e, t) => Math.round(t / e.dt), _X = 2;
-function E0e(e) {
+function $0e(e) {
   const t = e;
   t.systems.has("ragdolls") || t.systems.add("ragdolls", EX, { phase: "readback" });
 }
-function $0e(e, t, n = {}) {
+function T0e(e, t, n = {}) {
   const s = e, o = s.get(t);
   if (!o?.actor || !o.animator) throw j("SIM_BAD_ARGUMENT", { where: "handOff(w, id)", value: String(t), expected: "an actor with an animator (spawnActor with anim)" });
   if (!s.systems.has("ragdolls")) throw j("SIM_BAD_ARGUMENT", { where: "handOff(w)", value: "a world without the system ragdolls", expected: "a scene that calls addRagdolls(w) in its setup" });
@@ -17956,7 +17956,7 @@ function $0e(e, t, n = {}) {
   const h = d.get(t, a, { dt: s.dt }).pose({ at: SX.set(i.x, i.y, i.z), yaw: u }), f = dX(h.body.build, h.body.world), p = n.spin ? Ae(n.spin, "handOff(hit.spin)") : null, m = p ? fO.set(p.x, p.y, p.z) : fO.crossVectors(MX, l).multiplyScalar(kl.tip), g = [i.vx + l.x, i.vy + l.y, i.vz + l.z], y = bX(r, { ...f, velocity: g, angularVelocity: [m.x, m.y, m.z], group: "corpse" }), w = s.add(t, "ragdoll");
   return Object.assign(w, { bodies: [...y.bodies], joints: [...y.joints], poses: pR(r, y), since: s.tick, still: 0, rise: -1, dead: n.dead ?? !1 }), qb(s, t, (v) => n.dead ? v.die(l, u) : v.knockDown(l, u, 1 / 0)), s.emit("ragdoll", { id: t, dead: w.dead }), w;
 }
-function T0e(e, t) {
+function z0e(e, t) {
   const n = e, s = n.get(t);
   return !s?.ragdoll || s.ragdoll.rise >= 0 || !s.actor || !s.animator ? !1 : (s.ragdoll.dead = !1, gR(n, s, s.ragdoll), !0);
 }
@@ -17991,18 +17991,18 @@ function gR(e, t, n) {
   }
   qb(e, t.id, (o) => o.getUp(s.chest)), e.emit("getUp", { id: t.id, lying: s.lying });
 }
-const z0e = ke({
+const I0e = ke({
   stop: { type: "integer", default: 0, minimum: 0, description: "The stop it heads for, or stays at." },
   since: { type: "number", default: -1, unit: "s", description: "The sim time it reached that stop; −1 on its way." }
 });
-function I0e(e, t, n, s, o = 0.5) {
+function R0e(e, t, n, s, o = 0.5) {
   if (!e.length) throw j("CORE_BAD_SPEC", { where: "followRoute(stops)", problems: "give at least a stop" });
   t.stop %= e.length;
   let r = e[t.stop];
   return t.since < 0 && Math.hypot(n.x - r.at[0], n.z - r.at[2]) <= o && (t.since = s), t.since >= 0 && s - t.since >= r.stay && ([t.stop, t.since] = [(t.stop + 1) % e.length, -1], r = e[t.stop]), { stop: r, staying: t.since >= 0 };
 }
 const $X = Object.freeze({ reach: 1.6, width: 0.7 });
-function R0e(e, t, n, s = $X) {
+function L0e(e, t, n, s = $X) {
   const [o, r] = [n.x - e.x, n.z - e.z], i = o * Math.sin(t) + r * Math.cos(t), a = o * Math.cos(t) - r * Math.sin(t);
   if (i <= 0 || i > s.reach || Math.abs(a) > s.width) return null;
   const c = a < 0 ? 1 : -1;
@@ -18037,7 +18037,7 @@ function yR(e, t = 1) {
     }
   };
 }
-function L0e(e, t = {}) {
+function P0e(e, t = {}) {
   const { grade: n, ...s } = t;
   return new yx(yR(e, n), s);
 }
@@ -18066,10 +18066,10 @@ function bR(e, t, n, s) {
   }
   return o;
 }
-function P0e(e, t, n, s) {
+function N0e(e, t, n, s) {
   return bR(e, t, n, s)?.height ?? null;
 }
-function N0e(e, t, n, s) {
+function j0e(e, t, n, s) {
   return bR(e, t, n, s)?.surface ?? "";
 }
 function zX(e, t, n, s) {
@@ -18105,13 +18105,13 @@ function RX(e, t, n, s) {
   }
   return !1;
 }
-function j0e(e, t, n, s = 0.1) {
+function D0e(e, t, n, s = 0.1) {
   const [o, r, i] = [n[0] - t[0], n[1] - t[1], n[2] - t[2]], a = Math.max(1, Math.ceil(Math.sqrt(o * o + r * r + i * i) / s));
   for (let c = 0; c <= a; c++)
     if (RX(e, t[0] + o * c / a, t[1] + r * c / a, t[2] + i * c / a)) return !1;
   return !0;
 }
-function D0e(e, t = 1) {
+function C0e(e, t = 1) {
   const n = e.structures.map((d) => d.footprint);
   if (e.terrain) {
     const { origin: d, cols: h, rows: f, cell: p } = e.terrain;
@@ -18599,7 +18599,7 @@ function nJ(e, t) {
   const [n, s] = gt(t).body.size, o = (r) => r.width >= n && r.width <= n + tJ && r.top - r.bottom >= s;
   return (e.openings ?? []).filter((r) => r.kind === "door" && o(r));
 }
-function C0e(e, t, n) {
+function F0e(e, t, n) {
   return nJ(t, "prop:door").map((s) => {
     const [o, , r] = s.center, i = s.axis === "x", a = Math.max(0, s.width - gt("prop:door").body.size[0]) / 2 - s.width / 2, [c, l] = i ? [o + a, r] : [o, r + a], [u, d] = n ? Li({ at: n.at, turn: n.turn }, c, l) : [c, l], h = (i ? 0 : -Math.PI / 2) + (n?.turn ?? 0) * Math.PI / 2;
     return QX(e, { hinge: [u, s.bottom + (n?.at[1] ?? 0), d], yaw: h });
@@ -18635,7 +18635,7 @@ function MR(e, t, n, s) {
   const o = e, r = o.get(t)?.propHealth;
   !r || r.hp <= 0 || (r.hp = Math.max(0, r.hp - n), r.hp === 0 && iJ(o, t, s));
 }
-function F0e(e, t, n, s = "shot") {
+function q0e(e, t, n, s = "shot") {
   const o = Xu(e, t);
   o >= 0 && Ox(e, o, n, !0, s);
 }
@@ -18656,7 +18656,7 @@ function AR(e) {
     }
   }
 }
-function q0e(e, t, n) {
+function B0e(e, t, n) {
   const s = e, o = [];
   for (const r of (t.openings ?? []).filter((i) => i.kind === "window")) {
     const [i, , a] = r.center, c = r.axis === "x", l = Math.max(1, Math.round(r.width / oJ));
@@ -18667,7 +18667,7 @@ function q0e(e, t, n) {
   }
   return o.length && !s.systems.has("breakables") && s.systems.add("breakables", AR, { phase: "anim" }), o;
 }
-function B0e(e) {
+function G0e(e) {
   const t = e;
   t.systems.has("breakables") || t.systems.add("breakables", AR, { phase: "anim" });
 }
@@ -18680,7 +18680,7 @@ De("switch", {
     door: { type: "integer", default: -1, minimum: -1, description: "The door it opens and closes; −1 none." }
   }
 });
-function G0e(e, t) {
+function H0e(e, t) {
   const n = e, s = { on: t.on ?? !0, group: t.group ?? "", door: t.door ?? -1 }, o = ko(n, { prop: t.prop ?? "prop:switch", at: t.at, yaw: t.yaw ?? 0 }, { components: { switch: s } });
   return t.group && zx(n, t.group, s.on), n.systems.has("switches") || n.systems.add("switches", cJ, { phase: "anim" }), o;
 }
@@ -18750,7 +18750,7 @@ function dJ(e) {
 function OR(e) {
   e.systems.has("daytime") || e.systems.add("daytime", dJ);
 }
-function H0e(e, t) {
+function W0e(e, t) {
   const n = e, { hour: s, rate: o = 0 } = t;
   if (!(s >= 0 && s < 24)) throw j("SIM_BAD_ARGUMENT", { where: "setDaytime(w, { hour })", value: String(s), expected: "an hour from 0 up to 24: 12 is noon, 18.5 half past six in the evening" });
   if (!(o >= 0 && Number.isFinite(o))) throw j("SIM_BAD_ARGUMENT", { where: "setDaytime(w, { rate })", value: String(o), expected: "hours a sim second, 0 or more: 24 / 1200 passes a day in 20 minutes" });
@@ -18763,7 +18763,7 @@ function H0e(e, t) {
 function hJ(e) {
   return Ix(e)?.daytime.hour ?? null;
 }
-function W0e(e, t, n = {}) {
+function U0e(e, t, n = {}) {
   const s = e, o = { group: t, on: n.on ?? SR, off: n.off ?? _R };
   if (!t) throw j("SIM_BAD_ARGUMENT", { where: "lightsAtDusk(w, group)", value: "''", expected: "a light group, as its props were spawned with ('street')" });
   for (const [r, i] of [
@@ -18820,7 +18820,7 @@ function Rx(e) {
   }), e.def("thing", "thing:target", {}));
 }
 Rx(q);
-function U0e(e, t, n = q) {
+function V0e(e, t, n = q) {
   return Rx(n), n.def("thing", e, { ...t });
 }
 function Lx(e, t = q) {
@@ -18851,7 +18851,7 @@ De("thing", {
   fields: pJ
 });
 const nv = (e, t, n, s, o, r) => ({ thing: t.thing, kind: n, world: e, entity: t.id, from: [r[0], r[1], r[2]], outcome: s, amount: o });
-function V0e(e, t, n, s = 0, o = {}) {
+function K0e(e, t, n, s = 0, o = {}) {
   const r = e, i = Lx(t), a = [n[0], n[1] + vu(gt(i.prop)), n[2]], c = gJ(i, a), l = ko(r, { prop: i.prop, at: [n[0], n[1], n[2]], yaw: s }, { as: "kinematic", components: { ...o, thing: c } });
   return r.systems.has("things") || r.systems.add("things", xJ, { phase: "anim" }), l;
 }
@@ -18904,7 +18904,7 @@ const sv = ["aimed", "forward", "ring", "spiral", "random"], kJ = 8, MJ = ke({
   clock: { type: "number", default: 0, minimum: 0, unit: "s", description: "Its clock: time in range, held at the delay out of it." },
   // prettier-ignore
   volleys: { type: "integer", default: 0, minimum: 0, description: "Volleys loosed so far." }
-}), K0e = jt(
+}), Y0e = jt(
   Object.fromEntries(Object.entries(MJ).map(([e, t]) => [e, ot(t.default)]))
   // prettier-ignore
 );
@@ -18927,7 +18927,7 @@ function SJ(e, t, n = {}) {
     s === "ring" || s === "spiral" ? u.push(q1(c + e.turn + 2 * Math.PI * d / o, l)) : s === "random" ? (Ph(n.rng !== void 0, "volley(aim.rng)", "none", "the stream a random volley draws from: { rng: w.rng('turret') }"), u.push(q1(c + (n.rng.next() - 0.5) * r, l))) : u.push(q1(c + (o < 2 ? 0 : (d / (o - 1) - 0.5) * r), l));
   return u;
 }
-function Y0e(e, t, n) {
+function X0e(e, t, n) {
   if (Ph(Number.isFinite(t) && t >= 0, "stepVolleys(dt)", t, "a step of 0 seconds or more"), !n)
     return e.clock = Math.min(e.clock, e.delay), 0;
   e.clock += t;
@@ -18939,7 +18939,7 @@ function Y0e(e, t, n) {
   }
   return s;
 }
-function X0e(e, t, n, s = {}) {
+function J0e(e, t, n, s = {}) {
   const o = SJ(e, n, { from: t, ...s });
   e.pattern === "spiral" && (e.turn = (e.turn + e.spin) % (2 * Math.PI));
   const { muzzle: r, speed: i, radius: a, life: c, gravity: l, pierce: u, kind: d, team: h } = e;
@@ -18973,7 +18973,7 @@ const _J = ["unaware", "sees", "heard", "remembers"], OJ = ke({
   memory: { type: "number", default: 10, minimum: 0, unit: "s", description: "How long it remembers where he was." },
   hearing: { type: "number", default: 1, minimum: 0, description: "How far it hears, as a share of a noise’s loudness (0: deaf)." }
   // prettier-ignore
-}), J0e = jt(
+}), Q0e = jt(
   Object.fromEntries(Object.entries(OJ).map(([e, t]) => [e, ot(t.default)]))
   // prettier-ignore
 );
@@ -18981,7 +18981,7 @@ function ER(e, t, n = 1, s) {
   const o = s !== void 0 && !s(e, t);
   return e.loudness * n * (o ? 0.5 : 1);
 }
-function Q0e(e, t, n = 1, s) {
+function Z0e(e, t, n = 1, s) {
   return Math.hypot(e.x - t.x, e.y - t.y, e.z - t.z) <= ER(e, t, n, s);
 }
 function EJ(e) {
@@ -18989,7 +18989,7 @@ function EJ(e) {
   if (n) throw j("CORE_BAD_SPEC", { where: `sense(aware, { ${n[0]} })`, problems: `${String(n[1])}: give finite seconds and metres` });
   if (e.sees && !e.target) throw j("CORE_BAD_SPEC", { where: "sense(aware, { sees: true })", problems: "no target: give where he is when it sees him" });
 }
-function Z0e(e, t) {
+function eme(e, t) {
   EJ(t);
   const n = e.state, { time: s, ears: o } = t;
   let r = null, i = 1 / 0;
@@ -19086,7 +19086,7 @@ function TJ(e, t) {
   const s = Math.sin(n / 2) / n;
   return t.set(e.x * s, e.y * s, e.z * s, Math.cos(n / 2));
 }
-class eme {
+class tme {
   value;
   /** Its angular velocity, rad/s about the world's axes. */
   velocity = new z();
@@ -19115,7 +19115,7 @@ class eme {
     return this.value.copy(t), this.velocity.set(0, 0, 0), this;
   }
 }
-class tme {
+class nme {
   /** The weights now, by name. */
   weights;
   /** What each weight eases toward, 0 to 1. */
@@ -19147,7 +19147,7 @@ class tme {
     return Object.assign(this.weights, this.targets), this;
   }
 }
-function nme(e, t, n = []) {
+function sme(e, t, n = []) {
   for (let s = 0; s < e.length; s++) n[s] = e[s];
   n.length = e.length;
   for (const { values: s, weight: o } of t) {
@@ -19157,17 +19157,17 @@ function nme(e, t, n = []) {
   }
   return n;
 }
-function sme(e, t, n = 0) {
+function ome(e, t, n = 0) {
   let [s, o] = [0, 0];
   return e.forEach((r, i) => {
     s += Math.sin(r) * (t[i] ?? 0), o += Math.cos(r) * (t[i] ?? 0);
   }), Math.hypot(s, o) < 1e-12 ? n : Math.atan2(s, o);
 }
-function ome(e, t, n = new z()) {
+function rme(e, t, n = new z()) {
   return n.set(Math.sin(t) * Math.cos(e), Math.sin(e), Math.cos(t) * Math.cos(e));
 }
 const [zJ, MO, IJ] = [new z(0, 1, 0), new z(-1, 0, 0), new z(0, 0, -1)], [AO, SO, An] = [new J(), new J(), new z()];
-class rme {
+class ime {
   options;
   /** The root, then each joint, world metres. */
   points;
@@ -19189,7 +19189,7 @@ class rme {
   }
 }
 const [Rr, B1] = [new z(), new z()];
-class ime {
+class ame {
   length;
   rest;
   /** Where its tip is, and how it moves. */
@@ -19209,7 +19209,7 @@ class ime {
     return this.tip.velocity.addScaledVector(An, -i), this.tip.value.copy(An).multiplyScalar(this.length).add(n);
   }
 }
-class ame {
+class cme {
   count;
   gap;
   /** Each segment, the head first, world metres. */
@@ -19264,7 +19264,7 @@ class ame {
   }
 }
 const [RJ, LJ] = [new z(0, 0, 1), new z(0, 1, 0)], [Co, Bd, Fo] = [new z(), new z(), new z()], [G1, _O] = [new J(), new J()];
-class cme {
+class lme {
   /** Where it looks, world, unit. */
   direction = new z(0, 0, 1);
   rate;
@@ -19287,7 +19287,7 @@ class cme {
     return Fo.copy(this.direction).applyQuaternion(G1.copy(t).invert()), [Math.atan2(Fo.x, Fo.z), Math.asin(Math.max(-1, Math.min(1, Fo.y)))];
   }
 }
-class lme {
+class ume {
   every;
   close;
   /** Seconds to the next blink; below 0, how far into one (negated). */
@@ -19325,7 +19325,7 @@ const PJ = {
   foldRates: [15, 9],
   fold: { side: 0.65, forward: 0.35, up: 0.76 }
 }, [OO, H1, EO] = [new z(1, 0, 0), new z(0, 1, 0), new z(0, 0, 1)], [W1, $O, U1] = [new J(), new J(), new J()];
-class ume {
+class dme {
   options;
   /** The bob's phase, rad. */
   phase = 0;
@@ -19368,7 +19368,7 @@ class ume {
   }
 }
 const TO = new z();
-class dme {
+class hme {
   options;
   /** Each orbiter, world metres. */
   points;
@@ -19390,7 +19390,7 @@ class dme {
     }), this.points;
   }
 }
-class hme {
+class fme {
   part;
   sway;
   swayRate;
@@ -19408,7 +19408,7 @@ class hme {
     return TO.set(Math.sin(s), Math.sin(1.3 * s + 1), Math.cos(0.7 * s)).multiplyScalar(this.sway), this.#n.copy(n).add(TO), this.#t || this.part.reset(n), this.#t = !0, this.part.step(t, this.#n);
   }
 }
-class fme {
+class pme {
   count;
   keep;
   #e = [];
@@ -19461,7 +19461,7 @@ function FJ(e, t, n = new le()) {
   const o = t.at ?? [0, 0, 0], r = t.turn ?? [0, 0, 0], i = typeof t.scale == "number" ? [t.scale, t.scale, t.scale] : t.scale ?? [1, 1, 1];
   return zO.setFromEuler(DJ.set(r[0], r[1], r[2], "XYZ")), V1.compose(NJ.set(o[0], o[1], o[2]), zO, jJ.set(i[0], i[1], i[2])), s instanceof z ? n.multiplyMatrices(CJ.makeTranslation(s.x, s.y, s.z), V1) : n.multiplyMatrices(s, V1);
 }
-function pme(e, t) {
+function mme(e, t) {
   return Object.fromEntries(Object.entries(t).map(([n, s]) => [n, FJ(e, s)]));
 }
 function IO(e, t, n = new z()) {
@@ -19475,11 +19475,11 @@ function IO(e, t, n = new z()) {
   }
   return n.copy(e[e.length - 1]);
 }
-function mme(e, t, n = new z()) {
+function gme(e, t, n = new z()) {
   const [s, o] = [IO(e, Math.max(0, t - 0.01), new z()), IO(e, Math.min(1, t + 0.01), new z())];
   return n.subVectors(o, s).normalize();
 }
-class gme {
+class yme {
   life;
   capacity;
   jump;
@@ -19503,7 +19503,7 @@ class gme {
     return this.samples.length = 0, this;
   }
 }
-function yme(e, t = {}) {
+function wme(e, t = {}) {
   const { steps: n = 10, margin: s = 0.19, room: o = 0.53 } = t;
   let [r, i, a] = [-1 / 0, 0, -1 / 0];
   for (let l = 0; l <= n; l++) {
@@ -19520,7 +19520,7 @@ Q("anim", {
     doc: "Raised by `driveRig` and `rigCheck` (engine/anim/proc/rig.ts) for a rig that breaks its own contract."
   }
 });
-function wme(e, t) {
+function bme(e, t) {
   const n = e.closed;
   return typeof n == "number" ? n : n?.[t] ?? e.names.length;
 }
@@ -19553,7 +19553,7 @@ function K1(e, t, n, s, o = !1) {
   return { positions: l, world: u, held: [a, c] };
 }
 const RO = (e) => e.world.reduce((t, n) => n.reduce((s, o) => s.numbers(o.toArray()), t), new Ws()).hex(), Y1 = (e) => String(Math.round(e * 1e4) / 1e4);
-function bme(e, t = {}) {
+function vme(e, t = {}) {
   const { tolerance: n = 1e-3, floor: s = 0 } = t;
   TR(e);
   const o = /* @__PURE__ */ new Map(), r = (u) => e.names.indexOf(u), i = (e.bones ?? []).map(([u, d, h]) => [r(u), r(d), `${u}–${d}`, h]);
@@ -19605,10 +19605,10 @@ const X1 = Object.freeze({
   sprint: { vol: 1, pitch: 1.03 },
   slide: null
 });
-function vme(e) {
+function xme(e) {
   return e < 2.6 ? "walk" : e < 5.4 ? "run" : "sprint";
 }
-function xme(e, t) {
+function kme(e, t) {
   const n = qJ[t], s = Object.hasOwn(X1, e) ? X1[e] : X1["*"];
   return n ? { sfx: s, vol: n.vol, pitch: n.pitch } : null;
 }
@@ -23045,7 +23045,7 @@ function Bx(e) {
   }
 }
 Bx(q);
-function kme(e, t, n = q) {
+function Mme(e, t, n = q) {
   return Bx(n), n.def("geometry", e, t);
 }
 function ZZ(e, t = q) {
@@ -23055,7 +23055,7 @@ function eee(e, t = q) {
   const { geometry: n, params: s = {} } = typeof e == "string" ? { geometry: e } : e, o = ZZ(n, t), r = o.id === n ? s : {}, i = Dt(o.params, r, `the params of ${o.id}`);
   return o.create(i);
 }
-const Mme = ["character", "object", "environment"], Nh = { character: 1, object: 2, environment: 4 }, tee = 511, nw = { character: 512, actor: 1024 };
+const Ame = ["character", "object", "environment"], Nh = { character: 1, object: 2, environment: 4 }, tee = 511, nw = { character: 512, actor: 1024 };
 function sL(e) {
   return e >= 1 ? (Math.floor(e) - 1) % tee + 1 : 0;
 }
@@ -24102,7 +24102,7 @@ function lte(e) {
     }
   });
 }
-function Ame(e, t, n = q) {
+function Sme(e, t, n = q) {
   return lte(n), n.def("camera", e, t);
 }
 function ute(e, t) {
@@ -24901,7 +24901,7 @@ const Dne = {
     description: "The classic views zoom in whole steps only (1, 2, 3, 4), so a pixel look's pixels stay square. A view setting: never in the hash."
     // prettier-ignore
   }
-}, Sme = ct(Dne);
+}, _me = ct(Dne);
 function CL(e) {
   const t = e("cam.fov");
   return {
@@ -27611,7 +27611,7 @@ function Hoe(e, t) {
   }
   return s;
 }
-function _me(e, t) {
+function Ome(e, t) {
   const n = { ...e.colors };
   for (const [s, o] of Object.entries(t)) n[s] = Kt(o);
   return { ...e, colors: n };
@@ -28615,7 +28615,7 @@ function Fre(e = q) {
   });
 }
 Fre();
-function Ome(e, t, n = q) {
+function Eme(e, t, n = q) {
   return n.def("light", e, t);
 }
 function qre(e) {
@@ -29268,6 +29268,11 @@ Q("gfx", {
     template: "{feature} is off: {reason}; {downgrade}",
     fix: "nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there",
     doc: "Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off."
+  },
+  GFX_NO_SHELLS: {
+    template: "{feature} is off: {reason}; {downgrade}",
+    fix: "nothing to do for play; take feature:shells out of gfx.featuresOff to see the looks' outline shells again",
+    doc: "Advice from the feature registry (engine/gfx/features.ts) when `feature:shells` is off, which only `gfx.featuresOff` does: the stage makes no outline shell (engine/gfx/stageShells.ts), so a look's shells are left out and `x perf --feature feature:shells` prices them."
   }
 });
 const die = {
@@ -29324,6 +29329,10 @@ function pie(e = q) {
     needs: ["float32-filterable"],
     advice: "GFX_NO_FLOAT32_FILTERING",
     downgrade: "three.js samples 32-bit float textures without filtering, blocky up close"
+  }), t("feature:shells", {
+    description: "Outline shells round the stage's props and bodies, for the looks that ask for them (engine/gfx/stageShells.ts): an inverted hull, a draw call each, for every prop page and every puppet.",
+    advice: "GFX_NO_SHELLS",
+    downgrade: "the looks that ask for shells outline with the chain's ink alone"
   }), t("feature:largeBuffers", {
     description: "Storage buffers of 256 MB and more, for GPU techniques at crowd scale (compute particles, GPU culling).",
     limits: { maxStorageBufferBindingSize: 268435456, maxBufferSize: 268435456 },
@@ -29384,9 +29393,12 @@ function LP(e) {
   return e?.on.includes(RP.id) ? sie : null;
 }
 function kie(e) {
+  return e === void 0 || e.on.includes("feature:shells");
+}
+function Mie(e) {
   return e?.on.includes(tk.id) ? bre : null;
 }
-function Mie(e, t) {
+function Aie(e, t) {
   const n = (s) => e?.on.includes(s.id) ?? !1;
   return { metalrough: n(rk), velocity: t === "traa" && n(tk) };
 }
@@ -29397,7 +29409,7 @@ const PP = { lift: 0.02, rim: 0.04 }, AE = (e, t) => {
   const r = Ps(uT(e.x), e.y), i = Ps(Kw(o), lT(o)), a = at(t.sub(n), op(r.sub(i.mul(Tl(Pa(r, i), 0, n)))).mul(L8(i.y.mul(r.x).sub(i.x.mul(r.y)))));
   return at(En(o.greaterThanEqual(3.14159), t.sub(n), a), s.sub(t));
 };
-function Aie() {
+function Sie() {
   const e = new Gs({ transparent: !0, depthWrite: !1, fog: !1, side: ju });
   e.forceSinglePass = !0, Object.assign(e, {
     name: "fx:decal",
@@ -29410,8 +29422,8 @@ function Aie() {
   const t = Kh("fxShape", "vec4"), n = Kh("fxPaint", "vec4"), s = Fu().mul(2).sub(1).mul(n.y), o = op(s), r = t.x.lessThan(0.5), i = En(r, SE(s, o, t.z, t.y, t.w), AE(s, Ps(t.y, t.z))), a = n.x.mul(0.5), c = AE(s.sub(Ps(0, t.z.negate().add(a))), Ps(t.y, a)), l = En(r, SE(s, o, n.x, t.y, t.w), c), u = at(Na(i), 1e-4), d = Tl(we(0.5).sub(l.div(u)), 0, 1), f = Tl(we(0.5).sub(i.div(u)), 0, 1).mul(Tl(we(0.5).add(i.add(PP.rim).div(u)), 0, 1)), p = at(n.z.mul(d), n.w.mul(f));
   return e.colorNode = Pt(p), e.opacityNode = p, e;
 }
-function Sie(e) {
-  const t = Math.max(1, Math.floor(e.capacity)), n = new Cu(2, 2), s = Aie(), o = wr({
+function _ie(e) {
+  const t = Math.max(1, Math.floor(e.capacity)), n = new Cu(2, 2), s = Sie(), o = wr({
     name: e.name ?? "fx:decals",
     geometry: n,
     material: s,
@@ -29476,7 +29488,7 @@ function Sie(e) {
   };
   return d;
 }
-const _ie = {
+const Oie = {
   "emitter:smoke": {
     description: "Rising smoke that darkens, spreads and fades (shardfall).",
     area: [0.2, 0.05, 0.2],
@@ -29686,7 +29698,7 @@ const _ie = {
     count: 12,
     light: { color: "#ffb070", intensity: 30, distance: 10, offset: [0, 0.4, 0], flicker: 0.6 }
   }
-}, Oie = {
+}, Eie = {
   "emitter:bits": {
     description: "Debris chips thrown up and out, bouncing on the floor (the 2D engine’s bits).",
     area: [0.1, 0.2, 0.1],
@@ -29725,7 +29737,7 @@ const _ie = {
     alpha: [1, 0],
     count: 5
   }
-}, Eie = {
+}, $ie = {
   "emitter:hit": {
     description: "A hit: sparks flying from where it lands, a white star, a little shake.",
     events: ["hit"],
@@ -29880,7 +29892,7 @@ const _ie = {
       { emitter: "emitter:dust", count: 8, set: { spread: 1.5 } }
     ]
   }
-}, $ie = { ..._ie, ...Oie, ...Eie }, Iu = (e, t, n = [0, 0, 0]) => ({ type: "array", items: { type: "number" }, default: n, unit: t, description: e }), _l = (e, t, n, s = 0) => ({
+}, Tie = { ...Oie, ...Eie, ...$ie }, Iu = (e, t, n = [0, 0, 0]) => ({ type: "array", items: { type: "number" }, default: n, unit: t, description: e }), _l = (e, t, n, s = 0) => ({
   type: "array",
   items: { type: "number", minimum: s },
   default: e,
@@ -29921,7 +29933,7 @@ const _ie = {
   },
   bounce: dn(0.3, "", "How much of its fall speed a landing keeps, 0 to 1.", 1),
   prewarm: dn(0, "s", "Born as if emitted over the last this many seconds, so a new emitter starts in full swing.")
-}, Tie = {
+}, zie = {
   emitter: { type: "string", default: "emitter:sparks", description: "The other emitter's id." },
   count: { type: "integer", default: 0, minimum: 0, description: "Its particles per burst." },
   offset: Iu("Where it bursts, from where this one does.", "m"),
@@ -29947,7 +29959,7 @@ const _ie = {
   offset: Iu("Where it bursts or runs, from the point given.", "m"),
   layers: {
     type: "array",
-    items: { type: "object", properties: Tie },
+    items: { type: "object", properties: zie },
     default: [],
     description: "Other emitters bursting with it: { emitter, count, offset, set }."
   },
@@ -29976,8 +29988,8 @@ const _ie = {
     properties: EE
   },
   gallery: Sc()
-}, $E = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i, zie = new Set(Object.keys(NP));
-function Iie(e) {
+}, $E = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i, Iie = new Set(Object.keys(NP));
+function Rie(e) {
   const t = [], n = (s, o) => {
     for (const r of ["life", "size", "brightness", "alpha", "color"]) {
       const i = s[r];
@@ -29993,7 +30005,7 @@ function Iie(e) {
   n(e, ""), e.layers.forEach((s, o) => {
     const r = `layers[${o}].`;
     s.emitter === e.id && t.push(`${r}emitter is the emitter itself`);
-    const i = Object.keys(s.set).filter((a) => !zie.has(a));
+    const i = Object.keys(s.set).filter((a) => !Iie.has(a));
     i.length && t.push(`${r}set changes ${i.join(", ")}, which are not particle fields`), n(s.set, `${r}set.`);
   });
   for (const [s, o] of [
@@ -30010,20 +30022,20 @@ function Yp(e) {
       fields: jP,
       fallback: "emitter:sparks",
       defineWith: "defineEmitter('<id>', { count: 12, velocity: [0, 2, 0], color: ['#ffffff', '#ffaa44'] })",
-      check: (t) => Iie(t)
+      check: (t) => Rie(t)
     });
-    for (const [t, n] of Object.entries($ie)) e.def("emitter", t, { ...n });
+    for (const [t, n] of Object.entries(Tie)) e.def("emitter", t, { ...n });
   }
 }
 Yp(q);
-function Eme(e, t, n = q) {
+function $me(e, t, n = q) {
   return Yp(n), n.def("emitter", e, { ...t });
 }
 function nc(e, t = q) {
   return Yp(t), t.get("emitter", e);
 }
-const TE = /* @__PURE__ */ new WeakMap(), Rie = {};
-function vw(e, t = Rie) {
+const TE = /* @__PURE__ */ new WeakMap(), Lie = {};
+function vw(e, t = Lie) {
   let n = TE.get(e);
   n || TE.set(e, n = /* @__PURE__ */ new WeakMap());
   const s = n.get(t);
@@ -30048,7 +30060,7 @@ function vw(e, t = Rie) {
   });
   return n.set(t, b), b;
 }
-function Lie(e, t, n) {
+function Pie(e, t, n) {
   let s = e.intensity;
   if (e.flicker > 0) {
     const o = Math.sin(t * 13 + n) * 0.5 + Math.sin(t * 7.3 + n * 1.7) * 0.3 + Math.sin(t * 23 + n * 0.3) * 0.2;
@@ -30056,8 +30068,8 @@ function Lie(e, t, n) {
   }
   return e.pulse > 0 && (s *= 0.55 + 0.45 * Math.sin(t * e.pulse * 2 * Math.PI + n)), s;
 }
-const Pie = { blade: "#d8f2ff", claw: "#ff7a5a" };
-function Nie(e) {
+const Nie = { blade: "#d8f2ff", claw: "#ff7a5a" };
+function jie(e) {
   const t = Math.max(1, Math.floor(e.capacity)), n = Math.max(2, Math.floor(e.samples ?? 12)), s = t * n * 2, o = new Float32Array(s * 3), r = new Float32Array(s * 3), i = new Float32Array(s * 3);
   for (let m = 1; m < i.length; m += 3) i[m] = 1;
   const a = [];
@@ -30125,7 +30137,7 @@ function Nie(e) {
     }
   };
 }
-function jie(e) {
+function Die(e) {
   const t = [];
   return {
     get count() {
@@ -30156,7 +30168,7 @@ function zE(e) {
   const { position: t, x: n, y: s, z: o } = e;
   return t ? gs(t) : typeof n == "number" && typeof o == "number" ? [n, typeof s == "number" ? s : 0, o] : null;
 }
-function Die(e) {
+function Cie(e) {
   const t = {};
   return e.velocity && (t.velocity = gs(e.velocity)), e.color && (t.color = [Kt(e.color), Kt(e.color)]), typeof e.ground == "number" && (t.ground = e.ground), t;
 }
@@ -30168,7 +30180,7 @@ const xw = {
   still: 625e-6
   // under this (0.05 units) it does not move the camera
 };
-class Cie {
+class Fie {
   /** The amplitude now (m). */
   amount = 0;
   /** Presentation time (s), advanced by `update`. */
@@ -30203,15 +30215,15 @@ class Cie {
     t.position.sub(this.#e), this.#e.set(0, 0, 0), t.updateMatrixWorld();
   }
 }
-const Fr = { particles: 4096, glows: 1024, decals: 1024, ribbons: 32, boltLights: 4 }, ha = { color: "#ffb347", core: "#fff3c4", halo: 0.3125, radius: 0.125, light: 10, reach: 2.5 }, Fie = jP.ring.default;
-function qie(e = {}) {
+const Fr = { particles: 4096, glows: 1024, decals: 1024, ribbons: 32, boltLights: 4 }, ha = { color: "#ffb347", core: "#fff3c4", halo: 0.3125, radius: 0.125, light: 10, reach: 2.5 }, qie = jP.ring.default;
+function Bie(e = {}) {
   const t = e.registry ?? q;
   Yp(t);
   const n = new Zl(1), s = e.fxRng ?? ((..._) => n.stream(..._)), o = new Zre(Fr.particles);
   let r = null;
-  const i = (_) => _.gpu && r || o, a = nie({ capacity: Fr.particles + Fr.glows }), c = Sie({ capacity: Fr.decals }), l = Nie({ capacity: Fr.ribbons }), u = new Cie(), d = new tn();
+  const i = (_) => _.gpu && r || o, a = nie({ capacity: Fr.particles + Fr.glows }), c = _ie({ capacity: Fr.decals }), l = jie({ capacity: Fr.ribbons }), u = new Fie(), d = new tn();
   d.name = "fx", d.add(c.batch.root, l.mesh, a.batch.root);
-  const h = jie(Fr.decals), f = /* @__PURE__ */ new Map();
+  const h = Die(Fr.decals), f = /* @__PURE__ */ new Map();
   let p = { emits: [], places: [] }, m = { trails: [], bolts: [] }, g = [], [y, w, v] = [0, -1 / 0, 0], b = { size: -1, byType: /* @__PURE__ */ new Map() };
   function x(_) {
     const M = t.list("emitter");
@@ -30251,7 +30263,7 @@ function qie(e = {}) {
       if (!A.enabled || !S || !O.length) return 0;
       v++;
       let E = 0;
-      for (const $ of O) E += k($, S, M?.size ?? 1, Die(M));
+      for (const $ of O) E += k($, S, M?.size ?? 1, Cie(M));
       return E;
     },
     feed(_) {
@@ -30270,7 +30282,7 @@ function qie(e = {}) {
       A.enabled && m.trails.push([_, Kt(M)]);
     },
     decal(_, M) {
-      A.enabled && h.lay(gs(_), { ...Fie, ...M }, 1);
+      A.enabled && h.lay(gs(_), { ...qie, ...M }, 1);
     },
     bolt(_, M = {}) {
       if (!A.enabled) return;
@@ -30296,7 +30308,7 @@ function qie(e = {}) {
             g.push({
               position: [L, C, D],
               color: N,
-              intensity: Lie(S.light, y, T.seed),
+              intensity: Pie(S.light, y, T.seed),
               distance: P,
               decay: 2
             });
@@ -30361,20 +30373,20 @@ ct({
     description: "Draws the effects: particles, telegraphs, trails, bolts and camera shake. A view setting: never in the hash."
   }
 });
-const Bie = ["state", "kind", "team", "x", "y", "z", "vx", "vy", "vz", "radius"], Gie = { telegraph: "string", position: "array", yaw: "number", u: "number" };
-function Hie(e = q) {
+const Gie = ["state", "kind", "team", "x", "y", "z", "vx", "vy", "vz", "radius"], Hie = { telegraph: "string", position: "array", yaw: "number", u: "number" };
+function Wie(e = q) {
   if (!e.kinds().includes("component")) return { bolts: [], telegraphs: [] };
   const t = e.list("component"), n = (s) => s.fields;
   return {
-    bolts: t.filter((s) => Bie.every((o) => n(s)[o])).map((s) => s.id),
-    telegraphs: t.filter((s) => Object.entries(Gie).every(([o, r]) => n(s)[o]?.type === r)).map((s) => s.id)
+    bolts: t.filter((s) => Gie.every((o) => n(s)[o])).map((s) => s.id),
+    telegraphs: t.filter((s) => Object.entries(Hie).every(([o, r]) => n(s)[o]?.type === r)).map((s) => s.id)
   };
 }
-function Wie(e = {}) {
-  const t = e.registry ?? q, n = qie({ registry: t, ...e.fxRng ? { fxRng: e.fxRng } : {} }), s = xee({ effects: n });
+function Uie(e = {}) {
+  const t = e.registry ?? q, n = Bie({ registry: t, ...e.fxRng ? { fxRng: e.fxRng } : {} }), s = xee({ effects: n });
   n.root.add(s.root);
   let o = null;
-  const { bolts: r, telegraphs: i } = Hie(t), a = /* @__PURE__ */ new Map(), c = [];
+  const { bolts: r, telegraphs: i } = Wie(t), a = /* @__PURE__ */ new Map(), c = [];
   let l = [];
   return {
     effects: n,
@@ -30410,7 +30422,7 @@ function Wie(e = {}) {
       for (const f of c) n.bolt(f);
       for (const f of l) n.telegraph(f);
       for (const f of e.trails?.().values() ?? [])
-        f.length > 1 && n.trail(f, Pie.blade);
+        f.length > 1 && n.trail(f, Nie.blade);
       n.frame(u, d);
     },
     get gpuParticles() {
@@ -30430,13 +30442,13 @@ function Wie(e = {}) {
     }
   };
 }
-function Uie(e) {
+function Vie(e) {
   const { x: t, y: n, z: s, q: o } = e;
   if (typeof t != "number" || typeof n != "number" || typeof s != "number") return null;
   const r = Array.isArray(o) && o.length === 4 && o.every(Number.isFinite) ? o : [0, 0, 0, 1];
   return { p: [t, n, s], q: [r[0], r[1], r[2], r[3]] };
 }
-function Vie(e) {
+function Kie(e) {
   const t = e.registry ?? q, n = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Set(), r = /* @__PURE__ */ new Map(), [i, a, c] = [new J(), new J(), new z()];
   let l = null, [u, d] = [0, 1 / 60], h = null, f = [], p = "";
   function m() {
@@ -30454,7 +30466,7 @@ function Vie(e) {
       w !== void 0 && w > 0 && ([u, d] = [u + w, w]);
       const v = /* @__PURE__ */ new Set();
       for (const b of y) {
-        const x = b.sceneProp, k = x && typeof x.prop == "string" ? Uie(x) : null;
+        const x = b.sceneProp, k = x && typeof x.prop == "string" ? Vie(x) : null;
         if (!x || !k || v.has(b.id)) continue;
         v.add(b.id);
         const A = n.get(b.id), _ = x.prop, M = b.propLight?.on !== !1;
@@ -30511,33 +30523,33 @@ Q("gfx", {
     doc: "Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh."
   }
 });
-const $me = ["normal", "centre"];
-function Kie(e, t) {
+const Tme = ["normal", "centre"];
+function Yie(e, t) {
   const n = e.object;
   if (!n.isInstancedMesh) return null;
   const o = e.context.vertex?.nodes?.find((r) => r instanceof U$);
   return o?.instanceMatrixNode ? o.instanceMatrixNode : (t.warnOnce("GFX_OUTLINE_UNPINNED", { object: n.name || n.type }, "outline"), null);
 }
-function Yie(e) {
+function Xie(e) {
   return e.object.isSkinnedMesh ? e.context.vertex?.nodes?.find((n) => n instanceof f8) ?? null : null;
 }
-function Xie(e, t) {
+function Jie(e, t) {
   const [n, s, o] = [0, 1, 2].map((c) => e.element(Ye(c)).xyz), [r, i, a] = [o0(s, o), o0(o, n), o0(n, s)];
   return Pt(r.dot(t), i.dot(t), a.dot(t)).div(n.dot(r));
 }
-function Jie(e, t, n, s) {
+function Qie(e, t, n, s) {
   return Hs((o) => {
-    const r = Kie(o, s), i = r ? null : Yie(o), a = e === "centre" ? ga : Mk, c = i ? i.getSkinnedPosition(i.boneMatricesNode, ga) : null, l = r ? r.mul(je(ga, 1)).xyz : c ?? ga, u = r ? e === "centre" ? r.mul(je(a, 0)).xyz : N8(a, r) : i ? i.getSkinnedNormal(i.boneMatricesNode, Mk) : a, d = Ak.mul(je(l, 1)), h = ld.mul(d), f = ld.mul(Ak.mul(je(u, 0))), p = f.xy.mul(h.w).sub(h.xy.mul(f.w)).mul(s0), m = p.length(), g = p.div(at(m, 1e-9)).mul(ja(1e-9, m)), y = n > 0 ? at(j8(t.mul(s0.y).div(n)), 1) : t, w = g.mul(y).mul(2).div(s0), v = Pt(
+    const r = Yie(o, s), i = r ? null : Xie(o), a = e === "centre" ? ga : Mk, c = i ? i.getSkinnedPosition(i.boneMatricesNode, ga) : null, l = r ? r.mul(je(ga, 1)).xyz : c ?? ga, u = r ? e === "centre" ? r.mul(je(a, 0)).xyz : N8(a, r) : i ? i.getSkinnedNormal(i.boneMatricesNode, Mk) : a, d = Ak.mul(je(l, 1)), h = ld.mul(d), f = ld.mul(Ak.mul(je(u, 0))), p = f.xy.mul(h.w).sub(h.xy.mul(f.w)).mul(s0), m = p.length(), g = p.div(at(m, 1e-9)).mul(ja(1e-9, m)), y = n > 0 ? at(j8(t.mul(s0.y).div(n)), 1) : t, w = g.mul(y).mul(2).div(s0), v = Pt(
       w.x.mul(h.w).div(ld.element(Ye(0)).x),
       w.y.mul(h.w).div(ld.element(Ye(1)).y),
       we(0)
     ), b = rT.mul(Yw.mul(je(v, 0))).xyz;
-    return (c ?? ga).add(r ? Xie(r, b) : b);
+    return (c ?? ga).add(r ? Jie(r, b) : b);
   })();
 }
 function IE(e = {}) {
   const t = e.mode ?? "normal", n = e.log ?? Ne, s = me(e.width ?? 1), o = new Gs({ color: e.color ?? "#141018", side: Du, fog: !1 });
-  o.name = `outline:${t}`, o.positionNode = Jie(t, s, e.lines ?? 0, n);
+  o.name = `outline:${t}`, o.positionNode = Qie(t, s, e.lines ?? 0, n);
   const r = (a, c) => (a.name = `${c.name || c.type}/outline`, a.castShadow = !1, a.receiveShadow = !1, a.userData = { ...c.userData, outline: !0 }, a);
   return {
     material: o,
@@ -30552,7 +30564,7 @@ function IE(e = {}) {
     shell(a) {
       const c = a, l = c?.name || c?.type || String(c);
       if (!c?.isMesh) throw j("GFX_OUTLINE_TARGET", { object: l, problem: "it is not a mesh" });
-      const u = c.isInstancedMesh ? RE(c, o) : c.isSkinnedMesh ? Qie(c, o) : new fn(c.geometry, o);
+      const u = c.isInstancedMesh ? RE(c, o) : c.isSkinnedMesh ? Zie(c, o) : new fn(c.geometry, o);
       return r(u, c), c.add(u), u;
     },
     batch(a) {
@@ -30585,7 +30597,7 @@ function IE(e = {}) {
     }
   };
 }
-function Qie(e, t) {
+function Zie(e, t) {
   const n = new V$(e.geometry, t);
   return n.bindMode = e.bindMode, n.bind(e.skeleton, e.bindMatrix), n.frustumCulled = e.frustumCulled, n;
 }
@@ -30594,45 +30606,48 @@ function RE(e, t) {
   return n.instanceMatrix = e.instanceMatrix, n.count = e.count, n.frustumCulled = e.frustumCulled, n.renderOrder = e.renderOrder, n;
 }
 const LE = 270;
-function Zie(e) {
+function eae(e) {
   const t = IE({ mode: "centre", width: 0, lines: LE }), n = IE({ mode: "normal", width: 0, lines: LE });
   t.material.name = "outline:props", n.material.name = "outline:bodies";
   const s = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
-  let r = !1;
+  let r = !1, i = !1;
   return {
     get width() {
       return r ? t.width : 0;
     },
     count: () => ({
-      props: [...s.values()].reduce((i, a) => i + a.shells.length, 0),
+      props: [...s.values()].reduce((a, c) => a + c.shells.length, 0),
       bodies: o.size
     }),
-    set(i) {
-      r = i.width > 0, t.width = n.width = i.width, t.color.set(i.color), n.color.set(i.color);
+    set(a) {
+      r = a.width > 0 && !i, t.width = n.width = a.width, t.color.set(a.color), n.color.set(a.color);
     },
     sync() {
-      for (const a of e.props.meshes?.batches() ?? [])
-        s.has(a) || s.set(a, t.batch(a));
-      for (const a of s.values())
-        if (a.sync(), !r) for (const c of a.shells) c.visible = !1;
-      const i = new Set(e.actors.puppets.values());
-      for (const [a, c] of o)
-        (!i.has(a) || c.parent !== a.mesh) && o.delete(a);
-      for (const a of i) {
-        let c = o.get(a);
-        c || o.set(a, c = n.shell(a.mesh)), c.frustumCulled = !1, c.visible = r;
+      if (i) return;
+      for (const c of e.props.meshes?.batches() ?? [])
+        s.has(c) || s.set(c, t.batch(c));
+      for (const c of s.values())
+        if (c.sync(), !r) for (const l of c.shells) l.visible = !1;
+      const a = new Set(e.actors.puppets.values());
+      for (const [c, l] of o)
+        (!a.has(c) || l.parent !== c.mesh) && o.delete(c);
+      for (const c of a) {
+        let l = o.get(c);
+        l || o.set(c, l = n.shell(c.mesh)), l.frustumCulled = !1, l.visible = r;
       }
     },
-    register(i) {
-      const a = [
-        i.register("shells:props", { objects: () => [...s.values()].flatMap((c) => c.shells) }),
-        i.register("shells:bodies", { objects: () => [...o.values()] })
+    register(a, c) {
+      if (i = !kie(c), i) return { dispose: () => {
+      } };
+      const l = [
+        a.register("shells:props", { objects: () => [...s.values()].flatMap((u) => u.shells) }),
+        a.register("shells:bodies", { objects: () => [...o.values()] })
       ];
-      return { dispose: () => a.forEach((c) => c.dispose()) };
+      return { dispose: () => l.forEach((u) => u.dispose()) };
     },
     dispose() {
-      for (const i of s.values()) i.dispose();
-      for (const i of o.values()) i.removeFromParent();
+      for (const a of s.values()) a.dispose();
+      for (const a of o.values()) a.removeFromParent();
       s.clear(), o.clear(), t.dispose(), n.dispose();
     }
   };
@@ -30640,9 +30655,9 @@ function Zie(e) {
 const PE = 0.1;
 function DP(e, t, n, s) {
   const o = Lp(e, t, n + PE, s), r = (e.roofs ?? []).some(({ footprint: [i, a, c, l] }) => t > i && t < c && s > a && s < l);
-  return { storey: o, indoors: o >= 0 && (r || sI(e, t, n + PE, s) !== null), low: eae(e, o, t, n, s) };
+  return { storey: o, indoors: o >= 0 && (r || sI(e, t, n + PE, s) !== null), low: tae(e, o, t, n, s) };
 }
-function eae(e, t, n, s, o) {
+function tae(e, t, n, s, o) {
   const r = Ip(e, n, o), i = e.storeys?.[t];
   if (!r || !i) return !1;
   const a = e.legend[i.tiles[r.row * e.cols + r.col]];
@@ -30651,7 +30666,7 @@ function eae(e, t, n, s, o) {
 function CP(e, t, n, s, o) {
   return t >= 0 && Lp(e, n, s, o) > t;
 }
-function tae(e, t, n, s = !1) {
+function nae(e, t, n, s = !1) {
   return e.map((o) => {
     const r = o.storey ?? 0;
     return t < 0 || r <= t && !(n && o.roof) && !(s && o.heads && r === t);
@@ -30666,13 +30681,13 @@ function FP(e) {
     s = l;
     const u = c.map((h) => ({ storey: h.userData.storey, roof: t.has(h), heads: n.has(h) }));
     let d = !1;
-    return tae(u, r, i, a).forEach((h, f) => {
+    return nae(u, r, i, a).forEach((h, f) => {
       c[f].visible !== h && ([c[f].visible, d] = [h, !0]);
     }), d;
   };
   return { set: o, clear: () => o(-1, !1) };
 }
-const nae = 2376512323, sae = 3625334849, oae = 3407524639, rae = 16777216;
+const sae = 2376512323, oae = 3625334849, rae = 3407524639, iae = 16777216;
 function qP(e) {
   const { scale: t = 8, amount: n = 0.15, octaves: s = 3, gain: o = 0.5, seed: r = 1 } = e;
   if (!(t > 0) || !(s >= 1) || !Number.isInteger(s) || !Number.isInteger(r))
@@ -30681,7 +30696,7 @@ function qP(e) {
     );
   return { scale: t, amount: n, octaves: s, gain: o, seed: r };
 }
-function iae(e, t) {
+function aae(e, t) {
   const n = [];
   let s = 1;
   for (let o = 0; o < e; o++)
@@ -30689,21 +30704,21 @@ function iae(e, t) {
   return { each: n, total: n.reduce((o, r) => o + r, 0) };
 }
 function ah(e, t, n) {
-  let s = e.toUint().mul(Ht(nae)).bitXor(t.toUint().mul(Ht(sae))).bitXor(Ht(Math.imul(n | 0, oae) >>> 0));
-  return s = s.bitXor(s.shiftRight(Ht(16))).mul(Ht(2246822507)), s = s.bitXor(s.shiftRight(Ht(13))).mul(Ht(3266489909)), s = s.bitXor(s.shiftRight(Ht(16))), we(s.shiftRight(Ht(8))).div(rae);
+  let s = e.toUint().mul(Ht(sae)).bitXor(t.toUint().mul(Ht(oae))).bitXor(Ht(Math.imul(n | 0, rae) >>> 0));
+  return s = s.bitXor(s.shiftRight(Ht(16))).mul(Ht(2246822507)), s = s.bitXor(s.shiftRight(Ht(13))).mul(Ht(3266489909)), s = s.bitXor(s.shiftRight(Ht(16))), we(s.shiftRight(Ht(8))).div(iae);
 }
-function aae(e, t = 1) {
+function cae(e, t = 1) {
   const n = e.floor(), [s, o] = [n.x.toInt(), n.y.toInt()], r = e.sub(n), i = r.mul(r).mul(we(3).sub(r.mul(2))), a = ah(s, o, t), c = ah(s.add(1), o, t), l = ah(s, o.add(1), t), u = ah(s.add(1), o.add(1), t), d = a.add(c.sub(a).mul(i.x));
   return d.add(l.add(u.sub(l).mul(i.x)).sub(d).mul(i.y));
 }
 function BP(e, t = {}) {
-  const { octaves: n, gain: s, seed: o } = qP(t), { each: r, total: i } = iae(n, s);
+  const { octaves: n, gain: s, seed: o } = qP(t), { each: r, total: i } = aae(n, s);
   let a = we(0), c = 1;
   for (let l = 0; l < n; l++)
-    a = a.add(aae(e.mul(c), o + l).mul(r[l])), c *= 2;
+    a = a.add(cae(e.mul(c), o + l).mul(r[l])), c *= 2;
   return a.div(i);
 }
-function cae(e = {}, t = Da) {
+function lae(e = {}, t = Da) {
   const { scale: n, amount: s } = qP(e), o = Ps(t.x, t.z).div(n);
   return we(1).add(BP(o, e).mul(2).sub(1).mul(s));
 }
@@ -30712,8 +30727,8 @@ function kw(e) {
   const { color: t, map: n } = e, s = t ? Pt(t.r, t.g, t.b) : Pt(1, 1, 1);
   return n ? Yh(n, Fu().mul(Ps(n.repeat.x, n.repeat.y))).rgb.mul(s) : s;
 }
-function lae(e, t) {
-  const n = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Set(), [o, r] = [t[0], t[1]], i = BP(Ps(Da.x, Da.z).div(6), { octaves: 3, seed: 7 }).sub(0.5), a = D8.y.max(0.05), c = we(1).sub(a.mul(a)).max(0).sqrt().div(a).add(i.mul(0.2)), l = Ns(e.steep - NE, e.steep + NE, c), u = Da.y.sub(e.origin[1]).add(i.mul(1.5)), d = Ns(e.high - 1, e.high + 1, u), h = cae({ scale: 24, amount: 0.08, seed: 3 }), f = o ? kw(o) : null, p = r && e.high > 0 ? kw(r) : null;
+function uae(e, t) {
+  const n = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Set(), [o, r] = [t[0], t[1]], i = BP(Ps(Da.x, Da.z).div(6), { octaves: 3, seed: 7 }).sub(0.5), a = D8.y.max(0.05), c = we(1).sub(a.mul(a)).max(0).sqrt().div(a).add(i.mul(0.2)), l = Ns(e.steep - NE, e.steep + NE, c), u = Da.y.sub(e.origin[1]).add(i.mul(1.5)), d = Ns(e.high - 1, e.high + 1, u), h = lae({ scale: 24, amount: 0.08, seed: 3 }), f = o ? kw(o) : null, p = r && e.high > 0 ? kw(r) : null;
   return {
     wrap(m) {
       if (s.has(m)) return m;
@@ -30731,21 +30746,21 @@ function lae(e, t) {
     }
   };
 }
-const ch = 32, uae = [1, 2, 4], dae = [0, 48, 96], hae = 2, fae = 0.4663076581549986;
-function pae(e, t) {
+const ch = 32, dae = [1, 2, 4], hae = [0, 48, 96], fae = 2, pae = 0.4663076581549986;
+function mae(e, t) {
   const n = e;
-  return n.isOrthographicCamera ? (n.top - n.bottom) / n.zoom / (2 * fae) : e.getWorldPosition(mae).distanceTo(t) / (e.zoom ?? 1);
+  return n.isOrthographicCamera ? (n.top - n.bottom) / n.zoom / (2 * pae) : e.getWorldPosition(gae).distanceTo(t) / (e.zoom ?? 1);
 }
-const [mae, gae] = [new z(), new z()];
-class yae extends p8 {
+const [gae, yae] = [new z(), new z()];
+class wae extends p8 {
   update(t) {
-    const n = pae(t, this.getWorldPosition(gae));
+    const n = mae(t, this.getWorldPosition(yae));
     let s = 0;
     for (; s + 1 < this.levels.length && n >= this.levels[s + 1].distance; ) s++;
     this.levels.forEach((o, r) => o.object.visible = r === s), this._currentLevel = s;
   }
 }
-function wae(e) {
+function bae(e) {
   const { cols: t, rows: n, cell: s, heights: o } = e, r = (a, c) => o[Math.min(n, Math.max(0, c)) * (t + 1) + Math.min(t, Math.max(0, a))], i = new Float32Array((n + 1) * (t + 1) * 3);
   for (let a = 0; a <= n; a++)
     for (let c = 0; c <= t; c++) {
@@ -30754,7 +30769,7 @@ function wae(e) {
     }
   return i;
 }
-function bae(e, t, [n, s, o, r], i, a, c) {
+function vae(e, t, [n, s, o, r], i, a, c) {
   const { cell: l, origin: u, heights: d } = e, h = Yn(), [f, p] = [o / i, r / i], m = (v, b, x = 0) => {
     const [k, A] = [n + v * i, s + b * i], _ = A * (e.cols + 1) + k, [M, S] = [u[0] + k * l, u[2] + A * l], O = [t[_ * 3], t[_ * 3 + 1], t[_ * 3 + 2]];
     return h.vertex([M - a[0], d[_] - x - a[1], S - a[2]], O, [M, S]);
@@ -30775,29 +30790,29 @@ function bae(e, t, [n, s, o, r], i, a, c) {
     // west, south to north
   ];
   for (const v of w) {
-    const b = v.map(([k, A]) => m(k, A)), x = v.map(([k, A]) => m(k, A, hae));
+    const b = v.map(([k, A]) => m(k, A)), x = v.map(([k, A]) => m(k, A, fae));
     for (let k = 0; k + 1 < v.length; k++)
       h.triangle(b[k], b[k + 1], x[k]), h.triangle(b[k + 1], x[k + 1], x[k]);
   }
   return h.build();
 }
-function vae(e, t, [n, s, o, r]) {
+function xae(e, t, [n, s, o, r]) {
   for (let i = s; e && i < s + r; i++) for (let a = n; a < n + o; a++) if (e[i * t + a]) return !0;
   return !1;
 }
 function GP(e, t) {
   const n = new tn();
   n.name = `terrain:${e.name}`, n.userData.terrain = e.name;
-  const [s, ...o] = e.materials.map((f) => t.materials.get(f)), r = lae(e, o), i = wae(e), a = [], c = [], { cell: l, origin: u, heights: d } = e;
+  const [s, ...o] = e.materials.map((f) => t.materials.get(f)), r = uae(e, o), i = bae(e), a = [], c = [], { cell: l, origin: u, heights: d } = e;
   for (let f = 0; f < e.rows; f += ch)
     for (let p = 0; p < e.cols; p += ch) {
-      const [m, g] = [Math.min(ch, e.cols - p), Math.min(ch, e.rows - f)], y = d[(f + (g >> 1)) * (e.cols + 1) + p + (m >> 1)], w = [u[0] + (p + m / 2) * l, y, u[2] + (f + g / 2) * l], v = new yae();
+      const [m, g] = [Math.min(ch, e.cols - p), Math.min(ch, e.rows - f)], y = d[(f + (g >> 1)) * (e.cols + 1) + p + (m >> 1)], w = [u[0] + (p + m / 2) * l, y, u[2] + (f + g / 2) * l], v = new wae();
       v.name = `${n.name}/${p},${f}`, v.position.set(...w);
-      const b = vae(t.cut, e.cols, [p, f, m, g]);
-      uae.forEach((x, k) => {
+      const b = xae(t.cut, e.cols, [p, f, m, g]);
+      dae.forEach((x, k) => {
         if (m % x || g % x || b && x > 1) return;
-        const A = bae(e, i, [p, f, m, g], x, w, b ? t.cut : null), _ = new fn(A, r.wrap(s));
-        Object.assign(_, { name: `${v.name}#${k}`, castShadow: !0, receiveShadow: !0 }), Object.assign(_.userData, { terrain: e.name, restyle: (M) => r.wrap(M) }), v.addLevel(_, dae[k]), c.push(_);
+        const A = vae(e, i, [p, f, m, g], x, w, b ? t.cut : null), _ = new fn(A, r.wrap(s));
+        Object.assign(_, { name: `${v.name}#${k}`, castShadow: !0, receiveShadow: !0 }), Object.assign(_.userData, { terrain: e.name, restyle: (M) => r.wrap(M) }), v.addLevel(_, hae[k]), c.push(_);
       }), a.push(v), n.add(v);
     }
   n.updateMatrixWorld(!0);
@@ -30824,7 +30839,7 @@ function GP(e, t) {
     }
   };
 }
-function xae(e, t) {
+function kae(e, t) {
   const [n, s] = Ci(e, t.position[0], t.position[2]);
   return { ...t, position: [n, t.position[1] - e.at[1], s], yaw: t.yaw - e.turn * Math.PI / 2 };
 }
@@ -30832,7 +30847,7 @@ function Mw(e, [t, n, s]) {
   const [o, r] = Ci(e, t, s);
   return [o, n - e.at[1], r];
 }
-function kae(e, t) {
+function Mae(e, t) {
   const n = new tn();
   n.name = `site:${e.name}`;
   const s = e.terrain ? GP(e.terrain, { materials: t.materials, cut: e.cut }) : null;
@@ -30866,7 +30881,7 @@ function kae(e, t) {
       const h = d ? a(l) : null;
       i = h ? { structure: h.structure, storey: h.storey } : null, r?.update(c, l, { fade: u });
       for (const f of o)
-        f.cutaway?.update(xae(f.structure, c), Mw(f.structure, l), { fade: u }), h?.structure === f.structure ? f.storeys.set(h.storey, h.indoors, h.low) : f.storeys.clear();
+        f.cutaway?.update(kae(f.structure, c), Mw(f.structure, l), { fade: u }), h?.structure === f.structure ? f.storeys.set(h.storey, h.indoors, h.low) : f.storeys.clear();
     },
     where: a,
     hides(c, l, u) {
@@ -30892,16 +30907,16 @@ function kae(e, t) {
   };
 }
 const Ta = 60;
-function Mae(e, t, n = {}) {
-  const { corner: [s, o] = [0, 0], y: r = 0, hole: i = !1 } = n, [a, c] = e, l = i ? Sae(s, o, a, c, r - 0.02) : Aae(s, o, a, c, r - 0.02), u = new fn(l, t);
+function Aae(e, t, n = {}) {
+  const { corner: [s, o] = [0, 0], y: r = 0, hole: i = !1 } = n, [a, c] = e, l = i ? _ae(s, o, a, c, r - 0.02) : Sae(s, o, a, c, r - 0.02), u = new fn(l, t);
   return Object.assign(u, { name: "stage/ground", receiveShadow: !0 }), u;
 }
-function Aae(e, t, n, s, o) {
+function Sae(e, t, n, s, o) {
   const [r, i] = [n + 2 * Ta, s + 2 * Ta], a = new Cu(r, i).rotateX(-Math.PI / 2).translate(e + n / 2, o, t + s / 2), c = a.getAttribute("uv");
   for (let l = 0; l < c.count; l++) c.setXY(l, c.getX(l) * r, c.getY(l) * i);
   return a;
 }
-function Sae(e, t, n, s, o) {
+function _ae(e, t, n, s, o) {
   const r = [e - Ta, e, e + n, e + n + Ta], i = [t - Ta, t, t + s, t + s + Ta], [a, c, l, u] = [[], [], [], []];
   for (const f of i)
     for (const p of r)
@@ -30913,7 +30928,7 @@ function Sae(e, t, n, s, o) {
   const h = new vr();
   return h.setAttribute("position", new Ra(a, 3)), h.setAttribute("normal", new Ra(c, 3)), h.setAttribute("uv", new Ra(l, 2)), h.setIndex(u), h;
 }
-const _ae = {
+const Oae = {
   color: { type: "string", default: "#06050b", description: "Its colour, hex." },
   start: { type: "number", default: 12, minimum: 0, unit: "m", description: "Where range fog starts, past the focus." },
   end: { type: "number", default: 70, minimum: 0, unit: "m", description: "Where range fog is whole, past the focus." },
@@ -30927,12 +30942,12 @@ const _ae = {
     maximum: 1,
     description: "Height fog's density at the floor, 0 (none) to 1."
   }
-}, Oae = {
+}, Eae = {
   sky: { type: "string", default: "#c8d4ff", description: "The colour from above, hex." },
   ground: { type: "string", default: "#4a3f30", description: "The colour from below, hex." },
   intensity: { type: "number", default: 1, minimum: 0, description: "How bright it is." }
 };
-function Eae() {
+function $ae() {
   const e = new eT("#ffffff", "#000000", 0);
   e.name = "atmosphere/ambient";
   let t = { color: "#000000", start: 0, end: 1, amount: 0, floor: 0, ceiling: 1, height: 0 };
@@ -30969,8 +30984,8 @@ function Eae() {
     }
   };
 }
-const $ae = ["mountains", "hills", "forest"], rs = { width: 1024, height: 128, repeat: 3, radius: 100, band: 30, foot: 4 }, jE = Math.PI * 2, Tae = (e) => Math.min(1, Math.max(0, e)), Aw = (e, t, n) => Tae((e - t) / (n - t)), zae = (e, t) => 0.52 * (1 - Math.abs(Math.sin(e * 1.5 + t[0]))) + 0.3 * (1 - Math.abs(Math.sin(e * 3.5 + t[1]))) + 0.18 * (1 - Math.abs(Math.sin(e * 8.5 + t[2]))), DE = (e, t) => 0.55 + 0.25 * Math.sin(e * 2 + t[3]) + 0.14 * Math.sin(e * 5 + t[4]) + 0.06 * Math.sin(e * 11 + t[5]), Iae = {
-  mountains: (e, t) => Aw(zae(e, t), 0.12, 0.95),
+const Tae = ["mountains", "hills", "forest"], rs = { width: 1024, height: 128, repeat: 3, radius: 100, band: 30, foot: 4 }, jE = Math.PI * 2, zae = (e) => Math.min(1, Math.max(0, e)), Aw = (e, t, n) => zae((e - t) / (n - t)), Iae = (e, t) => 0.52 * (1 - Math.abs(Math.sin(e * 1.5 + t[0]))) + 0.3 * (1 - Math.abs(Math.sin(e * 3.5 + t[1]))) + 0.18 * (1 - Math.abs(Math.sin(e * 8.5 + t[2]))), DE = (e, t) => 0.55 + 0.25 * Math.sin(e * 2 + t[3]) + 0.14 * Math.sin(e * 5 + t[4]) + 0.06 * Math.sin(e * 11 + t[5]), Rae = {
+  mountains: (e, t) => Aw(Iae(e, t), 0.12, 0.95),
   hills: (e, t) => Aw(DE(e, t), 0.15, 1),
   forest: (e, t) => 0.6 * Aw(DE(e, t), 0.2, 1) + 0.4 * (1 - Math.abs(Math.sin(e * 61 + t[0]))) ** 3
 };
@@ -30982,7 +30997,7 @@ function CE(e, t = rs.width, n = rs.height) {
       (u, d) => Mo(ew(ew(a.base, a.sh, d / 15), e.haze, o.haze))
     ), l = Mo(ew(a.lt, e.haze, o.haze));
     for (let u = 0; u < t; u++) {
-      const d = Math.round(Iae[o.kind](u / t * jE, i) * o.height * (n - 1));
+      const d = Math.round(Rae[o.kind](u / t * jE, i) * o.height * (n - 1));
       for (let h = 0; h <= d; h++) {
         const f = h === d && d > 0 ? l : c[Math.round((1 - h / Math.max(1, d)) * 15)];
         s.set([f[0], f[1], f[2], 255], (h * t + u) * 4);
@@ -30991,7 +31006,7 @@ function CE(e, t = rs.width, n = rs.height) {
   }
   return s;
 }
-const fa = (e, t) => ({ type: "string", default: t, description: e }), ts = (e, t, n = 0, s, o) => ({ type: "number", default: t, minimum: n, ...s === void 0 ? {} : { maximum: s }, ...o ? { unit: o } : {}, description: e }), cl = (e, t) => ({ type: "object", default: Object.fromEntries(Object.entries(t).map(([s, o]) => [s, o.default])), description: e, properties: t }), Rae = {
+const fa = (e, t) => ({ type: "string", default: t, description: e }), ts = (e, t, n = 0, s, o) => ({ type: "number", default: t, minimum: n, ...s === void 0 ? {} : { maximum: s }, ...o ? { unit: o } : {}, description: e }), cl = (e, t) => ({ type: "object", default: Object.fromEntries(Object.entries(t).map(([s, o]) => [s, o.default])), description: e, properties: t }), Lae = {
   description: fa("What it looks like, in plain sentences.", ""),
   background: fa("The colour behind everything, hex, where neither dome nor backdrop is drawn.", "#06050b"),
   pointLights: ts("A multiplier on the light pool's intensities: 1 as the light kinds say, 0 puts them out.", 1),
@@ -31011,11 +31026,11 @@ const fa = (e, t) => ({ type: "string", default: t, description: e }), ts = (e, 
   }),
   ambient: cl(
     "The ambient light: three.js's HemisphereLight, one colour from above and one from below.",
-    Oae
+    Eae
   ),
   fog: cl(
     "Range fog past the focus plus height fog on the floor (engine/gfx/atmosphere.ts); amount 0 for none.",
-    _ae
+    Oae
   ),
   backdrop: cl("Silhouettes round the horizon, far layers first; no layers draws no backdrop.", {
     haze: fa("The colour hazed layers fade toward, hex.", "#c8e4f8"),
@@ -31027,7 +31042,7 @@ const fa = (e, t) => ({ type: "string", default: t, description: e }), ts = (e, 
       items: {
         type: "object",
         properties: {
-          kind: { type: "string", enum: $ae, required: !0, description: "Its silhouette." },
+          kind: { type: "string", enum: Tae, required: !0, description: "Its silhouette." },
           color: fa("Its colour, hex.", "#5aa060"),
           height: ts("Its tallest point, as a share of the backdrop band.", 0.5, 0, 1),
           haze: ts("How far it fades toward the haze colour, 0 to 1.", 0, 0, 1),
@@ -31040,7 +31055,7 @@ const fa = (e, t) => ({ type: "string", default: t, description: e }), ts = (e, 
 function HP(e = q) {
   e.kinds().includes("sky") || e.defineKind("sky", {
     description: "Sky presets: what surrounds and lights a level (background, dome, backdrop, sun, ambient light, fog, how bright the point lights shine).",
-    fields: Rae,
+    fields: Lae,
     fallback: "sky:daylight",
     defineWith: "defineSky('sky:<name>', { background, dome, sun, ambient, fog, backdrop, pointLights })"
   });
@@ -31070,19 +31085,19 @@ function HP(e = q) {
   });
 }
 HP();
-function Tme(e, t, n = q) {
+function zme(e, t, n = q) {
   return n.def("sky", e, t);
 }
-function Lae(e) {
+function Pae(e) {
   e.vertexNode = Hs(() => {
     const t = q8.toVar();
     return t.z.assign(t.w), t;
   })();
 }
-function Pae(e, t = {}) {
+function Nae(e, t = {}) {
   const n = t.registry ?? q, s = Vre({ ...bie(t.features), ...t.poolSize ? { size: t.poolSize } : {}, registry: n });
   t.level && s.setSources(qre(t.level), t.rng);
-  const o = Eae(), r = new tT("#ffffff", 0);
+  const o = $ae(), r = new tT("#ffffff", 0);
   r.name = "sky/sun", r.target.name = "sky/sun/target", r.shadow.mapSize.set(2048, 2048), r.shadow.bias = -5e-4;
   const { min: i, max: a } = t.level?.bounds ?? t.bounds ?? { min: [-8, 0, -8], max: [8, 4, 8] }, c = [(i[0] + a[0]) / 2, i[1], (i[2] + a[2]) / 2], l = Math.hypot(a[0] - i[0], a[2] - i[2]) / 2 + 2;
   Object.assign(r.shadow.camera, { left: -l, right: l, top: l, bottom: -l, near: 1, far: 3 * l + 60 }), r.shadow.camera.updateProjectionMatrix(), r.target.position.set(...c);
@@ -31099,7 +31114,7 @@ function Pae(e, t = {}) {
   const w = new Cv(1, 1, 1, 96, 1, !0), v = w.getAttribute("uv");
   for (let $ = 0; $ < v.count; $++) v.setX($, v.getX($) * rs.repeat);
   const b = new Gs({ map: y, alphaTest: 0.5, side: Du, fog: !1 });
-  b.depthWrite = !1, Lae(b);
+  b.depthWrite = !1, Pae(b);
   const x = new fn(w, b);
   x.name = "sky/backdrop", x.scale.set(rs.radius, rs.band, rs.radius), Object.assign(x, { frustumCulled: !1, renderOrder: -1 }), x.userData.background = !0, e.add(s.group), o.install(e), e.add(r, r.target, d, x);
   let k = n.get("sky", "sky:daylight"), A = "";
@@ -31155,7 +31170,7 @@ const Sw = [
   [18, "sky:dusk"],
   [19.5, "sky:night"],
   [24, "sky:night"]
-], vn = { rise: 6, set: 18, height: 1.15, moon: 0.9, lowest: 0.12, fade: 0.3, dimmest: 0.04 }, Nae = {
+], vn = { rise: 6, set: 18, height: 1.15, moon: 0.9, lowest: 0.12, fade: 0.3, dimmest: 0.04 }, jae = {
   "sky:noon": {
     description: "Noon by the clock: a clear sky dome, the sun high in the south, the lamps lit by their switches.",
     background: "#9cc4ec",
@@ -31192,15 +31207,15 @@ const Sw = [
     ambient: { sky: "#5a6aa0", ground: "#18141c", intensity: 0.25 },
     fog: { color: "#101830", start: 30, end: 180, amount: 0.55 }
   }
-}, jae = { "sky:noon": "#ffffff", "sky:dawn": "#e0c8c0", "sky:dusk": "#d0a088", "sky:night": "#2a3048" };
+}, Dae = { "sky:noon": "#ffffff", "sky:dawn": "#e0c8c0", "sky:dusk": "#d0a088", "sky:night": "#2a3048" };
 function WP(e = q) {
   HP(e);
   const t = e.get("sky", "sky:daylight");
-  for (const [n, s] of Object.entries(Nae))
-    e.has("sky", n) || e.def("sky", n, { ...s, backdrop: { ...t.backdrop, tint: jae[n] } });
+  for (const [n, s] of Object.entries(jae))
+    e.has("sky", n) || e.def("sky", n, { ...s, backdrop: { ...t.backdrop, tint: Dae[n] } });
 }
 WP();
-function Dae(e) {
+function Cae(e) {
   const t = (e % 24 + 24) % 24, n = t >= vn.rise && t < vn.set, s = n ? vn.set - vn.rise : 24 - (vn.set - vn.rise), o = (n ? t - vn.rise : (t - vn.set + 24) % 24) / s, r = Math.sin(Math.PI * o);
   return {
     azimuth: Math.PI / 2 - Math.PI * o,
@@ -31221,11 +31236,11 @@ function UP(e, t, n) {
   }
   return n < 0.5 ? e : t;
 }
-function Cae(e, t = q) {
-  const n = (e % 24 + 24) % 24, s = Sw.findIndex(([f]) => f > n), [[o, r], [i, a]] = [Sw[s - 1], Sw[s]], c = (n - o) / (i - o), l = c * c * (3 - 2 * c), u = UP(t.get("sky", r), t.get("sky", a), l), d = Dae(n), h = { ...u.sun, azimuth: d.azimuth, elevation: d.elevation, intensity: u.sun.intensity * d.strength };
+function Fae(e, t = q) {
+  const n = (e % 24 + 24) % 24, s = Sw.findIndex(([f]) => f > n), [[o, r], [i, a]] = [Sw[s - 1], Sw[s]], c = (n - o) / (i - o), l = c * c * (3 - 2 * c), u = UP(t.get("sky", r), t.get("sky", a), l), d = Cae(n), h = { ...u.sun, azimuth: d.azimuth, elevation: d.elevation, intensity: u.sun.intensity * d.strength };
   return { ...u, id: `daylight@${n.toFixed(2)}`, sun: h };
 }
-function Fae(e, t, n) {
+function qae(e, t, n) {
   const s = new eT("#c8d4ff", "#4a3f30", 1.6);
   s.name = "light:sky";
   const o = new tT("#fff0d8", 2.6);
@@ -31236,16 +31251,16 @@ function Fae(e, t, n) {
   return Object.assign(o.shadow.camera, { left: -l, right: l, top: l, bottom: -l, near: 0.5, far: u }), o.shadow.camera.updateProjectionMatrix(), { ambient: s, sun: o };
 }
 const FE = (e) => [e.pool.group, e.atmosphere.ambient, e.sun, e.dome, e.backdrop];
-function qae(e, t) {
-  const n = Fae(e, t.level, t.area);
+function Bae(e, t) {
+  const n = qae(e, t.level, t.area);
   let s = null, o = "", r = { shadowCasters: null }, i = null, a = null, c, l = null, u = NaN;
   const d = () => {
-    !s || !o || (l === null ? (Number.isNaN(u) || s.set(o), u = NaN) : Math.abs(l - u) < 1 / 60 || (s.show(Cae(l, t.registry)), u = l));
+    !s || !o || (l === null ? (Number.isNaN(u) || s.set(o), u = NaN) : Math.abs(l - u) < 1 / 60 || (s.show(Fae(l, t.registry)), u = l));
   }, h = () => {
     e.background instanceof it ? e.background.set(t.background) : e.background = new it(t.background);
   }, f = () => {
     WP(t.registry);
-    const m = t.level ? void 0 : t.area, [g, y] = m?.corner ?? [0, 0], [w, v] = m?.size ?? [0, 0], b = Pae(e, {
+    const m = t.level ? void 0 : t.area, [g, y] = m?.corner ?? [0, 0], [w, v] = m?.size ?? [0, 0], b = Nae(e, {
       level: t.level ?? void 0,
       bounds: m ? { min: [g, 0, y], max: [g + w, 4, y + v] } : void 0,
       rng: t.rng?.(),
@@ -31294,14 +31309,14 @@ function qae(e, t) {
     }
   };
 }
-const qE = "#2a3140", Bae = "material:stone", BE = 0.5;
-function Gae(e) {
+const qE = "#2a3140", Gae = "material:stone", BE = 0.5;
+function Hae(e) {
   if (!e.kinds().includes("component")) return [];
   const t = (o) => o?.type === "number" && o.unit === "m", n = (o) => t(o.x) && t(o.z);
   return e.list("component").filter((o) => n(o.fields)).map((o) => o.id);
 }
 const ll = (e, t, n) => typeof e[t] == "number" && Number.isFinite(e[t]) ? e[t] : n;
-function Hae(e, t) {
+function Wae(e, t) {
   for (const n of t) {
     const s = e[n];
     if (!s) continue;
@@ -31316,24 +31331,24 @@ function Hae(e, t) {
     return { kind: n, place: r };
   }
 }
-function Wae(e, t, n) {
+function Uae(e, t, n) {
   const s = Math.atan2(Math.sin(t - e), Math.cos(t - e));
   return e + s * n;
 }
-function Uae(e) {
+function Vae(e) {
   const t = new oc();
   t.name = e.level ? `stage:${e.level.name}` : "stage", t.background = new it(qE);
-  const { level: n, site: s = null } = e, o = e.terrain ?? s?.terrain ?? null, r = !n && o ? { corner: [o.origin[0], o.origin[2]], size: [o.cols * o.cell, o.rows * o.cell] } : void 0, i = qae(t, {
+  const { level: n, site: s = null } = e, o = e.terrain ?? s?.terrain ?? null, r = !n && o ? { corner: [o.origin[0], o.origin[2]], size: [o.cols * o.cell, o.rows * o.cell] } : void 0, i = Bae(t, {
     level: n,
     area: r,
     registry: e.registry,
     background: qE,
     rng: () => e.fxRng?.("stage", "lights")
-  }), [a, c] = n ? [n.cols * n.tile, n.rows * n.tile] : r?.size ?? [16, 16], [l, u] = r?.corner ?? [0, 0], d = [l + a / 2, 0, u + c / 2], h = n?.storeys ? n.bounds.min[1] : r ? o.origin[1] : 0, f = Mae([a, c], e.materials.get(Bae), { corner: [l, u], y: h, hole: !!r });
+  }), [a, c] = n ? [n.cols * n.tile, n.rows * n.tile] : r?.size ?? [16, 16], [l, u] = r?.corner ?? [0, 0], d = [l + a / 2, 0, u + c / 2], h = n?.storeys ? n.bounds.min[1] : r ? o.origin[1] : 0, f = Aae([a, c], e.materials.get(Gae), { corner: [l, u], y: h, hole: !!r });
   t.add(f);
   const p = n ? KL(n, e) : null;
   p && t.add(p.root);
-  const m = s ? kae(s, { materials: e.materials, registry: e.registry, log: e.log }) : null;
+  const m = s ? Mae(s, { materials: e.materials, registry: e.registry, log: e.log }) : null;
   m && t.add(m.root);
   const g = m ? m.terrain : o ? GP(o, { materials: e.materials }) : null;
   g && !m && t.add(g.root);
@@ -31342,7 +31357,7 @@ function Uae(e) {
   v.name = "stand-ins";
   const b = Koe({ materials: e.materials, registry: e.registry });
   t.add(v, b.root);
-  const x = Vie({ scene: t, materials: e.materials, registry: e.registry }), k = loe({ scene: t, materials: e.materials }), A = yre({ scene: t, materials: e.materials, level: n, registry: e.registry }), _ = Zie({ props: x, actors: b }), M = Wie({
+  const x = Kie({ scene: t, materials: e.materials, registry: e.registry }), k = loe({ scene: t, materials: e.materials }), A = yre({ scene: t, materials: e.materials, level: n, registry: e.registry }), _ = eae({ props: x, actors: b }), M = Uie({
     registry: e.registry,
     trails: () => b.trails(),
     muzzle: (P) => b.muzzle(P),
@@ -31350,7 +31365,7 @@ function Uae(e) {
   });
   t.add(M.effects.root);
   let S = 1;
-  const O = Gae(e.registry), E = (P) => e.registry.kinds().includes("component") && e.registry.has("component", P), $ = coe.filter((P) => E(P) && !O.includes(P)), T = [...O, ...M.kinds.filter((P) => !O.includes(P)), ...$], R = /* @__PURE__ */ new Map(), I = /* @__PURE__ */ new Map(), L = /* @__PURE__ */ new Map(), C = /* @__PURE__ */ new Set(), D = (P) => {
+  const O = Hae(e.registry), E = (P) => e.registry.kinds().includes("component") && e.registry.has("component", P), $ = coe.filter((P) => E(P) && !O.includes(P)), T = [...O, ...M.kinds.filter((P) => !O.includes(P)), ...$], R = /* @__PURE__ */ new Map(), I = /* @__PURE__ */ new Map(), L = /* @__PURE__ */ new Map(), C = /* @__PURE__ */ new Set(), D = (P) => {
     let F = R.get(P);
     return F || R.set(P, F = So({ width: P, height: P, depth: P })), F;
   };
@@ -31378,7 +31393,7 @@ function Uae(e) {
       const te = M.capture(K);
       p && !y && b.hasPlayer() && (y = hv(p, { objects: () => k.root.children })), b.hasPlayer() && m?.follow(() => k.root.children);
       for (const se of K) {
-        const pe = Hae(se, O), Be = V.has(se.id) || X.has(se.id) || Y.has(se.id) || te.has(se.id);
+        const pe = Wae(se, O), Be = V.has(se.id) || X.has(se.id) || Y.has(se.id) || te.has(se.id);
         if (!pe || B.has(se.id) || Be) continue;
         B.add(se.id);
         const { kind: et, place: Ee } = pe, Ge = L.get(se.id);
@@ -31397,7 +31412,7 @@ function Uae(e) {
         const B = L.get(W);
         if (!B) continue;
         const { before: V, after: X } = B;
-        K.position.set(V.x + (X.x - V.x) * F, V.y + (X.y - V.y) * F, V.z + (X.z - V.z) * F), K.rotation.set(0, Wae(V.yaw, X.yaw, F), 0);
+        K.position.set(V.x + (X.x - V.x) * F, V.y + (X.y - V.y) * F, V.z + (X.z - V.z) * F), K.rotation.set(0, Uae(V.yaw, X.yaw, F), 0);
       }
       v.updateMatrixWorld(!0), b.draw(P), x.carry(b.carried()), x.draw(P), _.sync(), M.draw(P);
     },
@@ -31422,7 +31437,7 @@ function Uae(e) {
         x.register(P),
         k.register(P),
         A.register(P),
-        _.register(P),
+        _.register(P, F),
         M.register(P, F),
         i.register(P, F)
       ];
@@ -31447,17 +31462,17 @@ Q("app", {
     fix: "start it with createHeadless({ scene, view: true }) in Node; a page always has one"
   }
 });
-const Vae = "cam=iso", VP = 16 / 9, Kae = 1 / 60;
+const Kae = "cam=iso", VP = 16 / 9, Yae = 1 / 60;
 function GE(e, t) {
   const n = /* @__PURE__ */ new Map();
   for (const s of t) for (const o of e.world.query(s)) n.set(o.id, o);
   return [...n.values()].sort((s, o) => s.id - o.id);
 }
-function Yae(e) {
+function Xae(e) {
   const { registry: t } = e, n = e.run().scene, s = (I) => t.kinds().includes("level") && t.has("level", I);
   if (n.level !== void 0 && !s(n.level))
     throw j("APP_NO_LEVEL", { scene: n.id, level: n.level });
-  const o = n.level === void 0 ? null : Pp(n.level, t), r = n.level === void 0 ? {} : VL(t, n.level), i = n.terrain === void 0 ? null : mU(n.terrain, t), a = n.site === void 0 ? null : cx(n.site, t), c = (...I) => e.run().world.fxRng(...I), l = Uae({ level: o, terrain: i, site: a, materials: e.materials, registry: t, log: e.log, fxRng: c, ...r }), u = () => {
+  const o = n.level === void 0 ? null : Pp(n.level, t), r = n.level === void 0 ? {} : VL(t, n.level), i = n.terrain === void 0 ? null : mU(n.terrain, t), a = n.site === void 0 ? null : cx(n.site, t), c = (...I) => e.run().world.fxRng(...I), l = Vae({ level: o, terrain: i, site: a, materials: e.materials, registry: t, log: e.log, fxRng: c, ...r }), u = () => {
     const I = e.run(), C = !(t.kinds().includes("setting") && t.has("setting", "gfx.effects")) || I.settings.get("gfx.effects") !== !1, D = l.fx.effects.enabled !== C;
     return l.fx.effects.enabled = C, D;
   }, d = () => {
@@ -31465,7 +31480,7 @@ function Yae(e) {
     l.capture([]), l.capture(GE(I, l.kinds), I.world.dt, A());
   };
   let h = null;
-  const f = Nne(), p = FL(e.cam ?? Vae);
+  const f = Nne(), p = FL(e.cam ?? Kae);
   let m = f.perspective, g = VP, y = { hidden: [], arms: [] }, w = 1, v = !1, b = 0;
   const x = () => {
     l.crowd.draw(w, m), v = !1;
@@ -31542,7 +31557,7 @@ function Yae(e) {
       return p.set(I, { blend: L.blend === !0 }), m = f.place($(void 0, 0), g), x(), T();
     },
     advance(I) {
-      for (let L = 0; L < I; L++) m = f.place($(void 0, Kae), g);
+      for (let L = 0; L < I; L++) m = f.place($(void 0, Yae), g);
       return x(), T();
     },
     dump: (I) => (v && x(), Kne(l.scene, I)),
@@ -31550,7 +31565,7 @@ function Yae(e) {
   };
   return R.restarted(), R.frame({ alpha: 1, dt: 0, aspect: g }), R;
 }
-const HE = /* @__PURE__ */ new WeakMap(), Xae = (e) => HE.get(e) ?? HE.set(e, new Y2()).get(e);
+const HE = /* @__PURE__ */ new WeakMap(), Jae = (e) => HE.get(e) ?? HE.set(e, new Y2()).get(e);
 rt("anim", {
   help: "An animated actor's animator: its weights, the layer stack slot by slot, effectors, sockets, events, trail.",
   args: {
@@ -31565,11 +31580,11 @@ rt("anim", {
       throw j("SIM_BAD_ARGUMENT", { where: "anim(id)", value: String(t), expected: d });
     }
     const { actor: r, animator: i, clips: a } = o, c = new z(r.x, r.y, r.z), l = new ji().get(o.id, i, { dt: n.dt });
-    return a && l.use("clips", Xae(n).get(o.id, a, l.body.build, n.dt)), l.pose({ at: c, yaw: r.yaw }).inspect();
+    return a && l.use("clips", Jae(n).get(o.id, a, l.body.build, n.dt)), l.pose({ at: c, yaw: r.yaw }).inspect();
   }
 });
 const WE = Dt(Uu, {});
-function Jae(e, t, n) {
+function Qae(e, t, n) {
   const s = { ...e.model ?? WE };
   for (const [i, a, c] of t)
     i === void 0 ? s[a] = c : s[i] = { ...s[i], [a]: c };
@@ -31586,7 +31601,7 @@ function Jae(e, t, n) {
   const r = { description: n ?? `${e.id}, as tuned in the feel panel.`, character: e.character };
   return e.model || Object.keys(o).length ? { ...r, model: o } : r;
 }
-function Qae(e, t, n = {}) {
+function Zae(e, t, n = {}) {
   const s = `defineMovement(${JSON.stringify(e)}, ${JSON.stringify(t, null, 2)});`, o = Object.keys(n).length ? `
 // the camera settings that differ, a preset for x set or the query:
 // ${JSON.stringify(n)}` : "";
@@ -31633,8 +31648,8 @@ rt("tune.profile", {
     id: { type: "string", default: "movement:playtest", description: "The new profile’s id." }
   },
   impl(e, t, n) {
-    const s = (i) => e.session.settings.get(i), o = Jae(Cz(t, e.registry), F2(s)), r = e.registry.list("setting").filter((i) => YP(i.id, KP.slice(1)) && !yo(s(i.id), i.default));
-    return Qae(n, o, Object.fromEntries(r.map((i) => [i.id, s(i.id)])));
+    const s = (i) => e.session.settings.get(i), o = Qae(Cz(t, e.registry), F2(s)), r = e.registry.list("setting").filter((i) => YP(i.id, KP.slice(1)) && !yo(s(i.id), i.default));
+    return Zae(n, o, Object.fromEntries(r.map((i) => [i.id, s(i.id)])));
   }
 });
 const rd = (e) => e;
@@ -31715,12 +31730,12 @@ rt("replay", {
   impl: (e, t, n) => rd(e).replay(t, n)
 });
 const lh = 1, uh = 0.02, [Bf, Gf, kv] = [0, 1, 2];
-function Zae(e) {
+function ece(e) {
   const t = (Array.isArray(e) ? e : [e ?? { side: Bf }]).map((n) => n.side);
   return t.includes(kv) ? kv : t.every((n) => n === Gf) ? Gf : Bf;
 }
 const UE = (e, t, n) => ((e + 4096) * 8192 + (t + 4096)) * 8192 + (n + 4096);
-function ece(e) {
+function tce(e) {
   const t = [], n = [], s = [], o = /* @__PURE__ */ new Map(), [r, i] = [new le(), new le()], [a, c, l, u, d] = [new z(), new z(), new z(), new z(), new z()], h = (p) => {
     const m = u.subVectors(c, a).cross(d.subVectors(l, a)), g = m.length();
     if (g < 1e-12) return;
@@ -31738,7 +31753,7 @@ function ece(e) {
     if (!p.visible || p.userData.background) return;
     const m = p.geometry, g = m?.attributes.position;
     if (p.isMesh && !p.isSkinnedMesh && m && g) {
-      const y = Zae(p.material), w = m.index, v = w ? w.count : g.count, b = Math.max(0, m.drawRange.start), x = Math.min(v, b + m.drawRange.count), k = (_, M) => {
+      const y = ece(p.material), w = m.index, v = w ? w.count : g.count, b = Math.max(0, m.drawRange.start), x = Math.min(v, b + m.drawRange.count), k = (_, M) => {
         const S = w ? w.getX(_) : _;
         return M.set(g.getX(S), g.getY(S), g.getZ(S)).applyMatrix4(r);
       }, A = p.isInstancedMesh ? p.count ?? 0 : 1;
@@ -31778,8 +31793,8 @@ function ece(e) {
     }
   };
 }
-const VE = { cols: 96, rows: 54 }, tce = 0.7, [nce, _w] = [16, 1e-3], sce = 2001;
-function oce(e) {
+const VE = { cols: 96, rows: 54 }, nce = 0.7, [sce, _w] = [16, 1e-3], oce = 2001;
+function rce(e) {
   const t = /* @__PURE__ */ new Map();
   for (const n of e) {
     const s = Object.entries(n).filter(([a]) => a !== "id"), o = s.find(([a]) => a === "sceneProp")?.[1].prop, r = s.find(([a]) => a === "actor")?.[1], i = typeof o == "string" ? o.replace(/^prop:/, "") : r ? "actor" : s[0]?.[0] ?? "entity";
@@ -31790,17 +31805,17 @@ function oce(e) {
   }
   return t;
 }
-function rce(e) {
+function ice(e) {
   const { cols: t = VE.cols, rows: n = VE.rows } = e;
   for (const [s, o] of Object.entries({ cols: t, rows: n }))
     if (!Number.isInteger(o) || o < 1 || o > 1024)
       throw j("SIM_BAD_ARGUMENT", { where: `eye({ ${s} })`, value: String(o), expected: "a whole number of cells from 1 to 1024" });
   return { cols: t, rows: n };
 }
-function ice(e, t, n, s = {}) {
-  const { cols: o, rows: r } = rce(s), { faces: i, exclude: a } = s;
+function ace(e, t, n, s = {}) {
+  const { cols: o, rows: r } = ice(s), { faces: i, exclude: a } = s;
   t.updateMatrixWorld();
-  const c = (b) => b.applyMatrix4(t.projectionMatrixInverse).applyMatrix4(t.matrixWorld), [l, u] = t.reversedDepth ? [1, 0] : [t.coordinateSystem === sce ? 0 : -1, 1], [d, h, f] = [new z(), new z(), new z()], p = /* @__PURE__ */ new Map(), m = new Array(o * r), g = new Uint8Array(o * r);
+  const c = (b) => b.applyMatrix4(t.projectionMatrixInverse).applyMatrix4(t.matrixWorld), [l, u] = t.reversedDepth ? [1, 0] : [t.coordinateSystem === oce ? 0 : -1, 1], [d, h, f] = [new z(), new z(), new z()], p = /* @__PURE__ */ new Map(), m = new Array(o * r), g = new Uint8Array(o * r);
   for (let b = 0; b < r; b++)
     for (let x = 0; x < o; x++) {
       const [k, A] = [(x + 0.5) / o * 2 - 1, 1 - (b + 0.5) / r * 2];
@@ -31809,7 +31824,7 @@ function ice(e, t, n, s = {}) {
       if (_ <= 1e-9) continue;
       f.copy(h).sub(d).divideScalar(_);
       let M = a;
-      for (let S = 0; S < nce && _ > 0; S++) {
+      for (let S = 0; S < sce && _ > 0; S++) {
         const O = { maxDistance: _, solid: S === 0, ...M === void 0 ? {} : { exclude: M } }, E = e.raycast(d.toArray(), f.toArray(), O);
         if (!E) break;
         const $ = n.get(E.body);
@@ -31821,7 +31836,7 @@ function ice(e, t, n, s = {}) {
         if (T) {
           const R = $ ? `entity:${$.entity}` : "level";
           let I = p.get(R);
-          I || (I = $ ? { key: R, kind: $.kind, entity: $.entity, ...$.player ? { player: !0 } : {}, ...$.actor ? { actor: !0 } : {}, cells: 0, share: 0 } : { key: R, kind: "level", cells: 0, share: 0 }, p.set(R, I)), I.cells++, m[b * o + x] = R, !$ && T.y >= tce && (g[b * o + x] = 1);
+          I || (I = $ ? { key: R, kind: $.kind, entity: $.entity, ...$.player ? { player: !0 } : {}, ...$.actor ? { actor: !0 } : {}, cells: 0, share: 0 } : { key: R, kind: "level", cells: 0, share: 0 }, p.set(R, I)), I.cells++, m[b * o + x] = R, !$ && T.y >= nce && (g[b * o + x] = 1);
           break;
         }
         d.copy(E.point).addScaledVector(f, _w), _ -= E.distance + _w;
@@ -31833,7 +31848,7 @@ function ice(e, t, n, s = {}) {
   for (let b = 0; b < m.length; b++) m[b] !== void 0 && (v[b] = w.get(m[b]));
   return { cols: o, rows: r, cells: v, floors: g, visible: y, empty: v.filter((b) => b < 0).length };
 }
-function ace(e) {
+function cce(e) {
   const t = {}, n = /* @__PURE__ */ new Map(), s = (i) => {
     if (i.player) return t["@"] = "the player", "@";
     if (i.key === "level") return "#";
@@ -31852,8 +31867,8 @@ function ace(e) {
   }
   return { map: r, legend: Object.fromEntries(Object.entries(t).sort(([i], [a]) => i < a ? -1 : 1)) };
 }
-function cce(e) {
-  const { map: t, legend: n } = ace(e);
+function lce(e) {
+  const { map: t, legend: n } = cce(e);
   return { cols: e.cols, rows: e.rows, map: t, legend: n, visible: e.visible, empty: e.empty };
 }
 rt("eye", {
@@ -31868,28 +31883,28 @@ rt("eye", {
     if (!s) throw j("APP_NO_VIEW", { member: "eye" });
     const o = s.queries();
     if (!o) throw j("SIM_BAD_ARGUMENT", { where: "__engine.eye()", value: "a scene without physics", expected: "a scene with physics: the eye casts at its bodies" });
-    const r = oce(n.session.world.query()), i = [...r].find(([, l]) => l.player)?.[0], a = s.cameraInfo().type === "first" && i !== void 0, c = ece(s.stage.scene);
-    return cce(ice(o, s.drawn, r, { ...t, faces: c, ...a ? { exclude: i } : {} }));
+    const r = rce(n.session.world.query()), i = [...r].find(([, l]) => l.player)?.[0], a = s.cameraInfo().type === "first" && i !== void 0, c = tce(s.stage.scene);
+    return lce(ace(o, s.drawn, r, { ...t, faces: c, ...a ? { exclude: i } : {} }));
   }
 });
-const Hf = "dev:gallery", ys = [8, 0, 8], lce = 1.2, uce = ["position", "velocity", "yaw", "air", "dash"], Mv = { walk: [0, 0.4], run: [0, 1] };
-function dce(e) {
+const Hf = "dev:gallery", ys = [8, 0, 8], uce = 1.2, dce = ["position", "velocity", "yaw", "air", "dash"], Mv = { walk: [0, 0.4], run: [0, 1] };
+function hce(e) {
   if (Object.hasOwn(Mv, e)) return { states: {}, move: [...Mv[e]] };
   const t = bp[e];
-  return t ? { states: Object.fromEntries(Object.entries(t.states).filter(([s]) => !uce.includes(s))), move: null } : Object.hasOwn(A2, e) ? { states: { pose: e }, move: null } : Object.hasOwn(S2, e) ? { states: { stance: e }, move: null } : null;
+  return t ? { states: Object.fromEntries(Object.entries(t.states).filter(([s]) => !dce.includes(s))), move: null } : Object.hasOwn(A2, e) ? { states: { pose: e }, move: null } : Object.hasOwn(S2, e) ? { states: { stance: e }, move: null } : null;
 }
 [
   .../* @__PURE__ */ new Set([...Object.keys(Mv), ...Object.keys(bp), ...Object.keys(A2), ...Object.keys(S2)])
 ];
 const Av = (e, t = null) => ({ states: e, move: t, swing: "", attack: null });
-function hce(e) {
+function fce(e) {
   return q.kinds().includes("body") && q.has("body", e) && q.get("body", e).build || "build:heroic";
 }
 function Sv(e, t, n, s = ys) {
-  const o = o6(), r = { build: hce(t), weapon: "sword" };
+  const o = o6(), r = { build: fce(t), weapon: "sword" };
   zU(e, { at: s, character: o, player: !1, anim: r, body: t, components: { galleryFigure: n } });
 }
-function fce(e) {
+function pce(e) {
   const [t, , n] = ys;
   ko(e, { prop: "prop:crate", at: [t - 1.3, 0, n + 0.2], yaw: 0.4 }), ko(e, { prop: "prop:barrel", at: [t + 1.3, 0, n - 0.2], yaw: 0 });
   for (const [s, o] of ["material:stone", "material:wood", "material:brick"].entries())
@@ -31898,7 +31913,7 @@ function fce(e) {
 }
 const KE = {
   prop: (e, t) => {
-    const n = gt(t).body.type === "none" ? lce : 0;
+    const n = gt(t).body.type === "none" ? uce : 0;
     ko(e, { prop: t, at: [ys[0], n, ys[2]], yaw: 0 });
   },
   material: (e, t) => {
@@ -31906,21 +31921,21 @@ const KE = {
   },
   // prettier-ignore
   body: (e, t, n) => {
-    const s = dce(n);
+    const s = hce(n);
     Sv(e, t, Av(s?.states ?? {}, s?.move ?? null));
   },
   move: (e, t) => Sv(e, "body:humanoid", { ...Av({}), swing: t }),
-  look: (e) => fce(e)
+  look: (e) => pce(e)
 };
-function pce(e) {
+function mce(e) {
   for (const t of e.query("sceneProp")) RI(e, t.id);
   for (const t of e.query("actor")) IU(e, t.id);
   for (const t of e.query("gallerySwatch")) e.despawn(t.id);
 }
 function YE(e, t, n, s) {
-  pce(e), n && Object.hasOwn(KE, t) && KE[t](e, n, s);
+  mce(e), n && Object.hasOwn(KE, t) && KE[t](e, n, s);
 }
-function mce(e) {
+function gce(e) {
   for (const t of e.query("galleryFigure")) {
     const n = t.galleryFigure, s = ot(n.states);
     if (n.swing) {
@@ -31988,7 +32003,7 @@ function XP(e = q) {
         const i = (a) => s.settings.get(`gallery.${a}`);
         YE(s, i("kind"), i("subject"), i("state"));
       },
-      step: mce,
+      step: gce,
       actions: {
         /** Stages `id` of `kind` in `state` instead of what the stage holds. */
         show(s, o) {
@@ -32009,15 +32024,15 @@ Q("dev", {
     // prettier-ignore
   }
 });
-const gce = (e) => e === "walk" ? 0.8 : bp[e]?.seconds ?? 1;
-function yce(e, t = q) {
+const yce = (e) => e === "walk" ? 0.8 : bp[e]?.seconds ?? 1;
+function wce(e, t = q) {
   const n = nc(e, t), s = n.count > 0 || n.rate > 0 ? [n.life[0]] : [], o = n.layers.map((r) => (r.set.life ?? nc(r.emitter, t).life)[0]);
   return Math.max(0.1, ...s, ...o);
 }
 const Xp = {
   prop: { steps: () => 30 },
   material: { steps: () => 1 },
-  body: { steps: (e) => Math.round(60 * gce(e)) },
+  body: { steps: (e) => Math.round(60 * yce(e)) },
   move: {
     steps: () => 0,
     // the swing starts at the first step after its staging: its frames' moments count from there
@@ -32031,8 +32046,8 @@ const Xp = {
     }
   },
   look: { steps: () => 30, settings: (e) => ({ "post.look": e }) },
-  emitter: { steps: () => 1, length: (e, t) => yce(e, t), burst: !0 }
-}, XE = { turntable: [30, 120, 210, 300], front: [30] }, wce = 25, JE = (e) => Math.round(e * 1e3) / 1e3;
+  emitter: { steps: () => 1, length: (e, t) => wce(e, t), burst: !0 }
+}, XE = { turntable: [30, 120, 210, 300], front: [30] }, bce = 25, JE = (e) => Math.round(e * 1e3) / 1e3;
 function ik(e = q) {
   return U9(e).filter((t) => Object.hasOwn(Xp, t));
 }
@@ -32056,10 +32071,10 @@ function Jp(e, t, n = q) {
 const QE = ML;
 function JP(e, t) {
   if (typeof e == "string") return e;
-  const n = t.isEmpty() ? new po().setFromCenterAndSize(new z(...ys), new z(1, 1, 1)) : t, s = n.getCenter(new z()), o = Math.max(0.05, n.getSize(new z()).length() / 2), r = Math.max(0.3, 1.15 * o / Math.sin(QE / 2 * Math.PI / 180)), [i, a] = [e, wce].map((u) => u * Math.PI / 180), c = [Math.sin(i) * Math.cos(a), Math.sin(a), Math.cos(i) * Math.cos(a)], l = [s.x, s.y, s.z].map((u, d) => u + r * c[d]);
+  const n = t.isEmpty() ? new po().setFromCenterAndSize(new z(...ys), new z(1, 1, 1)) : t, s = n.getCenter(new z()), o = Math.max(0.05, n.getSize(new z()).length() / 2), r = Math.max(0.3, 1.15 * o / Math.sin(QE / 2 * Math.PI / 180)), [i, a] = [e, bce].map((u) => u * Math.PI / 180), c = [Math.sin(i) * Math.cos(a), Math.sin(a), Math.cos(i) * Math.cos(a)], l = [s.x, s.y, s.z].map((u, d) => u + r * c[d]);
   return pL({ type: "fixed", position: l, yaw: i + Math.PI, pitch: -a, fov: QE });
 }
-function bce(e, t = q, n = Ne) {
+function vce(e, t = q, n = Ne) {
   const [s, o, ...r] = decodeURIComponent(e.replace(/^#/, "")).split("/");
   if (s !== "gallery") return null;
   XP(t);
@@ -32071,7 +32086,7 @@ function bce(e, t = q, n = Ne) {
   const l = r.join("/") || void 0, u = !c && l !== void 0 ? _v(a, l, t) : null, d = t.list(a)[0].id;
   return u && n.warnOnce("DEV_GALLERY_UNKNOWN", { ...u, instead: `; it shows ${d} instead` }, `gallery:${a}/${l}`), { kind: a, id: !c && !u && l !== void 0 ? l : d };
 }
-function vce(e, t = q) {
+function xce(e, t = q) {
   const [n] = Jp(e.kind, e.id, t);
   return { "gallery.kind": e.kind, "gallery.subject": e.id, "gallery.state": n.state, ...n.settings };
 }
@@ -32105,7 +32120,7 @@ function ak(e, t, n) {
   if (s) throw j("DEV_GALLERY_UNKNOWN", { ...s, instead: "" });
 }
 let Ov = null;
-async function xce(e, t, n, s) {
+async function kce(e, t, n, s) {
   if (ak(e.registry, t, n), e.session.scene.id !== Hf || !e.view)
     throw j("DEV_GALLERY_CLOSED", { member: "shoot", scene: e.session.scene.id });
   Ov && (Ov.stopped = !0);
@@ -32152,10 +32167,10 @@ rt("gallery.shoot", {
     size: { type: "object", description: "The shots’ size in pixels, { width, height }; the canvas’s when absent." }
   },
   needs: "renderer",
-  impl: (e, t, n, s) => xce(e, t, n, s)
+  impl: (e, t, n, s) => kce(e, t, n, s)
   // prettier-ignore
 });
-function kce(e, t, n) {
+function Mce(e, t, n) {
   const [s] = Jp(e.kind, e.id, n), o = Xp[e.kind], r = o.burst === !0, { duration: i } = n.get(e.kind, e.id).gallery, a = i || (o.length?.(e.id, n) ?? 0);
   let [c, l] = [!1, r ? 1 / 0 : 0];
   const u = Ov = { stopped: !1 };
@@ -32178,14 +32193,14 @@ Q("app", {
     fix: "play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })"
   }
 });
-const Mce = /* @__PURE__ */ new WeakMap();
+const Ace = /* @__PURE__ */ new WeakMap();
 function nN(e, t) {
   const n = As({ registry: t });
   n.override(e.scene.settings, "fresh");
   const s = e.settings.values(), o = Object.keys(s).filter((r) => !yo(s[r], n.get(r)));
   return Object.fromEntries(o.map((r) => [r, s[r]]));
 }
-function Ace(e, t) {
+function Sce(e, t) {
   const n = Object.entries(nN(e, t));
   return Object.fromEntries(n.filter(([s]) => t.get("setting", s).view === !0));
 }
@@ -32214,7 +32229,7 @@ function sN(e) {
     return { session: k, recorded: a(k), clock: A };
   };
   let l = c(s, t, e.settings), u = !1;
-  const h = e.view === !0 || r !== void 0 ? Yae({
+  const h = e.view === !0 || r !== void 0 ? Xae({
     run: () => l.session,
     registry: n,
     materials: e.materials ?? Cx({ registry: n }),
@@ -32225,7 +32240,7 @@ function sN(e) {
       throw j("APP_OTHER_SCENE", { shown: l.session.scene.id, scene: v.id });
     l = c(v, b, x), h?.restarted();
   }, p = (v) => {
-    const b = { ...Ace(l.session, n), ...v.settings };
+    const b = { ...Sce(l.session, n), ...v.settings };
     return f(ru(v.scene, n), v.seed, b), l.session;
   }, m = () => {
     const v = H_(l.session.world);
@@ -32296,7 +32311,7 @@ function sN(e) {
       }
     }
   }, w = dQ(y);
-  return Mce.set(w, y), {
+  return Ace.set(w, y), {
     inspector: w,
     host: y,
     get session() {
@@ -32315,7 +32330,7 @@ function sN(e) {
     meter: i
   };
 }
-async function zme(e) {
+async function Ime(e) {
   return sN(e).inspector;
 }
 const Gi = [
@@ -32336,7 +32351,7 @@ const Gi = [
   "PadLeft",
   "PadRight",
   "PadHome"
-], Sce = [
+], _ce = [
   "PadLeftStickUp",
   "PadLeftStickDown",
   "PadLeftStickLeft",
@@ -32345,18 +32360,18 @@ const Gi = [
   "PadRightStickDown",
   "PadRightStickLeft",
   "PadRightStickRight"
-], Wf = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"], _ce = ["WheelUp", "WheelDown"], e$ = /^(Key[A-Z]|Digit[0-9]|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F([1-9]|1[0-9]|2[0-4])|Arrow(Up|Down|Left|Right)|(Shift|Control|Alt|Meta)(Left|Right)|Space|Enter|Tab|Escape|Backspace|Backquote|Minus|Equal|Bracket(Left|Right)|Backslash|Semicolon|Quote|Comma|Period|Slash|CapsLock|Insert|Delete|Home|End|PageUp|PageDown|ContextMenu|IntlBackslash)$/, Oce = /* @__PURE__ */ new Set([...Gi, ...Sce, ...Wf, ..._ce]), Ev = "Hold:", Ece = 0.3;
+], Wf = ["MouseLeft", "MouseMiddle", "MouseRight", "MouseBack", "MouseForward"], Oce = ["WheelUp", "WheelDown"], e$ = /^(Key[A-Z]|Digit[0-9]|Numpad([0-9]|Add|Subtract|Multiply|Divide|Decimal|Enter)|F([1-9]|1[0-9]|2[0-4])|Arrow(Up|Down|Left|Right)|(Shift|Control|Alt|Meta)(Left|Right)|Space|Enter|Tab|Escape|Backspace|Backquote|Minus|Equal|Bracket(Left|Right)|Backslash|Semicolon|Quote|Comma|Period|Slash|CapsLock|Insert|Delete|Home|End|PageUp|PageDown|ContextMenu|IntlBackslash)$/, Ece = /* @__PURE__ */ new Set([...Gi, ..._ce, ...Wf, ...Oce]), Ev = "Hold:", $ce = 0.3;
 function Ow(e) {
   return `${Ev}${e}`;
 }
 function Qp(e) {
   return e.startsWith(Ev) ? e.slice(Ev.length) : null;
 }
-const $ce = /* @__PURE__ */ new Set([...Gi, ...Wf]);
+const Tce = /* @__PURE__ */ new Set([...Gi, ...Wf]);
 function Uf(e) {
   if (typeof e != "string") return !1;
   const t = Qp(e);
-  return t !== null ? $ce.has(t) || e$.test(t) : Oce.has(e) || e$.test(e);
+  return t !== null ? Tce.has(t) || e$.test(t) : Ece.has(e) || e$.test(e);
 }
 const oN = "touch:";
 function za(e) {
@@ -32366,14 +32381,14 @@ function _i(e) {
   const t = Qp(e);
   return t !== null ? _i(t) : e.startsWith(oN) ? "touch" : e.startsWith("Pad") ? "gamepad" : e.startsWith("Mouse") || e.startsWith("Wheel") ? "mouse" : "keyboard";
 }
-const Tce = {
+const zce = {
   xbox: ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "View", "Menu", "LS", "RS", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right", "Guide"],
   // prettier-ignore
   playstation: ["Cross", "Circle", "Square", "Triangle", "L1", "R1", "L2", "R2", "Create", "Options", "L3", "R3", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right", "PS"],
   // prettier-ignore
   nintendo: ["B", "A", "Y", "X", "L", "R", "ZL", "ZR", "−", "+", "L Stick", "R Stick", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right", "Home"]
   // prettier-ignore
-}, zce = {
+}, Ice = {
   MouseLeft: "LMB",
   MouseMiddle: "MMB",
   MouseRight: "RMB",
@@ -32390,20 +32405,20 @@ const Tce = {
   AltLeft: "L Alt",
   AltRight: "R Alt"
 };
-function Ice(e) {
+function Rce(e) {
   return /054c|playstation|dualsense|dualshock|sony/i.test(e) ? "playstation" : /057e|nintendo|switch|joy-con/i.test(e) ? "nintendo" : "xbox";
 }
 function rN(e, t = {}) {
   const n = Qp(e);
   if (n !== null) return `Hold ${rN(n, t)}`;
   const s = Gi.indexOf(e);
-  if (s >= 0) return Tce[t.pad ?? "xbox"][s];
+  if (s >= 0) return zce[t.pad ?? "xbox"][s];
   const o = /^Pad(Left|Right)Stick(Up|Down|Left|Right)$/.exec(e);
   if (o) return `${o[1][0]} Stick ${o[2]}`;
   const r = t.layout?.get(e);
-  return r && r.trim() ? r.length === 1 ? r.toUpperCase() : r : zce[e] ?? e.replace(/^(Key|Digit|Arrow)/, "").replace(/^Numpad/, "Num ");
+  return r && r.trim() ? r.length === 1 ? r.toUpperCase() : r : Ice[e] ?? e.replace(/^(Key|Digit|Arrow)/, "").replace(/^Numpad/, "Num ");
 }
-async function Ime() {
+async function Rme() {
   const e = globalThis.navigator?.keyboard;
   try {
     return await e?.getLayoutMap?.();
@@ -32428,7 +32443,7 @@ const $v = Object.freeze({
   "F12",
   "MetaLeft",
   "MetaRight"
-]), Rce = {
+]), Lce = {
   description: { type: "string", default: "", description: "What the map is for, in plain words." },
   actions: {
     type: "object",
@@ -32474,11 +32489,11 @@ const $v = Object.freeze({
     default: [],
     description: "Codes the game keeps for its own hotkeys: rebinding refuses them, as it refuses RESERVED_CODES."
   }
-}, Lce = /^[a-z][A-Za-z0-9]*$/;
-function Pce(e) {
+}, Pce = /^[a-z][A-Za-z0-9]*$/;
+function Nce(e) {
   const t = [], n = /* @__PURE__ */ new Set([...ck, ...e.reserved]);
   for (const [s, o] of Object.entries(e.actions)) {
-    if (Lce.test(s) || t.push(`the action ${U(s)} must be a lower-case word (jump, skill2)`), Object.hasOwn($v, s) && t.push(`${s} is a system action, never rebound: rename it`), !Array.isArray(o)) {
+    if (Pce.test(s) || t.push(`the action ${U(s)} must be a lower-case word (jump, skill2)`), Object.hasOwn($v, s) && t.push(`${s} is a system action, never rebound: rename it`), !Array.isArray(o)) {
       t.push(`actions.${s} is ${U(o)}; it must be a list of codes`);
       continue;
     }
@@ -32498,18 +32513,18 @@ function Pce(e) {
 function lk(e = q) {
   e.kinds().includes("actionMap") || e.defineKind("actionMap", {
     description: "Named actions and the physical codes bound to each (keys by KeyboardEvent.code, mouse, pad by position): what the input devices turn into intents.",
-    fields: Rce,
+    fields: Lce,
     defineWith: "defineActionMap('actionMap:<name>', { actions: { jump: ['Space', 'PadSouth'] } })",
-    check: (t) => Pce(t)
+    check: (t) => Nce(t)
   });
 }
-function Nce(e, t, n = q) {
+function jce(e, t, n = q) {
   return lk(n), n.def("actionMap", e, t);
 }
-function jce(e, t = q) {
+function Dce(e, t = q) {
   return lk(t), t.get("actionMap", e);
 }
-function Rme(e = q) {
+function Lme(e = q) {
   return lk(e), e.list("actionMap");
 }
 const dh = {
@@ -32517,7 +32532,7 @@ const dh = {
   back: ["KeyS", "ArrowDown", "PadDown", "PadLeftStickDown"],
   left: ["KeyA", "ArrowLeft", "PadLeft", "PadLeftStickLeft"],
   right: ["KeyD", "ArrowRight", "PadRight", "PadLeftStickRight"]
-}, Dce = {
+}, Cce = {
   "actionMap:thirdPerson": {
     description: "A third-person or top-down action game (the default): Space jumps, Shift dashes, the mouse fights.",
     actions: {
@@ -32564,8 +32579,8 @@ const dh = {
     }
   }
 };
-for (const [e, t] of Object.entries(Dce))
-  (!q.kinds().includes("actionMap") || !q.has("actionMap", e)) && Nce(e, t);
+for (const [e, t] of Object.entries(Cce))
+  (!q.kinds().includes("actionMap") || !q.has("actionMap", e)) && jce(e, t);
 Q("input", {
   INPUT_BAD_BINDINGS: {
     template: "saved bindings {key}: {problems}",
@@ -32583,8 +32598,8 @@ function iN(e, t, n) {
   return "—";
 }
 const hh = (e) => e === "gamepad" ? "gamepad" : "keyboard";
-function Cce(e, t = {}) {
-  const n = typeof e == "string" ? jce(e, t.registry) : e, s = t.key ?? `my3dge:bindings:${n.id}`, o = Object.keys(n.actions), r = /* @__PURE__ */ new Set([...ck, ...n.reserved]), i = /* @__PURE__ */ new Map();
+function Fce(e, t = {}) {
+  const n = typeof e == "string" ? Dce(e, t.registry) : e, s = t.key ?? `my3dge:bindings:${n.id}`, o = Object.keys(n.actions), r = /* @__PURE__ */ new Set([...ck, ...n.reserved]), i = /* @__PURE__ */ new Map();
   let a = 0;
   const c = (m) => i.get(m) ?? n.actions[m] ?? [], l = (m, g) => o.find((y) => y !== g && c(y).includes(m)), u = () => {
     a++, t.storage?.setItem(s, JSON.stringify(h.toJSON()));
@@ -32620,7 +32635,7 @@ function Cce(e, t = {}) {
       for (const g of o) i.has(g) && (m[g] = [...c(g)]);
       return { format: Tv, map: n.id, actions: m };
     }
-  }, [f, p] = Fce(t.storage?.getItem(s) ?? null, n);
+  }, [f, p] = qce(t.storage?.getItem(s) ?? null, n);
   for (const [m, g] of f) i.set(m, g);
   for (; ; ) {
     const m = [...i.keys()].find((y) => c(y).some((w) => l(w, y) !== void 0));
@@ -32630,7 +32645,7 @@ function Cce(e, t = {}) {
   }
   return p.length && (t.log ?? Ne).warnOnce("INPUT_BAD_BINDINGS", { key: s, problems: p.join("; ") }, s), h;
 }
-function Fce(e, t) {
+function qce(e, t) {
   const n = /* @__PURE__ */ new Map();
   if (e === null) return [n, []];
   let s;
@@ -32646,14 +32661,14 @@ function Fce(e, t) {
     Object.hasOwn(t.actions, i) ? !Array.isArray(a) || a.length > 16 || !a.every(Uf) ? r.push(`${i}: ${U(a)} is not a list of codes`) : a.some((c) => o.has(c)) ? r.push(`${i}: ${a.find((c) => o.has(c))} is reserved`) : n.set(i, Object.freeze([...new Set(a)])) : r.push(`${U(i)} is no action of ${t.id}${ue(i, Object.keys(t.actions))}`);
   return [n, r];
 }
-const qce = 0.18, t$ = 0.5, n$ = 0.4;
-function Bce(e, t, n) {
+const Bce = 0.18, t$ = 0.5, n$ = 0.4;
+function Gce(e, t, n) {
   const s = Math.hypot(e, t);
   if (s <= n || s === 0) return [0, 0];
   const o = Math.min(1, (s - n) / (1 - n)) / s;
   return [e * o, t * o];
 }
-function Gce(e, t, n = qce) {
+function Hce(e, t, n = Bce) {
   const s = G.clamp(n, 0.05, 0.5);
   let o = null, r = [0, 0], i = "xbox";
   const a = /* @__PURE__ */ new Set(), c = (h, f, p) => {
@@ -32681,7 +32696,7 @@ function Gce(e, t, n = qce) {
       const p = h.find((m) => m !== f && l(m));
       if (!f || p && !l(f)) {
         if (o && u.release(), f = p ?? h[0], !f) return;
-        o = { index: f.index, id: f.id }, i = Ice(f.id);
+        o = { index: f.index, id: f.id }, i = Rce(f.id);
       }
       d(f);
     }
@@ -32694,7 +32709,7 @@ function Gce(e, t, n = qce) {
       ["Left", 0],
       ["Right", 2]
     ]) {
-      const [m, g] = Bce(h.axes[p] ?? 0, h.axes[p + 1] ?? 0, s);
+      const [m, g] = Gce(h.axes[p] ?? 0, h.axes[p + 1] ?? 0, s);
       f === "Right" && (r = [m, g]);
       const y = [
         ["Up", -g],
@@ -32711,17 +32726,17 @@ function Gce(e, t, n = qce) {
   };
   return u;
 }
-const Hce = /* @__PURE__ */ new Set(["range", "checkbox", "radio", "button", "submit", "reset", "color", "file", "image"]);
-function Wce(e) {
+const Wce = /* @__PURE__ */ new Set(["range", "checkbox", "radio", "button", "submit", "reset", "color", "file", "image"]);
+function Uce(e) {
   const t = e;
   if (!t?.tagName) return !1;
   const n = t.tagName.toUpperCase();
-  return n === "TEXTAREA" || n === "SELECT" || t.isContentEditable ? !0 : n === "INPUT" && !Hce.has((t.type ?? "text").toLowerCase());
+  return n === "TEXTAREA" || n === "SELECT" || t.isContentEditable ? !0 : n === "INPUT" && !Wce.has((t.type ?? "text").toLowerCase());
 }
-function Uce(e, t) {
+function Vce(e, t) {
   const n = (o) => {
     const { code: r, repeat: i } = o;
-    !r || _i(r) !== "keyboard" || Wce(o.target) || (t.bound(r) && o.preventDefault(), i || t.press(r, "keyboard"));
+    !r || _i(r) !== "keyboard" || Uce(o.target) || (t.bound(r) && o.preventDefault(), i || t.press(r, "keyboard"));
   }, s = (o) => {
     const { code: r } = o;
     r && t.release(r);
@@ -32730,9 +32745,9 @@ function Uce(e, t) {
     e.removeEventListener("keydown", n), e.removeEventListener("keyup", s);
   };
 }
-const Vce = 25e-4, Kce = 100;
-function Yce(e, t, n = {}) {
-  const { element: s, target: o, document: r } = e, i = n.lookSpeed ?? Vce;
+const Kce = 25e-4, Yce = 100;
+function Xce(e, t, n = {}) {
+  const { element: s, target: o, document: r } = e, i = n.lookSpeed ?? Kce;
   let a = [0, 0], c = 0, l = { x: 0, y: 0, inside: !1 }, u = !1;
   const d = [
     [s, "pointerdown", (h) => {
@@ -32761,7 +32776,7 @@ function Yce(e, t, n = {}) {
       h.preventDefault();
       const p = (f.deltaY ?? 0) * (f.deltaMode === 1 ? 40 : f.deltaMode === 2 ? 800 : 1);
       if (!p) return;
-      c -= p / Kce;
+      c -= p / Yce;
       const m = p < 0 ? "WheelUp" : "WheelDown";
       t.press(m, "mouse"), t.release(m);
     }, { passive: !1 }],
@@ -32806,7 +32821,7 @@ function Yce(e, t, n = {}) {
     }
   };
 }
-const Vf = 56, Ew = 0.12, Xce = 0.82, Jce = 0.3, aN = 14, s$ = 2 * aN, Qce = 0.32, Zce = 2, ele = 2, tle = {
+const Vf = 56, Ew = 0.12, Jce = 0.82, Qce = 0.3, aN = 14, s$ = 2 * aN, Zce = 0.32, ele = 2, tle = 2, nle = {
   touch: {
     type: "string",
     enum: ["auto", "on", "off"],
@@ -32815,24 +32830,24 @@ const Vf = 56, Ew = 0.12, Xce = 0.82, Jce = 0.3, aN = 14, s$ = 2 * aN, Qce = 0.3
     description: "Touch mode, which shows the touch controls and the phone defaults: 'auto' follows the screen (a coarse pointer or a first touch on, the mouse off), 'on' and 'off' force it."
   }
 };
-ct(tle);
-function nle(e, t) {
+ct(nle);
+function sle(e, t) {
   const n = e / Vf, s = (0 - t) / Vf, o = Math.hypot(n, s);
   if (o < Ew) return [0, 0];
-  const r = Math.min((o - Ew) / (Xce - Ew), 1) / o;
+  const r = Math.min((o - Ew) / (Jce - Ew), 1) / o;
   return [n * r, s * r];
 }
-function sle() {
+function ole() {
   return globalThis.matchMedia?.("(pointer: coarse)").matches ?? !1;
 }
-function ole(e, t) {
+function rle(e, t) {
   const n = e;
   return typeof n?.closest == "function" ? n.closest(t) : null;
 }
-function rle(e, t, n = {}) {
+function ile(e, t, n = {}) {
   const { element: s, target: o } = e, r = /* @__PURE__ */ new Map();
-  let i = n.coarse ?? sle(), a = 0, c = null;
-  const l = () => n.mode?.() ?? "auto", u = () => l() === "on" || l() === "auto" && i, d = (b) => (a - b.t0) / 1e3, h = (b) => (d(b) < Jce || b.frames <= 1) && b.travel < aN, f = (b) => [b.clientX ?? 0, b.clientY ?? 0], p = () => {
+  let i = n.coarse ?? ole(), a = 0, c = null;
+  const l = () => n.mode?.() ?? "auto", u = () => l() === "on" || l() === "auto" && i, d = (b) => (a - b.t0) / 1e3, h = (b) => (d(b) < Qce || b.frames <= 1) && b.travel < aN, f = (b) => [b.clientX ?? 0, b.clientY ?? 0], p = () => {
     for (const b of r.values()) b.owner === "button" && t.release(za(b.name));
     r.clear();
   }, m = (b, x) => {
@@ -32841,7 +32856,7 @@ function rle(e, t, n = {}) {
     const x = b, k = f(x);
     if (x.pointerType === "mouse") return void (c = k);
     if (c = k, i = !0, !u() || x.pointerId === void 0) return;
-    const A = ole(x.target, "[data-action], [data-tap]"), _ = A?.dataset.action ?? A?.dataset.tap;
+    const A = rle(x.target, "[data-action], [data-tap]"), _ = A?.dataset.action ?? A?.dataset.tap;
     let M;
     if (A && _) M = A.dataset.action ? "button" : "tap";
     else if (x.target === s) M = [...r.values()].some(($) => $.owner === "stick") ? "game" : "stick";
@@ -32856,7 +32871,7 @@ function rle(e, t, n = {}) {
   }, y = (b) => {
     const x = b, k = f(x);
     if (x.pointerType === "mouse") {
-      c && Math.hypot(k[0] - c[0], k[1] - c[1]) > ele && i && (i = !1, u() || p()), c = k;
+      c && Math.hypot(k[0] - c[0], k[1] - c[1]) > tle && i && (i = !1, u() || p()), c = k;
       return;
     }
     c = k;
@@ -32890,11 +32905,11 @@ function rle(e, t, n = {}) {
     frame(b) {
       Number.isFinite(b) && (a = b);
       for (const x of r.values())
-        x.frames++, x.hold && !x.holding && x.travel < s$ && d(x) >= Qce && x.frames >= Zce && (x.holding = !0, t.press(za(x.name), "touch"));
+        x.frames++, x.hold && !x.holding && x.travel < s$ && d(x) >= Zce && x.frames >= ele && (x.holding = !0, t.press(za(x.name), "touch"));
     },
     stick() {
       const b = [...r.values()].find((x) => x.owner === "stick");
-      return b ? nle(b.pos[0] - b.anchor[0], b.pos[1] - b.anchor[1]) : [0, 0];
+      return b ? sle(b.pos[0] - b.anchor[0], b.pos[1] - b.anchor[1]) : [0, 0];
     },
     stickView() {
       const b = [...r.values()].find((x) => x.owner === "stick");
@@ -32907,7 +32922,7 @@ function rle(e, t, n = {}) {
     }
   };
 }
-const ile = 0.022, cN = {
+const ale = 0.022, cN = {
   "input.sensitivity": {
     type: "number",
     default: 5,
@@ -32956,7 +32971,7 @@ const ile = 0.022, cN = {
     description: "Right-stick look upside down (flight style): pushing the stick forward looks down. A view setting: never in the hash."
     // prettier-ignore
   }
-}, Lme = ct(cN);
+}, Pme = ct(cN);
 function lN(e) {
   const t = (n) => e(n) ?? cN[n].default;
   return {
@@ -32968,18 +32983,18 @@ function lN(e) {
     stickInvert: t("input.stickInvert")
   };
 }
-function ale(e, t, n) {
-  const s = t.sensitivity * (n ? t.ads : 1) * ile * G.DEG2RAD, o = t.stick * (n ? t.stickAds : 1), [r, i] = e.counts, [a, c] = e.stick;
+function cle(e, t, n) {
+  const s = t.sensitivity * (n ? t.ads : 1) * ale * G.DEG2RAD, o = t.stick * (n ? t.stickAds : 1), [r, i] = e.counts, [a, c] = e.stick;
   return {
     look: [r * s, (t.invert ? 0 - i : i) * s],
     // 0 − v, never −0
     turn: [a * o, (t.stickInvert ? c : 0 - c) * o]
   };
 }
-const cle = lN(() => {
+const lle = lN(() => {
 });
-function lle(e = {}) {
-  const t = (P) => typeof P == "object" ? P : Cce(P, e);
+function ule(e = {}) {
+  const t = (P) => typeof P == "object" ? P : Fce(P, e);
   let n = t(e.map ?? "actionMap:thirdPerson");
   const s = /* @__PURE__ */ new Map([[n.map.id, n]]), o = globalThis, r = e.window ?? o.window, i = e.document ?? o.document, a = e.element ?? o.document?.body, c = globalThis.navigator, l = e.gamepads ?? (() => c?.getGamepads?.() ?? []), u = /* @__PURE__ */ new Set(), d = /* @__PURE__ */ new Set(), h = /* @__PURE__ */ new Map();
   let f = "keyboard", p = /* @__PURE__ */ new Set(), m = /* @__PURE__ */ new Set(), g = /* @__PURE__ */ new Map(), y = null, w = { of: n, version: -1, codes: /* @__PURE__ */ new Map(), bound: /* @__PURE__ */ new Set(), holds: /* @__PURE__ */ new Set() };
@@ -33026,8 +33041,8 @@ function lle(e = {}) {
     bound(P) {
       return v(""), w.bound.has(P);
     }
-  }, O = Gce(S, l, e.deadzone), E = UR(), $ = r ? Uce(r, S) : () => {
-  }, T = a && r ? Yce({ element: a, target: r, document: i }, S, { lookSpeed: 1 }) : void 0, R = { mode: e.touchMode, onTap: e.onTap }, I = a && r ? rle({ element: a, target: r }, S, R) : void 0, L = () => {
+  }, O = Hce(S, l, e.deadzone), E = UR(), $ = r ? Vce(r, S) : () => {
+  }, T = a && r ? Xce({ element: a, target: r, document: i }, S, { lookSpeed: 1 }) : void 0, R = { mode: e.touchMode, onTap: e.onTap }, I = a && r ? ile({ element: a, target: r }, S, R) : void 0, L = () => {
     u.clear(), d.clear(), h.clear(), b.clear(), p = /* @__PURE__ */ new Set(), m = /* @__PURE__ */ new Set(), g = /* @__PURE__ */ new Map(), T?.clear(), I?.clear();
   }, C = () => {
     i?.visibilityState === "hidden" && L();
@@ -33060,7 +33075,7 @@ function lle(e = {}) {
       const W = F !== void 0 && Number.isFinite(F) ? F / 1e3 : x / 60;
       for (const [$e, Xn] of b) {
         const zc = Number.isNaN(Xn) ? W : Xn;
-        if (b.set($e, zc), W - zc < Ece - 1e-9) continue;
+        if (b.set($e, zc), W - zc < $ce - 1e-9) continue;
         b.delete($e);
         const Mr = Ow($e);
         u.add(Mr), d.add(Mr), h.set(Mr, 1), _(Mr);
@@ -33091,7 +33106,7 @@ function lle(e = {}) {
     pressed: (P) => m.has(P),
     strength: (P) => g.get(P) ?? 0,
     camera() {
-      const F = n.map.aimWith === "pointer" ? [0, 0] : O.rightStick(), W = { counts: T?.takeLook() ?? [0, 0], stick: F }, { look: K, turn: B } = ale(W, e.look?.() ?? cle, p.has("aim"));
+      const F = n.map.aimWith === "pointer" ? [0, 0] : O.rightStick(), W = { counts: T?.takeLook() ?? [0, 0], stick: F }, { look: K, turn: B } = cle(W, e.look?.() ?? lle, p.has("aim"));
       return { look: K, turn: B, zoom: T?.takeZoom() ?? 0 };
     },
     prompt(P) {
@@ -33107,7 +33122,7 @@ function lle(e = {}) {
     }
   };
 }
-const ule = {
+const dle = {
   A: "South",
   B: "East",
   X: "West",
@@ -33120,19 +33135,19 @@ const ule = {
   DPadDown: "Down",
   DPadLeft: "Left",
   DPadRight: "Right"
-}, dle = { left: fo(2), right: fo(2), lt: fo(1), rt: fo(1), hold: Tf, tap: Tf };
+}, hle = { left: fo(2), right: fo(2), lt: fo(1), rt: fo(1), hold: Tf, tap: Tf };
 function uN(e) {
-  return Gi.indexOf(`Pad${ule[e] ?? e}`);
+  return Gi.indexOf(`Pad${dle[e] ?? e}`);
 }
-function hle(e) {
-  const t = HR(e, dle, "the pad script"), n = t.flatMap(
+function fle(e) {
+  const t = HR(e, hle, "the pad script"), n = t.flatMap(
     (s) => [...s.values.hold ?? [], ...s.values.tap ?? []].filter((o) => uN(o) < 0).map((o) => `line ${s.line}: unknown button "${o}" (South, East, West, North, LB, RT, Up, Start…)`)
   );
   if (n.length) throw j("INPUT_BAD_SCRIPT", { where: "the pad script", problems: n.join("; ") });
   return t;
 }
-function Pme(e, t = {}) {
-  const n = hle(e), s = Gi.map(() => ({ pressed: !1, touched: !1, value: 0 })), o = {
+function Nme(e, t = {}) {
+  const n = fle(e), s = Gi.map(() => ({ pressed: !1, touched: !1, value: 0 })), o = {
     id: t.id ?? "Scripted gamepad (STANDARD GAMEPAD Vendor: 045e Product: 02ea)",
     index: t.index ?? 0,
     connected: !0,
@@ -33162,8 +33177,8 @@ function Pme(e, t = {}) {
     }
   };
 }
-const fle = 1e-10, ple = 1e-3;
-function Nme(e) {
+const ple = 1e-10, mle = 1e-3;
+function jme(e) {
   const t = e.getAttribute("position"), n = e.getAttribute("normal"), s = e.getAttribute("uv"), o = t?.count ?? 0, r = e.getIndex(), i = r ? Array.from(r.array) : Array.from({ length: o }, (u, d) => d), a = {
     vertices: o,
     triangles: Math.floor(i.length / 3),
@@ -33184,7 +33199,7 @@ function Nme(e) {
   for (let u = 0; u < o; u++)
     [t.getX(u), t.getY(u), t.getZ(u)].forEach((d, h) => {
       Number.isFinite(d) && (c[h] = Math.min(c[h], d), l[h] = Math.max(l[h], d));
-    }), n && Math.abs(Math.hypot(n.getX(u), n.getY(u), n.getZ(u)) - 1) > ple && a.badNormals++;
+    }), n && Math.abs(Math.hypot(n.getX(u), n.getY(u), n.getZ(u)) - 1) > mle && a.badNormals++;
   a.min = c.map((u) => Number.isFinite(u) ? u : 0), a.max = l.map((u) => Number.isFinite(u) ? u : 0);
   for (let u = 0; u + 2 < i.length; u += 3) {
     const d = [i[u], i[u + 1], i[u + 2]];
@@ -33192,7 +33207,7 @@ function Nme(e) {
     const [h, f, p] = d.map((A) => [t.getX(A), t.getY(A), t.getZ(A)]);
     if (![...h, ...f, ...p].every(Number.isFinite)) continue;
     const [m, g, y] = [f[0] - h[0], f[1] - h[1], f[2] - h[2]], [w, v, b] = [p[0] - h[0], p[1] - h[1], p[2] - h[2]], x = [g * b - y * v, y * w - m * b, m * v - g * w];
-    if (!(Math.hypot(x[0], x[1], x[2]) / 2 >= fle)) {
+    if (!(Math.hypot(x[0], x[1], x[2]) / 2 >= ple)) {
       a.degenerate++;
       continue;
     }
@@ -33210,7 +33225,7 @@ const $w = [
   "lowshelf",
   "highshelf"
 ];
-class mle {
+class gle {
   /** The filter's type. */
   type;
   /** Samples per second. */
@@ -33268,17 +33283,17 @@ class mle {
     return this.x2 = this.x1, this.x1 = t, this.y2 = this.y1, this.y1 = n, n;
   }
 }
-const gle = 1e-3, yle = 64;
+const yle = 1e-3, wle = 64;
 function dN(e) {
   let t = e.mix, n = 1;
-  for (; n < yle && t * e.feedback >= gle; )
+  for (; n < wle && t * e.feedback >= yle; )
     t *= e.feedback, n++;
   return n;
 }
 function hN(e, t) {
   return Math.max(1, Math.round(e.time * t));
 }
-function wle(e, t, n) {
+function ble(e, t, n) {
   const s = hN(t, n), o = new Float64Array(e.length + s * dN(t)), r = new Float64Array(o.length);
   for (let i = 0; i < o.length; i++) {
     const a = i < e.length ? e[i] : 0;
@@ -33290,20 +33305,20 @@ function wle(e, t, n) {
   }
   return o;
 }
-const ble = 5e-4;
+const vle = 5e-4;
 function o$(e, t) {
   return { kind: "adsr", attack: e, decay: 0, sustain: 1, release: Math.max(0, Math.min(0.03, t - e)) };
 }
 function r$(e, t, n, s) {
   return e < t ? e / t : e < t + n ? 1 - (1 - s) * (e - t) / n : s;
 }
-function vle(e, t, n, s) {
+function xle(e, t, n, s) {
   const o = new Float64Array(n), r = Math.min(n, Math.round(e.attack * s));
   if (e.kind === "fall") {
     for (let u = 0; u < r; u++) o[u] = t * u / r;
     const l = n - r;
     if (l > 0 && t > 0) {
-      const u = Math.pow(ble / t, 1 / l);
+      const u = Math.pow(vle / t, 1 / l);
       let d = t;
       for (let h = r; h < n; h++, d *= u) o[h] = d;
     }
@@ -33315,7 +33330,7 @@ function vle(e, t, n, s) {
   for (let l = a; l < n; l++) o[l] = c * (n - l) / (n - a);
   return o;
 }
-const xle = 2 * Math.PI, fN = ["square", "pulse", "pulse12", "triangle", "sine", "saw"], kle = {
+const kle = 2 * Math.PI, fN = ["square", "pulse", "pulse12", "triangle", "sine", "saw"], Mle = {
   square: 0.5,
   pulse: 0.25,
   pulse12: 0.125
@@ -33345,29 +33360,29 @@ function i$(e, t) {
   }
   return 0;
 }
-function Mle(e, t, n) {
+function Ale(e, t, n) {
   return ((e < n ? 1 : -1) + 2 * zv(e, t) - 2 * zv(bc(e - n), t) - (2 * n - 1)) / (2 - 2 * n);
 }
-function Ale(e, t) {
+function Sle(e, t) {
   const n = bc(e + 0.25);
   return 1 - 4 * Math.abs(n - 0.5) + 8 * t * (i$(n, t) - i$(bc(n - 0.5), t));
 }
-function Sle(e, t, n) {
+function _le(e, t, n) {
   const s = n < 0.5 ? n : 0.5;
   switch (e) {
     case "sine":
-      return Math.sin(xle * t);
+      return Math.sin(kle * t);
     case "saw": {
       const o = bc(t + 0.5);
       return 2 * o - 1 - 2 * zv(o, s);
     }
     case "triangle":
-      return Ale(t, s);
+      return Sle(t, s);
     default:
-      return Mle(t, s, kle[e]);
+      return Ale(t, s, Mle[e]);
   }
 }
-class _le {
+class Ole {
   line;
   coefficient;
   decay;
@@ -33395,7 +33410,7 @@ const pN = 2 * Math.PI;
 function mN(e, t) {
   return Math.max(1, Math.round(e.dur * t));
 }
-function Ole(e, t) {
+function Ele(e, t) {
   const n = e.delay ? hN(e.delay, t) * dN(e.delay) : 0;
   return Math.round(e.at * t) + mN(e, t) + n;
 }
@@ -33405,7 +33420,7 @@ function gN(e, t, n) {
   for (let i = 0; i < n; i++, r *= o) s[i] = r;
   return s;
 }
-function Ele(e, t, n) {
+function $le(e, t, n) {
   const s = gN(e.f0, e.to, t);
   if (e.arp) {
     const { arp: o, loop: r } = e, i = e.step * n;
@@ -33420,13 +33435,13 @@ function Ele(e, t, n) {
   }
   return s;
 }
-function $le(e, t, n, s) {
+function Tle(e, t, n, s) {
   const o = t.length, r = new Float64Array(o), { wave: i } = e;
   if (i === "noise") {
     const a = n.stream("noise", e.index);
     for (let c = 0; c < o; c++) r[c] = a.next() * 2 - 1;
   } else if (i === "pluck") {
-    const { decay: a, brightness: c } = e.pluck, l = new _le(e.f0, s, n.stream("pluck", e.index), a, c);
+    const { decay: a, brightness: c } = e.pluck, l = new Ole(e.f0, s, n.stream("pluck", e.index), a, c);
     for (let u = 0; u < o; u++) r[u] = l.next();
   } else {
     const a = e.fm;
@@ -33438,25 +33453,25 @@ function $le(e, t, n, s) {
         d += f * a.ratio * d * Math.cos(pN * l), l = bc(l + a.ratio * t[u] / s);
       }
       const h = d / s;
-      r[u] = Sle(i, c, h < 0 ? -h : h), c = bc(c + h);
+      r[u] = _le(i, c, h < 0 ? -h : h), c = bc(c + h);
     }
   }
   return r;
 }
-function Tle(e, t, n, s) {
+function zle(e, t, n, s) {
   const o = e.filter;
   if (!o) return;
-  const r = new mle(o.type, s), i = o.freq > 0 ? gN(o.freq, o.to, t.length) : n;
+  const r = new gle(o.type, s), i = o.freq > 0 ? gN(o.freq, o.to, t.length) : n;
   for (let a = 0; a < t.length; a++)
     r.set(i[a], o.q, o.gain), t[a] = r.process(t[a]);
 }
-function zle(e, t, n, s) {
+function Ile(e, t, n, s) {
   if (e.vol === 0) return;
-  const o = mN(e, n), r = Ele(e, o, n), i = $le(e, r, t, n);
-  Tle(e, i, r, n);
-  const a = vle(e.env, e.vol, o, n);
+  const o = mN(e, n), r = $le(e, o, n), i = Tle(e, r, t, n);
+  zle(e, i, r, n);
+  const a = xle(e.env, e.vol, o, n);
   for (let u = 0; u < o; u++) i[u] *= a[u];
-  const c = e.delay ? wle(i, e.delay, n) : i, l = Math.round(e.at * n);
+  const c = e.delay ? ble(i, e.delay, n) : i, l = Math.round(e.at * n);
   for (let u = 0; u < c.length; u++) s[l + u] += c[u];
 }
 Q("audio", {
@@ -33481,7 +33496,7 @@ Q("audio", {
     doc: "Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a pitch that is neither a positive number nor a note name."
   }
 });
-const Tw = [...fN, "noise", "pluck"], Ile = /^([A-Ga-g])([#b]?)(-?\d)$/, Rle = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }, Bs = 600, Lle = [
+const Tw = [...fN, "noise", "pluck"], Rle = /^([A-Ga-g])([#b]?)(-?\d)$/, Lle = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }, Bs = 600, Ple = [
   "wave",
   "freq",
   "to",
@@ -33505,9 +33520,9 @@ const Tw = [...fN, "noise", "pluck"], Ile = /^([A-Ga-g])([#b]?)(-?\d)$/, Rle = {
 ];
 function hi(e, t = "noteFreq") {
   if (typeof e == "number" && Number.isFinite(e) && e > 0) return e;
-  const n = typeof e == "string" ? Ile.exec(e.trim()) : null;
+  const n = typeof e == "string" ? Rle.exec(e.trim()) : null;
   if (!n) throw j("AUDIO_BAD_NOTE", { where: t, note: String(e) });
-  const s = Rle[n[1].toUpperCase()] + (n[2] === "#" ? 1 : n[2] === "b" ? -1 : 0) + (Number(n[3]) + 1) * 12;
+  const s = Lle[n[1].toUpperCase()] + (n[2] === "#" ? 1 : n[2] === "b" ? -1 : 0) + (Number(n[3]) + 1) * 12;
   return zs(() => 440 * Math.pow(2, (s - 69) / 12));
 }
 function qn(e, t, n, s) {
@@ -33535,7 +33550,7 @@ function Ol(e, t, n, s) {
 function Kf(e, t) {
   return Math.max(20, hi(t, e));
 }
-function Ple(e, t, n) {
+function Nle(e, t, n) {
   const s = Math.min(n, vt(e, "attack", t.attack, 4e-3, 0, Bs));
   return t.hold !== void 0 && typeof t.hold != "boolean" && qn(e, "hold", t.hold, "true or false"), t.decay === void 0 && t.sustain === void 0 && t.release === void 0 ? t.hold ?? t.wave === "pluck" ? o$(s, n) : { kind: "fall", attack: s } : {
     kind: "adsr",
@@ -33545,7 +33560,7 @@ function Ple(e, t, n) {
     release: vt(e, "release", t.release, o$(s, n).release, 0, Bs)
   };
 }
-function Nle(e, t, n, s) {
+function jle(e, t, n, s) {
   const o = t.filter;
   if (o === void 0) return n === "noise" ? { type: "bandpass", freq: 0, to: 0, q: s, gain: 0 } : null;
   const r = (a, c) => $w.includes(a) ? a : qn(e, c, a, `one of ${$w.join(", ")}${ue(String(a), $w)}`);
@@ -33559,14 +33574,14 @@ function Nle(e, t, n, s) {
     gain: vt(e, "filter.gain", i.gain, 0, -60, 60)
   };
 }
-function jle(e, t) {
+function Dle(e, t) {
   return {
     decay: vt(e, "pluck.decay", t.decay, 0.996, 0.5, 1),
     brightness: vt(e, "pluck.brightness", t.brightness, 1, 0.01, 1)
   };
 }
-function Dle(e, t, n) {
-  const s = `voice ${t}`, o = Ol(s, "", e, Lle), r = o.wave ?? "square";
+function Cle(e, t, n) {
+  const s = `voice ${t}`, o = Ol(s, "", e, Ple), r = o.wave ?? "square";
   if (!Tw.includes(r)) {
     const p = ue(String(r), Tw);
     throw j("AUDIO_UNKNOWN_WAVE", { where: s, wave: String(r), suggestion: p, waves: Tw.join(", ") });
@@ -33598,18 +33613,18 @@ function Dle(e, t, n) {
     dur: i,
     vol: vt(s, "vol", o.vol, 0.3, 0, 10),
     at: vt(s, "at", o.at, 0, 0, Bs),
-    env: Ple(s, o, i),
+    env: Nle(s, o, i),
     arp: c,
     step: vt(s, "step", o.step, 0.06, 1e-3, Bs),
     loop: o.loop === !0,
     vib: u,
-    filter: Nle(s, o, r, a),
+    filter: jle(s, o, r, a),
     fm: d && {
       ratio: vt(s, "fm.ratio", d.ratio, void 0, 1e-3, 100),
       index: vt(s, "fm.index", d.index, void 0, 0, 100),
       to: vt(s, "fm.to", d.to, d.index, 0, 100)
     },
-    pluck: r === "pluck" ? jle(s, h) : null,
+    pluck: r === "pluck" ? Dle(s, h) : null,
     delay: f && {
       time: vt(s, "delay.time", f.time, void 0, 1e-3, 2),
       feedback: vt(s, "delay.feedback", f.feedback, 0.35, 0, 0.95),
@@ -33619,7 +33634,7 @@ function Dle(e, t, n) {
 }
 function uk(e, t) {
   const n = Array.isArray(e) ? e : [e];
-  return n.length || qn("the sound", "the voice list", e, "at least one voice"), n.map((s, o) => Dle(s, o, t));
+  return n.length || qn("the sound", "the voice list", e, "at least one voice"), n.map((s, o) => Cle(s, o, t));
 }
 Q("audio", {
   AUDIO_BAD_RATE: {
@@ -33645,14 +33660,14 @@ function Iv(e, t = 0, n = ad) {
   return zs(() => {
     const s = uk(e, n);
     let o = 0;
-    for (const a of s) o = Math.max(o, Ole(a, n));
+    for (const a of s) o = Math.max(o, Ele(a, n));
     if (o > Bs * n) throw j("AUDIO_TOO_LONG", { seconds: o / n, max: Bs });
     const r = new Float64Array(o), i = new Zl(t);
-    for (const a of s) zle(a, i, n, r);
+    for (const a of s) Ile(a, i, n, r);
     return Float32Array.from(r);
   });
 }
-const Cle = {
+const Fle = {
   "sfx:drumKick": { voices: [{ wave: "sine", freq: 150, to: 42, dur: 0.14, vol: 0.7 }] },
   "sfx:drumSnare": {
     voices: [
@@ -33664,14 +33679,14 @@ const Cle = {
   "sfx:drumOpenHat": { voices: [{ wave: "noise", freq: 6500, dur: 0.2, vol: 0.13, filter: "highpass" }] },
   "sfx:drumCrash": { voices: [{ wave: "noise", freq: 4500, dur: 0.7, vol: 0.18, filter: "highpass" }] },
   "sfx:drumTom": { voices: [{ wave: "triangle", freq: 180, to: 90, dur: 0.16, vol: 0.45 }] }
-}, Fle = {
+}, qle = {
   k: "sfx:drumKick",
   s: "sfx:drumSnare",
   h: "sfx:drumHat",
   o: "sfx:drumOpenHat",
   c: "sfx:drumCrash",
   t: "sfx:drumTom"
-}, yN = 4, Fe = (e) => ({ voices: e, variants: yN }), pa = (e) => ({ voices: e, variants: yN, bus: "ui" }), qle = {
+}, yN = 4, Fe = (e) => ({ voices: e, variants: yN }), pa = (e) => ({ voices: e, variants: yN, bus: "ui" }), Ble = {
   "sfx:jump": Fe({ wave: "pulse", freq: 280, to: 640, dur: 0.14, vol: 0.3 }),
   "sfx:jump2": Fe({ wave: "pulse", freq: 420, to: 900, dur: 0.12, vol: 0.26 }),
   "sfx:land": Fe({ wave: "noise", freq: 500, to: 150, dur: 0.07, vol: 0.25, filter: "lowpass" }),
@@ -33727,7 +33742,7 @@ const Cle = {
   "sfx:pause": pa({ wave: "square", freq: 988, arp: [0, 12, 0, 12], step: 0.05, dur: 0.22, vol: 0.18 }),
   "sfx:text": pa({ wave: "square", freq: 820, dur: 0.018, vol: 0.06 }),
   "sfx:blip": pa({ wave: "square", freq: 1200, dur: 0.025, vol: 0.1 })
-}, ye = (e, t = 0.06, n = 4) => ({ voices: e, variants: n, vary: t }), ge = (e, t = 1) => ({ type: "bandpass", freq: e, q: t }), sn = (e, t) => ({ type: "lowpass", freq: e, ...t ? { to: t } : {} }), wt = (e) => ({ type: "highpass", freq: e }), Ble = {
+}, ye = (e, t = 0.06, n = 4) => ({ voices: e, variants: n, vary: t }), ge = (e, t = 1) => ({ type: "bandpass", freq: e, q: t }), sn = (e, t) => ({ type: "lowpass", freq: e, ...t ? { to: t } : {} }), wt = (e) => ({ type: "highpass", freq: e }), Gle = {
   // footsteps: a heel's strike and what the floor does with it
   "sfx:stepWood": ye([
     { wave: "noise", dur: 0.1, vol: 0.34, filter: ge(240, 2.2) },
@@ -34052,12 +34067,12 @@ Q("audio", {
     doc: "Raised by `renderSfx` (engine/audio/data/sfx.ts)."
   }
 });
-const Gle = ["effects", "ui", "ambience"], Hle = {
+const Hle = ["effects", "ui", "ambience"], Wle = {
   sfx: { type: "string", required: !0, description: "The id of the effect mixed in." },
   at: { type: "number", default: 0, minimum: 0, maximum: 60, unit: "s", description: "When it starts." },
   vol: { type: "number", default: 1, minimum: 0, maximum: 10, description: "Its gain: 1 plays it as written." },
   pitch: { type: "number", default: 1, minimum: 0.05, maximum: 20, description: "Its pitch ratio: 2 is an octave up." }
-}, Wle = {
+}, Ule = {
   voices: {
     type: "any",
     description: "One voice or a list played together, in the chip synth's words (wave, freq, to, dur, vol, …)."
@@ -34065,7 +34080,7 @@ const Gle = ["effects", "ui", "ambience"], Hle = {
   layers: {
     type: "array",
     default: [],
-    items: { type: "object", properties: Hle },
+    items: { type: "object", properties: Wle },
     description: "Other effects mixed in: { sfx, at, vol, pitch }."
   },
   variants: {
@@ -34082,7 +34097,7 @@ const Gle = ["effects", "ui", "ambience"], Hle = {
     maximum: 0.5,
     description: "How far the variants' pitch spreads either way, as a fraction."
   },
-  bus: { type: "string", enum: Gle, default: "effects", description: "The mixer bus it plays on." },
+  bus: { type: "string", enum: Hle, default: "effects", description: "The mixer bus it plays on." },
   loop: {
     type: "number",
     default: 0,
@@ -34092,8 +34107,8 @@ const Gle = ["effects", "ui", "ambience"], Hle = {
     description: "The pass a looped play repeats: what sounds past it folds over its start, so the loop has no seam (0: the whole render)."
     // prettier-ignore
   }
-}, Ule = 440, Vle = 0.3, Kle = (e) => Array.isArray(e) ? e : [e];
-function Yle(e) {
+}, Vle = 440, Kle = 0.3, Yle = (e) => Array.isArray(e) ? e : [e];
+function Xle(e) {
   if (e.voices === void 0) return e.layers?.length ? [] : ["it has neither voices nor layers: give either"];
   try {
     return uk(e.voices, ad), [];
@@ -34105,15 +34120,15 @@ function Zp(e) {
   if (!e.kinds().includes("sfx")) {
     e.defineKind("sfx", {
       description: "A sound effect: voices for the DSP core, layers of other effects, variants and a mixer bus.",
-      fields: Wle,
+      fields: Ule,
       defineWith: "defineSfx('<id>', { voices: { wave: …, freq: …, to: …, dur: … } })",
-      check: (t) => Yle(t)
+      check: (t) => Xle(t)
     });
-    for (const [t, n] of Object.entries({ ...qle, ...Cle, ...Ble })) e.def("sfx", t, { ...n });
+    for (const [t, n] of Object.entries({ ...Ble, ...Fle, ...Gle })) e.def("sfx", t, { ...n });
   }
 }
 Zp(q);
-function jme(e, t, n = q) {
+function Dme(e, t, n = q) {
   return Zp(n), n.def("sfx", e, { ...t });
 }
 function Lu(e, t = q) {
@@ -34121,13 +34136,13 @@ function Lu(e, t = q) {
 }
 function wN(e, { at: t, vol: n, pitch: s }) {
   const o = { ...e };
-  if (t !== 0 && (o.at = (e.at ?? 0) + t), n !== 1 && (o.vol = (e.vol ?? Vle) * n), s === 1) return o;
-  o.freq = hi(e.freq ?? Ule) * s, e.to !== void 0 && (o.to = hi(e.to) * s);
+  if (t !== 0 && (o.at = (e.at ?? 0) + t), n !== 1 && (o.vol = (e.vol ?? Kle) * n), s === 1) return o;
+  o.freq = hi(e.freq ?? Vle) * s, e.to !== void 0 && (o.to = hi(e.to) * s);
   const r = e.filter;
   return typeof r == "object" && (o.filter = { ...r }, r.freq !== void 0 && (o.filter.freq = hi(r.freq) * s), r.to !== void 0 && (o.filter.to = hi(r.to) * s)), o;
 }
 function bN(e, t, n, s, o) {
-  if (e.voices !== void 0) for (const r of Kle(e.voices)) o.push(wN(r, n));
+  if (e.voices !== void 0) for (const r of Yle(e.voices)) o.push(wN(r, n));
   for (const r of e.layers) {
     if (s.includes(r.sfx))
       throw j("AUDIO_LAYER_CYCLE", { id: s[0], path: [...s, r.sfx].join(" → ") });
@@ -34143,26 +34158,26 @@ function vN(e, t = q) {
   const n = typeof e == "string" ? Lu(e, t) : e, s = [];
   return bN(n, t, { at: 0, vol: 1, pitch: 1 }, [n.id], s), s;
 }
-function Xle(e, t, n = 0) {
+function Jle(e, t, n = 0) {
   if (t === 0 || e.variants < 2) return 1;
   const o = -1 + 2 / (e.variants - 1) * (t - 1 + new pr(Us(n, "vary", t)).next());
   return 1 + e.vary * o;
 }
-function Jle(e, t = {}) {
+function Qle(e, t = {}) {
   const { variant: n = 0, seed: s = 0, rate: o = ad, registry: r = q } = t, i = typeof e == "string" ? Lu(e, r) : e;
   if (!Number.isInteger(n) || n < 0 || n >= i.variants)
     throw j("AUDIO_BAD_VARIANT", { id: i.id, last: i.variants - 1, variant: n });
   if (!Number.isSafeInteger(s)) throw j("AUDIO_BAD_SEED", { seed: s });
   const a = vN(i, r);
   if (n === 0) return Iv(a, s, o);
-  const c = { at: 0, vol: 1, pitch: Xle(i, n, s) };
+  const c = { at: 0, vol: 1, pitch: Jle(i, n, s) };
   return Iv(
     a.map((l) => wN(l, c)),
     Us(s, "variant", n),
     o
   );
 }
-const Qle = {
+const Zle = {
   "song:title": {
     bpm: 112,
     steps: 4,
@@ -34258,9 +34273,9 @@ const Qle = {
       }
     ]
   }
-}, Zle = [...fN, "pluck", "drums"], eue = {
+}, eue = [...fN, "pluck", "drums"], tue = {
   notes: { type: "string", required: !0, description: "One token per step: a note, - (hold), . (rest), | bars." },
-  wave: { type: "string", enum: Zle, default: "square", description: "The wave; drums plays kit tokens." },
+  wave: { type: "string", enum: eue, default: "square", description: "The wave; drums plays kit tokens." },
   vol: { type: "number", default: 0.18, minimum: 0, maximum: 1, description: "The notes' gain." },
   octave: { type: "integer", default: 0, minimum: -4, maximum: 4, description: "Octaves added to every note." },
   gate: {
@@ -34273,7 +34288,7 @@ const Qle = {
   attack: { type: "number", default: 6e-3, minimum: 0, maximum: 1, unit: "s", description: "The notes' attack." },
   vib: { type: "array", items: { type: "number" }, description: "Vibrato: [rate in Hz, depth as a fraction]." },
   intensity: { type: "number", default: 0, minimum: 0, maximum: 1, description: "The intensity it joins from." }
-}, tue = {
+}, nue = {
   bpm: { type: "number", default: 120, minimum: 20, maximum: 400, description: "Beats per minute." },
   steps: { type: "integer", default: 4, minimum: 1, maximum: 16, description: "Steps per beat (4: sixteenths)." },
   beats: { type: "integer", default: 4, minimum: 1, maximum: 16, description: "Beats per bar." },
@@ -34281,11 +34296,11 @@ const Qle = {
   tracks: {
     type: "array",
     required: !0,
-    items: { type: "object", properties: eue },
+    items: { type: "object", properties: tue },
     description: "The tracks, played together, each looping on its own length."
   },
-  kit: { type: "object", default: Fle, description: "A drum track's tokens and the sfx ids they play." }
-}, nue = 0.18, sue = 0.3, Ul = "-", El = ".", xN = "|";
+  kit: { type: "object", default: qle, description: "A drum track's tokens and the sfx ids they play." }
+}, sue = 0.18, oue = 0.3, Ul = "-", El = ".", xN = "|";
 function dk(e) {
   return e.split(/\s+/).filter((t) => t && t !== xN);
 }
@@ -34293,7 +34308,7 @@ function Pi(e) {
   const t = 60 / e.bpm / e.steps, n = Math.max(0, ...e.tracks.map((s) => dk(s.notes).length));
   return { stepSeconds: t, barSteps: e.steps * e.beats, steps: n, seconds: n * t };
 }
-function oue(e, t, n) {
+function rue(e, t, n) {
   const s = [];
   let o = 0, r = El;
   for (const i of e.notes.split(/\s+/).filter(Boolean)) {
@@ -34319,14 +34334,14 @@ function kN(e) {
   const t = { wave: e.wave, vol: e.vol, hold: !0, attack: e.attack };
   return e.vib !== void 0 && (t.vib = e.vib), t;
 }
-function rue(e) {
+function iue(e) {
   const t = [], { barSteps: n, steps: s, seconds: o } = Pi(e);
   for (const r of Object.keys(e.kit))
     /^[^\s.|-]\S*$/.test(r) || t.push(`kit token "${r}" must be one word, not . - or |`);
   return e.tracks.length || t.push("it has no tracks"), e.tracks.forEach((r, i) => {
     const a = `tracks[${i}]`, c = dk(r.notes).length;
     c || t.push(`${a} has no steps`);
-    for (const l of oue(r, e.kit, n)) t.push(`${a}: ${l}`);
+    for (const l of rue(r, e.kit, n)) t.push(`${a}: ${l}`);
     if (c && c % n && n % c ? t.push(`${a} is ${c} steps long: a track fills whole bars or divides one (a bar is ${n} steps)`) : c && s % c && t.push(`${a} is ${c} steps long, which does not divide the song's ${s}`), r.wave !== "drums")
       try {
         uk(kN(r), ad);
@@ -34339,21 +34354,21 @@ function cd(e) {
   if (!e.kinds().includes("song")) {
     e.defineKind("song", {
       description: "A looping tune in tracker notation: tempo, bars and tracks of notes or drum tokens.",
-      fields: tue,
+      fields: nue,
       defineWith: "defineSong('<id>', { bpm: …, tracks: [{ wave: …, notes: 'C4 - E4 - …' }] })",
-      check: (t) => rue(t)
+      check: (t) => iue(t)
     });
-    for (const [t, n] of Object.entries(Qle)) e.def("song", t, { ...n });
+    for (const [t, n] of Object.entries(Zle)) e.def("song", t, { ...n });
   }
 }
 cd(q);
-function Dme(e, t, n = q) {
+function Cme(e, t, n = q) {
   return cd(n), n.def("song", e, { ...t });
 }
 function e0(e, t = q) {
   return cd(t), t.get("song", e);
 }
-function iue(e, t = {}) {
+function aue(e, t = {}) {
   const { intensity: n = 1, registry: s = q } = t, o = typeof e == "string" ? e0(e, s) : e, { stepSeconds: r, steps: i } = Pi(o), a = /* @__PURE__ */ new Map(), c = [];
   for (const l of o.tracks) {
     if (l.intensity > n) continue;
@@ -34364,7 +34379,7 @@ function iue(e, t = {}) {
       if (l.wave === "drums") {
         a.has(g) || a.set(g, vN(o.kit[g], s));
         for (const w of a.get(g))
-          c.push({ ...w, at: (w.at ?? 0) + p, vol: (w.vol ?? sue) * (l.vol / nue) });
+          c.push({ ...w, at: (w.at ?? 0) + p, vol: (w.vol ?? oue) * (l.vol / sue) });
         continue;
       }
       let y = 1;
@@ -34375,16 +34390,16 @@ function iue(e, t = {}) {
   return c;
 }
 function MN(e, t = {}) {
-  const { seed: n = 0, rate: s = ad, registry: o = q } = t, r = typeof e == "string" ? e0(e, o) : e, i = iue(r, t);
+  const { seed: n = 0, rate: s = ad, registry: o = q } = t, r = typeof e == "string" ? e0(e, o) : e, i = aue(r, t);
   return i.push({ wave: "sine", vol: 0, dur: Pi(r).seconds }), Iv(i, n, s);
 }
 const a$ = Object.freeze(["keydown", "click", "pointerup"]);
-function aue(e) {
+function cue(e) {
   return e.isTrusted ? e.type === "keydown" ? e.key !== "Escape" : e.type === "click" || e.type === "pointerup" : !1;
 }
-function cue(e, t) {
+function lue(e, t) {
   const n = (s) => {
-    aue(s) && t();
+    cue(s) && t();
   };
   for (const s of a$) e.addEventListener(s, n, { capture: !0 });
   return () => {
@@ -34413,9 +34428,9 @@ const zw = Object.freeze({
   plaster: { mid: 0.06, high: 0.05 },
   glass: { mid: 0.12, high: 0.04 },
   "*": { mid: 0.04, high: 0.05 }
-}), lue = 0.25, uue = 343;
-function Cme(e) {
-  const { area: t, height: n } = e, [s, o] = [Math.max(t, 0.25), Math.max(n, 0.5)], [r, i] = [s * o, 4 * Math.sqrt(s) * o], a = (g, y) => (c$[g ?? "plaster"] ?? c$["*"])[y], c = (g) => (e.contents ?? lue) * (g === "high" ? 1.4 : 1), l = (g) => s * (a(e.floor, g) + a(e.ceiling, g) + c(g)) + i * a(e.walls, g), [u, d] = [0.161 * r / l("mid"), 0.161 * r / l("high")], h = Math.min(u, 10), f = Math.min(12e3, Math.max(1500, 12e3 * (d / u) ** 2)), p = Math.min(0.4, Math.max(0.1, 0.1 + 0.08 * h)), m = Math.min(0.05, Math.max(2e-3, 4 * r / (2 * s + i) / uue));
+}), uue = 0.25, due = 343;
+function Fme(e) {
+  const { area: t, height: n } = e, [s, o] = [Math.max(t, 0.25), Math.max(n, 0.5)], [r, i] = [s * o, 4 * Math.sqrt(s) * o], a = (g, y) => (c$[g ?? "plaster"] ?? c$["*"])[y], c = (g) => (e.contents ?? uue) * (g === "high" ? 1.4 : 1), l = (g) => s * (a(e.floor, g) + a(e.ceiling, g) + c(g)) + i * a(e.walls, g), [u, d] = [0.161 * r / l("mid"), 0.161 * r / l("high")], h = Math.min(u, 10), f = Math.min(12e3, Math.max(1500, 12e3 * (d / u) ** 2)), p = Math.min(0.4, Math.max(0.1, 0.1 + 0.08 * h)), m = Math.min(0.05, Math.max(2e-3, 4 * r / (2 * s + i) / due));
   return { decay: h, predelay: m, damping: f, wet: p };
 }
 function Yf(e) {
@@ -34440,11 +34455,11 @@ function Yf(e) {
   }
   return e;
 }
-function Fme(e, t) {
+function qme(e, t) {
   const n = e.area * t;
   return n < 30 ? "small" : n < 200 ? "room" : "hall";
 }
-function due(e, t, n = 0) {
+function hue(e, t, n = 0) {
   const { decay: s, predelay: o, damping: r, wet: i } = Yf(e);
   if (s === 0 || i === 0) return null;
   const a = Math.round(o * t), c = a + Math.round(s * t), l = Math.exp(-2 * Math.PI * Math.min(r, t / 2) / t), u = (d) => {
@@ -34461,7 +34476,7 @@ function due(e, t, n = 0) {
   };
   return [u(0), u(1)];
 }
-const hue = Object.freeze(["effects", "music", "ui", "ambience"]), AN = Object.freeze({
+const fue = Object.freeze(["effects", "music", "ui", "ambience"]), AN = Object.freeze({
   master: 0.7,
   effects: 1,
   music: 0.5,
@@ -34472,17 +34487,17 @@ const hue = Object.freeze(["effects", "music", "ui", "ambience"]), AN = Object.f
   attack: 0.04,
   release: 0.3,
   buses: Object.freeze(["music", "ambience"])
-}), l$ = 0.2, fue = ["effects", "ambience"];
-function pue(e) {
+}), l$ = 0.2, pue = ["effects", "ambience"];
+function mue(e) {
   const t = (g, y) => {
     const w = new GainNode(e, { gain: g });
     return w.connect(y), w;
   }, n = { ...AN };
   let s = !1;
   const o = t(n.master, e.destination), r = new GainNode(e), i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map();
-  for (const g of hue) {
+  for (const g of fue) {
     const y = t(1, o);
-    fue.includes(g) && y.connect(r), i.set(g, y), a.set(g, t(n[g], y));
+    pue.includes(g) && y.connect(r), i.set(g, y), a.set(g, t(n[g], y));
   }
   let c = !1, l = -1 / 0, u = Yf("none"), d = null, h = null;
   const f = (g) => g === "master" ? o : a.get(g), p = (g) => {
@@ -34516,7 +34531,7 @@ function pue(e) {
       if (Object.keys(y).every((A) => y[A] === u[A])) return;
       const w = e.currentTime;
       h && (r.disconnect(h.send), h.convolver.disconnect()), h = d, d && (d.send.gain.setValueAtTime(u.wet, w), d.send.gain.linearRampToValueAtTime(0, w + l$)), u = y, d = null;
-      const v = due(y, e.sampleRate);
+      const v = hue(y, e.sampleRate);
       if (!v) return;
       const b = e.createBuffer(2, v[0].length, e.sampleRate);
       v.forEach((A, _) => b.copyToChannel(A, _));
@@ -34533,7 +34548,7 @@ function pue(e) {
     })
   };
 }
-function mue(e) {
+function gue(e) {
   const t = [...new Set(e.tracks.map((o) => o.intensity))].sort((o, r) => o - r), { steps: n } = Pi(e), s = { ...e.tracks[0], notes: Array(n).fill(".").join(" "), wave: "square", vol: 0 };
   return t.map((o) => ({
     intensity: o,
@@ -34545,36 +34560,36 @@ function SN(e, t) {
   for (let s = 0; s < e.length; s++) n[s % t] += e[s];
   return n;
 }
-function gue(e, t) {
+function yue(e, t) {
   const n = new Float32Array(2 * t);
   return n.set(e.subarray(0, t)), n.set(SN(e, t), t), n;
 }
 function _N(e, t) {
   return Math.round(Pi(e).seconds * t);
 }
-function yue(e, t, n = {}) {
+function wue(e, t, n = {}) {
   const s = _N(e, t);
-  return mue(e).map(({ intensity: o, song: r }) => {
+  return gue(e).map(({ intensity: o, song: r }) => {
     const i = MN(r, { ...n, rate: t });
-    return { intensity: o, samples: e.loop ? gue(i, s) : i };
+    return { intensity: o, samples: e.loop ? yue(i, s) : i };
   });
 }
 function Rv(e, t, n) {
   const s = e.createBuffer(1, Math.max(1, t.length), n);
   return s.copyToChannel(t, 0), s;
 }
-const wue = 0.03, bue = 0.03, vue = 0.25;
-function xue(e, t, n) {
+const bue = 0.03, vue = 0.03, xue = 0.25;
+function kue(e, t, n) {
   return e <= t ? t : t + Math.ceil((e - t) / n - 1e-9) * n;
 }
-function kue(e, t, n) {
+function Mue(e, t, n) {
   const s = n.registry ?? q;
   cd(s);
   const o = e.sampleRate, r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map();
   let a = null, c = 1;
-  const l = (f) => f === void 0 ? e.currentTime + wue : Math.max(f, e.currentTime), u = (f, p) => !a || f === "now" ? p : xue(p, a.start, f === "bar" ? a.bar : a.beat), d = (f) => {
+  const l = (f) => f === void 0 ? e.currentTime + bue : Math.max(f, e.currentTime), u = (f, p) => !a || f === "now" ? p : kue(p, a.start, f === "bar" ? a.bar : a.beat), d = (f) => {
     let p = r.get(f.id);
-    return p || (p = yue(f, o, { registry: s }).map(({ intensity: m, samples: g }) => ({
+    return p || (p = wue(f, o, { registry: s }).map(({ intensity: m, samples: g }) => ({
       intensity: m,
       buffer: Rv(e, g, o)
     })), r.set(f.id, p)), p;
@@ -34583,7 +34598,7 @@ function kue(e, t, n) {
     for (const g of f.layers) g.source.stop(p + m + 0.01);
   };
   return {
-    play(f, { at: p = "bar", when: m, fade: g = bue, intensity: y = c } = {}) {
+    play(f, { at: p = "bar", when: m, fade: g = vue, intensity: y = c } = {}) {
       if (f !== null && a?.song.id === f) return a.start;
       const w = u(p, l(m));
       if (a && h(a, w, g), c = y, a = null, f === null) return null;
@@ -34606,7 +34621,7 @@ function kue(e, t, n) {
         a === _ && (a = null);
       }), a = _, w;
     },
-    intensity(f, { at: p = "beat", when: m, fade: g = vue } = {}) {
+    intensity(f, { at: p = "beat", when: m, fade: g = xue } = {}) {
       if (c = Math.min(1, Math.max(0, f)), !a) return;
       const y = u(p, l(m));
       for (const w of a.layers) {
@@ -34638,7 +34653,7 @@ function kue(e, t, n) {
     }
   };
 }
-const Mue = Object.freeze({
+const Aue = Object.freeze({
   panningModel: "HRTF",
   distanceModel: "inverse",
   refDistance: 1,
@@ -34662,7 +34677,7 @@ const Mue = Object.freeze({
   /** The collision groups that block sound: the level. */
   groups: "world"
 });
-function Aue(e) {
+function Sue(e) {
   const [t, n, s, o] = [Math.sin(e.yaw), Math.cos(e.yaw), Math.sin(e.pitch), Math.cos(e.pitch)];
   return { forward: [t * o, s, n * o], up: [-t * s, o, -n * s] };
 }
@@ -34670,7 +34685,7 @@ function Gh(e, t, n) {
   e.forEach((s, o) => s.setValueAtTime(t[o], n));
 }
 function u$(e, t, n) {
-  const { forward: s, up: o } = Aue(t);
+  const { forward: s, up: o } = Sue(t);
   if (!e.positionX) {
     e.setPosition(...t.position), e.setOrientation(...s, ...o);
     return;
@@ -34705,7 +34720,7 @@ Q("audio", {
     doc: "Raised by `audio.play` and `Sound.move` (engine/audio/runtime/sound.ts) for a volume, pitch, variant or position out of range."
   }
 });
-const Sue = 0.02;
+const _ue = 0.02;
 function Hh(e, t, n, s, o = !1) {
   const r = typeof t == "number" && t >= n && t <= s && (!o || Number.isInteger(t));
   if (t === void 0 || r) return;
@@ -34717,15 +34732,15 @@ function ON(e) {
   const t = JSON.stringify(e);
   throw j("AUDIO_BAD_OPTION", { option: "position", value: t, expected: "[x, y, z] in metres" });
 }
-function _ue(e, t) {
+function Oue(e, t) {
   Hh("vol", e.vol, 0, 4), Hh("pitch", e.pitch, 0.1, 10), Hh("variant", e.variant, 0, t - 1, !0), e.position !== void 0 && ON(e.position);
 }
-function Oue(e, t) {
+function Eue(e, t) {
   const { id: n, bus: s, buffer: o, input: r, when: i, options: a } = t;
   let c = a.vol ?? 1;
   const l = a.loop ?? !1, u = new AudioBufferSourceNode(e, { buffer: o, loop: l, playbackRate: a.pitch ?? 1 }), d = new GainNode(e, { gain: c }), h = Math.min(hn.open, e.sampleRate / 2);
   let f = a.position ?? null;
-  const p = f ? new BiquadFilterNode(e, { type: "lowpass", frequency: h, Q: hn.q }) : null, m = f ? new PannerNode(e, Mue) : null;
+  const p = f ? new BiquadFilterNode(e, { type: "lowpass", frequency: h, Q: hn.q }) : null, m = f ? new PannerNode(e, Aue) : null;
   m && f && d$(m, f, i);
   const g = p && m ? [u, d, p, m] : [u, d];
   g.forEach((b, x) => b.connect(g[x + 1] ?? r));
@@ -34746,7 +34761,7 @@ function Oue(e, t) {
     move(b) {
       ON(b), !(!m || !y) && (f = b, d$(m, b, e.currentTime));
     },
-    stop(b = Sue) {
+    stop(b = _ue) {
       if (w) return;
       w = !0, y = !1;
       const x = e.currentTime;
@@ -34772,9 +34787,9 @@ function Oue(e, t) {
     t.onEnded?.();
   }), u.start(i), v;
 }
-const Eue = Object.freeze({ max: 32, perSound: 4, gap: 0.035 });
-function $ue(e = {}) {
-  const t = Object.freeze({ ...Eue, ...e }), n = [], s = /* @__PURE__ */ new Map();
+const $ue = Object.freeze({ max: 32, perSound: 4, gap: 0.035 });
+function Tue(e = {}) {
+  const t = Object.freeze({ ...$ue, ...e }), n = [], s = /* @__PURE__ */ new Map();
   return {
     limits: t,
     voices: n,
@@ -34805,16 +34820,16 @@ Q("audio", {
     doc: "Advice from `createAudio` (engine/audio/runtime/audio.ts) when there is no Web Audio, or the context could not be made."
   }
 });
-function qme(e = {}) {
+function Bme(e = {}) {
   const t = e.registry ?? q, n = e.log ?? Ne;
   Zp(t), cd(t);
-  const s = (O) => t.has("song", O) ? O : Lu(O, t).id, o = e.footsteps ?? {}, r = $ue(e.limits), i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), c = /* @__PURE__ */ new Map(), l = { ...AN };
+  const s = (O) => t.has("song", O) ? O : Lu(O, t).id, o = e.footsteps ?? {}, r = Tue(e.limits), i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), c = /* @__PURE__ */ new Map(), l = { ...AN };
   let u = !1, d = "none", h = null, f, p = null, m, g = null, y = null, w = null, v = "open", b = () => {
   };
   const x = (O) => typeof AudioContext < "u" && O instanceof AudioContext, k = () => v !== "open" ? v : g ? g.state : "locked", A = (O) => {
-    g = O, y = pue(O);
+    g = O, y = mue(O);
     for (const [E, $] of Object.entries(l)) y.volume(E, $);
-    y.mute(u), y.room(d), h && u$(O.listener, h, O.currentTime), w = kue(O, y.input("music"), {
+    y.mute(u), y.room(d), h && u$(O.listener, h, O.currentTime), w = Mue(O, y.input("music"), {
       registry: t,
       sfx: (E, $, T) => {
         S(E, { when: $, vol: T, bus: "music" });
@@ -34835,20 +34850,20 @@ function qme(e = {}) {
   };
   if (e.context && A(e.context), !e.context || x(e.context)) {
     const O = e.window ?? (typeof window > "u" ? void 0 : window);
-    !e.context && (typeof AudioContext > "u" || !O) ? (v = "off", n.warnOnce("AUDIO_OFF", { reason: "this runtime has no Web Audio (AudioContext) or no window for gestures" })) : O && (b = cue(O, _));
+    !e.context && (typeof AudioContext > "u" || !O) ? (v = "off", n.warnOnce("AUDIO_OFF", { reason: "this runtime has no Web Audio (AudioContext) or no window for gestures" })) : O && (b = lue(O, _));
   }
   const M = (O, E, $, T) => {
     const R = T && O.loop > 0 ? Math.max(1, Math.round(O.loop * $.sampleRate)) : 0, I = `${O.id}#${E}${R ? " looped" : ""}`;
     let L = i.get(I);
     if (!L) {
-      const C = Jle(O, { variant: E, seed: e.seed ?? 0, rate: $.sampleRate, registry: t });
+      const C = Qle(O, { variant: E, seed: e.seed ?? 0, rate: $.sampleRate, registry: t });
       i.set(I, L = Rv($, R ? SN(C, R) : C, $.sampleRate));
     }
     return L;
   };
   function S(O, E = {}) {
     const $ = Lu(O, t);
-    _ue(E, $.variants);
+    Oue(E, $.variants);
     const T = g;
     if (!T || !y || v !== "open") return null;
     const R = Math.max(E.when ?? T.currentTime, T.currentTime), I = r.admit(O, R);
@@ -34857,7 +34872,7 @@ function qme(e = {}) {
       F.stop(), r.remove(F);
     const L = a.get(O) ?? 0;
     a.set(O, L + 1);
-    const C = M($, E.variant ?? L % $.variants, T, E.loop === !0), D = E.bus ?? $.bus, N = y.input(D), P = Oue(T, {
+    const C = M($, E.variant ?? L % $.variants, T, E.loop === !0), D = E.bus ?? $.bus, N = y.input(D), P = Eue(T, {
       id: O,
       bus: D,
       buffer: C,
@@ -34932,10 +34947,10 @@ function qme(e = {}) {
     }
   };
 }
-const Tue = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;font:18px system-ui,sans-serif;color:#c9ccd4;text-align:center;white-space:pre-line;pointer-events:none";
-function zue(e) {
+const zue = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;font:18px system-ui,sans-serif;color:#c9ccd4;text-align:center;white-space:pre-line;pointer-events:none";
+function Iue(e) {
   let t = e.querySelector("#msg");
-  t || (t = e.createElement("div"), t.id = "msg", t.setAttribute("role", "status"), t.setAttribute("style", Tue), e.body.append(t));
+  t || (t = e.createElement("div"), t.id = "msg", t.setAttribute("role", "status"), t.setAttribute("style", zue), e.body.append(t));
   const n = t;
   let s = null, o = 0;
   const r = (a) => {
@@ -34956,7 +34971,7 @@ Fix: ${s.fix}${o ? `
     text: () => n.hidden ? "" : n.textContent ?? ""
   };
 }
-const Iue = [0.8, 0.72, 1], ni = { bands: 3, rim: 0.25, shade: 0, dither: 0 };
+const Rue = [0.8, 0.72, 1], ni = { bands: 3, rim: 0.25, shade: 0, dither: 0 };
 function EN(e = {}) {
   const t = (l) => me(l).setGroup(ve), [n, s, o, r] = [t(ni.bands), t(ni.rim), t(0), t(0)], i = me(new z(0, 0, 1)).setGroup(ve), a = (l) => Math.min(1, Math.max(0, l)), c = {
     bands: n,
@@ -34971,42 +34986,42 @@ function EN(e = {}) {
   };
   return c.set(e), c;
 }
-function Rue(e, t) {
+function Lue(e, t) {
   const n = at(we(t).sub(1), 1), s = we(e).mul(n), o = rc(s), r = Na(s).clamp(0.02, 0.5), i = o.add(Ns(r.oneMinus().mul(0.5), r.add(1).mul(0.5), s.sub(o))).div(n), a = Ns(Na(e).negate().add(0.02), Na(e).add(0.02), e);
   return en(i, a, ja(we(t), we(2.5)));
 }
-function Lue(e, t, n) {
+function Pue(e, t, n) {
   const s = at(we(t).sub(1), 1), o = we(e).mul(s), r = rc(o), i = r.add(ja(n, o.sub(r))).div(s);
   return en(i, ja(0.02, e), ja(we(t), we(2.5)));
 }
 const Lv = (e, t) => e.sub(rc(e.div(t)).mul(t)), p$ = (e, t) => Lv(e.mul(2).add(t.mul(3)), 4);
-function Pue(e) {
+function Nue(e) {
   const t = Lv(rc(e), 4), n = Lv(t, 2), s = rc(t.div(2));
   return p$(n.x, n.y).mul(4).add(p$(s.x, s.y)).add(0.5).div(16);
 }
-function Nue(e) {
-  return Pue(rc(aT.xy.div(at(e.z, 1))).add(e.xy));
+function jue(e) {
+  return Nue(rc(aT.xy.div(at(e.z, 1))).add(e.xy));
 }
-function jue(e, t) {
-  const n = G8(e.mul(Pt(...Iue)), we(t).mul(0.4).add(1));
+function Due(e, t) {
+  const n = G8(e.mul(Pt(...Rue)), we(t).mul(0.4).add(1));
   return en(e, at(n, Pt(0)), t);
 }
-class Due extends nT {
+class Cue extends nT {
   look;
   constructor(t) {
     super(!1), this.look = t;
   }
   direct(t) {
-    const { lightDirection: n, lightColor: s, reflectedLight: o } = t, r = t.lightNode, i = r.baseColorNode ?? r.colorNode, a = Sk(s).div(at(Sk(i), 1e-6)).clamp(0, 1), c = at(Vw.dot(n), 0).mul(a), { bands: l, dither: u, grid: d } = this.look, h = Ns(2e-3, 0.02, Na(c.mul(at(we(l).sub(1), 1)))), f = en(we(0.5), Nue(d), u.mul(h)), p = en(Rue(c, l), Lue(c, l, f), ja(1e-3, u)), m = Xw({ diffuseColor: Jw.rgb }), g = at(Vw.dot(B8), 0).oneMinus(), y = Na(g).clamp(5e-3, 0.1), w = Ns(y.negate().add(0.72), y.add(0.72), g).mul(this.look.rim), v = en(we(0.4), we(1), p).mul(r.light?.isDirectionalLight ? we(1) : a);
+    const { lightDirection: n, lightColor: s, reflectedLight: o } = t, r = t.lightNode, i = r.baseColorNode ?? r.colorNode, a = Sk(s).div(at(Sk(i), 1e-6)).clamp(0, 1), c = at(Vw.dot(n), 0).mul(a), { bands: l, dither: u, grid: d } = this.look, h = Ns(2e-3, 0.02, Na(c.mul(at(we(l).sub(1), 1)))), f = en(we(0.5), jue(d), u.mul(h)), p = en(Lue(c, l), Pue(c, l, f), ja(1e-3, u)), m = Xw({ diffuseColor: Jw.rgb }), g = at(Vw.dot(B8), 0).oneMinus(), y = Na(g).clamp(5e-3, 0.1), w = Ns(y.negate().add(0.72), y.add(0.72), g).mul(this.look.rim), v = en(we(0.4), we(1), p).mul(r.light?.isDirectionalLight ? we(1) : a);
     o.directDiffuse.addAssign(i.mul(m).mul(p.add(w.mul(v))));
   }
   /** Lambert's indirect light on the material's shade (`shadeOf`): what lights the shadows takes their hue. */
   indirect(t) {
-    const { ambientOcclusion: n, irradiance: s, reflectedLight: o } = t.context, r = jue(Jw.rgb, this.look.shade);
+    const { ambientOcclusion: n, irradiance: s, reflectedLight: o } = t.context, r = Due(Jw.rgb, this.look.shade);
     o.indirectDiffuse.addAssign(s.mul(Xw({ diffuseColor: r }))), o.indirectDiffuse.mulAssign(n);
   }
 }
-class Cue extends Fv {
+class Fue extends Fv {
   /** Its own type, so three.js never shares a compiled Lambert material's program with it. */
   static get type() {
     return "MeshBandedToonNodeMaterial";
@@ -35020,7 +35035,7 @@ class Cue extends Fv {
     return super.copy(t), this.toon = t.toon, this;
   }
   setupLightingModel() {
-    return new Due(this.toon);
+    return new Cue(this.toon);
   }
 }
 Q("gfx", {
@@ -35035,7 +35050,7 @@ function fh(e) {
   if (uo.includes(e)) return e;
   throw j("GFX_UNKNOWN_STYLE", { style: JSON.stringify(e), styles: uo.join(", ") });
 }
-class Fue extends nT {
+class que extends nT {
   constructor() {
     super(!1);
   }
@@ -35044,17 +35059,17 @@ class Fue extends nT {
     s.directDiffuse.addAssign(n.mul(Xw({ diffuseColor: Jw.rgb })));
   }
 }
-class que extends Fv {
+class Bue extends Fv {
   /** Its own type, so three.js never shares a compiled Lambert material's program with it. */
   static get type() {
     return "MeshFlatStyleNodeMaterial";
   }
   setupLightingModel() {
-    return new Fue();
+    return new que();
   }
 }
-const Bue = { front: ka, back: Du, double: ju };
-function Gue(e, t) {
+const Gue = { front: ka, back: Du, double: ju };
+function Hue(e, t) {
   return {
     name: e.id,
     color: new it(e.color),
@@ -35062,7 +35077,7 @@ function Gue(e, t) {
     transparent: e.transparent,
     opacity: e.opacity,
     alphaTest: e.alphaTest,
-    side: Bue[e.side],
+    side: Gue[e.side],
     vertexColors: e.vertexColors,
     fog: e.fog,
     depthWrite: e.depthWrite,
@@ -35074,8 +35089,8 @@ function Gue(e, t) {
     flatShading: e.flatShading
   };
 }
-function Hue(e, t, n, s) {
-  const o = Gue(e, t), r = n === "toon" ? new Cue({ ...o, normalMap: null }, s) : n === "flat" ? new que({ ...o, normalMap: null }) : new X$({
+function Wue(e, t, n, s) {
+  const o = Hue(e, t), r = n === "toon" ? new Fue({ ...o, normalMap: null }, s) : n === "flat" ? new Bue({ ...o, normalMap: null }) : new X$({
     ...o,
     roughness: e.roughness,
     metalness: e.metalness,
@@ -35088,7 +35103,7 @@ function g$(e) {
   const t = e.material;
   return t ? (Array.isArray(t) ? t : [t]).some((n) => typeof n?.userData?.material == "string") : !1;
 }
-function Wue(e = {}) {
+function Uue(e = {}) {
   const t = e.registry ?? q, n = e.library ?? Cx({ registry: t }), s = !e.library, o = EN(e.toon);
   let r = fh(e.style ?? "lambert");
   const i = /* @__PURE__ */ new Map(), a = [], c = (h, f) => {
@@ -35125,7 +35140,7 @@ function Wue(e = {}) {
       let y = i.get(g);
       if (!y) {
         const w = jx(p.map);
-        y = Hue(p, w ? n.maps(w) : null, m, o), i.set(g, y);
+        y = Wue(p, w ? n.maps(w) : null, m, o), i.set(g, y);
       }
       return y;
     },
@@ -35192,24 +35207,24 @@ function Wue(e = {}) {
   };
   return d;
 }
-const Uue = ["auto", "low", "medium", "high"], $N = {
+const Vue = ["auto", "low", "medium", "high"], $N = {
   quality: {
     type: "string",
-    enum: Uue,
+    enum: Vue,
     default: "auto",
     view: !0,
     description: "How much the picture costs: 'high' draws everything, 'medium' at most 1 megapixel with one shadow caster and no GI or god rays, 'low' at most 0.5 megapixel with no shadows, bloom or halos; 'auto' is medium on touch screens, high elsewhere."
   }
 };
 ct($N);
-function Vue(e, t) {
+function Kue(e, t) {
   return e === "auto" ? t ? "medium" : "high" : e;
 }
 function hk(e, t) {
-  const n = Vue(e, t), s = { gi: !0, godRays: !0, bloom: !0, halos: !0 };
+  const n = Kue(e, t), s = { gi: !0, godRays: !0, bloom: !0, halos: !0 };
   return n === "low" ? { tier: n, maxPixels: 5e5, maxPixelRatio: null, shadowCasters: 0, gi: !1, godRays: !1, bloom: !1, halos: !1 } : n === "medium" ? { tier: n, maxPixels: 1e6, maxPixelRatio: null, shadowCasters: 1, ...s, gi: !1, godRays: !1 } : { tier: n, maxPixels: null, maxPixelRatio: t ? 2 : null, shadowCasters: null, ...s };
 }
-const Kue = ["fxaa", "smaa", "traa"], TN = "fxaa", Yue = (e, t) => e === "traa" && !t ? "fxaa" : e;
+const Yue = ["fxaa", "smaa", "traa"], TN = "fxaa", Xue = (e, t) => e === "traa" && !t ? "fxaa" : e;
 function Pu(e, t) {
   const n = e.updateBefore.bind(e), s = e.setup.bind(e);
   let o = !0;
@@ -35218,7 +35233,7 @@ function Pu(e, t) {
       return o = !1, n(r);
   };
 }
-function Xue(e, t, n, s, o) {
+function Jue(e, t, n, s, o) {
   const r = e === "fxaa" ? ej(t) : e === "smaa" ? tj(t) : o(t);
   e !== "fxaa" && Pu(r, s);
   const i = Hs(() => {
@@ -35234,7 +35249,7 @@ function Xue(e, t, n, s, o) {
     }
   };
 }
-const Jue = Ie(
+const Que = Ie(
   `
 fn post_edge(normals: texture_2d<f32>, depth: texture_depth_2d, px: vec2<i32>, dims: vec2<i32>, t: i32, inv_proj: mat4x4<f32>, depth_th: f32, crease: f32) -> f32 {
   let n0 = textureLoad(normals, clamp(px, vec2<i32>(0), dims - vec2<i32>(1)), 0);
@@ -35265,7 +35280,7 @@ fn post_edge(normals: texture_2d<f32>, depth: texture_depth_2d, px: vec2<i32>, d
   return 0.0;
 }`,
   [_P]
-), Que = Ie(
+), Zue = Ie(
   `
 fn post_cel(display: texture_2d<f32>, normals: texture_2d<f32>, p: vec2<f32>, s: vec3<f32>, dims: vec2<i32>, bands: f32, punch: f32, ink: f32, ink_w: f32) -> vec3<f32> {
   let l = post_luma(s);
@@ -35286,7 +35301,7 @@ fn post_cel(display: texture_2d<f32>, normals: texture_2d<f32>, p: vec2<f32>, s:
   return clamp(inked, vec3<f32>(0.0), vec3<f32>(1.0));
 }`,
   [qi, Bi, Ec, nk]
-), Zue = Ie(
+), ede = Ie(
   `
 fn post_art_rim(normals: texture_2d<f32>, depth: texture_depth_2d, c: vec2<f32>, dims: vec2<i32>, art: f32, mask: f32, inv_proj: mat4x4<f32>) -> bool {
   let wc = post_flags(normals, c, dims).w;
@@ -35303,7 +35318,7 @@ fn post_art_rim(normals: texture_2d<f32>, depth: texture_depth_2d, c: vec2<f32>,
   return false;
 }`,
   [Ec, Kp, _P]
-), ede = Ie(
+), tde = Ie(
   `
 fn post_paint(display: texture_2d<f32>, normals: texture_2d<f32>, c: vec2<f32>, dims: vec2<i32>, radius: f32, mask: f32) -> vec3<f32> {
   let r = i32(clamp(radius, 2.0, 8.0));
@@ -35376,7 +35391,7 @@ fn post_paint(display: texture_2d<f32>, normals: texture_2d<f32>, c: vec2<f32>, 
   return acc.rgb / acc.w;
 }`,
   [Kp, Ec, Bi]
-), tde = Ie(
+), nde = Ie(
   `
 fn post_brush(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, size: f32) -> f32 {
   let o = i32(max(size, 2.0));
@@ -35400,7 +35415,7 @@ fn post_brush(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, size: f32
   return 0.88 + 0.22 * h + 0.12 * bristle + ridge * 0.45;
 }`,
   [qi, Bi, SP]
-), nde = Ie(
+), sde = Ie(
   `
 fn post_dots(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, angle: f32, cell: f32, ink: i32) -> f32 {
   let cs = cos(angle);
@@ -35423,7 +35438,7 @@ fn post_dots(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, angle: f32
   return clamp((radius - length(q - cq)) / (2.0 * aa) + 0.5, 0.0, 1.0) * clamp(radius / aa, 0.0, 1.0);
 }`,
   [qi, Bi]
-), sde = Ie(
+), ode = Ie(
   `
 fn post_halftone(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, size: f32, keep: f32) -> vec3<f32> {
   let cell = clamp(size, 3.0, 24.0);
@@ -35441,8 +35456,8 @@ fn post_halftone(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, size: 
   }
   return mix(mono, color, keep);
 }`,
-  [nde]
-), ode = Ie(
+  [sde]
+), rde = Ie(
   `
 fn post_ascii(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, size: f32, keep: f32) -> vec3<f32> {
   let cw = clamp(size, 4.0, 24.0);
@@ -35479,11 +35494,11 @@ fn post_ascii(display: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, size: f32
   return select(ground, ink, on);
 }`,
   [qi, Bi]
-), rde = Ie(`
+), ide = Ie(`
 fn post_hatch(p: vec2<f32>, dir: vec2<f32>, spacing: f32, wob: f32) -> f32 {
   let d = abs(fract(dot(p, dir) / spacing + wob) - 0.5) * spacing;
   return 1.0 - smoothstep(0.3, 1.1, d);
-}`), ide = Ie(
+}`), ade = Ie(
   `
 fn post_sketch(display: texture_2d<f32>, p: vec2<f32>, s: vec3<f32>, bp: vec3<f32>, dims: vec2<i32>, size: f32, keep: f32, time: f32) -> vec3<f32> {
   let sp = clamp(size, 2.0, 16.0);
@@ -35513,8 +35528,8 @@ fn post_sketch(display: texture_2d<f32>, p: vec2<f32>, s: vec3<f32>, bp: vec3<f3
   let lead = mix(vec3<f32>(0.2, 0.2, 0.24), s * 0.45, keep * 0.6);
   return mix(wash, lead, ink * 0.85);
 }`,
-  [qi, Bi, SP, rde]
-), ade = Ie(
+  [qi, Bi, SP, ide]
+), cde = Ie(
   `
 fn post_stylize(display: texture_2d<f32>, normals: texture_2d<f32>, kind: u32, p: vec2<f32>, s: vec3<f32>, dims: vec2<i32>, size: f32, keep: f32, mask: f32, time: f32) -> vec3<f32> {
   let bp = post_base(display, vec2<i32>(p), dims);
@@ -35534,15 +35549,15 @@ fn post_stylize(display: texture_2d<f32>, normals: texture_2d<f32>, kind: u32, p
   }
   return post_sketch(display, p, s, bp, dims, size, keep, time);
 }`,
-  [qi, Bi, ede, tde, sde, ode, ide]
-), zN = ["picture", "parts", "normals", "groups"], cde = Ie(
+  [qi, Bi, tde, nde, ode, rde, ade]
+), zN = ["picture", "parts", "normals", "groups"], lde = Ie(
   `
 fn post_is_art(normals: texture_2d<f32>, q: vec2<f32>, dims: vec2<i32>, mask: f32) -> bool {
   let n = post_flags(normals, q, dims);
   return n.w < 0.0 || post_aimed(mask, n.w);
 }`,
   [Ec, Kp]
-), lde = Ie(
+), ude = Ie(
   `
 fn post_show(normals: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, show: u32) -> vec4<f32> {
   let n = post_flags(normals, p, dims);
@@ -35560,7 +35575,7 @@ fn post_show(normals: texture_2d<f32>, p: vec2<f32>, dims: vec2<i32>, show: u32)
   return vec4<f32>(fract(g * 0.618034), fract(g * 0.371), fract(g * 0.1373), 1.0);
 }`,
   [Ec, nk]
-), ude = Ie(
+), dde = Ie(
   `
 fn post_composite(uv_in: vec2<f32>, display: texture_2d<f32>, display_s: sampler, normals: texture_2d<f32>, depth: texture_depth_2d, inv_proj: mat4x4<f32>, frame: vec4<f32>, cel: vec4<f32>, cel2: vec4<f32>, pixel: vec4<f32>, palette: vec4<f32>, outline: vec4<f32>, outline2: vec4<f32>, outline3: vec4<f32>, stylize: vec4<f32>, stylize2: vec4<f32>, grade: vec4<f32>, grade2: vec4<f32>, scan: vec4<f32>, grain: vec4<f32>, screen: vec4<f32>) -> vec4<f32> {
   let dims = vec2<i32>(textureDimensions(display));
@@ -35657,22 +35672,22 @@ fn post_composite(uv_in: vec2<f32>, display: texture_2d<f32>, display_s: sampler
   return vec4<f32>(clamp(s, vec3<f32>(0.0), vec3<f32>(1.0)), 1.0);
 }`,
   [
+    ude,
     lde,
-    cde,
-    Zue,
+    ede,
     Ec,
     Kp,
     qi,
     xre,
     Mre,
+    Zue,
     Que,
-    Jue,
-    ade
+    cde
   ]
 );
-function dde(e) {
+function hde(e) {
   const { display: t, normals: n, depth: s, invProj: o, uniforms: r } = e;
-  return ude({
+  return dde({
     uv_in: qv,
     display: t,
     display_s: t,
@@ -35716,7 +35731,7 @@ function w$(e) {
   }
   return { spec: t, raised: n };
 }
-const hde = [
+const fde = [
   "off",
   "all",
   "characters",
@@ -35725,7 +35740,7 @@ const hde = [
   "characters+objects",
   "characters+environment",
   "objects+environment"
-], fde = ["off", "all"], IN = ["none", "gameboy", "pico8", "cga", "1bit", "amber"], RN = ["paint", "halftone", "ascii", "sketch"], fk = [
+], pde = ["off", "all"], IN = ["none", "gameboy", "pico8", "cga", "1bit", "amber"], RN = ["paint", "halftone", "ascii", "sketch"], fk = [
   "ao",
   "gi",
   "ssr",
@@ -35751,7 +35766,7 @@ function ss(e) {
 }
 const Me = (e, t, n, s, o) => ({ type: "number", default: t, minimum: n, maximum: s, description: e, ...o ? { unit: o } : {} }), Br = (e, t, n, s, o) => ({ type: "integer", default: t, minimum: n, maximum: s, description: e, ...o ? { unit: o } : {} }), qt = (e = !1) => ({
   type: "string",
-  enum: e ? fde : hde,
+  enum: e ? pde : fde,
   default: "off",
   description: e ? "'all' turns it on over the whole picture; 'off' turns it off." : "Where it applies: 'off', 'all', or 'characters', 'objects', 'environment' or two of them joined by '+'."
 }), Bt = (e, t) => ({ type: "object", default: Object.fromEntries(Object.entries(t).map(([s, o]) => [s, o.default])), description: e, properties: t }), t0 = {
@@ -35897,10 +35912,10 @@ function b$(e, t) {
   for (const s of fk) n[s] = { ...e[s], ...t[s] };
   return PN(n);
 }
-function pde(e) {
+function mde(e) {
   return fk.every((t) => e[t].scope === "off");
 }
-function mde() {
+function gde() {
   const e = () => me(new La()).setGroup(ve), t = {
     frame: e(),
     cel: e(),
@@ -35964,7 +35979,7 @@ const Gr = (e, t, n, s) => ({
   description: e,
   group: "bloom",
   filters: { bloom: { scope: "all", strength: t, threshold: n } }
-}), ma = (e, t, n, s, o, r) => ({ description: e, group: "air", filters: { air: { scope: "all", haze: t, height: n, shafts: s, forward: o, halos: r } } }), gde = {
+}), ma = (e, t, n, s, o, r) => ({ description: e, group: "air", filters: { air: { scope: "all", haze: t, height: n, shafts: s, forward: o, halos: r } } }), yde = {
   "look:pixel/fine": Gr("3 px blocks, no outline.", 3, 0, !1),
   "look:pixel/classic": Gr("4 px blocks with a dark outline.", 4, 0, !0),
   "look:pixel/bold": Gr("5 px blocks with a dark outline.", 5, 0, !0),
@@ -36079,11 +36094,11 @@ const Gr = (e, t, n, s) => ({
     group: "ssr",
     filters: { ssr: { scope: "all" } }
   }
-}, yde = ["look", "shading", ...fk], wde = Object.fromEntries(Object.entries(t0).map(([e, t]) => [e, t.default])), bde = {
+}, wde = ["look", "shading", ...fk], bde = Object.fromEntries(Object.entries(t0).map(([e, t]) => [e, t.default])), vde = {
   description: { type: "string", default: "", description: "What it looks like, in plain sentences." },
   group: {
     type: "string",
-    enum: yde,
+    enum: wde,
     default: "look",
     description: "Where a menu lists it: 'look' for a whole look, else the filter it presets ('shading' for a style)."
   },
@@ -36150,12 +36165,12 @@ const Gr = (e, t, n, s) => ({
   },
   filters: {
     type: "object",
-    default: wde,
+    default: bde,
     description: "The filter chain: each filter it names, with its scope and numbers; the rest are off.",
     properties: t0
   },
   gallery: Sc({ camera: "cam=iso" })
-}, vde = {
+}, xde = {
   "look:clean": { description: "No filter: the picture as the scene draws it, in its own style." },
   "look:pixel-heroes": {
     description: "A clean, sharp world; the characters and objects are outlined pixel art.",
@@ -36307,7 +36322,7 @@ const Gr = (e, t, n, s) => ({
     }
   }
 };
-function xde(e) {
+function kde(e) {
   const { pixel: t, palette: n, outline: s } = e.filters;
   return [
     Pv(t.levels, "filters.pixel.levels"),
@@ -36319,19 +36334,19 @@ function xde(e) {
 function jN(e = q) {
   e.kinds().includes("look") || e.defineKind("look", {
     description: "Looks: a material style plus a filter chain (post-processing), and the sky that lights it, as whole looks or one-filter presets.",
-    fields: bde,
+    fields: vde,
     fallback: "look:clean",
-    check: (t) => xde(t),
+    check: (t) => kde(t),
     defineWith: "defineLook('look:<name>', { description, style, toon, sky, filters: { pixel: { scope, size }, … } })"
   });
-  for (const [t, n] of Object.entries({ ...vde, ...gde }))
+  for (const [t, n] of Object.entries({ ...xde, ...yde }))
     e.has("look", t) || e.def("look", t, n);
 }
 jN();
-function Bme(e, t, n = q) {
+function Gme(e, t, n = q) {
   return n.def("look", e, t);
 }
-class kde extends sT {
+class Mde extends sT {
   beforeDraw = () => {
   };
   // r182 keeps the clear colour as a Color4, which three/webgpu does not export; a Color takes its r, g and b.
@@ -36346,8 +36361,8 @@ class kde extends sT {
     }
   }
 }
-function Mde(e) {
-  const t = new oc(), n = new kde(sT.COLOR, t, e.camera, { depthBuffer: !1 }), s = me(0).setGroup(ve);
+function Ade(e) {
+  const t = new oc(), n = new Mde(sT.COLOR, t, e.camera, { depthBuffer: !1 }), s = me(0).setGroup(ve);
   let [o, r] = [null, !1];
   return n.beforeDraw = () => o?.depth(e.renderTarget.depthTexture, !0), Pu(n, () => r), {
     over(i) {
@@ -36406,7 +36421,7 @@ Q("gfx", {
     doc: "Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`."
   }
 });
-const Ade = {
+const Sde = {
   "post.look": {
     type: "string",
     default: "look:clean",
@@ -36429,7 +36444,7 @@ const Ade = {
   },
   "post.aa": {
     type: "string",
-    enum: Kue,
+    enum: Yue,
     default: TN,
     view: !0,
     when: "scene",
@@ -36438,7 +36453,7 @@ const Ade = {
 };
 function pk(e = q) {
   const t = (n) => e.kinds().includes("setting") && e.has("setting", n);
-  t("post.look") || ct(Ade, e), t("quality") || ct($N, e);
+  t("post.look") || ct(Sde, e), t("quality") || ct($N, e);
 }
 pk();
 Q("gfx", {
@@ -36449,7 +36464,7 @@ Q("gfx", {
     // prettier-ignore
   }
 });
-function Sde(e) {
+function _de(e) {
   const { scenePass: t, log: n } = e, s = xie(e.features), o = new sp(), r = () => me(new La()).setGroup(ve), [i, a] = [me(0).setGroup(ve), me(0).setGroup(ve)], [c, l, u, d] = [r(), r(), r(), r()], [h, f] = [me(new le()).setGroup(ve), me(new le()).setGroup(ve)], [p, m] = [t.getTextureNode("depth"), t.getTextureNode("normal")], g = { ao: !1, gi: !1, air: !1, ssr: !1 }, y = s.occlusion?.({ depth: p, normal: m, camera: o }) ?? null;
   y && Pu(y.node, () => e.warming() || g.ao);
   const w = t.getTextureNode("output"), v = s.reflections ? t.getTextureNode("metalrough") : null, b = v && s.reflections({ colour: w, depth: p, normal: m, metalrough: v });
@@ -36527,7 +36542,7 @@ fn shade_scene(base: vec3<f32>, uv_in: vec2<f32>, colour: texture_2d<f32>, depth
   };
 }
 const v$ = 10;
-function _de(e, t, n) {
+function Ode(e, t, n) {
   e.updateMatrixWorld();
   const s = e.projectionMatrix.elements, o = s[11] !== 0;
   let r = 1;
@@ -36537,11 +36552,11 @@ function _de(e, t, n) {
   }
   return [t * 2 * r / (s[0] * n.width), t * 2 * r / (s[5] * n.height)];
 }
-function Ode(e, t, n) {
+function Ede(e, t, n) {
   const s = { cells: [0, 0], shift: [0, 0], restore: () => {
   } };
   if (!(t >= 1) || n.width <= 0 || n.height <= 0) return s;
-  const [o, r] = _de(e, t, n);
+  const [o, r] = Ode(e, t, n);
   if (!(Number.isFinite(o) && Number.isFinite(r) && o > 0 && r > 0)) return s;
   const i = new z().setFromMatrixColumn(e.matrixWorld, 0).normalize(), a = new z().setFromMatrixColumn(e.matrixWorld, 1).normalize(), c = e.position.clone(), [l, u] = [c.dot(i) / o, c.dot(a) / r], [d, h] = [Math.round(l), Math.round(u)];
   return e.position.addScaledVector(i, (d - l) * o).addScaledVector(a, (h - u) * r), e.updateMatrixWorld(), {
@@ -36553,20 +36568,20 @@ function Ode(e, t, n) {
   };
 }
 const DN = { least: 240 };
-function Ede(e) {
+function $de(e) {
   return Math.max(1, Math.floor(e / DN.least));
 }
 function CN(e, t) {
-  return e.pixel.size === 0 ? Ede(t) : e.pixel.size;
+  return e.pixel.size === 0 ? $de(t) : e.pixel.size;
 }
-function $de(e, t = DN.least) {
+function Tde(e, t = DN.least) {
   return e.pixel.snap && (ss(e.pixel.scope) & Nh.environment) !== 0 ? CN(e, t) : e.screen.scope === "all" && e.screen.pixelate > 1 ? e.screen.pixelate : 0;
 }
-function Tde(e, t) {
+function zde(e, t) {
   return e.lines > 0 ? Math.max(1, Math.round(e.width * t / e.lines)) : e.width;
 }
-function zde(e, t, n) {
-  const s = CN(e, n.height), o = $de(e, n.height), r = o > 0 ? Ode(t, o, n) : null;
+function Ide(e, t, n) {
+  const s = CN(e, n.height), o = Tde(e, n.height), r = o > 0 ? Ede(t, o, n) : null;
   return {
     block: s,
     cells: r ? r.cells : [0, 0],
@@ -36574,15 +36589,15 @@ function zde(e, t, n) {
     restore: () => r?.restore()
   };
 }
-let Ide = 0;
-function Rde(e, t = {}) {
+let Rde = 0;
+function Lde(e, t = {}) {
   const { renderer: n } = e, s = t.registry ?? q;
   pk(s);
-  const o = t.settings ?? As({ registry: s }), r = t.log ?? Ne, i = t.styles, a = t.aa ?? (o.get("post.aa") || TN), c = a === "traa" ? kie(e.features) : null, l = Yue(a, c !== null), u = t.quality ?? (() => hk(o.get("quality"), !1));
+  const o = t.settings ?? As({ registry: s }), r = t.log ?? Ne, i = t.styles, a = t.aa ?? (o.get("post.aa") || TN), c = a === "traa" ? Mie(e.features) : null, l = Xue(a, c !== null), u = t.quality ?? (() => hk(o.get("quality"), !1));
   jN(s);
-  const d = ++Ide, h = i ? { style: i.style, toon: i.toon.values() } : null, f = aee(new oc(), new sp(), Mie(e.features, a)), p = mde(), m = me(new le()).setGroup(ve), g = me(0).setGroup(ve), y = me(0).setGroup(ve), w = Z8(f.getTextureNode("output"), 0, 0.4, 0.9);
+  const d = ++Rde, h = i ? { style: i.style, toon: i.toon.values() } : null, f = aee(new oc(), new sp(), Aie(e.features, a)), p = gde(), m = me(new le()).setGroup(ve), g = me(0).setGroup(ve), y = me(0).setGroup(ve), w = Z8(f.getTextureNode("output"), 0, 0.4, 0.9);
   let v = !1;
-  const b = Sde({ scenePass: f, features: e.features, warming: () => v, log: r }), x = LP(e.features) ? Mde(f) : null, k = new oc();
+  const b = _de({ scenePass: f, features: e.features, warming: () => v, log: r }), x = LP(e.features) ? Ade(f) : null, k = new oc();
   let A = !1;
   Pu(w, () => v || A);
   const _ = new g8(n);
@@ -36594,8 +36609,8 @@ function Rde(e, t = {}) {
     X.name = "postDisplay";
     const Y = () => v || y.value > 0.5;
     let te = null;
-    const se = c ? f.getTextureNode("velocity") : null, pe = Xue(l, X, y, Y, (Be) => (te = c({ beauty: Be, depth: f.getTextureNode("depth"), velocity: se, camera: f.camera, runs: Y }), te.node));
-    _.outputNode = dde({
+    const se = c ? f.getTextureNode("velocity") : null, pe = Jue(l, X, y, Y, (Be) => (te = c({ beauty: Be, depth: f.getTextureNode("depth"), velocity: se, camera: f.camera, runs: Y }), te.node));
+    _.outputNode = hde({
       display: pe.texture,
       normals: f.getTextureNode("normal"),
       depth: f.getTextureNode("depth"),
@@ -36643,15 +36658,15 @@ function Rde(e, t = {}) {
     B && i.setStyle(h.style, f.scene), n.render(f.scene, f.camera), B && i.setStyle(B, f.scene);
   }, K = () => {
     const B = C();
-    F = pde(B) && p.frame.value.x === 0 && (!i || !h || i.style === h.style);
+    F = mde(B) && p.frame.value.x === 0 && (!i || !h || i.style === h.style);
     const V = x?.prepare(n, v) ?? !1;
     if ((F || v) && (sw(n), W(), V && x.straight(n), e.resolution?.shift(0, 0), !v))
       return;
     (!M || M.tone !== n.toneMapping || M.space !== n.outputColorSpace) && O();
     const X = f.camera;
     X.updateMatrixWorld(), m.value.copy(X.projectionMatrixInverse), n.getDrawingBufferSize(N);
-    const Y = zde(B, X, { width: N.x, height: N.y });
-    p.pixel.value.y = Y.block, p.outline.value.y = Tde(B.outline, N.y), p.frame.value.z = Y.cells[0], p.frame.value.w = Y.cells[1], i?.toon.grid.value.set(Y.cells[0], Y.cells[1], Y.block), e.resolution?.shift(Y.shift[0], Y.shift[1]), b.frame(X, f.scene, P, N.y), M?.temporal?.follow(X), p.frame.value.y = P++ / 60;
+    const Y = Ide(B, X, { width: N.x, height: N.y });
+    p.pixel.value.y = Y.block, p.outline.value.y = zde(B.outline, N.y), p.frame.value.z = Y.cells[0], p.frame.value.w = Y.cells[1], i?.toon.grid.value.set(Y.cells[0], Y.cells[1], Y.block), e.resolution?.shift(Y.shift[0], Y.shift[1]), b.frame(X, f.scene, P, N.y), M?.temporal?.follow(X), p.frame.value.y = P++ / 60;
     const te = cee(f);
     te > 0 && r.warnOnce("GFX_POST_FLAG_SLOTS", { missed: te, slots: rv }, "slots"), sw(n);
     const se = f.scene;
@@ -36714,18 +36729,18 @@ function FN(e) {
   }
   return t;
 }
-function Lde(e) {
+function Pde(e) {
   return FN(e.limits);
 }
-async function Pde(e, t = {}) {
+async function Nde(e, t = {}) {
   const n = [...e.features].sort();
   try {
-    return await e.requestDevice({ requiredFeatures: n, requiredLimits: Lde(e) });
+    return await e.requestDevice({ requiredFeatures: n, requiredLimits: Pde(e) });
   } catch (s) {
     return (t.log ?? Ne).warnOnce("GFX_DEFAULT_LIMITS", { reason: String(s) }), e.requestDevice({ requiredFeatures: n });
   }
 }
-function Nde(e, t) {
+function jde(e, t) {
   const { vendor: n, architecture: s, device: o, description: r, isFallbackAdapter: i } = e.info;
   return {
     adapter: { vendor: n, architecture: s, device: o, description: r, fallback: i === !0 },
@@ -36739,8 +36754,8 @@ Q("gfx", {
     fix: "dispose the first registration (register returns { dispose }), or register the second under another id"
   }
 });
-const jde = new le().makeScale(0, 0, 0);
-function Dde(e, t) {
+const Dde = new le().makeScale(0, 0, 0);
+function Cde(e, t) {
   const n = [];
   let s = null;
   for (let r = e; r && r !== t; r = r.parent) {
@@ -36763,13 +36778,13 @@ function Dde(e, t) {
     const i = (a) => {
       o.setMatrixAt(0, a), o.instanceMatrix.clearUpdateRanges(), o.instanceMatrix.needsUpdate = !0;
     };
-    o.count = 1, i(jde), n.push(() => {
+    o.count = 1, i(Dde), n.push(() => {
       o.count = 0, i(r);
     });
   }
   return () => n.reverse().forEach((r) => r());
 }
-function Cde(e) {
+function Fde(e) {
   const t = [];
   return e.traverse((n) => {
     n.frustumCulled && (n.frustumCulled = !1, t.push(n));
@@ -36781,7 +36796,7 @@ function x$(e) {
   const t = e;
   return t ? t.isColor ? "color" : t.isCubeTexture ? "cube" : t.isTexture ? "texture" : "node" : "none";
 }
-function Fde(e) {
+function qde(e) {
   const { renderer: t, counter: n } = e, s = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
   let r = null, i = null, a = null, c = 0, l = null, u = null;
   const d = (g) => [...g.keys()].sort(), h = () => n.count().built, f = (g) => g.target !== void 0 ? g.target : t.needsFrameBufferTarget ? (r ??= new Uw(1, 1, {
@@ -36839,7 +36854,7 @@ function Fde(e) {
   async function m(g, y) {
     const { scene: w, camera: v } = g, b = performance.now(), x = h();
     l ??= x, u = x;
-    const k = p.key(w), A = d(s), _ = g.passes?.length ? g.passes : [{}], M = A.length + _.length + 1, S = [Cde(w)], O = (E, $) => y?.({ done: E, total: M, step: $ });
+    const k = p.key(w), A = d(s), _ = g.passes?.length ? g.passes : [{}], M = A.length + _.length + 1, S = [Fde(w)], O = (E, $) => y?.({ done: E, total: M, step: $ });
     try {
       const E = _.map(f), $ = t.getRenderTarget();
       try {
@@ -36852,7 +36867,7 @@ function Fde(e) {
             }
             O(1, "scene");
             for (const [C, D] of A.entries()) {
-              for (const N of s.get(D).objects()) S.push(Dde(N, w));
+              for (const N of s.get(D).objects()) S.push(Cde(N, w));
               await t.compileAsync(w, v), O(C + 2, D);
             }
           } finally {
@@ -36880,7 +36895,7 @@ function Fde(e) {
   }
   return p;
 }
-const qde = Q("gfx", {
+const Bde = Q("gfx", {
   GFX_NO_WEBGPU: {
     template: "WebGPU is unavailable: {reason}",
     fix: "open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)",
@@ -36919,11 +36934,11 @@ class Vl extends Error {
   fix;
   /** Fills the code's template with `values` (`{reason}` → `values.reason`). */
   constructor(t, n) {
-    const { template: s, fix: o } = qde[t];
+    const { template: s, fix: o } = Bde[t];
     super(s.replace(/\{(\w+)\}/g, (r, i) => n[i] ?? r)), this.code = t, this.fix = o;
   }
 }
-async function Bde(e = globalThis.navigator?.gpu) {
+async function Gde(e = globalThis.navigator?.gpu) {
   if (!e) throw new Vl("GFX_NO_WEBGPU", { reason: "this browser has no navigator.gpu" });
   let t;
   try {
@@ -36934,7 +36949,7 @@ async function Bde(e = globalThis.navigator?.gpu) {
   if (!t) throw new Vl("GFX_NO_WEBGPU", { reason: "navigator.gpu.requestAdapter() gave no adapter" });
   return t;
 }
-function Gde(e, t, n) {
+function Hde(e, t, n) {
   t.addEventListener("uncapturederror", (o) => {
     const { error: r } = o;
     o.preventDefault(), n.error("GFX_GPU_ERROR", { kind: r.constructor.name, message: r.message });
@@ -36944,18 +36959,18 @@ function Gde(e, t, n) {
     n.error("GFX_DEVICE_LOST", { reason: o.reason ?? "unknown", message: o.message }), s.call(e, o);
   };
 }
-async function Hde(e, t = {}) {
-  const n = t.log ?? Ne, s = t.settings ?? As({ registry: t.registry }), o = await Bde();
+async function Wde(e, t = {}) {
+  const n = t.log ?? Ne, s = t.settings ?? As({ registry: t.registry }), o = await Gde();
   let r;
   try {
-    r = await Pde(o, { log: n });
+    r = await Nde(o, { log: n });
   } catch (b) {
     throw new Vl("GFX_NO_WEBGPU", { reason: `the adapter gave no device (${String(b)})` });
   }
-  const i = FZ(r, { log: n }), a = Nde(o, r), c = gie(a, { registry: t.registry, settings: s, log: n }), l = c.on.includes("feature:timestamps"), u = new w8({ canvas: e, device: r, antialias: t.antialias ?? !1, trackTimestamp: l });
+  const i = FZ(r, { log: n }), a = jde(o, r), c = gie(a, { registry: t.registry, settings: s, log: n }), l = c.on.includes("feature:timestamps"), u = new w8({ canvas: e, device: r, antialias: t.antialias ?? !1, trackTimestamp: l });
   if (wie(u, c), await u.init(), u.backend.isWebGPUBackend !== !0)
     throw u.dispose(), new Vl("GFX_NO_WEBGPU", { reason: "three.js started another backend than WebGPU" });
-  Gde(u, r, n), u.info.autoReset = !1;
+  Hde(u, r, n), u.info.autoReset = !1;
   const d = yie(u, c), h = {
     backend: "WebGPU",
     adapter: a.adapter,
@@ -36964,7 +36979,7 @@ async function Hde(e, t = {}) {
     three: Xl,
     enabled: c.on,
     downgrades: c.downgrades
-  }, f = qte({ renderer: u, canvas: e, settings: s }), p = Fde({ renderer: u, counter: i });
+  }, f = qte({ renderer: u, canvas: e, settings: s }), p = qde({ renderer: u, counter: i });
   let m = 0, g = 1, y = null;
   return { renderer: u, device: r, info: h, features: c, resolution: f, warmup: p, pipelines: i, timing: d, frame: (b) => {
     const x = b.alpha ?? 1;
@@ -37009,19 +37024,19 @@ async function Hde(e, t = {}) {
     };
   } };
 }
-const Wde = "Turn your phone sideways for the best view";
-function Ude(e) {
+const Ude = "Turn your phone sideways for the best view";
+function Vde(e) {
   const t = e.documentElement;
   if (e.fullscreenElement || typeof t.requestFullscreen != "function") return;
   const n = globalThis.screen?.orientation;
   t.requestFullscreen({ navigationUI: "hide" }).then(() => n?.lock?.("landscape")).catch(() => {
   });
 }
-function Vde(e) {
+function Kde(e) {
   const t = e.createElement("div");
-  t.className = "touch-turn", t.setAttribute("role", "status"), t.textContent = Wde, t.hidden = !0, e.body.append(t);
+  t.className = "touch-turn", t.setAttribute("role", "status"), t.textContent = Ude, t.hidden = !0, e.body.append(t);
   let n = !1, s = !1;
-  const o = () => Ude(e), r = () => [...e.querySelectorAll("[data-panel]")].filter((i) => !i.hidden);
+  const o = () => Vde(e), r = () => [...e.querySelectorAll("[data-panel]")].filter((i) => !i.hidden);
   return {
     get touch() {
       return n;
@@ -37039,8 +37054,8 @@ function Vde(e) {
     }
   };
 }
-const Kde = 72, Yde = 26, Xde = 0.3, k$ = 420, Rw = 0.22, Jde = 240;
-function Qde(e) {
+const Yde = 72, Xde = 26, Jde = 0.3, k$ = 420, Rw = 0.22, Qde = 240;
+function Zde(e) {
   const t = /* @__PURE__ */ new Map(), n = (l, u) => [u.clientX - l.x, u.clientY - l.y], s = (l, u, d, h) => {
     l.style.transform = u || d ? `translate(${u}px, ${d}px)` : "", l.style.opacity = h < 1 ? String(h) : "";
   }, o = (l) => {
@@ -37050,13 +37065,13 @@ function Qde(e) {
     const u = l, d = t.get(u.pointerId);
     if (!d) return;
     const [h, f] = n(d, u);
-    s(d.element, h, f, Math.min(1, Math.max(0.25, 1 - Math.hypot(h, f) / Jde)));
+    s(d.element, h, f, Math.min(1, Math.max(0.25, 1 - Math.hypot(h, f) / Qde)));
   }, i = (l) => {
     const u = l, d = t.get(u.pointerId);
     if (!d) return;
     t.delete(u.pointerId);
-    const [h, f] = n(d, u), p = Math.hypot(h, f), m = (u.timeStamp - d.t0) / 1e3 < Xde, { element: g } = d;
-    if (u.type === "pointercancel" || !(p > Kde || m && p > Yde))
+    const [h, f] = n(d, u), p = Math.hypot(h, f), m = (u.timeStamp - d.t0) / 1e3 < Jde, { element: g } = d;
+    if (u.type === "pointercancel" || !(p > Yde || m && p > Xde))
       return g.style.transition = "transform 0.2s ease-out, opacity 0.2s ease-out", s(g, 0, 0, 1);
     g.style.transition = `transform ${Rw}s ease-in, opacity ${Rw}s linear`, s(g, h + h / p * k$, f + f / p * k$, 1e-3), setTimeout(() => {
       g.dataset.swiped = g.dataset.swipeKey ?? "", g.style.transition = "none", s(g, 0, 0, 1);
@@ -37098,7 +37113,7 @@ const Jf = Object.freeze([
 function qN(e, t) {
   return Math.min(1.25, Math.max(0.8, Math.min(e, t) / 390));
 }
-const Zde = {
+const ehe = {
   description: { type: "string", default: "", description: "What the layout is for, in plain words." },
   buttons: {
     type: "array",
@@ -37119,7 +37134,7 @@ const Zde = {
     description: "Whether the menu button shows: it pauses, then calls onMenu."
   }
 };
-function ehe(e) {
+function the(e) {
   const t = [];
   return e.buttons.length > Jf.length && t.push(`buttons holds ${e.buttons.length}; the fan has ${Jf.length} slots`), e.buttons.forEach((n, s) => {
     /^[a-z][A-Za-z0-9]*$/.test(n.action) || t.push(`buttons[${s}].action is ${U(n.action)}; name an action (a lower-case word: jump)`), e.buttons.findIndex((o) => o.action === n.action) !== s && t.push(`buttons[${s}] repeats the action ${n.action}`);
@@ -37128,18 +37143,18 @@ function ehe(e) {
 function BN(e = q) {
   e.kinds().includes("touchlayout") || e.defineKind("touchlayout", {
     description: "A page's touch controls: the buttons in the corner fan, each pressing an action, and whether the menu button shows.",
-    fields: Zde,
+    fields: ehe,
     defineWith: "defineTouchLayout('touchlayout:<name>', { buttons: [{ action: 'jump' }], menu: true })",
-    check: (t) => ehe(t)
+    check: (t) => the(t)
   });
 }
-function Gme(e, t, n = q) {
+function Hme(e, t, n = q) {
   return BN(n), n.def("touchlayout", e, t);
 }
-function the(e, t = q) {
+function nhe(e, t = q) {
   return BN(t), t.get("touchlayout", e);
 }
-function nhe(e, t) {
+function she(e, t) {
   const n = e.createElement("div");
   n.className = "touch-layer", n.hidden = !0;
   const s = e.createElement("div");
@@ -37190,10 +37205,10 @@ const sc = Object.freeze({
   stackSlots: 5,
   pool: 48
 });
-function she(e) {
+function ohe(e) {
   return sc.rise * e - sc.slow * e * e / 2;
 }
-function ohe(e, t, n) {
+function rhe(e, t, n) {
   const { stackTime: s, stackRadius: o, stackSlots: r } = sc, a = e !== null && n - e.t < s && Math.hypot(t[0] - e.x, t[2] - e.z) < o ? e : { x: t[0], y: t[1], z: t[2], t: n, n: 0 };
   return a.t = n, { column: a, slot: a.n++ % r };
 }
@@ -37206,7 +37221,7 @@ function yh(e, t) {
   return s;
 }
 const hl = new z();
-function rhe(e, t, n, s, o, r, i) {
+function ihe(e, t, n, s, o, r, i) {
   hl.set(t, n, s).applyMatrix4(e.matrixWorldInverse);
   const a = -hl.z;
   return a >= (e.near ?? 0) && a <= (e.far ?? 1 / 0) ? (hl.applyMatrix4(e.projectionMatrix), i[0] = (hl.x + 1) * o / 2, i[1] = (1 - hl.y) * r / 2, i[2] = a, !0) : !1;
@@ -37215,13 +37230,13 @@ function M$(e, t, n, s) {
   return n !== s && e.style.setProperty(t, n), n;
 }
 const Lw = (e) => String(Math.round(e * 100) / 100);
-function ihe(e, t) {
+function ahe(e, t) {
   const n = e.ownerDocument, s = [], o = [], r = [0, 0, 0];
   let i = 0, a = null, c = 0;
   const l = (f, p) => {
     f.shown !== p && (f.el.hidden = !(f.shown = p));
   }, u = (f, p, m, g, y, w) => {
-    const b = w && rhe(p.camera, m, g, y, p.width, p.height, r) && !p.blocked?.(r[0], r[1]);
+    const b = w && ihe(p.camera, m, g, y, p.width, p.height, r) && !p.blocked?.(r[0], r[1]);
     l(f, b), b && (f.x = M$(f.el, "--ui-x", Lw(r[0]), f.x), f.y = M$(f.el, "--ui-y", Lw(r[1]), f.y), f.depth = r[2]);
   }, d = (f) => {
     f.filter((m) => m.shown).sort((m, g) => g.depth - m.depth).forEach((m, g) => {
@@ -37274,7 +37289,7 @@ function ihe(e, t) {
       y ??= o.reduce((x, k) => k.age > x.age ? k : x);
       let w = 0;
       if (p.stack !== !1) {
-        const x = ohe(a, g, i);
+        const x = rhe(a, g, i);
         a = x.column, g.splice(0, 3, a.x, a.y, a.z), w = x.slot;
       }
       Object.assign(y, { live: !0, age: 0, point: g });
@@ -37295,31 +37310,31 @@ function ihe(e, t) {
         }
         p.el.style.setProperty("--ui-age", Lw(p.age));
         const [m, g, y] = p.point;
-        u(p, f, m, g + she(p.age), y, !0);
+        u(p, f, m, g + ohe(p.age), y, !0);
       }
       d(s), d(o);
     }
   };
 }
 const cr = (e) => Math.round(e * 100) / 100 + 0;
-function ahe(e, t) {
+function che(e, t) {
   if (!t || typeof e.getBoundingClientRect != "function") return null;
   const n = e.getBoundingClientRect();
   return [cr(n.left - t.left), cr(n.top - t.top), cr(n.width), cr(n.height)];
 }
-function che(e, t) {
+function lhe(e, t) {
   for (let n = e; n && n !== t; n = n.parentElement)
     if (n.hasAttribute("hidden")) return !0;
   return t.hasAttribute("hidden");
 }
-function lhe(e) {
+function uhe(e) {
   const t = typeof e.getBoundingClientRect == "function" ? e.getBoundingClientRect() : null, n = t ? [cr(t.width), cr(t.height)] : [parseFloat(e.style.width) || 0, parseFloat(e.style.height) || 0], s = Array.from(e.querySelectorAll("[data-ui]"), (o) => {
-    const { ui: r, id: i, value: a } = o.dataset, c = o.style.getPropertyValue("--ui-x"), l = o.style.getPropertyValue("--ui-y"), u = ahe(o, t), d = !u || u[2] > 0 && u[3] > 0 && uhe(u, n), h = typeof o.checkVisibility != "function" || o.checkVisibility({ visibilityProperty: !0 }), f = { kind: r ?? "", text: o.textContent ?? "", box: u, visible: !1 };
-    return i !== void 0 && (f.id = i), a !== void 0 && (f.value = a), c !== "" && l !== "" && (f.at = [cr(Number(c)), cr(Number(l))]), f.visible = !che(o, e) && h && d, f;
+    const { ui: r, id: i, value: a } = o.dataset, c = o.style.getPropertyValue("--ui-x"), l = o.style.getPropertyValue("--ui-y"), u = che(o, t), d = !u || u[2] > 0 && u[3] > 0 && dhe(u, n), h = typeof o.checkVisibility != "function" || o.checkVisibility({ visibilityProperty: !0 }), f = { kind: r ?? "", text: o.textContent ?? "", box: u, visible: !1 };
+    return i !== void 0 && (f.id = i), a !== void 0 && (f.value = a), c !== "" && l !== "" && (f.at = [cr(Number(c)), cr(Number(l))]), f.visible = !lhe(o, e) && h && d, f;
   });
   return { size: n, touch: e.ownerDocument.documentElement.classList.contains("touch"), elements: s };
 }
-function uhe(e, t) {
+function dhe(e, t) {
   return e[0] < t[0] && e[1] < t[1] && e[0] + e[2] > 0 && e[1] + e[3] > 0;
 }
 Q("ui", {
@@ -37339,7 +37354,7 @@ const wh = [
   "bottom-left",
   "bottom",
   "bottom-right"
-], Pw = "ui-overlay-style", A$ = 8, S$ = 12, dhe = { buttons: [], menu: null }, hhe = `
+], Pw = "ui-overlay-style", A$ = 8, S$ = 12, hhe = { buttons: [], menu: null }, fhe = `
 .ui-overlay { position: fixed; left: 0; top: 0; width: 0; height: 0; overflow: hidden; contain: strict;
   pointer-events: none;
   font: 600 16px/1.2 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #f0e3c6;
@@ -37386,7 +37401,7 @@ function Ur(e, t) {
   const n = e.createElement("div");
   return n.className = t, n;
 }
-function fhe(e, t, n) {
+function phe(e, t, n) {
   const s = qN(t, n), o = e.querySelectorAll(".touch-layer .touch-button").length, r = Jf.slice(0, o).map((c) => [
     t - c.right * s,
     n - c.bottom * s,
@@ -37394,15 +37409,15 @@ function fhe(e, t, n) {
   ]), i = (14 + 38 / 2) * s, a = e.querySelector(".touch-layer .touch-menu") ? [t - i, i, (38 / 2 + A$ + S$) * s] : null;
   return { buttons: r, menu: a };
 }
-function phe(e) {
+function mhe(e) {
   const { canvas: t } = e, n = t.ownerDocument;
   if (!n.getElementById(Pw)) {
     const w = n.createElement("style");
-    w.id = Pw, w.textContent = hhe, n.head.append(w);
+    w.id = Pw, w.textContent = fhe, n.head.append(w);
   }
   const s = Ur(n, "ui-overlay"), o = Ur(n, "ui-layer ui-labels"), r = Ur(n, "ui-layer ui-numbers"), i = Ur(n, "ui-layer ui-huds"), a = Ur(n, "ui-crosshair ui-at");
   a.hidden = !0, s.append(o, r, i, a), t.parentNode ? t.after(s) : n.body.append(s);
-  const c = ihe(o, r), l = /* @__PURE__ */ new Map(), u = /* @__PURE__ */ new Map(), d = { left: NaN, top: NaN, width: NaN, height: NaN }, h = ["", ""];
+  const c = ahe(o, r), l = /* @__PURE__ */ new Map(), u = /* @__PURE__ */ new Map(), d = { left: NaN, top: NaN, width: NaN, height: NaN }, h = ["", ""];
   let f = "", p = "";
   const m = (w) => {
     let v = l.get(w);
@@ -37418,7 +37433,7 @@ function phe(e) {
       d[v] !== w[v] && (s.style[v] = `${d[v] = w[v]}px`);
     return w;
   }, y = (w) => {
-    const v = n.defaultView, b = v !== null && n.documentElement.classList.contains("touch"), { buttons: x, menu: k } = b ? fhe(n, v.innerWidth, v.innerHeight) : dhe, A = Math.min(...x.map(([, O, E]) => O - E)), _ = x.length > 0 ? `${Math.max(0, w.bottom - A)}px` : "", M = k ? `${Math.max(0, k[1] + k[2] - w.top)}px` : "";
+    const v = n.defaultView, b = v !== null && n.documentElement.classList.contains("touch"), { buttons: x, menu: k } = b ? phe(n, v.innerWidth, v.innerHeight) : hhe, A = Math.min(...x.map(([, O, E]) => O - E)), _ = x.length > 0 ? `${Math.max(0, w.bottom - A)}px` : "", M = k ? `${Math.max(0, k[1] + k[2] - w.top)}px` : "";
     _ !== f && s.style.setProperty("--ui-corner", f = _), M !== p && s.style.setProperty("--ui-menu", p = M);
     const S = k ? [...x, k] : x;
     return S.length === 0 ? null : (O, E) => S.some(([$, T, R]) => Math.hypot(O + w.left - $, E + w.top - T) < R);
@@ -37454,14 +37469,14 @@ function phe(e) {
       const b = g(), [x, k] = [b.width, b.height].map((A) => String(Math.round(A * 50) / 100));
       x !== h[0] && a.style.setProperty("--ui-x", h[0] = x), k !== h[1] && a.style.setProperty("--ui-y", h[1] = k), c.place({ camera: w, width: b.width, height: b.height, dt: v, blocked: y(b) });
     },
-    state: () => lhe(s),
+    state: () => uhe(s),
     dispose() {
       s.remove(), n.querySelector(".ui-overlay") || n.getElementById(Pw)?.remove();
     }
   };
 }
-const mhe = 0.6;
-function ghe(e) {
+const ghe = 0.6;
+function yhe(e) {
   let t = null, n = -1 / 0;
   return {
     frame(s) {
@@ -37470,20 +37485,20 @@ function ghe(e) {
       for (const r of s.events.trace()) {
         if (r.seq <= n || (n = r.seq, r.type !== "damage")) continue;
         const i = r.payload;
-        i.amount > 0 && (e.damage(i.amount, { at: [i.at[0], i.at[1] + mhe, i.at[2]] }), o++);
+        i.amount > 0 && (e.damage(i.amount, { at: [i.at[0], i.at[1] + ghe, i.at[2]] }), o++);
       }
       return o;
     }
   };
 }
-function yhe(e, t = {}) {
+function whe(e, t = {}) {
   const { max: n = 40, minPx: s = 4 } = t;
   return e.visible.filter((o) => o.px >= s).slice(0, n).map((o, r) => ({ n: r + 1, id: o.id, name: o.name, px: o.px, at: o.centre }));
 }
-const whe = "111101101101111 010110010010111 111001111100111 111001111001111 101101111001001 111100111001111 111100111101111 111001001001001 111101111101111 111101111001111".split(
+const bhe = "111101101101111 010110010010111 111001111100111 111001111001111 101101111001001 111100111001111 111100111101111 111001001001001 111101111101111 111101111001111".split(
   " "
 ), _$ = [255, 230, 120], O$ = [10, 10, 14];
-function bhe(e, t, n, s) {
+function vhe(e, t, n, s) {
   const o = (r, i, a, c = 1) => {
     if (r < 0 || i < 0 || r >= t || i >= n) return;
     const l = (Math.round(i) * t + Math.round(r)) * 4;
@@ -37501,7 +37516,7 @@ function bhe(e, t, n, s) {
     for (let m = p - 2; m < p + 5 * u + 2; m++)
       for (let g = f - 2; g < f + h + 2; g++) o(g, m, O$, 0.8);
     [...l].forEach((m, g) => {
-      const y = whe[Number(m)];
+      const y = bhe[Number(m)];
       for (let w = 0; w < 15; w++) {
         if (y[w] !== "1") continue;
         const [v, b] = [f + g * d + w % 3 * u, p + Math.floor(w / 3) * u];
@@ -37516,7 +37531,7 @@ function E$(e, t, n) {
   return [s, Math.max(s + 1, Math.floor((e + 1) * n / t))];
 }
 const $$ = (e) => e === 0 ? "." : e === Kl ? "?" : GN[e - 1] ?? "+";
-function vhe(e, t, n, s) {
+function xhe(e, t, n, s) {
   if (t * n === 0 || e.length < t * n * 4)
     throw new Error(`thumbnail: ${e.length} bytes for ${t}×${n}`);
   const o = [], r = [], i = /* @__PURE__ */ new Set();
@@ -37562,7 +37577,7 @@ function fl(e, t) {
     if (s !== void 0) return s;
   }
 }
-function xhe(e, t, n = {}) {
+function khe(e, t, n = {}) {
   e.updateMatrixWorld(), t.parent === null && t.updateMatrixWorld();
   const s = new J$().setFromProjectionMatrix(
     new le().multiplyMatrices(t.projectionMatrix, t.matrixWorldInverse),
@@ -37589,7 +37604,7 @@ function xhe(e, t, n = {}) {
   }), { drawables: o, byColour: r, instanceOf: i };
 }
 const T$ = /* @__PURE__ */ new WeakMap();
-function khe(e) {
+function Mhe(e) {
   const t = T$.get(e);
   if (t) return t;
   const n = /* @__PURE__ */ new Map(), s = (d) => {
@@ -37616,8 +37631,8 @@ function khe(e) {
   const u = { material: c, scene: l, current: n };
   return T$.set(e, u), u;
 }
-function Mhe(e, t, n, s) {
-  const o = khe(e);
+function Ahe(e, t, n, s) {
+  const o = Mhe(e);
   for (const c of n.drawables) o.current.set(c.object, c);
   const r = e.getClearColor(new it()), i = e.getClearAlpha(), a = e.autoClear;
   o.scene.children = t.children;
@@ -37627,7 +37642,7 @@ function Mhe(e, t, n, s) {
     o.scene.children = [], o.current.clear(), e.setClearColor(r, i), e.autoClear = a;
   }
 }
-function Ahe(e, t, n, s) {
+function She(e, t, n, s) {
   const { drawables: o, byColour: r, instanceOf: i } = s, a = o.length, c = o.map((O) => O.instances === void 0 ? null : /* @__PURE__ */ new Set()), l = t * n, u = new Uint32Array(l), d = new Uint32Array(a), h = new Float64Array(a * 2), f = new Int32Array(a * 4).fill(-1);
   let p = 0, m = 0;
   for (let O = 0; O < l; O++) {
@@ -37676,7 +37691,7 @@ function Ahe(e, t, n, s) {
   } : null;
   return { pass: { width: t, height: n, objects: a, visible: x, unseen: k, empty: p, stray: m, protagonist: S }, pixels: _ };
 }
-const She = {
+const _he = {
   /** Coverage under this: almost nothing is drawn. */
   empty: 5e-3,
   /** Coverage under this: the frame is almost empty (check.mjs: 6%). */
@@ -37695,8 +37710,8 @@ const She = {
   blown: 0.05,
   /** One object over this share: the camera is inside or against it (§8.5). */
   oneObject: 0.7
-}, _he = 6, z$ = 0.1, Cw = (e, t, n) => `#${[e, t, n].map((s) => Math.round(s).toString(16).padStart(2, "0")).join("")}`, ns = (e) => Math.round(e * 1e4) / 1e4, xn = (e, t = 0) => `${(e * 100).toFixed(t)}%`;
-function Ohe(e, t, n, s) {
+}, Ohe = 6, z$ = 0.1, Cw = (e, t, n) => `#${[e, t, n].map((s) => Math.round(s).toString(16).padStart(2, "0")).join("")}`, ns = (e) => Math.round(e * 1e4) / 1e4, xn = (e, t = 0) => `${(e * 100).toFixed(t)}%`;
+function Ehe(e, t, n, s) {
   const o = t * n;
   if (o === 0 || e.length < o * 4)
     throw new Error(`lookMetrics: ${e.length} bytes for ${t}×${n}`);
@@ -37717,7 +37732,7 @@ function Ohe(e, t, n, s) {
   const y = [m / 2 ** 24 & 255, m / 2 ** 16 & 255, m / 256 & 255];
   let w = 0, v = 0;
   for (let T = 0, R = 0; T < o; T++, R += 4) {
-    [0, 1, 2].some((D) => Math.abs(e[R + D] - y[D]) > _he) && w++;
+    [0, 1, 2].some((D) => Math.abs(e[R + D] - y[D]) > Ohe) && w++;
     const L = T % t + 1 < t && Math.abs(l[T] - l[T + 1]) > z$, C = T + t < o && Math.abs(l[T] - l[T + t]) > z$;
     (L || C) && v++;
   }
@@ -37763,8 +37778,8 @@ function Ohe(e, t, n, s) {
     protagonist: s?.protagonist ? s.protagonist.px > 0 : null
   };
 }
-function Ehe(e, t = "the frame", n) {
-  const s = She, o = `${e.width}×${e.height}`;
+function $he(e, t = "the frame", n) {
+  const s = _he, o = `${e.width}×${e.height}`;
   if (e.blank) {
     const a = `${t} drew a blank frame: all ${o} pixels are ${e.background}. Draw before signalling ready, and check that the camera sees the scene`;
     return [{ id: "LOOK_BLANK", level: "fail", value: e.coverage, limit: 0, message: a }];
@@ -37834,7 +37849,7 @@ Q("gfx", {
 function WN(e, t = 4) {
   return Math.ceil(e * t / 256) * 256;
 }
-function $he(e, t, n, s = 4) {
+function The(e, t, n, s = 4) {
   const [o, r] = [WN(t, s), t * s];
   if (e.length < (n - 1) * o + r)
     throw new Error(`stripRowPadding: ${e.length} bytes cannot hold ${n} rows of ${o} bytes`);
@@ -37845,7 +37860,7 @@ function $he(e, t, n, s = 4) {
 async function I$(e, t, n, s) {
   const o = await e.readRenderTargetPixelsAsync(t, 0, 0, n, s), r = new Uint8Array(o.buffer, o.byteOffset, o.byteLength);
   return {
-    pixels: $he(r, n, s),
+    pixels: The(r, n, s),
     readback: { bytesPerRow: WN(n), bytes: r.length }
   };
 }
@@ -37854,19 +37869,19 @@ function R$(e) {
   for (let n = 0; n < e.length; n += 32768) t += String.fromCharCode(...e.subarray(n, n + 32768));
   return btoa(t);
 }
-function The(e) {
+function zhe(e) {
   const { pixels: t, marked: n, ...s } = e;
   return { ...s, ...t ? { pixels: R$(t) } : {}, ...n ? { marked: R$(n) } : {} };
 }
 const L$ = /* @__PURE__ */ new WeakMap();
-function zhe(e, t, n) {
+function Ihe(e, t, n) {
   let s = L$.get(e);
   s || (s = { colour: new Uw(t, n), ids: new Uw(t, n) }, s.colour.texture.name = "Shot.colour", s.ids.texture.name = "Shot.ids", L$.set(e, s));
   for (const o of [s.colour, s.ids])
     (o.width !== t || o.height !== n) && o.setSize(t, n);
   return s;
 }
-function Ihe(e, t, n, s) {
+function Rhe(e, t, n, s) {
   const [o, r] = [e.getDrawingBufferSize(new fr()), e.getSize(new fr())];
   if (o.x === t && o.y === n) return s();
   const i = e.getPixelRatio();
@@ -37877,7 +37892,7 @@ function Ihe(e, t, n, s) {
     e.setSize(r.x, r.y, !1);
   }
 }
-function Rhe(e, t) {
+function Lhe(e, t) {
   const n = e.camera;
   if (!t || !n.isPerspectiveCamera || n.aspect === t.width / t.height) return () => {
   };
@@ -37886,26 +37901,26 @@ function Rhe(e, t) {
     n.aspect = s, n.updateProjectionMatrix();
   };
 }
-async function Lhe(e, t, n = {}) {
+async function Phe(e, t, n = {}) {
   const s = performance.now(), { renderer: o } = e, { scene: r, camera: i } = t, a = (n.ids ?? !0) || n.marks === !0;
   e.warmup.running && await e.warmup.run(t);
   const c = o.getDrawingBufferSize(new fr()), { width: l, height: u } = n.size ?? c;
   if (!(Number.isInteger(l) && Number.isInteger(u) && l >= 1 && u >= 1))
     throw j("GFX_BAD_SHOT_SIZE", { width: String(l), height: String(u) });
-  const d = e.pipelines.count().built, h = zhe(o, l, u), f = Rhe(t, n.size);
+  const d = e.pipelines.count().built, h = Ihe(o, l, u), f = Lhe(t, n.size);
   let p;
   try {
     const [b, x] = [o.getOutputRenderTarget(), o.getRenderTarget()];
     o.setOutputRenderTarget(h.colour);
     try {
-      Fx(o), t.draw ? Ihe(o, l, u, t.draw) : o.render(r, i);
+      Fx(o), t.draw ? Rhe(o, l, u, t.draw) : o.render(r, i);
     } finally {
       o.setOutputRenderTarget(b), o.setRenderTarget(x);
     }
     if (a) {
-      p = xhe(r, i, { protagonist: n.protagonist });
+      p = khe(r, i, { protagonist: n.protagonist });
       const k = o.getRenderTarget();
-      Mhe(o, r, p, (A) => {
+      Ahe(o, r, p, (A) => {
         o.setRenderTarget(h.ids);
         try {
           o.render(A, i);
@@ -37919,16 +37934,16 @@ async function Lhe(e, t, n = {}) {
   }
   const { pixels: m, readback: g } = await I$(o, h.colour, l, u), y = { width: l, height: u, readback: g, built: 0, ms: 0 };
   let w;
-  p && (w = Ahe((await I$(o, h.ids, l, u)).pixels, l, u, p), (n.ids ?? !0) && (y.ids = w.pass));
+  p && (w = She((await I$(o, h.ids, l, u)).pixels, l, u, p), (n.ids ?? !0) && (y.ids = w.pass));
   const v = w && { visible: w.pass.visible, protagonist: w.pass.protagonist };
-  if ((n.metrics ?? !0) && (y.metrics = Ohe(m, l, u, v), y.notes = Ehe(y.metrics, n.where ?? "the shot", v)), n.thumbnail ?? !0) {
+  if ((n.metrics ?? !0) && (y.metrics = Ehe(m, l, u, v), y.notes = $he(y.metrics, n.where ?? "the shot", v)), n.thumbnail ?? !0) {
     const b = w?.pass.visible.map((x) => x.name) ?? [];
-    y.thumbnail = vhe(m, l, u, w && { pixels: w.pixels, names: b });
+    y.thumbnail = xhe(m, l, u, w && { pixels: w.pixels, names: b });
   }
-  return n.marks && w && (y.marks = yhe(w.pass), y.marked = m.slice(), bhe(y.marked, l, u, y.marks)), n.pixels && (y.pixels = m), y.built = e.pipelines.count().built - d, y.ms = Math.round(performance.now() - s), y;
+  return n.marks && w && (y.marks = whe(w.pass), y.marked = m.slice(), vhe(y.marked, l, u, y.marks)), n.pixels && (y.pixels = m), y.built = e.pipelines.count().built - d, y.ms = Math.round(performance.now() - s), y;
 }
 const Fw = { drain: 10, tries: 10 };
-function Phe(e, t) {
+function Nhe(e, t) {
   const { chrome: n, settings: s } = t;
   let o = 0;
   const r = () => e.run.view, i = () => {
@@ -37986,7 +38001,7 @@ function Phe(e, t) {
     },
     async shot(f) {
       const p = r().frame({ alpha: 1, dt: 0, aspect: i() });
-      return S4(p.camera, i()), The(await Lhe(e.gfx, c(p), f));
+      return S4(p.camera, i()), zhe(await Phe(e.gfx, c(p), f));
     },
     async draw() {
       const f = e.gfx;
@@ -37998,7 +38013,7 @@ function Phe(e, t) {
     counts: () => e.gfx?.stats() ?? null
   }, frame: u, settle: d, warmBoth: l };
 }
-function Nhe(e) {
+function jhe(e) {
   const { post: t, styles: n, warmup: s } = e, o = n.style;
   let r = null;
   return {
@@ -38011,11 +38026,11 @@ function Nhe(e) {
     }
   };
 }
-const qw = 16.667, jhe = 2.5, Dhe = (e, t) => [.../* @__PURE__ */ new Set([...e, ...t])].sort();
-function Che(e) {
+const qw = 16.667, Dhe = 2.5, Che = (e, t) => [.../* @__PURE__ */ new Set([...e, ...t])].sort();
+function Fhe(e) {
   const t = e.request ?? ((u) => requestAnimationFrame(u)), n = e.cancel ?? ((u) => cancelAnimationFrame(u));
   let s = null, o = 0, r = 0, i = [], a = -1 / 0;
-  const c = (u) => e.cap?.() ? u + jhe < a ? !1 : (a = u > a + qw ? u + qw : a + qw, !0) : !0, l = {
+  const c = (u) => e.cap?.() ? u + Dhe < a ? !1 : (a = u > a + qw ? u + qw : a + qw, !0) : !0, l = {
     start() {
       if (s !== null) return;
       const u = (d) => {
@@ -38034,7 +38049,7 @@ function Che(e) {
     frame(u) {
       const d = e.clock();
       if (e.hold?.()) return d.advance(u);
-      const h = e.sample(u), f = Dhe(i, Array.isArray(h.p) ? h.p : []), p = d.advance(u);
+      const h = e.sample(u), f = Che(i, Array.isArray(h.p) ? h.p : []), p = d.advance(u);
       if (p.steps === 0) i = f;
       else {
         i = [];
@@ -38066,7 +38081,7 @@ const P$ = ["scene", "seed", "cam", "cam3", "replay"];
 function si(e, t, n, s) {
   throw j("APP_BAD_ROUTE", { key: e, value: t, problem: n, fix: s });
 }
-function Fhe(e, t, n) {
+function qhe(e, t, n) {
   if (t.length || si("scene", e ?? "", "has no scene to pick: the page offers none", "pass createEngine its scenes"), e === null) return t[0];
   const s = t.find((o) => o === e || o.slice(o.indexOf(":") + 1) === e);
   if (!s) {
@@ -38075,11 +38090,11 @@ function Fhe(e, t, n) {
   }
   return ru(s, n), s;
 }
-function qhe(e, t) {
+function Bhe(e, t) {
   const n = t.registry ?? q, s = new URLSearchParams(e), o = (m) => {
     const g = s.getAll(m);
     return g.length > 1 && si(m, g.join(","), "is given more than once", `give ${m} once`), g[0] ?? null;
-  }, r = t.hash ? bce(t.hash, n, t.log ?? Ne) : null, i = r ? Hf : Fhe(o("scene"), t.scenes, n), a = o("seed");
+  }, r = t.hash ? vce(t.hash, n, t.log ?? Ne) : null, i = r ? Hf : qhe(o("scene"), t.scenes, n), a = o("seed");
   a !== null && !/^(0|[1-9]\d*)$/.test(a) && si("seed", a, "is not a whole number from 0", "write a seed as digits: ?seed=3");
   const c = a === null ? 1 : Number(a);
   Number.isSafeInteger(c) || si("seed", a ?? "", "is too large", "use a seed below 2^53");
@@ -38099,9 +38114,9 @@ function qhe(e, t) {
   const p = {};
   for (const m of new Set([...s.keys()].filter((g) => !P$.includes(g))))
     p[m] = f.get(m);
-  return r && Object.assign(p, vce(r, n)), { scene: i, seed: c, ...d ? { cam: d } : {}, ...h ? { replay: h } : {}, settings: p, ...r ? { gallery: r } : {} };
+  return r && Object.assign(p, xce(r, n)), { scene: i, seed: c, ...d ? { cam: d } : {}, ...h ? { replay: h } : {}, settings: p, ...r ? { gallery: r } : {} };
 }
-function Hme(e) {
+function Wme(e) {
   const t = new URLSearchParams();
   if (e.scene !== void 0 && t.set("scene", e.scene), e.seed !== void 0 && t.set("seed", String(e.seed)), e.cam !== void 0) {
     const s = e.cam.indexOf("=");
@@ -38131,7 +38146,7 @@ Q("app", {
     fix: "read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless"
   }
 });
-async function Bhe(e, t) {
+async function Ghe(e, t) {
   const n = t?.[e];
   if (!n) {
     const s = Object.keys(t ?? {}).sort();
@@ -38151,19 +38166,19 @@ function Bw(e) {
     }
   });
 }
-function Ghe(e, t) {
+function Hhe(e, t) {
   const n = e, s = String(n?.message ?? e), o = typeof n?.code == "string" ? Bv(n.code) : void 0;
   if (!o) return [t, { message: s }];
   if (n.values) return [o.code, n.values];
   const r = [], i = o.template.split(/\{(\w+)\}/).map((c, l) => l % 2 ? (r.push(c), "(.*)") : c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(""), a = new RegExp(`^${i}$`, "s").exec(s);
   return [o.code, Object.fromEntries(r.map((c, l) => [c, a?.[l + 1] ?? "?"]))];
 }
-async function Wme(e) {
-  const t = e.log ?? Ne, n = e.registry ?? q, s = zue(document);
+async function Ume(e) {
+  const t = e.log ?? Ne, n = e.registry ?? q, s = Iue(document);
   s.status("Loading…");
   let o = null, r = null;
   const i = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, ready: !1 }, a = (N, P = "APP_START") => {
-    const F = t.error(...Ghe(N, P), N);
+    const F = t.error(...Hhe(N, P), N);
     return s.error(F), F;
   };
   Object.assign(window, { __engine: {
@@ -38194,25 +38209,25 @@ async function Wme(e) {
     stop: () => r?.stop()
   };
   let u = null, d = null;
-  const h = () => i.run.view, f = Bw(() => i.run), p = Vde(document);
+  const h = () => i.run.view, f = Bw(() => i.run), p = Kde(document);
   let m = null;
   const g = (N) => {
     m?.frame(N.dt), e.onFrame?.(N);
-  }, { drawing: y, frame: w, settle: v, warmBoth: b } = Phe(i, { chrome: p, settings: f, onFrame: g });
+  }, { drawing: y, frame: w, settle: v, warmBoth: b } = Nhe(i, { chrome: p, settings: f, onFrame: g });
   let x = null, k = null, A = null;
   try {
     pk(n);
     for (const [B, V] of Object.entries(e.levels ?? {}))
       n.has("level", B) || eU(B, V, n);
     const N = e.search ?? location.search;
-    if (o = qhe(N, { scenes: e.scenes, registry: n, hash: e.hash ?? location.hash, log: t }), o.replay !== void 0) {
-      k = await Bhe(o.replay, e.replays);
+    if (o = Bhe(N, { scenes: e.scenes, registry: n, hash: e.hash ?? location.hash, log: t }), o.replay !== void 0) {
+      k = await Ghe(o.replay, e.replays);
       const B = k.playback?.replay.scene;
       B && !new URLSearchParams(N).has("scene") && e.scenes.includes(B) && (o = { ...o, scene: B });
     }
-    e.touchLayout !== void 0 && (u = the(e.touchLayout, n)), A = Cx({ registry: n });
+    e.touchLayout !== void 0 && (u = nhe(e.touchLayout, n)), A = Cx({ registry: n });
     const { scene: P, seed: F, settings: W, cam: K } = o;
-    i.run = sN({ scene: P, seed: F, settings: W, cam: K, registry: n, log: t, drawing: y, materials: A }), o.gallery && (m = kce(o.gallery, () => i.run, n));
+    i.run = sN({ scene: P, seed: F, settings: W, cam: K, registry: n, log: t, drawing: y, materials: A }), o.gallery && (m = Mce(o.gallery, () => i.run, n));
   } catch (N) {
     return a(N), l;
   }
@@ -38223,7 +38238,7 @@ async function Wme(e) {
   }, S = () => f.get("touch"), O = () => {
     const N = e.actionMap;
     return (typeof N == "function" ? N(h().camera.code()) : N) ?? "actionMap:thirdPerson";
-  }, E = (N) => n.kinds().includes("setting") && n.has("setting", N), $ = () => lN((N) => E(N) ? f.get(N) : void 0), T = i.input = lle({ window, document, element: e.canvas, registry: n, log: t, touchMode: S, onTap: M, map: O(), look: $, onView: e.onView }), R = {
+  }, E = (N) => n.kinds().includes("setting") && n.has("setting", N), $ = () => lN((N) => E(N) ? f.get(N) : void 0), T = i.input = ule({ window, document, element: e.canvas, registry: n, log: t, touchMode: S, onTap: M, map: O(), look: $, onView: e.onView }), R = {
     yaw: () => h().camera.yaw(),
     pose: () => h().camera.pose(),
     aim: (N, P) => h().aim(N, P)
@@ -38233,22 +38248,22 @@ async function Wme(e) {
   };
   e.canvas.addEventListener("click", () => {
     T.bindings.map.lock && !_.clock.paused && !T.mouse?.locked && T.mouse?.lock();
-  }), i.layer = nhe(document, u), Qde(document), OZ(_.host, T.virtual);
+  }), i.layer = she(document, u), Zde(document), OZ(_.host, T.virtual);
   try {
-    i.gfx = await Hde(e.canvas, { settings: Bw(() => _), registry: n, log: t });
+    i.gfx = await Wde(e.canvas, { settings: Bw(() => _), registry: n, log: t });
   } catch (N) {
     return a(N), l;
   }
   const L = i.gfx;
-  i.numbers = ghe(i.ui = phe({ canvas: e.canvas }));
+  i.numbers = yhe(i.ui = mhe({ canvas: e.canvas }));
   try {
     L.renderer.shadowMap.enabled = !0;
-    const N = Wue({ library: A, registry: n }), P = i.post = Rde(L, { settings: Bw(() => _), registry: n, log: t, styles: N }), F = () => hk(f.get("quality"), T.touch?.active ?? !1);
-    i.look = Nhe({ post: P, styles: N, warmup: L.warmup, quality: F }), P.attach(L.warmup), h().stage.register(L.warmup, L.features), await b(), await v(1, 0);
+    const N = Uue({ library: A, registry: n }), P = i.post = Lde(L, { settings: Bw(() => _), registry: n, log: t, styles: N }), F = () => hk(f.get("quality"), T.touch?.active ?? !1);
+    i.look = jhe({ post: P, styles: N, warmup: L.warmup, quality: F }), P.attach(L.warmup), h().stage.register(L.warmup, L.features), await b(), await v(1, 0);
   } catch (N) {
     return a(N), l;
   }
-  r = Che({
+  r = Fhe({
     clock: () => _.clock,
     sample: I,
     step: (N) => {
@@ -38273,7 +38288,7 @@ async function Wme(e) {
     }
   return l;
 }
-const N$ = "ui-widgets-style", Hhe = `
+const N$ = "ui-widgets-style", Whe = `
 .ui-bar { position: relative; width: 12em; height: 1em; border: 1px solid #140b12; border-radius: 2px;
   background: #3a1a26; box-shadow: 0 1px 2px #0b0814; overflow: hidden; }
 .ui-bar-fill { position: absolute; inset: 0; transform-origin: left; transform: scaleX(var(--ui-fill, 0));
@@ -38315,7 +38330,7 @@ const N$ = "ui-widgets-style", Hhe = `
 function $c(e) {
   if (e.getElementById(N$)) return;
   const t = e.createElement("style");
-  t.id = N$, t.textContent = Hhe, e.head.append(t);
+  t.id = N$, t.textContent = Whe, e.head.append(t);
 }
 function Lt(e, t, n, s, o = "div") {
   const r = e.ownerDocument.createElement(o);
@@ -38325,7 +38340,7 @@ function Nu(e, t) {
   e.textContent !== t && (e.textContent = t);
 }
 const Oi = (e) => String(Math.round(e * 100) / 100);
-function Ume(e, t) {
+function Vme(e, t) {
   $c(e.ownerDocument);
   const n = t.max ?? 1, s = Lt(e, "ui-bar", "bar", t.id), o = Lt(s, "ui-bar-fill"), r = Lt(s, "ui-bar-text");
   s.append(o, r), t.color && s.style.setProperty("--ui-color", t.color), e.append(s);
@@ -38335,7 +38350,7 @@ function Ume(e, t) {
   };
   return i(t.value), { el: s, set: i, remove: () => s.remove() };
 }
-function Vme(e, t) {
+function Kme(e, t) {
   $c(e.ownerDocument);
   const n = Lt(e, "ui-hearts", "hearts", t.id);
   e.append(n);
@@ -38353,7 +38368,7 @@ function Vme(e, t) {
   };
   return s([t.hp, t.max]), { el: n, set: s, remove: () => n.remove() };
 }
-function Kme(e, t) {
+function Yme(e, t) {
   $c(e.ownerDocument);
   const n = Lt(e, "ui-box", "box", t.id);
   t.title && n.append(Object.assign(Lt(n, "ui-box-title"), { textContent: t.title }));
@@ -38372,7 +38387,7 @@ function UN() {
     return e.set(s, r + o), t(r + o) > t(r);
   };
 }
-function Yme(e, t) {
+function Xme(e, t) {
   $c(e.ownerDocument);
   const n = Lt(e, "ui-cursor ui-at", "cursor");
   n.hidden = !0, e.append(n);
@@ -38400,7 +38415,7 @@ Q("ui", {
     doc: "Raised by the dialog box (engine/ui/dialog.ts) for text that is not a string or a list of them, choices that are not, or a frame time that is not a number of seconds from 0."
   }
 });
-function Xme(e, t) {
+function Jme(e, t) {
   $c(e.ownerDocument);
   const { input: n, sound: s = () => {
   } } = t, o = t.speed ?? 50, r = Lt(e, "ui-panel ui-dialog", "dialog"), i = Lt(r, "ui-dialog-name", "dialog-name"), a = Lt(r, "ui-dialog-text", "dialog-text"), c = Lt(r, "ui-dialog-choices");
@@ -38473,8 +38488,8 @@ Q("ui", {
     doc: "Raised by the menu (engine/ui/menu.ts) for an item that is neither a string nor `{ label, id?, disabled? }`, or a frame time that is not a number of seconds from 0."
   }
 });
-const Whe = (e) => typeof e == "string" ? e : e.label, pl = (e) => typeof e == "object" && e.disabled === !0;
-function Jme(e, t, n) {
+const Uhe = (e) => typeof e == "string" ? e : e.label, pl = (e) => typeof e == "object" && e.disabled === !0;
+function Qme(e, t, n) {
   $c(e.ownerDocument);
   const { input: s, sound: o = () => {
   } } = n, r = Lt(e, "ui-panel ui-menu", "menu", n.id);
@@ -38503,7 +38518,7 @@ function Jme(e, t, n) {
     for (const g of c) g.remove();
     a = [...m], c = a.map((g, y) => {
       const w = Lt(r, "ui-menu-item", "item", typeof g == "object" && g.id !== void 0 ? g.id : String(y));
-      return w.dataset.index = String(y), Nu(w, Whe(g)), w.addEventListener("pointerenter", () => !pl(a[y]) && h(y, 1)), w.addEventListener("click", () => {
+      return w.dataset.index = String(y), Nu(w, Uhe(g)), w.addEventListener("pointerenter", () => !pl(a[y]) && h(y, 1)), w.addEventListener("click", () => {
         pl(a[y]) || (y !== l && h(y, 1), f());
       }), r.append(w), w;
     }), l = a.length ? u(Math.min(l, a.length - 1), 1) : 0, d();
@@ -38561,7 +38576,7 @@ function C$() {
     key: (t) => [...e.keys()][t] ?? null
   };
 }
-function Uhe() {
+function Vhe() {
   try {
     const e = globalThis.localStorage;
     if (!e) return "none in this runtime";
@@ -38571,7 +38586,7 @@ function Uhe() {
     return e instanceof Error ? e.name : String(e);
   }
 }
-function Qme(e = {}) {
+function Zme(e = {}) {
   const { prefix: t = "my3dge:", version: n = 1, mode: s = "play" } = e, o = e.log ?? Ne, r = (d, h) => j("APP_BAD_STORE", { where: d, problem: h });
   if (typeof t != "string" || !t) throw r("createStore({ prefix })", `${U(t)} is not a non-empty string`);
   if (!Number.isInteger(n) || n < 1) throw r("createStore({ version })", `${U(n)} is not a whole number from 1`);
@@ -38580,7 +38595,7 @@ function Qme(e = {}) {
   if (s !== "play") i = C$();
   else if (e.backend) [i, a] = [e.backend, !0];
   else {
-    const d = Uhe();
+    const d = Vhe();
     typeof d == "string" ? (d !== "none in this runtime" && o.warnOnce("APP_STORE_BLOCKED", { reason: d, prefix: t }, t), i = C$()) : [i, a] = [d, !0];
   }
   const c = (d, h) => {
@@ -38665,7 +38680,7 @@ const F$ = {
   steps: 5,
   tint: [1, 0.98, 1.02],
   rise: 0.25
-}, Vhe = { reach: 1.375, cover: 0.5, tones: ["#3f5a44", "#4d6b4b", "#62805a"] }, Khe = {
+}, Khe = { reach: 1.375, cover: 0.5, tones: ["#3f5a44", "#4d6b4b", "#62805a"] }, Yhe = {
   radius: 3.375,
   inner: 2.6875,
   spokes: 16,
@@ -38673,7 +38688,7 @@ const F$ = {
   glow: "#6fd6cc",
   lineGlow: 0.45
 };
-function Yhe(e, t, n, s) {
+function Xhe(e, t, n, s) {
   const { cols: o, rows: r } = e, [i, a] = [o * t, r * t], c = e.tiles.map((h) => e.legend[h].collider === "box"), l = Math.ceil(s / t), u = e.tiles.map((h, f) => {
     const [p, m] = [Math.floor(f / o), f % o], g = [];
     for (let y = Math.max(0, p - l); y <= Math.min(r - 1, p + l); y++)
@@ -38701,18 +38716,18 @@ function Yhe(e, t, n, s) {
   }
   return d;
 }
-function Xhe(e, t, n) {
+function Jhe(e, t, n) {
   const s = e < t ? 1 - e / t : 0;
   return n > 0 ? Math.round(s * n) / n : s;
 }
-function Jhe(e, t) {
+function Qhe(e, t) {
   const n = e.tile * t, s = Math.max(e.cols, e.rows) * e.tile, o = Number.isInteger(n) && n > 0 ? s * t > 4096 ? `its ${s} m side would be ${s * t} texels` : "" : `a ${e.tile} m tile would be ${n} texels`;
   if (!o) return n;
   const i = Math.max(1, Math.min(Math.floor(4096 / Math.max(e.cols, e.rows)), Math.round(n) || 1)) / e.tile;
   throw j("GFX_FLOOR_BAKE", { level: e.name, density: t, reason: o, tile: e.tile, suggest: i });
 }
-function Zme(e, t = {}) {
-  const n = t.registry ?? q, s = typeof t.base == "string" ? { texture: t.base } : t.base ?? { texture: "texture:flagstone" }, o = FR(s.texture, n), r = t.density ?? o.density, i = Jhe(e, r), [a, c] = [e.cols * i, e.rows * i], l = t.shadows === !1 ? null : { ...F$, ...t.shadows }, u = t.moss === !1 ? null : { ...Vhe, ...t.moss }, d = t.runes === !1 ? null : { ...Khe, ...t.runes }, h = [l && "contact shadows", u && "moss", d && e.daises.length && "rune circles"];
+function ege(e, t = {}) {
+  const n = t.registry ?? q, s = typeof t.base == "string" ? { texture: t.base } : t.base ?? { texture: "texture:flagstone" }, o = FR(s.texture, n), r = t.density ?? o.density, i = Qhe(e, r), [a, c] = [e.cols * i, e.rows * i], l = t.shadows === !1 ? null : { ...F$, ...t.shadows }, u = t.moss === !1 ? null : { ...Khe, ...t.moss }, d = t.runes === !1 ? null : { ...Yhe, ...t.runes }, h = [l && "contact shadows", u && "moss", d && e.daises.length && "rune circles"];
   return {
     description: `The floor of level ${e.name}, ${e.cols} × ${e.rows} tiles: ${s.texture} with ${h.filter(Boolean).join(", ") || "nothing more"}.`,
     size: [a, c],
@@ -38720,7 +38735,7 @@ function Zme(e, t = {}) {
     density: r,
     look: o.look,
     create({ seed: f }) {
-      const p = Bp({ ...s, seed: s.seed ?? f, size: [a, c] }, n), m = l ? l.radius * r : 0, g = u ? u.reach * r : 0, y = Yhe(e, i, l?.rise ?? F$.rise, Math.max(m, g)), w = u && PR([a, c], f, xe(u.tones, "the floor moss")), v = d && {
+      const p = Bp({ ...s, seed: s.seed ?? f, size: [a, c] }, n), m = l ? l.radius * r : 0, g = u ? u.reach * r : 0, y = Xhe(e, i, l?.rise ?? F$.rise, Math.max(m, g)), w = u && PR([a, c], f, xe(u.tones, "the floor moss")), v = d && {
         rune: xe([d.rune], "the floor runes")[0],
         glow: xe([d.glow], "the floor runes")[0],
         lineGlow: d.lineGlow
@@ -38735,7 +38750,7 @@ function Zme(e, t = {}) {
         w && S > 0 && S < g && w(A, _, M, u.cover * (1 - S / g));
         for (const $ of b) jR(A, $.mark(_ - $.at[0], M - $.at[1]), v);
         if (!l) return;
-        const O = Xhe(S, m, l.steps);
+        const O = Jhe(S, m, l.steps);
         if (!(O > 0)) return;
         const E = 1 - l.strength * O;
         for (let $ = 0; $ < 3; $++)
@@ -38751,8 +38766,8 @@ Q("gfx", {
     doc: "Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names."
   }
 });
-const Qhe = { main: "#e8aa3a", joint: "#aa66db" };
-function Zhe(e, t) {
+const Zhe = { main: "#e8aa3a", joint: "#aa66db" };
+function efe(e, t) {
   const n = xr(t), s = n.tips.subarray(ce("toeL") * 3, ce("toeL") * 3 + 3), o = {
     pelvis: ["pelvis", null],
     spine1: ["spine1", null],
@@ -38777,8 +38792,8 @@ function Zhe(e, t) {
     });
   return o;
 }
-function efe(e, t, n) {
-  const s = Zhe(t, n), o = bP(xr(n)), r = (l) => {
+function tfe(e, t, n) {
+  const s = efe(t, n), o = bP(xr(n)), r = (l) => {
     const [u, d] = s[l];
     return d ? ["off", u, ...d] : u;
   }, i = (l) => {
@@ -38801,26 +38816,26 @@ function efe(e, t, n) {
   return {
     description: `The mannequin the library was measured on, ${(e.height / 1e3).toFixed(2)} m: amber limbs, purple joint rings.`,
     // prettier-ignore
-    slots: { ...Qhe },
+    slots: { ...Zhe },
     parts: c,
     build: "build:mannequin"
   };
 }
-function ege(e, t = {}) {
+function tge(e, t = {}) {
   const n = t.registry ?? q, s = e.sources?.[t.source ?? Object.keys(e.sources ?? {})[0]]?.rest;
   if (!s || !e.body)
     throw j("GFX_NO_MANNEQUIN", { set: String(e.set), missing: e.body ? "rest body" : "body" });
   Gu(n), Vp(n);
-  const o = n.has("build", "build:mannequin") ? Ks("build:mannequin", n) : y2("build:mannequin", U2(s), n), r = n.has("body", "body:mannequin") ? yP("body:mannequin", n) : Coe("body:mannequin", efe(e.body, s, o), n);
+  const o = n.has("build", "build:mannequin") ? Ks("build:mannequin", n) : y2("build:mannequin", U2(s), n), r = n.has("body", "body:mannequin") ? yP("body:mannequin", n) : Coe("body:mannequin", tfe(e.body, s, o), n);
   return { build: o, body: r };
 }
-const tfe = ["speed", "topSpeed", "speedGain", "velocityChange", "apex", "top", "height", "heightAt", "distance", "time", "duration", "topRise", "topFall", "standHeight", "grounded", "rideSpeed", "rideGain", "catches"], VN = ["footSlide", "pop", "handGap", "handContact", "muzzle"], KN = ["cameraJump", "cameraTurn", "cameraInside", "cameraLost", "cameraClip"], nfe = [...tfe, ...VN, ...KN], sfe = ["speedAbove", "speedBelow", "grounded", "airborne", "crouched", "standing", "sliding", "stopsSliding", "mantling", "grabbing", "hanging", "pulling", "climbing", "riding", "onLadder", "skydiving", "landingPose"], ofe = ke({
+const nfe = ["speed", "topSpeed", "speedGain", "velocityChange", "apex", "top", "height", "heightAt", "distance", "time", "duration", "topRise", "topFall", "standHeight", "grounded", "rideSpeed", "rideGain", "catches"], VN = ["footSlide", "pop", "handGap", "handContact", "muzzle"], KN = ["cameraJump", "cameraTurn", "cameraInside", "cameraLost", "cameraClip"], sfe = [...nfe, ...VN, ...KN], ofe = ["speedAbove", "speedBelow", "grounded", "airborne", "crouched", "standing", "sliding", "stopsSliding", "mantling", "grabbing", "hanging", "pulling", "climbing", "riding", "onLadder", "skydiving", "landingPose"], rfe = ke({
   name: { type: "string", required: !0, description: 'What it measures, as the report names it: "sprint".' },
-  metric: { type: "string", enum: nfe, required: !0, description: "What it reads off the run." },
+  metric: { type: "string", enum: sfe, required: !0, description: "What it reads off the run." },
   from: { type: "integer", default: 1, minimum: 0, description: "The first sample it reads (0: before the first step)." },
   // prettier-ignore
   to: { type: "integer", minimum: 0, description: "The last sample it reads; absent: the course’s last." },
-  until: { type: "string", enum: sfe, description: "For `time`: the sample that ends it; for `duration`: the state it times; for `heightAt`: the state it waits for." },
+  until: { type: "string", enum: ofe, description: "For `time`: the sample that ends it; for `duration`: the state it times; for `heightAt`: the state it waits for." },
   // prettier-ignore
   value: { type: "number", description: "For `time` with `speedAbove` or `speedBelow`: the speed, m/s." },
   camera: { type: "string", description: "For a camera metric: the camera’s code (`cam3=chase`, `cam=iso`)." },
@@ -38841,7 +38856,7 @@ const tfe = ["speed", "topSpeed", "speedGain", "velocityChange", "apex", "top", 
       ticks: { type: "integer", minimum: 0, description: "Whole steps, for `time`." }
     }
   }
-}), rfe = ke({
+}), ife = ke({
   description: { type: "string", default: "", description: "What it drives over, and what it shows." },
   scene: { type: "string", required: !0, description: "The scene it runs (a scene id)." },
   settings: { type: "object", default: {}, description: "Setting values over the scene’s at the start, path → value." },
@@ -38862,11 +38877,11 @@ const tfe = ["speed", "topSpeed", "speedGain", "velocityChange", "apex", "top", 
   measures: {
     type: "array",
     required: !0,
-    items: { type: "object", properties: ofe, description: "One number it measures." },
+    items: { type: "object", properties: rfe, description: "One number it measures." },
     description: "The numbers it measures, each against its reference and tolerance."
   }
 });
-function ife(e, t, n) {
+function afe(e, t, n) {
   const s = [], o = e.to ?? t;
   e.from > o && s.push(`${n}: from ${e.from} is after to ${o}`), o > t && s.push(`${n}: to ${o} is past the course's ${t} steps`), e.metric === "time" && !e.until && s.push(`${n}: a time measure names when it ends (until)`), e.metric === "duration" && !e.until && s.push(`${n}: a duration measure names the state it times (until)`), e.metric === "heightAt" && !e.until && s.push(`${n}: a heightAt measure names the state it waits for (until)`), e.until?.startsWith("speed") && e.value === void 0 && s.push(`${n}: ${e.until} needs a value (m/s)`);
   const r = KN.includes(e.metric);
@@ -38876,8 +38891,8 @@ function ife(e, t, n) {
   const { share: a, abs: c, ticks: l } = e.tolerance;
   return a === void 0 && c === void 0 && l === void 0 && s.push(`${n}: give a tolerance (share, abs or ticks)`), s;
 }
-function afe(e) {
-  const t = e.measures.flatMap((i, a) => ife(i, e.steps, `measures[${a}] (${i.name})`)), n = e.inputs.map((i) => Array.isArray(i) ? i[0] : NaN), s = n.findIndex((i) => !Number.isInteger(i) || i < 0 || i >= e.steps);
+function cfe(e) {
+  const t = e.measures.flatMap((i, a) => afe(i, e.steps, `measures[${a}] (${i.name})`)), n = e.inputs.map((i) => Array.isArray(i) ? i[0] : NaN), s = n.findIndex((i) => !Number.isInteger(i) || i < 0 || i >= e.steps);
   s >= 0 && t.push(`inputs[${s}] is not [step, change] with a step from 0 to ${e.steps - 1}`);
   const o = n.findIndex((i, a) => a > 0 && i < n[a - 1]);
   o > 0 && t.push(`inputs[${o}] at step ${n[o]} comes after step ${n[o - 1]}: give change-points in step order`);
@@ -38897,30 +38912,30 @@ function mk(e = q) {
   e.kinds().includes("course") || e.defineKind("course", {
     description: "A feel course: a scripted run of a scene (a replay’s inputs) and the numbers to measure on it, each against its reference and tolerance (node x feel).",
     // prettier-ignore
-    fields: rfe,
-    check: (t) => afe(t),
+    fields: ife,
+    check: (t) => cfe(t),
     defineWith: "defineCourse('course:<name>', { scene, steps, inputs: [[0, { move: [0, 1] }]], measures: [{ name, metric, reference, tolerance: { share: 0.02 } }] })"
     // prettier-ignore
   });
 }
-function tge(e, t, n = q) {
+function nge(e, t, n = q) {
   return mk(n), n.def("course", e, t);
 }
-function nge(e, t = q) {
+function sge(e, t = q) {
   return mk(t), t.get("course", e);
 }
-function sge(e = q) {
+function oge(e = q) {
   return mk(e), e.list("course");
 }
 const YN = {
   pop: { ratio: 2.5, floor: 0.5 / 16 },
   slide: { contact: 5e-3 }
 }, XN = new z(), Wh = (e) => String(Math.round(e * 1e4) / 1e4);
-function cfe(e) {
+function lfe(e) {
   const t = e.world.map((n, s) => n.map((o) => o.clone().sub(e.positions[s])));
   return { size: 1, dt: Kn, feet: [], treadmill: XN, held: [0, 0], local: t, ...e };
 }
-function lfe(e) {
+function ufe(e) {
   const { ratio: t, floor: n } = YN.pop;
   let s;
   if (e.names.forEach((l, u) => {
@@ -38931,7 +38946,7 @@ function lfe(e) {
   const { value: o, k: r, i, d: a } = s, c = `${e.where}: ${e.names[r]} jumps ${Wh(o)} m in one step at frame ${i + 1} (${Wh(a[i - 1])} and ${Wh(a[i + 1])} m either side); ease into the pose`;
   return { value: o, message: c };
 }
-function ufe(e) {
+function dfe(e) {
   const { contact: t } = YN.slide;
   let n;
   for (const o of e.feet) {
@@ -38950,12 +38965,12 @@ function ufe(e) {
   const s = `${e.where}: ${e.names[n.k]} slides ${Wh(n.value)} m on the floor by frame ${n.i} in one contact; plant it, or lift it to move it`;
   return { value: n.value, message: s };
 }
-const dfe = ["weaponR", "weaponL"], q$ = ["contactL", "contactR"];
-function hfe(e, t) {
+const hfe = ["weaponR", "weaponL"], q$ = ["contactL", "contactR"];
+function ffe(e, t) {
   const n = e.body.yaw, s = n + G.clamp(Math.atan2(Math.sin(t.yaw - n), Math.cos(t.yaw - n)), -0.9, kt.yaw), o = new z(Math.sin(s) * Math.cos(t.pitch), Math.sin(t.pitch), Math.cos(s) * Math.cos(t.pitch));
   return new z(0, 0, 1).applyQuaternion(Ze(e.body.world, "handR")).angleTo(o);
 }
-function ffe(e = "feel", t) {
+function pfe(e = "feel", t) {
   const n = new ji(), s = /* @__PURE__ */ new WeakMap(), o = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), c = t ? HI(t) : null, l = [];
   let u = 1, d = null;
   const h = { point: new z(), normal: new z() }, f = (m) => {
@@ -38964,7 +38979,7 @@ function ffe(e = "feel", t) {
     return c(g, bt.up + bt.down, h) ? h.point.y : -1 / 0;
   }, p = (m, g, y = !1) => {
     const w = l.slice(m, g + 1), v = w.map((k) => y ? k.soles : k.points), b = w.map((k) => k.position);
-    return cfe({ where: e, size: u, names: y ? q$ : FI, world: v, positions: b, feet: y ? [0, 1] : [] });
+    return lfe({ where: e, size: u, names: y ? q$ : FI, world: v, positions: b, feet: y ? [0, 1] : [] });
   };
   return {
     /** How many frames it holds. */
@@ -38990,7 +39005,7 @@ function ffe(e = "feel", t) {
       a.set(m, T), [O.look, O.busy] = [T.look, $.weight], M.weight = $.plantShare, M.weight === 0 && M.reset(), M.locks = XL(b), M.ground = c;
       const R = r.get(m) ?? new JL();
       r.set(m, R.update(b, v, x)), R.apply(A), A.pose({ at: E, yaw: w }), d = { animator: A, traversal: S };
-      const { skeleton: I, world: L } = A.body, C = ie.map((Y, te) => ee(L, te)), D = lt.map((Y) => Oe(I, L, Y)), N = dfe.map((Y) => Oe(I, L, Y)), P = [0, 1].map((Y) => S.limbs[Y].held ? N[1 - Y].distanceTo(S.limbs[Y].point) : NaN), F = !b || (b.mode ?? "ground") === "ground", W = (Y) => F && M.weight > 0 ? M.floorAt(Y.x, Y.z) : f(Y), K = q$.map((Y) => Oe(I, L, Y)).map((Y) => Y.setY(Y.y - W(Y))), B = [...C, ...D].map((Y) => Y.setY(Y.y - y[1])), X = O.holding && T.look !== null && T.look.raised >= 1 && T.look.weight >= 1 && O.busy === 0 ? hfe(A, T.look) : Number.NaN;
+      const { skeleton: I, world: L } = A.body, C = ie.map((Y, te) => ee(L, te)), D = lt.map((Y) => Oe(I, L, Y)), N = hfe.map((Y) => Oe(I, L, Y)), P = [0, 1].map((Y) => S.limbs[Y].held ? N[1 - Y].distanceTo(S.limbs[Y].point) : NaN), F = !b || (b.mode ?? "ground") === "ground", W = (Y) => F && M.weight > 0 ? M.floorAt(Y.x, Y.z) : f(Y), K = q$.map((Y) => Oe(I, L, Y)).map((Y) => Y.setY(Y.y - W(Y))), B = [...C, ...D].map((Y) => Y.setY(Y.y - y[1])), X = O.holding && T.look !== null && T.look.raised >= 1 && T.look.weight >= 1 && O.busy === 0 ? ffe(A, T.look) : Number.NaN;
       l.push({ points: B, soles: K, position: new z(y[0], 0, y[2]), hands: N, held: P, eye: Up(I, L), muzzle: X }), u = Ks(g.build).size;
     },
     /** First person's arms' input off the last frame's body, for a frame with `frame`'s camera inputs; null before one. */
@@ -39003,11 +39018,11 @@ function ffe(e = "feel", t) {
     },
     /** The most a sole slid on the floor in one contact over frames `from` to `to` (m). */
     footSlide(m, g) {
-      return ufe(p(m, g, !0))?.value ?? 0;
+      return dfe(p(m, g, !0))?.value ?? 0;
     },
     /** The largest one-step jump of a point against its neighbours over frames `from` to `to` (m). */
     pop(m, g) {
-      return lfe(p(m, g))?.value ?? 0;
+      return ufe(p(m, g))?.value ?? 0;
     },
     /**
      * The farthest a hand held on its contact (a lip, a rung, a hold on a wall, a cable, the floor under a hard
@@ -39036,14 +39051,14 @@ function ffe(e = "feel", t) {
     }
   };
 }
-const pfe = Object.freeze(["first", "shoulder"]), fi = { aspect: 16 / 9, ball: 0.05, chest: 1.2 }, Yl = (e, t) => [e[0] - t[0], e[1] - t[1], e[2] - t[2]], Ei = (e, t) => e[0] * t[0] + e[1] * t[1] + e[2] * t[2], Uh = (e) => Math.sqrt(Ei(e, e));
-function mfe(e, t, n = fi.aspect) {
+const mfe = Object.freeze(["first", "shoulder"]), fi = { aspect: 16 / 9, ball: 0.05, chest: 1.2 }, Yl = (e, t) => [e[0] - t[0], e[1] - t[1], e[2] - t[2]], Ei = (e, t) => e[0] * t[0] + e[1] * t[1] + e[2] * t[2], Uh = (e) => Math.sqrt(Ei(e, e));
+function gfe(e, t, n = fi.aspect) {
   const s = Yl(t, e.position), o = [s[0], s[1] * e.boost, s[2]], [r, i, a] = [Ei(o, We(e)), Ei(o, mn(e)), Ei(o, Ys(e))];
   if (r < e.near || r > e.far) return !1;
   const c = e.projection === "orthographic" ? e.frustumSize / 2 / e.zoom : r * Math.tan(e.fov / 2 * Math.PI / 180) / e.zoom;
   return Math.abs(a) <= c && Math.abs(i) <= c * n;
 }
-function gfe(e, t, n) {
+function yfe(e, t, n) {
   const [s, o, r] = [We(e), mn(e), Ys(e)], i = Math.tan(e.fov / 2 * Math.PI / 180) / e.zoom;
   for (const a of t.points) {
     const c = Yl(hP(e, a, t.fov), e.position), l = Ei(c, s);
@@ -39054,7 +39069,7 @@ function gfe(e, t, n) {
   }
   return !1;
 }
-function yfe(e, t = {}) {
+function wfe(e, t = {}) {
   const n = FL(e, t), s = [];
   let o, r;
   return {
@@ -39068,7 +39083,7 @@ function yfe(e, t = {}) {
     frame(i, a = {}) {
       const { eye: c, queries: l, dt: u = 1 / 60, player: d = null } = a;
       n.step(d);
-      const h = a.look, f = n.update({ follow: i, player: d, ...c ? { eye: c } : {}, ...l ? { queries: l } : {}, ...h ? { view: h } : {} }, u), p = { type: "ball", radius: fi.ball }, m = l ? l.overlap(p, f.position, { groups: "world", fixed: !0 }).length > 0 : !1, g = n.firstShare() > 0.5, y = g && a.arms ? a.arms(f, n.effects()) : null, w = ($) => woe(f, $, fi.aspect, y?.fov), v = g ? y?.hands.some(w) ?? !1 : mfe(f, [i[0], i[1] + fi.chest, i[2]]), b = y ? gfe(f, y, l) : !1, x = ($) => Tn({ position: [0, 0, 0], yaw: $[0], pitch: $[1] }), k = o ?? r, A = h && k && pfe.includes(n.camera.type) ? uv(x(k), x(h)) : 0, _ = n.camera.pose();
+      const h = a.look, f = n.update({ follow: i, player: d, ...c ? { eye: c } : {}, ...l ? { queries: l } : {}, ...h ? { view: h } : {} }, u), p = { type: "ball", radius: fi.ball }, m = l ? l.overlap(p, f.position, { groups: "world", fixed: !0 }).length > 0 : !1, g = n.firstShare() > 0.5, y = g && a.arms ? a.arms(f, n.effects()) : null, w = ($) => woe(f, $, fi.aspect, y?.fov), v = g ? y?.hands.some(w) ?? !1 : gfe(f, [i[0], i[1] + fi.chest, i[2]]), b = y ? yfe(f, y, l) : !1, x = ($) => Tn({ position: [0, 0, 0], yaw: $[0], pitch: $[1] }), k = o ?? r, A = h && k && mfe.includes(n.camera.type) ? uv(x(k), x(h)) : 0, _ = n.camera.pose();
       [o, r] = [h, [_.yaw, _.pitch]];
       const M = c ?? [i[0], i[1] + fi.chest, i[2]], S = n.blend(), O = { move: S.move + A * Uh(Yl(f.position, M)), turn: S.turn + A }, E = { pose: f, feet: i, inside: m, seen: v, clipped: b, allowed: O };
       return s.push(E), E;
@@ -39094,28 +39109,28 @@ Q("dev", {
     fix: "spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure"
   }
 });
-function wfe({ actor: e, motion: t }) {
+function bfe({ actor: e, motion: t }) {
   const n = { feet: [e.x, e.y, e.z], velocity: [e.vx, e.vy, e.vz], grounded: e.grounded, yaw: e.yaw };
   if (!t) return n;
   const { gait: s, stance: o, sliding: r, mode: i, mantle: a, rideSpeed: c, catches: l, landing: u } = t;
   return { ...n, gait: s, stance: o, sliding: r, mode: i, mantle: a, rideSpeed: c, catches: l, landing: u };
 }
-function oge(e, t = {}) {
+function rge(e, t = {}) {
   const n = t.registry ?? q, s = Nx(e.scene, { seed: e.seed, settings: e.settings, registry: n }), o = s.world, r = () => o.query("actor").find((M) => M.actor.player), i = r();
   if (!i) throw j("DEV_COURSE_NO_PLAYER", { course: e.id, scene: e.scene });
   const a = e.measures.find((M) => VN.includes(M.metric));
   if (a && !i.animator) throw j("DEV_COURSE_NO_ANIMATOR", { course: e.id, measure: a.name, scene: e.scene });
-  const c = [...e.measures.map((M) => M.camera ?? ""), ...e.views.map(([, M]) => M)], l = i.animator !== void 0 && c.some((M) => M.startsWith("cam3=first")), u = gx(o), d = a || l ? ffe(e.id, u) : void 0, h = e.measures.filter((M) => M.camera !== void 0).map((M) => ({ m: M, track: void 0, arms: void 0 })), f = (M) => n.kinds().includes("setting") && n.has("setting", M), p = (M) => f(M) ? s.settings.get(M) : void 0, m = CL(p), g = cP(p("cam.armsFov"));
+  const c = [...e.measures.map((M) => M.camera ?? ""), ...e.views.map(([, M]) => M)], l = i.animator !== void 0 && c.some((M) => M.startsWith("cam3=first")), u = gx(o), d = a || l ? pfe(e.id, u) : void 0, h = e.measures.filter((M) => M.camera !== void 0).map((M) => ({ m: M, track: void 0, arms: void 0 })), f = (M) => n.kinds().includes("setting") && n.has("setting", M), p = (M) => f(M) ? s.settings.get(M) : void 0, m = CL(p), g = cP(p("cam.armsFov"));
   let [y, w] = [0, vp];
   const v = (M) => {
-    const S = r(), O = wfe(S), E = w.look ? { yaw: w.look[0], pitch: w.look[1], aiming: (w.b ?? []).includes("aim") } : null, $ = { ride: S.motion && S.motion.ride >= 0 ? ZL(o.get(S.motion.ride)) : null, hull: QL(S.actor.character, Ff), look: E };
+    const S = r(), O = bfe(S), E = w.look ? { yaw: w.look[0], pitch: w.look[1], aiming: (w.b ?? []).includes("aim") } : null, $ = { ride: S.motion && S.motion.ride >= 0 ? ZL(o.get(S.motion.ride)) : null, hull: QL(S.actor.character, Ff), look: E };
     d && S.animator && d.frame(S.id, S.animator, O.feet, O.yaw, o.dt, S.motion, S.actor, $);
     const T = h.length ? gL(S, (w.b ?? []).includes("aim")) : null, [R, I, L] = O.feet, C = T?.eye !== void 0 ? [R, I + T.eye, L] : d?.eye(M);
     for (const D of h) {
       if (M < D.m.from || M > (D.m.to ?? e.steps)) continue;
       if (D.track)
         for (const [P, F] of e.views) P === M && D.track.set(F);
-      D.track ??= yfe(D.m.camera, m);
+      D.track ??= wfe(D.m.camera, m);
       const N = (P, F) => {
         const W = d?.armsInput({ player: T, effects: F, aspect: fi.aspect, fov: g });
         return !W || !S.animator ? null : (D.arms ??= new fP(S.animator.build), D.arms.update(P, W, o.dt), { hands: D.arms.hands.map(Sl), points: D.arms.points(), fov: g });
@@ -39133,14 +39148,14 @@ function oge(e, t = {}) {
     }
     w = Rz(w, S, `the course ${e.id}'s inputs at step ${M}`), s.step(w), b.push(v(M + 1));
   }
-  const x = Object.fromEntries(h.map((M) => [M.m.name, M.track?.metrics() ?? { jump: 0, turn: 0, inside: 0, lost: 0, clip: 0 }])), k = { samples: b, anim: d, cameras: x }, A = e.measures.map((M) => vfe(M, bfe(M, k, e.steps, o.dt), o.dt)), _ = A.every((M) => M.pass || M.watch !== void 0);
+  const x = Object.fromEntries(h.map((M) => [M.m.name, M.track?.metrics() ?? { jump: 0, turn: 0, inside: 0, lost: 0, clip: 0 }])), k = { samples: b, anim: d, cameras: x }, A = e.measures.map((M) => xfe(M, vfe(M, k, e.steps, o.dt), o.dt)), _ = A.every((M) => M.pass || M.watch !== void 0);
   return { id: e.id, scene: e.scene, steps: e.steps, results: A, pass: _, hash: o.hash(), samples: b };
 }
 const Ia = (e) => Math.hypot(e.velocity[0], e.velocity[2]);
 function bh(e, t) {
   return e.until === "grounded" ? t.grounded : e.until === "airborne" ? !t.grounded : e.until === "crouched" || e.until === "standing" ? t.stance === (e.until === "crouched" ? "crouch" : "stand") : e.until === "sliding" || e.until === "stopsSliding" ? t.sliding === (e.until === "sliding") : e.until === "mantling" || e.until === "climbing" ? t.mode === (e.until === "mantling" ? "mantle" : "climb") : e.until === "grabbing" || e.until === "hanging" || e.until === "pulling" ? t.mantle === { grabbing: "grab", hanging: "hang", pulling: "pull" }[e.until] : e.until === "riding" || e.until === "onLadder" || e.until === "skydiving" ? t.mode === { riding: "zipline", onLadder: "ladder", skydiving: "skydive" }[e.until] : e.until === "landingPose" ? t.mode === "skydive" && t.landing === !0 : e.until === "speedAbove" ? Ia(t) > e.value : Ia(t) < e.value;
 }
-function bfe(e, t, n, s) {
+function vfe(e, t, n, s) {
   const { samples: o } = t, r = Math.min(e.to ?? n, o.length - 1), i = o.slice(e.from, r + 1), a = o[e.from], c = t.cameras[e.name];
   switch (e.metric) {
     case "speed":
@@ -39213,20 +39228,20 @@ function bfe(e, t, n, s) {
       return c.clip;
   }
 }
-function vfe(e, t, n) {
+function xfe(e, t, n) {
   const s = t - e.reference, { share: o, abs: r, ticks: i } = e.tolerance, a = Number.isFinite(t) && (o !== void 0 && Math.abs(s) <= o * Math.abs(e.reference) + 1e-9 || r !== void 0 && Math.abs(s) <= r + 1e-9 || i !== void 0 && Math.abs(s) <= i * n + 1e-9), c = { name: e.name, metric: e.metric, value: t, reference: e.reference, off: s, tolerance: e.tolerance, pass: a };
   return e.watch === void 0 ? c : { ...c, watch: e.watch };
 }
-function xfe(e) {
+function kfe(e) {
   if (!(e > 0)) return 1e-3;
   const t = e / 300, n = Math.pow(10, Math.floor(Math.log10(t))), s = t / n;
   return (s < 1.5 ? 1 : s < 3.5 ? 2 : s < 7.5 ? 5 : 10) * n;
 }
-function kfe(e) {
-  const t = Math.max(Math.abs(e.default) * 3, Math.abs(e.value), 1), n = Math.min(Math.max(e.minimum ?? 0, -t), e.value), s = Math.max(Math.min(e.maximum ?? t, t), e.value), o = xfe(s - n);
+function Mfe(e) {
+  const t = Math.max(Math.abs(e.default) * 3, Math.abs(e.value), 1), n = Math.min(Math.max(e.minimum ?? 0, -t), e.value), s = Math.max(Math.min(e.maximum ?? t, t), e.value), o = kfe(s - n);
   return [n, ((i) => Number((Math.ceil(i / o) * o).toPrecision(12)))(s), o];
 }
-const B$ = (e) => String(Number(e.toPrecision(4))), Mfe = `
+const B$ = (e) => String(Number(e.toPrecision(4))), Afe = `
 .feel-panel { position: fixed; right: 8px; top: 40px; bottom: 40px; width: 340px; overflow-y: auto; z-index: 30;
   background: rgba(16, 18, 24, 0.92); color: #e8e8e8; font: 12px/1.4 system-ui, sans-serif; padding: 8px;
   border-radius: 6px; box-sizing: border-box; }
@@ -39238,10 +39253,10 @@ const B$ = (e) => String(Number(e.toPrecision(4))), Mfe = `
 .feel-panel output { text-align: right; font-variant-numeric: tabular-nums; }
 .feel-panel textarea { width: 100%; height: 160px; font: 11px/1.3 monospace; }
 `, G$ = (e) => e.split(".")[1] ?? e;
-function rge(e, t) {
+function ige(e, t) {
   if (!e.getElementById("feel-panel-style")) {
     const h = e.createElement("style");
-    h.id = "feel-panel-style", h.textContent = Mfe, e.head.append(h);
+    h.id = "feel-panel-style", h.textContent = Afe, e.head.append(h);
   }
   const n = e.createElement("div");
   n.className = "feel-panel", n.dataset.ui = "feel", n.hidden = !0;
@@ -39257,7 +39272,7 @@ function rge(e, t) {
     f.dataset.path = h.path, f.title = h.description ?? h.path;
     const p = e.createElement("span");
     p.textContent = h.path.split(".").at(-1);
-    const m = e.createElement("input"), [g, y, w] = kfe(h);
+    const m = e.createElement("input"), [g, y, w] = Mfe(h);
     Object.assign(m, { type: "range", min: String(g), max: String(y), step: String(w), value: String(h.value) });
     const v = e.createElement("output");
     return v.textContent = `${B$(h.value)}${h.unit ? ` ${h.unit}` : ""}`, m.addEventListener("input", () => {
@@ -39308,14 +39323,14 @@ export {
   Fne as AIM_RULES,
   E1 as APPROACH_RING,
   $X as ASIDE,
-  s0e as ATTACK_TOKENS,
+  o0e as ATTACK_TOKENS,
   FK as ATTACK_TOKENS_FIELDS,
-  J0e as AWARENESS,
+  Q0e as AWARENESS,
   OJ as AWARENESS_FIELDS,
   _J as AWARENESS_STATES,
   Tp as Actions,
-  cge as AnimationClip,
-  lge as AnimationMixer,
+  lge as AnimationClip,
+  uge as AnimationMixer,
   Iz as Animator,
   bf as Attack,
   be as B,
@@ -39332,10 +39347,10 @@ export {
   sJ as BREAK_SPEED,
   zq as BUFFER_STEPS,
   AN as BUS_VOLUMES,
-  lme as Blink,
+  ume as Blink,
   Kb as Blob,
-  uge as Box3,
-  Sme as CAMERA_SETTINGS,
+  dge as Box3,
+  _me as CAMERA_SETTINGS,
   ms as CAPE,
   xY as CARRY_MASS,
   zt as CHAIN,
@@ -39346,10 +39361,10 @@ export {
   pH as CLIPS_FIELDS,
   Ho as CLIP_LAYER,
   tb as COLLISION_GROUPS,
-  lue as CONTENTS,
-  Cfe as CROWD_AGENT,
+  uue as CONTENTS,
+  Ffe as CROWD_AGENT,
   dz as CROWD_AGENT_FIELDS,
-  l0e as CROWD_BODY,
+  u0e as CROWD_BODY,
   BK as CROWD_BODY_FIELDS,
   gy as CROWD_GROUNDED,
   r5 as CROWD_LIMITS,
@@ -39359,17 +39374,17 @@ export {
   vf as Chain,
   K2 as ClipLayer,
   Y2 as ClipLayerPool,
-  dge as Color,
-  Kpe as Combo,
+  hge as Color,
+  Ype as Combo,
   sc as DAMAGE_NUMBERS,
   _R as DAWN,
-  ile as DEGREES_PER_COUNT,
+  ale as DEGREES_PER_COUNT,
   vR as DOOR_SWING,
   SR as DUSK,
-  hme as DetachedPart,
+  fme as DetachedPart,
   ES as EFFECTORS,
   _s as EFFECTS,
-  hge as Euler,
+  fge as Euler,
   fk as FILTER_NAMES,
   fee as FLICKER,
   X2 as FLIP_AXES,
@@ -39385,76 +39400,76 @@ export {
   WI as FootPlant,
   ci as GROUND_SPEED,
   Ld as HAIR,
-  b0e as HEALTH,
+  v0e as HEALTH,
   bY as HEALTH_FIELDS,
   Ev as HOLD_PREFIX,
-  Ece as HOLD_TIME,
-  Zpe as HOP,
+  $ce as HOLD_TIME,
+  e0e as HOP,
   Xc as HOVER,
   xq as HUMANOID_WEIGHTS,
-  ume as Hover,
+  dme as Hover,
   E2 as Humanoid,
   Wa as INTENT_KEYS,
   ie as JOINTS,
   _h as LAYER_SLOTS,
-  Hfe as LEGACY_FIELDS,
+  Wfe as LEGACY_FIELDS,
   rI as LEVEL_FORMAT,
   wW as LEVEL_FORMAT_2,
   lse as LEVEL_RECIPES,
   Aa as LIMBS,
   pb as LOD,
   P_ as LOOK_AHEAD,
-  Lme as LOOK_SETTINGS,
+  Pme as LOOK_SETTINGS,
   cN as LOOK_SETTING_FIELDS,
-  ime as LagPart,
+  ame as LagPart,
   iK as LegGait,
-  cme as LookAt,
-  Qhe as MANNEQUIN_SLOTS,
+  lme as LookAt,
+  Zhe as MANNEQUIN_SLOTS,
   b2 as MASKS,
   uo as MATERIAL_STYLES,
   Hn as MELEE,
   PY as MELEE_FIELDS,
   L1 as MELEE_MOVES,
-  nfe as METRICS,
+  sfe as METRICS,
   Uu as MODEL_FIELDS,
   kJ as MOST_VOLLEYS,
   Dz as MOTION_FIELDS,
   c6 as MOVEMENT_SETTINGS,
-  Rpe as MOVER,
+  Lpe as MOVER,
   FU as MOVER_FIELDS,
   fb as MOVE_PHASES,
-  fge as MathUtils,
-  pge as Matrix4,
+  pge as MathUtils,
+  mge as Matrix4,
   wu as NAV_CLIMB,
   bi as NAV_DIRECTIONS,
   EK as NAV_GRID_FIELDS,
   OK as NEAREST_RINGS,
   yx as NavGrid,
   hn as OCCLUSION,
-  $me as OUTLINE_MODES,
-  dme as Orbiters,
+  Tme as OUTLINE_MODES,
+  hme as Orbiters,
   IN as PALETTES,
-  Mme as PARTS,
+  Ame as PARTS,
   sv as PATTERNS,
   ab as PHASES,
   wT as PHYSICS_SETTINGS,
   Oh as POINT_INDEX,
   A2 as POSES,
   du as POSE_POINTS,
-  Ade as POST_SETTINGS,
+  Sde as POST_SETTINGS,
   oY as PROJECTILE,
   Kr as PROJECTILE_FIELDS,
   DU as PROP_MATERIAL,
-  ame as PathChain,
-  mge as Plane,
+  cme as PathChain,
+  gge as Plane,
   ut as Pose,
-  fme as PoseHistory,
+  pme as PoseHistory,
   Ue as QUADRUPED,
   Qoe as QUADRUPED_BODY,
   $_ as QUADRUPED_LEGS,
   wK as QUADRUPED_RIG,
   jp as Quadruped,
-  gge as Quaternion,
+  yge as Quaternion,
   xX as RAGDOLL_FIELDS,
   kl as RAGDOLL_SIM,
   cn as REACTION,
@@ -39465,17 +39480,17 @@ export {
   ck as RESERVED_CODES,
   M6 as RETARGET,
   zw as ROOMS,
-  z0e as ROUTE_FIELDS,
-  yge as Ray,
+  I0e as ROUTE_FIELDS,
+  wge as Ray,
   zp as Reactions,
   pr as Rng,
   bp as SAMPLE_STATES,
   eV as SCENE_PROP_FIELDS,
-  hde as SCOPES,
+  fde as SCOPES,
   LH as SECONDARY_FIELDS,
   xw as SHAKE,
-  qpe as SHEET_CAMERAS,
-  K0e as SHOT_EMITTER,
+  Bpe as SHEET_CAMERAS,
+  Y0e as SHOT_EMITTER,
   MJ as SHOT_EMITTER_FIELDS,
   dt as SHOULDER,
   Jc as SIGHT,
@@ -39492,15 +39507,15 @@ export {
   RN as STYLIZE_KINDS,
   X1 as SURFACE_STEPS,
   $v as SYSTEM_ACTIONS,
-  Cie as ScreenShake,
+  Fie as ScreenShake,
   eK as Secondary,
-  Jpe as SpatialHash,
-  wge as Sphere,
+  Qpe as SpatialHash,
+  bge as Sphere,
   xO as Spring1,
   $R as Spring3,
-  eme as SpringQuat,
-  tme as StateWeights,
-  rme as SwayChain,
+  tme as SpringQuat,
+  nme as StateWeights,
+  ime as SwayChain,
   f1 as TAIL,
   KK as TELEGRAPH_SHAPES,
   hI as TERRAIN_FIELDS,
@@ -39509,104 +39524,104 @@ export {
   kY as THROW_SPEED,
   ni as TOON_LOOK,
   wp as TRAILS,
-  Pie as TRAIL_TINTS,
-  Npe as TRIGGER_FIELDS,
+  Nie as TRAIL_TINTS,
+  jpe as TRIGGER_FIELDS,
   z6 as Timeline,
-  gme as TipTrail,
+  yme as TipTrail,
   Af as USE_REACH,
-  Eue as VOICE_LIMITS,
-  bge as Vector3,
+  $ue as VOICE_LIMITS,
+  vge as Vector3,
   _2 as WEAPONS,
   UY as WEAPONS_FIELDS,
   BY as WEAPON_FIELDS,
-  mpe as actOn,
-  Ype as actionCheck,
+  gpe as actOn,
+  Xpe as actionCheck,
   XF as addAgent,
-  $pe as addBall,
-  Epe as addBox,
-  B0e as addBreakables,
-  Tpe as addCapsule,
-  lpe as addClips,
-  zpe as addCylinder,
+  Tpe as addBall,
+  $pe as addBox,
+  G0e as addBreakables,
+  zpe as addCapsule,
+  upe as addClips,
+  Ipe as addCylinder,
   QX as addDoor,
-  v0e as addInteraction,
+  x0e as addInteraction,
   oX as addJoint,
   SI as addLadder,
-  Spe as addLauncher,
+  _pe as addLauncher,
   vK as addLevelBodies,
-  C0e as addLevelDoors,
-  _pe as addLevelLadders,
-  q0e as addLevelWindows,
-  x0e as addMelee,
+  F0e as addLevelDoors,
+  Ope as addLevelLadders,
+  B0e as addLevelWindows,
+  k0e as addMelee,
   G9 as addPose,
   Np as addProp,
-  E0e as addRagdolls,
-  Ppe as addSensor,
-  Xpe as addSiteBodies,
-  Ope as addSiteLadders,
-  G0e as addSwitch,
+  $0e as addRagdolls,
+  Npe as addSensor,
+  Jpe as addSiteBodies,
+  Epe as addSiteLadders,
+  H0e as addSwitch,
   xK as addTerrainBody,
-  A0e as addWeapons,
-  Ape as addZipline,
+  S0e as addWeapons,
+  Spe as addZipline,
   wz as aim,
-  ome as aimDirection,
+  rme as aimDirection,
   Gne as aimPoint,
   CK as airTime,
   IO as along,
-  mme as alongDirection,
+  gme as alongDirection,
   Ut as angDiff,
   vV as animCheck,
-  Bpe as animCheckBody,
-  Fpe as animSheet,
+  Gpe as animCheckBody,
+  qpe as animSheet,
   Wx as apexFov,
   f4 as applyEffects,
-  Ipe as applyTorqueImpulse,
+  Rpe as applyTorqueImpulse,
   Le as approach,
-  Dfe as approachAng,
-  e0e as approachRing,
+  Cfe as approachAng,
+  t0e as approachRing,
   _G as bakeClip,
   iZ as bakeTexture,
-  sme as blendAngles,
+  ome as blendAngles,
   lv as blendCameras,
   Wu as blendPoses,
   kP as blobBody,
   OV as blobMove,
-  Gpe as blobMoveTimes,
+  Hpe as blobMoveTimes,
   tre as blobScale,
   QV as bodyCapsules,
   ds as boneMask,
   So as boxGeometry,
   bO as breakDoor,
   iJ as breakProp,
-  Yfe as buffered,
+  Xfe as buffered,
   eee as buildGeometry,
   aL as buildPropPart,
   gL as cameraPlayer,
-  c0e as canSee,
+  l0e as canSee,
   iY as capsuleCast,
   Se as cellHash,
   Q9 as checkBodyStates,
   qK as clearSight,
-  ope as clipJSON,
+  rpe as clipJSON,
   gH as clipLayerOf,
   hS as clipPace,
-  ipe as clipSetFromFiles,
+  ape as clipSetFromFiles,
   fH as clipSetId,
-  ape as clipSetIds,
+  cpe as clipSetIds,
   uG as clipText,
   rN as codeLabel,
   vP as compileBody,
   HW as compileLevel,
-  g0e as coneHits,
-  h0e as coneOf,
+  y0e as coneHits,
+  f0e as coneOf,
   OZ as connectVirtualDevice,
   Lq as consume,
-  Xfe as consumeAll,
-  qme as createAudio,
-  Ume as createBar,
-  Cce as createBindings,
+  Jfe as consumeAll,
+  Bme as createAudio,
+  Vme as createBar,
+  Fce as createBindings,
   nre as createBlobShadows,
-  Kme as createBox,
+  Yme as createBox,
   uw as createCamera,
   zee as createCameraEffects,
   FL as createCameraRig,
@@ -39615,35 +39630,35 @@ export {
   dre as createCrowd,
   rre as createCrowdLod,
   hv as createCutaway,
-  Xme as createDialog,
-  qie as createEffects,
-  Wme as createEngine,
-  rge as createFeelPanel,
+  Jme as createDialog,
+  Bie as createEffects,
+  Ume as createEngine,
+  ige as createFeelPanel,
   Ite as createFirstCamera,
   dne as createFollowCamera,
   g5 as createFootPlantState,
-  zme as createHeadless,
-  Vme as createHearts,
-  lle as createInput,
-  Ufe as createInputBuffer,
+  Ime as createHeadless,
+  Kme as createHearts,
+  ule as createInput,
+  Vfe as createInputBuffer,
   wr as createInstancedBatch,
   Ese as createLevelMeshes,
   Cx as createMaterialLibrary,
-  Jme as createMenu,
+  Qme as createMenu,
   IE as createOutline,
-  phe as createOverlay,
-  Yme as createPadCursor,
-  Rde as createPost,
+  mhe as createOverlay,
+  Xme as createPadCursor,
+  Lde as createPost,
   yee as createPropMeshes,
   poe as createPuppet,
   goe as createPuppetBatches,
-  Pme as createScriptedGamepad,
+  Nme as createScriptedGamepad,
   Lne as createShoulderCamera,
   HX as createSiteNav,
   xr as createSkeleton,
-  Pae as createSky,
-  Qme as createStore,
-  Wue as createStyleSet,
+  Nae as createSky,
+  Zme as createStore,
+  Uue as createStyleSet,
   GP as createTerrainMeshes,
   ene as createViewCamera,
   UR as createVirtualDevice,
@@ -39655,47 +39670,47 @@ export {
   f6 as decodePose,
   vc as def,
   kH as defineAction,
-  Nce as defineActionMap,
+  jce as defineActionMap,
   Coe as defineBody,
   y2 as defineBuild,
-  Ame as defineCamera,
-  rpe as defineClipSet,
+  Sme as defineCamera,
+  ipe as defineClipSet,
   De as defineComponent,
-  tge as defineCourse,
+  nge as defineCourse,
   uV as defineDevAction,
-  Eme as defineEmitter,
-  kme as defineGeometry,
-  gpe as defineGlyph,
-  jfe as defineKind,
+  $me as defineEmitter,
+  Mme as defineGeometry,
+  ype as defineGlyph,
+  Dfe as defineKind,
   eU as defineLevel,
-  Ome as defineLight,
-  Bme as defineLook,
-  ege as defineMannequin,
+  Eme as defineLight,
+  Gme as defineLook,
+  tge as defineMannequin,
   Gp as defineMaterial,
-  Gfe as defineMove,
+  Hfe as defineMove,
   nB as defineMovement,
   pk as definePostSettings,
-  Dpe as defineProp,
+  Cpe as defineProp,
   VF as defineScene,
-  cpe as defineSetBuild,
+  lpe as defineSetBuild,
   ct as defineSettings,
-  jme as defineSfx,
-  Mpe as defineSite,
-  Tme as defineSky,
-  Dme as defineSong,
+  Dme as defineSfx,
+  Ape as defineSite,
+  zme as defineSky,
+  Cme as defineSong,
   Ex as defineStrikable,
-  d0e as defineTelegraph,
-  kpe as defineTerrain,
+  h0e as defineTelegraph,
+  Mpe as defineTerrain,
   nZ as defineTexture,
-  U0e as defineThing,
-  Gme as defineTouchLayout,
+  V0e as defineThing,
+  Hme as defineTouchLayout,
   rR as defineUsable,
-  k0e as defineWeapon,
+  M0e as defineWeapon,
   _i as deviceOf,
   oK as digitigrade,
   q1 as direction,
   hx as driveBody,
-  Lpe as driveMover,
+  Ppe as driveMover,
   K1 as driveRig,
   ER as earshot,
   sr as ease,
@@ -39708,19 +39723,19 @@ export {
   Ri as floorHeight,
   nd as followCamera,
   DK as followFlow,
-  I0e as followRoute,
+  R0e as followRoute,
   SV as footPlant,
-  xme as footstepSound,
+  kme as footstepSound,
   _e as forwardKinematics,
   $2 as fromCamera,
-  Wfe as fromLegacy,
+  Ufe as fromLegacy,
   qx as frustumGeometry,
   Th as getAction,
-  jce as getActionMap,
+  Dce as getActionMap,
   yP as getBody,
   Ks as getBuild,
   S6 as getClipSet,
-  nge as getCourse,
+  sge as getCourse,
   nc as getEmitter,
   ZZ as getGeometry,
   Pp as getLevel,
@@ -39734,98 +39749,98 @@ export {
   ZK as getTelegraph,
   mU as getTerrain,
   Lx as getThing,
-  the as getTouchLayout,
+  nhe as getTouchLayout,
   Ju as getWeapon,
-  $0e as handOff,
+  T0e as handOff,
   lr as handTo,
-  _0e as hasJoint,
+  O0e as hasJoint,
   H9 as hashPose,
   AJ as headingTo,
-  Q0e as hears,
+  Z0e as hears,
   ur as held,
   Qp as heldBase,
   tH as hipRatio,
   sV as hitProp,
   yJ as hitThing,
   Ow as holdCode,
-  o0e as holdsToken,
-  n0e as hop,
-  t0e as hover,
+  r0e as holdsToken,
+  s0e as hop,
+  n0e as hover,
   HV as inArc,
   lY as inCone,
-  Upe as inHitShape,
-  f0e as inTelegraph,
-  Nme as inspectGeometry,
+  Vpe as inHitShape,
+  p0e as inTelegraph,
+  jme as inspectGeometry,
   Uf as isCode,
-  O0e as jointBodies,
-  Bfe as jointMatrix,
+  E0e as jointBodies,
+  Gfe as jointMatrix,
   ee as jointPosition,
   Ze as jointRotation,
   Is as jointToWorld,
-  a0e as keepTokens,
+  c0e as keepTokens,
   ZF as killAgent,
   dx as knock,
   QF as knockback,
-  Vpe as knockbackVelocity,
+  Kpe as knockbackVelocity,
   i5 as launch,
-  nme as layerPose,
+  sme as layerPose,
   Wv as lerpAng,
-  Zme as levelFloorTexture,
+  ege as levelFloorTexture,
   MI as levelLadders,
-  Cpe as levelProps,
-  W0e as lightsAtDusk,
+  Fpe as levelProps,
+  U0e as lightsAtDusk,
   eL as limbGeometry,
-  Rme as listActionMaps,
-  sge as listCourses,
-  Qfe as listMovements,
+  Lme as listActionMaps,
+  oge as listCourses,
+  Zfe as listMovements,
   uJ as litAt,
-  ppe as loadActions,
+  mpe as loadActions,
   YG as loadClipLibrary,
-  hpe as locomoteClips,
+  fpe as locomoteClips,
   lN as lookOptions,
-  X0e as loose,
+  J0e as loose,
   j6 as lyingOf,
   B9 as makeAdditive,
   Tn as makePose,
   xU as makeSite,
   pI as makeTerrain,
-  efe as mannequinBody,
+  tfe as mannequinBody,
   AK as measureFeel,
   GV as measureMove,
-  yme as measureReach,
+  wme as measureReach,
   cR as meleeTargets,
   C$ as memoryBackend,
   ed as mergeGeometries,
   LG as mirrorClip,
-  Wpe as moveAt,
+  Upe as moveAt,
   F2 as movementOverrides,
   BU as moverPose,
   h$ as muffling,
-  p0e as nearMiss,
-  Zfe as normalizedLens,
+  m0e as nearMiss,
+  epe as normalizedLens,
   Bne as onFloor,
   xe as palette,
   H2 as parseClip,
   W2 as parseClipSet,
-  qhe as parseRoutes,
+  Bhe as parseRoutes,
   lL as partMatrix,
   ze as physicsOf,
-  w0e as physicsWalls,
+  b0e as physicsWalls,
   $o as pickTone,
   nL as pillarGeometry,
   tL as pillarParts,
   _I as placeActor,
-  pme as placeExtras,
+  mme as placeExtras,
   qse as planCutaway,
-  upe as playClip,
-  tpe as poseError,
+  dpe as playClip,
+  npe as poseError,
   We as poseForward,
-  npe as poseMeanError,
+  spe as poseMeanError,
   mn as poseRight,
   mc as poseTarget,
   Ys as poseUp,
   Wt as pressed,
-  Qae as profileText,
+  Zae as profileText,
   TI as propBody,
   vu as propCentre,
   yO as propObstacles,
@@ -39836,85 +39851,85 @@ export {
   VZ as rampGeometry,
   qb as reactTo,
   Kx as readCameraCode,
-  Ime as readKeyboardLayout,
+  Rme as readKeyboardLayout,
   HY as recoilStep,
-  _me as recolor,
-  i0e as releaseToken,
-  Kfe as released,
+  Ome as recolor,
+  a0e as releaseToken,
+  Yfe as released,
   IU as removeActor,
   JF as removeAgent,
-  S0e as removeJoint,
+  _0e as removeJoint,
   RI as removeProp,
   OX as removeRagdollOf,
-  Jle as renderSfx,
+  Qle as renderSfx,
   MN as renderSong,
-  Jfe as repeated,
+  Qfe as repeated,
   sR as requestHitStop,
-  Qpe as rescueLost,
+  Zpe as rescueLost,
   yp as resolveMove,
   U2 as restBuild,
-  spe as restPoints,
+  ope as restPoints,
   k6 as restSkeleton,
   kS as retargetPose,
   OU as ridesOf,
-  bme as rigCheck,
-  wme as rigClosed,
+  vme as rigCheck,
+  bme as rigClosed,
   CL as rigOptions,
   KZ as ringGeometry,
-  Cme as roomAcoustics,
+  Fme as roomAcoustics,
   sI as roomAt,
-  Fme as roomReverb,
+  qme as roomReverb,
   YZ as roundedBoxGeometry,
-  Hme as routeQuery,
-  oge as runCourse,
+  Wme as routeQuery,
+  rge as runCourse,
   VG as runOverWalk,
   Qu as runningBond,
   $G as sampleBaked,
   hG as samplePose,
-  ale as scaleLook,
-  xpe as scatterTerrain,
+  cle as scaleLook,
+  kpe as scatterTerrain,
   j4 as screenRay,
   Jb as seek,
-  fpe as seekClip,
-  Z0e as sense,
+  ppe as seekClip,
+  eme as sense,
   GU as sensorHits,
-  H0e as setDaytime,
+  W0e as setDaytime,
   oL as setPart,
-  Ffe as setVelocity,
+  qfe as setVelocity,
   vN as sfxVoices,
   _u as sidesThenTops,
-  j0e as siteClearSight,
-  P0e as siteFloorBelow,
-  D0e as siteRescueGrid,
+  D0e as siteClearSight,
+  N0e as siteFloorBelow,
+  C0e as siteRescueGrid,
   RX as siteSolidAt,
   zX as siteStructureAt,
-  N0e as siteSurfaceBelow,
+  j0e as siteSurfaceBelow,
   bT as smoothDamp,
   FJ as socketMatrix,
   Oe as socketPosition,
-  wpe as solidAt,
+  bpe as solidAt,
   Pi as songTiming,
-  iue as songVoices,
+  aue as songVoices,
   zU as spawnActor,
   ko as spawnProp,
-  V0e as spawnThing,
+  K0e as spawnThing,
   WY as spreadOf,
   JV as squashScale,
-  T0e as standUp,
+  z0e as standUp,
   gS as standingHipHeight,
   r1 as stateMatrix,
-  R0e as stepAside,
-  u0e as stepCrowdBody,
-  vme as stepGait,
-  m0e as stepProjectiles,
+  L0e as stepAside,
+  d0e as stepCrowdBody,
+  xme as stepGait,
+  g0e as stepProjectiles,
   NH as stepReactions,
   wJ as stepThing,
-  Y0e as stepVolleys,
-  dpe as stopClip,
+  X0e as stepVolleys,
+  hpe as stopClip,
   nI as storeyAt,
   Lp as storeyBelow,
   pc as storeyView,
-  F0e as strikeBody,
+  q0e as strikeBody,
   ZX as strikeDoor,
   Ox as strikeEntity,
   zY as strikeEntry,
@@ -39922,22 +39937,22 @@ export {
   CV as strikeSegment,
   vJ as strikeThing,
   KG as strikeTime,
-  ype as surfaceAt,
+  wpe as surfaceAt,
   uW as surfaceBelow,
-  y0e as sweepHits,
+  w0e as sweepHits,
   yY as sweepTouches,
   dj as swingTwist,
   Lh as switchGroup,
-  r0e as takeToken,
+  i0e as takeToken,
   IY as takesStrike,
   sY as telegraphFill,
   ZI as telegraphGap,
   wI as terrainGrade,
   yI as terrainGradient,
   gf as terrainHeight,
-  L0e as terrainNavGrid,
+  P0e as terrainNavGrid,
   yR as terrainNavSurface,
-  vpe as terrainNormal,
+  xpe as terrainNormal,
   fI as terrainProblems,
   fU as terrainSurface,
   bJ as thingAt,
@@ -39951,20 +39966,20 @@ export {
   za as touchCode,
   zb as travelAt,
   l6 as tuneCharacter,
-  Jae as tunedSpec,
+  Qae as tunedSpec,
   sf as turnRight,
   fp as twoBone,
   ks as twoBoneRot,
-  lhe as uiState,
-  qfe as updateCrowd,
-  Vfe as updateInputBuffer,
-  jpe as updateTrigger,
+  uhe as uiState,
+  Bfe as updateCrowd,
+  Kfe as updateInputBuffer,
+  Dpe as updateTrigger,
   kR as useDoor,
-  epe as validateClip,
-  bpe as validateLevel,
+  tpe as validateClip,
+  vpe as validateLevel,
   SJ as volley,
   UG as walkRate,
   f$ as wallsBetween,
-  M0e as weaponsFor,
+  A0e as weaponsFor,
   oe as wrapIndex
 };

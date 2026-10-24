@@ -4684,6 +4684,7 @@ For the agents who maintain the engine.
 - `sceneTargetsFor` (function): The scene pass's extra targets the techniques on in `report` read, for a chain smoothing with `aa` (mrt.ts).
 - `shadingFor` (function): The shading techniques whose features are on in `report` (none without a report).
 - `ShadingTechniques` (interface): The post chain's shading techniques a renderer whose features are `report` has (engine/gfx/post/shading.ts).
+- `shellsOn` (function): Whether the stage makes outline shells (engine/gfx/stageShells.ts): `feature:shells` on in `report`, or no report.
 - `TemporalAa` (interface from [`engine/gfx/enhanced/aa.ts`](../engine/gfx/enhanced/aa.ts)): The smoothing (see the file comment).
 - `temporalAaFor` (function): TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA).
 

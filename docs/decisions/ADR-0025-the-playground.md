@@ -1856,3 +1856,15 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   neither look. A pan with a dolly in it (camera codes keep 1 mm, so a target moved off the plane by their rounding)
   changed 1 to 8 pixels, the cascades off too: an orthographic picture ignores a dolly, its depth-dependent parts do
   not; the spec pans in whole millimetres along the plane.
+
+## Amendment 34 (2026-10-24, WP 13.24): the shells priced, as a feature
+
+- **The shells are a feature,** `feature:shells` (engine/gfx/features.ts, advice `GFX_NO_SHELLS`): they need nothing
+  of the device, so only `gfx.featuresOff` turns them off, and then the stage makes, registers and shows no shell
+  (engine/gfx/stageShells.ts, handed the renderer's report at `register` as the stage's effects are). That is what
+  `x perf --feature` prices a technique by (WP 11.1), and what the feature matrix (tests/e2e/features.spec.ts) plays
+  the box's climb under, its goldens and entities kept with the shells off.
+- **Measured,** `node x perf labs/playground --scene site-street --feature feature:shells` on SwiftShader (the cel
+  look, 60 frames; ADR-0022: its times are noise to compare runs, not proof): the shells cost 177 draw calls (3,509
+  against 3,332), 72,060 triangles (834,653 against 762,593), 10 pipelines and 26.7 ms of the GPU's 816.8 a frame, 0
+  pipelines after the warm-up either way.

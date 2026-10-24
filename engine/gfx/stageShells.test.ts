@@ -2,8 +2,8 @@
  * @file Unit tests for the stage's outline shells (engine/gfx/stageShells.ts), in Node, on stand-ins for the stage's
  * props (one instanced batch) and actors (puppets as skinned meshes): a shell per page and per puppet once synced,
  * hidden at width 0 and shown as a look asks, in its colour; a puppet's shell skinned to its skeleton, dropped with
- * the puppet; every shell registered with the warm-up whatever the look; `dispose()` removes them. What they draw is
- * tests/e2e/playground-looks.spec.ts's.
+ * the puppet; every shell registered with the warm-up whatever the look; `dispose()` removes them; with
+ * `feature:shells` off, none made, registered or shown. What they draw is tests/e2e/playground-looks.spec.ts's.
  * @see engine/gfx/stageShells.ts
  */
 import { Bone, BoxGeometry, Matrix4, MeshBasicMaterial, Skeleton, SkinnedMesh } from 'three/webgpu';
@@ -72,5 +72,19 @@ describe('createStageShells', () => {
     shells.dispose();
     expect(batch.root.children.some((child) => child.userData.outline === true)).toBe(false);
     expect(puppets.get(2)!.mesh.children.some((child) => child.userData.outline === true)).toBe(false);
+  });
+
+  it('with feature:shells off, makes, registers and shows none, whatever the look asks', () => {
+    const { batch, puppets, parts } = stand();
+    const shells = createStageShells(parts);
+    const registered: string[] = [];
+    const warmup = { register: (id: string) => (registered.push(id), { dispose: () => undefined }) };
+    const off = { on: ['feature:timestamps'], off: [{ id: 'feature:shells', advice: 'GFX_NO_SHELLS', reason: 'gfx.featuresOff lists it' }], downgrades: ['GFX_NO_SHELLS'] }; // prettier-ignore
+    shells.register(warmup, off);
+    shells.set({ width: 1, color: '#1a1420' });
+    shells.sync();
+    expect([shells.width, shells.count(), registered]).toEqual([0, { props: 0, bodies: 0 }, []]);
+    expect(batch.root.children.some((child) => child.userData.outline === true)).toBe(false);
+    expect(puppets.get(1)!.mesh.children.some((child) => child.userData.outline === true)).toBe(false);
   });
 });

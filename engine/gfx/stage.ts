@@ -370,7 +370,7 @@ export function createStage(options: StageOptions): Stage {
         props.register(warmup),
         rides.register(warmup),
         crowd.register(warmup),
-        shells.register(warmup),
+        shells.register(warmup, features),
         fx.register(warmup, features),
         lights.register(warmup, features),
       ];
