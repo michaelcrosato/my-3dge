@@ -2,10 +2,11 @@
  * @file The sets' checks (PLAN.md §10.3 and §10.5 steps 4 and 5, WPs 8.3 and 8.10): `data/anim/sets/` holds ten
  * sets, each a directory of one `<Clip_Slug>.json` per clip, `_set.json` and a generated `catalog.tsv` (repack.ts):
  * - my-3d2dge's two curated sets left after WP 8.10, `mesh2motion` and `cmu` (HERO dropped). Rejoined, each is the
- *   source's object, apart from the `alt` tag on each of Mesh2Motion's 84 Quaternius re-exports, and in `cmu` the
- *   license in each of its 25 source records (CMU's terms, as the CMU catalog states them: WP 8.5) and the set's credit
+ *   source's object, apart from the `alt` tag on each of Mesh2Motion's 84 Quaternius re-exports, in `cmu` the license
+ *   in each of its 25 source records (CMU's terms, as the CMU catalog states them: WP 8.5) and the set's credit
  *   (repack.ts `CMU_CREDIT`, after G9), where my-3d2dge's said "free for all uses", which `x anim import --cmu --legacy`
- *   writes;
+ *   writes, and the clips WP 8.8 re-imported from their sources (`via: "source"`, their fits, format 2): the clips
+ *   kept are the source's, pinned by the SHA-256 of the source's object less the ones swapped in;
  * - shardfall's eight (tools/anim/shardfall.ts): 100STYLE's seven `style100*` sets and Quaternius v2's `quaternius`,
  *   which replaced v1's. Rejoined, each is shardfall's file, apart from its `body`, the `via` marks and, in
  *   `quaternius`, `Punch_Enter`, kept from v1 (its clip and its `fit` entry).
@@ -47,12 +48,16 @@ import { legacy } from '../../../anim/clip-fixtures';
 import { canonicalSha256 } from '../catalogs/catalogs';
 import { readCatalogs } from '../sources/sources';
 
-/** Where a set came from: its checkout, its file there, its clips, and the SHA-256 of the source's object. */
+/**
+ * Where a set came from: its checkout, its file there, its clips, the SHA-256 of the source's object and, for a set WP
+ * 8.8 re-imported from its originals, the SHA-256 of the source's object less the clips swapped in (and their fits).
+ */
 interface SourceSet {
   source: 'my-3d2dge' | 'shardfall';
   from: string;
   clips: number;
   sha256: string;
+  kept?: string;
 }
 
 /** Each set, by directory: my-3d2dge@e37e4ee's (WP 8.3) and shardfall@fa2dab6's (WP 8.10). */
@@ -62,12 +67,14 @@ const SOURCE_SETS: Record<string, SourceSet> = {
     from: 'src/mocap/sets/mesh2motion.js',
     clips: 177,
     sha256: '93997b1ee3de44e7be628af3f78452e89431f42736112ed79f974f22744a0598',
+    kept: '18a47a289c30f1e5278d8c62f29d627ddf34e523c8f71d7e122d2be517da7f4f',
   },
   cmu: {
     source: 'my-3d2dge',
     from: 'src/mocap/sets/cmu.js',
     clips: 60,
     sha256: '042068d134e719cfc0213c8e2259af5159ecdb118ac2e12ef6621b843dd33727',
+    kept: '8fb4f049be898338fc366b0e87c4e451550893bef58a1550d93cfe663edbe678',
   },
   quaternius: {
     source: 'shardfall',
@@ -163,13 +170,26 @@ function asShardfallWroteIt(set: ClipSet): ClipSet {
   return { ...header, ...(fits && { fit: fits }), clips: Object.fromEntries(unmarked) } as ClipSet;
 }
 
-/** The set as its source wrote it, the repacker's and the adoption's changes taken off. */
+/** The clips WP 8.8 re-imported from the sources into the set in `dir` (tools/anim/upgrade.ts): `via: "source"`. */
+const swappedIn = (dir: string) =>
+  new Set(Object.keys(sets[dir]?.clips ?? {}).filter((name) => sets[dir]?.clips[name]?.via === 'source'));
+
+/** `set` less the clips WP 8.8 swapped into `dir` and their fits, at format 1 again when it took any. */
+function withoutUpgrades(dir: string, set: ClipSet): ClipSet {
+  const swapped = swappedIn(dir);
+  if (!swapped.size) return set;
+  const keep = <T>(entries: Record<string, T>) =>
+    Object.fromEntries(Object.entries(entries).filter(([name]) => !swapped.has(name)));
+  return { ...set, format: 1, ...(set.fit && { fit: keep(set.fit) }), clips: keep(set.clips) };
+}
+
+/** The set as its source wrote it, the repacker's and the adoption's changes and WP 8.8's swaps taken off. */
 const restore = (dir: string, set: ClipSet) =>
   SOURCE_SETS[dir]?.source === 'shardfall'
     ? asShardfallWroteIt(set)
     : dir === 'cmu'
-      ? withLegacyLicense(withoutAltTags(set))
-      : withoutAltTags(set);
+      ? withoutUpgrades(dir, withLegacyLicense(withoutAltTags(set)))
+      : withoutUpgrades(dir, withoutAltTags(set));
 
 const sets = Object.fromEntries(Object.keys(SOURCE_SETS).map((dir) => [dir, readSet(dir)]));
 const read = (dir: string, file: string) => readFileSync(join(SETS_DIR, dir, file), 'utf8');
@@ -213,12 +233,14 @@ describe('data/anim/sets/', () => {
     ]);
   });
 
-  for (const [dir, { source, from, clips, sha256 }] of Object.entries(SOURCE_SETS)) {
+  for (const [dir, { source, from, clips, sha256, kept }] of Object.entries(SOURCE_SETS)) {
     describe(dir, () => {
       const set = sets[dir] as ClipSet;
       const files = readSetDir(join(SETS_DIR, dir));
       const changes =
-        source === 'shardfall' ? 'body, via marks and v1 clips' : dir === 'cmu' ? 'licenses (CMU’s terms)' : 'alt tags';
+        source === 'shardfall'
+          ? 'body, via marks and v1 clips'
+          : `${dir === 'cmu' ? 'licenses (CMU’s terms)' : 'alt tags'} and the clips re-imported from the source`;
 
       it(`is _set.json, catalog.tsv and ${clips} clip files, each named by its clip's slug`, () => {
         expect(set.set.toLowerCase()).toBe(dir);
@@ -229,7 +251,7 @@ describe('data/anim/sets/', () => {
       });
 
       it(`rejoined, is ${source}:${from} apart from the ${changes} (SHA-256 of the object, key order included)`, () => {
-        expect(canonicalSha256(restore(dir, set))).toBe(sha256);
+        expect(canonicalSha256(restore(dir, set))).toBe(kept ?? sha256);
       });
 
       it('lays each clip file out as its text(), _set.json as the repacker does, and generates catalog.tsv', () => {
@@ -266,11 +288,13 @@ describe('data/anim/sets/', () => {
       if (source === 'my-3d2dge') {
         it(`deep-equals ${from}, prints the same text() with the source's codec, and repacks to these files (needs the my-3d2dge checkout)`, (context) => {
           const { MR, sets: sources, source: path } = legacy(context);
-          const original = sources[dir] as unknown as ClipSet;
+          const whole = sources[dir] as unknown as ClipSet;
+          expect(canonicalSha256(whole), 'the recorded SHA-256').toBe(sha256);
+          const original = withoutUpgrades(dir, whole);
           const restored = restore(dir, set);
           expect(restored).toEqual(original);
           expect(JSON.stringify(restored)).toBe(JSON.stringify(original));
-          expect(canonicalSha256(original), 'the recorded SHA-256').toBe(sha256);
+          expect(canonicalSha256(original), 'the recorded SHA-256 of the clips kept').toBe(kept ?? sha256);
           for (const [name, clip] of Object.entries(original.clips)) {
             expect(MR.text(restored.clips[name] as Clip), `${dir}/${name}`).toBe(MR.text(clip));
             expect(MR.text(set.clips[name] as Clip), `${dir}/${name}`).toBe(clipText(set.clips[name] as Clip));

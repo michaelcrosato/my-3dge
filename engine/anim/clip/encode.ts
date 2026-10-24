@@ -44,6 +44,7 @@ import {
   type V,
 } from './frames';
 import { encodeRoll, footLine } from './feet';
+import { ANGLE_ENTRIES } from './lens';
 import { encodeHand } from './hands';
 import { bendOf, bodyFrames, euler, loc, poleOf, pt, rel, unwrap } from './inverse';
 import { armOf, POINT_COUNT, samplePose, type Clip, type ClipKey, type KeyPose } from './readable';
@@ -252,7 +253,10 @@ export function encodePose(
       // fully bent limb away from the elbow instead, so the elbow, the bigger shape, stays where it was
       if (len(v) < Math.abs(L1 - L2) + 10) v = mul(norm(loc(M, sub(p(mid + s), root))), -Math.abs(L1 - L2));
       const dir = norm([v[0], v[1] * SG[s], v[2]]).map((x) => r0(x * 100));
-      const bend = r0(bendOf(len(v), L1, L2));
+      // format 2 bends the limb as the capture does, measured from its own shoulder or hip: a nearly straight limb's
+      // bend swings with every millimetre its reach gains or loses, so the decoded root's small miss would fold it
+      const shaped = limb === 'arm' ? opts.hands : opts.feet;
+      const bend = r0(bendOf(shaped ? len(sub(reach, p((limb === 'arm' ? 'sh' : 'hip') + s))) : len(v), L1, L2));
       const dd = norm(sub(limbEnd(root, M, norm(dir), s, reachOf(bend, L1, L2)), root));
       const tw = poleOf(dd, hintFor(limb, SG[s], M, [dir[0], dir[1] * SG[s], dir[2]]), sub(p(mid + s), root));
       const before = pr[limb + s] as V | undefined;
@@ -301,8 +305,35 @@ export function encodeClip(R: RestBody, cap: Capture, kf: readonly number[], ext
     keys.push(k);
     prev = k;
   }
+  if (extra.hands || extra.feet || extra.spine) centreTurns(keys);
   const words = { ...(extra.tags ? { tags: extra.tags } : {}), ...(extra.desc ? { desc: extra.desc } : {}) };
   return { clip: cap.name, dur: Math.round(cap.dur * 1000) / 1000, loop: cap.loop, ...words, keys };
+}
+
+/**
+ * Format 2: each angle's track moved by the whole turns, the same on every key, that bring its middle nearest 0. Every
+ * angle decodes through its sine and cosine and in-betweens linearly, so the clip decodes the same, and a twist that
+ * winds on from key to key stays within the validator's ±540° where it can.
+ */
+function centreTurns(keys: ClipKey[]): void {
+  for (const [field, entries] of Object.entries(ANGLE_ENTRIES)) {
+    for (const j of entries ?? []) {
+      const at = (k: ClipKey) => {
+        const v = (k as unknown as Record<string, number | number[] | undefined>)[field];
+        return typeof v === 'number' ? v : v?.[j];
+      };
+      const values = keys.map(at).filter((v): v is number => v !== undefined);
+      if (!values.length) continue;
+      const turns = Math.round((Math.min(...values) + Math.max(...values)) / 2 / 360);
+      if (!turns) continue;
+      for (const k of keys) {
+        const record = k as unknown as Record<string, number | number[] | undefined>;
+        const v = record[field];
+        if (typeof v === 'number') record[field] = v - 360 * turns;
+        else if (v) v[j] -= 360 * turns;
+      }
+    }
+  }
 }
 
 /** A fitted clip, with its worst and average body-point error against the capture (mm, over every frame). */

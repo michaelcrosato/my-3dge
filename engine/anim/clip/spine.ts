@@ -6,12 +6,16 @@
  * the shares cannot: Mesh2Motion's `Bow` misses its neck by 129 mm on them.
  *
  * Invariants: the importer writes the override on every key of a clip or on none (`keyAt` holds a field the next key
- * lacks), when `spineMiss` passes `SPINE_MISS`; its twist about the spine is the shares' (the two bones lie almost in
- * line, so they say little about it), its bend takes the decoded `spine1` to the captured chest.
+ * lacks), when `spineMiss` passes `SPINE_MISS` and the override brings the clip's worst frame closer (a long neck's
+ * own miss, CMU's, can show once the chest is right); its twist about the spine is the shares' (the two bones lie
+ * almost in line, so they say little about it), its bend takes the decoded `spine1` to the captured chest.
  *
  * @example
- * import { REST } from '../../../tests/unit/anim/clip-fixtures';
- * spineMiss(REST, capture) > SPINE_MISS; // true for a capture whose back curls past what the shares rebuild
+ * import { busy, clipOf, REST } from '../../../tests/unit/anim/clip-fixtures';
+ * import { samplePose } from './readable';
+ * const data = samplePose(REST, clipOf([{ ...busy(0), spine: [0, 40, 0] }]), 0); // a back curled 40° forward
+ * const capture = { name: 'Curl', n: 1, dur: 0, loop: false, fps: 30, data, move: null };
+ * spineMiss(REST, capture) > SPINE_MISS; // true: the shares cannot curl it so
  * @see engine/anim/clip/spine.test.ts
  */
 import type { Capture } from './encode';

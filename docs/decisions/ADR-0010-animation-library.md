@@ -143,9 +143,45 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   heading within 0.5° (their turns, `Turn_Left_90` among them, are in the body), and CMU's root is its pelvis. So the
   importer writes no `yaw`, and its decode waits for a source that turns its root (the Quaternius GLBs' root-motion
   clips may: ESC-0003); the field stays carried, mirrored and printed as before.
+- **Format 2 bends a limb as the capture does** (encode.ts): its bend comes from the captured shoulder or hip to the
+  limb's end, not from the decoded one. A nearly straight limb's bend swings by about a degree for every 0.6 mm its
+  reach gains or loses, so the decoded shoulder's few millimetres used to fold it: `Turn_Left_180`'s elbows landed 31
+  to 42 mm off where format 1's landed 9 to 11; now 5. Format 1 (`--legacy`) keeps the source's rule, for its bits.
+- **The spine override only where it helps:** the importer fits a clip whose shares miss both ways and keeps the
+  override only when it brings the worst frame closer. CMU's neck bone is long and follows the chest (its share is
+  0.05), so on some frames a chest put right bares the neck's own miss at the head (`Drink_Water`: 61 → 92 mm).
+- **Contacts and events, detected at import** (tools/anim/contacts.ts), watched in the ground's frame: the root's
+  travel added, an in-place loop's treadmill taken away (the planted balls' median velocity along the floor, or the
+  velocity most hand and foot frames share: an in-place ladder's rungs sinking at 0.6 m/s). A foot holds where its
+  sole is within 30 mm of the floor, or where its ball holds still while the pelvis moves 5 cm past it; a hand where
+  its knuckle holds still for 0.15 s while the pelvis moves 5 cm past it, or lies still on the floor or above the
+  head. `step` where a foot's contact begins, `land` where one begins after a quarter second with nothing held, `hit`
+  in an `attack` or `kick` clip at the runtime's own strike time. Known limit: a hand still while the body is still
+  too, below the head and off the floor (an idle's, a held wall), reads as no contact.
+- **Call: parity is two decodes of one capture, and no worse** (tools/anim/upgrade.ts; PLAN.md §10.5 step 9 and WP
+  8.8 edited to match). The plan asked each re-imported clip's decode to lie within the old clip's fit of the old
+  decode. That rule sits on its own boundary: a format-2 clip that holds its capture closely lies from the format-1
+  decode by just the format-1 clip's error against that capture, which is its fit, so the upgrades that mend most
+  fail it by a millimetre or two (104 of Mesh2Motion's 177, 47 of CMU's 60). The rule kept: the two decodes lie within
+  the sum of their fits of each other, mean and worst (two decodes each within its fit of one capture can lie no
+  farther apart: the same motion; every clip of both sets passes), and the new clip fits its capture no worse, mean
+  and worst. Mesh2Motion: 175 of 177 swapped in; CMU: 51 of 60. The others stay as they were, each with its reason in
+  data/anim/upgrade.json (a worse worst frame, or a worse mean by a millimetre or two: CMU's format 2 in-betweens its
+  takes' frames where format 1 took the nearest, so each is fitted to a slightly different capture).
+- **Sources:** Mesh2Motion's three `.glb` files at mesh2motion-app@653a969, each checked by its sha256 (`x anim
+  fetch`; the repository's API and archives are not reachable here, its raw files are); CMU's picked takes by range
+  requests, as before. The Quaternius GLBs wait for the owner (ESC-0003) and the 100STYLE sets for a defect that touches
+  them (tools/anim/fetch.ts `SET_SOURCES`); `x anim upgrade <set>` refuses both, saying why.
+- **Call: the ledger's re-survey waits for a pick** (PLAN.md §10.5 step 10). `x anim cmu survey` now fits format 2
+  (as the importer does, `fitFormat2`), so every row it writes from here on reflects format 2, and the CMU set's own
+  60 clips are fitted in format 2 by the upgrade. Re-fitting the ledger's other takes now would need CMU's whole 1.08
+  GB archive and hours of fits for numbers that only rank takes for browsing; they are re-surveyed subject by subject
+  as games pick their rows (`x anim cmu survey --subjects …`), the notes kept, as step 10 already says of the picks.
 - Evidence: engine/anim/clip/hands.test.ts (random turns and grips back to the degree and the whole, either side; the
   mirror image; a capture with turning, closing hands fitted within 30 mm and its hands within 15 mm, more than three
   times closer than format 1), engine/anim/clip/feet.test.ts, engine/anim/clip/spine.test.ts,
   engine/anim/clip/mirror.test.ts (a mirrored format-2 clip decodes to the reflected body, every hand, spine and toe
   point with it), engine/anim/clip/bake.test.ts (FK of a format-2 key rebuilds every rigid point; a flipped roll sign
-  misses by 57 mm).
+  misses by 57 mm), tools/anim/contacts.test.ts, tools/anim/upgrade.test.ts, tools/anim/glb-library.test.ts (a skinned
+  mesh read through its inverse bind matrices, the WP's prerequisite), tests/unit/data/anim/upgrade.test.ts (the 80%
+  per set, the kept clips listed, every swapped clip's format-2 fields in full).

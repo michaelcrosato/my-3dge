@@ -1,7 +1,8 @@
 /**
  * @file Small `.glb` files built in memory for the importer's tests (WP 8.5; no binary fixture is committed): a
  * `GlbBuilder` that packs typed arrays into accessors, and `riggedGlb`, a T-posed humanoid with the Unreal
- * mannequin's bone names (tools/anim/rigs.ts) and the clips asked for, each a track list on named bones.
+ * mannequin's bone names (tools/anim/rigs.ts), the clips asked for, each a track list on named bones, and, when asked,
+ * a skinned mesh (its vertices, their bones' weights and each bone's inverse bind matrix).
  *
  * The figure faces +Z with its left at +X, 1.8 m tall; every bone's rest rotation is the identity, so a bone's local
  * axes are the world's. A clip's tracks may use any component type, normalized or not, and any interpolation, so the
@@ -111,8 +112,17 @@ const WAVE: Record<string, FixtureTrack[]> = {
   ],
 };
 
-/** A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`. */
-export function riggedGlb(clips: Record<string, FixtureTrack[]> = WAVE): Uint8Array {
+/** A vertex of `riggedGlb`'s skinned mesh: where it sits in the bind pose (metres) and its bones' weights. */
+export interface FixtureVertex {
+  at: number[];
+  bones: [bone: string, weight: number][];
+}
+
+/**
+ * A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`; with `mesh`, a skinned
+ * mesh of those vertices too, each bone's inverse bind matrix taking the bind pose to the bone's own frame.
+ */
+export function riggedGlb(clips: Record<string, FixtureTrack[]> = WAVE, mesh: FixtureVertex[] = []): Uint8Array {
   const index = new Map(SKELETON.map(([name], i) => [name, i]));
   const nodes = SKELETON.map(([name, parent, head]) => {
     const base = parent === null ? [0, 0, 0] : (SKELETON[index.get(parent) as number][2] as number[]);
@@ -133,5 +143,29 @@ export function riggedGlb(clips: Record<string, FixtureTrack[]> = WAVE): Uint8Ar
     }));
     return { name, channels, samplers };
   });
-  return builder.build({ scene: 0, scenes: [{ nodes: [0] }], nodes, animations });
+  if (!mesh.length) return builder.build({ scene: 0, scenes: [{ nodes: [0] }], nodes, animations });
+  const bind = SKELETON.flatMap(([, , head]) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -head[0], -head[1], -head[2], 1]);
+  const four = (v: FixtureVertex, of: (bone: [string, number]) => number) =>
+    [0, 1, 2, 3].map((k) => (v.bones[k] ? of(v.bones[k]) : 0));
+  const attributes = {
+    POSITION: builder.add(
+      mesh.flatMap((v) => v.at),
+      'VEC3',
+    ),
+    JOINTS_0: builder.add(
+      mesh.flatMap((v) => four(v, ([bone]) => index.get(bone) as number)),
+      'VEC4',
+      5123,
+    ),
+    WEIGHTS_0: builder.add(
+      mesh.flatMap((v) => four(v, ([, w]) => w)),
+      'VEC4',
+    ),
+  };
+  return builder.build({
+    ...{ scene: 0, scenes: [{ nodes: [0, nodes.length] }], animations },
+    nodes: [...nodes, { name: 'Body', mesh: 0, skin: 0 }],
+    skins: [{ joints: SKELETON.map((_, i) => i), inverseBindMatrices: builder.add(bind, 'MAT4') }],
+    meshes: [{ primitives: [{ attributes }] }],
+  });
 }

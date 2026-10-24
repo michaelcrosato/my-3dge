@@ -2,32 +2,14 @@
   {
     "id": "clip:CMU/Backflip",
     "metric": "angleRange",
-    "value": 15.9349,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right foot's out angle winds through the flip to 913°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+    "value": 9.6517,
+    "reason": "re-imported from the source in format 2 (WP 8.8), each angle track moved by whole turns to centre on 0 (encode.ts `centreTurns`): the right foot's out angle still winds through the flip over more than three turns, to 553°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
   },
   {
     "id": "clip:CMU/Chop_Wood",
     "metric": "kneeRange",
-    "value": 0.8901,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): at 1.2 s the left knee bends 31°, one over the validator's 30°, with its twist turned 171° from forward: a nearly straight leg, whose twist barely shows, so it plays as one"
-  },
-  {
-    "id": "clip:CMU/Curtsey",
-    "metric": "angleRange",
-    "value": 12.322,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to -706°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
-  },
-  {
-    "id": "clip:CMU/Dig",
-    "metric": "angleRange",
-    "value": 11.6239,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to 666°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
-  },
-  {
-    "id": "clip:CMU/Fishing",
-    "metric": "angleRange",
-    "value": 15.0273,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to 861°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
+    "value": 0.8552,
+    "reason": "re-imported from the source in format 2 (WP 8.8), its legs bent as the capture bends them: at 1.2–5.2 s the knees bend 32–40°, past the validator's 30°, with their twist turned 158–169° from forward: nearly straight legs, whose twist barely shows, so they play as such"
   },
   {
     "id": "clip:CMU/Jump_Kick",
@@ -38,56 +20,32 @@
   {
     "id": "clip:CMU/Punch_Combo",
     "metric": "angleRange",
-    "value": 18.9543,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the right leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to -1086°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
-  },
-  {
-    "id": "clip:CMU/Rake_Leaves",
-    "metric": "angleRange",
-    "value": 10.6989,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): its importer unwinds each angle from the key before, and the left leg, nearly straight (bent 0–15°, where its twist barely shows), winds its twist through whole turns to -613°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
-  },
-  {
-    "id": "clip:MESH2MOTION/Roll",
-    "metric": "twistPop",
-    "value": 2.4609,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3), a Quaternius re-export: the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 141° at 0.7 s; WP 8.8's re-import from the source is where it gets fixed"
-  },
-  {
-    "id": "clip:MESH2MOTION/Roll_RM",
-    "metric": "twistPop",
-    "value": 2.4609,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3), a Quaternius re-export: the v1 pop pattern (PLAN.md §10.2), the left arm folded fully (180°) while its twist jumps 141° at 0.7 s; WP 8.8's re-import from the source is where it gets fixed"
-  },
-  {
-    "id": "clip:MESH2MOTION/Victory",
-    "metric": "twistPop",
-    "value": 3.0543,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the v1 pop the validator was written for (HERO Victory, 1.2–1.27 s): the right arm folded 163° while its twist jumps 175°; WP 8.8's re-import from the source is where it gets fixed"
+    "value": 12.8282,
+    "reason": "re-imported from the source in format 2 (WP 8.8), each angle track moved by whole turns to centre on 0 (encode.ts `centreTurns`): the right leg, nearly straight (where its twist barely shows), still winds its twist over four turns, -726° to 735°; decoded through its sine and cosine it plays as its fold, and the keys in-between it the short way"
   },
   {
     "id": "clip:MESH2MOTION/Zombie_Rise",
     "metric": "belowFloor",
     "value": 0.3667,
-    "reason": "my-3d2dge's data, carried byte for byte (WP 8.3): the zombie rises out of the ground, its hips starting at 40% of standing hip height under the floor, by design; after G9 the retargeter lifts a pose only as far as it sinks below its source's own lowest point, scaled (engine/anim/clip/retarget.ts), so on a build it rises out of the floor as the source does"
+    "reason": "my-3d2dge's data (WP 8.3), re-imported from the source in format 2 (WP 8.8) with its depth as captured: the zombie rises out of the ground, its hips starting at 40% of standing hip height under the floor, by design; after G9 the retargeter lifts a pose only as far as it sinks below its source's own lowest point, scaled (engine/anim/clip/retarget.ts), so on a build it rises out of the floor as the source does"
   },
   {
     "id": "clip:MESH2MOTION/Zombie_Rise",
     "metric": "pop",
-    "value": 0.7119,
-    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 1.5 s, folded 136° as it rises with its hips under the floor, on build:mannequin (0.72 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note); after G9 contact IK bends the knee toward the source's (KNEE_POLE), which cleared the get-up's and the slide's swings but not this one, its hips under the floor: 0.7215 → 0.7119"
+    "value": 0.7121,
+    "reason": "contact IK on the build (retarget.ts: the feet planted through ik.ts twoBoneRot) swings the left knee through at 1.5 s, folded 136° as it rises with its hips under the floor, on build:mannequin (0.72 m in a step): the format-1 decode's knee and the baked tracks stay put, and the same clip without contact IK plays clean; open for the retargeter's IK (WP 8.6 note); after G9 contact IK bends the knee toward the source's (KNEE_POLE), which cleared the get-up's and the slide's swings but not this one, its hips under the floor: 0.7215 → 0.7119; WP 8.8's format-2 re-import (its legs bent as captured, its feet rolled) moves it by 0.2 mm: 0.7119 → 0.7121, the same swing"
   },
   {
     "id": "clip:MESH2MOTION/Zombie_Rise",
     "metric": "twistJump",
-    "value": 2.8065,
-    "reason": "after G9 contact IK bends the knee toward the source's knee (retarget.ts KNEE_POLE), and as the zombie rises with its hips under the floor, folded 151°, the source's knee crosses its hip–ankle line: build:skeleton's left thigh rolls 2.81 rad in one step at frame 106, where the pole flips with it"
+    "value": 2.8053,
+    "reason": "after G9 contact IK bends the knee toward the source's knee (retarget.ts KNEE_POLE), and as the zombie rises with its hips under the floor, folded 151°, the source's knee crosses its hip–ankle line: build:skeleton's left thigh rolls 2.81 rad in one step at frame 106, where the pole flips with it; WP 8.8's format-2 re-import: 2.8065 → 2.8053"
   },
   {
     "id": "clip:MESH2MOTION/Zombie_Rise",
     "metric": "underFloor",
-    "value": 0.0494,
-    "reason": "by design (see its belowFloor entry): after G9 the retargeter keeps the source's depth, so the build's right foot starts 4.9 cm under the floor, as the source's does, for 32 frames on build:mannequin"
+    "value": 0.0501,
+    "reason": "by design (see its belowFloor entry): after G9 the retargeter keeps the source's depth, so the build's right foot starts 4.9 cm under the floor, as the source's does, for 32 frames on build:mannequin; WP 8.8's format-2 re-import, its feet rolled as captured: 4.94 → 5.01 cm"
   },
   {
     "id": "clip:QUATERNIUS/Roll",

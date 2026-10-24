@@ -1,31 +1,31 @@
 {
   "rest": {
-    "reason": "FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. The frames lie on format 1’s key grid, every 1/30 s from 0 and a last one at the clip’s end (bake.ts `bakeTimes`), the times v1 sampled its clips at, so at a 30 fps sample the two agree to 5 µm (the rotations are float32). The worst cases are midpoints where a limb’s pole swings fast between two frames (a sword arm’s twist, a fist pulled across the chest), and the slerp between the frames takes another way than the decode’s in-between of the key numbers.",
+    "reason": "FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. The frames lie on format 1’s key grid, every 1/30 s from 0 and a last one at the clip’s end (bake.ts `bakeTimes`), the times v1 sampled its clips at, so at a 30 fps sample the two agree to 5 µm (the rotations are float32). The worst cases are midpoints where a limb’s pole swings fast between two frames (a sword arm’s twist, a fist pulled across the chest), and the slerp between the frames takes another way than the decode’s in-between of the key numbers. Re-recorded for WP 8.8: mesh2motion’s 175 and CMU’s 51 clips re-imported from their sources in format 2 (hands, the spine override, foot roll), each measured against the decode with its grips open, since the skeleton has no fingers.",
     "sets": {
       "cmu": {
         "clips": 60,
         "samples": 454624,
-        "mean": 0.118,
-        "worst": { "clip": "Side_Kick", "t": 4.117, "point": "toeR", "mm": 172.6 },
+        "mean": 0.121,
+        "worst": { "clip": "Curtsey", "t": 2.783, "point": "toeR", "mm": 261.5 },
         "worstClips": [
+          { "clip": "Curtsey", "t": 2.783, "point": "toeR", "mm": 261.5 },
           { "clip": "Side_Kick", "t": 4.117, "point": "toeR", "mm": 172.6 },
-          { "clip": "Dive_Roll", "t": 1.15, "point": "fistL", "mm": 103.3 },
-          { "clip": "Roundhouse_Kick", "t": 0.85, "point": "toeL", "mm": 99.3 },
-          { "clip": "Backflip", "t": 0.65, "point": "fistL", "mm": 97.5 },
-          { "clip": "Breakdance_Helicopter", "t": 4.15, "point": "toeL", "mm": 74.6 }
+          { "clip": "Backflip", "t": 2.05, "point": "toeR", "mm": 122.8 },
+          { "clip": "Dive_Roll", "t": 1.15, "point": "fistL", "mm": 105.2 },
+          { "clip": "Get_Up_From_Side", "t": 2.183, "point": "toeL", "mm": 96.4 }
         ]
       },
       "mesh2motion": {
         "clips": 177,
         "samples": 621856,
-        "mean": 0.144,
-        "worst": { "clip": "Sword_Regular_B", "t": 0.517, "point": "fistR", "mm": 459.3 },
+        "mean": 0.167,
+        "worst": { "clip": "Hit_Knockback", "t": 0.817, "point": "fistL", "mm": 312.1 },
         "worstClips": [
-          { "clip": "Sword_Regular_B", "t": 0.517, "point": "fistR", "mm": 459.3 },
-          { "clip": "Victory", "t": 1.25, "point": "elbowR", "mm": 389.6 },
-          { "clip": "Hit_Knockback", "t": 0.817, "point": "fistL", "mm": 338.7 },
-          { "clip": "Roll", "t": 0.383, "point": "toeL", "mm": 240 },
-          { "clip": "Roll_RM", "t": 0.383, "point": "toeL", "mm": 240 }
+          { "clip": "Hit_Knockback", "t": 0.817, "point": "fistL", "mm": 312.1 },
+          { "clip": "Backflip", "t": 0.75, "point": "fistR", "mm": 304.2 },
+          { "clip": "Dance Charleston", "t": 0.917, "point": "fistR", "mm": 302.4 },
+          { "clip": "Jump_2_RM", "t": 0.383, "point": "fistR", "mm": 300.2 },
+          { "clip": "Jump_2", "t": 0.383, "point": "fistR", "mm": 300 }
         ]
       },
       "quaternius": {
@@ -135,32 +135,32 @@
     }
   },
   "mannequin": {
-    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it and the parity’s own fast pole swings. Re-recorded after G9: the lift raises a pose only as far as it sinks below its source’s own lowest point (Quaternius’ swims stood up to 1,813 mm up, Swim_Idle_Loop), and contact IK bends each knee toward the source’s once it stands 2 cm off its hip–ankle line.",
+    "reason": "The clip layer’s pose on build:mannequin (rotation copy aligned at rest, the hip joints placed by the hip-height ratio, contact IK, the lift) against the format-1 decode scaled by the same ratio, over the 22 points its joints stand for, at 30 fps and the 60 Hz midpoints. A build lays its bones out straight: its hip joints sit level with its pelvis and its spine stands on them, and its shoulders sit level with the neck, where the libraries’ sit 4–6 cm lower and behind it. Retargeting puts the hip joints where the source’s are (as my-3d2dge’s drive did), so the legs follow the source’s and the torso moves by the source’s own hip layout: on Quaternius’ clips the hips match to 0 mm and the knees and ankles to 6–7 mm on average, while the pelvis and spine stand 4 cm ahead, since its hips sit 5 cm ahead of its pelvis point (mesh2motion’s too); on CMU’s, whose hips sit 10 cm under the pelvis point, the pelvis stands 13 cm lower than the decode’s on average. The other sets’ bodies have other proportions than the mannequin’s. The worst cases are clips that lie on the floor or dip below it and the parity’s own fast pole swings. Re-recorded after G9: the lift raises a pose only as far as it sinks below its source’s own lowest point (Quaternius’ swims stood up to 1,813 mm up, Swim_Idle_Loop), and contact IK bends each knee toward the source’s once it stands 2 cm off its hip–ankle line. Re-recorded for WP 8.8: mesh2motion’s 175 and CMU’s 51 clips re-imported from their sources in format 2 (hands, the spine override, foot roll), the decode taken with their grips open (the skeleton has no fingers).",
     "sets": {
       "cmu": {
         "clips": 60,
         "samples": 312554,
-        "mean": 92.183,
-        "worst": { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 283.8 },
+        "mean": 93.114,
+        "worst": { "clip": "Breakdance_Helicopter", "t": 4.817, "point": "ankleL", "mm": 310.8 },
         "worstClips": [
-          { "clip": "Cartwheel", "t": 1.533, "point": "kneeR", "mm": 283.8 },
+          { "clip": "Breakdance_Helicopter", "t": 4.817, "point": "ankleL", "mm": 310.8 },
+          { "clip": "Curtsey", "t": 0.1, "point": "head", "mm": 284.4 },
+          { "clip": "Run_Jump_Over", "t": 0.267, "point": "wristL", "mm": 283.7 },
           { "clip": "Get_Up_From_Back", "t": 2.4, "point": "wristR", "mm": 281.1 },
-          { "clip": "Curtsey", "t": 0.117, "point": "pelvis", "mm": 280.8 },
-          { "clip": "Dive_Roll", "t": 1.15, "point": "wristL", "mm": 276.6 },
-          { "clip": "Run_Jump_Over", "t": 0.267, "point": "wristL", "mm": 275.9 }
+          { "clip": "Cartwheel", "t": 1.517, "point": "kneeR", "mm": 277.9 }
         ]
       },
       "mesh2motion": {
         "clips": 177,
         "samples": 427526,
-        "mean": 58.077,
+        "mean": 56.988,
         "worst": { "clip": "Zombie_Rise", "t": 1.8, "point": "kneeL", "mm": 711.6 },
         "worstClips": [
           { "clip": "Zombie_Rise", "t": 1.8, "point": "kneeL", "mm": 711.6 },
-          { "clip": "Hit_Knockback", "t": 0.767, "point": "kneeL", "mm": 451 },
-          { "clip": "Sword_Regular_B", "t": 0.517, "point": "wristR", "mm": 373.7 },
-          { "clip": "Slide_Start", "t": 0.8, "point": "ballR", "mm": 334.4 },
-          { "clip": "Victory", "t": 1.25, "point": "elbowR", "mm": 321.4 }
+          { "clip": "Hit_Knockback", "t": 0.767, "point": "kneeL", "mm": 448.7 },
+          { "clip": "Sword_Regular_B", "t": 0.517, "point": "ballL", "mm": 351.8 },
+          { "clip": "Slide_Start", "t": 0.8, "point": "ballR", "mm": 298.2 },
+          { "clip": "Idle_TalkingPhone", "t": 2.917, "point": "elbowR", "mm": 228.5 }
         ]
       },
       "quaternius": {
@@ -270,32 +270,32 @@
     }
   },
   "restKeys": {
-    "reason": "The same measure at each clip’s own key times (keys past a clip’s end, which neither reaches, left out). Format 1 writes a key’s time to the millisecond, so it lies up to a third of a millisecond from its frame (0.033 s for 1/30 s), 1% of a frame’s step. The worst cases are keys in the fastest swings, where that 1% is up to 35 mm: Victory’s right arm turns its twist by 175° toward the next key, so the decode itself moves 35 mm between 1.233 s and 1/30 s × 37; Sword_Regular_B’s sword arm swings into its last key, which the decode reaches at 0.533 s and the bake at its frame, 1/30 s × 16. At the frames the two agree to 5 µm.",
+    "reason": "The same measure at each clip’s own key times (keys past a clip’s end, which neither reaches, left out). Format 1 writes a key’s time to the millisecond, so it lies up to a third of a millisecond from its frame (0.033 s for 1/30 s), 1% of a frame’s step. The worst cases are keys in the fastest swings, where that 1% is up to 35 mm: Victory’s right arm turns its twist by 175° toward the next key, so the decode itself moves 35 mm between 1.233 s and 1/30 s × 37; Sword_Regular_B’s sword arm swings into its last key, which the decode reaches at 0.533 s and the bake at its frame, 1/30 s × 16. At the frames the two agree to 5 µm. Re-recorded for WP 8.8 with the format-2 clips, as the rest section says.",
     "sets": {
       "cmu": {
         "clips": 60,
-        "samples": 76032,
-        "mean": 0.105,
-        "worst": { "clip": "Side_Kick", "t": 4.133, "point": "ankleR", "mm": 5.6 },
+        "samples": 76224,
+        "mean": 0.103,
+        "worst": { "clip": "Curtsey", "t": 2.767, "point": "toeR", "mm": 7.7 },
         "worstClips": [
+          { "clip": "Curtsey", "t": 2.767, "point": "toeR", "mm": 7.7 },
           { "clip": "Side_Kick", "t": 4.133, "point": "ankleR", "mm": 5.6 },
-          { "clip": "Backflip", "t": 1.467, "point": "toeR", "mm": 4.3 },
-          { "clip": "Get_Up_From_Side", "t": 2.167, "point": "toeL", "mm": 4.2 },
-          { "clip": "Dive_Roll", "t": 1.133, "point": "fistL", "mm": 3.9 },
-          { "clip": "Breakdance_Helicopter", "t": 4.133, "point": "toeR", "mm": 3.2 }
+          { "clip": "Backflip", "t": 1.467, "point": "toeR", "mm": 4.1 },
+          { "clip": "Dive_Roll", "t": 1.133, "point": "fistL", "mm": 4 },
+          { "clip": "Breakdance_Helicopter", "t": 4.133, "point": "toeR", "mm": 3.8 }
         ]
       },
       "mesh2motion": {
         "clips": 177,
-        "samples": 87872,
+        "samples": 89984,
         "mean": 0.155,
-        "worst": { "clip": "Victory", "t": 1.233, "point": "elbowR", "mm": 34.3 },
+        "worst": { "clip": "Sword_Regular_B", "t": 0.533, "point": "fistR", "mm": 33.7 },
         "worstClips": [
-          { "clip": "Victory", "t": 1.233, "point": "elbowR", "mm": 34.3 },
-          { "clip": "Sword_Regular_B", "t": 0.533, "point": "fistR", "mm": 26.3 },
+          { "clip": "Sword_Regular_B", "t": 0.533, "point": "fistR", "mm": 33.7 },
           { "clip": "Sword_Regular_Combo", "t": 2.833, "point": "toeL", "mm": 15.4 },
-          { "clip": "Spell_Simple_Exit", "t": 0.533, "point": "fistL", "mm": 9.1 },
-          { "clip": "Sprint", "t": 0.633, "point": "ballR", "mm": 8.1 }
+          { "clip": "Victory", "t": 1.233, "point": "elbowR", "mm": 15.3 },
+          { "clip": "Backflip", "t": 0.767, "point": "fistR", "mm": 10 },
+          { "clip": "Spell_Simple_Exit", "t": 0.533, "point": "fistL", "mm": 9.2 }
         ]
       },
       "quaternius": {

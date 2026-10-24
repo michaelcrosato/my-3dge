@@ -1,10 +1,10 @@
-{"clip": "Pistol_Aim_Down", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Pistol_Aim_Down", "dur": 0.208, "loop": false, "tags": ["gun","aim","pose","alt"], "desc": "two-handed pistol aim, pointing down", "keys": [
+{"clip": "Pistol_Aim_Down", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Pistol_Aim_Down", "dur": 0.208, "loop": false, "tags": ["gun","aim","pose","alt"], "desc": "two-handed pistol aim, pointing down", "fps": 5, "via": "source", "contacts": [{"part":"footL","from":0,"to":0.2},{"part":"footR","from":0,"to":0.2}], "keys": [
   {"t":0,
    "hips":[-10,0,100], "body":[13,-6,0], "chest":[49,46,-54], "head":[-5,-11,16],
-   "shL":[-29,7], "shR":[32,-6], "armL":[90,13,-41,25,34], "armR":[70,-68,-23,23,23],
-   "legL":[4,18,-98,20,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0]},
+   "shL":[-29,7], "shR":[32,-6], "armL":[90,1,-43,31,11], "armR":[72,-65,-25,15,17], "handL":[-15,32,-82], "handR":[-6,6,-37], "gripL":0, "gripR":83,
+   "legL":[4,18,-98,21,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0], "rollL":-1, "rollR":-4},
   {"t":0.2,
    "hips":[-10,0,100], "body":[13,-6,0], "chest":[49,46,-54], "head":[-5,-11,16],
-   "shL":[-29,7], "shR":[32,-6], "armL":[90,13,-41,25,34], "armR":[70,-68,-23,23,23],
-   "legL":[4,18,-98,20,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0]}
+   "shL":[-29,7], "shR":[32,-6], "armL":[90,1,-43,31,11], "armR":[72,-65,-25,15,17], "handL":[-15,32,-82], "handR":[-6,6,-37], "gripL":0, "gripR":83,
+   "legL":[4,18,-98,21,8], "legR":[-33,13,-94,14,-36], "footL":[6,8,0], "footR":[5,33,0], "rollL":-1, "rollR":-4}
 ]}

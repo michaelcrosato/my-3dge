@@ -8878,6 +8878,17 @@ For the agents who maintain the engine.
 - `parseMotionList` (function): The takes on the site's full motion list (`search.php?subjectnumber=%&motion=%`), from its HTML.
 - `SITE` (const): The site; it serves plain HTTP.
 
+### [`tools/anim/contacts.ts`](../tools/anim/contacts.ts)
+
+- `AIRBORNE` (const): How long (s) nothing may be held before a foot's contact is a landing: a jump's, not a run's flight.
+- `CARRY` (const): How far (mm) the pelvis must move past a held hand or raised foot over its hold.
+- `detectContacts` (function): A capture's contacts and events (see the file comment), on its rest body `R`; `clip` is the capture fitted (its strike is timed on what plays) and `tags` its catalog words.
+- `FOOT_CLEAR` (const): How far above the floor (mm) a foot's sole may be and still stand on it.
+- `HAND_FLOOR` (const): How far above the floor (mm) a hand's knuckle may be and still lie on it.
+- `HOLD` (const): How long (s) a hand or a raised foot must hold still to count.
+- `STILL` (const): How slowly (mm/s) a held point moves in the ground's frame.
+- `treadmill` (function): The ground's velocity under an in-place loop (mm/s; zero for any other clip): of the planted balls' median velocity along the floor and the velocity most hand and foot frames share (a ladder's, a wall's), whichever more of the hand and foot frames move with.
+
 ### [`tools/anim/cut.ts`](../tools/anim/cut.ts)
 
 - `cutSet` (function): Cuts the clips `picks` out of `sets` into a new set named `name` (see the file comment).
@@ -8885,6 +8896,14 @@ For the agents who maintain the engine.
 ### [`tools/anim/cycle.ts`](../tools/anim/cycle.ts)
 
 - `bestCycle` (function): The best cycle in seconds `from`–`to` of a take of `count` frames at `src` a second: `[start, end, seam]`, in seconds, `seam` the cost that remained.
+
+### [`tools/anim/fetch.ts`](../tools/anim/fetch.ts)
+
+- `fetchMesh2Motion` (function): Mesh2Motion's three files in `dir` (from the repository root `root`), fetched when missing or changed; each is checked against its sha256, and a file that does not match is an error naming it and the fix.
+- `MESH2MOTION` (const): Mesh2Motion's commit and its three files' sha256.
+- `MESH2MOTION_CACHE` (const): Where `x anim fetch` keeps Mesh2Motion's files.
+- `SET_SOURCES` (const): Every set's originals (a set not named here has none to re-import).
+- `SetSource` (interface): Whether a set's originals can be re-imported here, and why not when they cannot.
 
 ### [`tools/anim/find.ts`](../tools/anim/find.ts)
 
@@ -8897,8 +8916,9 @@ For the agents who maintain the engine.
 ### [`tools/anim/glb-fixture.ts`](../tools/anim/glb-fixture.ts)
 
 - `FixtureTrack` (interface): One animation track: a bone, a path, key times and flat values, optionally quantized or splined.
+- `FixtureVertex` (interface): A vertex of `riggedGlb`'s skinned mesh: where it sits in the bind pose (metres) and its bones' weights.
 - `GlbBuilder` (class): Packs elements into one binary buffer, one buffer view and accessor each.
-- `riggedGlb` (function): A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`.
+- `riggedGlb` (function): A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`; with `mesh`, a skinned mesh of those vertices too, each bone's inverse bind matrix taking the bind pose to the bone's own frame.
 - `turn` (function): A rotation of `deg` degrees about `axis` as `[x, y, z, w]`.
 
 ### [`tools/anim/glb-library.ts`](../tools/anim/glb-library.ts)
@@ -8932,6 +8952,7 @@ For the agents who maintain the engine.
 ### [`tools/anim/import.ts`](../tools/anim/import.ts)
 
 - `Catalog` (type): A catalog: each clip's `[tags, desc, orig?]`, plus `$sources`, `$skip` and (CMU) `$pick`.
+- `fitFormat2` (function): A capture fitted in format 2: hands, grips and foot roll on every key, and the spine override where the shares miss the capture by more than `SPINE_MISS` and it brings the worst frame closer (it can bare a long neck's own miss: CMU's).
 - `ImportOptions` (interface): What to import and how (see the file comment).
 - `importSet` (function): Imports a set (see the file comment); `notes` says what was left out, warned of or measured.
 
@@ -8994,12 +9015,13 @@ For the agents who maintain the engine.
 - `clipSlug` (function): The file name of a clip, without `.json`: its name with each run of characters other than letters, digits, `_` and `-` made one `_`, and `_` and `-` trimmed from the ends.
 - `CMU_CREDIT` (const): The credit every CMU set carries: CMU's terms in short (data/anim/SOURCES.md has them verbatim) and the acknowledgment the database asks for, verbatim.
 - `joinSet` (function): Reads a set's directory files back into the set it was split from (`where` names it in errors): the clips in the order `_set.json`'s `fit` lists them, then any others by file name.
+- `keepUpgrades` (function): `set` with the clips its committed version in `root` re-imported from their source (WP 8.8: `via: "source"`, tools/anim/upgrade.ts) taken from it, with their fits and its format, so a curated set repacks as committed and never undoes the upgrade; every other clip stays the source's.
 - `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
 - `main` (function): The command line (see the file comment).
 - `readPlainSet` (function): A plain JSON set, as shardfall writes it (text, or an object), read through the codec's parser.
 - `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`, or at `dir` when absolute), rejoined.
 - `readSetDir` (function): Reads a set's directory: every file in it, by name.
-- `repackSets` (function): Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius); with `check` it only compares.
+- `repackSets` (function): Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius), their clips re-imported from the source kept (`keepUpgrades`); with `check` it only compares.
 - `SET_FILE` (const): The file that holds a set's header: everything but its clips.
 - `setDirName` (const): A set's directory name: its name, slugged, in lower case (`STYLE100_BACK` → `style100_back`).
 - `SetFiles` (type): A set's directory as text: file name → contents.
@@ -9044,6 +9066,19 @@ For the agents who maintain the engine.
 - `SurveyOptions` (interface): What the survey does: which subjects, legacy reading, the ledger and library tolerances, and where things go.
 - `usedBy` (function): Which clips of the CMU set each take feeds: `{ '13_17': ['Boxing_Guard_Loop', 'Boxing_Jab'] }`.
 
+### [`tools/anim/upgrade.ts`](../tools/anim/upgrade.ts)
+
+- `apartOf` (function): How far apart (mm) two clips decode, mean and worst, at 30 fps over the shorter.
+- `judge` (function): The verdict on swapping `fresh` in for `held` (see the file comment).
+- `readUpgraded` (function): `UPGRADE_FILE` as committed (empty when there is none).
+- `reimport` (function): Set directory `dir`'s originals imported again in format 2, from the repository root `root` (see fetch.ts).
+- `UPGRADE_FILE` (const): The clips each re-imported set kept, and why: `{ set: { swapped, of, kept: { clip: why } } }`.
+- `Upgraded` (interface): One set's line in `UPGRADE_FILE`.
+- `upgradedOf` (function): Set `dir`'s line for `UPGRADE_FILE` from its verdicts.
+- `upgradeSet` (function): `held` with `fresh`'s clips swapped in where they keep parity (see the file comment): the set, now format 2, and a verdict per clip in the set's order.
+- `Verdict` (interface): What happened to one clip: swapped or kept, why, and the numbers (mm) that decided it.
+- `writeUpgraded` (function): Writes set `dir`'s line into `UPGRADE_FILE`, the others kept, sets in name order.
+
 ### [`tools/anim/view.ts`](../tools/anim/view.ts)
 
 - `bakedPoints` (function): The 36 decode points of `baked` at `t`, by FK on its rest body's own skeleton (mm, rig frame).
@@ -9075,7 +9110,7 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/anim.ts`](../tools/cmd/anim.ts)
 
-- `default` (default): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries and fetch CMU takes, all from the command line, with no browser.
+- `default` (default): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries, fetch their sources and re-import them, all from the command line, with no browser.
 - `subcommandOf` (function): The subcommand named first, or a usage error naming the closest.
 - `targetOf` (const): The report's target: the subcommand and its first arguments.
 

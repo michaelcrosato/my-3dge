@@ -2,63 +2,63 @@
 # Each clip is <name>.json, its name slugged (clipSlug). sec: seconds; loop: true for a loop; fit: mean/worst
 # mm against its capture; speed: a loop's travel as captured, % of standing hip height a second.
 name	sec	loop	speed	tags	desc	src	orig	take	fit
-Walk_Loop	1.1	true		walk	An everyday walk at a steady pace, arms swinging loosely. One stride cycle, in place	CMU_02		02_01 0.91-2.01	10/100
-Sword_Lunge	2	false		attack sword	Swordplay: from a guard, a lunge forward with the sword arm thrust straight out, then a recovery back	CMU_02		02_07 10.50-12.50	15/109
-Zombie_Walk_Loop	1.4	true		walk zombie	A zombie's shamble: head and shoulders slumped forward, a dragging step, arms hanging. One cycle, in place	CMU_120		120_22 5.65-7.05	19/84
-Gorilla_Walk_Loop	0.9	true		walk monster	A gorilla: hunched, knuckles low, a rolling heavy walk. One cycle, in place	CMU_120		120_02 2.47-3.35	30/141
-Robot	6	false		monster	A robot, acted by a person: stiff, jerky steps and arm moves in straight lines	CMU_120		120_21 12.00-18.00	13/61
+Walk_Loop	1.1	true	124	walk	An everyday walk at a steady pace, arms swinging loosely. One stride cycle, in place	CMU_02		02_01 0.91-2.01	9/53
+Sword_Lunge	2	false		attack sword	Swordplay: from a guard, a lunge forward with the sword arm thrust straight out, then a recovery back	CMU_02		02_07 10.50-12.50	7/52
+Zombie_Walk_Loop	1.4	true	68	walk zombie	A zombie's shamble: head and shoulders slumped forward, a dragging step, arms hanging. One cycle, in place	CMU_120		120_22 5.65-7.05	19/84
+Gorilla_Walk_Loop	0.9	true	186	walk monster	A gorilla: hunched, knuckles low, a rolling heavy walk. One cycle, in place	CMU_120		120_02 2.47-3.35	15/131
+Robot	6	false		monster	A robot, acted by a person: stiff, jerky steps and arm moves in straight lines	CMU_120		120_21 12.00-18.00	13/54
 Jumping_Jacks_Loop	1.133	true		exercise	Jumping jacks: hop the feet apart while the arms swing up overhead, then back together. One jack, in place	CMU_13		13_29 2.30-3.42	16/92
-Boxing_Guard_Loop	1.033	true		stance unarmed	A boxer's guard: fists up by the face, bouncing light on the feet, weaving a little. In place	CMU_13		13_17 12.87-13.91	16/96
-Boxing_Jab	1.1	false		attack unarmed	From the guard, a straight jab with the lead fist, snapped back to the guard	CMU_13		13_17 1.50-2.60	15/135
+Boxing_Guard_Loop	1.033	true	12	stance unarmed	A boxer's guard: fists up by the face, bouncing light on the feet, weaving a little. In place	CMU_13		13_17 12.87-13.91	12/63
+Boxing_Jab	1.1	false		attack unarmed	From the guard, a straight jab with the lead fist, snapped back to the guard	CMU_13		13_17 1.50-2.60	10/83
 Climb_Ladder	7	false		climb	Climbing a ladder hand over hand, rising about a step a second (no ladder is drawn)	CMU_13		13_33 2.00-9.00	21/167
-Sweep_Loop	1.833	true		work	Sweeping the floor with a broom, steady strokes (no broom is drawn). In place	CMU_13		13_23 12.50-14.32	13/89
-Wash_Window_Loop	1.3	true		work	Washing a window: one hand wiping in circles at head height (no window is drawn). In place	CMU_13		13_20 35.33-36.64	16/62
+Sweep_Loop	1.833	true		work	Sweeping the floor with a broom, steady strokes (no broom is drawn). In place	CMU_13		13_23 12.50-14.32	10/84
+Wash_Window_Loop	1.3	true		work	Washing a window: one hand wiping in circles at head height (no window is drawn). In place	CMU_13		13_20 35.33-36.64	15/56
 Jump_Kick	2.4	false		attack kick jump	A spinning jump kick (a tornado kick): a run-up, a leap that turns the body round with a high roundhouse kick in the air, landing turned away	CMU_90		90_05 1.00-3.40	18/94
-Fall_On_Face	2.2	false		death hurt	Toppling forward flat onto the face	CMU_90		90_16 1.90-4.10	17/99
-Cartwheel	2.6	false		jump dodge	A cartwheel to the side: hands to the floor one after the other, legs wheeling over, back up to standing	CMU_49		49_06 1.00-3.60	24/143
-Run_Loop	0.733	true		run	A steady run, arms pumping. One stride cycle, in place	CMU_09		09_01 0.01-0.74	16/57
-Sneak_Loop	1.433	true		walk crouch	Sneaking: crouched low, stepping carefully, arms held in close. One cycle, in place	CMU_139		139_29 11.71-13.16	14/67
-Wounded_Walk_Loop	1.067	true		walk hurt	Limping on a wounded leg: a short careful step on the bad leg, a longer one on the good. One cycle, in place	CMU_139		139_19 6.01-7.07	19/83
+Fall_On_Face	2.2	false		death hurt	Toppling forward flat onto the face	CMU_90		90_16 1.90-4.10	10/83
+Cartwheel	2.6	false		jump dodge	A cartwheel to the side: hands to the floor one after the other, legs wheeling over, back up to standing	CMU_49		49_06 1.00-3.60	22/122
+Run_Loop	0.733	true	375	run	A steady run, arms pumping. One stride cycle, in place	CMU_09		09_01 0.01-0.74	7/32
+Sneak_Loop	1.433	true	62	walk crouch	Sneaking: crouched low, stepping carefully, arms held in close. One cycle, in place	CMU_139		139_29 11.71-13.16	11/56
+Wounded_Walk_Loop	1.067	true	71	walk hurt	Limping on a wounded leg: a short careful step on the bad leg, a longer one on the good. One cycle, in place	CMU_139		139_19 6.01-7.07	19/81
 Looking_Around	6	false		idle	Standing a little hunched, looking warily about	CMU_139		139_03 1.00-7.00	16/62
 Search_Ground	6	false		interact crouch	Crouching to search the ground, peering about and poking at it	CMU_139		139_01 1.50-7.50	21/101
-Hurt_Stomach_Walk_Loop	1.267	true		walk hurt	Walking hunched over, a hand clutching the stomach. One cycle, in place	CMU_91		91_26 6.13-7.39	19/69
+Hurt_Stomach_Walk_Loop	1.267	true	109	walk hurt	Walking hunched over, a hand clutching the stomach. One cycle, in place	CMU_91		91_26 6.13-7.39	17/67
 Walk_Backwards_Loop	1.633	true		walk	Walking backwards at an easy pace. One cycle, in place	CMU_136		136_25 8.13-9.77	13/91
-Crouch_Walk_Loop	1.2	true		walk crouch	Walking crouched low on deeply bent knees. One cycle, in place	CMU_136		136_09 7.48-8.69	15/36
+Crouch_Walk_Loop	1.2	true	94	walk crouch	Walking crouched low on deeply bent knees. One cycle, in place	CMU_136		136_09 7.48-8.69	6/35
 Hop_One_Foot_Loop	1	true		jump	Hopping on the left foot, the right held up, arms out for balance. One hop, in place	CMU_132		132_23 3.11-4.12	19/100
-Run_Quick_Stop	1.6	false		run	A run that skids to a sudden stop, leaning back to brake	CMU_127		127_05 0.00-1.60	19/96
-Run_Jump_Over	1.9	false		run jump	Running, a leap over an obstacle, and running on	CMU_127		127_25 0.00-1.90	19/100
-Duck_Under	1.7	false		dodge run crouch	Running, ducking low under something, and running on	CMU_127		127_29 0.00-1.70	19/138
-Dive_Roll	3.567	false		dodge run	Running, a dive forward over something into a shoulder roll, back up and running	CMU_128		128_10 0.00-3.55	20/104
-Jump_Twist	1.8	false		jump	A jump straight up with a full spin in the air, landing facing forward again	CMU_85		85_01 2.00-3.80	15/54
-Breakdance_Helicopter	7.067	false		dance	Breakdance: on the floor, the legs sweeping round under the body (the helicopter)	CMU_85		85_08 1.40-8.46	18/107
-Punch_Combo	6	false		attack unarmed	A fighter's punch combination from a guard: jabs, crosses and hooks	CMU_144		144_20 0.00-6.00	13/73
-Block_Combo	6	false		block unarmed	Blocks from a fighting stance: forearm blocks high, middle and low	CMU_144		144_26 0.40-6.40	9/52
-Front_Kick	6	false		attack kick	A karate front kick (mae-geri): knee up, foot snapped straight ahead, back to the stance	CMU_135		135_04 0.60-6.60	19/75
-Roundhouse_Kick	6	false		attack kick	A karate roundhouse kick (mawashi-geri): the leg swings round in an arc at head height	CMU_135		135_07 0.20-6.20	25/101
-Side_Kick	6	false		attack kick	A karate side kick (yoko-geri): the body turned side on, the heel driven out sideways	CMU_135		135_11 0.90-6.90	34/109
-Stepping_Punch	6	false		attack unarmed walk	Karate stepping punches (oi-zuki): a long stride forward with a straight punch on each step	CMU_135		135_09 1.80-7.80	29/116
-Get_Up_Face_Down	6.1	false		getup	Getting up from lying face down: push up on the arms, a knee under, stand	CMU_140		140_01 0.80-6.90	24/129
+Run_Quick_Stop	1.6	false		run	A run that skids to a sudden stop, leaning back to brake	CMU_127		127_05 0.00-1.60	11/60
+Run_Jump_Over	1.9	false		run jump	Running, a leap over an obstacle, and running on	CMU_127		127_25 0.00-1.90	10/54
+Duck_Under	1.7	false		dodge run crouch	Running, ducking low under something, and running on	CMU_127		127_29 0.00-1.70	10/66
+Dive_Roll	3.567	false		dodge run	Running, a dive forward over something into a shoulder roll, back up and running	CMU_128		128_10 0.00-3.55	12/77
+Jump_Twist	1.8	false		jump	A jump straight up with a full spin in the air, landing facing forward again	CMU_85		85_01 2.00-3.80	9/37
+Breakdance_Helicopter	7.067	false		dance	Breakdance: on the floor, the legs sweeping round under the body (the helicopter)	CMU_85		85_08 1.40-8.46	10/80
+Punch_Combo	6	false		attack unarmed	A fighter's punch combination from a guard: jabs, crosses and hooks	CMU_144		144_20 0.00-6.00	10/69
+Block_Combo	6	false		block unarmed	Blocks from a fighting stance: forearm blocks high, middle and low	CMU_144		144_26 0.40-6.40	7/39
+Front_Kick	6	false		attack kick	A karate front kick (mae-geri): knee up, foot snapped straight ahead, back to the stance	CMU_135		135_04 0.60-6.60	9/50
+Roundhouse_Kick	6	false		attack kick	A karate roundhouse kick (mawashi-geri): the leg swings round in an arc at head height	CMU_135		135_07 0.20-6.20	10/74
+Side_Kick	6	false		attack kick	A karate side kick (yoko-geri): the body turned side on, the heel driven out sideways	CMU_135		135_11 0.90-6.90	12/62
+Stepping_Punch	6	false		attack unarmed walk	Karate stepping punches (oi-zuki): a long stride forward with a straight punch on each step	CMU_135		135_09 1.80-7.80	12/55
+Get_Up_Face_Down	6.1	false		getup	Getting up from lying face down: push up on the arms, a knee under, stand	CMU_140		140_01 0.80-6.90	14/65
 Get_Up_From_Back	7.067	false		getup	Getting up from lying on the back: sit up, roll to a knee, stand	CMU_140		140_08 0.40-7.47	16/73
-Get_Up_From_Side	8.5	false		getup	Getting up from lying on the side	CMU_140		140_03 0.00-8.50	17/91
+Get_Up_From_Side	8.5	false		getup	Getting up from lying on the side	CMU_140		140_03 0.00-8.50	17/78
 Duck_Thrown_Object	5.5	false		dodge crouch	Ducking from something thrown: dropping into a tight crouch with the head covered, staying down, then rising	CMU_77		77_09 2.50-8.00	19/90
 Chop_Wood	6	false		work	Chopping wood: an axe raised overhead in both hands and brought down hard, again and again (no axe is drawn)	CMU_79		79_01 0.00-6.00	19/78
-Dig	6	false		work farm	Digging with a spade: foot on the blade, lever back, toss the earth aside (no spade is drawn)	CMU_79		79_04 1.30-7.30	20/66
+Dig	6	false		work farm	Digging with a spade: foot on the blade, lever back, toss the earth aside (no spade is drawn)	CMU_79		79_04 1.30-7.30	20/60
 Fishing	8	false		fish	Fishing: a cast with a rod, waiting, then reeling in (no rod is drawn)	CMU_79		79_34 1.30-9.30	17/74
-Drink_Water	7	false		eat	Drinking a glass of water	CMU_79		79_38 0.00-7.00	16/60
-Carry_Heavy_Box	8.3	false		carry	Moving a heavy box: squat, lift with effort, carry a few steps, set it down (no box is drawn)	CMU_79		79_25 1.60-9.90	20/62
-Rake_Leaves	6	false		work farm	Raking leaves with long pulls toward the feet (no rake is drawn)	CMU_80		80_34 2.00-8.00	24/102
-Shake_Hands	5	false		talk	Shaking hands with someone in front	CMU_80		80_01 1.00-6.00	17/68
-Pick_Up_Box	4.6	false		carry item	Walking up to a box, bending to lift it, and carrying it off (no box is drawn)	CMU_143		143_11 0.50-5.10	11/58
-Sit_Down_Get_Up	5.967	false		sit	Sitting down on a chair and getting up again (no chair is drawn)	CMU_143		143_18 0.30-6.26	11/70
-Wave_Hello	2.3	false		gesture	Waving hello with a raised hand	CMU_141		141_16 0.00-2.30	13/55
-Shrug	1.4	false		gesture	A shrug: shoulders up, palms turned out, who knows	CMU_141		141_21 0.30-1.70	12/61
-Stretch_Yawn	3.067	false		idle rest	A big stretch with a yawn, arms reaching up overhead	CMU_141		141_13 0.00-3.06	12/53
-Curtsey	3.3	false		emote	A curtsey: one foot behind, knees dipping, a small bow of the head	CMU_141		141_26 0.00-3.30	19/94
-Waiting_Loop	0.933	true		idle	Waiting impatiently: shifting weight from foot to foot, looking about	CMU_141		141_20 3.64-4.58	33/105
-Frankenstein_Walk_Loop	2.5	true		walk monster zombie	Frankenstein's monster: stiff legs, arms held straight out ahead, a heavy lurching walk. One cycle, in place	CMU_104		104_03 3.08-5.58	16/78
-Monkey	6	false		monster	A monkey, acted by a person: hunched, scratching, hopping about	CMU_54		54_01 0.00-6.00	15/75
-Bear	6	false		monster	A bear, acted by a person: heavy, lumbering, rearing up with paws raised	CMU_54		54_02 5.10-11.10	26/137
-Dragon	6	false		monster	A dragon, acted by a person: arms as wings, a prowl and a roar	CMU_54		54_12 1.50-7.50	15/87
-Ghost	6	false		monster	A ghost, acted by a person: gliding, arms floating up, a spooky drift	CMU_54		54_10 0.20-6.20	16/63
-Chicken	6	false		monster	A chicken, acted by a person: elbows as flapping wings, pecking, strutting	CMU_29		29_22 0.10-6.10	14/76
-Backflip	2.4	false		jump dodge	A standing backflip: a deep swing of the arms, a jump up and over backwards, landing on the feet	CMU_87		87_03 1.50-3.90	14/145
+Drink_Water	7	false		eat	Drinking a glass of water	CMU_79		79_38 0.00-7.00	15/60
+Carry_Heavy_Box	8.3	false		carry	Moving a heavy box: squat, lift with effort, carry a few steps, set it down (no box is drawn)	CMU_79		79_25 1.60-9.90	20/61
+Rake_Leaves	6	false		work farm	Raking leaves with long pulls toward the feet (no rake is drawn)	CMU_80		80_34 2.00-8.00	17/54
+Shake_Hands	5	false		talk	Shaking hands with someone in front	CMU_80		80_01 1.00-6.00	16/49
+Pick_Up_Box	4.6	false		carry item	Walking up to a box, bending to lift it, and carrying it off (no box is drawn)	CMU_143		143_11 0.50-5.10	8/48
+Sit_Down_Get_Up	5.967	false		sit	Sitting down on a chair and getting up again (no chair is drawn)	CMU_143		143_18 0.30-6.26	9/46
+Wave_Hello	2.3	false		gesture	Waving hello with a raised hand	CMU_141		141_16 0.00-2.30	12/46
+Shrug	1.4	false		gesture	A shrug: shoulders up, palms turned out, who knows	CMU_141		141_21 0.30-1.70	11/56
+Stretch_Yawn	3.067	false		idle rest	A big stretch with a yawn, arms reaching up overhead	CMU_141		141_13 0.00-3.06	11/53
+Curtsey	3.3	false		emote	A curtsey: one foot behind, knees dipping, a small bow of the head	CMU_141		141_26 0.00-3.30	10/57
+Waiting_Loop	0.933	true	91	idle	Waiting impatiently: shifting weight from foot to foot, looking about	CMU_141		141_20 3.64-4.58	19/80
+Frankenstein_Walk_Loop	2.5	true	45	walk monster zombie	Frankenstein's monster: stiff legs, arms held straight out ahead, a heavy lurching walk. One cycle, in place	CMU_104		104_03 3.08-5.58	14/75
+Monkey	6	false		monster	A monkey, acted by a person: hunched, scratching, hopping about	CMU_54		54_01 0.00-6.00	10/52
+Bear	6	false		monster	A bear, acted by a person: heavy, lumbering, rearing up with paws raised	CMU_54		54_02 5.10-11.10	12/72
+Dragon	6	false		monster	A dragon, acted by a person: arms as wings, a prowl and a roar	CMU_54		54_12 1.50-7.50	10/52
+Ghost	6	false		monster	A ghost, acted by a person: gliding, arms floating up, a spooky drift	CMU_54		54_10 0.20-6.20	14/38
+Chicken	6	false		monster	A chicken, acted by a person: elbows as flapping wings, pecking, strutting	CMU_29		29_22 0.10-6.10	8/63
+Backflip	2.4	false		jump dodge	A standing backflip: a deep swing of the arms, a jump up and over backwards, landing on the feet	CMU_87		87_03 1.50-3.90	10/99

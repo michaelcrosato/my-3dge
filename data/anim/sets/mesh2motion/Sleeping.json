@@ -1,10 +1,10 @@
-{"clip": "Sleeping", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["rest","lie","idle"], "desc": "lies on the back asleep, the chest rising and falling", "keys": [
+{"clip": "Sleeping", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["rest","lie","idle"], "desc": "lies on the back asleep, the chest rising and falling", "fps": 24, "via": "source", "contacts": [{"part":"handL","from":0,"to":1.667}], "keys": [
   {"t":0,
-   "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18],
-   "shL":[0,0], "shR":[0,0], "armL":[60,-54,-59,145,-21], "armR":[-2,97,-24,37,-33],
-   "legL":[-8,16,-98,14,-14], "legR":[-8,12,-99,18,10], "footL":[0,15,0], "footR":[0,23,0]},
+   "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18], "spine":[0,4,0],
+   "shL":[0,0], "shR":[0,0], "armL":[82,-33,-46,136,-14], "armR":[-2,99,-11,31,-54], "handL":[34,-3,-36], "handR":[29,4,53], "gripL":9, "gripR":33,
+   "legL":[-8,16,-98,18,-14], "legR":[-8,12,-99,21,10], "footL":[0,15,0], "footR":[0,23,0], "rollL":1, "rollR":1},
   {"t":1.667,
-   "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18],
-   "shL":[0,0], "shR":[0,0], "armL":[60,-54,-59,145,-21], "armR":[-2,97,-24,37,-33],
-   "legL":[-8,16,-98,14,-14], "legR":[-8,12,-99,18,10], "footL":[0,15,0], "footR":[0,23,0]}
+   "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18], "spine":[0,4,0],
+   "shL":[0,0], "shR":[0,0], "armL":[82,-33,-46,136,-14], "armR":[-2,99,-11,31,-54], "handL":[34,-3,-36], "handR":[29,4,53], "gripL":9, "gripR":33,
+   "legL":[-8,16,-98,18,-14], "legR":[-8,12,-99,21,10], "footL":[0,15,0], "footR":[0,23,0], "rollL":1, "rollR":1}
 ]}

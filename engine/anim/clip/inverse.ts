@@ -9,6 +9,7 @@
  * standard `Math`, for its bits (encode.test.ts encodes as the source does). Internal to engine/anim/clip/.
  *
  * @example
+ * import { fromEuler, reachOf } from './frames';
  * euler(fromEuler([30, -10, 5])); // ≈ [30, -10, 5]
  * bendOf(reachOf(40, 300, 250), 300, 250); // ≈ 40
  * @see engine/anim/clip/encode.test.ts

@@ -1,14 +1,14 @@
-{"clip": "Idle_Torch", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Torch_Loop", "dur": 1.583, "loop": true, "tags": ["idle","prop","alt"], "desc": "standing with one arm raised, holding up a torch or lantern", "keys": [
+{"clip": "Idle_Torch", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Torch_Loop", "dur": 1.583, "loop": true, "tags": ["idle","prop","alt"], "desc": "standing with one arm raised, holding up a torch or lantern", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":1.583},{"part":"footR","from":0,"to":1.583},{"part":"handR","from":0,"to":1.583},{"part":"handL","from":0.333,"to":1.583}], "keys": [
   {"t":0,
    "hips":[-10,-1,100], "body":[13,-5,0], "chest":[0,11,0], "head":[0,2,0],
-   "shL":[0,0], "shR":[0,0], "armL":[97,25,0,54,37], "armR":[14,17,-98,57,-1],
-   "legL":[6,17,-98,22,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0]},
+   "shL":[0,0], "shR":[0,0], "armL":[96,28,-3,51,40], "armR":[9,26,-96,44,-8], "handL":[-6,9,-22], "handR":[5,23,0], "gripL":74, "gripR":87,
+   "legL":[6,17,-98,21,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0], "rollL":-1, "rollR":-2},
   {"t":0.5,
    "hips":[-10,-1,99], "body":[13,-5,0], "chest":[0,7,0], "head":[0,5,0],
-   "shL":[0,-2], "shR":[-1,-2], "armL":[96,25,10,50,40], "armR":[18,15,-97,58,-2],
-   "legL":[6,17,-98,27,6], "legR":[-31,14,-94,22,-39], "footL":[5,8,0], "footR":[4,32,0]},
+   "shL":[0,-2], "shR":[-1,-2], "armL":[96,28,9,51,43], "armR":[13,24,-96,44,-8], "handL":[-8,5,-22], "handR":[6,23,-2], "gripL":74, "gripR":86,
+   "legL":[6,17,-98,26,6], "legR":[-31,14,-94,20,-39], "footL":[5,8,0], "footR":[4,32,0], "rollL":-1, "rollR":-2},
   {"t":1.6,
    "hips":[-10,-1,100], "body":[13,-5,0], "chest":[0,11,0], "head":[0,2,0],
-   "shL":[0,0], "shR":[0,0], "armL":[97,25,0,54,37], "armR":[14,17,-98,57,-1],
-   "legL":[6,17,-98,22,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0]}
+   "shL":[0,0], "shR":[0,0], "armL":[96,28,-3,51,40], "armR":[9,26,-96,44,-8], "handL":[-6,9,-22], "handR":[5,23,0], "gripL":74, "gripR":87,
+   "legL":[6,17,-98,21,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0], "rollL":-1, "rollR":-2}
 ]}

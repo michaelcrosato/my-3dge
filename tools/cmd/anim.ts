@@ -1,8 +1,9 @@
 /**
  * @file The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller
- * set, import libraries and fetch CMU takes, all from the command line, with no browser. Usage: node x anim <find|
- * show|cut|import|cmu|bake|sheet|repack> …. Exit 0 when it did what was asked (`--check`: nothing differs), 1 when
- * it failed (a difference, a fetch, a broken file), 2 on a usage error naming the closest choice.
+ * set, import libraries, fetch their sources and re-import them, all from the command line, with no browser. Usage:
+ * node x anim <find|show|cut|import|cmu|bake|sheet|repack|fetch|upgrade> …. Exit 0 when it did what was asked
+ * (`--check`: nothing differs), 1 when it failed (a difference, a fetch, a broken file), 2 on a usage error naming the
+ * closest choice.
  *
  * - `find <words…> [--cat tag] [--max 20] [--json]`: every set's catalog, then the CMU ledger's takes not yet in a set
  *   (tools/anim/find.ts); the best first, `max` lines in all; `--json` writes every hit to `find.json`.
@@ -27,6 +28,10 @@
  *   [--write]`).
  * - `repack [set.json…] [--check]`: my-3d2dge's curated sets, or plain JSON sets, split into set directories
  *   (tools/anim/repack.ts).
+ * - `fetch`: Mesh2Motion's three `.glb` files into `.cache/anim/mesh2motion/`, at a pinned commit, each checked by its
+ *   sha256 (tools/anim/fetch.ts). `upgrade <set> [--check]`: the set re-imported from its sources in format 2 and
+ *   swapped in clip by clip where it keeps parity, the clips kept listed with their reasons in data/anim/upgrade.json
+ *   (tools/anim/upgrade.ts; mesh2motion and cmu: quaternius waits for the owner's files, 100STYLE for a defect).
  *
  * @example
  * subcommandOf(['find', 'punch']); // 'find'
@@ -44,6 +49,7 @@ import { CMU_SUBCOMMANDS, cmuTargets, runCmu } from '../anim/cmu-cli';
 import { cutSet } from '../anim/cut';
 import { findClips } from '../anim/find';
 import { listGlb } from '../anim/glb-library';
+import { fetchMesh2Motion, MESH2MOTION, SET_SOURCES } from '../anim/fetch';
 import { importSet, type Catalog } from '../anim/import';
 import {
   readSet,
@@ -56,11 +62,12 @@ import {
   writeSetDir,
   type SetFiles,
 } from '../anim/repack';
+import { readUpgraded, reimport, upgradedOf, upgradeSet, writeUpgraded } from '../anim/upgrade';
 import { bakeReport, clipSheet, resolveClip, shownDir } from '../anim/view';
 import { targetSlug } from '../lib/report';
 import { closest, UsageError, type Command, type CommandResult } from '../x';
 
-const SUBCOMMANDS = ['find', 'show', 'cut', 'import', 'cmu', 'bake', 'sheet', 'repack'] as const;
+const SUBCOMMANDS = ['find', 'show', 'cut', 'import', 'cmu', 'bake', 'sheet', 'repack', 'fetch', 'upgrade'] as const;
 type Sub = (typeof SUBCOMMANDS)[number];
 /** The flags each subcommand takes; any other is a usage error. */
 const FLAGS: Record<Sub, string[]> = {
@@ -75,6 +82,8 @@ const FLAGS: Record<Sub, string[]> = {
   bake: ['json', 'sets'],
   sheet: ['frames', 'views', 'sets'],
   repack: ['check'],
+  fetch: [],
+  upgrade: ['check'],
 };
 type Values = Record<string, unknown>;
 
@@ -298,6 +307,32 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
         : 'repacked';
       return { ok: !differ, summary, lines, target };
     }
+    case 'fetch': {
+      const lines = fetchMesh2Motion(root);
+      return {
+        ok: true,
+        summary: `mesh2motion: ${lines.length} files at ${MESH2MOTION.commit.slice(0, 7)}`,
+        lines,
+        target,
+      };
+    }
+    case 'upgrade': {
+      if (args.length !== 1) throw new UsageError(`upgrade takes one set: ${Object.keys(SET_SOURCES).join(', ')}`);
+      const { set, verdicts } = upgradeSet(readSet(args[0]), reimport(args[0], root));
+      const line = upgradedOf(verdicts);
+      const check = values.check === true;
+      const result = writeOrCheck(join(SETS_DIR, setDirName(set.set)), splitSet(set), check, root);
+      const listed = JSON.stringify(readUpgraded(root)[args[0]]) === JSON.stringify(line);
+      if (!check) writeUpgraded(root, args[0], line);
+      const kept = Object.entries(line.kept).map(([clip, why]) => `kept ${clip}: ${why}`);
+      return {
+        ...result,
+        ok: result.ok && (listed || !check),
+        summary: `${args[0]}: ${line.swapped} of ${line.of} clips swapped in from the source; ${result.summary}`,
+        lines: [...kept, ...(result.lines ?? [])],
+        target,
+      };
+    }
     case 'cmu': {
       const cmuTarget = cmuTargets(args);
       const result = runCmu({ args, values, root, jsonPath: `out/anim/${targetSlug(cmuTarget)}/cmu.json` });
@@ -311,7 +346,7 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
 }
 
 const command: Command = {
-  usage: 'anim <find|show|cut|import|cmu|bake|sheet|repack> [args]',
+  usage: 'anim <find|show|cut|import|cmu|bake|sheet|repack|fetch|upgrade> [args]',
   options: {
     ...Object.fromEntries(
       ['cat', 'max', 'clips', 'name', 'title', 'credit', 'out', 'catalog', 'sources', 'rest', 'rm', 'sets'].map((f) => [

@@ -1,22 +1,22 @@
-{"clip": "Idle_Shield", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Shield_Loop", "dur": 2.5, "loop": true, "tags": ["shield","idle","stance","alt"], "desc": "guarding: the left forearm held across the chest behind a shield", "keys": [
+{"clip": "Idle_Shield", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Shield_Loop", "dur": 2.5, "loop": true, "tags": ["shield","idle","stance","alt"], "desc": "guarding: the left forearm held across the chest behind a shield", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.5},{"part":"footR","from":0,"to":2.5}], "keys": [
   {"t":0,
    "hips":[-10,-1,100], "body":[13,-5,0], "chest":[19,9,3], "head":[-30,12,2],
-   "shL":[0,0], "shR":[0,0], "armL":[88,-41,-25,86,-40], "armR":[16,25,-96,57,-14],
-   "legL":[6,17,-98,22,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0]},
+   "shL":[0,0], "shR":[0,0], "armL":[89,-34,-31,74,-42], "armR":[9,32,-94,44,-20], "handL":[2,21,-60], "handR":[4,23,0], "gripL":87, "gripR":88,
+   "legL":[6,17,-98,21,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0], "rollL":-1, "rollR":-2},
   {"t":0.567,
    "hips":[-10,0,99], "body":[13,-4,0], "chest":[20,9,3], "head":[-31,8,2],
-   "shL":[-1,-3], "shR":[0,-3], "armL":[89,-39,-21,88,-37], "armR":[23,21,-95,59,-16],
-   "legL":[7,18,-98,27,8], "legR":[-30,13,-94,23,-37], "footL":[4,8,0], "footR":[3,32,0]},
+   "shL":[-1,-3], "shR":[0,-3], "armL":[91,-32,-28,74,-38], "armR":[16,29,-94,44,-23], "handL":[4,24,-59], "handR":[5,24,1], "gripL":86, "gripR":87,
+   "legL":[7,18,-98,27,8], "legR":[-30,13,-94,22,-37], "footL":[4,8,0], "footR":[3,32,0], "rollL":-1, "rollR":-2},
   {"t":1.233,
    "hips":[-10,0,100], "body":[13,-5,0], "chest":[19,9,3], "head":[-30,12,2],
-   "shL":[0,0], "shR":[0,0], "armL":[88,-41,-25,86,-40], "armR":[16,24,-96,57,-14],
-   "legL":[6,19,-98,21,4], "legR":[-31,13,-94,15,-39], "footL":[5,8,0], "footR":[4,32,0]},
+   "shL":[0,0], "shR":[0,0], "armL":[89,-33,-32,74,-42], "armR":[9,32,-94,44,-20], "handL":[3,23,-60], "handR":[4,23,0], "gripL":87, "gripR":87,
+   "legL":[6,19,-98,21,4], "legR":[-31,13,-94,15,-39], "footL":[5,8,0], "footR":[4,32,0], "rollL":-1, "rollR":-3},
   {"t":1.867,
    "hips":[-10,0,99], "body":[13,-4,0], "chest":[20,9,3], "head":[-31,9,2],
-   "shL":[-1,-3], "shR":[0,-2], "armL":[89,-39,-22,87,-37], "armR":[23,21,-95,57,-17],
-   "legL":[7,18,-98,27,7], "legR":[-30,14,-94,23,-35], "footL":[4,8,0], "footR":[3,32,0]},
+   "shL":[-1,-3], "shR":[0,-2], "armL":[90,-32,-29,74,-39], "armR":[16,29,-94,44,-24], "handL":[3,24,-60], "handR":[5,23,2], "gripL":87, "gripR":87,
+   "legL":[7,18,-98,27,7], "legR":[-30,14,-94,23,-35], "footL":[4,8,0], "footR":[3,32,0], "rollL":-1, "rollR":-2},
   {"t":2.5,
    "hips":[-10,-1,100], "body":[13,-5,0], "chest":[19,9,3], "head":[-30,12,2],
-   "shL":[0,0], "shR":[0,0], "armL":[88,-41,-25,86,-40], "armR":[16,25,-96,57,-14],
-   "legL":[6,17,-98,22,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0]}
+   "shL":[0,0], "shR":[0,0], "armL":[89,-34,-31,74,-42], "armR":[9,32,-94,44,-20], "handL":[2,21,-60], "handR":[4,23,0], "gripL":87, "gripR":88,
+   "legL":[6,17,-98,21,6], "legR":[-31,14,-94,14,-38], "footL":[5,8,0], "footR":[4,32,0], "rollL":-1, "rollR":-2}
 ]}

@@ -1,14 +1,14 @@
-{"clip": "Bow Release", "src": "M2M_ANIMATED", "dur": 0.5, "loop": false, "tags": ["bow","attack"], "desc": "looses the arrow: the drawing hand springs back, the bow arm held out", "keys": [
+{"clip": "Bow Release", "src": "M2M_ANIMATED", "dur": 0.5, "loop": false, "tags": ["bow","attack"], "desc": "looses the arrow: the drawing hand springs back, the bow arm held out", "fps": 24, "via": "source", "events": [{"t":0.5,"name":"hit","side":"L"}], "contacts": [{"part":"footL","from":0,"to":0.5},{"part":"footR","from":0,"to":0.5}], "keys": [
   {"t":0,
-   "hips":[-5,0,98], "body":[0,0,0], "chest":[67,-6,4], "head":[-64,11,12],
-   "shL":[15,-3], "shR":[23,-4], "armL":[68,72,-10,70,-14], "armR":[40,91,-7,105,8],
-   "legL":[-7,0,-100,26,-3], "legR":[-7,0,-100,26,3], "footL":[0,0,0], "footR":[0,0,0]},
+   "hips":[-5,0,98], "body":[0,0,0], "chest":[67,-6,4], "head":[-64,11,12], "spine":[31,-1,-1],
+   "shL":[15,-3], "shR":[23,-4], "armL":[58,80,-18,17,-25], "armR":[32,94,-15,59,9], "handL":[40,39,-80], "handR":[58,46,-64], "gripL":83, "gripR":81,
+   "legL":[-7,0,-100,28,-3], "legR":[-7,0,-100,28,3], "footL":[0,0,0], "footR":[0,0,0], "rollL":0, "rollR":0},
   {"t":0.233,
-   "hips":[-5,0,98], "body":[0,0,0], "chest":[67,-6,4], "head":[-65,14,11],
-   "shL":[18,-3], "shR":[23,-4], "armL":[70,71,-11,79,-20], "armR":[37,93,-2,83,4],
-   "legL":[-7,0,-100,26,-3], "legR":[-7,0,-100,26,3], "footL":[0,0,0], "footR":[0,0,0]},
+   "hips":[-5,0,98], "body":[0,0,0], "chest":[67,-6,4], "head":[-65,14,11], "spine":[31,-1,-1],
+   "shL":[18,-3], "shR":[23,-4], "armL":[63,75,-19,45,-26], "armR":[27,95,-13,50,7], "handL":[25,36,-82], "handR":[35,40,-71], "gripL":84, "gripR":37,
+   "legL":[-7,0,-100,28,-3], "legR":[-7,0,-100,28,3], "footL":[0,0,0], "footR":[0,0,0], "rollL":0, "rollR":0},
   {"t":0.5,
-   "hips":[-5,0,98], "body":[0,0,0], "chest":[67,-6,4], "head":[-64,11,12],
-   "shL":[15,-3], "shR":[23,-4], "armL":[68,72,-10,69,-11], "armR":[40,91,-7,107,8],
-   "legL":[-7,0,-100,26,-3], "legR":[-7,0,-100,26,3], "footL":[0,0,0], "footR":[0,0,0]}
+   "hips":[-5,0,98], "body":[0,0,0], "chest":[67,-6,4], "head":[-64,11,12], "spine":[31,-1,-1],
+   "shL":[15,-3], "shR":[23,-4], "armL":[56,81,-17,10,-21], "armR":[33,93,-15,60,10], "handL":[46,38,-76], "handR":[60,48,-63], "gripL":81, "gripR":83,
+   "legL":[-7,0,-100,28,-3], "legR":[-7,0,-100,28,3], "footL":[0,0,0], "footR":[0,0,0], "rollL":0, "rollR":0}
 ]}

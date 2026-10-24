@@ -2,180 +2,180 @@
 # Each clip is <name>.json, its name slugged (clipSlug). sec: seconds; loop: true for a loop; fit: mean/worst
 # mm against its capture; speed: a loop's travel as captured, % of standing hip height a second.
 name	sec	loop	speed	tags	desc	src	orig	take	fit
-Chest_Open	1.375	false		interact chest alt	bends forward and lifts a chest's lid with both hands, then straightens	M2M_QUATERNIUS	QUATERNIUS/Chest_Open		12/74
-Chop_Tree	0.958	true		work alt	chops with an axe: swings from over the shoulder down into a tree	M2M_QUATERNIUS	QUATERNIUS/TreeChopping_Loop		10/52
-ClimbUp_1m_RM	0.667	false		climb root-motion alt	grabs a ledge about 1 m high and hauls up onto it (travels)	M2M_QUATERNIUS	QUATERNIUS/ClimbUp_1m_RM		20/112
-Consume	1.333	false		item eat alt	eats or drinks: lifts the left hand to the mouth, tips the head, lowers it	M2M_QUATERNIUS	QUATERNIUS/Consume		10/61
-Crouch_Idle	3.667	true		crouch idle stealth alt	crouched low and still, looking about	M2M_QUATERNIUS	QUATERNIUS/Crouch_Idle_Loop		17/60
-Crouch_Walk	2.5	true		crouch walk stealth alt	crouched sneaking walk, in place	M2M_QUATERNIUS	QUATERNIUS/Crouch_Fwd_Loop		14/54
-Dance_Simple	1.25	true		emote dance alt	a one-second groove: hips sway, arms swing out	M2M_QUATERNIUS	QUATERNIUS/Dance_Loop		18/80
-Death_D	2.167	false		death	staggers back, the knees buckle, and falls onto the side, then lies flat	M2M_QUATERNIUS			13/77
-Driving	2.083	true		sit vehicle alt	seated, hands on a steering wheel, small turns	M2M_QUATERNIUS	QUATERNIUS/Driving_Loop		10/41
-Farm_Harvest	2.333	false		farm work alt	bends down and pulls a crop up out of the ground	M2M_QUATERNIUS	QUATERNIUS/Farm_Harvest		13/66
-Farm_PlantSeed	2.792	false		farm work alt	kneels, presses a seed into the soil, stands	M2M_QUATERNIUS	QUATERNIUS/Farm_PlantSeed		13/62
-Farm_Watering	3.833	false		farm work alt	tips a watering can held in the right hand, sweeping it over the ground	M2M_QUATERNIUS	QUATERNIUS/Farm_Watering		11/73
-Fixing_Kneeling	6.5	false		work interact alt	kneels on one knee and works with both hands near the ground	M2M_QUATERNIUS	QUATERNIUS/Fixing_Kneeling		13/94
-Hit_Chest	0.417	false		hurt	a slight flinch: the shoulders jolt and the arms swing a little; the body barely moves	M2M_QUATERNIUS			11/49
-Hit_Head	0.542	false		hurt alt	takes a blow to the head: head snaps aside, recovers	M2M_QUATERNIUS	QUATERNIUS/Hit_Head		10/51
-Hit_Knockback	0.833	false		hurt getup alt	hit hard: thrown back off the feet onto the back, then gets back up	M2M_QUATERNIUS	QUATERNIUS/Hit_Knockback		14/79
-Hit_Knockback_RM	0.625	false		hurt death root-motion alt	hit hard and thrown back onto the back, travelling backward	M2M_QUATERNIUS	QUATERNIUS/Hit_Knockback_RM		14/79
-Idle_A	3.125	true		idle alt	standing at rest, breathing and shifting weight	M2M_QUATERNIUS	QUATERNIUS/Idle_Loop		11/52
-Idle_FoldArms	2.5	true		idle talk alt	standing with the arms folded across the chest, shifting weight: waiting, listening	M2M_QUATERNIUS	QUATERNIUS/Idle_FoldArms_Loop		14/91
-Idle_Lantern	2.5	true		idle prop alt	standing, holding a lantern out in front in the right hand	M2M_QUATERNIUS	QUATERNIUS/Idle_Lantern_Loop		12/51
-Idle_Rail	2.5	true		idle lean alt	leaning forward on the forearms, as over a railing	M2M_QUATERNIUS	QUATERNIUS/Idle_Rail_Loop		13/53
-Idle_Rail_Call	2.5	false		idle lean gesture alt	leaning on a railing, raises the right hand to wave or call out, then leans back on it	M2M_QUATERNIUS	QUATERNIUS/Idle_Rail_Call		12/88
-Idle_ShakeOff	2.5	true		idle emote gesture alt	standing, shakes the head no	M2M_QUATERNIUS	QUATERNIUS/Idle_No_Loop		12/52
-Idle_Shield	2.5	true		shield idle stance alt	guarding: the left forearm held across the chest behind a shield	M2M_QUATERNIUS	QUATERNIUS/Idle_Shield_Loop		12/63
-Idle_Shield_Break	1.083	false		shield hurt alt	the guard breaks: knocked back off balance with the arms flung out, recovers	M2M_QUATERNIUS	QUATERNIUS/Idle_Shield_Break		12/73
-Idle_Sword	2.083	true		sword idle alt	standing ready with a sword in the right hand	M2M_QUATERNIUS	QUATERNIUS/Sword_Idle		15/52
-Idle_Talking	3.667	true		idle talk alt	standing and talking with hand gestures	M2M_QUATERNIUS	QUATERNIUS/Idle_Talking_Loop		10/69
-Idle_TalkingPhone	2.917	true		idle talk prop alt	on the phone: right hand at the ear, left arm across the body	M2M_QUATERNIUS	QUATERNIUS/Idle_TalkingPhone_Loop		10/69
-Idle_Torch	1.583	true		idle prop alt	standing with one arm raised, holding up a torch or lantern	M2M_QUATERNIUS	QUATERNIUS/Idle_Torch_Loop		12/50
-Interact	2.5	false		interact alt	reaches forward at chest height and works something with the hands (a lever, a door, a box)	M2M_QUATERNIUS	QUATERNIUS/Interact		10/55
-Jog	1.167	true		run alt	jog, in place	M2M_QUATERNIUS	QUATERNIUS/Jog_Fwd_Loop		16/139
-Jump_air	3.125	true		jump air alt	airborne pose held while rising or falling	M2M_QUATERNIUS	QUATERNIUS/Jump_Loop		14/75
-Jump_Land	1.583	false		jump alt	lands from a fall, knees soak it up, stands	M2M_QUATERNIUS	QUATERNIUS/Jump_Land		14/69
-Jump_Start	1.667	false		jump alt	dips, then springs up with the arms thrown out (in place: the game lifts the body)	M2M_QUATERNIUS	QUATERNIUS/Jump_Start		17/75
-LayToIdle	1.5	false		getup alt	gets up from lying on the back to standing	M2M_QUATERNIUS	QUATERNIUS/LayToIdle		12/118
-Melee_Hook	0.458	false		unarmed attack alt	a big lunging hook swing that carries low to the ground	M2M_QUATERNIUS	QUATERNIUS/Melee_Hook		21/102
-Melee_Hook_Rec	0.583	false		unarmed stance alt	recovers from the hook back to standing	M2M_QUATERNIUS	QUATERNIUS/Melee_Hook_Rec		18/63
-NinjaJump_Idle	2	true		jump air alt	airborne ninja pose held: body forward, arms swept back	M2M_QUATERNIUS	QUATERNIUS/NinjaJump_Idle_Loop		17/57
-NinjaJump_Land	1.25	false		jump alt	lands from the ninja leap in a crouch, hands near the ground, and stands	M2M_QUATERNIUS	QUATERNIUS/NinjaJump_Land		13/52
-NinjaJump_Start	0.958	false		jump alt	crouches and leaps into a running ninja's air pose, arms swept back	M2M_QUATERNIUS	QUATERNIUS/NinjaJump_Start		16/49
-OverhandThrow	1.333	false		throw attack alt	winds up and throws overhand with the right arm, following through	M2M_QUATERNIUS	QUATERNIUS/OverhandThrow		13/66
-PickUp_Table	1.042	false		interact item alt	reaches out and picks something up from table height	M2M_QUATERNIUS	QUATERNIUS/PickUp_Table		10/52
-Pistol_Aim_Down	0.208	false		gun aim pose alt	two-handed pistol aim, pointing down	M2M_QUATERNIUS	QUATERNIUS/Pistol_Aim_Down		10/54
-Pistol_Aim_Neutral	0.208	false		gun aim pose alt	two-handed pistol aim, level (a pose to blend with up and down)	M2M_QUATERNIUS	QUATERNIUS/Pistol_Aim_Neutral		10/62
-Pistol_Aim_Up	0.208	false		gun aim pose alt	two-handed pistol aim, pointing up	M2M_QUATERNIUS	QUATERNIUS/Pistol_Aim_Up		16/73
-Pistol_Idle	2.083	true		gun idle alt	standing ready, pistol held low in both hands	M2M_QUATERNIUS	QUATERNIUS/Pistol_Idle_Loop		13/61
-Pistol_Reload	2.083	false		gun alt	reloads the pistol	M2M_QUATERNIUS	QUATERNIUS/Pistol_Reload		12/72
-Pistol_Shoot	0.792	false		gun attack alt	one pistol shot with recoil	M2M_QUATERNIUS	QUATERNIUS/Pistol_Shoot		11/85
-Punch_Cross	1.25	false		unarmed attack alt	rear-hand straight punch with a hip turn	M2M_QUATERNIUS	QUATERNIUS/Punch_Cross		19/89
-Punch_Jab	1.083	false		unarmed attack alt	quick lead-hand jab from the stance	M2M_QUATERNIUS	QUATERNIUS/Punch_Jab		17/60
-Push	3.333	true		interact push alt	leans in and shoves something heavy, stepping	M2M_QUATERNIUS	QUATERNIUS/Push_Loop		20/114
-Roll	1.833	false		dodge alt	forward roll over the shoulder and back to standing, in place	M2M_QUATERNIUS	QUATERNIUS/Roll		14/194
-Roll_RM	1.833	false		dodge root-motion alt	forward roll that travels (root motion)	M2M_QUATERNIUS	QUATERNIUS/Roll_RM		14/194
-Shield_Dash_RM	1.083	false		shield attack root-motion alt	charges forward behind a shield (travels)	M2M_QUATERNIUS	QUATERNIUS/Shield_Dash_RM		16/82
-Shield_OneShot	0.833	false		shield block alt	a quick block: snaps the shield arm up across the chest, then lowers it	M2M_QUATERNIUS	QUATERNIUS/Shield_OneShot		11/62
-Sitting_Enter	1.625	false		sit alt	sits down onto a seat (no chair is drawn)	M2M_QUATERNIUS	QUATERNIUS/Sitting_Enter		12/90
-Sitting_Exit	1.292	false		sit alt	stands up from a seat	M2M_QUATERNIUS	QUATERNIUS/Sitting_Exit		13/140
-Sitting_Idle	2.083	true		sit idle alt	seated at rest	M2M_QUATERNIUS	QUATERNIUS/Sitting_Idle_Loop		12/70
-Sitting_Talking	3.667	true		sit talk alt	seated, talking with hand gestures	M2M_QUATERNIUS	QUATERNIUS/Sitting_Talking_Loop		10/83
-Slide	2	true		slide alt	sliding feet first, leaning back on one hand	M2M_QUATERNIUS	QUATERNIUS/Slide_Loop		17/68
-Slide_Exit	0.5	false		slide alt	springs up out of the slide into a run	M2M_QUATERNIUS	QUATERNIUS/Slide_Exit		16/86
-Slide_Start	0.833	false		slide dodge alt	drops from a run into a feet-first slide on the back; ends back in the running pose	M2M_QUATERNIUS	QUATERNIUS/Slide_Start		16/82
-Spell_Simple_Enter	0.667	false		magic stance alt	raises a hand to ready a spell	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Enter		11/74
-Spell_Simple_Exit	0.542	false		magic stance alt	lowers the casting hand	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Exit		10/74
-Spell_Simple_Idle	2.667	true		magic idle alt	holds a spell ready	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Idle_Loop		13/70
-Spell_Simple_Shoot	0.625	false		magic attack alt	casts: drives the hand forward	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Shoot		11/77
-Sprint	0.833	true		run alt	full sprint with big arm swings, in place	M2M_QUATERNIUS	QUATERNIUS/Sprint_Loop		15/66
-Swim_Fwd	1.667	true		swim alt	swimming forward, body flat	M2M_QUATERNIUS	QUATERNIUS/Swim_Fwd_Loop		15/78
-Swim_Idle	4.167	true		swim idle alt	treading water, upright	M2M_QUATERNIUS	QUATERNIUS/Swim_Idle_Loop		13/93
-Sword_Attack	1.917	false		sword attack alt	stepping one-handed slash, in place	M2M_QUATERNIUS	QUATERNIUS/Sword_Attack		18/88
-Sword_Attack_RM	1.917	false		sword attack root-motion alt	stepping one-handed slash that travels	M2M_QUATERNIUS	QUATERNIUS/Sword_Attack_RM		18/88
-Sword_Block	1.25	false		sword block alt	braces and raises the sword to block, then recovers	M2M_QUATERNIUS	QUATERNIUS/Sword_Block		11/57
-Sword_Dash_RM	1.583	false		sword attack dodge root-motion alt	dashes forward low and slashes (travels)	M2M_QUATERNIUS	QUATERNIUS/Sword_Dash_RM		15/87
+Chest_Open	1.375	false		interact chest alt	bends forward and lifts a chest's lid with both hands, then straightens	M2M_QUATERNIUS	QUATERNIUS/Chest_Open		7/34
+Chop_Tree	0.958	true		work alt	chops with an axe: swings from over the shoulder down into a tree	M2M_QUATERNIUS	QUATERNIUS/TreeChopping_Loop		7/46
+ClimbUp_1m_RM	0.667	false		climb root-motion alt	grabs a ledge about 1 m high and hauls up onto it (travels)	M2M_QUATERNIUS	QUATERNIUS/ClimbUp_1m_RM		11/62
+Consume	1.333	false		item eat alt	eats or drinks: lifts the left hand to the mouth, tips the head, lowers it	M2M_QUATERNIUS	QUATERNIUS/Consume		6/50
+Crouch_Idle	3.667	true		crouch idle stealth alt	crouched low and still, looking about	M2M_QUATERNIUS	QUATERNIUS/Crouch_Idle_Loop		7/33
+Crouch_Walk	2.5	true		crouch walk stealth alt	crouched sneaking walk, in place	M2M_QUATERNIUS	QUATERNIUS/Crouch_Fwd_Loop		11/41
+Dance_Simple	1.25	true		emote dance alt	a one-second groove: hips sway, arms swing out	M2M_QUATERNIUS	QUATERNIUS/Dance_Loop		10/46
+Death_D	2.167	false		death	staggers back, the knees buckle, and falls onto the side, then lies flat	M2M_QUATERNIUS			9/44
+Driving	2.083	true		sit vehicle alt	seated, hands on a steering wheel, small turns	M2M_QUATERNIUS	QUATERNIUS/Driving_Loop		8/30
+Farm_Harvest	2.333	false		farm work alt	bends down and pulls a crop up out of the ground	M2M_QUATERNIUS	QUATERNIUS/Farm_Harvest		8/37
+Farm_PlantSeed	2.792	false		farm work alt	kneels, presses a seed into the soil, stands	M2M_QUATERNIUS	QUATERNIUS/Farm_PlantSeed		9/49
+Farm_Watering	3.833	false		farm work alt	tips a watering can held in the right hand, sweeping it over the ground	M2M_QUATERNIUS	QUATERNIUS/Farm_Watering		7/47
+Fixing_Kneeling	6.5	false		work interact alt	kneels on one knee and works with both hands near the ground	M2M_QUATERNIUS	QUATERNIUS/Fixing_Kneeling		9/58
+Hit_Chest	0.417	false		hurt	a slight flinch: the shoulders jolt and the arms swing a little; the body barely moves	M2M_QUATERNIUS			8/35
+Hit_Head	0.542	false		hurt alt	takes a blow to the head: head snaps aside, recovers	M2M_QUATERNIUS	QUATERNIUS/Hit_Head		6/31
+Hit_Knockback	0.833	false		hurt getup alt	hit hard: thrown back off the feet onto the back, then gets back up	M2M_QUATERNIUS	QUATERNIUS/Hit_Knockback		10/45
+Hit_Knockback_RM	0.625	false		hurt death root-motion alt	hit hard and thrown back onto the back, travelling backward	M2M_QUATERNIUS	QUATERNIUS/Hit_Knockback_RM		11/45
+Idle_A	3.125	true		idle alt	standing at rest, breathing and shifting weight	M2M_QUATERNIUS	QUATERNIUS/Idle_Loop		6/31
+Idle_FoldArms	2.5	true		idle talk alt	standing with the arms folded across the chest, shifting weight: waiting, listening	M2M_QUATERNIUS	QUATERNIUS/Idle_FoldArms_Loop		7/35
+Idle_Lantern	2.5	true		idle prop alt	standing, holding a lantern out in front in the right hand	M2M_QUATERNIUS	QUATERNIUS/Idle_Lantern_Loop		7/35
+Idle_Rail	2.5	true		idle lean alt	leaning forward on the forearms, as over a railing	M2M_QUATERNIUS	QUATERNIUS/Idle_Rail_Loop		8/25
+Idle_Rail_Call	2.5	false		idle lean gesture alt	leaning on a railing, raises the right hand to wave or call out, then leans back on it	M2M_QUATERNIUS	QUATERNIUS/Idle_Rail_Call		7/43
+Idle_ShakeOff	2.5	true		idle emote gesture alt	standing, shakes the head no	M2M_QUATERNIUS	QUATERNIUS/Idle_No_Loop		7/41
+Idle_Shield	2.5	true		shield idle stance alt	guarding: the left forearm held across the chest behind a shield	M2M_QUATERNIUS	QUATERNIUS/Idle_Shield_Loop		7/35
+Idle_Shield_Break	1.083	false		shield hurt alt	the guard breaks: knocked back off balance with the arms flung out, recovers	M2M_QUATERNIUS	QUATERNIUS/Idle_Shield_Break		7/35
+Idle_Sword	2.083	true		sword idle alt	standing ready with a sword in the right hand	M2M_QUATERNIUS	QUATERNIUS/Sword_Idle		9/40
+Idle_Talking	3.667	true		idle talk alt	standing and talking with hand gestures	M2M_QUATERNIUS	QUATERNIUS/Idle_Talking_Loop		7/47
+Idle_TalkingPhone	2.917	true		idle talk prop alt	on the phone: right hand at the ear, left arm across the body	M2M_QUATERNIUS	QUATERNIUS/Idle_TalkingPhone_Loop		7/35
+Idle_Torch	1.583	true		idle prop alt	standing with one arm raised, holding up a torch or lantern	M2M_QUATERNIUS	QUATERNIUS/Idle_Torch_Loop		9/46
+Interact	2.5	false		interact alt	reaches forward at chest height and works something with the hands (a lever, a door, a box)	M2M_QUATERNIUS	QUATERNIUS/Interact		6/39
+Jog	1.167	true		run alt	jog, in place	M2M_QUATERNIUS	QUATERNIUS/Jog_Fwd_Loop		10/38
+Jump_air	3.125	true		jump air alt	airborne pose held while rising or falling	M2M_QUATERNIUS	QUATERNIUS/Jump_Loop		8/38
+Jump_Land	1.583	false		jump alt	lands from a fall, knees soak it up, stands	M2M_QUATERNIUS	QUATERNIUS/Jump_Land		11/43
+Jump_Start	1.667	false		jump alt	dips, then springs up with the arms thrown out (in place: the game lifts the body)	M2M_QUATERNIUS	QUATERNIUS/Jump_Start		9/43
+LayToIdle	1.5	false		getup alt	gets up from lying on the back to standing	M2M_QUATERNIUS	QUATERNIUS/LayToIdle		8/45
+Melee_Hook	0.458	false		unarmed attack alt	a big lunging hook swing that carries low to the ground	M2M_QUATERNIUS	QUATERNIUS/Melee_Hook		9/42
+Melee_Hook_Rec	0.583	false		unarmed stance alt	recovers from the hook back to standing	M2M_QUATERNIUS	QUATERNIUS/Melee_Hook_Rec		10/38
+NinjaJump_Idle	2	true		jump air alt	airborne ninja pose held: body forward, arms swept back	M2M_QUATERNIUS	QUATERNIUS/NinjaJump_Idle_Loop		14/43
+NinjaJump_Land	1.25	false		jump alt	lands from the ninja leap in a crouch, hands near the ground, and stands	M2M_QUATERNIUS	QUATERNIUS/NinjaJump_Land		10/40
+NinjaJump_Start	0.958	false		jump alt	crouches and leaps into a running ninja's air pose, arms swept back	M2M_QUATERNIUS	QUATERNIUS/NinjaJump_Start		12/32
+OverhandThrow	1.333	false		throw attack alt	winds up and throws overhand with the right arm, following through	M2M_QUATERNIUS	QUATERNIUS/OverhandThrow		8/37
+PickUp_Table	1.042	false		interact item alt	reaches out and picks something up from table height	M2M_QUATERNIUS	QUATERNIUS/PickUp_Table		6/38
+Pistol_Aim_Down	0.208	false		gun aim pose alt	two-handed pistol aim, pointing down	M2M_QUATERNIUS	QUATERNIUS/Pistol_Aim_Down		7/27
+Pistol_Aim_Neutral	0.208	false		gun aim pose alt	two-handed pistol aim, level (a pose to blend with up and down)	M2M_QUATERNIUS	QUATERNIUS/Pistol_Aim_Neutral		7/26
+Pistol_Aim_Up	0.208	false		gun aim pose alt	two-handed pistol aim, pointing up	M2M_QUATERNIUS	QUATERNIUS/Pistol_Aim_Up		10/37
+Pistol_Idle	2.083	true		gun idle alt	standing ready, pistol held low in both hands	M2M_QUATERNIUS	QUATERNIUS/Pistol_Idle_Loop		11/46
+Pistol_Reload	2.083	false		gun alt	reloads the pistol	M2M_QUATERNIUS	QUATERNIUS/Pistol_Reload		9/49
+Pistol_Shoot	0.792	false		gun attack alt	one pistol shot with recoil	M2M_QUATERNIUS	QUATERNIUS/Pistol_Shoot		8/29
+Punch_Cross	1.25	false		unarmed attack alt	rear-hand straight punch with a hip turn	M2M_QUATERNIUS	QUATERNIUS/Punch_Cross		8/40
+Punch_Jab	1.083	false		unarmed attack alt	quick lead-hand jab from the stance	M2M_QUATERNIUS	QUATERNIUS/Punch_Jab		14/41
+Push	3.333	true		interact push alt	leans in and shoves something heavy, stepping	M2M_QUATERNIUS	QUATERNIUS/Push_Loop		7/38
+Roll	1.833	false		dodge alt	forward roll over the shoulder and back to standing, in place	M2M_QUATERNIUS	QUATERNIUS/Roll		9/45
+Roll_RM	1.833	false		dodge root-motion alt	forward roll that travels (root motion)	M2M_QUATERNIUS	QUATERNIUS/Roll_RM		9/45
+Shield_Dash_RM	1.083	false		shield attack root-motion alt	charges forward behind a shield (travels)	M2M_QUATERNIUS	QUATERNIUS/Shield_Dash_RM		10/63
+Shield_OneShot	0.833	false		shield block alt	a quick block: snaps the shield arm up across the chest, then lowers it	M2M_QUATERNIUS	QUATERNIUS/Shield_OneShot		6/43
+Sitting_Enter	1.625	false		sit alt	sits down onto a seat (no chair is drawn)	M2M_QUATERNIUS	QUATERNIUS/Sitting_Enter		8/39
+Sitting_Exit	1.292	false		sit alt	stands up from a seat	M2M_QUATERNIUS	QUATERNIUS/Sitting_Exit		7/42
+Sitting_Idle	2.083	true		sit idle alt	seated at rest	M2M_QUATERNIUS	QUATERNIUS/Sitting_Idle_Loop		9/34
+Sitting_Talking	3.667	true		sit talk alt	seated, talking with hand gestures	M2M_QUATERNIUS	QUATERNIUS/Sitting_Talking_Loop		7/51
+Slide	2	true		slide alt	sliding feet first, leaning back on one hand	M2M_QUATERNIUS	QUATERNIUS/Slide_Loop		13/68
+Slide_Exit	0.5	false		slide alt	springs up out of the slide into a run	M2M_QUATERNIUS	QUATERNIUS/Slide_Exit		10/59
+Slide_Start	0.833	false		slide dodge alt	drops from a run into a feet-first slide on the back; ends back in the running pose	M2M_QUATERNIUS	QUATERNIUS/Slide_Start		10/45
+Spell_Simple_Enter	0.667	false		magic stance alt	raises a hand to ready a spell	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Enter		7/47
+Spell_Simple_Exit	0.542	false		magic stance alt	lowers the casting hand	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Exit		5/36
+Spell_Simple_Idle	2.667	true		magic idle alt	holds a spell ready	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Idle_Loop		8/38
+Spell_Simple_Shoot	0.625	false		magic attack alt	casts: drives the hand forward	M2M_QUATERNIUS	QUATERNIUS/Spell_Simple_Shoot		7/34
+Sprint	0.833	true		run alt	full sprint with big arm swings, in place	M2M_QUATERNIUS	QUATERNIUS/Sprint_Loop		9/33
+Swim_Fwd	1.667	true		swim alt	swimming forward, body flat	M2M_QUATERNIUS	QUATERNIUS/Swim_Fwd_Loop		9/52
+Swim_Idle	4.167	true		swim idle alt	treading water, upright	M2M_QUATERNIUS	QUATERNIUS/Swim_Idle_Loop		9/33
+Sword_Attack	1.917	false		sword attack alt	stepping one-handed slash, in place	M2M_QUATERNIUS	QUATERNIUS/Sword_Attack		9/48
+Sword_Attack_RM	1.917	false		sword attack root-motion alt	stepping one-handed slash that travels	M2M_QUATERNIUS	QUATERNIUS/Sword_Attack_RM		9/48
+Sword_Block	1.25	false		sword block alt	braces and raises the sword to block, then recovers	M2M_QUATERNIUS	QUATERNIUS/Sword_Block		7/35
+Sword_Dash_RM	1.583	false		sword attack dodge root-motion alt	dashes forward low and slashes (travels)	M2M_QUATERNIUS	QUATERNIUS/Sword_Dash_RM		8/37
 Sword_Regular_A	0.458	false		sword attack root-motion alt	the combo's first strike: crouches and thrusts forward, then rises back to standing	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_A		21/230
-Sword_Regular_B	0.542	false		sword attack root-motion alt	the combo's second strike: a low, wide sweeping slash	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_B		16/83
-Sword_Regular_B_Rec	1	false		sword stance root-motion alt	recovers from the second strike back to standing	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_B_Rec		15/85
-Sword_Regular_C	1.667	false		sword attack root-motion alt	the combo's finisher: a big overhead slash down to the ground, then stands	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_C		15/78
-Sword_Regular_C_RM	1.667	false		sword attack root-motion alt	the combo's finisher: a big overhead slash down to the ground, then stands (travels)	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_C		15/78
-Sword_Regular_Combo	2.958	false		sword attack root-motion alt	the three strikes chained: thrust, sweep, finisher	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_Combo		16/79
-Walk	1.667	true		walk alt	relaxed walk, in place	M2M_QUATERNIUS	QUATERNIUS/Walk_Loop		13/78
-Walk_Carry	2	true		walk carry alt	walking with a box held in both arms in front, in place	M2M_QUATERNIUS	QUATERNIUS/Walk_Carry_Loop		12/106
-Walk_Formal	1.667	true		walk alt	upright, measured walk, in place	M2M_QUATERNIUS	QUATERNIUS/Walk_Formal_Loop		13/76
-Yes	2.5	false		emote gesture alt	agrees: raises the left hand out in front (a thumbs-up), holds it, lowers it	M2M_QUATERNIUS	QUATERNIUS/Yes		11/52
-Zombie_Idle	1.333	true		zombie idle alt	hunched and swaying, arms hanging: a zombie at rest	M2M_QUATERNIUS	QUATERNIUS/Zombie_Idle_Loop		18/62
-Zombie_Scratch	1.792	false		zombie attack alt	lunges and claws down with both hands, then settles back	M2M_QUATERNIUS	QUATERNIUS/Zombie_Scratch		20/75
-Zombie_Walk	1.333	true		zombie walk alt	shambling, dragging zombie walk, in place	M2M_QUATERNIUS	QUATERNIUS/Zombie_Walk_Fwd_Loop		15/76
-Angry	0.833	false		emote gesture	an angry outburst: flings both arms out wide and down, twice	M2M_ANIMATED			26/170
-Attack_Ground_Pound	2.708	false		attack unarmed jump	crouches, springs up with the arms spread, and slams down into a low crouch	M2M_ANIMATED			18/121
-Backflip	2.5	false		jump dodge	crouches, springs into a full backward somersault, lands crouched and stands	M2M_ANIMATED			19/235
-Bow	3.75	false		bow aim	raises a bow from low to aim at head height, holds the aim, lowers it	M2M_ANIMATED			37/184
-Bow Pull Back	1.25	false		bow attack	raises a bow, nocks and draws the string back to the face	M2M_ANIMATED			18/136
-Bow Pull Hold	0.25	true		bow aim pose	holds a bow at full draw, aiming	M2M_ANIMATED			28/137
-Bow Release	0.5	false		bow attack	looses the arrow: the drawing hand springs back, the bow arm held out	M2M_ANIMATED			25/151
-Climb Ladder	3.625	true		climb	climbs a ladder hand over hand, in place	M2M_ANIMATED			28/137
-Climb Wall	2.083	true		climb	climbs a sheer wall, reaching high hand over hand and stepping up, in place	M2M_ANIMATED			20/152
-Confused	2.917	false		emote gesture	scratches the head and looks about, puzzled	M2M_ANIMATED			12/136
-Consume Item	4.167	false		item eat	brings an item up to the mouth with both hands and eats, then lowers it	M2M_ANIMATED			16/96
-Crawl	1.708	true		crawl stealth	crawls on the belly, reaching ahead with alternate arms, in place	M2M_ANIMATED			11/75
-Crawl RM	1.708	true		crawl stealth root-motion	crawls on the belly, reaching ahead with alternate arms (travels)	M2M_ANIMATED			11/75
-Dance Body Roll	6.5	false		emote dance	a long dance: body rolls, arm waves and a dip, 6.5 seconds	M2M_ANIMATED			18/193
-Dance Charleston	2.333	true		emote dance	the Charleston: the knees swing in and out, the hands cross over them	M2M_ANIMATED			19/143
-Dance Reach Hip	2.542	false		emote dance	a dance: hip pops, then one arm reaching high and pointing out	M2M_ANIMATED			17/146
-Death_A	4.5	false		death	clutches the chest, staggers and sinks down onto the side, and lies still	M2M_ANIMATED			14/105
-Death_B	1.875	false		death	thrown back off the feet into the air and lands flat on the ground	M2M_ANIMATED			25/148
-Death_C	2.208	false		death	falls straight back, rolls over and lies spread out	M2M_ANIMATED			35/115
-Defend	0.958	true		block stance unarmed	crouched behind raised forearms, guarding the head	M2M_ANIMATED			18/105
-Dizzy	2.417	true		hurt idle	sways in place, unsteady, the head lolling	M2M_ANIMATED			21/81
-Dodge_back	1	false		dodge	hops back a step out of the way of a blow, in place	M2M_ANIMATED			14/96
-Dodge_back_RM	1	false		dodge root-motion	hops back a step out of the way of a blow (travels)	M2M_ANIMATED			14/96
-Dodge_left	0.833	false		dodge	throws the body to the left in a low lunge and recovers, in place	M2M_ANIMATED			24/286
-Dodge_left_RM	0.833	false		dodge root-motion	throws the body to the left in a low lunge and recovers (travels)	M2M_ANIMATED			24/286
-Dodge_right	0.833	false		dodge	throws the body to the right in a low lunge and recovers, in place	M2M_ANIMATED			24/286
-Dodge_right_RM	0.833	false		dodge root-motion	throws the body to the right in a low lunge and recovers (travels)	M2M_ANIMATED			24/286
-Fighting Idle	1.708	true		unarmed stance idle	a boxer's stance: fists up, bouncing lightly	M2M_ANIMATED			21/118
-Fighting Left Jab	0.917	false		unarmed attack	from the fighting stance, swings the left fist out wide and back to guard	M2M_ANIMATED			22/121
-Fighting Right Jab	0.917	false		unarmed attack	from the fighting stance, a straight right punch and back to guard	M2M_ANIMATED			15/101
-Flying Forward	0.5	true		fly air	flying forward, body level, arms at the sides, legs trailing	M2M_ANIMATED			16/66
-Flying Forward Super	0.5	true		fly air	flying forward like a superhero, both arms stretched ahead	M2M_ANIMATED			17/84
-Glide	0.792	true		fly air	gliding: the body leaning forward, both arms raised overhead in a V	M2M_ANIMATED			18/106
-Greeting	4.833	false		emote gesture talk	lays the right hand on the chest and bows the head in greeting	M2M_ANIMATED			12/130
-Head Nod	0.875	false		emote gesture	nods the head yes, standing	M2M_ANIMATED			6/25
-Idle Hurt	1.667	true		idle hurt	stands hunched, holding the side, hurt	M2M_ANIMATED			13/68
-Idle Listening	1.708	true		idle talk	weight on one leg, a hand on the hip, head cocked: listening	M2M_ANIMATED			13/103
-Idle_Subtle	2.583	true		idle	standing still, breathing gently	M2M_ANIMATED			15/61
-Jump_2	1.625	false		jump	crouches and jumps with the arms flung forward, then lands, in place	M2M_ANIMATED			18/174
-Jump_2_RM	1.625	false		jump root-motion	crouches and jumps up and forward with the arms flung forward, then lands (travels)	M2M_ANIMATED			18/178
-Jumping Jacks	1.25	true		emote exercise	jumping jacks: the arms and legs scissor out and in	M2M_ANIMATED			11/70
-Kneeling Tired	0.833	true		rest hurt	down on one knee, leaning on it, worn out	M2M_ANIMATED			21/130
-Ladder_Idle	2.5	true		climb idle	holds on to a ladder, hands and feet on the rungs	M2M_ANIMATED			28/103
-Land_Three_Point	1.375	false		jump air	drops from above into a crouched three-point landing, one hand on the ground	M2M_ANIMATED			26/115
-Ledge Hang	1.917	true		climb idle	hangs from a ledge by both hands, legs dangling	M2M_ANIMATED			14/76
-Levitate Entrance	2	false		magic air	rises into a floating pose: knees drawn up, one arm out	M2M_ANIMATED			19/93
-Levitate Idle	2	true		magic air idle	floats in the air, knees drawn up, bobbing gently	M2M_ANIMATED			19/60
-Meditate	1.5	true		sit rest idle	sits cross-legged, hands on the knees, breathing slowly	M2M_ANIMATED			15/54
-Pipe Climb	1.875	true		climb	shins up a pole or pipe, hands and knees gripping, in place	M2M_ANIMATED			18/121
-Power Up	0.75	true		magic stance	crouched, fists clenched, gathering power and shaking with effort	M2M_ANIMATED			35/201
-Pushup	1.542	true		emote exercise	push-ups: the body held straight, arms bending and pressing up	M2M_ANIMATED			29/160
-Reject	3.792	false		emote gesture	crosses both forearms in front of the chest and turns the head away: no	M2M_ANIMATED			12/110
-Rest Pose	0.417	false		reference	Mesh2Motion's rest pose, arms out: the pose its clips are measured from	M2M_ANIMATED			5/27
-Run Jump	1.25	false		jump air run	a running leap held in the air: legs split, arms back (travels)	M2M_ANIMATED			15/63
-Run_Anime	0.75	true		run root-motion	an anime ninja run: body pitched forward, arms trailing straight back (travels)	M2M_ANIMATED			21/144
-Run_Female	0.833	true		run	a light run with swinging arms, in place	M2M_ANIMATED			18/106
-Run_Stealth	0.542	true		run crouch stealth root-motion	a quick crouched sneaking run (travels)	M2M_ANIMATED			39/111
-Shivering	0.25	true		idle emote	hunched with the arms hugged in, shivering with cold	M2M_ANIMATED			24/171
-Sleeping	1.667	true		rest lie idle	lies on the back asleep, the chest rising and falling	M2M_ANIMATED			15/68
-Strafe_left	1	true		walk strafe	sidesteps to the left while facing forward, in place	M2M_ANIMATED			12/64
-Strafe_right	1	true		walk strafe	sidesteps to the right while facing forward, in place	M2M_ANIMATED			12/75
-Sword_Attack_Air_Vertical	4.833	false		sword attack jump air	leaps and chops down with a two-handed overhead swing, landing crouched	M2M_ANIMATED			38/178
-Throw Object	1.875	false		throw attack	winds up and hurls an object, dropping into a deep lunge	M2M_ANIMATED			13/122
-Tired Hunched	1.042	true		rest hurt	crouched low and doubled over, exhausted, catching breath	M2M_ANIMATED			21/140
-Two-hand Blast	0.458	false		magic attack	crouched forward, thrusts both hands out to cast a blast	M2M_ANIMATED			17/88
-Victory	1.667	false		emote cheer	jumps up with a fist raised in triumph and lands	M2M_ANIMATED			16/227
-Victory Fist Pump	2.25	false		emote cheer gesture	pumps a fist down at the side in triumph	M2M_ANIMATED			18/159
-Walk_Backwards	1	true		walk	walks backward, in place	M2M_ANIMATED			10/41
-Walk_Female	1.375	true		walk	a swaying walk, the hips moving, in place	M2M_ANIMATED			11/57
-Walk_Large	1.417	true		walk	a heavy, lumbering walk, the arms held out from the body (a big character), in place	M2M_ANIMATED			13/69
-Walk_Stealth	1.5	true		walk crouch stealth	a crouched sneaking walk, knees wide, arms tucked, in place	M2M_ANIMATED			15/83
-Zombie Yell	3.708	false		zombie emote	hunched, rears up and roars with the arms raised, then slumps	M2M_ANIMATED			23/142
-Zombie_Idle_Crouch	2.958	true		zombie idle crouch	crouched low and swaying: a zombie at rest	M2M_ANIMATED			25/149
-Zombie_Rise	3.375	false		zombie getup	rises from the ground: lying, sits up stiffly and gets up hunched	M2M_ANIMATED			17/140
-Zombie_Walk_2	2.917	true		zombie walk	a lurching zombie walk, deeply hunched, in place	M2M_ANIMATED			20/102
-Cheer_One_arm	2.167	false		emote cheer	cheers with one fist raised high	M2M_MOCOPI			9/54
-Cheering_Two_Hands	1.583	false		emote cheer	cheers with both arms raised overhead, waving	M2M_MOCOPI			32/116
-Fishing_Cast	2.95	false		fish work prop	swings a fishing rod back over the shoulder and casts it forward	M2M_MOCOPI			13/77
-Fishing_Catch	2.05	false		fish work prop	jerks the rod up to hook a fish and pulls it in	M2M_MOCOPI			19/156
-Fishing_Reel	1.45	true		fish work prop	holds the rod out and turns the reel	M2M_MOCOPI			13/68
-Golf_Drive	3.1	false		sport prop	addresses the ball and swings a golf club through	M2M_MOCOPI			13/118
-Golf_idle	1.833	true		sport prop idle	stands over a golf ball, the club held low, shifting weight	M2M_MOCOPI			27/93
-Help_One_Arm	2.667	false		emote gesture	waves one arm overhead for attention: help	M2M_MOCOPI			10/68
-Help_Two_Arms	1.583	false		emote gesture	waves both arms overhead for attention	M2M_MOCOPI			11/79
-Insult	2.783	false		emote gesture	an insulting gesture, jabbing an arm forward at someone	M2M_MOCOPI			11/79
-Kick_Breach	1.833	false		attack unarmed kick interact	kicks a door in with a front kick, then steps back	M2M_MOCOPI			14/79
-Salute	4.383	false		emote gesture	stands at attention, salutes and lowers the hand	M2M_MOCOPI			14/62
+Sword_Regular_B	0.542	false		sword attack root-motion alt	the combo's second strike: a low, wide sweeping slash	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_B		9/35
+Sword_Regular_B_Rec	1	false		sword stance root-motion alt	recovers from the second strike back to standing	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_B_Rec		8/34
+Sword_Regular_C	1.667	false		sword attack root-motion alt	the combo's finisher: a big overhead slash down to the ground, then stands	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_C		7/44
+Sword_Regular_C_RM	1.667	false		sword attack root-motion alt	the combo's finisher: a big overhead slash down to the ground, then stands (travels)	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_C		7/41
+Sword_Regular_Combo	2.958	false		sword attack root-motion alt	the three strikes chained: thrust, sweep, finisher	M2M_QUATERNIUS	QUATERNIUS/Sword_Regular_Combo		8/52
+Walk	1.667	true		walk alt	relaxed walk, in place	M2M_QUATERNIUS	QUATERNIUS/Walk_Loop		8/57
+Walk_Carry	2	true		walk carry alt	walking with a box held in both arms in front, in place	M2M_QUATERNIUS	QUATERNIUS/Walk_Carry_Loop		7/33
+Walk_Formal	1.667	true		walk alt	upright, measured walk, in place	M2M_QUATERNIUS	QUATERNIUS/Walk_Formal_Loop		8/51
+Yes	2.5	false		emote gesture alt	agrees: raises the left hand out in front (a thumbs-up), holds it, lowers it	M2M_QUATERNIUS	QUATERNIUS/Yes		6/33
+Zombie_Idle	1.333	true		zombie idle alt	hunched and swaying, arms hanging: a zombie at rest	M2M_QUATERNIUS	QUATERNIUS/Zombie_Idle_Loop		16/51
+Zombie_Scratch	1.792	false		zombie attack alt	lunges and claws down with both hands, then settles back	M2M_QUATERNIUS	QUATERNIUS/Zombie_Scratch		18/56
+Zombie_Walk	1.333	true		zombie walk alt	shambling, dragging zombie walk, in place	M2M_QUATERNIUS	QUATERNIUS/Zombie_Walk_Fwd_Loop		10/41
+Angry	0.833	false		emote gesture	an angry outburst: flings both arms out wide and down, twice	M2M_ANIMATED			4/26
+Attack_Ground_Pound	2.708	false		attack unarmed jump	crouches, springs up with the arms spread, and slams down into a low crouch	M2M_ANIMATED			7/51
+Backflip	2.5	false		jump dodge	crouches, springs into a full backward somersault, lands crouched and stands	M2M_ANIMATED			7/45
+Bow	3.75	false		bow aim	raises a bow from low to aim at head height, holds the aim, lowers it	M2M_ANIMATED			5/34
+Bow Pull Back	1.25	false		bow attack	raises a bow, nocks and draws the string back to the face	M2M_ANIMATED			5/30
+Bow Pull Hold	0.25	true		bow aim pose	holds a bow at full draw, aiming	M2M_ANIMATED			5/30
+Bow Release	0.5	false		bow attack	looses the arrow: the drawing hand springs back, the bow arm held out	M2M_ANIMATED			5/30
+Climb Ladder	3.625	true		climb	climbs a ladder hand over hand, in place	M2M_ANIMATED			7/39
+Climb Wall	2.083	true		climb	climbs a sheer wall, reaching high hand over hand and stepping up, in place	M2M_ANIMATED			7/37
+Confused	2.917	false		emote gesture	scratches the head and looks about, puzzled	M2M_ANIMATED			6/42
+Consume Item	4.167	false		item eat	brings an item up to the mouth with both hands and eats, then lowers it	M2M_ANIMATED			6/42
+Crawl	1.708	true		crawl stealth	crawls on the belly, reaching ahead with alternate arms, in place	M2M_ANIMATED			9/55
+Crawl RM	1.708	true		crawl stealth root-motion	crawls on the belly, reaching ahead with alternate arms (travels)	M2M_ANIMATED			9/55
+Dance Body Roll	6.5	false		emote dance	a long dance: body rolls, arm waves and a dip, 6.5 seconds	M2M_ANIMATED			7/43
+Dance Charleston	2.333	true		emote dance	the Charleston: the knees swing in and out, the hands cross over them	M2M_ANIMATED			9/42
+Dance Reach Hip	2.542	false		emote dance	a dance: hip pops, then one arm reaching high and pointing out	M2M_ANIMATED			11/60
+Death_A	4.5	false		death	clutches the chest, staggers and sinks down onto the side, and lies still	M2M_ANIMATED			8/75
+Death_B	1.875	false		death	thrown back off the feet into the air and lands flat on the ground	M2M_ANIMATED			8/37
+Death_C	2.208	false		death	falls straight back, rolls over and lies spread out	M2M_ANIMATED			8/48
+Defend	0.958	true		block stance unarmed	crouched behind raised forearms, guarding the head	M2M_ANIMATED			7/28
+Dizzy	2.417	true		hurt idle	sways in place, unsteady, the head lolling	M2M_ANIMATED			10/47
+Dodge_back	1	false		dodge	hops back a step out of the way of a blow, in place	M2M_ANIMATED			8/35
+Dodge_back_RM	1	false		dodge root-motion	hops back a step out of the way of a blow (travels)	M2M_ANIMATED			8/35
+Dodge_left	0.833	false		dodge	throws the body to the left in a low lunge and recovers, in place	M2M_ANIMATED			8/45
+Dodge_left_RM	0.833	false		dodge root-motion	throws the body to the left in a low lunge and recovers (travels)	M2M_ANIMATED			8/45
+Dodge_right	0.833	false		dodge	throws the body to the right in a low lunge and recovers, in place	M2M_ANIMATED			8/45
+Dodge_right_RM	0.833	false		dodge root-motion	throws the body to the right in a low lunge and recovers (travels)	M2M_ANIMATED			8/45
+Fighting Idle	1.708	true		unarmed stance idle	a boxer's stance: fists up, bouncing lightly	M2M_ANIMATED			10/36
+Fighting Left Jab	0.917	false		unarmed attack	from the fighting stance, swings the left fist out wide and back to guard	M2M_ANIMATED			7/54
+Fighting Right Jab	0.917	false		unarmed attack	from the fighting stance, a straight right punch and back to guard	M2M_ANIMATED			7/39
+Flying Forward	0.5	true		fly air	flying forward, body level, arms at the sides, legs trailing	M2M_ANIMATED			10/25
+Flying Forward Super	0.5	true		fly air	flying forward like a superhero, both arms stretched ahead	M2M_ANIMATED			10/26
+Glide	0.792	true		fly air	gliding: the body leaning forward, both arms raised overhead in a V	M2M_ANIMATED			5/28
+Greeting	4.833	false		emote gesture talk	lays the right hand on the chest and bows the head in greeting	M2M_ANIMATED			6/42
+Head Nod	0.875	false		emote gesture	nods the head yes, standing	M2M_ANIMATED			5/25
+Idle Hurt	1.667	true		idle hurt	stands hunched, holding the side, hurt	M2M_ANIMATED			7/29
+Idle Listening	1.708	true		idle talk	weight on one leg, a hand on the hip, head cocked: listening	M2M_ANIMATED			4/28
+Idle_Subtle	2.583	true		idle	standing still, breathing gently	M2M_ANIMATED			6/34
+Jump_2	1.625	false		jump	crouches and jumps with the arms flung forward, then lands, in place	M2M_ANIMATED			9/37
+Jump_2_RM	1.625	false		jump root-motion	crouches and jumps up and forward with the arms flung forward, then lands (travels)	M2M_ANIMATED			10/45
+Jumping Jacks	1.25	true		emote exercise	jumping jacks: the arms and legs scissor out and in	M2M_ANIMATED			8/51
+Kneeling Tired	0.833	true		rest hurt	down on one knee, leaning on it, worn out	M2M_ANIMATED			12/27
+Ladder_Idle	2.5	true		climb idle	holds on to a ladder, hands and feet on the rungs	M2M_ANIMATED			8/40
+Land_Three_Point	1.375	false		jump air	drops from above into a crouched three-point landing, one hand on the ground	M2M_ANIMATED			9/47
+Ledge Hang	1.917	true		climb idle	hangs from a ledge by both hands, legs dangling	M2M_ANIMATED			7/28
+Levitate Entrance	2	false		magic air	rises into a floating pose: knees drawn up, one arm out	M2M_ANIMATED			9/36
+Levitate Idle	2	true		magic air idle	floats in the air, knees drawn up, bobbing gently	M2M_ANIMATED			12/41
+Meditate	1.5	true		sit rest idle	sits cross-legged, hands on the knees, breathing slowly	M2M_ANIMATED			9/54
+Pipe Climb	1.875	true		climb	shins up a pole or pipe, hands and knees gripping, in place	M2M_ANIMATED			8/40
+Power Up	0.75	true		magic stance	crouched, fists clenched, gathering power and shaking with effort	M2M_ANIMATED			11/52
+Pushup	1.542	true		emote exercise	push-ups: the body held straight, arms bending and pressing up	M2M_ANIMATED			7/42
+Reject	3.792	false		emote gesture	crosses both forearms in front of the chest and turns the head away: no	M2M_ANIMATED			5/36
+Rest Pose	0.417	false		reference	Mesh2Motion's rest pose, arms out: the pose its clips are measured from	M2M_ANIMATED			4/27
+Run Jump	1.25	false		jump air run	a running leap held in the air: legs split, arms back (travels)	M2M_ANIMATED			9/34
+Run_Anime	0.75	true		run root-motion	an anime ninja run: body pitched forward, arms trailing straight back (travels)	M2M_ANIMATED			6/31
+Run_Female	0.833	true		run	a light run with swinging arms, in place	M2M_ANIMATED			6/32
+Run_Stealth	0.542	true		run crouch stealth root-motion	a quick crouched sneaking run (travels)	M2M_ANIMATED			7/35
+Shivering	0.25	true		idle emote	hunched with the arms hugged in, shivering with cold	M2M_ANIMATED			7/29
+Sleeping	1.667	true		rest lie idle	lies on the back asleep, the chest rising and falling	M2M_ANIMATED			6/32
+Strafe_left	1	true		walk strafe	sidesteps to the left while facing forward, in place	M2M_ANIMATED			6/46
+Strafe_right	1	true		walk strafe	sidesteps to the right while facing forward, in place	M2M_ANIMATED			6/45
+Sword_Attack_Air_Vertical	4.833	false		sword attack jump air	leaps and chops down with a two-handed overhead swing, landing crouched	M2M_ANIMATED			5/32
+Throw Object	1.875	false		throw attack	winds up and hurls an object, dropping into a deep lunge	M2M_ANIMATED			8/32
+Tired Hunched	1.042	true		rest hurt	crouched low and doubled over, exhausted, catching breath	M2M_ANIMATED			6/28
+Two-hand Blast	0.458	false		magic attack	crouched forward, thrusts both hands out to cast a blast	M2M_ANIMATED			8/28
+Victory	1.667	false		emote cheer	jumps up with a fist raised in triumph and lands	M2M_ANIMATED			7/33
+Victory Fist Pump	2.25	false		emote cheer gesture	pumps a fist down at the side in triumph	M2M_ANIMATED			7/32
+Walk_Backwards	1	true		walk	walks backward, in place	M2M_ANIMATED			7/41
+Walk_Female	1.375	true		walk	a swaying walk, the hips moving, in place	M2M_ANIMATED			8/35
+Walk_Large	1.417	true		walk	a heavy, lumbering walk, the arms held out from the body (a big character), in place	M2M_ANIMATED			9/40
+Walk_Stealth	1.5	true		walk crouch stealth	a crouched sneaking walk, knees wide, arms tucked, in place	M2M_ANIMATED			8/33
+Zombie Yell	3.708	false		zombie emote	hunched, rears up and roars with the arms raised, then slumps	M2M_ANIMATED			10/43
+Zombie_Idle_Crouch	2.958	true		zombie idle crouch	crouched low and swaying: a zombie at rest	M2M_ANIMATED			14/45
+Zombie_Rise	3.375	false		zombie getup	rises from the ground: lying, sits up stiffly and gets up hunched	M2M_ANIMATED			7/49
+Zombie_Walk_2	2.917	true		zombie walk	a lurching zombie walk, deeply hunched, in place	M2M_ANIMATED			9/47
+Cheer_One_arm	2.167	false		emote cheer	cheers with one fist raised high	M2M_MOCOPI			7/54
+Cheering_Two_Hands	1.583	false		emote cheer	cheers with both arms raised overhead, waving	M2M_MOCOPI			10/46
+Fishing_Cast	2.95	false		fish work prop	swings a fishing rod back over the shoulder and casts it forward	M2M_MOCOPI			9/50
+Fishing_Catch	2.05	false		fish work prop	jerks the rod up to hook a fish and pulls it in	M2M_MOCOPI			12/146
+Fishing_Reel	1.45	true		fish work prop	holds the rod out and turns the reel	M2M_MOCOPI			8/46
+Golf_Drive	3.1	false		sport prop	addresses the ball and swings a golf club through	M2M_MOCOPI			8/44
+Golf_idle	1.833	true		sport prop idle	stands over a golf ball, the club held low, shifting weight	M2M_MOCOPI			12/65
+Help_One_Arm	2.667	false		emote gesture	waves one arm overhead for attention: help	M2M_MOCOPI			7/32
+Help_Two_Arms	1.583	false		emote gesture	waves both arms overhead for attention	M2M_MOCOPI			8/51
+Insult	2.783	false		emote gesture	an insulting gesture, jabbing an arm forward at someone	M2M_MOCOPI			8/42
+Kick_Breach	1.833	false		attack unarmed kick interact	kicks a door in with a front kick, then steps back	M2M_MOCOPI			9/56
+Salute	4.383	false		emote gesture	stands at attention, salutes and lowers the hand	M2M_MOCOPI			9/50
 Turn_Left_180	2.117	false		walk turn	turns around to the left on the spot, stepping	M2M_MOCOPI			12/42
-Turn_Left_90	2	false		walk turn	turns a quarter to the left on the spot	M2M_MOCOPI			13/80
-Turn_Right_180	1.483	false		walk turn	turns around to the right on the spot, stepping	M2M_MOCOPI			12/79
-Turn_Right_90	2	false		walk turn	turns a quarter to the right on the spot	M2M_MOCOPI			10/62
+Turn_Left_90	2	false		walk turn	turns a quarter to the left on the spot	M2M_MOCOPI			10/39
+Turn_Right_180	1.483	false		walk turn	turns around to the right on the spot, stepping	M2M_MOCOPI			9/38
+Turn_Right_90	2	false		walk turn	turns a quarter to the right on the spot	M2M_MOCOPI			8/34

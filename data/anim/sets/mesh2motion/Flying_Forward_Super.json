@@ -1,10 +1,10 @@
-{"clip": "Flying Forward Super", "src": "M2M_ANIMATED", "dur": 0.5, "loop": true, "tags": ["fly","air"], "desc": "flying forward like a superhero, both arms stretched ahead", "keys": [
+{"clip": "Flying Forward Super", "src": "M2M_ANIMATED", "dur": 0.5, "loop": true, "tags": ["fly","air"], "desc": "flying forward like a superhero, both arms stretched ahead", "fps": 24, "via": "source", "contacts": [{"part":"handL","from":0,"to":0.5},{"part":"handR","from":0,"to":0.5}], "keys": [
   {"t":0,
    "hips":[-3,0,140], "body":[108,80,-108], "chest":[-1,-10,0], "head":[1,-20,6],
-   "shL":[-4,1], "shR":[-4,1], "armL":[10,-9,99,37,-45], "armR":[15,-9,99,35,36],
-   "legL":[2,0,-100,28,7], "legR":[5,-3,-100,28,12], "footL":[58,3,0], "footR":[58,-10,0]},
+   "shL":[-4,1], "shR":[-4,1], "armL":[4,-3,100,0,-50], "armR":[13,-2,99,5,50], "handL":[5,13,-79], "handR":[-4,15,-90], "gripL":88, "gripR":90,
+   "legL":[2,0,-100,26,7], "legR":[5,-3,-100,25,12], "footL":[58,3,0], "footR":[58,-10,0], "rollL":2, "rollR":-4},
   {"t":0.5,
    "hips":[-3,0,140], "body":[108,80,-108], "chest":[-1,-10,0], "head":[1,-20,6],
-   "shL":[-4,1], "shR":[-4,1], "armL":[10,-9,99,37,-45], "armR":[15,-9,99,35,36],
-   "legL":[2,0,-100,28,7], "legR":[5,-3,-100,28,12], "footL":[58,3,0], "footR":[58,-10,0]}
+   "shL":[-4,1], "shR":[-4,1], "armL":[4,-3,100,0,-50], "armR":[13,-2,99,5,50], "handL":[5,13,-79], "handR":[-4,15,-90], "gripL":88, "gripR":90,
+   "legL":[2,0,-100,26,7], "legR":[5,-3,-100,25,12], "footL":[58,3,0], "footR":[58,-10,0], "rollL":2, "rollR":-4}
 ]}

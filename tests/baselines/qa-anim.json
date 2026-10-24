@@ -62,8 +62,8 @@
   {
     "id": "action:dizzy",
     "metric": "footSlide",
-    "value": 0.2003,
-    "reason": "Mesh2Motion's Dizzy: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; tightened after G9: the retargeter moves it a little"
+    "value": 0.1762,
+    "reason": "Mesh2Motion's Dizzy: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; tightened after G9: the retargeter moves it a little; tightened after WP 8.8 re-imported its Mesh2Motion clip in format 2 (its feet rolled and legs bent as captured): 0.2003 → 0.1762"
   },
   {
     "id": "action:getUp",
@@ -98,8 +98,8 @@
   {
     "id": "action:landHeavy",
     "metric": "footSlide",
-    "value": 0.4825,
-    "reason": "Mesh2Motion's Land_Three_Point: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; 0.3 mm more after G9, the retargeter's knee pole and source-relative lift (retarget.ts)"
+    "value": 0.4366,
+    "reason": "Mesh2Motion's Land_Three_Point: a format-1 library clip on the clip layer (WP 8.4) plants its feet only inside format-2 contacts, which Mesh2Motion's and Quaternius' clips lack until WP 8.8 re-imports them, so the feet slide as captured and as the clip fades in over the body and out; 0.3 mm more after G9, the retargeter's knee pole and source-relative lift (retarget.ts); tightened after WP 8.8 re-imported its Mesh2Motion clip in format 2 (its feet rolled and legs bent as captured): 0.4825 → 0.4366"
   },
   {
     "id": "action:rise",

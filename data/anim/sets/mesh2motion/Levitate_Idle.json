@@ -1,14 +1,14 @@
-{"clip": "Levitate Idle", "src": "M2M_ANIMATED", "dur": 2, "loop": true, "tags": ["magic","air","idle"], "desc": "floats in the air, knees drawn up, bobbing gently", "keys": [
+{"clip": "Levitate Idle", "src": "M2M_ANIMATED", "dur": 2, "loop": true, "tags": ["magic","air","idle"], "desc": "floats in the air, knees drawn up, bobbing gently", "fps": 24, "via": "source", "contacts": [{"part":"footR","from":0,"to":2},{"part":"handL","from":0,"to":2}], "keys": [
   {"t":0,
    "hips":[-5,0,134], "body":[10,0,0], "chest":[-2,-2,-1], "head":[0,17,0],
-   "shL":[0,0], "shR":[0,0], "armL":[3,15,-99,56,-20], "armR":[8,3,-100,51,33],
-   "legL":[-8,-2,-100,72,9], "legR":[-5,-2,-100,48,13], "footL":[59,-39,-1], "footR":[59,-59,-1]},
+   "shL":[0,0], "shR":[0,0], "armL":[4,14,-99,48,-20], "armR":[4,8,-100,31,35], "handL":[-19,-1,-44], "handR":[-6,17,-44], "gripL":90, "gripR":89,
+   "legL":[-8,-2,-100,73,9], "legR":[-5,-2,-100,49,13], "footL":[59,-39,0], "footR":[59,-59,0], "rollL":44, "rollR":44},
   {"t":1,
    "hips":[-5,0,126], "body":[10,0,0], "chest":[-2,-2,-1], "head":[0,17,0],
-   "shL":[0,0], "shR":[0,0], "armL":[-5,13,-99,50,-7], "armR":[2,4,-100,51,18],
-   "legL":[-8,-2,-100,57,2], "legR":[-8,-1,-100,32,23], "footL":[51,-155,-22], "footR":[58,-153,-8]},
+   "shL":[0,0], "shR":[0,0], "armL":[-6,16,-99,35,-4], "armR":[-1,11,-99,28,13], "handL":[-9,5,-29], "handR":[1,17,-21], "gripL":89, "gripR":88,
+   "legL":[-8,-2,-100,57,2], "legR":[-8,-1,-100,33,23], "footL":[51,-155,-50], "footR":[58,-153,-50], "rollL":-19, "rollR":-42},
   {"t":2,
    "hips":[-5,0,134], "body":[10,0,0], "chest":[-2,-2,-1], "head":[0,17,0],
-   "shL":[0,0], "shR":[0,0], "armL":[3,15,-99,56,-20], "armR":[8,3,-100,51,33],
-   "legL":[-8,-2,-100,72,9], "legR":[-5,-2,-100,48,13], "footL":[59,-39,-1], "footR":[59,-59,-1]}
+   "shL":[0,0], "shR":[0,0], "armL":[4,14,-99,48,-20], "armR":[4,8,-100,31,35], "handL":[-19,-1,-44], "handR":[-6,17,-44], "gripL":90, "gripR":89,
+   "legL":[-8,-2,-100,73,9], "legR":[-5,-2,-100,49,13], "footL":[59,-39,0], "footR":[59,-59,0], "rollL":44, "rollR":44}
 ]}
