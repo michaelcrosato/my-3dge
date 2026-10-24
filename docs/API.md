@@ -8486,6 +8486,7 @@ For the agents who maintain the engine.
 
 ### [`tests/e2e/fixtures.ts`](../tests/e2e/fixtures.ts)
 
+- `CHROMIUM_NO_ADAPTER` (const): Chromium's own warning when `navigator.gpu.requestAdapter()` finds no adapter.
 - `decodePng` (re-export): (undocumented)
 - `expect` (re-export): Playwright's `expect`, re-exported so a suite imports everything from this file.
 - `Frame` (interface): A frame read from the page: decoded RGBA pixels plus the PNG.

@@ -1951,7 +1951,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## tests/e2e
 
 - [`fixtures.ts`](../tests/e2e/fixtures.ts): The shared e2e fixture (PLAN.md §8.8): every suite imports `test` and `expect` from here.
-  - Exports: `decodePng`, `expect`, `Frame`, `Harness`, `test`, `WebGPUProof`
+  - Exports: `CHROMIUM_NO_ADAPTER`, `decodePng`, `expect`, `Frame`, `Harness`, `test`, `WebGPUProof`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts)
 - [`parity-stages.ts`](../tests/e2e/parity-stages.ts): The box's stages for the CPU-only gameplay contract (tests/e2e/parity.spec.ts, PLAN.md §6.7, I-07): each stage's scene, the component its gameplay entities hold, its replays (read from tests/replays/), the ones swept through every camera and with the GPU features off, whether it plays through the looks, and the live play recorded in its page.
   - Exports: `replay`, `Stage`, `STAGES`

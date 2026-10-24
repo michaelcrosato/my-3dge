@@ -13,7 +13,7 @@ import { chromium, type Page } from '@playwright/test';
 import { chromiumPath, preparePage, VIEWPORT, type GpuLog } from '../../tools/lib/browser';
 import { frameMetrics } from '../../tools/cmd/shot';
 import { findUnlisted, loadAllowList } from '../setup/adviceTrap';
-import { expect, test, type Harness } from './fixtures';
+import { CHROMIUM_NO_ADAPTER, expect, test, type Harness } from './fixtures';
 
 const PAGE = 'labs/hello/';
 
@@ -182,8 +182,10 @@ test('the startup test: without the WebGPU flags the page reports GFX_NO_WEBGPU 
     expect(await watch.errors()).toEqual([]);
     // The page prints one line, the coded error in the advice trap's form (read here on purpose). Chromium itself
     // says WebGPU is missing in lines without a source URL ("WebGPU is experimental on this platform", "Failed to
-    // create WebGPU Context Provider"), and Vite's client logs its connection: neither is the page's doing.
-    const pageLines = watch.console.filter((line) => line.url && !line.url.endsWith('/@vite/client'));
+    // create WebGPU Context Provider") and in its no-adapter warning, and Vite's client logs its connection: none is
+    // the page's doing.
+    const theirs = (line: { url?: string; text: string }) => line.url?.endsWith('/@vite/client') || line.text === CHROMIUM_NO_ADAPTER; // prettier-ignore
+    const pageLines = watch.console.filter((line) => line.url && !theirs(line));
     expect(pageLines.map(({ type, text }) => ({ type, text }))).toEqual([
       { type: 'error', text: `[GFX_NO_WEBGPU] ${error.message}. Fix: ${error.fix}` },
     ]);
