@@ -247,15 +247,22 @@ export function createOutline(options: OutlineOptions = {}): Outline {
     },
     batch(batch) {
       const shells: InstancedMesh[] = [];
+      /** Each page's bounding box as the last sync saw it: engine/gfx/instancing.ts drops it when the page changes. */
+      const seen: (InstancedMesh['boundingBox'] | undefined)[] = [];
       const registered = new Set<{ dispose(): void }>();
       const group = {
         shells,
         sync() {
           batch.pages.forEach((page, i) => {
-            shells[i] ??= asShell(shellOf(page, material), page);
-            if (shells[i].parent !== batch.root) batch.root.add(shells[i]);
-            shells[i].count = page.count;
-            shells[i].visible = page.visible;
+            const shell = (shells[i] ??= asShell(shellOf(page, material), page));
+            if (shell.parent !== batch.root) batch.root.add(shell);
+            // The shell shares the page's instances, so its bounds go stale with the page's: drop them too, or a
+            // stage's bounds (the gallery's framing) would hold props long gone.
+            if (page.boundingBox === null || page.boundingBox !== seen[i])
+              shell.boundingBox = shell.boundingSphere = null;
+            seen[i] = page.boundingBox;
+            shell.count = page.count;
+            shell.visible = page.visible;
           });
         },
         register(warmup: Pick<Warmup, 'register'>, id = `outline:${batch.name}`) {

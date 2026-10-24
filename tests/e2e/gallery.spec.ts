@@ -15,6 +15,9 @@ import type { Page } from '@playwright/test';
 import { emptyFrames, SIZE, type Filmed } from '../../tools/cmd/gallery';
 import { expect, test } from './fixtures';
 
+/** How long the gallery's page may take to be ready: it registers and warms up every lab's entries. */
+const READY_MS = 120_000;
+
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, unknown>;
 
@@ -100,7 +103,7 @@ test.describe('the gallery', () => {
     test(`renders every ${kind} with a gallery field, each frame showing it`, async ({ page, harness }) => {
       test.setTimeout(15 * 60_000);
       await page.goto(`tests/pages/gallery.html#gallery/${kind}`);
-      await harness.ready();
+      await harness.ready({ timeout: READY_MS }); // every lab's entries, warmed up: about 24 s on 4 cores at G12
       const kinds = await call<{ kind: string; count: number }[]>(page, 'gallery.list');
       expect(kinds.map((k) => k.kind)).toEqual(KINDS);
       const ids = await call<string[]>(page, 'gallery.list', kind);

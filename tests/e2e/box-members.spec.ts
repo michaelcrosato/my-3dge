@@ -56,6 +56,7 @@ test.describe('the box’s inspector', () => {
       out['camera.set'] = e.camera.set('cam=topdown').code;
       out['camera.advance'] = e.camera.advance(2).code;
       out['scene.dump'] = e.scene.dump({ filter: 'pillar' }).includes('level:room/pillar InstancedMesh');
+      out['fx.stats'] = Object.keys(e.fx.stats()).sort();
       out.pause = e.pause();
       out.resume = e.resume();
       out.timeScale = e.timeScale(1);
@@ -116,6 +117,7 @@ test.describe('the box’s inspector', () => {
       'camera.set': 'cam=topdown',
       'camera.advance': 'cam=topdown',
       'scene.dump': true,
+      'fx.stats': ['decals', 'drawCalls', 'events', 'gpuParticles', 'particles', 'ribbons', 'skipped', 'sprites'],
       pause: undefined,
       resume: undefined,
       timeScale: 1,
@@ -147,7 +149,9 @@ test.describe('the box’s inspector', () => {
       'tune.profile': true,
       render: true,
       stats: { frames: true, drawCalls: true, after: 0 },
-      shot: 18, // the room's 11 drawables and its effects' 7 (five sprite pages, the decals' page, the ribbons)
+      // the room's 11 drawables, its effects' 7 (five sprite pages, the decals' page, the ribbons) and the shots' 2
+      // (the tracers' page and the holes', engine/gfx/weapons.ts, WP 13.20)
+      shot: 20,
       replay: GOLDEN['600'],
       seed: 9,
     });

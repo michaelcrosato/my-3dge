@@ -2273,6 +2273,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
   - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts), [`tools/lib/browser.test.ts`](../tools/lib/browser.test.ts)
+- [`ciShards.ts`](../tools/lib/ciShards.ts): How the full run splits T2 over its machines (ADR-0023 amendment 3): by minutes, not by count.
+  - Exports: `E2eReport`, `E2eSuite`, `minutesFromReports`, `minutesOf`, `planShards`, `readT2Minutes`, `SPEC_DIR`, `specFiles`, `T2_MINUTES`, `T2Minutes`, `UNMEASURED_MINUTES`, `writeMinutes`
+  - Tests: [`tools/lib/ciShards.test.ts`](../tools/lib/ciShards.test.ts)
 - [`ciStatus.ts`](../tools/lib/ciStatus.ts): Where main's full run stands (ADR-0023): `x ci --status` reads the GitHub workflow's runs on main (.github/workflows/ci.yml, which runs `node x ci --local --full` after each merge) through GitHub's REST API, with curl, which honours the environment's proxy, and no token: the repository is public.
   - Exports: `mainStatus`, `readRuns`, `repoSlug`, `RunsReader`, `WORKFLOW`, `WorkflowRun`
   - Tests: [`tools/lib/ciStatus.test.ts`](../tools/lib/ciStatus.test.ts)

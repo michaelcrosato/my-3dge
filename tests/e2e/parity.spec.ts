@@ -31,7 +31,8 @@
  * newest first (at G5, in file order, Box 4's began 4 minutes into T2 and ended it); and Box 4 sweeps each replay
  * once: each draws a crowd for 720–780 steps, both give their goldens drawn in test 1 and `x replay --browser page`,
  * and the chase, the costlier to draw (74 s in the page against the hop's 32 s at G5), is swept by test 2 alone.
- * Test 1 plays one replay a test (gate G7's review: Box 4's two in one test passed its 240 s at a load of 70–95).
+ * Test 1 plays one replay a test (gate G7's review: Box 4's two in one test passed its 240 s at a load of 70–95), and
+ * so does the camera sweep (Box 5's two took 215 s at G10 and passed 240 s at G12 on GitHub's runners).
  */
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
@@ -204,23 +205,23 @@ for (const { stage, scene, component, replays, swept, looks, live } of [...STAGE
       });
     }
 
-    test('switching every camera preset and resolution mode during a replay leaves its hashes unchanged', async ({
-      page,
-      harness,
-    }) => {
-      playing(sweep.cameras);
-      await open(page, harness, `?scene=${scene}`);
-      const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
-      const every = Math.floor(560 / CAMERA_PRESETS.length);
-      CAMERA_PRESETS.forEach((cam, i) => views.push([10 + i * every, { cam }]));
-      RESOLUTION_MODES.forEach((mode, i) => views.push([25 + i * 170, { set: { 'gfx.resolution': mode } }]));
-      for (const { name, text } of sweep.cameras) {
+    for (const { name, text } of sweep.cameras) {
+      test(`switching every camera preset and resolution mode during ${name} leaves its hashes unchanged`, async ({
+        page,
+        harness,
+      }) => {
+        playing([{ name }]);
+        await open(page, harness, `?scene=${scene}`);
+        const views: [number, { cam?: string; set?: Record<string, unknown> }][] = [];
+        const every = Math.floor(560 / CAMERA_PRESETS.length);
+        CAMERA_PRESETS.forEach((cam, i) => views.push([10 + i * every, { cam }]));
+        RESOLUTION_MODES.forEach((mode, i) => views.push([25 + i * 170, { set: { 'gfx.resolution': mode } }]));
         const run = await play(page, text, { views });
         expect(run.hashes, name).toEqual(goldens(text));
-      }
-      const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
-      expect(advice).not.toContain('GFX_COLD_PIPELINE');
-    });
+        const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+        expect(advice).not.toContain('GFX_COLD_PIPELINE');
+      });
+    }
 
     if (looks) {
       test('switching to a look of each material style during a replay leaves its hashes unchanged', async ({

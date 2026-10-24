@@ -6,23 +6,28 @@
  * each pass's queries carry its frame's id (`info.frame`: r182's loop sets it each animation frame, engine/gfx/
  * pipelines.ts `advanceFrame` before each frame the engine draws); `resolveTimestampsAsync(type)` reads every pass
  * queried since the last read and gives the milliseconds of the latest frame's, or, when none was queried, the last
- * read's again; and it keeps each pass's time in its pools' `timestamps`, never pruned.
+ * read's again; it keeps each pass's time in its pools' `timestamps`, never pruned; a pool holds 2,048 queries and
+ * warns past them; and a pass is queried only while its backend's `trackTimestamp` is true, which it reads as the pass
+ * begins and as a read starts, the read emptying the pools before it returns.
  *
  * `createGpuTiming(renderer, on)` reads after each drawn frame (`afterFrame()`) when no read is in flight, a type only
  * when it ran since (its `info` calls grew), so each read gives one frame's time: its passes', render and compute. It
  * keeps the last `GPU_WINDOW` of them; `gpuMs()` is their mean: null before the first, undefined when the feature is
- * off (the stats leave `gpuMs` out; `GFX_NO_TIMESTAMPS` said why when the renderer started). After each read it
- * empties the pools' `timestamps`, which would otherwise grow by every pass of every frame. Passes outside the frames
- * (a warm-up's, a shot's) must not count as a frame's: `taint()` discards the next read, and `drain()` starts one,
- * discarded, so a run of shots never fills a pool (r182 holds 2,048 queries a type and warns past them).
+ * off (the stats leave `gpuMs` out; `GFX_NO_TIMESTAMPS` said why when the renderer started). While a read is in flight
+ * the renderer queries nothing (`trackTimestamp` false), so frames drawn meanwhile never fill a pool, however many:
+ * the virtual clock's `tick(n)` draws n frames in one task, before any read can come back. After each read it empties
+ * the pools' `timestamps`, which would otherwise grow by every pass of every frame. Passes outside the frames (a
+ * warm-up's, a shot's) must not count as a frame's: `taint()` discards the next read, and `drain()` starts one,
+ * discarded, so a run of shots never fills a pool.
  *
- * Invariants: presentation only, never read by the sim; reads never overlap; a page that draws with the renderer
- * outside `frame()` calls `afterFrame()` itself (labs/hello does). The platform's SwiftShader adapter has timestamp
- * queries, but its times are a CPU's emulating a GPU (§4.7): a measure to compare runs, not hardware.
+ * Invariants: presentation only, never read by the sim; reads never overlap, and none is in flight while the renderer
+ * queries; a page that draws with the renderer outside `frame()` calls `afterFrame()` itself (labs/hello does). The
+ * platform's SwiftShader adapter has timestamp queries, but its times are a CPU's emulating a GPU (§4.7): a measure to
+ * compare runs, not hardware.
  *
  * @example
- * // browser: a page's renderer (tests/e2e/timing.spec.ts runs it)
- * const timing = createGpuTiming(renderer, gfx.features.on.includes('feature:timestamps'));
+ * // browser: it needs a page's renderer (tests/e2e/timing.spec.ts runs it)
+ * // const timing = createGpuTiming(renderer, gfx.features.on.includes('feature:timestamps'));
  * // after each drawn frame: timing.afterFrame(); then timing.gpuMs(); // 0.84: the last frames' mean, ms
  * @see engine/gfx/enhanced/timing.test.ts
  * @see tests/e2e/timing.spec.ts
@@ -62,6 +67,11 @@ function prune(renderer: TimedRenderer): void {
     if (pool?.timestamps instanceof Map) pool.timestamps.clear();
 }
 
+/** Turns r182's queries on or off for the passes that begin from now (see the file comment). */
+function track(renderer: TimedRenderer, on: boolean): void {
+  (renderer.backend as { trackTimestamp: boolean }).trackTimestamp = on;
+}
+
 /** Makes a renderer's GPU timing, measuring when `on` (see the file comment). */
 export function createGpuTiming(renderer: TimedRenderer, on: boolean, window = GPU_WINDOW): GpuTiming {
   const samples: number[] = [];
@@ -74,7 +84,9 @@ export function createGpuTiming(renderer: TimedRenderer, on: boolean, window = G
     for (const type of ran) seen[type] = renderer.info[type].calls;
     const drop = discard || !keep;
     [reading, discard] = [true, false];
-    void Promise.all(ran.map((type) => renderer.resolveTimestampsAsync(type)))
+    const reads = ran.map((type) => renderer.resolveTimestampsAsync(type)); // each has emptied its pool
+    track(renderer, false); // till it is back: the frames drawn meanwhile query nothing
+    void Promise.all(reads)
       .then((times) => {
         const ms = times.reduce<number>((sum, time) => sum + (time ?? 0), 0);
         if (!drop && Number.isFinite(ms) && samples.push(ms) > window) samples.shift();
@@ -82,6 +94,7 @@ export function createGpuTiming(renderer: TimedRenderer, on: boolean, window = G
       .catch(() => undefined) // a lost device: the stats keep their last samples
       .finally(() => {
         prune(renderer);
+        track(renderer, true);
         reading = false;
       });
   };

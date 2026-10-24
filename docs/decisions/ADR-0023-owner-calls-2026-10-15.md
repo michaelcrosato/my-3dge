@@ -36,7 +36,8 @@ names it. The leaks between suites that C1's full runs found are still found, an
 before it.
 
 ## Enforced by
-tools/cmd/ci.ts (`CI_STEPS`' `full`, `FULL_ONLY`, `--status`, `--shard`), tools/lib/tierBudgets.ts
+tools/cmd/ci.ts (`CI_STEPS`' `full`, `FULL_ONLY`, `--status`, `--shard`, `--minutes`), tools/lib/ciShards.ts and
+tests/baselines/t2-minutes.json, tools/lib/tierBudgets.ts
 (`GATE_BUDGET_MS`), tools/lib/ciStatus.ts, .github/workflows/ci.yml and tools/cmd/ci-workflow.test.ts,
 tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop, merging, gates).
 
@@ -52,3 +53,28 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    what `x engine --test` found too late: every file a game gets imports only files a game gets
    (tools/game/imports.test.ts). Alternative not taken: a longer limit (up to 360 minutes), simpler, but main's
    verdict would come two and a half hours after each merge and grow with T2.
+2. **2026-10-24: what main's first run in shards found** (my calls). The full run on d1d707b (#29) took T2 to its
+   end for the first time since G10, on Chromium 141, and failed in all four on faults from G11 and G12 that no
+   full run had reached; each is fixed where it lies, every bar kept: tiled lighting dropped a lamp of unlimited
+   range (WP 11.5); the outline shells kept their pages' stale bounds (WP 13.24); GPU timing let three.js's query
+   pool fill, since the virtual clock's `tick(n)` draws n frames in one task, before a read can come back, so the
+   renderer now queries nothing while a read is out (WP 11.2; tests/e2e/timing.spec.ts draws such a burst). Specs
+   had fallen behind the engine: the box room's shot counts the shots' two batches (WP 13.20), and its inspector
+   check calls `fx.stats` (WP 11.3); the materials cards, rows of ten, left the frame at 19 materials (now rows of
+   seven, each window checked in the frame), and glass's 2 m bands never fit a card's window (its card maps 2.4 m of
+   texture, so the 85% check holds it); materials-v2's shell measure lists the page's own shells, which the ID pass
+   leaves out; the playground's accent count (WP 13.2's) dropped the pixel look's third step of the accent, a middle
+   band at value 0.48–0.52 under its 0.55 floor, now 0.45, below that step and above both looks' dark bands and ink
+   as measured. Two waits were too short on GitHub's runners: the gallery's pages get 120 s to be ready, and the
+   camera sweep runs one replay a test, as test 1 does (Box 5's two passed 240 s).
+3. **2026-10-24: the shards dealt by minutes** (my call). Amendment 1's `--shard` balanced test counts, and the
+   playground's three heaviest spec files, next to each other by name, all fell to the fourth job: 90 minutes of T2
+   there against 7 on the second, 45 on the first (plus its 14.5 minutes of other steps) and 55 on the third, on
+   d1d707b; G12's and G13's specs would have pushed it past the 120. Now `x ci --local --full --shard <i>/<n>` runs the
+   spec files tools/lib/ciShards.ts deals to machine i: longest first, each to the machine with the fewest minutes so
+   far, the first starting with the other steps', by tests/baselines/t2-minutes.json (each spec file's minutes on
+   GitHub's runner, measured on d1d707b; a file it does not list weighs 5 until measured). On those numbers each job
+   runs about 53 minutes. `node x ci --minutes <report.json…>` rewrites the table from a full run's `out-<i>`
+   artifacts, and T1 fails when the table names a gone spec file or its plan puts any job past 100 minutes, which
+   asks for a fifth shard. Alternatives not taken: more count-balanced shards, or Playwright's `fullyParallel` to
+   split files by test: both still balance counts, blind to minutes, so heavy files can still meet on one job.
