@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the light pool (engine/gfx/lights.ts): the torch kind as carried, the hall's 30 light
  * sources, the flicker's numbers, the ranking and fade, and a pool that hands its fixed lights from torch to torch
- * as the focus crosses the hall, the casters always on the most important ones.
+ * as the focus crosses the hall, the casters always on the most important ones; the frame's lamps lit with their own
+ * colour and reach, ranked with the sources (WP 13.23).
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -137,5 +138,30 @@ describe('createLightPool', () => {
     expect(slots[0].intensity).toBeCloseTo(30 * 0.9, 9);
     pool.scale = 0;
     expect(pool.update([0, 1, 0], 0).every((slot) => slot.intensity === 0)).toBe(true);
+  });
+
+  it("lights the frame's lamps with their own colour and reach, ranked with the sources, a declared kind's priority", () => {
+    const registry = createRegistry();
+    defineLights(registry);
+    defineLight('light:porch', { priority: 4 }, registry);
+    const pool = createLightPool({ size: 8, registry });
+    pool.setSources([torch(0, 0), torch(4, 0)]);
+    const lamp = (x: number, tag: string) => ({ tag, position: [x, 2, 0] as const, color: '#ffe2b0', intensity: 8, distance: 7, decay: 1 }); // prettier-ignore
+    // The porch's lamp, 12 m off but of priority 4, ranks as if 3 m away: after the room's lamp 1.4 m off.
+    const slots = pool.update([0, 1, 0], 0, [lamp(1, 'lamp'), lamp(12, 'porch')]);
+    expect(slots.map((slot) => slot.source)).toEqual([0, 2, 3, 1, -1, -1, -1, -1]);
+    expect([slots[1].light, slots[1].intensity, slots[2].light]).toEqual(['light:lamp', 8, 'light:porch']);
+    const light = pool.lights[1];
+    expect([light.position.toArray(), `#${light.color.getHexString()}`, light.distance, light.decay]).toEqual([[1, 2, 0], '#ffe2b0', 7, 1]); // prettier-ignore
+    pool.scale = 0;
+    expect(pool.update([0, 1, 0], 0, [lamp(1, 'lamp')]).every((slot) => slot.intensity === 0)).toBe(true);
+  });
+
+  it("lights a lamp standing on a level's spot of its kind once, as that spot: a brazier on its torch", () => {
+    const pool = createLightPool({ size: 8 });
+    pool.setSources([torch(0, 0), torch(4, 0)]);
+    const brazier = { tag: 'torch', position: [4, 1, 0.01] as const, color: '#ffc8a0', intensity: 27, distance: 10.625, decay: 0.5 }; // prettier-ignore
+    const lantern = { ...brazier, position: [8, 1, 0] as const };
+    expect(pool.update([0, 1, 0], 0, [brazier, lantern]).map((slot) => slot.source)).toEqual([0, 1, 2, -1, -1, -1, -1, -1]); // prettier-ignore
   });
 });

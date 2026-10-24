@@ -3,7 +3,9 @@
  * before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts)
  * reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts):
  * - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the
- *   quality tier's shadow budget (engine/gfx/quality.ts);
+ *   quality tier's shadow budget (engine/gfx/quality.ts), its dome as the look's gradient asks (`skyGradient`);
+ * - **its shells:** the outline shells round the stage's props and bodies, as the look's `shells` ask (WP 13.24,
+ *   engine/gfx/stageShells.ts);
  * - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the
  *   warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles
  *   the drawn meshes in the set's own style and in each style a look has asked for; and while it is joined, meshes
@@ -51,7 +53,7 @@ export interface PageLook {
   /** Whether the style set has joined the warm-up. */
   readonly styled: boolean;
   /** Brings `stage` to the look before `view` is drawn, warmed up or shot; returns `view`. */
-  sync<V extends FrameView | { scene: FrameView['scene'] }>(stage: Pick<Stage, 'scene' | 'sky'>, view: V): V;
+  sync<V extends FrameView | { scene: FrameView['scene'] }>(stage: Pick<Stage, 'scene' | 'sky' | 'shells'>, view: V): V;
 }
 
 /** Makes a page's look (see the file comment). */
@@ -67,6 +69,8 @@ export function createPageLook(options: PageLookOptions): PageLook {
       const look = post.look;
       stage.sky.show(look.sky);
       stage.sky.budget(options.quality());
+      stage.sky.sky?.gradient(look.skyGradient);
+      stage.shells.set(look.shells);
       if (look.style && look.style !== own && !joined?.styles.includes(look.style)) {
         if (joined) joined.add(look.style);
         else joined = styles.attach(warmup, stage.scene, [own, look.style]);

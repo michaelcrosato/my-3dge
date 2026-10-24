@@ -6,13 +6,16 @@
  * looks writes uniforms and re-points materials to styles the warm-up has already compiled, so it builds no
  * pipeline. A look's sky is shown by the pages `createEngine` starts (engine/app/look.ts): the stage's lights give way
  * to it (engine/gfx/stageSky.ts), which changes the shader key, so a look with another sky warms up before it draws.
+ * WP 13.24 adds the toon style's `shade` and `dither`, what a look asks of the stage (`shells`, outline shells round
+ * its props and bodies, engine/gfx/stageShells.ts; `skyGradient`, the dome as a clean gradient) and its variant for
+ * perspective cameras (`perspective`, a look id whose filters and toon numbers the chain draws there).
  *
  * The entries are seeded from shardfall's tuned presets (`shardfall:crates/pav_view/src/looks.toml`, with
  * `look.rs:100-353`), keys renamed: its whole looks are here (`look:hd-2d`, `look:game-boy`…), and its one-section
  * presets are looks of their own, grouped by the filter they set (`look:palette/game-boy`, `look:stylize/oil-paint`,
- * engine/gfx/post/presets.ts). Its "objects" (characters and objects) is the scope `characters+objects`. Left out:
- * the haze, light shafts, halos and bounce light (its `air` section, the `gi` preset and the looks Sunbeams and
- * Lamplit fog), which arrive with WP 11.5; styles that differ by part and the knobs WP 7.2's styles lack
+ * engine/gfx/post/presets.ts). Its "objects" (characters and objects) is the scope `characters+objects`. Its air and
+ * bounce light came with WP 11.5 (the `air` and `gi` sections, engine/gfx/post/shading.ts): the looks Sunbeams and
+ * Lamplit fog, and their presets. Left out: styles that differ by part and the knobs WP 7.2's styles lack
  * (`flat_shadow`, `specular`, `exposure`), so four looks keep the scene's style where shardfall styled the parts
  * apart. One rename for the lesson: "64 colours" posterized to 4 levels, which shifts the hue of dull colours, so it
  * is `look:palette/512-colours`, at 8.
@@ -26,7 +29,7 @@
  * const registry = createRegistry();
  * defineLooks(registry);
  * registry.get('look', 'look:game-boy').filters.palette.palette; // 'gameboy'
- * registry.list('look').length; // 86
+ * registry.list('look').length; // 98
  * @see engine/gfx/post/looks.test.ts
  * @see tests/e2e/post.spec.ts
  */
@@ -68,11 +71,54 @@ export const LOOK_FIELDS = {
   toon: {
     type: 'object',
     default: { ...TOON_LOOK },
-    description: "The toon style's bands and rim, used when the style is 'toon'.",
+    description: "The toon style's bands, rim, shade and dither, used when the style is 'toon'.",
     properties: {
       bands: { type: 'integer', default: TOON_LOOK.bands, minimum: 2, maximum: 8, description: 'Bands of light.' },
       rim: { type: 'number', default: TOON_LOOK.rim, minimum: 0, maximum: 1, description: "The rim light's strength." },
+      shade: {
+        type: 'number',
+        default: TOON_LOOK.shade,
+        minimum: 0,
+        maximum: 1,
+        description: "How far each material's shadows shift in hue (cooler, more saturated) from its colour darkened.",
+      },
+      dither: {
+        type: 'number',
+        default: TOON_LOOK.dither,
+        minimum: 0,
+        maximum: 1,
+        description:
+          "The share of each band's step mixed by an ordered dither fixed to the world, edges hard; 0 smooths.",
+      },
     },
+  },
+  shells: {
+    type: 'object',
+    default: { width: 0, color: '#141018' },
+    description: 'Outline shells round the props and bodies (engine/gfx/stageShells.ts), drawn in front of the sky.',
+    properties: {
+      width: {
+        type: 'number',
+        default: 0,
+        minimum: 0,
+        maximum: 4,
+        description: 'Their width in pixels at 270 lines, scaled to the picture in whole pixels; 0 draws none.',
+      },
+      color: { type: 'string', default: '#141018', description: "The shells' colour, hex." },
+    },
+  },
+  skyGradient: {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    maximum: 1,
+    description: "How much of the sky's dome is a clean gradient, horizon haze to zenith, instead of daylight's model.",
+  },
+  perspective: {
+    type: 'string',
+    default: '',
+    description:
+      "The look drawn instead while the camera is a perspective one (its variant: same style and sky); '' keeps this.",
   },
   filters: {
     type: 'object',
@@ -87,8 +133,9 @@ export const LOOK_FIELDS = {
 export type LookEntry = Entry<typeof LOOK_FIELDS>;
 
 /** What `defineLook` takes: any of the fields, the filters as part of a chain. */
-export type LookSpec = Partial<Omit<EntryOf<typeof LOOK_FIELDS>, 'filters' | 'toon'>> & {
+export type LookSpec = Partial<Omit<EntryOf<typeof LOOK_FIELDS>, 'filters' | 'toon' | 'shells'>> & {
   toon?: Partial<LookEntry['toon']>;
+  shells?: Partial<LookEntry['shells']>;
   filters?: FilterSpec;
 };
 
@@ -231,6 +278,20 @@ export const LOOKS: Record<string, LookSpec> = {
       outline: { scope: 'characters+objects', width: 2, darken: 0.1 },
     },
   },
+  'look:sunbeams': {
+    description: 'Dusty air, sunlight streaming through the gaps, a soft glow.',
+    filters: {
+      air: { scope: 'all', haze: 0.7, height: 6, shafts: 2.4, forward: 0.6, halos: 0.3 },
+      bloom: { scope: 'all', strength: 0.6, threshold: 1 },
+    },
+  },
+  'look:lamplit-fog': {
+    description: 'A foggy night where every lamp glows in the air.',
+    filters: {
+      air: { scope: 'all', haze: 0.9, height: 3, shafts: 0.4, forward: 0.3, halos: 1.8 },
+      grade: { scope: 'all', temperature: -0.25, brightness: 0.9 },
+    },
+  },
 };
 
 /** The levels a look sets that break the posterize rule, and an outline colour that is none, as problems. */
@@ -240,6 +301,7 @@ function checkLook(entry: LookEntry): string[] {
     levelsProblem(pixel.levels, 'filters.pixel.levels'),
     levelsProblem(palette.levels, 'filters.palette.levels'),
     colorProblem(outline.color, 'filters.outline.color'),
+    entry.shells.color ? colorProblem(entry.shells.color, 'shells.color') : 'shells.color is empty: give hex',
   ].filter((problem): problem is string => problem !== null);
 }
 

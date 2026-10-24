@@ -3,13 +3,14 @@
  * (engine/gfx/puppets/grammar.ts), worn on `build:adult` (engine/anim/builds.ts): a jacket with darker upper sleeves
  * and collar, cargo trousers with knee pads and a belt, boots with dark soles, gloves, short hair and a face, and a
  * small pack on the back. Every garment has two tones, so the cel look's bands and the pixel look's palette both read
- * it, and one accent (`accent`: the yoke and its shoulder caps, the pack's top flap and the cuffs) marks the player
- * from every camera: the caps and the flap face up, so the isometric and top-down cameras, which draw the player 11 to
- * 15 px tall, still show it (tests/e2e/playground.spec.ts counts it in every camera of both looks).
+ * it, and one accent (`accent`: the yoke and its shoulder caps and the pack's top flap; the cuffs, `cuff`, in its
+ * colour) marks the player from every camera: the caps and the flap face up, so the isometric and top-down cameras,
+ * which draw the player 11 to 15 px tall, still show it (tests/e2e/playground.spec.ts counts it in every camera of both
+ * looks).
  *
  * Sizes are an adult's at 1.80 m: limbs in multiples of the body's `limbRadius`, the torso of its `torsoRadius`, the
  * head of the skeleton's head radius. Its slots are what the neighbours vary by seed (docs/PLAYGROUND.md §7.4): the
- * skin, the hair, the jacket's two tones, the trousers', the boots' and the accent.
+ * skin, the hair, the jacket's two tones, the trousers', the boots', the accent and the cuffs.
  *
  * Invariants: data only; every slot it names is in `slots` and every slot in `slots` is worn; parts written for the
  * left side are in `mirror`. The page registers it (labs/playground/main.ts); the sim names it by id only.
@@ -35,6 +36,7 @@ export const PLAYER_BODY: BodySpec = {
     jacket: '#2f6672',
     jacketDark: '#1d3f48',
     accent: '#ff7f2a',
+    cuff: '#ff7f2a',
     pants: '#41444d',
     pantsDark: '#2a2c32',
     boot: '#4d3424',
@@ -72,11 +74,11 @@ export const PLAYER_BODY: BodySpec = {
     ['limb', ['lerp', 'shinL', 'footL', 0.66], 'footL', [1.12, 'limb'], [1.04, 'limb'], 'boot'],
     ['limb', 'footL', 'toeL', [1.02, 'limb'], [0.86, 'limb'], 'boot'],
     ['box', ['off', 'footL', [-0.6, 'limb'], 0, -0.06], ['off', 'toeL', [0.9, 'limb'], 0, -0.045], [2.0, 'limb'], 0.02, 'sole', { on: 'footL' }], // prettier-ignore
-    // the arms: the yoke's shoulder caps, the sleeves, dark above the elbow, the accent cuffs, gloves
+    // the arms: the yoke's shoulder caps, the sleeves, dark above the elbow, the cuffs in the accent, gloves
     ['ball', 'upperArmL', [[1.9, 'limb'], [1.15, 'limb'], [1.8, 'limb']], 'accent', { on: 'chest' }], // prettier-ignore
     ['limb', 'upperArmL', 'forearmL', [1.24, 'limb'], [1.06, 'limb'], 'jacketDark'],
     ['limb', 'forearmL', ['lerp', 'forearmL', 'handL', 0.82], [1.06, 'limb'], [0.98, 'limb'], 'jacket'],
-    ['limb', ['lerp', 'forearmL', 'handL', 0.82], ['lerp', 'forearmL', 'handL', 0.95], [1.04, 'limb'], [1.04, 'limb'], 'accent'], // prettier-ignore
+    ['limb', ['lerp', 'forearmL', 'handL', 0.82], ['lerp', 'forearmL', 'handL', 0.95], [1.04, 'limb'], [1.04, 'limb'], 'cuff'], // prettier-ignore
     ['limb', ['lerp', 'forearmL', 'handL', 0.95], 'handL', [0.9, 'limb'], [0.86, 'limb'], 'glove'],
     ['ball', 'weaponL', [0.9, 'limb'], 'glove'],
     ['eye', 'eyeL', [0.11, 'head'], 'eye'],

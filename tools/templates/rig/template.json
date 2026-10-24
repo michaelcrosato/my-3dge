@@ -1,0 +1,11 @@
+{
+  "describe": "A procedural rig: a creature made of the blocks of engine/anim/proc (it starts as a small four-legged walker: a planted gait on two diagonals, two-bone legs, a body bobbing on a spring, a wagging tail, a looking head) and its rig spec, with a unit test that passes it through rigCheck and walks it on its diagonals (PLAN.md WP 10.1).",
+  "id": "the module's path, labs/<lab>/rigs/<name> (its rig's id is rig:<name>; `node x qa anim` drives the fixture rigs, a game's own test drives its own): labs/box/rigs/crab",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/rigs|tools/templates/rig)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/rig/sampleRig",
+  "files": {
+    "rig.ts.tmpl": "{{id}}.ts",
+    "rig.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"]
+}

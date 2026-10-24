@@ -65,7 +65,13 @@ function harness(size = { width: 1280, height: 720 }) {
     setPixelRatio: (ratio: number) => calls.push(['ratio', ratio]),
     setSize: (width: number, height: number, style: boolean) => calls.push(['size', width, height, style]),
   } as unknown as WebGPURenderer;
-  const canvas = { clientWidth: size.width, clientHeight: size.height, style: { imageRendering: '' } };
+  const style = {
+    imageRendering: '',
+    transform: '',
+    vars: {} as Record<string, string>,
+    setProperty: (name: string, value: string) => void (style.vars[name] = value),
+  };
+  const canvas = { clientWidth: size.width, clientHeight: size.height, style };
   return { calls, renderer, canvas: canvas as unknown as HTMLCanvasElement & typeof canvas };
 }
 
@@ -95,6 +101,19 @@ describe('createResolution', () => {
     canvas.clientHeight = 360;
     expect(resolution.update()).toBe(true);
     expect(resolution.current).toMatchObject({ mode: 'full', width: 1280, height: 720, pixelRatio: 2 });
+  });
+
+  it("glides the picture by fractions of a drawn pixel, and gives the page one drawn pixel's CSS size", () => {
+    const { renderer, canvas } = harness();
+    const resolution = createResolution({ renderer, canvas, settings: createSettings(), pixelRatio: () => 1 });
+    resolution.update(); // 1280 × 720 CSS drawn at 427 × 240: 3 CSS px a pixel
+    expect(canvas.style.vars['--my3dge-pixel']).toBe(`${1280 / 427}px`);
+    expect(resolution.offset).toEqual([0, 0]);
+    resolution.shift(0.25, -0.5);
+    expect(resolution.offset).toEqual([0.25, -0.5]);
+    expect(canvas.style.transform).toBe(`translate(${0.25 * (1280 / 427)}px, ${-0.5 * (1280 / 427)}px)`);
+    resolution.shift(0, 0);
+    expect(canvas.style.transform).toBe('');
   });
 
   it('reads gfx.resolution, a view setting kept out of the hash', () => {

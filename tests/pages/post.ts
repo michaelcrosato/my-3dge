@@ -26,8 +26,8 @@
  *   their own tags back;
  * - `withoutStyles(id)` draws look `id` through a chain of its own made without a style set, then disposes it;
  * - `slide(fractions, snap)` shoots the pixel filter with the camera moved across by each fraction of a block;
- * - `measureAa()` shoots the frame unsmoothed, with FXAA and with SMAA (each a chain of its own) and drawn plainly at
- *   4 × 4 the size, for the comparison that chose the edge smoothing.
+ * - `measureAa()` shoots the frame unsmoothed, with FXAA, SMAA and TRAA (each a chain of its own) and drawn plainly
+ *   at 4 × 4 the size, for the comparison that chose the edge smoothing.
  *
  * Invariants: `ready` turns true once the warm-up and the first frame are done, never after an error; frames are
  * drawn only when the page is called; the session's state is only stepped by `run`.
@@ -309,13 +309,15 @@ async function start(): Promise<void> {
       const out: Record<string, ShotJson> = {};
       out.none = await page.shoot();
       settings.set('post.filters', { aa: { scope: 'all' } });
-      for (const kind of ['fxaa', 'smaa'] as const) {
+      for (const kind of ['fxaa', 'smaa', 'traa'] as const) {
         const chain = kind === post.aa ? post : createPost(gfx, { settings, styles, aa: kind });
         const attached = chain === post ? null : chain.attach(gfx.warmup);
         // SMAA reads the picture in its own passes too, so its chain sets bloom up twice in its first frame: a
         // second warm-up builds what the second set-up asks for.
         if (attached) for (const _ of [1, 2]) await gfx.warmup.run(viewNow(chain));
-        await settle(chain);
+        // TRAA gathers its samples over frames, r182's blending 5% of each new one into what it holds: 64 of a still
+        // picture before it is shot leave the first, unsmoothed one 4% of it.
+        for (let k = 0; k < (kind === 'traa' ? 64 : 1); k++) await settle(chain);
         out[kind] = shotForJson(await shot(gfx, viewNow(chain), { ids: false, pixels: true, metrics: false, thumbnail: false })); // prettier-ignore
         attached?.dispose();
         if (chain !== post) chain.dispose();

@@ -38,8 +38,8 @@ describe('a filter chain', () => {
     expect(isPlain(chainOf()), 'every filter off').toBe(true);
     expect(isPlain(chainOf({ grade: { saturation: 0 }, pixel: { size: 8 } })), 'numbers, scopes off').toBe(true);
     for (const name of FILTER_NAMES) {
-      const scope = name === 'bloom' || name === 'aa' || name === 'screen' ? 'all' : 'environment';
-      expect(isPlain(chainOf({ [name]: { scope } })), name).toBe(false);
+      const scoped = (FILTER_FIELDS[name].properties.scope.enum as readonly string[]).includes('environment');
+      expect(isPlain(chainOf({ [name]: { scope: scoped ? 'environment' : 'all' } })), name).toBe(false);
     }
   });
 

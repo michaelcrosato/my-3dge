@@ -19,9 +19,13 @@
  * the batch's origin. The offset is solved in view space, parallel to the picture, so it is `width` pixels of the
  * target drawn into (`screenSize`) at any depth and in either projection.
  *
+ * A skinned mesh's shell (WP 13.24) is a skinned mesh bound to its skeleton; its push skins the geometry's vertex and
+ * normal through r182's `SkinningNode`, read off the vertex stage's stack as the instance's matrix is, so the line
+ * follows the posed body. With `lines`, `width` is pixels at that many lines, scaled to the target's height in whole
+ * pixels (at least 1): the stage's shells keep their weight at any resolution (engine/gfx/stageShells.ts).
+ *
  * Invariants: `width` and `color` are uniforms (changing them builds nothing); shells cast and receive no shadows,
- * have no fog and carry `userData.outline`; a skinned mesh gets no shell (`GFX_OUTLINE_TARGET`), since the push
- * reads the vertex before skinning.
+ * have no fog and carry `userData.outline`, so the ID pass leaves them out (engine/gfx/idpass.ts).
  *
  * @example
  * const outline = createOutline({ color: '#1a1420', width: 2, mode: 'centre' });
@@ -39,6 +43,7 @@ import {
   int,
   max,
   modelViewMatrix,
+  round,
   modelWorldMatrixInverse,
   normalGeometry,
   positionGeometry,
@@ -56,6 +61,8 @@ import {
   InstanceNode,
   MeshBasicNodeMaterial,
   Mesh,
+  SkinnedMesh,
+  SkinningNode,
   type Node,
   type NodeBuilder,
   type Object3D,
@@ -73,8 +80,8 @@ export const OUTLINE_CODES = defineCodes('gfx', {
   },
   GFX_OUTLINE_TARGET: {
     template: 'outline shells cannot outline {object}: {problem}',
-    fix: 'give shells to meshes and instanced batches; outline a skinned mesh with the edge outline filter (WP 7.4) instead',
-    doc: "Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh, or a skinned mesh: the shell's push reads the vertex before skinning.",
+    fix: 'give shells to meshes (skinned ones too) and instanced batches; outline anything else with the edge outline filter (WP 7.4)',
+    doc: 'Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh.',
   },
 });
 
@@ -90,8 +97,10 @@ export interface OutlineOptions {
   color?: string;
   /** The line's width in pixels of the target drawn into (1 by default). */
   width?: number;
-  /** 'normal' (default) for round parts, 'centre' for boxes. */
+  /** 'normal' (default) for round parts and skinned bodies, 'centre' for boxes. */
   mode?: OutlineMode;
+  /** The lines `width` is given at: scaled to the target's height in whole pixels, at least 1 (0, default: none). */
+  lines?: number;
   /** Where advice goes (the shared log by default). */
   log?: Log;
 }
@@ -143,6 +152,13 @@ function instanceMatrixOf(builder: NodeBuilder, log: Log): Node | null {
   return null;
 }
 
+/** The skinning of the skinned mesh `builder` draws, read off the vertex stage's stack (see the file comment). */
+function skinningOf(builder: NodeBuilder): SkinningNode | null {
+  if (!(builder.object as Object3D & { isSkinnedMesh?: boolean }).isSkinnedMesh) return null;
+  const stack = (builder as unknown as { context: { vertex?: VertexStack } }).context.vertex;
+  return stack?.nodes?.find((entry): entry is SkinningNode => entry instanceof SkinningNode) ?? null;
+}
+
 /** `v` taken back through the linear part of `matrix` (columns a, b, c): (b×c·v, c×a·v, a×b·v) / det. */
 function unturn(matrix: Node, v: Node): Node {
   const [a, b, c] = [0, 1, 2].map((i) => matrix.element(int(i)).xyz);
@@ -155,16 +171,20 @@ function unturn(matrix: Node, v: Node): Node {
  * `positionNode` returns by the instance afterwards (its `InstanceNode` assigns after the material's position), so for
  * an instanced mesh the push returns the geometry's vertex plus the offset taken back through the instance's turn.
  */
-function pushNode(mode: OutlineMode, width: Node, log: Log): Node {
+function pushNode(mode: OutlineMode, width: Node, lines: number, log: Log): Node {
   return Fn((builder: NodeBuilder) => {
     const matrix = instanceMatrixOf(builder, log);
+    const skin = matrix ? null : skinningOf(builder);
     const away = mode === 'centre' ? positionGeometry : normalGeometry;
-    const place = matrix ? matrix.mul(vec4(positionGeometry, 1)).xyz : positionGeometry;
+    const skinned = skin ? skin.getSkinnedPosition(skin.boneMatricesNode, positionGeometry) : null;
+    const place = matrix ? matrix.mul(vec4(positionGeometry, 1)).xyz : (skinned ?? positionGeometry);
     const direction = matrix
       ? mode === 'centre'
         ? matrix.mul(vec4(away, 0)).xyz
         : transformNormal(away, matrix)
-      : away;
+      : skin
+        ? skin.getSkinnedNormal(skin.boneMatricesNode, normalGeometry)
+        : away;
     const view = modelViewMatrix.mul(vec4(place, 1));
     const clip = cameraProjectionMatrix.mul(view);
     const towards = cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(direction, 0)));
@@ -172,14 +192,15 @@ function pushNode(mode: OutlineMode, width: Node, log: Log): Node {
     const screen = towards.xy.mul(clip.w).sub(clip.xy.mul(towards.w)).mul(screenSize);
     const length = screen.length();
     const unit = screen.div(max(length, 1e-9)).mul(step(1e-9, length));
-    const ndc = unit.mul(width).mul(2).div(screenSize);
+    const pixels = lines > 0 ? max(round(width.mul(screenSize.y).div(lines)), 1) : width;
+    const ndc = unit.mul(pixels).mul(2).div(screenSize);
     const offset = vec3(
       ndc.x.mul(clip.w).div(cameraProjectionMatrix.element(int(0)).x),
       ndc.y.mul(clip.w).div(cameraProjectionMatrix.element(int(1)).y),
       float(0),
     );
     const local = modelWorldMatrixInverse.mul(cameraWorldMatrix.mul(vec4(offset, 0))).xyz;
-    return positionGeometry.add(matrix ? unturn(matrix, local) : local);
+    return (skinned ?? positionGeometry).add(matrix ? unturn(matrix, local) : local);
   })() as unknown as Node;
 }
 
@@ -190,7 +211,7 @@ export function createOutline(options: OutlineOptions = {}): Outline {
   const width = uniform(options.width ?? 1);
   const material = new MeshBasicNodeMaterial({ color: options.color ?? '#141018', side: BackSide, fog: false });
   material.name = `outline:${mode}`;
-  material.positionNode = pushNode(mode, width, log);
+  material.positionNode = pushNode(mode, width, options.lines ?? 0, log);
 
   /** Marks `shell` as `of`'s outline, drawn without shadows. */
   const asShell = <T extends Object3D>(shell: T, of: Object3D): T => {
@@ -215,11 +236,12 @@ export function createOutline(options: OutlineOptions = {}): Outline {
       const target = mesh as Mesh & { isMesh?: boolean; isSkinnedMesh?: boolean; isInstancedMesh?: boolean };
       const object = target?.name || target?.type || String(target);
       if (!target?.isMesh) throw codeError('GFX_OUTLINE_TARGET', { object, problem: 'it is not a mesh' });
-      if (target.isSkinnedMesh) throw codeError('GFX_OUTLINE_TARGET', { object, problem: 'it is skinned' });
       const shell = target.isInstancedMesh
         ? shellOf(target as unknown as InstancedMesh, material)
-        : asShell(new Mesh(target.geometry, material), target);
-      if (target.isInstancedMesh) asShell(shell, target);
+        : target.isSkinnedMesh
+          ? skinnedShellOf(target as unknown as SkinnedMesh, material)
+          : new Mesh(target.geometry, material);
+      asShell(shell, target);
       target.add(shell);
       return shell;
     },
@@ -261,6 +283,15 @@ export function createOutline(options: OutlineOptions = {}): Outline {
     },
   };
   return outline;
+}
+
+/** A shell for a skinned mesh: its geometry, bound to its skeleton as it is bound, so it follows every pose. */
+function skinnedShellOf(body: SkinnedMesh, material: MeshBasicNodeMaterial): SkinnedMesh {
+  const shell = new SkinnedMesh(body.geometry, material);
+  shell.bindMode = body.bindMode;
+  shell.bind(body.skeleton, body.bindMatrix);
+  shell.frustumCulled = body.frustumCulled;
+  return shell;
 }
 
 /** A shell for an instanced mesh: its geometry and its instance matrices (shared, not copied), no instance colours. */

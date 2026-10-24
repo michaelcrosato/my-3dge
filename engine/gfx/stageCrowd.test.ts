@@ -63,7 +63,7 @@ function fakeWarmup() {
   };
 }
 
-const ROW = [{ rig: 'humanoid' }, { rig: 'blob', look: 'horns', size: 0.375 }, { rig: 'floater' }] as const;
+const ROW = [{ rig: 'humanoid' }, { rig: 'blob', look: 'horns', size: 0.375 }, { rig: 'floater' }, { rig: 'quadruped' }] as const; // prettier-ignore
 
 describe('crowd bodies on the stage', () => {
   it('makes no crowd until the first crowd body, then one under the scene, each look prepared once', () => {
@@ -84,16 +84,17 @@ describe('crowd bodies on the stage', () => {
     const crowd = createStageCrowd({ scene: new Scene(), materials: createMaterialLibrary() });
     const row = bodies(ROW);
     crowd.capture(row, 1 / 60);
-    expect(crowd.draw(1, camera())).toBe(3);
+    expect(crowd.draw(1, camera())).toBe(4);
     const stats = crowd.crowd!.stats();
-    expect(stats.bodies).toBe(3);
-    expect(stats.lod.bands[0]).toBe(3); // all within 15 m: full detail
+    expect(stats.bodies).toBe(4);
+    expect(stats.lod.bands[0]).toBe(4); // all within 15 m: full detail
+    expect(stats.instances['crowd/rigs/cone']).toBe(4); // the blob's horns and the dog's ears
     const behind = camera();
     behind.position.set(1.5, 2, -6);
     behind.lookAt(1.5, 0.8, -20);
     behind.updateMatrixWorld(true);
     expect(crowd.draw(1, behind)).toBe(0);
-    expect(crowd.crowd!.stats().lod.outside).toBe(3);
+    expect(crowd.crowd!.stats().lod.outside).toBe(4);
   });
 
   it('never writes the components it draws', () => {
@@ -128,9 +129,9 @@ describe('crowd bodies on the stage', () => {
     const row = bodies(ROW);
     stage.capture(row, 1 / 60);
     expect(stage.standIns.size).toBe(0);
-    expect(stage.crowd.draw(1, camera())).toBe(3);
+    expect(stage.crowd.draw(1, camera())).toBe(4);
     stage.capture(row.slice(1), 1 / 60);
-    expect(stage.crowd.draw(1, camera())).toBe(2);
+    expect(stage.crowd.draw(1, camera())).toBe(3);
     stage.dispose();
   });
 });

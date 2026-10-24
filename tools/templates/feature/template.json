@@ -1,0 +1,13 @@
+{
+  "describe": "A rendering technique behind its feature (PLAN.md WP 11.1, ADR-0025 amendment 30): its feature entry and the advice code the registry raises while it is off, with a unit test that reads both through the registry; engine/gfx/features.ts registers it and hands the technique out only while it is on.",
+  "id": "the module's path, engine/gfx/enhanced/<name> (its feature is feature:<name>, its advice GFX_NO_<NAME>): engine/gfx/enhanced/softShadows",
+  "pattern": "^(engine/gfx/enhanced|tools/templates/feature)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/feature/sampleFeature",
+  "files": {
+    "feature.ts.tmpl": "{{id}}.ts",
+    "feature.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "replace the placeholder text; add {{NAME}}_FEATURE to TECHNIQUES in engine/gfx/features.ts, with a gate that hands the technique out only while it is on; measure its cost (node x perf <lab> --feature feature:{{name}}); then node x docs --write",
+  "games": "a game defines no feature: it reads which are on (__engine.info().features) and turns one off with the view setting gfx.featuresOff"
+}

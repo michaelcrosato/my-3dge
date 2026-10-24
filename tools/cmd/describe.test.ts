@@ -3,9 +3,10 @@
  * their calls (comments, strings, declarations, tests, `defineCodes`, `defineProperty` and `defineConfig` aside), a
  * module that fails to load is a warning, kinds declared in fixture modules are listed by a child process without
  * editing the command (a module's timers and side effects never reach the command; one that never finishes loading
- * is named), the three listings print and write `describe.json`, the engine's actions are listed (tools define them), an entry is found as `kind:name` alone or by its
- * name without the kind's prefix, a listing with a line cut short ends naming `describe.json`, and an unknown kind or
- * id is a usage error naming the closest.
+ * is named), the three listings print and write `describe.json`, the engine's actions are listed (tools define them)
+ * and the labs' own beside them, an entry is found as `kind:name` alone or by its name without the kind's prefix, a
+ * listing with a line cut short ends naming `describe.json`, and an unknown kind or id is a usage error naming the
+ * closest.
  */
 import {
   existsSync,
@@ -198,13 +199,17 @@ defineKind('testShort', { description: 'Short.', fields: { size: { type: 'number
     expect([short.code, short.lines.some((line) => line.includes('cut short'))]).toEqual([0, false]);
   });
 
-  it("lists the engine's actions, which tools define from data/anim/actions/ (the engine cannot import data/)", async () => {
+  it("lists the engine's actions, which tools define from data/anim/actions/ (the engine cannot import data/), and the labs' own", async () => {
     const { code } = await run(ROOT, 'action');
     expect(code).toBe(0);
     const data = JSON.parse(readFileSync(join(ROOT, 'out/describe/action/describe.json'), 'utf8')) as { ids: string[] };
     const files = readdirSync(join(ROOT, 'data/anim/actions')).filter((file) => file.endsWith('.json'));
-    expect(data.ids).toEqual(expect.arrayContaining(['action:backflip', 'action:charge', 'action:deathSpin']));
-    expect(data.ids).toHaveLength(files.length);
+    const fromData = files.map((file) => `action:${file.slice(0, -'.json'.length)}`);
+    expect(data.ids).toEqual(
+      expect.arrayContaining([...fromData, 'action:backflip', 'action:charge', 'action:deathSpin']),
+    );
+    // besides the data's, only what a lab defines in code: the playground's neighbours sit (labs/playground/cast/neighbours.ts)
+    expect(data.ids.filter((id) => !fromData.includes(id))).toEqual(['action:sit']);
   });
 
   it('describes a setting from the schema it was declared with', async () => {

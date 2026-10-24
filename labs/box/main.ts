@@ -63,10 +63,10 @@ const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./
 const sceneEntries = exported({ room: { room }, ...modules }, 'scene');
 const scenes = sceneEntries.map((entry) => entry.id);
 
-/** The box's replays, by name (`box-1-room`), as text loaded on demand. */
+/** The box's replays, by name (`box-1-room`, `ragdoll-falls`), as text loaded on demand. */
 const replays = Object.fromEntries(
   Object.entries(
-    import.meta.glob<string>('../../tests/replays/box-*.replay.json', { query: '?raw', import: 'default' }),
+    import.meta.glob<string>(['../../tests/replays/box-*.replay.json', '../../tests/replays/ragdoll-*.replay.json'], { query: '?raw', import: 'default' }), // prettier-ignore
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
 

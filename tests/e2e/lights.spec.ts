@@ -9,9 +9,15 @@
  *   hall's vault stays dark above its walls, and the daylight dome shows blue above its backdrop.
  * - Switching presets while a replay steps, frames drawn as it goes and the flicker drawn from the world's visual
  *   stream, never changes the hash: the kernel replay gives its goldens.
+ * - The playground's block by the hour (WP 13.23: the scene's clock, engine/sim/lights.ts, and the sky it shows,
+ *   engine/gfx/daylight.ts), from the street at noon, dusk and night in both its looks: neither blank, dark nor blown
+ *   out, night darker than dusk and dusk than noon, building nothing as the hours pass (a shot in each look first, to
+ *   build the shot's own passes); the street's four lamps shine in the light pool at dusk and night and not at noon,
+ *   the moon casts at night through its cascades and the nearest lamp casts too; and its group switched off by hand
+ *   (the scene's dev action `lights`) puts them out.
  *
- * Invariants: the level's and replay's text are read in Node and passed to the page, which fetches nothing; goldens
- * come from the replay file, never from this run.
+ * Invariants: the level's and replay's text are read in Node and passed to the lights page, which fetches nothing;
+ * goldens come from the replay file, never from this run.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -24,6 +30,12 @@ import type { Replay } from '../../engine/sim/replay';
 import { compileLevel } from '../../engine/world/level/compile';
 import type { HashRunOptions, LookOptions, Looked } from '../pages/lights';
 import { expect, test, type Harness } from './fixtures';
+
+/** The page's engine, inside `evaluate` (the playground's page). */
+declare const __engine: Record<string, (...args: unknown[]) => unknown> & {
+  scene: { dump(o: object): string };
+  actions: { run(name: string, args?: unknown): unknown };
+};
 
 /** What the page publishes as `window.__lightsPage` (tests/pages/lights.ts), as far as this suite uses it. */
 interface LightsPage {
@@ -169,4 +181,76 @@ test('switching presets while a replay steps never changes the hash', async ({ p
     [REPLAY, options] as const,
   );
   expect(hashes).toEqual((JSON.parse(REPLAY) as Replay).hashes['linux-x64']);
+});
+
+/** The playground's street (WP 13.23), its four streetlights' heads (where their lamps shine), its looks and hours. */
+const STREET = 'labs/playground/?scene=site-street&cam=iso';
+const STREET_LAMPS = [45, 59, 73, 87].map((x) => [x, 4.35, 85.3] as const);
+const PLAYGROUND_LOOKS = ['look:playground-cel', 'look:playground-pixel'];
+const HOURS = { noon: 12, dusk: 18.75, night: 22 } as const;
+
+/** The pool's lights the page's dump shows shining at a streetlight's head, and the dump's casting lines. */
+async function streetLamps(page: Page): Promise<{ shining: number; casting: string[] }> {
+  const lines = (await page.evaluate(() => __engine.scene.dump({ filter: 'lights:pool/' }) + '\n' + __engine.scene.dump({ filter: 'sky/sun' }))).split('\n'); // prettier-ignore
+  const shining = lines.filter((line) => {
+    const m = / at (-?[\d.]+),(-?[\d.]+),(-?[\d.]+) lit ([\d.]+)/.exec(line);
+    return m && Number(m[4]) > 0 && STREET_LAMPS.some(([x, y, z]) => Math.hypot(Number(m[1]) - x, Number(m[2]) - y, Number(m[3]) - z) < 0.05); // prettier-ignore
+  }).length;
+  return { shining, casting: lines.filter((line) => / shadow/.test(line)).map((line) => line.trim().split(' ')[0]) };
+}
+
+test("the block by the hour: noon, dusk and night in both looks, the street's lamps lit after dusk", async ({
+  page,
+  harness,
+}) => {
+  test.setTimeout(900_000);
+  await page.goto(`${STREET}&post.look=${PLAYGROUND_LOOKS[0]}`);
+  await harness.ready({ timeout: 600_000 });
+  await harness.assertWebGPU();
+  const metrics: Record<string, { lumaMean: number; dark: number; blown: number; notes: string[] }> = {};
+  const lamps: Record<string, { shining: number; casting: string[] }> = {};
+  const built = () => page.evaluate(() => (__engine.stats() as { pipelines: number }).pipelines);
+  const shoot = (look: string) =>
+    page.evaluate(async (l) => {
+      __engine.set('post.look', l);
+      await __engine.render(3);
+      return __engine.shot({ metrics: true, ids: false, thumbnail: false });
+    }, look) as Promise<{ metrics: Parameters<typeof judgeLook>[0] }>;
+  for (const look of PLAYGROUND_LOOKS) await shoot(look); // a shot builds its own passes, once a look
+  const before = await built();
+  for (const [name, hour] of Object.entries(HOURS)) {
+    await page.evaluate((h) => {
+      __engine.pause();
+      __engine.actions.run('daytime', { hour: h });
+      __engine.step(1); // the clock's rule puts the lamps as the hour has them on the step after
+    }, hour);
+    for (const look of PLAYGROUND_LOOKS) {
+      const shot = await shoot(look);
+      const at = `${name} in ${look}`;
+      metrics[at] = { ...shot.metrics, notes: judgeLook(shot.metrics, at).map((note) => note.id) };
+    }
+    lamps[name] = await streetLamps(page);
+    expect([name, await built()]).toEqual([name, before]); // the hours and the looks build nothing
+  }
+  console.log(`the block by the hour: ${JSON.stringify({ metrics, lamps })}`);
+  for (const [at, m] of Object.entries(metrics)) {
+    expect(m.notes, at).not.toContain('LOOK_BLANK');
+    expect(m.dark, at).toBeLessThan(LOOK_LIMITS.dark);
+    expect(m.blown, at).toBeLessThan(LOOK_LIMITS.blown);
+  }
+  for (const look of PLAYGROUND_LOOKS) {
+    const mean = (name: string) => metrics[`${name} in ${look}`].lumaMean;
+    expect([look, mean('night') < mean('dusk'), mean('dusk') < mean('noon')]).toEqual([look, true, true]);
+  }
+  expect(Object.values(lamps).map((l) => l.shining)).toEqual([0, 4, 4]);
+  expect(lamps.night.casting).toContain('sky/sun'); // the moon casts, through its cascades
+  expect(lamps.night.casting.some((name) => name.startsWith('lights:pool/'))).toBe(true); // and the nearest lamp
+  await page.evaluate(async () => {
+    __engine.actions.run('lights', { group: 'street', on: false });
+    await __engine.render(2);
+  });
+  expect((await streetLamps(page)).shining).toBe(0);
+  const advice = await page.evaluate(() => (__engine.advice as unknown as { code: string }[]).map((a) => a.code));
+  expect(advice).not.toContain('GFX_COLD_PIPELINE');
+  expect(harness.advice()).toEqual([]);
 });

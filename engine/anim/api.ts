@@ -325,3 +325,15 @@ export { CLIPS_FIELDS } from './clip/clipsets';
 export type { ClipsData } from './clip/clipsets';
 export { emptyClipState } from './clip/clipsets';
 export { ClipLayerPool } from './clip/clipsets';
+
+// The quadruped rig (WP 13.21): a dog on the planted gait for a crowd body (the rig `quadruped`), its state plain
+// data, its pose the joints its body is drawn on, and its rig contract for the anim QA.
+export { Quadruped } from './quadruped';
+export { QUADRUPED } from './quadruped';
+export { QUADRUPED_LEGS } from './quadruped';
+export { QUADRUPED_RIG } from './quadruped';
+export type { QuadrupedOptions } from './quadruped';
+export type { QuadrupedInput } from './quadruped';
+export type { QuadrupedState } from './quadruped';
+export type { QuadrupedPose } from './quadruped';
+export type { QuadrupedBone } from './quadruped';

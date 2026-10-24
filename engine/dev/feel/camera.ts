@@ -9,7 +9,8 @@
  *   the look's turn, read off the sim's look intents, swings a camera that looks along it, `LOOK_CAMERAS`, round the
  *   player by the turn times its distance from his eye);
  * - `turn`: the most one frame turns the view beyond what the look (for those cameras) and a blend account for (rad);
- * - `inside`: the frames whose camera stands inside the level (a `CAMERA_CHECK.ball` ball overlapping `world`);
+ * - `inside`: the frames whose camera stands inside the level (a `CAMERA_CHECK.ball` ball overlapping `world`'s fixed
+ *   bodies: a door or a lift that moves through the camera is no wall to it, engine/gfx/cameras/collide.ts);
  * - `lost`: the frames whose player (its chest, `CAMERA_CHECK.chest` above the feet) is out of the picture, a frame of
  *   `CAMERA_CHECK.aspect`; in first person, its arms (`TrackFrame.arms`: neither hand in the arms' frame);
  * - `clip`: first person's frames whose arms a wall covers or the near plane cuts where their lens draws them (any of
@@ -148,7 +149,9 @@ export function createCameraTrack(code: string, options: RigOptions = {}) {
       const view = options.look;
       const pose = rig.update({ follow: feet, player, ...(eye ? { eye } : {}), ...(queries ? { queries } : {}), ...(view ? { view } : {}) }, dt); // prettier-ignore
       const ball = { type: 'ball', radius: CAMERA_CHECK.ball } as const;
-      const inside = queries ? queries.overlap(ball, pose.position, { groups: 'world' }).length > 0 : false;
+      const inside = queries
+        ? queries.overlap(ball, pose.position, { groups: 'world', fixed: true }).length > 0
+        : false;
       const first = rig.firstShare() > 0.5;
       const arms = first && options.arms ? options.arms(pose, rig.effects()) : null;
       const inFrame = (hand: Vec3) => inArmsFrame(pose, hand, CAMERA_CHECK.aspect, arms?.fov);

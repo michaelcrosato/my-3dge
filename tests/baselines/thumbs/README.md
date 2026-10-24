@@ -29,3 +29,7 @@ Golden references for how a frame looks, as text instead of images (PLAN.md §8.
 - `materials-v2-toon-bands`, `materials-v2-toon-gradient`: tests/pages/materials-v2.html's comparison scene
   (`compare('bands')`, `compare('gradient')`, 480 × 270), the toon bands and the gradient-map baseline (WP 7.2),
   compared by tests/e2e/materials-v2.spec.ts (`UPDATE_THUMBS=1` records them).
+- `playground-<look>-<camera>` (`cel` and `pixel`, each of `first`, `shoulder`, `follow`, `iso` and `overhead`): the
+  playground's street (labs/playground, scene `site-street`, 484 × 274 with its canvas's margin) at noon, the sim
+  paused, in each of its two looks from each of its five cameras (WP 13.24), compared by
+  tests/e2e/playground-looks.spec.ts (`UPDATE_THUMBS=1` records them).

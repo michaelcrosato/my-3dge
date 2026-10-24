@@ -16,11 +16,11 @@ function looks() {
 }
 
 describe('the look kind', () => {
-  it('holds the clean look, 19 of shardfall’s whole looks and 66 presets', () => {
+  it('holds the clean look, 21 of shardfall’s whole looks and 76 presets', () => {
     const registry = looks();
-    expect(Object.keys(LOOKS)).toHaveLength(20);
-    expect(Object.keys(PRESETS)).toHaveLength(66);
-    expect(registry.list('look')).toHaveLength(86);
+    expect(Object.keys(LOOKS)).toHaveLength(22);
+    expect(Object.keys(PRESETS)).toHaveLength(76);
+    expect(registry.list('look')).toHaveLength(98);
     const clean = registry.get('look', 'look:clean') as LookEntry;
     expect([clean.style, clean.sky]).toEqual(['', '']);
     for (const name of FILTER_NAMES) expect(clean.filters[name].scope, name).toBe('off');
@@ -32,7 +32,7 @@ describe('the look kind', () => {
     expect(hd.filters.bloom).toMatchObject({ scope: 'all', strength: 1, threshold: 0.7 });
     expect(hd.filters.grade).toMatchObject({ scope: 'environment', temperature: 0.25, saturation: 1.2 });
     const cartoon = looks().get('look', 'look:cartoon') as LookEntry;
-    expect([cartoon.style, cartoon.toon]).toEqual(['toon', { bands: 2, rim: 0.4 }]);
+    expect([cartoon.style, cartoon.toon]).toEqual(['toon', { bands: 2, rim: 0.4, shade: 0, dither: 0 }]);
   });
 
   it('turns on in each preset only the filters of its group (grain with chroma), or only the style', () => {

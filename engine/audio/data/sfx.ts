@@ -1,7 +1,7 @@
 /**
  * @file The `sfx` kind (PLAN.md WP 9.2, I-23; doctrines: Assets, Agent-operable): a sound effect as data, rendered
- * into samples by the DSP core (engine/audio/dsp/render.ts). The engine's 33 effects (effects.ts) and 6 drums
- * (drums.ts) are its entries; a game adds its own with `defineSfx`, and `x new sfx` scaffolds one.
+ * into samples by the DSP core (engine/audio/dsp/render.ts). The engine's 33 effects (effects.ts), 6 drums (drums.ts)
+ * and its foley (foley.ts) are its entries; a game adds its own with `defineSfx`, and `x new sfx` scaffolds one.
  *
  * An entry's fields:
  * - `voices`: one voice or a list played together, in the chip synth's words (engine/audio/dsp/voice.ts);
@@ -9,7 +9,10 @@
  *   a big hit is a punch over a boom without copying either; layers nest;
  * - `variants` and `vary`: how many versions the runtime picks between, and how far their pitch spreads either way
  *   (a fraction), so a sound heard a hundred times does not repeat exactly;
- * - `bus`: the mixer bus it plays on (`effects`, `ui` or `ambience`; engine/audio/runtime, WP 9.3).
+ * - `bus`: the mixer bus it plays on (`effects`, `ui` or `ambience`; engine/audio/runtime, WP 9.3);
+ * - `loop`: for an effect played looped (a bed of ambience, the wind), the pass it repeats, s: what sounds past it
+ *   folds over its start (engine/audio/runtime/buffers.ts `foldLoop`, WP 13.22), so a voice fading out past the pass
+ *   crossfades into one fading in at its start and the loop has no seam; 0 loops the whole render as it is.
  *
  * Invariants:
  * - Rendering flattens an entry into one voice list: its voices, then each layer's voices (recursively), each layer
@@ -40,6 +43,7 @@ import { DEFAULT_RATE, render } from '../dsp/render';
 import { normalizeSound, noteFreq, type SoundDef, type Voice } from '../dsp/voice';
 import { DRUMS } from './drums';
 import { EFFECTS } from './effects';
+import { FOLEY } from './foley';
 
 /** The codes the effects raise beyond the DSP's own, with their fixes. */
 export const SFX_CODES = defineCodes('audio', {
@@ -85,6 +89,8 @@ export interface SfxSpec {
   vary?: number;
   /** The mixer bus; `effects` by default. */
   bus?: SfxBus;
+  /** Played looped, the pass it repeats, s (see the file comment); 0 (the whole render) by default. */
+  loop?: number;
 }
 
 /** An `sfx` entry: the spec with its defaults filled, frozen. */
@@ -96,6 +102,7 @@ export interface Sfx {
   readonly variants: number;
   readonly vary: number;
   readonly bus: SfxBus;
+  readonly loop: number;
 }
 
 /** A layer's fields. */
@@ -133,6 +140,14 @@ export const SFX_FIELDS = {
     description: "How far the variants' pitch spreads either way, as a fraction.",
   },
   bus: { type: 'string', enum: SFX_BUSES, default: 'effects', description: 'The mixer bus it plays on.' },
+  loop: {
+    type: 'number',
+    default: 0,
+    minimum: 0,
+    maximum: 60,
+    unit: 's',
+    description: 'The pass a looped play repeats: what sounds past it folds over its start, so the loop has no seam (0: the whole render).', // prettier-ignore
+  },
 } as const satisfies Schema;
 
 /** voice.ts's defaults for the two fields a layer changes on a voice that leaves them out. */
@@ -160,7 +175,7 @@ export function sfxProblems(sfx: { voices?: unknown; layers?: readonly unknown[]
   }
 }
 
-/** Declares the `sfx` kind on `registry` with the engine's effects and drums (once). */
+/** Declares the `sfx` kind on `registry` with the engine's effects, drums and foley (once). */
 export function sfxKind(registry: Registry): void {
   if (registry.kinds().includes('sfx')) return;
   registry.defineKind('sfx', {
@@ -169,7 +184,7 @@ export function sfxKind(registry: Registry): void {
     defineWith: "defineSfx('<id>', { voices: { wave: …, freq: …, to: …, dur: … } })",
     check: (entry) => sfxProblems(entry),
   });
-  for (const [id, spec] of Object.entries({ ...EFFECTS, ...DRUMS })) registry.def('sfx', id, { ...spec });
+  for (const [id, spec] of Object.entries({ ...EFFECTS, ...DRUMS, ...FOLEY })) registry.def('sfx', id, { ...spec });
 }
 sfxKind(sharedRegistry);
 

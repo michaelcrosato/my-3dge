@@ -10,7 +10,8 @@
  * `PANNER` is how every placed sound is panned: HRTF (the best Web Audio offers for headphones), the inverse distance
  * model (gain `refDistance / d` past 1 m, as three.js's `PositionalAudio`), no cone. `OCCLUSION` is how a blocked one
  * sounds: through a lowpass at `cutoff` Hz (Butterworth, so the lows keep their level) and at `gain`, both eased in
- * with a time constant of `ease` seconds.
+ * with a time constant of `ease` seconds; behind more walls (WP 13.22: `wallsBetween` counts them, up to `walls`), the
+ * cutoff an octave lower and the gain `gain` again for each, so a sound two rooms away is fainter and duller.
  *
  * Invariants: `occluded` casts one ray from the listener to the sound against `OCCLUSION.groups` (the level: `world`),
  * stopping `OCCLUSION.margin` short of the sound, so a torch on a wall is not hidden by its own wall; a sound closer
@@ -66,6 +67,8 @@ export const OCCLUSION = Object.freeze({
   ease: 0.06,
   /** How far short of the sound the ray stops, m. */
   margin: 0.3,
+  /** How many walls `wallsBetween` counts: past them, as muffled as it gets. */
+  walls: 3,
   /** The collision groups that block sound: the level. */
   groups: 'world' as const,
 });
@@ -98,6 +101,38 @@ export function placeListener(listener: AudioListener, pose: ListenerPose, time:
 /** Puts `panner` at `position` at `time`. */
 export function placePanner(panner: PannerNode, position: Vec3, time: number): void {
   setParams([panner.positionX, panner.positionY, panner.positionZ], position, time);
+}
+
+/** The lowpass cutoff (Hz) and the gain a sound behind `walls` walls goes through: open at 0 (see the file comment). */
+export function muffling(walls: number, open: number = OCCLUSION.open): { cutoff: number; gain: number } {
+  const n = Math.min(Math.max(Math.round(walls), 0), OCCLUSION.walls);
+  return n === 0 ? { cutoff: open, gain: 1 } : { cutoff: OCCLUSION.cutoff / 2 ** (n - 1), gain: OCCLUSION.gain ** n };
+}
+
+/**
+ * How many walls of the level stand between `from` (the listener) and `to` (the sound), up to `most`: a ray to each
+ * wall, another from inside it to its far side (`solid: false`), on from just past it; stopping `OCCLUSION.margin`
+ * short of the sound, as `occluded` does.
+ */
+export function wallsBetween(queries: QueryView, from: Vec3, to: Vec3, most: number = OCCLUSION.walls): number {
+  const d: Vec3 = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
+  const length = Math.hypot(...d);
+  if (length <= OCCLUSION.margin) return 0;
+  const dir: Vec3 = [d[0] / length, d[1] / length, d[2] / length];
+  const end = length - OCCLUSION.margin;
+  const at = (t: number): Vec3 => [from[0] + dir[0] * t, from[1] + dir[1] * t, from[2] + dir[2] * t];
+  let [t, walls] = [0, 0];
+  while (walls < most) {
+    const hit = queries.raycast(at(t), dir, { maxDistance: end - t, groups: OCCLUSION.groups });
+    if (!hit) break;
+    walls++;
+    const inside = t + hit.distance + 1e-3; // a ray from on its face would meet that face again
+    const out = queries.raycast(at(inside), dir, { maxDistance: end - inside, groups: OCCLUSION.groups, solid: false }); // prettier-ignore
+    if (!out) break; // the wall runs on past the sound
+    t = inside + out.distance + 1e-3;
+    if (t >= end) break;
+  }
+  return walls;
 }
 
 /** Whether a wall of the level stands between `from` (the listener) and `to` (the sound). */

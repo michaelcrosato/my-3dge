@@ -6,7 +6,8 @@
  * actor, a prop) stands where the leaf would go: it waits there. Using one (engine/sim/interact.ts) opens it away from
  * the user, a quarter turn and a little more (`swing`, 1.65 rad), or closes it; a locked one says so and stays shut.
  *
- * Strikes (`strikeDoor`, a melee hit while the striker faces it, Apex's rule): the first bursts it open away from the
+ * Strikes (`strikeDoor`, a melee hit while the striker faced it as the swing began, Apex's rule; a melee plays the door
+ * kick on it, `move:breach`, engine/sim/melee.ts): the first bursts it open away from the
  * striker, three times as fast, unlocking it; the second breaks it off its hinges: the leaf's body turns dynamic,
  * knocked away, and the event its prop's `breaks.shards` names goes out (`splinters`: engine/sim/breakables.ts). A
  * shot or a blast (`force`) breaks it at once. A sliding door (`slide: [dx, dy, dz]`) moves along that offset instead,
@@ -246,4 +247,4 @@ defineUsable('door', {
     useDoor(w, id, [actor.x, actor.y, actor.z]);
   },
 });
-defineStrikable('door', (w, id, from, faced, force) => strikeDoor(w, id, from, faced, force));
+defineStrikable('door', (w, id, from, faced, force) => strikeDoor(w, id, from, faced, force), 'move:breach'); // the door kick

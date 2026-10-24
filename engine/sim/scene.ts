@@ -12,9 +12,10 @@
  * `level` names the level it loads (WP 2.2 compiles it), `terrain` its ground (WP 10.5, engine/world/terrain.ts) and
  * `site` the levels standing on a terrain (WP 13.15, engine/world/site.ts): the view draws them; its setup adds their
  * bodies. `physics: true` gives it a physics world (physicsOf, WP 3.1).
- * `sounds(record, w)` says which sound a traced sim event plays, `{ sfx, vol?, variant? }` or null, for `x audio
- * --replay` (WP 9.4): by default the event payload's own (`payloadSound`); a game that maps its events to sounds sets
- * its map here, so Node hears what its pages play (after G9, ADR-0013 amendment 3).
+ * `sounds(record, w)` says which sound a traced sim event plays, `{ sfx, vol?, variant? }`, a list of them (a shot and
+ * where it strikes, WP 13.22) or null, for `x audio --replay` (WP 9.4): by default the event payload's own
+ * (`payloadSound`); a game that maps its events to sounds sets its map here, so Node hears what its pages play (after
+ * G9, ADR-0013 amendment 3).
  * Seeds are whole numbers from 0 (`checkSeed`, `SIM_BAD_SEED`).
  *
  * Invariants: a scene's `settings` are checked against the settings schema when it is defined (`CORE_BAD_SPEC`
@@ -94,8 +95,8 @@ export interface SceneSpec<C extends object = AnyComponents, E extends EventMap 
   step?: (w: World<C, E>, intents: Intents) => void;
   /** Its dev actions, by name. */
   actions?: Readonly<Record<string, SceneAction<World<C, E>>>>;
-  /** The sound each traced sim event plays, read as the event is delivered (`x audio --replay`); `payloadSound`. */
-  sounds?: (record: TraceRecord, w: World<C, E>) => SceneSound | null;
+  /** The sounds each traced sim event plays, read as the event is delivered (`x audio --replay`); `payloadSound`. */
+  sounds?: (record: TraceRecord, w: World<C, E>) => SceneSound | readonly SceneSound[] | null;
 }
 
 /** A defined scene: its spec with defaults filled, plus `id` and `kind`. */
@@ -134,7 +135,7 @@ const SCENE_FIELDS = {
     type: 'function',
     default: payloadSound,
     description:
-      "The sound each traced sim event plays, for x audio --replay: (record, w) => { sfx, vol?, variant? } or null; by default the payload's own sfx.",
+      "The sounds each traced sim event plays, for x audio --replay: (record, w) => { sfx, vol?, variant? }, a list of them, or null; by default the payload's own sfx.",
   },
 } as const satisfies Schema;
 

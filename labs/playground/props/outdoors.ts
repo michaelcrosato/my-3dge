@@ -4,7 +4,9 @@
  * and the dog's kennel; the front yard's picket fence (a 2 m section, 0.9 m: vault it), hedge (a 4 m run, 1.2 m) and
  * mailbox; trees and rocks for the hill and the yards; the street's lamp (always on: no light group yet, WP 13.23
  * gives the street's its group to switch at dusk), its hydrant, and its bus stop's roof (a slab 2.4 m up to mantle
- * onto), posts and back; the range's targets; the ring's ropes. labs/playground/furnish.ts says where each stands.
+ * onto), posts and back; the range's targets; the ring's ropes and its sparring dummy (WP 13.19:
+ * labs/playground/cast/dummies.ts stands it); the dog's ball (WP 13.21: labs/playground/cast/dog.ts puts it by the
+ * player). labs/playground/furnish.ts says where each other stands.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
  *
@@ -64,10 +66,10 @@ export const OUTDOOR_PROPS = {
   },
   'prop:playground-streetlight': {
     description:
-      'A street lamp, its pole 4.5 m high and its head over the road, always lit (no light group yet: WP 13.23). Fixed.',
+      'A street lamp, its pole 4.5 m high and its head over the road, lit with its group (the street: at dusk). Fixed.',
     parts: [upright('pole', 0.07, 4.5, IRON, [0, 0, 0], '#3a3f45'), part('arm', [0.08, 0.08, 1.2], IRON, [0, 4.42, 0.6], '#3a3f45'), { ...part('head', [0.35, 0.12, 0.5], GLOW, [0, 4.32, 1.1], '#fff3c8'), shadow: false, lit: true }], // prettier-ignore
     body: { type: 'fixed', shape: 'cylinder', radius: 0.08, height: 4.5 },
-    light: { tag: 'streetlight', color: '#ffe8b0', intensity: 10, distance: 14, decay: 1, position: [0, 4.2, 1.1] },
+    light: { tag: 'streetlight', color: '#ffe8b0', intensity: 10, distance: 14, decay: 0.75, position: [0, 4.2, 1.1] },
   },
   'prop:playground-hydrant': {
     description: 'A fire hydrant, 0.3 m across and 0.8 m high: fixed.',
@@ -98,6 +100,16 @@ export const OUTDOOR_PROPS = {
     description: 'A rope of the ring, 6 m long, along +X from its middle: fixed, so it holds a body in.',
     parts: [part('rope', [6, 0.04, 0.04], CLOTH, [0, 0, 0], '#c0392b')],
     body: fixed([6, 0.04, 0.04]),
+  },
+  'prop:playground-dummy': {
+    description: 'A sparring dummy, 1.62 m: a padded body and head on a post sprung into a weighted base. Fixed (the ring rocks it on its spring).', // prettier-ignore
+    parts: [{ name: 'base', geometry: 'geometry:frustum', params: { radiusBottom: 0.3, radiusTop: 0.24, height: 0.14, radialSegments: 16, smooth: true }, material: PAINT, tint: '#2b2b2b' }, upright('post', 0.045, 0.5, IRON, [0, 0.1, 0]), { name: 'pad', geometry: 'geometry:frustum', params: { radiusBottom: 0.18, radiusTop: 0.21, height: 0.8, radialSegments: 16, smooth: true }, material: CLOTH, tint: '#9a2f2a', position: [0, 0.56, 0] }, { name: 'head', geometry: 'geometry:roundedBox', params: { width: 0.24, height: 0.26, depth: 0.24, radius: 0.1 }, material: CLOTH, tint: '#9a2f2a', position: [0, 1.36, 0] }], // prettier-ignore
+    body: fixed([0.44, 1.62, 0.44]),
+  },
+  'prop:playground-ball': {
+    description: 'The dog’s ball: a tennis ball, 6.7 cm across and 58 g, bouncing; carry it and throw it, and the dog fetches it.', // prettier-ignore
+    parts: [{ name: 'ball', geometry: 'geometry:limb', params: { length: 0.001, radiusStart: 0.0335, radiusEnd: 0.0335, radialSegments: 12, capSegments: 4 }, material: CLOTH, tint: '#cfe23a', position: [0, 0.0335, 0] }], // prettier-ignore
+    body: { type: 'dynamic', shape: 'ball', radius: 0.0335, density: 368, friction: 0.8, restitution: 0.7, linearDamping: 0.6, angularDamping: 3 }, // prettier-ignore
   },
 } as const satisfies Record<string, PropDefinition>;
 

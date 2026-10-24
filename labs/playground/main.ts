@@ -19,8 +19,12 @@
  * in the gym's own scene and where the gym stands on the site (labs/playground/levels/site.ts), those within
  * `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
  * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), what using the thing in reach does, with the key
- * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), and the keys of the map in use as its
- * prompts give them (`keysLine`). It reads the run and never changes it.
+ * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), the player's weapon, its rounds, his
+ * hits and his accuracy, and the crosshair while the screen's centre aims one (labs/playground/weapons/hud.ts, WP
+ * 13.20), and the keys of the map in use as its prompts give them (`keysLine`); it plays the frame's sound
+ * (labs/playground/sounds/page.ts, WP 13.22: the run's events, the room's reverb, the ambience, the wind), silent until
+ * the first key, click or touch, and runs the weather (labs/playground/weather.ts, WP 11.3: the rain outdoors and the
+ * dust indoors, as `playground.rain` and `playground.dust` say). It reads the run and never changes it.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
@@ -42,6 +46,9 @@ import { SITE, SITE_STRUCTURES } from './levels/site';
 import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
+import { createPlaygroundSound } from './sounds/page';
+import { runWeather } from './weather';
+import { showsCrosshair, weaponLine, type WeaponsView } from './weapons/hud';
 
 /** How near the player a sign shows (m): the features around him, not the whole gym at once. */
 const SIGN_RANGE = 24;
@@ -107,16 +114,22 @@ let showing = { camera: '', look: search.get('post.look') ?? '' };
 /** The running scene's site, made once a scene (its id and the site, or null without one). */
 let placed: { scene: string; site: Site | null } = { scene: '', site: null };
 
+/** The structure and room the feet at `at` stand in on the scene's site; null outdoors, undefined without a site. */
+function placeAt(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }) {
+  if (placed.scene !== scene.id) placed = { scene: scene.id, site: scene.site ? getSite(scene.site) : null };
+  if (!placed.site) return undefined;
+  return siteStructureAt(placed.site, at.x, at.y + 0.1, at.z); // 10 cm up: resting feet sink a hair into a floor
+}
+
 /** Where the player is on the scene's site, for the HUD: the room's name, indoors, or outdoors; null without a site. */
 function whereLine(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }): string | null {
-  if (placed.scene !== scene.id) placed = { scene: scene.id, site: scene.site ? getSite(scene.site) : null };
-  if (!placed.site) return null;
-  const found = siteStructureAt(placed.site, at.x, at.y + 0.1, at.z); // 10 cm up: resting feet sink a hair into a floor
+  const found = placeAt(scene, at);
+  if (found === undefined) return null;
   return found?.room ? `Room: ${found.room.name}` : found ? 'Indoors' : 'Outdoors';
 }
 
 /** The player's entity as the HUD reads it: where it is, and what it would use (engine/sim/interact.ts). */
-type PlayerEntity = { actor: { player: boolean; x: number; y: number; z: number }; interactor?: { prompt: string } };
+type PlayerEntity = { actor: { player: boolean; x: number; y: number; z: number }; interactor?: { prompt: string }; weapons?: WeaponsView }; // prettier-ignore
 
 /** The inspector's camera member; null before the engine starts. */
 const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? null;
@@ -146,6 +159,9 @@ function showFrame({ world, scene }: EngineFrame): void {
   if (!engine?.input) return;
   const use = entity?.interactor?.prompt;
   ui.hud('use', use ? `${engine.input.prompt('interact')}: ${use}` : null, { at: 'bottom', keys: true });
+  const draw = `${engine.input.prompt('weapon1')} ${engine.input.prompt('weapon2')}`;
+  ui.hud('weapon', entity?.weapons ? weaponLine(entity.weapons, draw) : null, { at: 'bottom-right' });
+  ui.crosshair(showsCrosshair(entity?.weapons, engine.input.bindings.map.aimWith === 'centre'));
   ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
 }
 
@@ -165,6 +181,7 @@ function onView(action: string): void {
 }
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
+const sound = createPlaygroundSound(); // published as window.__playgroundSound
 engine = await createEngine({
   canvas,
   actionMap: playgroundMap,
@@ -173,7 +190,11 @@ engine = await createEngine({
   levels,
   replays,
   search: `?${search}`,
-  onFrame: showFrame,
+  onFrame: (frame) => {
+    showFrame(frame);
+    sound.frame(frame);
+    runWeather(frame, (at) => !!placeAt(frame.scene, at)); // the rain and the dust (labs/playground/weather.ts)
+  },
 });
 if (engine.inspector) mountFeelPanel(document, engine.inspector, search);
 

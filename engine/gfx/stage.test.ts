@@ -114,9 +114,12 @@ describe('createStage', () => {
       'stage:stand-ins',
       'stage:actors',
       'stage:rides',
+      'shells:props', // the outline shells round the props and the bodies (WP 13.24)
+      'shells:bodies',
       'fx:sprites',
       'fx:decals',
       'fx:ribbons',
+      'fx:weapons', // the shots' tracers and holes (WP 13.20)
     ]);
     stage.capture([{ id: 1, dot: { x: 0, z: 0 } }]);
     expect(parts.get('stage:stand-ins')!()).toBe('0.5|material:default');

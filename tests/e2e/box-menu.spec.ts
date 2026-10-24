@@ -25,12 +25,12 @@ const INDEX = README.slice(
 );
 /** The scenes of labs/box/scenes/ the demo index lists, by name. */
 const INDEXED = [...new Set([...INDEX.matchAll(/`labs\/box\/scenes\/([\w-]+)\.ts`/g)].map(([, name]) => name))].sort();
-/** The box's replays, by name. */
-const REPLAYS = globSync('tests/replays/box-*.replay.json', { cwd: ROOT })
+/** The box's replays, by name, as labs/box/main.ts globs them. */
+const REPLAYS = globSync(['tests/replays/box-*.replay.json', 'tests/replays/ragdoll-*.replay.json'], { cwd: ROOT })
   .map((file) => basename(file, '.replay.json'))
   .sort();
 /** The box's own looks, by id. */
-const BOX_LOOKS = globSync('labs/box/looks/torch-*.ts', { cwd: ROOT })
+const BOX_LOOKS = globSync(['labs/box/looks/torch-*.ts', 'labs/box/looks/daylight.ts'], { cwd: ROOT })
   .filter((file) => !file.endsWith('.test.ts'))
   .map((file) => `look:${basename(file, '.ts')}`);
 

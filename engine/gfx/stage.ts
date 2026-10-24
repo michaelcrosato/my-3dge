@@ -13,13 +13,13 @@
  * bodies (`crowdBody`) through a crowd (engine/gfx/stageCrowd.ts, WP 5.7: `crowd`), which the view draws once the
  * frame's camera is placed (`crowd.draw(alpha, camera)`), rides as themselves (engine/gfx/stageRides.ts, WP 13.7:
  * `rides`), and projectiles as bolts (engine/gfx/stageFx.ts, WP 6.7: `fx`, with telegraphs, trails and bursts, handed
- * each frame by the view). Stand-ins: any other entity is drawn as a box when one of its components declares `x` and
- * `z` as numbers in metres (`placeableKinds`: asked of the component entries, never of a name). The first such
- * component in registry order places it: `x`, `y` (the box's bottom, 0 by default) and `z`, `yaw` (rad), `size` (the
- * box's side, m; 0.5 by default) and `material` (an id from the material library; `material:default` otherwise). A
- * stand-in is named `<component>#<id>` and carries `userData.entity`, so the ID pass and the inspector say which entity
- * it is. `capture(entities, dt)` after each sim step keeps the last two places; `draw(alpha)` puts every stand-in,
- * puppet and prop `alpha` of the way from the one before to the last (§6.4's interpolation; yaw the shorter way).
+ * each frame by the view), and the guns in the actors' hands as props (WP 13.20). Stand-ins: any other entity is drawn
+ * as a box when one of its components declares `x` and `z` as numbers in metres (`placeableKinds`, asked of the
+ * entries, never of a name). The first such component in registry order places it: `x`, `y` (the box's bottom, 0 by
+ * default) and `z`, `yaw` (rad), `size` (the box's side, m; 0.5 by default) and `material` (a material library id;
+ * `material:default` otherwise). A stand-in is named `<component>#<id>` with `userData.entity`, so the ID pass and the
+ * inspector name its entity. `capture(entities, dt)` after each sim step keeps the last two places; `draw(alpha)` puts
+ * every stand-in, puppet and prop `alpha` of the way from the one before to the last (§6.4's interpolation).
  *
  * The level's cutaway (engine/gfx/cutaway.ts, its fade taking the rides too) is made when a player first stands on
  * it, never without one; the view runs it as it follows the player (`frame`), with the cut by storey in a classic view
@@ -59,8 +59,10 @@ import { createStageCrowd, type StageCrowd } from './stageCrowd';
 import { createStageFx, type StageFx } from './stageFx';
 import { createStageProps, type StageProps } from './stageProps';
 import { createStageRides, RIDE_KINDS, type StageRides } from './stageRides';
+import { createStageShells, type StageShells } from './stageShells';
 import { createStageSite, type StageSite } from './stageSite';
 import { groundMesh } from './stageGround';
+import type { FeatureReport } from './features';
 import { createStageSky, type StageSky } from './stageSky';
 import { aboveStorey, createStoreyCut, cutPlace } from './storeyCut';
 import { createTerrainMeshes, type TerrainMeshes } from './terrain';
@@ -128,6 +130,8 @@ export interface Stage {
   readonly rides: StageRides;
   /** The crowd bodies, drawn through a crowd from the frame's camera (`crowd.draw(alpha, camera)`, after `draw`). */
   readonly crowd: StageCrowd;
+  /** The outline shells round the props and the bodies, as a look asks (engine/gfx/stageShells.ts, WP 13.24). */
+  readonly shells: StageShells;
   /**
    * The effects: bolts, telegraphs, trails and the events' bursts (engine/gfx/stageFx.ts); the view hands it frames.
    * Turned off, they claim no bolt, so bolts draw as stand-ins.
@@ -138,12 +142,18 @@ export interface Stage {
    * sim's read-only `queries` give the puppets' feet the ground (none without physics).
    */
   capture(entities: Iterable<EntityData>, dt?: number, queries?: QueryView | null): void;
-  /** Puts every stand-in and puppet `alpha` (0 to 1) of the way from its place a step ago to its last. */
+  /**
+   * Puts every stand-in and puppet `alpha` (0 to 1) of the way from its place a step ago to its last, a yaw the shorter
+   * way round.
+   */
   draw(alpha: number): void;
   /** Runs the cutaways for `pose` and the player's `feet`: the fade with `fade`, the cut by storey in a classic `view`. */
   frame(pose: CameraPose, feet: Vec3, options?: { fade?: boolean; view?: boolean }): void;
-  /** Registers the level and the stand-ins with `warmup` (see the file comment); `dispose()` undoes it. */
-  register(warmup: Pick<Warmup, 'register' | 'keyPart'>): { dispose(): void };
+  /**
+   * Registers the level and the stand-ins with `warmup` (see the file comment); `dispose()` undoes it. `features`,
+   * the renderer's report (engine/gfx/features.ts), sizes the sky shown after it (engine/gfx/stageSky.ts).
+   */
+  register(warmup: Pick<Warmup, 'register' | 'keyPart'>, features?: FeatureReport): { dispose(): void };
   /** Frees the geometries it made and empties the scene. */
   dispose(): void;
 }
@@ -159,17 +169,10 @@ const DEFAULT_SIZE = 0.5;
 /** The component kinds whose entities stand somewhere: they declare `x` and `z` as numbers in metres. */
 export function placeableKinds(registry: Registry): string[] {
   if (!registry.kinds().includes('component')) return [];
-  const metres = (field: unknown) => {
-    const f = field as Field | undefined;
-    return f?.type === 'number' && f.unit === 'm';
-  };
-  return registry
-    .list('component')
-    .filter((entry) => {
-      const fields = entry.fields as Record<string, unknown>;
-      return metres(fields.x) && metres(fields.z);
-    })
-    .map((entry) => entry.id);
+  const metres = (field: unknown) => (field as Field | undefined)?.type === 'number' && (field as Field).unit === 'm';
+  const placing = (fields: Record<string, unknown>) => metres(fields.x) && metres(fields.z);
+  const list = registry.list('component');
+  return list.filter((entry) => placing(entry.fields as Record<string, unknown>)).map((entry) => entry.id);
 }
 
 /** A number field of `data`, or `fallback` when it holds none. */
@@ -243,10 +246,12 @@ export function createStage(options: StageOptions): Stage {
   const props = createStageProps({ scene, materials: options.materials, registry: options.registry });
   const rides = createStageRides({ scene, materials: options.materials });
   const crowd = createStageCrowd({ scene, materials: options.materials, level, registry: options.registry });
+  const shells = createStageShells({ props, actors });
 
   const fx = createStageFx({
     registry: options.registry,
     trails: () => actors.trails(),
+    muzzle: (id) => actors.muzzle(id),
     ...(options.fxRng ? { fxRng: options.fxRng } : {}),
   });
   scene.add(fx.effects.root);
@@ -282,6 +287,7 @@ export function createStage(options: StageOptions): Stage {
     props,
     rides,
     crowd,
+    shells,
     fx,
     capture(entities, dt, queries) {
       const list = [...entities];
@@ -332,7 +338,9 @@ export function createStage(options: StageOptions): Stage {
       }
       boxes.updateMatrixWorld(true);
       actors.draw(alpha);
+      props.carry(actors.carried());
       props.draw(alpha);
+      shells.sync();
       fx.draw(alpha);
     },
     frame(pose, feet, { fade = false, view = false } = {}) {
@@ -342,9 +350,13 @@ export function createStage(options: StageOptions): Stage {
       site?.update(pose, feet, { fade, view });
       const own = place && place.storey >= 0 && level ? (x: number, y: number, z: number) => aboveStorey(level, place.storey, x, y, z) : null; // prettier-ignore
       const cutKey = own && place ? `${place.storey}` : (site?.cutKey() ?? '');
-      if (props.hide(own ?? (site ? site.hides : null), cutKey)) props.draw(drawnAlpha); // the cut moved: its props go
+      const guns = props.carry(actors.carried()); // first person took a gun into its arms, or gave it back
+      if (props.hide(own ?? (site ? site.hides : null), cutKey) || guns) {
+        props.draw(drawnAlpha); // the cut moved: its props go
+        shells.sync();
+      }
     },
-    register(warmup) {
+    register(warmup, features) {
       const registrations = [
         warmup.register('stage:ground', { objects: () => [ground] }),
         ...(meshes ? [meshes.register(warmup, 'stage:level')] : []),
@@ -358,8 +370,9 @@ export function createStage(options: StageOptions): Stage {
         props.register(warmup),
         rides.register(warmup),
         crowd.register(warmup),
-        fx.register(warmup),
-        lights.register(warmup),
+        shells.register(warmup),
+        fx.register(warmup, features),
+        lights.register(warmup, features),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };
     },
@@ -369,12 +382,7 @@ export function createStage(options: StageOptions): Stage {
       meshes?.dispose();
       if (site) site.dispose();
       else terrain?.dispose();
-      actors.dispose();
-      props.dispose();
-      rides.dispose();
-      crowd.dispose();
-      fx.dispose();
-      lights.dispose();
+      for (const part of [shells, actors, props, rides, crowd, fx, lights]) part.dispose();
       ground.geometry.dispose();
       for (const geometry of geometries.values()) geometry.dispose();
       geometries.clear();

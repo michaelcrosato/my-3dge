@@ -10,6 +10,7 @@
  * with the component; its `reactions` bend its spine with the flinch and lay a body knocked forward on its face, read
  * from the sim and never written. WP 13.10: the feet stand on the ground the sim's queries find. WP 13.11: an actor's
  * `actions` turn its puppet over mid-roll, read from the sim and never written; one riding a zipline holds its cable.
+ * WP 10.2: a ragdoll's parts lie on the bones once faded in, and fade out over 0.3 s as the body gets up.
  * @see engine/gfx/puppets/actors.ts
  */
 import { PerspectiveCamera, Quaternion, type Mesh } from 'three/webgpu';
@@ -27,6 +28,7 @@ import { defineMannequin } from './bodies/mannequin';
 import { createCharacter } from '../../physics/character';
 import { physicsOf } from '../../physics/binding';
 import { spawnActor } from '../../sim/actors';
+import { addRagdolls, handOff, type RagdollState } from '../../sim/ragdolls';
 import { reactTo } from '../../sim/reactions';
 import { actOn } from '../../sim/actorActions';
 import { defineActions } from '../../../tools/anim/library';
@@ -45,6 +47,16 @@ const scene = defineScene('test:actor-puppets', {
     physicsOf(w).addBody({ type: 'fixed', colliders: [floor] });
     spawnActor(w, { at: [1, 0, 2], character: createCharacter(), anim: { build: 'build:heroic' } });
     spawnActor(w, { at: [4, 0, 2], character: createCharacter(), player: false });
+  },
+});
+
+/** A floor and an adult, the player, at the origin, with ragdolls (engine/sim/ragdolls.ts). */
+const ragdolled = defineScene('test:actor-ragdoll', {
+  physics: true,
+  setup(w) {
+    physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] }] }); // prettier-ignore
+    spawnActor(w, { at: [0, 0, 0], character: createCharacter(), anim: { build: 'build:adult' } });
+    addRagdolls(w);
   },
 });
 
@@ -279,5 +291,38 @@ describe('an actor’s reactions and secondary motion drawn (WP 7.8)', () => {
     expect(under).toBe(true);
     expect(actors.layers().get(1)).toBeDefined();
     expect(world.hash()).toBe(alone.hash());
+  });
+
+  it('lays a ragdoll’s parts on the bones once faded in, and fades it out as it gets up (WP 10.2)', () => {
+    const { world } = startScene(ragdolled);
+    world.step({});
+    const actors = createActorPuppets({ materials: createMaterialLibrary() });
+    handOff(world, 1, { push: [0, 1, 3] });
+    const lying = () => (world.get(1) as unknown as { ragdoll?: RagdollState }).ragdoll;
+    const pelvis = () => actors.player()!.posed!.world.positions.slice(0, 3);
+    const apart = (a: ArrayLike<number>, b: ArrayLike<number>) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const step = () => {
+      world.step({});
+      actors.capture(world.query('actor'), world.dt);
+    };
+    for (let i = 0; i < 20; i++) step();
+    actors.draw(1);
+    expect(apart(pelvis(), lying()!.poses)).toBeLessThan(1e-5); // its pelvis where the ragdoll's is (the pose's float32)
+    while (lying() && lying()!.rise < 0) step();
+    const last = [...lying()!.poses];
+    actors.draw(0);
+    expect(apart(pelvis(), last)).toBeLessThan(1e-5); // still the ragdoll's on the step it rises
+    const weights: number[] = [];
+    while (lying()) {
+      step();
+      actors.draw(1);
+      weights.push(actors.layers().get(1)!.ragdoll.weight);
+    }
+    expect(weights.length).toBe(Math.round(0.3 * 60)); // RAGDOLL_FADE.out, then gone
+    weights.forEach((weight, i) => expect(weight).toBeCloseTo(Math.max(0, 1 - (i + 2) / 18), 9)); // the get-up showing
+    world.step({});
+    actors.capture(world.query('actor'), world.dt);
+    actors.draw(1);
+    expect([actors.layers().get(1)!.ragdoll.weight, apart(pelvis(), last) > 0.01]).toEqual([0, true]); // the animation's
   });
 });

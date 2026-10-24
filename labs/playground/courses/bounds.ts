@@ -5,7 +5,8 @@
  * playground's five cameras (labs/playground/views.ts), §4's: no frame moves the camera more than 0.3 m or turns it
  * more than 4° beyond what the player's own move, the look and a blend account for (engine/dev/feel/camera.ts), none
  * stands it inside the level, and none loses the player (first person: its arms); and no frame lets a wall cover first
- * person's arms or its near plane cut them (WP 13.12, `clip`). The feet
+ * person's arms or its near plane cut them (WP 13.12, `clip`); with a gun, §5.1's muzzle within 2° of the aim while the
+ * sights are up (`muzzleBound`, WP 13.20). The feet
  * were watched until WP 13.10 planted them (the procedural run slid 0.36 m a contact at a 5 m/s run, 0.53 to 0.73 m
  * sprinting); a sole's height is from the ground under it (engine/dev/feel/anim.ts), so a foot on a ramp is on its floor.
  *
@@ -19,8 +20,8 @@
  */
 import { PLAYGROUND_CAMERAS } from '../views';
 
-/** §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m), a held hand's gap (m). */ // prettier-ignore
-export const BOUNDS = { jump: 0.3, turn: (4 * Math.PI) / 180, slide: 0.05, pop: 9 / 16, hand: 0.03 } as const;
+/** §4's and §5.1's bounds: the camera's move (m) and turn (rad) in a frame, a sole's slide (m), a point's pop (m), a held hand's gap (m), the muzzle off the aim (rad). */ // prettier-ignore
+export const BOUNDS = { jump: 0.3, turn: (4 * Math.PI) / 180, slide: 0.05, pop: 9 / 16, hand: 0.03, muzzle: (2 * Math.PI) / 180 } as const; // prettier-ignore
 
 /** Where a run of bounds reads: from step `from` to `to` (the course's end when absent), its names after `label`. */
 export interface BoundsSpan {
@@ -54,4 +55,9 @@ export function cameraBounds(from: number, span: BoundsSpan = {}): Record<string
     const clip = name === 'first' ? [measure('arms never cut', 'cameraClip', 0)] : [];
     return [measure('jump', 'cameraJump', BOUNDS.jump), measure('turn', 'cameraTurn', BOUNDS.turn), measure('inside', 'cameraInside', 0), measure('lost', 'cameraLost', 0), ...clip]; // prettier-ignore
   });
+}
+
+/** §5.1's muzzle bound, from step `from`: the gun hand's barrel line within 2° of the aim while the sights are up. */
+export function muzzleBound(from: number, span: BoundsSpan = {}): Record<string, unknown> {
+  return { name: named(span, 'muzzle on the aim'), metric: 'muzzle', from, to: span.to, reference: 0, tolerance: { abs: BOUNDS.muzzle } }; // prettier-ignore
 }

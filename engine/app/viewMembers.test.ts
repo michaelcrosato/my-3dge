@@ -59,6 +59,7 @@ const CALLS: Record<string, Call> = {
   'get()': (e) => expect(e.get(1)).toMatchObject({ id: 1, pathMover: { x: 3.5, z: 4.5 } }),
   'hash()': (e) => expect(e.hash()).toMatch(/^[0-9a-f]{16}$/),
   'help()': (e) => expect(e.help('scene.dump')).toContain('options'),
+  'fx.stats()': (_e, call) => expect(call('fx.stats')).toMatchObject({ particles: { live: 0, capacity: 4096 }, gpuParticles: null }), // prettier-ignore
   'gallery.frames()': (_e, call) => expect(call('gallery.frames', 'prop', 'prop:crate')).toHaveLength(4),
   'gallery.list()': (_e, call) => {
     expect(call('gallery.list')).toContainEqual({ kind: 'prop', count: expect.any(Number) });

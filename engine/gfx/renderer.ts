@@ -16,8 +16,11 @@
  * loop, so a frame drawn off it would show a post pass's last picture), and draws with `view.draw` (a post pass) or
  * `render()`. `view.alpha` is the clock's interpolation alpha, kept for the
  * stats. A frame that builds a pipeline after the warm-up raises `GFX_COLD_PIPELINE`: it stalled. `stats()` gives
- * `renderer.info`'s counts with the pipeline counts. Draw with `render()`, never `renderAsync()` (deprecated since
- * r181; docs/THREE-DELTA.md). Game code meets none of this (doctrine: Quality under the hood).
+ * `renderer.info`'s counts with the pipeline counts, and `gpuMs`, the GPU's milliseconds a frame where the device has
+ * timestamp queries (WP 11.2: the features resolve before the renderer is made, so it tracks timestamps when
+ * `feature:timestamps` is on; engine/gfx/enhanced/timing.ts reads them), and tiled lighting is its lighting when
+ * `feature:tiledLighting` is (WP 11.5). Draw with `render()`, never `renderAsync()`
+ * (deprecated since r181; docs/THREE-DELTA.md). Game code meets none of this (doctrine: Quality under the hood).
  *
  * Invariants: a `Gfx` exists only on the WebGPU backend; every failure to get there is a `GfxError` with its code and
  * fix, and nothing is drawn, configured or allocated on the GPU before the adapter check passes. Rendering settings
@@ -35,7 +38,7 @@ import { codeError, defineCodes, log as sharedLog, type Log } from '../core/log'
 import type { Registry } from '../core/registry';
 import { createSettings, type Settings } from '../core/settings';
 import { readCaps, requestDevice, type GfxCaps } from './caps';
-import { resolveFeatures, type FeatureReport } from './features';
+import { gpuTimingFor, lightingFor, resolveFeatures, type FeatureReport, type GpuParticles, type GpuTiming } from './features'; // prettier-ignore
 import { advanceFrame, checkPinned, countPipelines, type PipelineCounter } from './pipelines';
 import { createResolution, type Resolution, type ResolutionMode } from './resolution';
 import { createWarmup, type Warmup, type WarmupView } from './warmup';
@@ -113,9 +116,13 @@ export interface GfxInfo {
   downgrades: string[];
 }
 
-/** One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default). */
+/**
+ * One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default) and
+ * the GPU's particles the post chain draws in a pass of their own (engine/gfx/enhanced/particles.ts, WP 11.3).
+ */
 export interface FrameView extends WarmupView {
   alpha?: number;
+  particles?: GpuParticles;
 }
 
 /** What `frame()` did. */
@@ -140,6 +147,8 @@ export interface GfxStats {
   mode: ResolutionMode | null;
   width: number;
   height: number;
+  /** The picture's offset in drawn pixels, right and down: a snapped camera's remainder (resolution.ts `shift`). */
+  shift: readonly [number, number];
   /** The last frame's draw calls (`renderer.info.render`). */
   drawCalls: number;
   /** The last frame's triangles. */
@@ -164,6 +173,8 @@ export interface GfxStats {
   warmUps: number;
   /** Pipelines built outside warm-ups since the first began: 0 is the budget (§8.7); null before a warm-up. */
   pipelinesAfterWarmUp: number | null;
+  /** The GPU's mean milliseconds a frame over the last 60 (timing.ts); null before the first, absent without timestamps. */
+  gpuMs?: number | null;
 }
 
 /** A started renderer: three.js's `WebGPURenderer`, its device, its report, and what draws a frame. */
@@ -179,6 +190,8 @@ export interface Gfx {
   warmup: Warmup;
   /** The pipeline counter. */
   pipelines: PipelineCounter;
+  /** The GPU's time a frame, from timestamp queries where the device has them (engine/gfx/enhanced/timing.ts). */
+  timing: GpuTiming;
   /** Draws one frame (see the file comment). Throws `GFX_BAD_ALPHA`. */
   frame(view: FrameView): FrameReport;
   /** The counts so far. */
@@ -246,7 +259,11 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
     throw new GfxError('GFX_NO_WEBGPU', { reason: `the adapter gave no device (${String(error)})` });
   }
   const pipelines = countPipelines(device, { log });
-  const renderer = new WebGPURenderer({ canvas, device, antialias: options.antialias ?? false });
+  const caps = readCaps(adapter, device);
+  const features = resolveFeatures(caps, { registry: options.registry, settings, log });
+  const trackTimestamp = features.on.includes('feature:timestamps');
+  const renderer = new WebGPURenderer({ canvas, device, antialias: options.antialias ?? false, trackTimestamp });
+  lightingFor(renderer, features); // tiled lighting, when its feature is on (WP 11.5)
   await renderer.init();
   if ((renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend !== true) {
     renderer.dispose();
@@ -255,8 +272,7 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
   routeErrors(renderer, device, log);
   // One frame may render several times (a post pass): `frame()` resets the counts once per frame.
   renderer.info.autoReset = false;
-  const caps = readCaps(adapter, device);
-  const features = resolveFeatures(caps, { registry: options.registry, settings, log });
+  const timing = gpuTimingFor(renderer, features);
   const info: GfxInfo = {
     backend: 'WebGPU',
     adapter: caps.adapter,
@@ -284,7 +300,7 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
       camera.updateProjectionMatrix();
     }
     const idle = { drawn: false, warming: true, alpha: next, built: 0 };
-    if (warmup.running) return idle;
+    if (warmup.running) return (void timing.taint(), idle); // its passes are not a frame's
     const key = warmup.key(view.scene);
     if (key !== warmup.last?.key && key !== failed) {
       warmup.run(view).catch((error: unknown) => {
@@ -301,6 +317,7 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
     (view.draw ?? (() => renderer.render(view.scene, view.camera)))();
     const built = pipelines.count().built - before;
     frames++;
+    timing.afterFrame();
     alpha = next;
     if (built > 0 && warmup.last) log.warnOnce('GFX_COLD_PIPELINE', { count: built, frame: frames });
     return { drawn: true, warming: false, alpha, built };
@@ -316,6 +333,7 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
       mode: fit?.mode ?? null,
       width: fit?.width ?? 0,
       height: fit?.height ?? 0,
+      shift: resolution.offset,
       drawCalls: render.drawCalls,
       triangles: render.triangles,
       points: render.points,
@@ -328,8 +346,9 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
       cachedPipelines: counted.cached,
       warmUps: warmup.last?.count ?? 0,
       pipelinesAfterWarmUp: warmup.start === null ? null : counted.built - warmup.start - warmup.built,
+      ...(timing.on ? { gpuMs: timing.gpuMs() } : {}),
     };
   };
 
-  return { renderer, device, info, features, resolution, warmup, pipelines, frame, stats };
+  return { renderer, device, info, features, resolution, warmup, pipelines, timing, frame, stats };
 }

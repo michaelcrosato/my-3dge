@@ -1,7 +1,8 @@
 /**
  * @file The house part of the public sim API (PLAN.md §6.1, Phase 13, WP 13.16): every name sim-side game code takes
  * for using things (the `interact` action's use and prompt, carrying and throwing, a strike), doors, windows and other
- * breakable props, and switches, re-exported whole by engine/sim-api.ts, so that file stays under its line cap, as
+ * breakable props, switches, and the time of day (WP 13.23), re-exported whole by engine/sim-api.ts, so that file
+ * stays under its line cap, as
  * engine/sim/movementApi.ts and engine/sim/siteApi.ts do (ADR-0025 amendment 19). Game code imports these names from
  * engine/sim-api.ts (or engine/index.ts), never from here: the public-API rule rejects any other engine path.
  *
@@ -16,7 +17,7 @@
  */
 
 // Use (WP 13.16): the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying
-// and throwing a light prop; a melee strike), the kinds `usable` and `strikable`, and the body-to-entity lookup.
+// and throwing a light prop), the kinds `usable` and `strikable`, and the body-to-entity lookup.
 export { addInteraction } from './interact';
 export { defineUsable } from './interact';
 export { defineStrikable } from './interact';
@@ -56,3 +57,20 @@ export { switchGroup } from './switches';
 export { flipSwitch } from './switches';
 export type { SwitchSpec } from './switches';
 export type { SwitchComponent } from './switches';
+
+// Strikes (WP 13.19): a strikable entry by entity (the move a melee plays on it: a door's kick), what takes one, and
+// whose a body is (a prop's or an actor's, WP 13.20).
+export type { StrikeEntry } from './interact';
+export { strikeEntry } from './interact';
+export { takesStrike } from './interact';
+export { entityOfBody } from './props';
+
+// Light and time (WP 13.23): the world's clock, and the light groups it switches at dusk and dawn.
+export { setDaytime } from './lights';
+export { daytimeOf } from './lights';
+export { lightsAtDusk } from './lights';
+export { litAt } from './lights';
+export { DUSK } from './lights';
+export { DAWN } from './lights';
+export type { DaytimeComponent } from './lights';
+export type { DuskComponent } from './lights';

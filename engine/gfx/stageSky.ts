@@ -5,7 +5,11 @@
  * and the fog). A look names the sky (`look.sky`, engine/gfx/post/looks.ts) and the app shows it (engine/app/look.ts):
  * `show('')` draws with the stage's own lights; `show(id)` makes the sky the first time a preset is asked for, then
  * hides the stage's own lights and shows the preset. Each frame, `update` follows the camera and the focus, the pool's
- * lights flickering at the frame time (engine/app/view.ts).
+ * lights flickering at the frame time and lighting the frame's lamps too (engine/app/view.ts: the props' lamps that
+ * are on, WP 13.23); and given the scene's hour (its clock, engine/sim/lights.ts), the sky shows the hour's sky
+ * (engine/gfx/daylight.ts) in place of the preset the look names, shown again when the hour has moved a minute, and
+ * from the first show once an hour is known, so the warm-up compiles what the frames draw. Without a level, the sky's
+ * sun covers the terrain's ground with its shadow, as the stage's own does (it covered 16 m at the origin).
  *
  * Why on demand, and hidden rather than out: every lit shader pays for each visible light, and the pool's 12 point
  * lights with their cube shadow maps would cost every frame of a page that never asks for them (the box's suites draw
@@ -33,6 +37,9 @@ import type { Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
 import type { CompiledLevel } from '../world/level/types';
 import type { QualityBudget } from './quality';
+import type { FeatureReport } from './features';
+import { daylightAt, defineDaylight } from './daylight';
+import type { PoolLamp } from './lights';
 import { createSky, type Sky, type SkyReport } from './sky';
 import type { Warmup } from './warmup';
 
@@ -50,6 +57,15 @@ export interface StageSkyOptions {
   rng?: () => Rng | undefined;
 }
 
+/** What a frame gives the stage's lights: the camera, the focus (m), the time (s), the hour and the frame's lamps. */
+export interface StageSkyView {
+  camera: Camera;
+  focus: readonly number[];
+  time: number;
+  hour?: number | null;
+  lamps?: readonly PoolLamp[];
+}
+
 /** The stage's lights (see the file comment). */
 export interface StageSky {
   /** The sky preset shown, or `''` while the stage's own lights draw. */
@@ -62,10 +78,17 @@ export interface StageSky {
   show(id: string): void;
   /** Takes a quality tier's shadow budget for the sky (engine/gfx/quality.ts). */
   budget(budget: Pick<QualityBudget, 'shadowCasters'>): void;
-  /** Follows the camera and the focus (m), flickering at `time` (s), while a sky shows; call it each frame. */
-  update(view: { camera: Camera; focus: readonly number[]; time: number }): void;
+  /**
+   * Follows the camera and the focus (m), flickering at `time` (s), while a sky shows; call it each frame. The scene's
+   * `hour` (null without a clock) shows the hour's sky; the frame's `lamps` light the pool beside the level's spots.
+   */
+  update(view: StageSkyView): void;
   /** Registers the sky with `warmup`, now or when it is made; `dispose()` undoes it. */
-  register(warmup: Pick<Warmup, 'register' | 'keyPart'>): { dispose(): void };
+  /**
+   * Registers the sky's parts with `warmup` (and the sky made later); `features`, the renderer's report
+   * (engine/gfx/features.ts), sizes the sky made after it (tiled lighting's pool, the sun's cascades).
+   */
+  register(warmup: Pick<Warmup, 'register' | 'keyPart'>, features?: FeatureReport): { dispose(): void };
   /** What draws now: the preset, and the sky's report while it shows. */
   report(): { shown: string; sky: SkyReport | null };
   /** Takes the sky out of the scene and frees it. */
@@ -106,6 +129,20 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
   let budget: Pick<QualityBudget, 'shadowCasters'> = { shadowCasters: null };
   let warmup: Pick<Warmup, 'register' | 'keyPart'> | null = null;
   let registered: { dispose(): void } | null = null;
+  let features: FeatureReport | undefined;
+  let hour: number | null = null;
+  let daylit = NaN; // the hour the sky shows, NaN while it shows its preset
+  /** The hour's sky, shown when the hour moved a minute since (and the preset again when the clock is gone). */
+  const daylight = () => {
+    if (!sky || !shown) return;
+    if (hour === null) {
+      if (!Number.isNaN(daylit)) sky.set(shown);
+      daylit = NaN;
+    } else if (!(Math.abs(hour - daylit) < 1 / 60)) {
+      sky.show(daylightAt(hour, options.registry));
+      daylit = hour;
+    }
+  };
   const background = () => {
     if (scene.background instanceof Color) scene.background.set(options.background);
     else scene.background = new Color(options.background);
@@ -113,10 +150,16 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
 
   /** The sky, made the first time a preset is asked for. */
   const make = (): Sky => {
+    defineDaylight(options.registry);
+    const area = options.level ? undefined : options.area; // a terrain's ground: the sun's shadow covers it (WP 13.23)
+    const [x0, z0] = area?.corner ?? [0, 0];
+    const [w, d] = area?.size ?? [0, 0];
     const made = createSky(scene, {
       level: options.level ?? undefined,
+      bounds: area ? { min: [x0, 0, z0], max: [x0 + w, 4, z0 + d] } : undefined,
       rng: options.rng?.(),
       registry: options.registry,
+      features,
     });
     made.budget(budget);
     if (warmup) registered = made.register(warmup as Warmup);
@@ -139,6 +182,7 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
         for (const part of skyParts(sky)) part.visible = true;
         scene.fogNode = sky.atmosphere.fogNode;
         sky.set(id); // the background, the dome's and backdrop's visibility, who casts shadows
+        daylit = NaN;
       } else {
         own.ambient.visible = own.sun.visible = true;
         if (sky) for (const part of skyParts(sky)) part.visible = false;
@@ -146,15 +190,19 @@ export function createStageSky(scene: Scene, options: StageSkyOptions): StageSky
         background();
       }
       shown = id;
+      daylight(); // the hour's sky at once, once an hour is known
     },
     budget(given) {
       budget = { shadowCasters: given.shadowCasters };
       sky?.budget(budget);
     },
     update(view) {
+      hour = view.hour ?? null;
+      daylight();
       if (shown && sky) sky.update(view);
     },
-    register(given) {
+    register(given, report) {
+      features = report ?? features;
       warmup = given;
       if (sky && !registered) registered = sky.register(given as Warmup);
       return {

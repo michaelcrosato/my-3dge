@@ -95,53 +95,8 @@ export type { LevelShape } from './gfx/level/recipes';
 export { createTerrainMeshes } from './gfx/terrain';
 export type { TerrainMeshes } from './gfx/terrain';
 export type { TerrainMeshesOptions } from './gfx/terrain';
-// Sound data (WP 9.2): effects and songs as registry entries (voices, layers, variants; tracker-notation tracks),
-// rendered offline by the DSP core into reproducible samples.
-export { defineSfx } from './audio/data/sfx';
-export { getSfx } from './audio/data/sfx';
-export { renderSfx } from './audio/data/sfx';
-export { sfxVoices } from './audio/data/sfx';
-export type { Sfx } from './audio/data/sfx';
-export type { SfxSpec } from './audio/data/sfx';
-export type { SfxLayer } from './audio/data/sfx';
-export type { SfxBus } from './audio/data/sfx';
-export type { SfxRenderOptions } from './audio/data/sfx';
-export { defineSong } from './audio/data/song';
-export { getSong } from './audio/data/song';
-export { renderSong } from './audio/data/song';
-export { songVoices } from './audio/data/song';
-export { songTiming } from './audio/data/song';
-export type { Song } from './audio/data/song';
-export type { SongSpec } from './audio/data/song';
-export type { SongTrack } from './audio/data/song';
-export type { SongTiming } from './audio/data/song';
-export type { SongRenderOptions } from './audio/data/song';
-export type { Voice } from './audio/dsp/voice';
-export type { SoundDef } from './audio/dsp/voice';
-// The audio runtime (WP 9.3): a page's sound through Web Audio, started by the first gesture: buses with ducking and
-// voice limits, sounds placed in 3D and occluded through the QueryView, room reverb, and music in intensity layers
-// that change on the beat and the bar line.
-export { createAudio } from './audio/runtime/audio';
-export type { Audio } from './audio/runtime/audio';
-export type { AudioOptions } from './audio/runtime/audio';
-export type { AudioState } from './audio/runtime/audio';
-export type { AudioInfo } from './audio/runtime/audio';
-export type { PlayOptions } from './audio/runtime/sound';
-export type { Sound } from './audio/runtime/sound';
-export type { ListenerPose } from './audio/runtime/spatial';
-export type { GestureTarget } from './audio/runtime/gesture';
-export type { AudioBus } from './audio/runtime/mixer';
-export { BUS_VOLUMES } from './audio/runtime/mixer';
-export type { MixerInfo } from './audio/runtime/mixer';
-export type { MusicChange } from './audio/runtime/music';
-export type { MusicPosition } from './audio/runtime/music';
-export type { Quantize } from './audio/runtime/music';
-export { ROOMS } from './audio/runtime/reverb';
-export { roomReverb } from './audio/runtime/reverb';
-export type { RoomName } from './audio/runtime/reverb';
-export type { RoomSpec } from './audio/runtime/reverb';
-export { VOICE_LIMITS } from './audio/runtime/voices';
-export type { VoiceLimits } from './audio/runtime/voices';
+// Sound (WP 9.2, WP 9.3, WP 13.22): effects and songs as data, the audio runtime, rooms and walls: engine/audio/api.ts.
+export * from './audio/api';
 // The engine in a page (WP 2.7): createEngine reads the routes, starts the scene with its view, publishes
 // window.__engine, warms up and runs the frame loop; createHeadless({ view: true }) builds the same view in Node.
 export { createEngine } from './app/engine';
@@ -328,6 +283,7 @@ export { BLOB_BODY } from './gfx/puppets/bodies/blob';
 export { blobBody } from './gfx/puppets/bodies/blob';
 export type { BlobFeatures } from './gfx/puppets/bodies/blob';
 export { FLOATER_BODY } from './gfx/puppets/bodies/floater';
+export { QUADRUPED_BODY } from './gfx/puppets/bodies/quadruped';
 // Performance counters (WP 5.5): what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
 export type { EngineStats } from './dev/stats';
 // The texture library (v2, WP 7.3): a level's whole floor as a texture generator (define it under a game's id), with

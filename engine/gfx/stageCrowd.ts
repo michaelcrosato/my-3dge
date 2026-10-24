@@ -1,6 +1,6 @@
 /**
  * @file Crowd bodies on the stage (PLAN.md WP 5.7 core proposal, ADR-0008 amendment 6; §6.4's view; I-21): every
- * entity with the component `crowdBody` (engine/sim/crowdBodies.ts: a humanoid, blob or floater rig, where it stands
+ * entity with the component `crowdBody` (engine/sim/crowdBodies.ts: a humanoid, blob, floater or quadruped rig, where it stands
  * and its rig's state) drawn through a crowd (engine/gfx/puppets/crowd.ts: instanced batches, a few dozen draw calls
  * for thousands), seen through the crowd's level of detail (engine/gfx/puppets/lod.ts) from the frame's camera. The
  * stage (engine/gfx/stage.ts) draws these instead of stand-ins.
@@ -9,9 +9,10 @@
  * its component, and returns the ids it draws. `draw(alpha, camera)`, once the frame's camera is placed, puts each
  * body `alpha` of the way from its place a step ago to its last and asks the crowd whether the camera sees it: only a
  * seen body is posed (the view's half of its rig, loaded from the component: a humanoid's animator at its band's
- * detail, `animator.pose({ lod })`; a blob or a floater from its state alone) and drawn, a blob shadow under each
- * humanoid and blob on the level's floor. Humanoids wear the neutral humanoid (`body:humanoid`) in their build, blobs
- * `BLOB_BODY` with their features (`blobBody`), floaters `FLOATER_BODY`.
+ * detail, `animator.pose({ lod })`; a blob, a floater or a quadruped from its state alone) and drawn, a blob shadow
+ * under each humanoid, blob and quadruped on the level's floor. Humanoids wear the neutral humanoid (`body:humanoid`)
+ * in their build, blobs `BLOB_BODY` with their features (`blobBody`), floaters `FLOATER_BODY`, quadrupeds
+ * `QUADRUPED_BODY` (the dog).
  *
  * The crowd is made when the first crowd body arrives, and added to the stage's scene then: a stage with none has
  * none, and its scene graph is the one it had before. Each look is prepared (its batches made) when the first body
@@ -33,6 +34,7 @@ import { type Camera, type Material, type Scene } from 'three/webgpu';
 import { AnimatorPool, type AnimatorData } from '../anim/character';
 import { Blob, BLOB, type BlobState } from '../anim/blob';
 import { Floater, type FloaterState } from '../anim/floater';
+import { Quadruped, type QuadrupedState } from '../anim/quadruped';
 import { Vector3 } from '../core/math';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { CrowdBody } from '../sim/crowdBodies';
@@ -41,8 +43,9 @@ import { floorHeight } from '../world/level/heights';
 import type { CompiledLevel } from '../world/level/types';
 import { BLOB_BODY, blobBody, type BlobFeatures } from './puppets/bodies/blob';
 import { FLOATER_BODY } from './puppets/bodies/floater';
+import { QUADRUPED_BODY } from './puppets/bodies/quadruped';
 import { compileBody, type CompiledBody } from './puppets/compile';
-import { createCrowd, type Crowd, type RigBody } from './puppets/crowd';
+import { createCrowd, type Crowd, type RigBody, type RigJoints } from './puppets/crowd';
 import type { Warmup } from './warmup';
 
 /** What the stage's crowd is made from: where it goes, the materials, the level for the shadows' floor, a registry. */
@@ -86,6 +89,8 @@ interface Held {
 const FLOATER_REACH = 0.7;
 /** A blob's sphere for culling, in its radii: its body, stretched, its wings and its leap. */
 const BLOB_REACH = 2.6;
+/** The radius (m) of a quadruped's sphere as the crowd culls it, about its body: its head to its tail's tip. */
+const QUADRUPED_REACH = 0.8;
 
 /** The shorter way from angle `a` to `b`, `k` of the way. */
 function lerpAngle(a: number, b: number, k: number): number {
@@ -108,6 +113,7 @@ export function createStageCrowd(options: StageCrowdOptions): StageCrowd {
   const animators = new AnimatorPool();
   const blobs = new Map<number, Blob>();
   const floater = new Floater();
+  const quadruped = new Quadruped();
   const [ground, at] = [new Vector3(), new Vector3()];
   let crowd: Crowd | null = null;
   let dt = 1 / 60;
@@ -135,6 +141,7 @@ export function createStageCrowd(options: StageCrowdOptions): StageCrowd {
   const blobLookOf = (look: string) =>
     prepare(`blob:${look}`, blobLooks, () => (look ? blobBody(featuresOf(look)) : BLOB_BODY));
   const floaterLook = () => prepare('floater', blobLooks, () => FLOATER_BODY);
+  const quadrupedLook = () => prepare('quadruped', blobLooks, () => QUADRUPED_BODY);
   const floorAt = (x: number, z: number) => (options.level ? floorHeight(options.level, x, z) : 0);
 
   const stageCrowd: StageCrowd = {
@@ -150,6 +157,7 @@ export function createStageCrowd(options: StageCrowdOptions): StageCrowd {
         seen.add(entity.id);
         if (body.rig === 'humanoid') humanoidOf(body.look || 'build:chibi');
         else if (body.rig === 'blob') blobLookOf(body.look);
+        else if (body.rig === 'quadruped') quadrupedLook();
         else floaterLook();
         const place = { x: body.x, y: body.y, z: body.z, yaw: body.yaw };
         const last = held.get(entity.id);
@@ -182,6 +190,12 @@ export function createStageCrowd(options: StageCrowdOptions): StageCrowd {
           Object.assign(blob.state, body.state as unknown as BlobState);
           blob.position.set(x, y, z);
           crowd.blob(blob, { band, floor: floorAt(x, z), body: blobLookOf(body.look) });
+        } else if (body.rig === 'quadruped') {
+          const band = crowd.see(x, y + 0.4, z, QUADRUPED_REACH);
+          if (!band || !Object.keys(body.state).length) continue;
+          quadruped.state = body.state as unknown as QuadrupedState; // read only: its pose never writes the state
+          quadruped.position.set(x, y, z);
+          crowd.rig(quadrupedLook(), quadruped.pose() as RigJoints, { band, floor: floorAt(x, z) });
         } else {
           const band = crowd.see(x, y, z, FLOATER_REACH);
           if (!band || !Object.keys(body.state).length) continue;

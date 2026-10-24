@@ -15,16 +15,16 @@
  * The camera is a rig (engine/gfx/cameras/rig.ts: a code's camera, blends, the view effects, the settings `cam.*`) that
  * follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's middle; so does
  * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's looks (its
- * swaps, rooms' floors and recipes: `levelLooks`) reach the stage. The rig also gets the sim's read-only `QueryView` in a physics scene (the follow
- * cameras keep out of the walls), the player's eye (the shooter model's height, else his head socket) and what he does
- * each step (`cameraPlayer`); first person draws his arms by their own lens and hides his body, its shadow kept
- * (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the screen. Following a
- * player, the cutaways run (the stage's `frame`); `aim(rule, devices)` is his aim from the camera drawn last (WP 13.9,
- * engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the pointer's onto his floor),
- * which the page's input records. `restarted()` after the run starts again (a new seed, a replay) or its world changes
- * between steps (a restore, a dev action) reads the entities afresh: the stand-ins and bolts snap to them, so no dump,
- * shot or frame shows the places they had before. The effects forget what ran only for a new world, read from its first
- * event; the same world keeps its trace read (history, never restored), so no event plays twice.
+ * swaps, rooms' floors and recipes: `levelLooks`) reach the stage. The rig also gets the sim's read-only `QueryView` in
+ * a physics scene (the follow cameras keep out of the walls), the player's eye (the shooter model's height, else his
+ * head socket) and what he does each step (`cameraPlayer`); first person draws his arms by their own lens and hides his
+ * body, its shadow kept (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the
+ * screen. Following a player, the cutaways run (the stage's `frame`); `aim(rule, devices)` is his aim from the camera
+ * drawn last (WP 13.9, engine/input/aim.ts: the centre's ray through the sim's queries, his body skipped, or the
+ * pointer's onto his floor), which the page's input records. `restarted()` after the run starts again (a new seed, a
+ * replay) or its world changes between steps (a restore, a dev action) reads the entities afresh: the stand-ins and
+ * bolts snap to them, so no dump, shot or frame shows the places they had before. The effects forget what ran only for
+ * a new world, read from its first event; the same world keeps its trace read, so no event plays twice.
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
  * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5), the site from its `site` id (WP 13.15). Cameras are
@@ -54,6 +54,8 @@ import { createStage, type Stage } from '../gfx/stage';
 import type { FirstPersonParts } from '../gfx/viewmodel/body';
 import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
+import { daytimeOf } from '../sim/lights';
+import { CHEST } from '../sim/weapons';
 import type { Session } from '../sim/session';
 import type { EntityData } from '../sim/state';
 import { getLevel } from '../world/level/level';
@@ -129,11 +131,17 @@ export interface RunView {
   stepped(): void;
   /** The run started again, or its world changed between steps: forget the old places and snap to the new ones. */
   restarted(): void;
-  /** Moves the camera by one rendered frame and the stand-ins to `alpha`; returns what to draw. */
+  /**
+   * Moves the camera by one rendered frame and the stand-ins to `alpha`; returns what to draw. The stage's sky follows,
+   * lit by the hour of the scene's clock (engine/sim/lights.ts) and lighting the props' lamps that are on (WP 13.23).
+   */
   frame(frame: ViewFrame): FrameView;
   /** The camera now. */
   cameraInfo(): CameraInfo;
-  /** The point `rule` aims at from the camera drawn last (see the file comment); undefined without a player. */
+  /**
+   * The point `rule` aims at from the camera drawn last (see the file comment), without the burst's climb, which the
+   * sim adds to his shots (the rig's `aimPose`, WP 13.20); undefined without a player.
+   */
   aim(rule: AimRule, devices?: AimDevices): Vec3 | undefined;
   /** Switches to the camera `code` names, from the current one (blending with `blend`); returns it. Throws for a bad code. */
   setCamera(code: string, options?: { blend?: boolean }): CameraInfo;
@@ -215,7 +223,8 @@ export function createRunView(options: RunViewOptions): RunView {
   let doing: CameraPlayer | null = null;
   /** The player's body, which his aim's ray skips; -1 without one. */
   let body = -1;
-  /** Reads the player after a step (`fresh`: after a restart, so nothing he did before counts as a landing). */
+  /** Reads the player after a step (`fresh`: after a restart, so nothing he did before counts as a landing), and the
+   * looks of the other actors' AIs (their heads along them). */
   const readPlayer = (fresh = false) => {
     const run = options.run();
     if (fresh) rig.step(null);
@@ -223,8 +232,14 @@ export function createRunView(options: RunViewOptions): RunView {
     const aiming = (run.intents.b ?? []).includes('aim');
     doing = entity ? cameraPlayer(entity, aiming) : null;
     body = entity ? Number((entity.actor as { body?: number }).body ?? -1) : -1;
-    const look = run.intents.look; // his head, and his gun, along it (WP 13.11)
-    if (entity) stage.actors.look(entity.id, look ? { yaw: look[0], pitch: look[1], aiming } : null);
+    const look = run.intents.look; // his head, and his gun, along it (WP 13.11); the sights only with one out (WP 13.20)
+    if (entity) stage.actors.look(entity.id, look ? { yaw: look[0], pitch: look[1], aiming: doing?.aiming ?? aiming } : null); // prettier-ignore
+    for (const other of run.world.query('actor')) {
+      const actor = other.actor as { player?: boolean; intents?: { look?: readonly [number, number] } };
+      if (actor.player === true) continue;
+      const along = actor.intents?.look; // an AI's head along the look it gives its actor (WP 13.21: the neighbours)
+      stage.actors.look(other.id, along ? { yaw: along[0], pitch: along[1], aiming: false } : null);
+    }
     rig.step(doing);
   };
   /** Whether the run's registry declares the view setting `path`. */
@@ -298,10 +313,11 @@ export function createRunView(options: RunViewOptions): RunView {
       stage.draw((alpha = frame.alpha));
       drawn = pair.place(move(frame.input, frame.dt), aspect);
       time += frame.dt;
-      stage.sky.update({ camera: drawn, focus: stage.actors.player()?.feet ?? stage.centre, time });
+      const [hour, lamps] = [daytimeOf(options.run().world), stage.props.lights()]; // WP 13.23
+      stage.sky.update({ camera: drawn, focus: stage.actors.player()?.feet ?? stage.centre, time, hour, lamps });
       drawCrowd();
       stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
-      return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
+      return { scene: stage.scene, camera: drawn, alpha: frame.alpha, ...(stage.fx.gpuParticles ? { particles: stage.fx.gpuParticles } : {}) }; // prettier-ignore
     },
     cameraInfo: info,
     queries,
@@ -312,7 +328,9 @@ export function createRunView(options: RunViewOptions): RunView {
       const skip = body >= 0 ? { exclude: body } : {};
       const cast = (origin: Vec3, direction: Vec3, max: number) =>
         walls?.raycast(origin, direction, { maxDistance: max, ...skip })?.distance ?? null;
-      return aimPoint(rule, { pose: { ...rig.pose(), ...lens }, aspect, feet, eye, ...devices, cast });
+      const motion = (options.run().world.get(stage.actors.player()!.id) as { motion?: { stance?: string } } | undefined)?.motion; // prettier-ignore
+      const height = motion?.stance === 'crouch' ? CHEST.crouch : CHEST.stand; // where a level shot leaves
+      return aimPoint(rule, { pose: { ...rig.aimPose(), ...lens }, aspect, feet, eye, height, ...devices, cast }); // the climb aside: the sim adds it
     },
     setCamera(code, setOptions = {}) {
       rig.set(code, { blend: setOptions.blend === true });

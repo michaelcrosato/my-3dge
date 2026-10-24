@@ -7,8 +7,9 @@
  * - `medium`: at most 1 megapixel, one shadow caster, GI and god rays off.
  * - `low`: at most 0.5 megapixel, no shadow casters, and bloom and halos off as well.
  *
- * engine/gfx/resolution.ts applies the pixel caps now (`resolution.cap(budget)`); WPs 7.1, 7.4 and 11.5 read the
- * rest as their features arrive.
+ * engine/gfx/resolution.ts applies the pixel caps (`resolution.cap(budget)`), engine/gfx/shadows.ts the shadow
+ * casters, the post chain the bloom (engine/gfx/post/chain.ts), and its shading the GI, the god rays (the air's light
+ * shafts) and the halos (engine/gfx/post/shading.ts, WP 11.5).
  *
  * Invariants: a view setting, so `capture()`, the hash and sim-side code never see it; on the desktop `auto` is
  * `high`, which caps nothing, so a desktop draws as it did before this module. No `@example` runs here: it would be a

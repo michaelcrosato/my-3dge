@@ -1,12 +1,15 @@
 /**
  * @file Where the block's things stand (docs/PLAYGROUND.md §2, PLAN.md WP 13.18), as data the site's scenes read
  * (labs/playground/scenes/site.ts): in each room of the house, its lamp hung from the ceiling and its switch on the
- * wall by its door (`HOUSE_LIGHTS`), the lamp's light group the room's (`room:<name>`); the furniture, room by room
+ * wall by its door (`HOUSE_LIGHTS`), the lamp's light group the room's (`room:<name>`), the porch's lamp outside the
+ * front door with its switch inside, and the crawlspace's under its low ceiling (WP 13.23); the furniture, room by room
  * (`HOUSE_FURNITURE`), in the house's own metres and storeys (labs/playground/levels/house.ts); the garage door's two
- * switches; and outside (`OUTDOORS`, world metres): the patio, the backyard, the front yard's fence, hedge and
- * mailbox, the street's lamps, hydrant, parked car and bus stop, the range's targets and the ring's ropes; the
- * zipline from the tree house to the garage's deck, the lookout's down to the backyard, the hill's balloon and the
- * backyard's trampoline (`SITE_RIDES`). A thing's yaw turns its +Z face (a prop's front) about +Y.
+ * switches; and outside (`OUTDOORS`, world metres): the patio, the backyard, the front yard's fence, hedge and mailbox,
+ * the street's lamps (the light group `street`, lit at dusk), hydrant, parked car and bus stop and the ring's ropes
+ * (the range's targets are things:
+ * labs/playground/weapons/range.ts); the zipline from the tree house to the garage's deck, the lookout's down to the
+ * backyard, the hill's balloon and the backyard's trampoline (`SITE_RIDES`). A thing's yaw turns its +Z face (a prop's
+ * front) about +Y.
  *
  * Game code, sim-side: data, importing nothing from the engine.
  *
@@ -18,14 +21,19 @@
 /** Facing: +Z (south), +X (east), −Z (north), −X (west), as yaws (rad). */
 const [S, E, N, W] = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
 
-/** A room's lamp (where it hangs, x and z) and switch (x, z and the way it faces), in the house's metres. */
+/**
+ * A room's lamp (where it hangs, x and z) and switch (x, z and the way it faces), in the house's metres; the lamp's top
+ * over its floor (`ceiling`, 2.7 m) and the switch's height (`plate`, 1.2 m) when a low ceiling wants others.
+ */
 export interface RoomLight {
   readonly storey: number;
   readonly lamp: readonly [number, number] | null;
   readonly switch: readonly [number, number, number];
+  readonly ceiling?: number;
+  readonly plate?: number;
 }
 
-/** Each room's lamp and switch (see the file comment); the crawlspace has neither, the attic's lamp hangs from its ridge. */ // prettier-ignore
+/** Each room's lamp and switch (see the file comment); the attic's lamp hangs from its ridge. */
 export const HOUSE_LIGHTS: Readonly<Record<string, RoomLight>> = {
   workshop: { storey: 0, lamp: [4.5, 10], switch: [8.75, 6.8, W] },
   stairwell: { storey: 0, lamp: [9.6, 6.5], switch: [10.25, 8.6, W] }, // at the foot of the stairs
@@ -43,6 +51,8 @@ export const HOUSE_LIGHTS: Readonly<Record<string, RoomLight>> = {
   study: { storey: 2, lamp: [13, 7], switch: [10.5, 8.3, E] },
   master: { storey: 2, lamp: [13, 13], switch: [10.5, 13.7, E] },
   attic: { storey: 3, lamp: [8, 10.5], switch: [12, 10.1, W] },
+  porch: { storey: 1, lamp: [7.5, 16.6], switch: [6.6, 15.75, N] }, // over the front door outside, lit at dusk too
+  crawlspace: { storey: 0, lamp: [10.5, 2], switch: [10.4, 4, N], ceiling: 1.4, plate: 0.9 }, // under its 1.4 m ceiling
 };
 
 /** The garage door's switches, in the house's metres: inside on its east wall, and outside beside it. */
@@ -105,7 +115,7 @@ export const HOUSE_FURNITURE: readonly Placed[] = [
 ];
 
 /** One thing outside: its prop, where its base stands (x, y, z, world metres) and its yaw. */
-export type Outside = readonly [prop: string, x: number, y: number, z: number, yaw: number];
+export type Outside = readonly [prop: string, x: number, y: number, z: number, yaw: number, group?: string];
 
 /** The picket fence's sections along the front yard (2 m each), but at the path and the driveway. */
 const FENCE = [42, 44, 46, 48, 50, 54, 56, 58, 67, 69, 71].map((x): Outside => [
@@ -135,7 +145,7 @@ export const OUTDOORS: readonly Outside[] = [
   ['prop:playground-tree', 46, 0, 70, 0],
   ['prop:playground-tree', 68, 0, 68, 0],
   // the street: its lamps on the north sidewalk, over the road; the hydrant; a parked car; the bus stop
-  ...[45, 59, 73, 87].map((x): Outside => ['prop:playground-streetlight', x, 0.15, 84.2, S]),
+  ...[45, 59, 73, 87].map((x): Outside => ['prop:playground-streetlight', x, 0.15, 84.2, S, 'street']),
   ['prop:playground-hydrant', 57, 0.15, 84, 0],
   ['prop:playground-car', 78, 0, 87, E],
   ['prop:playground-busstopRoof', 82, 2.55, 94.1, 0],
@@ -143,8 +153,6 @@ export const OUTDOORS: readonly Outside[] = [
   ['prop:playground-busstopPost', 83.4, 0.15, 94.6, 0],
   ['prop:playground-busstopBack', 82, 0.15, 94.8, 0],
   ['prop:bench', 82, 0.15, 94.3, N],
-  // the range: three lanes' targets at 10, 25 and 50 m from the bench (x 4), facing it
-  ...[3, 6, 9].flatMap((z) => [14, 29, 54].map((x): Outside => ['prop:playground-target', x, 0, z, W])),
   // the ring's ropes on its canvas (1 m up, x 63 to 69, z 3 to 9), but its south side, where its steps come up
   ...[1.5, 1.9, 2.3].flatMap((y): Outside[] => [['prop:playground-rope', 66, y, 3.1, 0], ['prop:playground-rope', 63.1, y, 6, E], ['prop:playground-rope', 68.9, y, 6, E]]), // prettier-ignore
 ];

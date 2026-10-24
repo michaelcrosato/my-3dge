@@ -5,9 +5,10 @@
  * runs in T1 through `runQa` (tools/qa/audio.test.ts), and `x audio` (tools/cmd/audio.ts) prints the same metrics for
  * one sound.
  *
- * Renders: every variant of an effect (each variant already draws its noise from its own seed) and a song with every
- * track (intensity 1), from seed 0, at 44,100 Hz. Metrics, one violation per sound and metric, valued by the worst
- * render (larger is worse):
+ * Renders: every variant of an effect (each variant already draws its noise from its own seed), as it plays (`asHeard`:
+ * one with a `loop` pass folded onto it, as a looped play repeats it, WP 13.22), and a song with every track (intensity
+ * 1), from seed 0, at 44,100 Hz. Metrics, one violation per sound and metric, valued by the worst render (larger is
+ * worse):
  * - `clipping`: the peak above 1 (full scale), where the output clips;
  * - `dcOffset`: the mean sample's size above 0.01;
  * - `clicks`: how many jumps of at least 0.05 lead into or out of near-silence, the buffer's ends included, and do not
@@ -38,6 +39,7 @@ import { getSfx, renderSfx, sfxKind } from '../../engine/audio/data/sfx';
 import { renderSong, songKind } from '../../engine/audio/data/song';
 import { dcOffset, rms } from '../../engine/audio/dsp/measure';
 import { DEFAULT_RATE } from '../../engine/audio/dsp/render';
+import { foldLoop } from '../../engine/audio/runtime/buffers';
 import { registry as sharedRegistry, type Registry } from '../../engine/core/registry';
 import type { QaFamily, QaViolation } from '../cmd/qa';
 
@@ -330,12 +332,21 @@ export async function loadSoundModules(root: string): Promise<void> {
   songKind(sharedRegistry);
 }
 
-/** The renders the family checks of a sound, from seed 0: each variant of an effect, a song with every track. */
+/**
+ * `samples`, a render of effect `id`, as it plays: folded onto its `loop` pass when it has one (engine/audio/runtime/
+ * buffers.ts `foldLoop`), what a looped play repeats; else as rendered.
+ */
+export function asHeard(id: string, samples: Float32Array, registry: Registry = sharedRegistry): Float32Array {
+  const pass = getSfx(id, registry).loop;
+  return pass > 0 ? foldLoop(samples, Math.max(1, Math.round(pass * DEFAULT_RATE))) : samples;
+}
+
+/** The renders the family checks of a sound, from seed 0: each variant of an effect as heard, a song with every track. */
 function renders(registry: Registry, kind: string, id: string): { at: string; render: () => Float32Array }[] {
   if (kind !== 'sfx') return [{ at: 'every track', render: () => renderSong(id, { registry }) }];
   return Array.from({ length: getSfx(id, registry).variants }, (_, variant) => ({
     at: `variant ${variant}`,
-    render: () => renderSfx(id, { variant, registry }),
+    render: () => asHeard(id, renderSfx(id, { variant, registry }), registry),
   }));
 }
 

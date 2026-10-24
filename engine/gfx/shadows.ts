@@ -15,7 +15,9 @@
  *
  * Invariants: a budget is a whole number from 0 to `MAX_SHADOW_CASTERS`; point casters carry the prototype's shadow
  * settings (a 512 × 512 map, near 0.1 m, bias −0.002), and r182 sets a point shadow's far plane to the light's
- * distance itself.
+ * distance itself. A point caster also carries a `target`, which nothing aims: once a light has cast, r182 reads its
+ * shadow's matrix each render through `LightShadow.updateMatrices`, which looks at `light.target`, and a point light
+ * that stops casting (a sun taking the budget, WP 11.5's `look:daylight` after the torch-lit hall) threw there.
  *
  * Carried from `my-3d2dge:src/stress-world/10-hall.js:442-463`: the two shadow lights that take over the lit torches
  * nearest the hero, and their shadow settings.
@@ -26,7 +28,7 @@
  * splitCasters(2, { sun: true, points: true }); // { sun: true, points: 1 }
  * @see engine/gfx/shadows.test.ts
  */
-import { PCFShadowMap, type PointLight, type ShadowMapType, type WebGPURenderer } from 'three/webgpu';
+import { Object3D, PCFShadowMap, type PointLight, type ShadowMapType, type WebGPURenderer } from 'three/webgpu';
 import type { QualityBudget } from './quality';
 
 /** The most lights that cast shadows at once: the budget at the `high` tier. */
@@ -67,4 +69,7 @@ export function configurePointCaster(light: PointLight): void {
   light.shadow.mapSize.set(POINT_SHADOW.mapSize, POINT_SHADOW.mapSize);
   light.shadow.camera.near = POINT_SHADOW.near;
   light.shadow.bias = POINT_SHADOW.bias;
+  // r182's `lightShadowMatrix` (src/nodes/accessors/Lights.js:47) calls `LightShadow.updateMatrices` for a light that
+  // no longer casts, and that reads `light.target`, which a point light lacks (see the file comment).
+  Object.assign(light, { target: (light as PointLight & { target?: Object3D }).target ?? new Object3D() });
 }

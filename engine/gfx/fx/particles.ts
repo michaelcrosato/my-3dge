@@ -15,9 +15,12 @@
  * Budgets: a burst never grows the pool. Particles past `capacity` are not born and are counted (`dropped`), so a
  * crowded fight costs at most the pool, never a frame spike; `stats()` says how many live, were born and dropped.
  *
+ * Births are written by `planBurst` and `writeParticle`, which the GPU's ring shares (engine/gfx/enhanced/
+ * particles.ts, WP 11.3: the same floats, `PARTICLE_FLOATS`), so a burst gives the same particles on either.
+ *
  * Carried from `shardfall:crates/pav_render/src/fx.rs:584-618` (births: area, the unit ball, prewarm) and
- * `shaders/particle_update.wgsl` (the step), on the CPU (its GPU version is WP 11.3), with
- * `my-3d2dge:engine/my-3d2dge.js:940-959` (`Particles`: a capped list, swap-removal).
+ * `shaders/particle_update.wgsl` (the step), on the CPU, with `my-3d2dge:engine/my-3d2dge.js:940-959` (`Particles`:
+ * a capped list, swap-removal).
  *
  * Invariants: view state only (doctrine: WebGPU only): nothing here reads or writes the sim; draws only from the
  * stream it is given, so the same bursts, stream and frames give the same particles; particles are kept in slots
@@ -57,8 +60,29 @@ export interface ParticleStats {
   dropped: number;
 }
 
-/** The floats a particle keeps, by name: offsets into its stride. */
-const F = {
+/** The box round live particles (m). */
+export interface ParticleBounds {
+  min: [number, number, number];
+  max: [number, number, number];
+}
+
+/**
+ * What bursts the particles of an emitter whose entry says `gpu`, as the effects meet it: the GPU's ring
+ * (engine/gfx/enhanced/particles.ts, WP 11.3), moved by `update` and counted by `stats` as the pool is.
+ */
+export interface ParticleRing {
+  burst(spec: ParticleSpec, count: number, origin: readonly number[], rng: Rng, options?: BurstOptions): number;
+  update(dt: number, time: number): void;
+  bounds(): ParticleBounds | null;
+  stats(): ParticleStats & { recycled: number };
+  clear(): void;
+}
+
+/**
+ * The floats a particle keeps, by name: offsets into its stride. The GPU's ring keeps the same (engine/gfx/enhanced/
+ * particles.ts), so one writer births both.
+ */
+export const PARTICLE_FLOATS = {
   x: 0,
   y: 1,
   z: 2,
@@ -78,6 +102,7 @@ const F = {
   c1: 19, // r, g, b, a
   flags: 23, // 1: additive, 2: stretch
 } as const;
+const F = PARTICLE_FLOATS;
 /** Floats per particle. */
 export const PARTICLE_STRIDE = 24;
 /** No floor. */
@@ -124,43 +149,8 @@ export class ParticlePool {
     const n = Math.max(0, Math.round(count));
     const room = Math.min(n, this.capacity - this.count);
     this.#dropped += n - room;
-    const k = options.scale ?? 1;
-    const [ox, oy, oz] = origin;
-    const add = options.velocity ?? [0, 0, 0];
-    const floor = spec.lands ? (options.ground ?? oy) + spec.floor : NO_FLOOR;
-    const [c0, c1] = options.color
-      ? [0, 1].map((i) => [
-          ...options.color![i].map((c) => c * brightest(i ? spec.c1 : spec.c0)),
-          (i ? spec.c1 : spec.c0)[3],
-        ])
-      : [spec.c0, spec.c1];
-    const d = this.data;
-    for (let i = 0; i < room; i++) {
-      const o = (this.count + i) * PARTICLE_STRIDE;
-      d[o + F.x] = ox + rng.range(-1, 1) * spec.area[0] * k;
-      d[o + F.y] = oy + rng.range(-1, 1) * spec.area[1] * k;
-      d[o + F.z] = oz + rng.range(-1, 1) * spec.area[2] * k;
-      let [dx, dy, dz] = [1, 1, 1];
-      while (dx * dx + dy * dy + dz * dz > 1) [dx, dy, dz] = [rng.range(-1, 1), rng.range(-1, 1), rng.range(-1, 1)];
-      d[o + F.vx] = spec.velocity[0] + dx * spec.spread * k + add[0];
-      d[o + F.vy] = spec.velocity[1] + dy * spec.spread * k + add[1];
-      d[o + F.vz] = spec.velocity[2] + dz * spec.spread * k + add[2];
-      const life = Math.max(0.01, spec.life[0] + (spec.life[1] - spec.life[0]) * rng.next());
-      let age = 0;
-      if (spec.prewarm > 0) {
-        age = rng.next() * Math.min(spec.prewarm, life) * 0.95;
-        d[o + F.x] += d[o + F.vx] * age;
-        d[o + F.y] += d[o + F.vy] * age - 0.5 * spec.gravity * age * age;
-        d[o + F.z] += d[o + F.vz] * age;
-        d[o + F.vy] -= spec.gravity * age;
-        d[o + F.y] = Math.max(d[o + F.y], floor);
-      }
-      d.set([age, life, spec.size[0] * k, spec.size[1] * k], o + F.age);
-      d.set([spec.gravity, spec.drag, spec.turbulence, floor, spec.bounce], o + F.gravity);
-      d.set(c0, o + F.c0);
-      d.set(c1, o + F.c1);
-      d[o + F.flags] = (spec.additive ? 1 : 0) + (spec.stretch ? 2 : 0);
-    }
+    const plan = planBurst(spec, origin, options);
+    for (let i = 0; i < room; i++) writeParticle(this.data, (this.count + i) * PARTICLE_STRIDE, spec, plan, rng);
     this.count += room;
     this.#born += room;
     return room;
@@ -225,6 +215,19 @@ export class ParticlePool {
     return out;
   }
 
+  /** The box round every live particle, each its size out from its middle and a streak `streak` × its speed more. */
+  bounds(streak = 0): ParticleBounds | null {
+    if (!this.count) return null;
+    const box: ParticleBounds = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+    const seen = {} as ParticleView;
+    for (let i = 0; i < this.count; i++) {
+      const { x, y, z, vx, vy, vz, size, stretch } = this.read(i, seen);
+      const r = size + (stretch ? Math.hypot(vx, vy, vz) * streak : 0);
+      [x, y, z].forEach((v, k) => ([box.min[k], box.max[k]] = [Math.min(box.min[k], v - r), Math.max(box.max[k], v + r)])); // prettier-ignore
+    }
+    return box;
+  }
+
   /** Removes every particle. */
   clear(): void {
     this.count = 0;
@@ -240,6 +243,65 @@ export class ParticlePool {
     const last = --this.count;
     if (i !== last) this.data.copyWithin(i * PARTICLE_STRIDE, last * PARTICLE_STRIDE, (last + 1) * PARTICLE_STRIDE);
   }
+}
+
+/** What every particle of one burst shares: its scale, origin, added velocity, floor and colours (`planBurst`). */
+export interface BurstPlan {
+  k: number;
+  origin: readonly number[];
+  add: readonly number[];
+  floor: number;
+  c0: readonly number[];
+  c1: readonly number[];
+}
+
+/** The plan of a burst of `spec` at `origin` (m) as `options` change it (see the file comment). */
+export function planBurst(spec: ParticleSpec, origin: readonly number[], options: BurstOptions = {}): BurstPlan {
+  const [c0, c1] = options.color
+    ? [0, 1].map((i) => [
+        ...options.color![i].map((c) => c * brightest(i ? spec.c1 : spec.c0)),
+        (i ? spec.c1 : spec.c0)[3],
+      ])
+    : [spec.c0, spec.c1];
+  const floor = spec.lands ? (options.ground ?? origin[1]) + spec.floor : NO_FLOOR;
+  return { k: options.scale ?? 1, origin, add: options.velocity ?? [0, 0, 0], floor, c0, c1 };
+}
+
+/**
+ * Writes one particle of a burst into `d` from float `o` (a slot's first, `PARTICLE_STRIDE` floats), drawing from
+ * `rng` in a fixed order: its place in the area, its direction in the unit ball, its life, and its age when prewarmed.
+ */
+export function writeParticle(
+  d: Float32Array | Float64Array,
+  o: number,
+  spec: ParticleSpec,
+  plan: BurstPlan,
+  rng: Rng,
+): void {
+  const { k, origin, add, floor } = plan;
+  d[o + F.x] = origin[0] + rng.range(-1, 1) * spec.area[0] * k;
+  d[o + F.y] = origin[1] + rng.range(-1, 1) * spec.area[1] * k;
+  d[o + F.z] = origin[2] + rng.range(-1, 1) * spec.area[2] * k;
+  let [dx, dy, dz] = [1, 1, 1];
+  while (dx * dx + dy * dy + dz * dz > 1) [dx, dy, dz] = [rng.range(-1, 1), rng.range(-1, 1), rng.range(-1, 1)];
+  d[o + F.vx] = spec.velocity[0] + dx * spec.spread * k + add[0];
+  d[o + F.vy] = spec.velocity[1] + dy * spec.spread * k + add[1];
+  d[o + F.vz] = spec.velocity[2] + dz * spec.spread * k + add[2];
+  const life = Math.max(0.01, spec.life[0] + (spec.life[1] - spec.life[0]) * rng.next());
+  let age = 0;
+  if (spec.prewarm > 0) {
+    age = rng.next() * Math.min(spec.prewarm, life) * 0.95;
+    d[o + F.x] += d[o + F.vx] * age;
+    d[o + F.y] += d[o + F.vy] * age - 0.5 * spec.gravity * age * age;
+    d[o + F.z] += d[o + F.vz] * age;
+    d[o + F.vy] -= spec.gravity * age;
+    d[o + F.y] = Math.max(d[o + F.y], floor);
+  }
+  d.set([age, life, spec.size[0] * k, spec.size[1] * k], o + F.age);
+  d.set([spec.gravity, spec.drag, spec.turbulence, floor, spec.bounce], o + F.gravity);
+  d.set(plan.c0, o + F.c0);
+  d.set(plan.c1, o + F.c1);
+  d[o + F.flags] = (spec.additive ? 1 : 0) + (spec.stretch ? 2 : 0);
 }
 
 /** The brightest channel of linear `rgba` (at least 1): what a replaced colour is multiplied by. */

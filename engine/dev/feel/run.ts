@@ -261,6 +261,10 @@ export function measure(m: Measure, run: CourseRecord, steps: number, dt: number
       const { gap, held } = run.anim!.handContact(m.from, to);
       return m.holds === true && held === 0 ? Number.MAX_VALUE : gap; // a traversal never posed: as far off as JSON writes
     }
+    case 'muzzle': {
+      const { angle, aimed } = run.anim!.muzzle(m.from, to);
+      return aimed === 0 ? Number.MAX_VALUE : angle; // never aimed: nothing measured, so it fails
+    }
     case 'cameraJump':
       return camera.jump;
     case 'cameraTurn':

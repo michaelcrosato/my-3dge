@@ -102,3 +102,53 @@ On another platform a replay runs twice, compares the runs, and reports "golden:
   player's animator phase differs. All four again at the third round, when a planted stride's steps grew shorter as
   the move turns sideways (`GAIT.sideStride`, 35% straight across, by the square of the move's sideways share): with
   it left out all four gave the goldens above, and in their final states only the player's animator phase differs.
+- playground-site's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) with WP 13.19's melee
+  (ADR-0025 amendment 24): its two strikes on the living room's door were instant, and are door kicks now, each landing
+  0.83 s after its press and 1.41 s long, so its second press moved 180 steps after the first (a look toward the burst
+  leaf before it: the kick's cone is 30°), every input after it 140 steps later and the run 140 steps longer (780);
+  the site also gained melee and the ring's dummies (hashed). The story is the same, event for event
+  (labs/playground/scenes/site.test.ts). playground-melee is new with that WP: the ring's story (scenes/ring.test.ts).
+- playground-site's and playground-melee's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing)
+  with WP 13.20's firearms (ADR-0025 amendment 25): the site's player carries the pistol and the rifle, holstered (the
+  component `weapons`, hashed), and the range's targets are things (the components `thing` and `popup`, hashed) where
+  fixed props stood. Neither run draws a gun or fires a shot: their inputs are as they were, and their stories the
+  same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts). playground-range is new with that WP:
+  the range's story (labs/playground/weapons/range.test.ts), its inputs written from a scripted run that aimed each
+  shot at its target's plate as the sim had it.
+- playground-site's, playground-melee's and playground-range's goldens were re-recorded (`--update`, Node ×3 and
+  Chromium ×3 agreeing) with WP 10.2's ragdolls (ADR-0025 amendment 26): the ring stands two sparring partners
+  (actors with an animator, `health` and the component `sparringPartner`, hashed) and the site adds the systems
+  `ragdolls` and `partners`. No run strikes them: their inputs are as they were, and their stories the same, event for
+  event (labs/playground/scenes/site.test.ts, ring.test.ts, labs/playground/weapons/range.test.ts). ragdoll-falls and
+  ragdoll-strike are new with that WP: the box's ragdolls (labs/box/scenes/ragdoll.test.ts).
+- playground-range's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) at WP 13.20's review
+  (ADR-0025 amendment 25): a burst's kick falls away after it (`recover`) instead of vanishing, and the kick and the
+  cone turn a shot in its aim's own frame. Its inputs are as they were, and its story the same, event for event, the
+  same 10 of its 20 rounds striking (labs/playground/weapons/range.test.ts); the site's and the ring's fire no shot.
+- ragdoll-falls' and ragdoll-strike's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3 agreeing) at WP
+  10.2's film review (ADR-0025 amendment 26): a ragdoll gets up once its trunk has lain still, not its every limb (one
+  swinging lay up to 2.8 s longer), and the partners stand where each falls on open floor the room's camera sees (the
+  first slid into the south wall's foot, the second fell onto the pillar). Their inputs are as they were, and their
+  stories the same: each partner falls to its blow and gets up the way it lies, the dead one when the cycle stands it,
+  and the hero's blow fells the third between the first two's falls (labs/box/scenes/ragdoll.test.ts).
+- playground-site's, playground-melee's and playground-range's goldens were re-recorded (`--update`, Node ×3 and
+  Chromium ×3 agreeing) with WP 13.21's neighbours and dog (ADR-0025 amendment 28): every site scene stands four
+  neighbours on their rounds (actors with an animator and the components `neighbour`, `route`, `awareness` and
+  `health`), the dog beside the player and facing him (an actor with the components `dog` and `crowdBody`, its feet
+  stood from its first step) and its ball before its paws (a prop), and keeps the boxes its cast's ways go round
+  (`siteWays`), all hashed. Their inputs are as they were, and their
+  stories the same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts,
+  labs/playground/weapons/range.test.ts). playground-street is new with that WP: the dog sits by the player, follows
+  him to its ball, chases the ball he throws, fetches it and lets it fall by him (labs/playground/cast/dog.test.ts).
+  playground-site's and -street's were re-recorded again (Node ×3, Chromium ×3, the street's in the page ×3) when the
+  dog and its ball moved to where both lie flat: on the street the dog stands on the driveway, its ball 0.34 m from
+  the sidewalk's edge, and the street's pick-up was retuned to the ball's new place, its story unchanged; in the front
+  yard the dog stands where it did and only its ball moved, laid at the dog's floor height, no longer its spot's.
+- playground-site's, -street's, -melee's and -range's goldens were re-recorded (`--update`, Node ×3 and Chromium ×3
+  agreeing) with WP 13.23's light and time (ADR-0025 amendment 31): every site scene stands the block's clock (an
+  entity with the component `daytime`, noon by `playground.hour`, held), its two rules (`dusk`: the street's lamps and
+  the porch's), the porch's lamp and switch and the crawlspace's (after the attic's, so every entity after them is
+  four ids on), and gives the street's four lamps their group (`propLight`), spawned with the porch's lamp and
+  switch as the starting hour has them (dark at noon), all hashed. Their inputs are as they were, and their stories
+  the same, event for event (labs/playground/scenes/site.test.ts, ring.test.ts, labs/playground/weapons/range.test.ts,
+  labs/playground/cast/dog.test.ts).

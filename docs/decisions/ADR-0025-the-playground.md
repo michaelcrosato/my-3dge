@@ -1026,7 +1026,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   engine/gfx/props.ts, at its cap, gave its texture and materials to engine/gfx/propLooks.ts.
 - **The playground**: the library gains the chair (6 kg), what the owner's playtest throws; the cottage
   (labs/playground/levels/cottage.ts, scenes/interact.ts) holds a door, two windows, the kitchen's lamp and switch and
-  chairs to throw, and its replay (tests/replays/playground-interact.replay.json) opens the door, switches the light
+  chairs to throw, and its replay (playground-interact, retired with the cottage at WP 13.18) opens the door, switches the light
   off and on, closes the door, bursts it open and breaks it, and throws a chair through a pane. The house's doors,
   windows, lamps by room (`room:<name>`, amendment 18's light groups), the garage and its door (whose storey must hold
   the door's 2.2 m slide up) and the bot through closed doors are WP 13.18's; doors, glass and switches have no
@@ -1172,3 +1172,687 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Beyond its Owns**: engine/app/{view,headless,viewMembers}.ts and their tests (the members `eye` and
   `camera.advance`), tests/e2e/box-members.spec.ts (every member in the page), the tests beside each file, the house
   test, docs/GAME-GUIDE.md's command row and the stress-box skill's quick loop.
+
+## Amendment 22 (2026-10-22, WP 13.27): the follow cameras indoors
+
+- **Never cut by what moves** (engine/physics/queries.ts `fixed`, Rapier's `ONLY_FIXED`): the cameras' casts, sweeps and
+  overlaps meet the level's fixed bodies only (engine/gfx/cameras/collide.ts `Walls.fixed`, true by default), so a door
+  that swings, a lift or a prop that moves passes through the camera, faded where it stands between it and the player,
+  as a game's camera channel ignores its doors; the feel check's `inside` counts the same bodies
+  (engine/dev/feel/camera.ts). The 3.45 m cut by the living room's swinging door (amendment 20) is gone.
+- **The shooter** (shoulder.ts): its arm reads the room it will need before it needs it: toward each side, as far as a
+  turn of the view at a body's 720°/s could take it before the arm, coming in, got there (`SHOULDER_ROOM.sides`), and
+  back from where the shoulder point is going, by his velocity, its bend and the pitch turning on, over the next half
+  second (`SHOULDER_ROOM.ahead`, the arm preparing at half its pace: a drop off a ledge, the climb down the attic's
+  hatch, a jamb as he steps past it). A short arm draws the shoulder point in toward his chest at once and lets it out
+  at 3 a second. The camera heads for the arm's end as `moveCamera` moves it (`SHOULDER_KEEP`: in sight of its own
+  ball, along his trail however near once out of his sight), carried with the pivot and the view, not with a turn
+  that would carry it into a wall; where his chest stands past 60% of the picture's half-height it shifts across the
+  view toward him, its own moves held to 1.5 × `COLLIDE_PULL` (0.25 m a frame, under §4's 0.3). Tried and dropped: a
+  camera standing on its arm, never past the first wall, which lost the player in 19 of the soak's frames but popped
+  0.7 to 2.9 m on ten of the gym's courses, wherever the arm sank onto a ledge behind a drop.
+- **The platformer** (follow.ts): `moveCamera` keeps a trail of its base (`CameraBall.trail`) and, out of its sight,
+  goes along it to the newest point it sees (a door, a corner); held off its arm it looks toward its pivot
+  (`FollowState.aim`, at most 120°/s; right over it, straight down at 180°/s); its look-ahead scales by the share of
+  its arm the camera stands out, so a camera held in close looks at him, not a metre past him.
+- **The bot's look** (engine/dev/bot.ts): it turns toward its heading at a body's 720°/s, as a mouse would, its keys in
+  the heading's frame (`cam`), so it walks as it did; the soak's view no longer turns 90° in a frame.
+- **Measured** over the house's soak (labs/playground/scenes/site-soak.test.ts, 5,127 frames, every camera's bounds
+  judged, none watched): the shooter's jump 0.19 m, turn 0.008 rad, inside 0, lost 0 (about 7% before); the
+  platformer's jump 0.19 m, turn 0.054 rad, inside 0, lost 0 (most before); first person, isometric and top-down as
+  before. The gym's 25 courses keep their 1,767 measures (`node x feel labs/playground`).
+- **ESC-0002** (the shooter's bound where less than 0.6 m lies behind his chest): decided in the owner's absence, §4's
+  bound kept as written; no frame needed the unframable count the call allowed.
+- **Found**: Rapier 0.21's heightfield misses ball casts: of the hits a ray finds against a heightfield of 16 to 96
+  cells a side, its ball casts miss 11 to 24% (and a ray up a slope missed at 96); a triangle mesh of the same cells
+  misses none (a probe; the hill's shooter stood in its terrain for 21 frames while its arm trusted those casts). Not
+  needed now (`moveCamera`'s overlap test keeps every camera out of the hill), so proposed, not done: stand every
+  terrain as `addTerrainBody`'s triangle mesh (engine/sim/levelBodies.ts), the hill's replay re-recorded.
+- **Beyond its Owns**: engine/physics/queries.ts (`fixed`), engine/dev/feel/camera.ts (`inside` against fixed bodies),
+  engine/dev/bot.ts and its test (`LOOK_TURN`, `cam`).
+
+## Amendment 23 (2026-10-22, WP 10.4): the gameplay kits
+
+- **Things** (engine/world/things.ts, engine/sim/things.ts) are props that count their hits, go down and stand back up
+  after their kind's `rise`, or break (`rise` below 0), and slide along a track: the kind `thing` holds the prop, the
+  numbers and the hooks `hit`, `down` and `up` (asked of the entry); a scene's thing is its prop, kinematic, holding the
+  component `thing`, struck through WP 13.16's `defineStrikable` (a melee hit or a shot a point, a blast all it has),
+  its body driven along its track by the system `things` (`driveBody`). The range's pop-up and moving targets (WP 13.20)
+  and the ring's dummies (WP 13.19) are things; a door or a pane stays WP 13.16's.
+- **Projectile patterns** (engine/world/patterns.ts): a shot emitter's volleys (aimed, forward, ring, spiral, random
+  from a named stream) and timing (delay, interval, bursts and their pause, range) over WP 6.3's swept shots, so no
+  pattern tunnels. Its names say *shot* emitter (`ShotEmitter`, `SHOT_EMITTER`, `stepVolleys`): `Emitter` is already
+  the particle effects' kind (engine/gfx/fx/emitters.ts). Volleys fall at the delay and whole intervals after it, each
+  on the step that reaches it, the overshoot kept, so a coarse step keeps the rhythm.
+- **Awareness** (engine/world/awareness.ts): beyond WP 5.2's sight, which the caller still tests (a grid's `canSee`,
+  a ray on a site), the noises an agent hears (each within its loudness times the agent's hearing, half as far through
+  a wall the caller names) and its memory of where it last saw or heard (`memory` seconds), with `alerted` the step it
+  first knows: the neighbours' startle (WP 13.21).
+- **The public API**: their names are listed in engine/sim/kitsApi.ts, and the crowds' and combat's (WPs 5.1 to 6.4)
+  moved to engine/sim/combatApi.ts, both re-exported whole by engine/sim-api.ts (400 lines, at its cap, now 302): the
+  split PROGRESS.md asked for on its next change, the names and their paths unchanged for game code.
+- **Measured**: engine/world/{things,patterns,awareness}.test.ts and engine/sim/things.test.ts, 19 tests; the
+  Done-when's bound in patterns.test.ts: every shot of every pattern, 60 m/s (1 m a step), stopped on the 4 cm post
+  across its way, never past it.
+- **Beyond its Owns**: engine/sim/{things,kitsApi,combatApi}.ts and their tests, engine/sim-api.ts.
+
+## Amendment 24 (2026-10-22, WP 13.19): melee and the door kick
+
+- **The door kick on the procedural body, not the clip**: the WP and docs/PLAYGROUND.md §5.1 name Mesh2Motion's
+  `Kick_Breach`, its hit at the strike, but the player is the procedural humanoid and the library's clips wait for WP
+  8.8's contacts (amendments 10 and 11); a clip layer on him would also load the library into the page. Built instead:
+  the engine's door kick, `move:breach` (engine/anim/moves-data.ts `ADDED_MOVES`: a front kick, the sole at the lock's
+  height), timed on the clip: its hit 0.83 s in, where `Kick_Breach` lands its strike (engine/anim/clip/library.ts
+  `strikeTime`; its 1.83 s hold a step back the body does not need: the move is 1.41 s). Its own lunge is 0: at the
+  port's kicks' 0.025 m the planted foot still slid 6.5 cm (the anim QA's 5 cm), and the sim's lunge moves the body.
+  The punch is the engine's cross, the air's kick `move:kick` and the slide's uppercut `move:uppercut`, each drawn out
+  so its hit lands at Apex's 0.35 s (the cross's own clip, Mesh2Motion's `Punch_Cross`, strikes at 0.33 s).
+- **Melee** (engine/sim/melee.ts, the system `melee`): Apex's numbers (§3.2) as `MELEE`: 30 damage to a person (an
+  actor with `health`, engine/sim/damage.ts), a reach of 1.52 m in a 30° cone, the lunge until the hit (0.35 s), the
+  hands back 0.75 s after a swing began, a 0.25 s hit-stop. Ours: the lunge closes to 0.9 of the move's measured reach
+  (engine/anim/moves.ts `measureMove`), its speed toward the target's point set each step (so the model's friction
+  cannot leave it short), 8 m/s at most; one target a swing; the cone is a fan of five rays at three heights (scaled
+  down crouched) through the physics world (engine/sim/hits.ts `fanHits`), so a wall hides what stands behind it; the
+  facing is the step's (its aim, else its look), as the movement model turns him.
+- **Faced** (Apex's door rule; amendment 19's hand-off): the target as the swing began; at the hit the first in reach,
+  faced only when it is that one. A strikable entry may name the move a melee plays on it (`defineStrikable(component,
+  strike, move)`: a door's is the kick); else a slide gives the uppercut, the air the kick, the rest the punch.
+- **No mantle while a swing plays** (engine/physics/movement/mantle.ts): the model's air mantle starts at any ledge
+  the body moves at, and an air kick's lunge climbed the dummy it kicked; `CharacterInput.swinging`, from the actor's
+  `melee`, holds it off.
+- **Seen**: third person through the animator's `states.body` (the arm path, WP 6.1); first person, the kick's leg
+  (amendment 12's) and the punch's fist where the body's goes from its eyes (engine/gfx/viewmodel/rig.ts `punch`); a
+  hit kicks the view back 1.5° and shakes it 2 cm, by each camera's share of the punch (engine/gfx/cameras/effects.ts,
+  `melee.hitAt`).
+- **Sound**: the events `melee` and `strike` (and the dummies' `thingHit`, WP 10.4's), which WP 13.22 voices: the
+  playground has no sound before it, and its coverage test asks a sound of every event the playground emits.
+- **The ring's dummies** (labs/playground/cast/dummies.ts): things (amendment 23) standing as `prop:playground-dummy`,
+  three on the canvas, sprung into their bases (1.4 Hz, damping 0.22, 2.6 rad/s a hit, 0.5 rad at most; the component
+  `sparring`, the system `dummies` driving the body about its base); a hit's points come back at once, so a punch never
+  puts one down, a blast for its 3 s rise. The two that ragdoll and get up are WP 10.2's.
+- **The site's replay** (tests/replays/playground-site.replay.json): its two instant strikes are door kicks now, so its
+  second press moved 180 steps after the first, a look toward the burst leaf before it (the 30° cone), and everything
+  after it 140 steps later; its goldens re-recorded (tests/replays/README.md). The site gains melee and the dummies.
+- **Found by the page**: WP 13.27's shooter camera divided its look-ahead's rates by a frame's dt, and a page's
+  warm-up frame of no time made NaN casts (the playground did not start): fixed in 3bcb765, with a test.
+
+## Amendment 25 (2026-10-22, WP 13.20): firearms
+
+- **The kind `weapon` in engine/world/weapons.ts**, not engine/sim/weapons.ts (the WP's Owns): the view draws a gun
+  from its kind (its prop, its muzzle, its sights' lens), and the layer rule keeps engine/gfx from the sim's values.
+  The sim's half (the component `weapons`, the system `weapons`) is engine/sim/weapons.ts.
+- **Hitscan from the eye or the chest**: with a look (first person, the shooter) a shot leaves the eye (Apex's 1.52 m,
+  0.81 m crouched: engine/sim/interact.ts `EYE`) toward the step's aim, the crosshair's point; without one, level from
+  the chest (1.3 m, 0.75 m crouched: engine/sim/weapons.ts `CHEST`) toward the pointer's point (isometric, top-down)
+  or where he faces (the platformer). The view meets the pointer's ray at the chest's height, not on his floor
+  (engine/input/aim.ts `height`), so the pointer over a target aims at it: met on the floor, isometric's 30° view aimed
+  2.25 m beyond what the pointer was over (the verifier's finding). It is the physics world's raycast through the
+  level, props, people and crowds, his own body aside. The cone is drawn from his stream `weapon`, uniform over its
+  disc, and turned in the aim's own frame, so it stays round at any pitch; the hip's and the move's half-angles ease to
+  the sights' as they come up (`spreadOf`). Aiming down the sights walks (Apex walks only then), on foot or in the air.
+- **Recoil once**: the burst's kick (each shot's step of the weapon's `recoil`, [up, right] degrees, the last
+  repeating) turns the shots in the sim, so spread and recoil follow the weapon's data in Node; `settle` seconds after
+  the last shot the burst ends and the kick falls away with the time constant `recover` (0.15 s, ours), so a shot
+  fired meanwhile goes where the still-raised picture's centre is. The view takes the kick as it is (the effects' frame
+  `recoil`) by the camera's aim share, whole in first person and the shooter, the two cameras that aim with their
+  centre, so it is where the next shot goes (the verifier found the shooter climbing by its punch share, half), and the
+  rig's `aimPose` leaves it out of the aim's ray, so the page's recorded aim does not carry it into the sim a second
+  time. The rig's spring `kick` stays for a game's own kicks.
+- **Drawing, holstering, reloading**: 1 and 2 draw the pistol and the rifle, `swap` the other, 3 holsters (and draws
+  again), the trigger draws a holstered one; each takes the weapon's `draw`. Holstered he runs Apex's ×1.15 (the
+  shooter model's `motion.holstered`, which only the spawn set before). A reload is `reload.tactical`, from empty
+  `reload.empty`; the magazine's last round brings it on, and an empty trigger clicks (`dry`). A melee swing holds the
+  trigger until the hands are back (`MELEE.back`, 0.75 s).
+- **The pad's held bindings** (engine/input/codes.ts `Hold:<code>`, `HOLD_TIME` 0.3 s, ours): Apex's X held reloads
+  and Y held holsters, a tap of X uses and of Y swaps; the input holds a code back while a held binding waits on it,
+  so a tap presses its plain action on release and a hold never does (engine/input/input.ts). Amendment 9's hand-off.
+- **The gun drawn**: in third person its prop, drawn by the stage's props (`carry`) at the right hand's grip with +Z
+  along the hold's barrel (amendment 11's) and +Y as near up as that leaves. In first person a mesh per weapon of its
+  prop's parts as one geometry, coloured by their tints (`gunGeometry`), in the arms' vertex-coloured material by their
+  lens, so first person adds no material; made for the weapons defined when the arms are, so the warm-up builds them,
+  and for one defined later the first time the body holds it; its barrel the body's turned from the body's look onto the camera's, the
+  arms' grips taken from the right eye as the sights come up, so they line up on the picture's centre, and a shot
+  kicks it 3 cm back and 0.05 rad up (`GUN_KICK`). Shots leave the muzzle as it is drawn: a tracer (50 ms), a flash
+  of sparks, and where a shot struck the impact's star and sparks and a hole facing the surface (the latest 64 kept).
+- **Sound**: the events `gunshot`, `draw`, `holster`, `reload` and `dry`, which WP 13.22 voices, as amendment 24's.
+- **The guns** (labs/playground/weapons/guns.ts): props of parts (no body) and Apex's season 3 rate, damage, magazine
+  and reloads of the P2020 and the R-301; their cones, recoil patterns, sights' times and draws are ours. The gallery's
+  review closed the pistol's trigger guard, hung a trigger in it and seated the rifle's magazine in its receiver; the
+  rifle reads near black (its iron parts dark under the gallery's light), kept: the brief asks for none lighter.
+- **The range's targets** (labs/playground/weapons/range.ts): things (amendment 23) instead of WP 13.18's fixed props:
+  pop-ups at 10 and 25 m, movers sliding 2 m across their lane at 1 m/s at 50 m; one hit puts one down, falling back
+  about its base (the component `popup`, the system `poppers`), up again 2.5 s later. The HUD shows the weapon out, its
+  rounds and the range's count, hits of shots, and the crosshair while the screen's centre aims one.
+- **The site's player is armed**: every site scene's player carries the pistol and the rifle, holstered, and the site
+  adds the system `weapons` and the range's targets, so the site's and the ring's replays (playground-site,
+  playground-melee) took new goldens, their stories unchanged; the gym's scenes stay unarmed.
+- **The draw eases** (engine/anim/traversal/hold.ts `drawn`, `HOLD.draw` 0.25 s, ours): found by the range's course,
+  whose draw popped the hands 0.59 m in a step (the anim QA's 9/16 m). The view makes an actor's animator again when
+  its weapon changes (the weapon is part of the humanoid's make, engine/anim/character.ts `AnimatorPool`), so a new
+  hold snapped onto the gun; now the hands come onto a gun drawn and leave one holstered over 0.25 s by the body's
+  clock, and a hold made again follows the old one's draw (`follow`), in the page and in the feel kit alike. A body
+  that starts with a gun holds it at once, so the states' sheets and the anim QA pose as they did.
+- **§5.1's muzzle as a course measure** (amendment 11's hand-off): the feel kit's metric `muzzle`, the farthest the gun
+  hand's barrel line (the right hand's +Z, which the hold lays on the barrel) points from the aim while the sights are
+  fully up, past any bound for a span that never aims; the range's course (labs/playground/courses/range.ts: both
+  guns down their sights, the looks glided to as a mouse turns them, rounds and bursts fired) judges it against 2°.
+- **The range's replay** (tests/replays/playground-range.replay.json, written from a scripted run that aims each shot
+  at its target's plate as the sim has it): each kind of target down, the hip's third round and a burst's last into
+  the backstop, a reload and the holster; its story is labs/playground/weapons/range.test.ts. Writing it found the
+  first recoil numbers too steep (a rifle burst climbing 4° in seven rounds, over the 3 m backstop): the guns' kicks
+  were halved (the pistol 0.9° a shot, the rifle 0.5° falling to 0.2°).
+
+## Amendment 26 (2026-10-22, WP 10.2): ragdolls
+
+- **Joints as data** (engine/physics/joints.ts, beyond the WP's Owns: §5.8's port of shardfall's joints): fixed, ball,
+  hinge, slider, rope and spring, to another body or to the world (a fixed anchor body of its own), in SI. Ours: a
+  joint's frames are set so it rests at `rest`, `b`'s rotation relative to `a`'s (theirs at the hand-off by default),
+  so a hinge's limits and every spring measure from there, whatever the pose a joint is made in. Two traps of Rapier
+  0.21's JS, measured: it hands a ball joint back typed as a generic one (its motors missing), so a ball's springs go
+  through its own class over the same handle; and it has no limits for a ball, which its joint set's raw per-axis call
+  (what a hinge's `setLimits` calls) gives: exact for a turn about one axis, the quaternion's share about each for a
+  turn about several. Not ported: shardfall's chain and bridge builders (nothing here needs them yet).
+- **The ragdoll** (engine/physics/ragdoll.ts, engine/anim/ragdoll.ts): eleven parts at their bones' frames (the pelvis
+  with the hips, the chest with the shoulders, the head, the arms' and legs' two segments, the hands and feet on the
+  forearms and shins), capsules at `bodyCapsules`' radii, in the group `corpse`; balls at the spine, the neck, the
+  shoulders and the hips within a body's limits (the spine and neck sprung toward straight), hinges at the elbows and
+  knees about the IK's own hinges, each joint at rest in the T-pose. A first build without limits folded a neck 174°
+  and a knee to its stop; with them, over eight measured falls, a knee goes 10° past its limit for a moment (21°
+  without the parts' four extra solver passes: engine/physics/world.ts `solverIterations`) and an elbow still swings
+  24° past as a hand strikes the floor. A fall lies still (its fastest part under 0.3 m/s, a turn counted at 0.1 m)
+  1.7 to 4 s after the blow; it gets up after 0.5 s still, or 5 s after the blow however it lies.
+- **The hand-off** (engine/sim/ragdolls.ts, beyond Owns: the sim's half): the body posed from its animator's data
+  where it stands, every part moving as it did plus the blow's push and a tip over it; its reactions down for as long
+  as it takes (or dead); its capsule kept under the pelvis, so the cameras follow, and the actor moving nothing
+  meanwhile (engine/sim/actors.ts skips it, and `removeActor` takes its parts). It gets up where the humanoid lying as
+  it lies would stand (its pelvis the ragdoll's, measured over 4 s of the lying body's breath and sway, ±2 cm), facing
+  as it would, and its reactions get up the way its chest lies. A scene adds the system `ragdolls` in its setup
+  (`addRagdolls`): one added at the first hand-off made a capture taken after it unrestorable into a fresh world.
+- **The view** (engine/gfx/puppets/actors.ts): a ragdoll layer last in the physics slot of every puppet, the parts
+  between their last two steps, faded in over 0.1 s and out over 0.3 s as the get-up shows (`RAGDOLL_FADE`).
+- **The box's setting** (labs/box/scenes/ragdoll.ts, `box:ragdoll`): four partners in the room fall on an 8 s cycle
+  to a blow from the front, one from behind, a launch and a death; `box.ragdoll.handOff` off, they fall through their
+  timelines instead. Its replays are tests/replays/ragdoll-falls.replay.json and ragdoll-strike.replay.json (the
+  hero's attack). The box's crowd (the fight's walkers) does not ragdoll: they are crowd bodies, not actors.
+- **The ring's partners** (labs/playground/cast/partners.ts): the two of §7.3 that ragdoll are people (actors on
+  `build:adult`) in the canvas's south corners, not two more of amendment 24's dummies (props on springs): a punch or
+  a shot flinches one, a kick or the uppercut hands it off, and its hit points come back at every blow. The site's
+  three replays (playground-site, -melee, -range) took new goldens for them (hashed), their stories unchanged.
+- **The film's review** (2026-10-23): the box's film showed partners lying motionless 2 s and more before rising. A limb
+  went on swinging after the body lay still: an arm standing on its hand, toppling and springing back up off the floor,
+  or a leg trapped under a launched body, its hip 1.4 rad past its twist limit and coming back. It lay still by every
+  part up to 3.4 s after its trunk did (1.1 s on average). A ragdoll now gets up once its trunk (the pelvis and the
+  chest) has lain still 0.5 s, the limbs' last poses laid into the get-up as the ragdoll fades. Over 24 measured falls
+  (the three living partners' blows at eight pushes from 2.5 to 8 m/s) it gets up 1.5 to 3.6 s after the blow (2.2 s on
+  average, 3.1 before), but for one launch at 7 m/s whose trunk rolled again (5 s). More solver passes (8, 12 and 16 a
+  step) and more damping (the parts' or the joints') changed the limbs' swing and the hip's overshoot only within the
+  falls' scatter, so they stay as they were. The first partner slid into the south wall's foot, where the cutaway hides
+  it, and the second fell onto the pillar: they stand where each falls on open floor in view, the dead one too. Filmed
+  again, the third, launched up and a little east, came to rest along the low wall's foot: it is launched to the
+  south-east, away from it, and lies 2 m clear.
+
+## Amendment 27 (2026-10-23, WP 10.1): procedural building blocks
+
+- **The blocks** (engine/anim/proc/, one concept a file, the techniques of PLAN.md §5.6 as mechanisms): springs with a
+  kick (`Spring1`, `Spring3` and `SpringQuat`, the last new: no source has a turn's spring) stepped by the damped
+  oscillator's exact solution, so 60 and 120 steps a second settle alike and no frequency is too stiff; eased state
+  weights and the pose stack (`StateWeights`, `layerPose`: its angles not wrapped, as the source's); the digitigrade
+  leg; sway chains (`SwayChain`, keeping its links' lengths, which the source's tail did not) and the lagging part
+  (`LagPart`, a sprung tip on its sphere about its pivot: the source's abdomen, driven by the turn rate alone, moved a
+  hundredth of a radian); the planted gait (`LegGait`); path chains; looking (`LookAt`, bounded, the angle left
+  shrinking by e^(−rate dt), a target behind turning it: the source's nlerp had no bounds and stuck there) and
+  blinking (`Blink`, from a named stream, not `Math.random`); hovering; orbiters (their angle integrated: the source's
+  time × rate jumped when the rate changed) and detached parts; pose history (between records, not the one before);
+  extras on sockets; tip trails (by time, with a base for a ribbon); and the measured reach (its last moment exactly 1).
+- **The gait, beyond the sources**, each found by a fixture rig's check: a foot aims its landing past the spot it
+  measures from, the rest spot `lead` ahead and 0.35 of its step further, as the source's (`BST_Crawler`; the first
+  port left the lead out, and at speed its foot landed behind where it measured, so it stepped again at once, and the
+  biped's force rule lifted both its feet); a body standing still squares its feet up
+  (`threshold.still`, shardfall's two-level threshold, so a rig comes back to its rest); and the gait steps in inner
+  steps of 1/120 s (`GAIT_SUBSTEP`), the body moving linearly between its steps, so 60 and 120 steps a second take the
+  same decisions (the hexapod's rate check found its feet 5–7 cm apart). A wall is found by a ray from the hip toward
+  the spot (the source marched tiles); the ground by a ray down from above it.
+- **The path chain lays the body out as its path** at `reset`, so a head rising from rest lifts its neck and leaves
+  the rest lying (the serpent's check found the body hanging below the floor along the newest stretch's direction).
+- **Two blocks the engine had**: the verlet strand is engine/anim/chain.ts's `Chain` (WP 6.2: gravity, drag, wind,
+  iterations, colliders, the floor, a rest shape and a fixed inner step), so WP 10.1 maps its block to it rather than
+  writing a second; and the block the plan calls `Floater` is `Hover` (engine/anim/proc/hover.ts: hover, bank, lean and
+  fold), since engine/anim/floater.ts's `Floater` is the stress world's wisp, kept as it is.
+- **The rig contract** (engine/anim/proc/rig.ts, beyond Owns): `anim.check` is bound to the humanoid's 23 joints
+  (engine/anim/check.ts), so a procedural rig names its own points, bones, feet and states (`ProcRig`) and `rigCheck`
+  holds it to the same contract (finite, bones their length, over the floor, the same every run, the same at half the
+  step). The `anim` QA family drives the six fixture rigs through their states as `rig:<name>/<state>` with its motion
+  metrics too (tools/qa/anim/points.ts, split from tools/qa/anim.ts at its cap, the blob's and the wisp's runs as they
+  were): 25 states, none over its bounds.
+- **Public names**: engine/anim/proc/api.ts, re-exported whole by engine/sim-api.ts as engine/sim/kitsApi.ts is; three
+  names chosen against clashes with the API's own (`LookAtOptions`, `HoveringOptions`, `TipSample`).
+- **The review** (2026-10-23, the verifier at 9b5ebf7): the force rule measured its bypass against the standing
+  threshold (1 cm), so feet 2.3 cm off stepped whatever the others did: the hexapod lifted both tripods in 50 of its
+  turn's 138 frames and the biped both feet as it stopped. It is measured against the moving threshold now (`base` and
+  its speed's share), as the source's; and the feet waiting start the farthest first, for in a turn in place the first
+  tripod, landing, stepped again before the other could and starved it. `fly` now leaves the gait where the body is, and
+  feet in the air land under the body as the step ends (they landed 0.5 m up after a 1 m drop at 60 Hz). The serpent's
+  rise wrote its head's height into its path, so its neck stood on in a column after it lowered (`closed: 3` hid it):
+  its neck now curls up by a lift fading down six segments, as the source's, and its rig closes every point but in its
+  slither. A rig naming a point or a state it lacks threw a bare TypeError: `ANIM_BAD_RIG` now, its fix and the closest
+  names. A bone may give its length (the multi-arm's do); `closed` may be given by state (`rigClosed`); the QA reads its
+  runs through `driveRig`, cloned; and T1's QA test holds the fixture rigs' ids too. The multi-arm's blades go on by
+  `placeExtras` and the serpent wears a crest by `along`, so the blocks the README credits are the ones the rigs use
+  (`blendAngles`, round the circle, in its unit tests only). Its second reading (at 8ad16fd) passed, with notes, three
+  taken at once: a flight eased once a step parted 60 Hz from 120 Hz by 0.36 m after a hop, and a body easing its speed
+  by up to 0.15 m in 30 of 54 runs (the inner steps held the step's end velocity), so the gait eases a flight in inner
+  steps too and moves the body's velocity on linearly between steps as its place (3 of 54 runs left over the bound, by a
+  threshold met an inner step apart); a rig's numbers are checked (a bone's length, a closure, a state's seconds); and
+  the serpent's spines lean back, toward its tail. Left as they are: feet in a fast turn in place, 4 rad/s, can still
+  lift both tripods for a few frames (the corners of one land and start again before its middle leg is down); a standing
+  body squares its feet up to 1 cm, so a turn in place shuffles (a feel question for WP 13.21's dog, whose gait sets its
+  own); the serpent's curl stretches its neck's first link 18%, as the source's. Kept: the fixtures' one-statement lines
+  over 120 columns, the codebase's own `prettier-ignore` idiom, so their 86 to 118 lines are counted as written (114 to
+  190 as Prettier would lay them out).
+- **The rig template** (tools/templates/rig/, `node x new rig labs/<lab>/rigs/<name>`): a small four-legged walker on
+  two diagonals, written once six rigs were written by hand; a start for WP 13.21's dog.
+
+## Amendment 28 (2026-10-23, WP 13.21): the neighbours and the dog
+
+- **The neighbours** (labs/playground/cast/neighbours.ts): four people about the block, each on a round of two stops
+  kept on a schedule (`followRoute`, engine/world/aiRoutes.ts: the stop it walks to and since when it stays, a
+  component), strolling at 1.3 m/s over the site's navigation round its props, a flow field a stop. Each knows the
+  player by WP 10.4's awareness (in sight within 14 m, nothing of the world between their eyes; a shot carrying 40 m,
+  a kick 12) and reacts as §7.4 lists, each reaction an event `neighbour` `{ id, what }`: it looks at him within 6 m
+  (its head along its intents' `look`: engine/app/view.ts turns any AI actor's head so, not the player's alone), steps
+  aside to its right where he stands in its way (`stepAside`, 1.6 m ahead and 0.7 m of its line), flinches when he
+  runs into it (within 0.85 m, closing faster than 1 m/s), startles at a shot or a kick it hears (a light hit away from
+  it and a look), falls to a hard blow (the kick and the jump kick, `PARTNER_BLOWS`, the ring's own: WP 10.2's
+  hand-off) and gets up the way it lies, and flinches at a punch or a shot (a shot puts none down: it was heard first,
+  and the ring's partners fall only to the same blows). Two sit on the benches' stops (`action:sit`, a data action of
+  the playground's: its pelvis back and down onto a seat behind it, its feet planted ahead, until told to rise) and
+  rise when their stay is over. Their hit points come back at every blow (cast/health.ts, shared with the partners).
+- **Their bodies** (labs/playground/bodies/neighbours.ts): the player's body, its parts as they are, its slots drawn
+  from palettes by a seed each (`Rng(2113 + k)`), never in his orange accent, so he stays the one marked from every
+  camera (§3.1); bare-handed, the gloves their skin and the cuffs their jacket's (the player's body names its cuffs
+  `cuff`, in his accent's colour, so a neighbour's hands do not read as gloves in its accent: the frame review). The
+  page registers them with its bodies; tests that draw the site import them as they do the player's.
+- **The dog** (labs/playground/cast/dog.ts) is Biscuit, shardfall's town dog (`arpg/scene.rs:974-981`: the quadruped
+  preset at 0.72, its colours): a new rig in the engine, `Quadruped` (engine/anim/quadruped.ts: its state plain data,
+  for a crowd body), not a fixture or a template's rig, because the stage cannot draw a lab's own mesh (a frame has no
+  scene) and the crowd draws rig bodies on any joints (the blob's and the wisp's way): the crowd body rig `quadruped`
+  (engine/sim/crowdBodies.ts, its feet on the physics ground through `crowdGround`, a raycast through `world`) and its
+  body `QUADRUPED_BODY` (engine/gfx/puppets/bodies/quadruped.ts). Its legs are WP 10.1's planted gait (`LegGait`, two
+  diagonals: `save` and `load` new, a gait as plain data), the front two bones with the elbows back (shardfall's
+  mammal legs), the hind three by `digitigrade` (the stifle forward, the hock back: new, shardfall's are two). Its body
+  rides over its front and hind feet's ground, bobs 2.5 cm with its feet in the air (Σ sin πt, as `lifting`: a spring
+  kicked at each footfall, the biped fixture's way, sagged it 3 cm while it walked instead) and lowers 7 cm as it runs;
+  sitting drops its hips 0.14 m and draws them back 0.08 m, its stifles forward, its long feet flat and its paws
+  planted, and lays its rump on the ground behind them (a joint of its own, `rump`, as a pelvis tilts: on the torso,
+  the frame review found it 9 cm off the ground and the stifles folded back, a crouch), its tail along the ground;
+  its head looks where it is told within 1.1 rad and 0.6 up or down, and looks about while it stands (shardfall's);
+  its tail wags as told. Its heading and head follow their targets as
+  an exact first-order lag (the target moving linearly between steps): an ease of 1 − e^(−rate·dt) toward a moving
+  target parted 60 from 120 steps a second by 4.6 cm in a turn in place.
+- **The dog's gait, tuned to its legs**: WP 10.1's defaults let a planted paw stray past its leg's reach from 2 m/s
+  (shardfall's legs reach 0.17 m across from under their roots), so the dog's strides are shorter (a threshold of
+  0.09 m and 0.015 m more a m/s, a lead of 0.03 s, steps of 0.045 to 0.14 s) and its body lowers as it runs: speeding
+  up at 15 m/s², a planted paw stays on its foot at any steady pace to 6 m/s and within 6 mm in the first half second.
+  The `anim` QA drives it as `rig:quadruped/<state>` (rest, walk, trot, run, a turn in place, sit, look): 7 states,
+  none over a bound. Its drive eases a speed in and out over 0.3 s, as an actor's body speeds up and brakes: a step
+  change of speed parted the two rates by 13 cm at the stop, a discrete choice of which diagonal squares up first.
+- **What the dog does**: it stands beside the player's spawn in every area, facing him from the first, its ball
+  (`prop:playground-ball`, a tennis ball, 58 g, bouncing) 0.45 m before its middle, just before its paws, toward him and
+  off his way (laid before him, the bot's tour kicked it ahead to the front door, where a use took it up instead of the
+  door and the tour went another way; laid ahead of the dog facing his way, it lay by its hips once the dog had turned
+  to him: the frame review), at the first of six spots beside him where the dog's paws and its ball lie flat, clear of a
+  kerb or a step (the street's sidewalk, 2 m wide, leaves none: there the dog stands on the driveway, its ball 0.34 m from
+  the sidewalk's edge, whose foot hid a ball laid against it: the second frame review). Its first step stands its feet
+  even told it is aloft: an actor is not grounded on its first tick, the world's queries seeing no ground before the
+  first physics step, and its gait, flown from a fresh state, swung its feet from the world's origin (`LegGait.fly` now
+  tucks a gait's feet at once while it has never stood). It trots after him beyond 2.2 m and runs beyond 7 m
+  (shardfall's 2.4 and 7), sits once he has stood still a second, gets out of his way when he walks at it (actors pass
+  through each other, so it is courtesy), chases a ball he throws, slowing as it comes, picks it up lying under its
+  mouth, carries it back pulled to its mouth as a player's carry is, and lets it fall 1.4 m from him. Its capsule is an
+  actor's (it collides with the world and climbs a kerb); its rig steps in `readback`, from where the capsule moved,
+  since the platformer controller snaps an actor's yaw to its move (the rig eases toward it).
+- **The ways** (labs/playground/cast/ways.ts): one navigation of the block a world, round its props, shared by the
+  neighbours and the dog. A scene's setup sees none of its own props (entities spawned there reach queries after it),
+  so the ways are made at the first step that asks, and the boxes they went round are kept in the world (the component
+  `siteWays`, with a count of remakes), so a world restored from a capture makes the same ways the run had then. A
+  walker held by what its ways do not know (a door the bot opened swung its leaf onto the dog in the hall) has them made
+  again round the props as they stand, as the bot does, and the dog backs out the way with the most room; held again
+  (the leaf had swung into its capsule, which a character controller cannot walk out of) it is set down on the clear
+  point of its tile or one beside it on its own floor, and waits 4 s. `plainWays()`, the site's alone, places the dog
+  and its ball in the setup.
+- **Two spots the soak found**: a neighbour's nav built in the setup saw no props, so the porch's walker met the front
+  yard's fence and the gardener the patio's grill (the ways are made at the first step now); and the gardener's second
+  stop stood 0.12 m from the house's back wall, nearer than its capsule can come (moved 0.6 m off it).
+- **Measured**: the house's soak (labs/playground/scenes/site-soak.test.ts) judges the cast through the bot's tour of
+  every room and 15 s after it: no neighbour and not the dog stuck (told to go and not 0.3 m on for 8 s; the dog's one
+  hold, the door's leaf, lasted 6 s), every neighbour at each of its stops, the dog with the player again, and every
+  camera still inside its bounds.
+
+## Amendment 29 (2026-10-23, WP 13.22): the playground's sound
+
+- **The map** (labs/playground/sounds/events.ts): every event the playground emits plays a sound, from the engine's
+  foley (engine/audio/data/foley.ts, 41 effects: steps on seven surfaces, the moves, doors and windows, blows, impacts
+  by material, the guns, the wind) and its own (labs/playground/sounds/effects.ts: the dog's bark, whine, huff, tags and
+  bouncing ball, people's wordless voices, the bench's creak, and the two beds). It asks the entries, never the ids: a
+  weapon names its shot (`sound`, a new field of the kind `weapon`, which the sim never plays), a move its limb (a
+  kick's blow or a punch's), a prop its make (its biggest part's material: the dummy's pad is soft, the target's plate
+  metal, a door's planks wood), a thing its prop, a door how it opens (a window and the garage's tilting door slide),
+  the ground its surface under the feet. One event can sound twice (a shot at the muzzle and where it strikes), so a
+  scene's `sounds` hook may give a list (engine/sim/scene.ts; `x audio --replay` reads each). Quiet by design: a
+  slide's footsteps (its scrape is the `move` it begins) and a hit that downs its thing (its `thingDown` sounds once:
+  with both, the range's mix peaked at 1.03 and clipped); a gunshot at a thing leaves its impact to the thing's own.
+- **Footsteps by surface and gait** live in engine/world/footsteps.ts, not the planned engine/audio/runtime/: the
+  scenes' sound map is sim-side and reads them through engine/sim-api.ts, which may re-export sim-side layers only
+  (audio/runtime is a page's; audio/data registers its effects when it loads). The gait is the movement model's
+  (`motion.gait`), else by speed (a walk under 2.6 m/s, a run under 5.4, then a sprint).
+- **The ground** (labs/playground/sounds/ground.ts, `SITE_GROUND`): a house room sounds as the floor `HOUSE_ROOMS`
+  names; the playground's sidewalks and road line carry tags of their own (concrete, asphalt: labs/playground/levels/
+  street.ts); a structure's floors as `FLOORS` names them (the street's asphalt, the path's flagstones, the shed's,
+  the treehouse's and the lookout's wood, the ring's canvas as carpet); off them the terrain's (grass, rock where
+  steep). A flat paving's box is no taller than its top, so it is found by its footprint. The shed and the treehouse are
+  small wooden rooms only where their own floor is underfoot (among the treehouse's stilts is the lawn: its test).
+- **Movement foley** needs the sim to say what a move began: the character's step names it (`entered`:
+  engine/physics/character.ts) and the actors' system emits `move` `{ id, what }` (mantle, climb, ladder, zipline,
+  skydive, slide, crouch, stand). An actor's body events (`footstep`, `jump`, `land`, `dash`, `launch`, `move`) now
+  carry its feet as the step began (`at`), a footstep its movement model's gait: the page reads the events once a
+  frame, and a step read late took the floor he had reached by then (the porch's concrete heard as the hall's wood:
+  the browser spec found it, the page reading every 20 steps). Events are not hashed, so no golden changed; the box's
+  map still reads where its actors are when it reads (box content, its timeline's golden unchanged).
+- **Rooms and walls** (engine/audio/runtime/reverb.ts `roomAcoustics`, spatial.ts `wallsBetween`): a room's reverb is
+  worked out of its make by Sabine's RT60 = 0.161 V / A, the room taken as square, its contents soaking up a quarter of
+  its floor's area at the mids (a bare room a tenth): the carpeted bedrooms 0.56 s, the tiled kitchen 0.95, the hall
+  0.90, the attic 1.31, the bare garage 1.56 and the basement's concrete rooms 1.8 to 2.15, the shed 0.68; the open
+  air is `ROOMS.outdoor`. Up to three walls between the listener and a sound muffle it, each halving the lowpass's
+  cutoff from 900 Hz and taking its gain by 0.6; a sound eases between counts (`Sound.occlude`). The mixer, named in the
+  plan's Owns, needed nothing: it already takes a room's numbers.
+- **The page** (labs/playground/sounds/page.ts): the listener is at the player's head, turned as the camera looks,
+  so every camera hears what he hears (the isometric camera, high over a cutaway, would hear the house through its
+  walls); the reverb follows his room, the beds crossfade over 1.5 s (the block's breeze and birds out of doors, the
+  house's hum in a room), the wind past his ears rises from 3 m/s to full at 12, and the zipline's run hums while he
+  rides. `Sound.volume(vol, ease)` sets a loop's level.
+- **Loops without a seam**: a looped effect that fades in and out at its ends dips at every repeat (18 to 30 dB for the
+  wind, the zipline and the beds: a pulse). An effect now names the pass it repeats (`loop`, a field of the kind
+  `sfx`), and played looped the runtime folds what sounds past it over its start (engine/audio/runtime/buffers.ts
+  `foldLoop`, the songs' fold alone), a fading voice crossfading into itself: the deepest dip is now 1 to 4 dB. A
+  tone in a loop turns a whole number of times a pass (the zipline's 190 Hz and its 9 Hz vibrato in 2 s, the hum's
+  120 Hz in 3 s), so the fold adds it to itself in phase. The box's torch keeps its fades: box content, unchanged.
+- **Measured**: `x audio --replay` mixes all eight playground replays unclipped (peaks 0.24 to 0.78, the range's at
+  0.78 once its shots play at 0.8); the house replay's timeline gives 55 sounds, hash `017481cb37c16edc`, in Node, as
+  Chromium must (tests/e2e/playground-audio.spec.ts); the coverage test plays every playground replay and hears every
+  event but the two quiet kinds.
+
+## Amendment 30 (2026-10-23, WP 11.5): lighting and shading upgrades
+
+- **Where they live.** Each technique is a module of engine/gfx/enhanced/ that declares its feature and advice code
+  (`<X>_FEATURE`, `<X>_CODES`) and makes it; engine/gfx/features.ts registers them and hands each out only while its
+  feature is on (`lightingFor`, `cascadeSunFor`, `shadingFor`, `temporalAaFor`, `sceneTargetsFor`), and only it may
+  import engine/gfx/enhanced/ (ESLint's layer rule). Beyond the plan's Owns: `gi.ts` and `air.ts` (the GI tier and
+  the air), engine/gfx/post/shading.ts (the chain's shading stage), engine/gfx/backdrop.ts (split out of sky.ts for the
+  length limit), and extensions to engine/gfx/post/{chain,filters,mrt,aa,settings,looks,presets}.ts,
+  engine/gfx/{lights,sky,stage,stageSky,renderer,sceneDump,quality,shadows}.ts and engine/app/engine.ts (the stage
+  takes the renderer's features); the box's `look:daylight` (labs/box/looks/daylight.ts), the comment of
+  `look:torch-lit` and labs/box/README.md; the advice trap (tests/setup/adviceTrap.ts, its test,
+  tests/baselines/advice/README.md and docs/TESTING.md: below);
+  tests/e2e/{post,renderer,box-look,box-menu,parity}.spec.ts and tests/pages/post.ts (the looks' counts, TRAA's
+  measure, the features' ids, the day look), box-menu's replay list among them, which missed WP 10.2's two; and the
+  kind `feature`'s template (below). Seven features: `feature:tiledLighting`, `feature:cascadedShadows`,
+  `feature:ao`, `feature:gi`, `feature:air`, `feature:ssr`, `feature:traa`.
+- **Tiled lighting** is r182's `TiledLightsNode` with its faults fixed in a subclass (engine/gfx/enhanced/lighting.ts):
+  shadow casters stay ordinary lights (r182 tiled them and lost their shadows); its buffers are made once for 4,096²
+  and its grid read from uniforms, so a resize rebuilds nothing (r182 baked the size into its shaders); its compute
+  pass covers the grid's tiles alone (r182's dispatched 32 times too many); the grid follows the render target, not
+  the canvas; the reach test is in pixels from the projection, right for any aspect and for orthographic cameras; a
+  tile holds 16 lights, not 8. The decisive one: r182's uniforms are object-group uniforms, written only when an
+  object's own uniforms update, so still objects drew with a stale light list (the hall came out darker than with the
+  pool); they are render-group uniforms now. With it the light pool holds 64 lights (`POOL_SIZES.tiled`), else 12.
+- **Cascaded shadows** (csm.ts): the sky's sun casts through r182's `CSMShadowNode`, three cascades over the view's
+  first 90 m at 1,024² each; the node takes its camera at its first build, so `follow` hands it each frame's camera
+  and splits the cascades again only when the camera or its projection changed. The scene dump says `×3 cascades`.
+- **The chain's shading stage** (engine/gfx/post/shading.ts) lays the look's new sections on the scene's light, before
+  bloom: `ao` (r182's `GTAONode`, half resolution, 16 samples) multiplies it; `ssr` mixes reflections over metal;
+  `gi` and `air` run inside the display pass, a part of its WGSL included only while the feature is on, behind
+  render-group uniforms. The AO and SSR passes run only in frames that ask for them (and the warm-up's), so switching
+  any section builds no pipeline. The techniques see each frame's camera through a lens whose matrices copy it, after
+  pixel art's block snap has moved it: r182's nodes keep the camera they are made with, and the chain draws through
+  any of the five camera codes, orthographic ones among them.
+- **GI is shardfall's 12-tap spiral** (gi.ts, its "Bounce light"), with its radius in metres at the pixel's depth and
+  the orthographic case added; r182's `SSGINode`, the plan's tier above, reads a perspective camera's field of view and
+  waits for a look that needs it (the Build line's "when a look needs it"; none does yet).
+- **The air is shardfall's haze march** (air.ts): 32 steps through haze thick at its base, sunlight scattered toward
+  the camera by a Henyey–Greenstein phase where the sun's shadow map says it reaches (shafts), the sky's light in the
+  haze, and lamp halos in closed form. three.js's intensities are taken as radiance times π (its BRDF divides by π):
+  read raw, 86% of the arena's pixels came out white. The shadow map is read and compared by hand (WGSL `textureLoad`),
+  the widest cascade's when the sun casts through cascades; the lamps and the sun are brought up to date before they
+  are read (the gathering runs before the scene pass), and the shadow camera's matrix is read as the display pass
+  draws, after the scene pass has moved it. The quality tiers turn bounce light and shafts off below `high` and halos
+  at `low`; a look that asks for one there gets `GFX_POST_TIER` once.
+- **Reflections** (ssr.ts) are r182's `SSRNode`, which decides at build time whether its camera is perspective: two
+  passes, one per kind of lens, only the frame camera's running. The scene pass writes (metalness, roughness) into a
+  `metalrough` target only while `feature:ssr` is on, and the mix is gated by the pixel's own metalness, since r182's
+  blurred levels spread a reflection past a metal surface's edge. The box draws no metal (its materials are Lambert
+  unless a look draws them in the pbr style, and its iron is on props it never places), so the reflections are shown
+  on a fixture page of their own, tests/pages/shading.html, with a steel ball and plate.
+- **TRAA** (aa.ts) is r182's `TRAANode`, chosen by the new view setting `post.aa` (`fxaa`, `smaa`, `traa`; the chain
+  reads it when made), never by default: it smooths a still picture by gathering frames, which a single frame of play
+  never has. The camera is jittered by r182's Halton steps only in frames the filter runs; the scene pass writes
+  motion (`velocity`) only for it.
+- **Looks**: shardfall's Sunbeams and Lamplit fog (`look:sunbeams`, `look:lamplit-fog`), its seven air presets
+  (`look:air/…`) and its bounce light (`look:gi/bounce-light`), and one preset each for the sections it lacked
+  (`look:ao/corners`, `look:ssr/metal`): 98 looks. The playground's own looks take the sections in WP 13.24, which owns
+  labs/playground/looks/.
+- **Found on the way, and fixed.** Under tiled lighting every toon-style material failed to build (r182 hands its
+  tiled lights to the lighting model as the tiles' node, which has no colour, and the toon style reads one), and r182
+  drew its default material in their place, saying so only through `console.error`: no spec failed. The advice trap
+  now fails a test on r182's `THREE.TSL:` errors. The review found a second: the sun's cascades were never made when
+  the sun first cast after its sky was shown (from `look:torch-lit` to `look:daylight`, or from the low tier to the
+  high), since `follow` handed r182's node a camera before its first build, and r182 makes its cascades only while it
+  has none; `follow` now waits for that build, the scene dump counts the cascades made, and enhanced.spec switches
+  both ways. Also: the shading follows the camera after pixel art's block snap; the air brings its lights up to date
+  before it reads them, reads the shadow camera as the display pass draws, and lets a sun that stops casting go; the
+  tiles leave out the pool's empty slots and lights wholly behind a perspective camera, and a target past the buffers
+  made lights its outer tiles with the ordinary lights alone; the `metalrough` target is 8 bits a channel, as
+  three.js's own SSR example keeps it. And a fault of r182's that the new `look:daylight` showed in box-look.spec's
+  switches, with the features off too: once a point light stops casting, r182 still brings its shadow's matrices up to
+  date (`accessors/Lights.js:47`), reading a `target` that point lights lack, and the warm-up failed; the pool's point
+  casters get a target (engine/gfx/shadows.ts). The same spec's switch between the hall's looks and the day's warms up
+  each way, every time (over three rounds, 43 pipelines to the day and 25 back, then 36 and 25): r182 frees the
+  pipelines a sky leaves unused and builds them again when it returns (engine/gfx/pipelines.ts). Keeping each
+  caster's shadow node across the switch, tried, changed none of it. A switch never builds in a frame, among the
+  torch-lit looks builds nothing, and a second round trip to the day costs no more than the first; the spec says so,
+  and its knock replay now plays through the day too (its view at step 180, the replay's last, never applied). Tiled
+  lighting's buffers are made for 4,096²: a larger target's outer tiles draw the ordinary lights alone, and say so once
+  a size (`GFX_TILES_PAST`).
+- **Measured** with `x perf labs/box --feature` (GPU ms a frame on SwiftShader, on less off: they rank the techniques
+  here and budget nothing, ADR-0022): tiled lighting −40 on the torch-lit hall (189 against 229, 64 lights against
+  12), cascaded shadows +130 on crowd-100 by day (+24 draw calls), and on the room with its section on, AO +9.9, GI
+  +22, air +68, SSR +20 and TRAA +38 against FXAA. `feature:ssr`'s `metalrough` target is written on every frame its
+  feature is on, the default, even where no look asks for reflections: +1.2 on the room (46.1 against 44.8), with
+  5 textures and 4 pipelines more and no draw call, kept so that a look switching reflections on builds nothing. No
+  run built a pipeline after its warm-up. The governor's part, demoting a technique under load, waits for WP 7.5.
+- **The kind `feature` has its template.** Seven techniques wrote their entries and advice codes by hand, the
+  third time and more, so `node x new feature engine/gfx/enhanced/<name>` writes the module of a new one: its entry,
+  its advice code `GFX_NO_<NAME>` (x new's new placeholder `{{NAME}}`, the name in upper case, words split by `_`) and
+  a unit test that reads both through the registry, the feature turned off; `x new --test-all` keeps it working. A
+  feature is engine-internal (a game turns one off, never defines one: the manifest's `games`), and its gate in
+  engine/gfx/features.ts stays by hand, each technique handed out its own way (the manifest's `next` says so). The
+  kind's schema checks every entry as it is defined (`FEATURE_FIELDS`), and engine/gfx/features.test.ts lists them.
+
+## Amendment 31 (2026-10-23, WP 13.23): light and time
+
+- **Where it lives.** The clock is sim state (engine/sim/lights.ts): `setDaytime(w, { hour, rate })` sets the world's
+  clock (the component `daytime`, one a world), `lightsAtDusk(w, group, { on, off })` a rule (the component `dusk`)
+  that switches a light group (engine/sim/switches.ts) as the clock passes its hours, and the system `daytime` moves
+  the clock on and switches at the crossings; the names reach game code through engine/sim/houseApi.ts. The view's
+  side is engine/gfx/daylight.ts: four key skies (`sky:night`, `sky:dawn`, `sky:noon`, `sky:dusk`), the sky at an hour
+  eased between them (`daylightAt`), and the light's arc (`lightAt`). Beyond the plan's Owns: engine/gfx/sceneDump.ts (a light's intensity, `lit n`,
+  so a dump says which lamps shine), engine/app/view.ts (the hour and the frame's lamps to the stage's lights), the
+  playground's site scenes, furnish.ts and the streetlight's description, and the four site replays' goldens.
+- **The house's lamps lit nothing until now.** WP 13.16 drew a lamp's shade on or off by its switch, but nothing gave
+  the props' light spots to the light pool (engine/gfx/props.ts `lights()` had no caller), and the playground's looks
+  show `sky:daylight`, whose pool is out (`pointLights` 0). The pool now ranks the frame's lamps beside the level's
+  spots (`update(focus, time, lamps)`), each with its own colour, intensity and reach, a declared `light:<tag>` giving
+  its priority; the view hands it the props' lamps that are on. A lamp standing on one of the level's spots of its
+  kind is that spot's light, lit once: the box's hall stands a brazier, its torch light where the spot is, on each of
+  its 30 torch spots, and would have lit every torch twice.
+- **The clock sets the rules on the step after.** What a scene's setup spawns is in the world only once the setup is
+  over (engine/sim/world.ts: spawns wait for the step's boundary), so a rule made there could not switch its group at
+  once: the system puts each new rule's group as the hour has it on its first step (`dusk.set`), and again after the
+  clock is set by hand; between its hours a player's switch holds. No event: the rule's switching is the switches'.
+  Found by the page's test, whose virtual clock never stepped: a frame drawn before the first step showed the street
+  lit at noon. So the block spawns its dusk groups' lamps and switches as the starting hour has them (site.ts
+  `litAtStart`), and the rule's first step changes nothing there; a test that sets the hour steps once after.
+- **One shader key all day.** Who casts shadows is part of every lit shader's key, and r182 builds the pipelines
+  again on each change (amendment 30's box-look switches: 43 and 25 each time), so the day never changes it: the sky's
+  light never goes out (the moon by night, a twenty-fifth of the key's light where sun and moon swap, so the light's
+  jump from west to east goes unseen), and every key lights the pool (`pointLights` 1): a lamp shines by its switch,
+  not the hour. The light is held 7° above the horizon at least, so no shadow stretches across the site.
+- **The sky follows the clock over the look's.** While a scene runs a clock, the stage's sky shows the hour's sky in
+  place of the preset its look names (a look naming none keeps the stage's own lights); it is shown again when the
+  hour has moved a minute, and from the look's first show once the view knows the hour, so the warm-up compiles what
+  the frames draw. The backdrop's silhouettes darken by a tint (`backdrop.tint`, a new field of `sky`, white by
+  default: the material's colour, a uniform), and the strip is baked again only when its silhouettes change. Found
+  on the way: on a stage with no level (a site, a terrain) the sky's sun was fitted to 16 m round the origin, so with
+  its cascades off the block had shadows in one corner; it covers the terrain's ground now, as the stage's own sun.
+- **The block.** The street's four lamps are the light group `street`, lit at dusk (18:30) and put out at dawn
+  (06:30); the porch has a lamp over the front door, its switch inside, lit at dusk too (`room:porch`); the
+  crawlspace has its lamp under its 1.4 m ceiling and its switch at 0.9 m by its low door (PROGRESS's wait since WP
+  13.18). Its scenes start at `playground.hour` (12) and pass a day in `playground.day` minutes (0 holds it); their dev
+  actions `daytime { hour, rate }` and `lights { group, on }` set the clock and switch a group, so an agent or a test
+  reaches any hour without a restart.
+- **Measured.** From the street at cam iso (480 × 270), the luma mean at noon, dusk and night is 0.484, 0.106 and
+  0.097 in the cel look and 0.483, 0.123 and 0.115 in the pixel look, at most 31% near-black and nothing blown after
+  dusk; 0 pipelines are built through the hours and both looks once a shot in each has built the shot's own passes;
+  the street's four lamps shine in the pool at dusk and night and not at noon, the moon and the nearest lamp casting
+  (tests/e2e/lights.spec.ts). Dusk and night are dim and flat (luma spreads 0.13 to 0.16, the pixel look 36 to 39
+  colours): WP 13.24 tunes both looks by night.
+
+## Amendment 32 (2026-10-23, WP 11.3): GPU particles
+
+- **Where it lives.** engine/gfx/enhanced/particles.ts is the technique `feature:gpuParticles`: a ring of 65,536
+  particles (`GPU_RING`) the GPU moves in compute and draws, decorative only, handed out by engine/gfx/features.ts
+  (`gpuParticlesFor`) while the feature is on. The stage's effects get it when they register with the warm-up
+  (engine/gfx/stageFx.ts `gpuParticles`, `useGpuParticles`), where an emitter of the registry asks for it: a page with
+  none makes none, so the box's pages pay nothing. The frame carries it (`FrameView.particles`), and the post chain
+  draws it through its particle layer (engine/gfx/post/particles.ts). Which particles go to it is the emitter's to
+  say: the kind's new field `gpu` (false by default), so the engine's own emitters keep the CPU pool, their tests and
+  pictures as they were, and the playground's rain and dust ask for the ring. The CPU pool takes them where the
+  feature is off, thinned to its 4,096 and the rest counted (`GFX_NO_GPU_PARTICLES` says so once). Beyond the plan's
+  Owns: engine/gfx/fx/{particles,emitters,effects}.ts, engine/gfx/fx/rings.ts (the floor rings, split from effects.ts
+  to keep it under 400 lines), engine/gfx/{features,stageFx,stage,renderer}.ts, engine/gfx/post/{particles,chain}.ts,
+  engine/app/{view,drawing,engine,viewMembers}.ts, labs/playground/{weather,main}.ts and README.md, docs/PLAYGROUND.md
+  §9.3.
+- **Births on the CPU, into a buffer of their own.** shardfall writes each birth into the ring itself. r182 uploads a
+  storage buffer's whole array when it first creates it and keeps the update ranges asked for before that, so a later
+  upload would put back births the GPU had moved on. So the CPU writes births only into a births buffer, through the
+  CPU pool's own writer (`planBurst`, `writeParticle`: the same floats and the same draws, so a burst gives the same
+  particles on either), and one compute pass a frame copies each into its slot of the ring and moves every slot used,
+  as the CPU pool moves its particles. Nothing is read back: the CPU counts the live ones by their lives.
+- **No normal written: a pass of its own.** r182 has one colour write mask for every target of a pass and blends only
+  the first, so a transparent object drawn in the scene pass replaces the normals and flags under it (the CPU's
+  sprites do). The ring is drawn in a pass of its own, cleared to nothing (r182 clears a pass to the renderer's clear
+  colour, so the layer's pass sets it for its draw), tested by hand against the scene pass's depth, and laid
+  premultiplied over the scene's light before bloom's glow and the display pass, so the looks' filters reach the rain;
+  a plain frame draws it straight after the scene, against the screen's own depth. It is out of the ID pass for free:
+  the ID pass draws the stage's scene, and the ring's mesh is in a scene of its own.
+- **The warm-up.** The warm frame draws a slot of the ring and steps it, building the pass's, the plain frame's and
+  the step's pipelines. Found by a probe at the device: `warmBoth` (engine/app/drawing.ts) handed the warm-up views
+  without the ring, and the first rainy frame built two; it hands them over now.
+- **The page's frame.** `EngineFrame` gains `emit(id, at, key, scale)`, which runs an emitter at its rate times
+  `scale` (`Effects.emit` takes the scale too), and `setting(key)`, so a page's own presentation follows a view
+  setting live; both types moved with `FrameWorld` to engine/app/drawing.ts (engine/app/engine.ts was at its cap),
+  re-exported from engine.ts, so engine/index.ts is as it was. The inspector's new `fx.stats()` gives the effects'
+  counts, the ring's among them.
+- **The playground's weather** (labs/playground/weather.ts): rain over a 36 m square round the player, falling 13 m at
+  14 m/s, and dust motes about him indoors, at `playground.rain` and `playground.dust` (0 to 1, view settings, 0 by
+  default); no rain falls while he is indoors, since no drop finds a roof.
+- **The budget.** `GPU_RING.budgetMs`: a downpour adds at most 1 ms of GPU time a frame on a desktop GPU, which the
+  owner's playtest checks (docs/PLAYGROUND.md §9.3, item 11): SwiftShader's GPU time is a CPU's (WP 11.2), so here it
+  is measured and ranks nothing (ADR-0022).
+- **Debris stays on the CPU.** The trigger names rain, dust and debris; the debris the block makes (a kicked door's
+  splinters, a shot's impact, `emitter:bits`) bursts in tens of particles, well inside the CPU pool, so the engine's
+  emitters keep `gpu` false; one that needs more says so.
+- **Measured** (tests/e2e/enhanced-particles.spec.ts, the street from cam iso, the sim paused): a downpour holds
+  28,524 drops on the ring and none in the CPU pool, changes 22.5% of the picture's pixels, builds nothing after the
+  warm-up and leaves the ID pass and the normals view the same pixel for pixel; a light rain (2,895 drops) drawn by
+  the ring and, the feature off, by the CPU pool's sprites, the same frames in the clean look, differs in 0.10% of the
+  pixels (`PARITY` 1%); a rain drawn plain and through the chain (a neutral grade laid on, the chain's draw calls
+  telling it apart) is the same picture, 0 pixels apart: the hand-made depth test against the scene pass's hides what
+  the screen's does; the feature off, a downpour fills the CPU pool to 3,804 of its 4,096 with 24,871 drops left out
+  in 60 frames, building nothing; the street replay, a frame every 10 steps through a downpour on the ring, gives its
+  goldens to step 240. `x perf labs/playground --scene site-street --set playground.rain=1 --feature
+  feature:gpuParticles`, on less off (SwiftShader, ranking only): GPU ms +113 (737 against 623, about 28,500 drops
+  against the pool's 4,096), CPU render ms −1.2, one compute call, 52,454 triangles, five pipelines more, 0 after the
+  warm-up.
+
+## Amendment 33 (2026-10-24, WP 13.24): the two looks, finished
+
+- **A ramp per material, from its own colour.** The toon style (engine/gfx/materials/toon.ts) gains `shade` and
+  `dither`. Each material's light falls from its lit colour to its shade: the indirect light, what lights its shadows,
+  falls on the colour times `SHADE_TINT` (cooler, toward violet) with its saturation raised (`shadeOf`), `shade` of
+  the way, so a shadow keeps its material's hue shifted rather than going grey; a ramp per material then needs no data
+  per material, and a material whose shade reads wrong can say so later. `dither` makes the bands' edges hard and
+  mixes neighbouring bands over that share of each step by a 4 × 4 ordered pattern (`bayer4`, the composite's table
+  built from Bayer's 2 × 2 order) laid on the grid the chain hands it (`toon.grid`). The toon uniforms are
+  render-group uniforms now, as the sky's knobs are (an object-group uniform reaches a still mesh only when its object
+  or material changes, and switching between two toon looks changes neither); `shade` and `dither` 0 draw as before
+  them.
+- **The pixel grid** (engine/gfx/post/grid.ts, the chain's per-frame part, split from chain.ts at its cap): the pixel
+  filter's `size` 0 is the art block, the largest whole block giving 240 to 360 lines (one drawn pixel at the engine's
+  `pixels` resolution, 270 lines on a 1080 or 540-line screen; four at `full` on 1080); the snap now holds at one
+  drawn pixel too (`snapBlock` gives 0 for none; it gave 1); `snapGrid` (engine/gfx/post/snap.ts) says where it put
+  the camera: the whole blocks (`cells`), which both dithers add to their screen cells so their patterns stay on the
+  world (the composite's palette dither through `frame.zw`; `post_bayer4` wraps negative cells now), and the remainder
+  as the picture's offset (`shift`). The outline filter's new `lines` scales its width with the picture's lines in
+  whole pixels (`inkWidth`): 1 px at 270 lines is 4 at 1080.
+- **The glide.** The pixel filter's new `smooth` hands the snap's remainder to the page: engine/gfx/resolution.ts
+  `shift(x, y)` moves the canvas by that fraction of a pixel (a CSS transform; `stats().shift` reports it), so the
+  snapped picture glides as the camera does and never shimmers. One drawn pixel's CSS size is the canvas's variable
+  `--my3dge-pixel`, which the playground's page uses to give its canvas a margin of two drawn pixels, drawn and
+  hidden, so the glide never shows an edge: its picture is 484 × 274 at 960 × 540 (it was 480 × 270). The offset is a
+  page's, so a shot reads the snapped picture: the shimmer metric is measured there.
+- **The perspective variant.** A look's new `perspective` names the look whose filters and toon numbers the chain
+  draws while the camera is a perspective one (its style and sky stay the look's, so no camera change warms up);
+  `look:playground-pixel-perspective` draws unsnapped, with no glide and a lighter dither on the screen, for first
+  person, the shooter and the platformer (the plan names two; the platformer's lens is a perspective one too).
+- **Outline shells on the stage** (engine/gfx/stageShells.ts): every prop batch's pages (pushed from each part's
+  centre) and every actor's puppet get a shell as they appear; a skinned mesh's shell is a skinned mesh bound to its
+  skeleton, its push skinning the geometry's vertex and normal through r182's `SkinningNode` read off the vertex
+  stage's stack, as the instance's matrix is (`GFX_OUTLINE_TARGET` no longer refuses skinned meshes). A look's new
+  `shells` (`width` px at 270 lines, scaled in the shader to the target's lines; `color`) shows them, through the
+  page's look (engine/app/look.ts); 0 hides them. They are registered with the warm-up whatever the look, so switching
+  builds nothing, and the ID pass leaves them out (`userData.outline`), so a shot's objects are the same in every
+  look. The crowd's batches keep only the chain's ink: a crowd of hundreds would double its draw calls.
+- **The sky's gradient.** A look's new `skyGradient` (0 to 1) mixes the dome toward a clean gradient, the fog's haze
+  at the horizon to the background deepened at the zenith (engine/gfx/sky.ts `gradient`, render-group uniforms, so the
+  hour's sky keeps it); the cel look draws it whole.
+- **Night has a key.** Night was dim and flat (amendment 31: luma spreads 0.13 to 0.16). A toon band's share is the
+  light's falloff alone (its intensity only brightens the band), and the streetlights' falloff (decay 1 from 4.2 m up)
+  left the ground under them at a share of 0.23, below the cel look's first band (0.25): their pools never showed. The
+  streetlight's decay is 0.75 now (labs/playground/props/outdoors.ts), `sky:night`'s ambient 0.25 (it was 0.55) and
+  its fog 0.55 (0.7), and `sky:dusk`'s ambient 1.1 (0.9), so dusk stays brighter than night (the ambient's change a
+  minute stays under daylight.test's bound); the moon and the lamps' brightness are as they were. A flat surface whose
+  share sat at a band's edge dithered whole (a quarter of the frame in 1-pixel checkers at dusk, the moon low), so the
+  dither works only where the light changes across the picture (`fwidth` of the share) and a flat share keeps a hard
+  band. The visual review asked for the pixel look's sky to be a gradient too (its dusk read overcast): it is.
+- **The looks.** `look:playground-cel`: three bands and a rim, `shade` 0.7, ink 1 px at 270 lines at sharp creases,
+  shells of 1 px, the gradient sky. `look:playground-pixel`: the art block, four bands, `shade` 0.6, `dither` 0.5, ink
+  1 px at 270 lines, 24 shades a channel, snapped and gliding, the gradient sky, its perspective variant. Ink never
+  comes from texture brightness: the outline filter reads depth and normals.
+- Split for the line caps: the filter chain's checks to engine/gfx/post/filterChecks.ts (re-exported from filters.ts).
+  Beyond the plan's Owns: engine/gfx/{stage,stageShells,idpass,sky,daylight,renderer}.ts,
+  engine/gfx/post/{grid,filterChecks,chain}.ts, engine/gfx/post/shaders/common.ts, engine/app/look.ts,
+  labs/playground/index.html and README.md, docs/PLAYGROUND.md §5.2, tests/e2e/playground-looks.spec.ts (the plan's
+  Verify names it now), tests/baselines/thumbs (ten cases).
+- **Measured** (tests/e2e/playground-looks.spec.ts, the street, the sim paused): each look from each of the five
+  cameras at noon and at 22:00, none blank or empty, the player in view in the four that show him, night darker than
+  noon; at night the cel look's luma spread is 0.29 to 0.85 and the pixel look's 0.56 to 0.69 (WP 13.23 measured 0.13
+  to 0.16, low contrast in four cameras of five), `LOOK_FEW_COLOURS` left on top-down (25 to 31 colours, a few large
+  ground materials) and some night frames; 0 pipelines built through the night after the noon round; the noon
+  thumbnails recorded (tests/baselines/thumbs/playground-*.json); 177 of 214 shells shown in the cel look and none in
+  the pixel look, the ID pass the same objects in both; the pixel look at 274 lines (484 × 274 with the margin). The
+  visual review passed both looks. The shimmer metric is 0 in the pixel look: isometric panned 1.4 mm at a time in its
+  image plane changes no pixel in seven steps, the glide carrying the remainder (within half a pixel), while the same
+  pans change 2.3 to 2.7% of the cel look's pixels; top-down is pixel-exact by itself (WP 13.8), so its pans move
+  neither look. A pan with a dolly in it (camera codes keep 1 mm, so a target moved off the plane by their rounding)
+  changed 1 to 8 pixels, the cascades off too: an orthographic picture ignores a dolly, its depth-dependent parts do
+  not; the spec pans in whole millimetres along the plane.

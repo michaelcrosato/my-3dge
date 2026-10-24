@@ -13,10 +13,11 @@
  * rebuilt, so `cached` is a live count, never a build count; that is why builds are counted at the device. And r182
  * starts a new node frame only in its own requestAnimationFrame loop, so a frame drawn off that loop (a warm frame, a
  * test's frame) would reuse the last picture of every node updated once per frame, a post pass's scene among them:
- * `advanceFrame(renderer)` starts one, and the renderer's `frame()` calls it first. `checkPinned(renderer)` lists what
- * no longer matches r182's internals: another revision, no `_pipelines` with its `caches` and `programs` maps, or no
- * `_nodes.nodeFrame.update`. When they do not match, `cached` is null, no frame is advanced, and advice
- * `GFX_PIPELINES_UNPINNED` says so once; the device counts still hold.
+ * `advanceFrame(renderer)` starts one as that loop does (the node frame, then `info.frame`, the id the frame's
+ * timestamp queries carry: engine/gfx/enhanced/timing.ts), and the renderer's `frame()` calls it first.
+ * `checkPinned(renderer)` lists what no longer matches r182's internals: another revision, no `_pipelines` with its
+ * `caches` and `programs` maps, or no `_nodes.nodeFrame.update`. When they do not match, `cached` is null, no frame
+ * is advanced, and advice `GFX_PIPELINES_UNPINNED` says so once; the device counts still hold.
  *
  * Invariants: counts only grow; one counter per device (a second call returns the first), so everything that asks
  * reads the same numbers.
@@ -95,18 +96,20 @@ function internals(renderer: WebGPURenderer): PipelinesInternals | string[] {
 }
 
 /** `renderer._nodes.nodeFrame`, as r182 keeps it, or null. */
-function nodeFrameOf(renderer: WebGPURenderer): { update(): void } | null {
+function nodeFrameOf(renderer: WebGPURenderer): { update(): void; frameId?: unknown } | null {
   const frame = (renderer as unknown as { _nodes?: { nodeFrame?: { update?: unknown } } })._nodes?.nodeFrame;
   return typeof frame?.update === 'function' ? (frame as { update(): void }) : null;
 }
 
 /**
  * Starts a new frame for three.js's nodes, so a post pass and every other node updated once per frame draws afresh,
- * also off r182's own animation-frame loop. False when the internals are not r182's (`checkPinned` says why).
+ * also off r182's own animation-frame loop, and gives it its own `info.frame`, as that loop does, so its timestamp
+ * queries are its own. False when the internals are not r182's (`checkPinned` says why).
  */
 export function advanceFrame(renderer: WebGPURenderer): boolean {
   const frame = nodeFrameOf(renderer);
   frame?.update();
+  if (typeof frame?.frameId === 'number') renderer.info.frame = frame.frameId;
   return frame !== null;
 }
 

@@ -4,8 +4,8 @@
  * shown against its recorded budget, and, on a scene in a temporary repository, `--budget` failing over a budget and
  * without a budget file, measuring at the file's steps, refusing a run that is not the one the budget was measured on
  * (other steps, another scene, `--set`, another `--agents`), the crowd ladder at 100, 1,000 and 5,000 agents against
- * its section, and the page way's usage errors (its browser run is the WP's Verify: `node x perf labs/box --scene room
- * --budget`). No test here depends on how fast this machine runs: the verdicts are proven on budgets every run meets
+ * its section, and the page way's usage errors, `--feature`'s among them (its browser runs are the WPs' Verify: `node x
+ * perf labs/box --scene room --budget`, and `--feature feature:largeBuffers` for WP 11.1). No test here depends on how fast this machine runs: the verdicts are proven on budgets every run meets
  * (1000 ms) or misses (0), and the kernel is held to its own budget by `x ci --long` (tools/lib/tiers.ts's LONG_RUNS).
  * @see tools/cmd/perf.ts
  */
@@ -255,7 +255,8 @@ describe('x perf', () => {
     );
   });
 
-  it('refuses --agents without --ladder, --runs on a page, and a page that does not exist, before opening one', async () => {
+  it('refuses --agents without --ladder, --runs on a page, a page that does not exist and --feature but on a page alone, before opening one', async () => {
+    // prettier-ignore
     const root = tinyRepository();
     expect((await perf(root, 'fixtures/scenes/tiny', '--agents', 'perftiny.agents')).code).toBe(2);
     mkdirSync(join(root, 'labs/box'), { recursive: true });
@@ -267,5 +268,9 @@ describe('x perf', () => {
       2,
       expect.stringContaining('there is no tests/pages/none.html'),
     ]);
+    const refused = async (...args: string[]) => (await perf(root, ...args)).lines.join('\n');
+    expect(await refused('labs/box', '--scene', 'room', '--feature', 'feature:timestamps', '--budget')).toContain('drop --budget'); // prettier-ignore
+    expect(await refused('fixtures/scenes/tiny', '--feature', 'feature:timestamps')).toContain('--feature measures a page'); // prettier-ignore
+    expect(await refused('labs/box', '--scene', 'crowd-1000', '--ladder', '--feature', 'feature:timestamps')).toContain('drop --ladder'); // prettier-ignore
   });
 });

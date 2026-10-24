@@ -4,9 +4,9 @@
  * each area's scene stands the player at its spawn, on its floor; the house's things are there: a door in every door
  * opening it fits, two panes in every window, the garage's door on its switches, a lamp and a switch in every room;
  * and its replay (tests/replays/playground-site.replay.json) plays the story in its order, each step's prompt the
- * HUD's: the front door opens away from the player, the hall's light goes off and on at its switch, two strikes burst
- * the living room's door open and break it, a chair is picked up and thrown through the dining room's window, both its
- * panes breaking, and the garage's switch raises its door.
+ * HUD's: the front door opens away from the player, the hall's light goes off and on at its switch, two door kicks
+ * burst the living room's door open and break it, a chair is picked up and thrown through the dining room's window,
+ * both its panes breaking, and the garage's switch raises its door.
  * @see labs/playground/scenes/site.ts
  */
 import { readFileSync } from 'node:fs';
@@ -93,7 +93,7 @@ describe('the block', () => {
       'door open', // the front door, from the porch
       'light off', // the hall's, at its switch by the door
       'light on',
-      'door open', // the living room's: the first strike bursts it open
+      'door open', // the living room's: the first door kick bursts it open
       'strike',
       'splinters prop:door', // the second breaks it
       'strike',
@@ -104,7 +104,7 @@ describe('the block', () => {
       'door open', // the garage's, up and over
       'garage switch',
     ]);
-    const prompts = [5, 20, 111, 113, 200, 232, 334, 337, 459].map((until) => {
+    const prompts = [5, 20, 111, 113, 200, 282, 474, 477, 599].map((until) => {
       const at = playReplay(REPLAY, { until }).session.world;
       return (at.get(1) as unknown as { interactor: { prompt: string } }).interactor.prompt;
     });

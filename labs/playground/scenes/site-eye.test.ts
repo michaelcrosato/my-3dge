@@ -11,6 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../../engine/app/headless';
 import { toWorld } from '../../../engine/sim-api';
+import '../bodies/neighbours'; // the neighbours' bodies, which the view draws them in
 import '../bodies/player'; // the player's body, which the view draws him in
 import { SITE, SITE_STRUCTURES } from '../levels/site';
 import { PLAYGROUND_CAMERAS } from '../views';

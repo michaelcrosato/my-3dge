@@ -46,9 +46,9 @@ tests/e2e/harness.spec.ts shows the fixture at work.
 
 ## Warnings fail tests
 
-The advice trap (tests/setup/adviceTrap.ts) fails a test that prints an advice code, a `console.warn` or a three.js
-deprecation that tests/baselines/advice/ does not list; that directory's README says how to list one, and when not
-to.
+The advice trap (tests/setup/adviceTrap.ts) fails a test that prints an advice code, a `console.warn`, a three.js
+deprecation or a shader three.js could not build (`THREE.TSL: …`) that tests/baselines/advice/ does not list; that
+directory's README says how to list one, and when not to.
 
 ## Adding a suite
 

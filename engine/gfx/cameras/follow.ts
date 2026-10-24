@@ -10,7 +10,7 @@
  * - recentring: after `FOLLOW_RIG.idle` seconds without look input, the view turns behind his movement across the ground
  *   (faster than `FOLLOW_RIG.moving`), eased by `FOLLOW_RIG.ease` and at most `FOLLOW_RIG.recentre` rad/s;
  * - look-ahead: the pivot leads him by up to `FOLLOW_RIG.ahead` along his movement (all of it at `FOLLOW_RIG.run`), eased with
- *   a time constant of `FOLLOW_RIG.lead`;
+ *   a time constant of `FOLLOW_RIG.lead`, by the share of its arm the camera stands out (held in, it looks at him);
  * - the vertical dead zone: the pivot's ground follows the ground he stands on (eased by `FOLLOW_RIG.settle`) and keeps
  *   still while he is in the air within `FOLLOW_RIG.zone` of it, so a jump does not shake the frame; beyond, it is carried
  *   at the zone's edge;
@@ -18,9 +18,12 @@
  * - the lift: while the arm is cut more than `FOLLOW_RIG.room` short (a slope or a wall behind him), the camera tilts down
  *   at `FOLLOW_RIG.raise` rad/s, up to `FOLLOW_RIG.lift`, rising over it, and back at `FOLLOW_RIG.lower` once the arm clears.
  *
- * Walls (engine/gfx/cameras/collide.ts): the ball is swept from his eye to the pivot; the camera moves on as
- * `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a sweep back from the pivot clears),
- * so it moves at a pace (two cuts left, collide.ts's) and never stands in a wall.
+ * Walls (engine/gfx/cameras/collide.ts, their fixed bodies): the ball is swept from his eye to the pivot; the camera
+ * moves on as `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a sweep back from the
+ * pivot clears, along the pivot's trail when it lost sight of it), so it moves at a pace (two cuts left, collide.ts's)
+ * and never stands in a wall; held off its arm, it looks off its view toward the pivot (`FollowState.aim`), turning
+ * that look at most `FOLLOW_RIG.aim` rad/s, right over it straight down and half as fast again (WP 13.27: indoors,
+ * where the walls keep it from behind him).
  *
  * Invariants: with `queries` and the eye at least `COLLIDE_RADIUS` from every wall, the camera's ball never ends
  * inside one; the pivot's height is within `FOLLOW_RIG.zone` of the feet's ground; the pitch within `FOLLOW_LIMITS.pitch`.
@@ -36,7 +39,7 @@
  */
 import { MathUtils } from '../../core/math';
 import { codeDegrees, codeNumber, followCamera, readCode, type CodePart, type FollowCamera } from './chase';
-import { carry, COLLIDE_PULL, follow, moveCamera, reach, type CameraBall, type Walls } from './collide';
+import { carry, COLLIDE_PULL, COLLIDE_RADIUS, follow, moveCamera, reach, type CameraBall, type Walls } from './collide';
 import type { CameraPlayer, EffectWeights } from './effects';
 import { ORBIT_ZOOM_STEP } from './orbit';
 import { approach, makePose, poseForward, rangeProblems, refuse, wrapAngle, type CameraInput, type CameraPose, type Vec3 } from './pose'; // prettier-ignore
@@ -64,6 +67,7 @@ export const FOLLOW_RIG = Object.freeze({
   lower: 0.6,
   room: 0.25,
   lens: 60,
+  aim: (2 * Math.PI) / 3,
 });
 /** The range of the pitch (rad) and the arm (m). */
 export const FOLLOW_LIMITS = Object.freeze({ pitch: [-1.4, 0.8] as const, distance: [1, 20] as const });
@@ -109,6 +113,11 @@ export interface FollowState {
   readonly lift: number;
   /** The camera after the walls (collide.ts's `moveCamera`); null until the first follow. */
   readonly ball: CameraBall | null;
+  /**
+   * How far off its view it looks, `[yaw, pitch]` rad: toward the base from the ball when the walls keep the ball off
+   * its arm, the offset changed at most `FOLLOW_RIG.aim` rad/s (the view's own turns are the view's).
+   */
+  readonly aim: readonly [number, number];
 }
 
 /** Options for a follow camera: its code's data, the lens, and the camera before it. */
@@ -133,6 +142,7 @@ export function followState(options: FollowOptions = {}): FollowState {
     base: null,
     lift: 0,
     ball: null,
+    aim: [0, 0],
   };
   refuse('the follow camera', [
     ...rangeProblems({
@@ -162,7 +172,9 @@ export function stepFollow(state: FollowState, input: FollowInput, dt: number): 
     const most = FOLLOW_RIG.recentre * dt;
     yaw = wrapAngle(yaw + MathUtils.clamp(gap * (1 - Math.exp(-dt / FOLLOW_RIG.ease)), -most, most));
   }
-  const ahead = speed > 1e-3 ? (FOLLOW_RIG.ahead * Math.min(speed / FOLLOW_RIG.run, 1)) / speed : 0;
+  // the look-ahead by the share of the arm the camera stands out: a camera held in close looks at him, not past him
+  const out = state.ball && state.base ? Math.min(1, Math.hypot(...state.ball.at.map((v, i) => v - state.base![i])) / distance) : 1; // prettier-ignore
+  const ahead = speed > 1e-3 ? (FOLLOW_RIG.ahead * out * Math.min(speed / FOLLOW_RIG.run, 1)) / speed : 0;
   const lead = approach(state.lead, [v[0] * ahead, 0, v[2] * ahead], 1 - Math.exp(-dt / FOLLOW_RIG.lead));
   const standing = input.player?.grounded ?? true;
   let ground = state.ground ?? f[1];
@@ -193,19 +205,44 @@ export function stepFollow(state: FollowState, input: FollowInput, dt: number): 
   const turned = { base, yaw: wrapAngle(state.yaw - right), pitch: MathUtils.clamp(pitch - state.lift, ...FOLLOW_LIMITS.pitch) }; // prettier-ignore
   const carried = before && state.ball ? carry(state.ball.at, before, turned) : end; // its own turns (recentre, lift): to `end` at its pace
   const ball = moveCamera(input, state.ball, base, carried, end, dt);
-  return { ...state, yaw, pitch, idle, distance, lead, ground, pivot, base, lift, ball };
+  const aim = aimAt(state.ball ? state.aim : null, ball.at, base, [yaw, view], dt);
+  return { ...state, yaw, pitch, idle, distance, lead, ground, pivot, base, lift, ball, aim };
+}
+
+/**
+ * How far off the view `[yaw, pitch]` the camera at `at` looks to look at `base` (its pivot), changed from `aim` by
+ * at most `FOLLOW_RIG.aim` rad/s (at once with no `aim`), so the player stays in the picture when the walls keep the
+ * ball off its arm; none when the ball stands on the arm; right over the base, its heading as it was, looking down.
+ */
+function aimAt(
+  aim: readonly [number, number] | null,
+  at: Vec3,
+  base: Vec3,
+  view: readonly [number, number],
+  dt: number,
+): readonly [number, number] {
+  // prettier-ignore
+  const d: Vec3 = [base[0] - at[0], base[1] - at[1], base[2] - at[2]];
+  const flat = Math.hypot(d[0], d[2]);
+  const over = flat < COLLIDE_RADIUS; // right over it: its heading as it was, looking as far down as it may
+  const pitch = MathUtils.clamp(over ? Math.sign(d[1]) * Math.PI : Math.atan2(d[1], flat), ...FOLLOW_LIMITS.pitch);
+  const want = [over ? (aim?.[0] ?? 0) : wrapAngle(Math.atan2(d[0], d[2]) - view[0]), pitch - view[1]] as const;
+  if (!aim) return want;
+  const step = FOLLOW_RIG.aim * dt * (over ? 1.5 : 1); // right over it, only its pitch turns: half as fast again
+  return [aim[0] + MathUtils.clamp(wrapAngle(want[0] - aim[0]), -step, step), aim[1] + MathUtils.clamp(want[1] - aim[1], -step, step)]; // prettier-ignore
 }
 
 /** The follow camera's pose: where its ball stands (the arm back from the pivot), looking along its view. */
 export function followPose(state: FollowState): CameraPose {
   const p = state.base ?? [0, FOLLOW_RIG.height, 0];
-  const pitch = MathUtils.clamp(state.pitch - state.lift, ...FOLLOW_LIMITS.pitch);
-  const f = poseForward({ yaw: state.yaw, pitch });
+  const yaw = wrapAngle(state.yaw + state.aim[0]);
+  const pitch = MathUtils.clamp(state.pitch - state.lift + state.aim[1], ...FOLLOW_LIMITS.pitch);
+  const f = poseForward({ yaw, pitch });
   const position: Vec3 = state.ball?.at ?? [p[0] - f[0] * state.distance, p[1] - f[1] * state.distance, p[2] - f[2] * state.distance]; // prettier-ignore
   const ahead = (p[0] - position[0]) * f[0] + (p[1] - position[1]) * f[1] + (p[2] - position[2]) * f[2];
   return makePose({
     position,
-    yaw: state.yaw,
+    yaw,
     pitch,
     fov: state.fov,
     near: 0.05,

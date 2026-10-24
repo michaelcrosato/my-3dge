@@ -9,7 +9,8 @@
  * blocks (the block's centre where it or this pixel is pixel art, plus the one-block rim), then the pixel's part,
  * read after the blocks so whole blocks agree, and its colour (with colour fringes where `chroma` applies). Then, by
  * scope: `cel`; `pixel` (the blocks' levels and rim) and `palette` (levels or a palette, Bayer dither stepping with
- * the blocks); `outline`; `stylize`; `grade`; and the screen effects: `scanlines`, the vignette (whole screen) and
+ * the blocks, its cells counted from where the chain snapped the camera, `frame.zw`, so the pattern stays on the
+ * world); `outline`; `stylize`; `grade`; and the screen effects: `scanlines`, the vignette (whole screen) and
  * `grain`. Engine/gfx/post/filters.ts says what each takes and how the uniforms pack it.
  *
  * `show` (the setting `post.show`) draws what the MRT holds instead of the picture: `parts` (characters red,
@@ -129,7 +130,7 @@ fn post_composite(uv_in: vec2<f32>, display: texture_2d<f32>, display_s: sampler
     }
   }
   if (palette.x > 0.5 && post_aimed(palette.x, w)) {
-    let th = mix(0.5, post_bayer4(floor(frag / select(block, art_px, art))), clamp(palette.w, 0.0, 1.0));
+    let th = mix(0.5, post_bayer4(floor(frag / select(block, art_px, art)) + frame.zw), clamp(palette.w, 0.0, 1.0));
     let pal = u32(palette.y + 0.5);
     let c = clamp(s, vec3<f32>(0.0), vec3<f32>(1.0));
     if (pal > 0u) {

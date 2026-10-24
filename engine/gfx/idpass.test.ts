@@ -81,6 +81,16 @@ describe('listDrawables', () => {
     expect(drawables.find((d) => d.name === 'floor')?.reason).toBeNull();
   });
 
+  it("leaves a look's outline shells out altogether (userData.outline): a shot's objects are the same in every look", () => {
+    const { scene, camera } = fixture();
+    const floor = scene.getObjectByName('floor')!;
+    const shell = new Mesh(new BoxGeometry(), new MeshBasicNodeMaterial());
+    Object.assign(shell, { name: 'floor/outline', userData: { outline: true } });
+    floor.add(shell);
+    const names = listDrawables(scene, camera).drawables.map((d) => d.name);
+    expect([names.includes('floor'), names.includes('floor/outline')]).toEqual([true, false]);
+  });
+
   it('takes the protagonist by name when no object carries userData.protagonist', () => {
     const { scene, camera } = fixture();
     const { drawables } = listDrawables(scene, camera, { protagonist: 'floor' });

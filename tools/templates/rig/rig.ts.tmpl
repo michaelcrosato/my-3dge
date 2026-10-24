@@ -1,0 +1,91 @@
+/**
+ * @file The rig `rig:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX). It starts as
+ * a small four-legged walker of the procedural blocks (engine/sim-api.ts): its feet planted and stepping on two
+ * diagonals (`LegGait`), each leg bent by two-bone IK (`twoBone`), its body bobbing on a spring a footfall kicks
+ * (`Spring1`), its tail wagging (`SwayChain`) and its head looking where it is told (`LookAt`).
+ *
+ * Invariants: metres, seconds, +Y up, facing +Z; a fixed step; nothing random.
+ *
+ * @example
+ * {{name}}.names.length; // 21: its body, head and eye, four legs and a tail
+ * @see {{id}}.test.ts
+ */
+import { LegGait, LookAt, Quaternion, Spring1, SwayChain, twoBone, Vector3 } from '../../../engine/sim-api';
+import type { GaitLeg, ProcRig } from '../../../engine/sim-api';
+
+/** Its legs: left front with right back, right front with left back (x left, y up, z forward; m). */
+const LEGS: readonly GaitLeg[] = [1, -1].flatMap((side) =>
+  [0.18, -0.18].map((z) => {
+    const group = side > 0 === z > 0 ? 0 : 1;
+    return { hip: [0.08 * side, 0.32, z], rest: [0.1 * side, 0, z], group } as const;
+  }),
+);
+const UP = new Vector3(0, 1, 0);
+
+/** The creature, stepped at `dt`, facing `yaw`. */
+class Body {
+  readonly root = new Vector3();
+  readonly turn: Quaternion;
+  readonly gait = new LegGait({ legs: LEGS });
+  readonly bob = new Spring1({ frequency: 12, damping: 0.5, limit: 0.03 });
+  readonly tail = new SwayChain({ count: 4, length: 0.06, amplitude: 0.5, frequency: 6, lag: 0.6, droop: 0.1 });
+  readonly look = new LookAt({ rate: 8, yaw: 1, pitch: 0.5 });
+  readonly yaw: number;
+  readonly dt: number;
+  points: Vector3[] = [];
+
+  constructor(yaw: number, dt: number) {
+    [this.yaw, this.dt] = [yaw, dt];
+    this.turn = new Quaternion().setFromAxisAngle(UP, yaw);
+  }
+
+  /** One step at `velocity`, looking at `target` (none: ahead). */
+  step(velocity: Vector3, target: Vector3 | null): Vector3 {
+    this.root.addScaledVector(velocity, this.dt);
+    const up = this.gait.feet.map((foot) => foot.t >= 0);
+    this.gait.step(this.dt, { position: this.root, yaw: this.yaw, velocity });
+    if (this.gait.feet.some((foot, i) => up[i] && foot.t < 0)) this.bob.kick(-0.2);
+    const at = (x: number, y: number, z: number) => new Vector3(x, y, z).applyQuaternion(this.turn).add(this.root);
+    const body = at(0, 0.32 + this.bob.step(this.dt), 0);
+    const head = at(0, 0.4, 0.26);
+    const eye = head.clone().addScaledVector(this.look.step(this.dt, head, target, this.turn), 0.04);
+    const legs = LEGS.flatMap((leg, i) => {
+      const hip = at(leg.hip[0], body.y - this.root.y, leg.hip[2]);
+      const pole = at(0, 0, leg.hip[2] > 0 ? -1 : 1).sub(this.root); // front knees bend back, back ones forward
+      const [knee, foot] = twoBone(hip, this.gait.feet[i].position, 0.17, 0.17, pole);
+      return [hip, knee.clone(), foot.clone()];
+    });
+    const tail = this.tail.step(this.dt, at(0, body.y - this.root.y + 0.02, -0.22), this.turn).map((p) => p.clone());
+    this.points = [this.root.clone(), body, head, eye, ...legs, ...tail];
+    return this.root;
+  }
+}
+
+/** Each leg's points, and the two bones each keeps. */
+const LEG_POINTS = LEGS.flatMap((_, i) => ['hip', 'knee', 'foot'].map((j) => `leg${i} ${j}`));
+const LEG_BONES = (i: number): [string, string][] => [
+  [`leg${i} hip`, `leg${i} knee`],
+  [`leg${i} knee`, `leg${i} foot`],
+];
+
+/** The rig `rig:{{name}}`: replace this sentence with what it is. */
+export const {{name}}: ProcRig = {
+  id: 'rig:{{name}}',
+  names: ['root', 'body', 'head', 'eye', ...LEG_POINTS, ...[0, 1, 2, 3, 4].map((k) => `tail${k}`)],
+  bones: [['head', 'eye'], ...LEGS.flatMap((_, i) => LEG_BONES(i))],
+  feet: LEGS.map((_, i) => `leg${i} foot`),
+  closed: 4,
+  states: { rest: 1, walk: 2, look: 1 },
+  make(state, facing, dt) {
+    const body = new Body(facing, dt);
+    const ahead = new Vector3(Math.sin(facing), 0, Math.cos(facing));
+    return {
+      step(time) {
+        const speed = time !== undefined && state === 'walk' ? 0.8 : 0;
+        const look = time !== undefined && state === 'look' ? body.root.clone().add(new Vector3(1, 0.5, 1)) : null;
+        return body.step(ahead.clone().multiplyScalar(speed), look);
+      },
+      points: () => body.points,
+    };
+  },
+};

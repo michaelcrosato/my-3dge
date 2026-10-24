@@ -5,7 +5,10 @@
  * the name (or `<type>#<id>` for an unnamed object), the type, `hidden` when it is invisible, `at x,y,z` (its local
  * position, m), `size w×h×d` (its world bounds, m, for an object with geometry below it), the material (its library
  * id, `userData.material`, else its type; one per group for a multi-material mesh), the triangles one draw takes,
- * and `×n` instances for an instanced mesh. `entity n` names the sim entity an object stands for.
+ * and `×n` instances for an instanced mesh. `lit n` gives a light's intensity (0 for one put out: a pool's slot with no
+ * source, a lamp's switch off, WP 13.23). `shadow` marks a light that casts shadows (`shadow ×3 cascades` when it
+ * casts through cascades, engine/gfx/enhanced/csm.ts: the cascades made, 0 before their first build); `entity n`
+ * names the sim entity an object stands for.
  *
  * `filter` keeps the objects whose name or type contains it (any case), with their ancestors for context; `depth`
  * cuts the tree below that depth (the root is depth 0). A cut or filtered subtree is counted on its parent's line.
@@ -16,12 +19,20 @@
  * @example
  * // dumpScene(stage.scene, { depth: 2 })
  * // stage:room Scene
- * //   light:sky HemisphereLight at 0,1,0
+ * //   light:sky HemisphereLight at 0,1,0 lit 1.6
  * //   level:room Group at 0,0,0 size 16×3.5×12
  * //     level:room/floor Mesh at 0,0,0 size 14×0×10 material:flagstone tris 280
  * @see engine/gfx/sceneDump.test.ts
  */
-import { Box3, type BufferGeometry, type InstancedMesh, type Material, type Mesh, type Object3D } from 'three/webgpu';
+import {
+  Box3,
+  type BufferGeometry,
+  type InstancedMesh,
+  type Light,
+  type Material,
+  type Mesh,
+  type Object3D,
+} from 'three/webgpu';
 
 /** What `dumpScene` writes. */
 export interface DumpOptions {
@@ -68,6 +79,12 @@ function line(object: Object3D, hidden: number): string {
   }
   if (mesh.geometry) parts.push(`tris ${triangles(mesh.geometry)}`);
   if (mesh.isInstancedMesh) parts.push(`×${mesh.count}`);
+  const light = object as Light;
+  if (light.isLight) parts.push(`lit ${num(light.intensity)}`);
+  if (light.isLight && light.castShadow) {
+    const node = light.shadow?.shadowNode as { cascades?: unknown; lights?: unknown[] } | undefined;
+    parts.push(typeof node?.cascades === 'number' ? `shadow ×${node.lights?.length ?? 0} cascades` : 'shadow');
+  }
   if (typeof object.userData.entity === 'number') parts.push(`entity ${object.userData.entity}`);
   if (hidden) parts.push(`(+${hidden} below)`);
   return parts.join(' ');

@@ -9,8 +9,9 @@
  * by WP 11.2), filtering of 32-bit float textures (r182 samples `FloatType` textures unfiltered without
  * `float32-filterable`, quietly) and the larger storage-buffer limits the device asks for (caps.ts). Later WPs add
  * their techniques with `def('feature', id, { … })` and an advice code of their own; consumers read the report, never
- * the GPU. The view setting `gfx.featuresOff` lists features to treat as missing, to see or test a downgraded look on
- * a GPU that has everything; turning one off never changes the hash (§6.7, parity contract item 3).
+ * the GPU, and reach a technique (engine/gfx/enhanced/) through this module alone: `gpuTimingFor` (WP 11.2). The
+ * view setting `gfx.featuresOff` lists features to treat as missing, to see or test a downgraded look on a GPU that
+ * has everything; turning one off never changes the hash (§6.7, parity contract item 3).
  *
  * Invariants: the report lists features in id order; an entry is off when any need is unmet or the setting lists it,
  * and then its advice is raised once per feature (the subject is the id), with `{feature}`, `{reason}` and
@@ -34,7 +35,18 @@ import { defineCodes, log as sharedLog, type Log } from '../core/log';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import type { Field, Schema } from '../core/schema';
 import { createSettings, defineSettings, type Settings } from '../core/settings';
+import type { DirectionalLight, WebGPURenderer } from 'three/webgpu';
 import type { GfxCaps } from './caps';
+import { createTemporalAa, TRAA_FEATURE } from './enhanced/aa';
+import { AIR_FEATURE, createAirLights, shadeAir } from './enhanced/air';
+import { AO_FEATURE, createOcclusion } from './enhanced/ao';
+import { cascadeSun, CSM_FEATURE, type CascadedSun } from './enhanced/csm';
+import { GI_FEATURE, giScale, shadeGi } from './enhanced/gi';
+import { PoolTiledLighting, TILED, TILED_FEATURE } from './enhanced/lighting';
+import { createGpuParticles, PARTICLES_FEATURE } from './enhanced/particles';
+import { createReflections, SSR_FEATURE } from './enhanced/ssr';
+import { createGpuTiming, type GpuTiming } from './enhanced/timing';
+import { POOL_SIZES } from './lights';
 
 /** The advice codes of the built-in features, with their fixes. */
 export const FEATURES_CODES = defineCodes('gfx', {
@@ -119,6 +131,9 @@ export interface FeatureReport {
   downgrades: string[];
 }
 
+/** The techniques' entries (WP 11.5), each declared by its module in engine/gfx/enhanced/. */
+const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE, AO_FEATURE, GI_FEATURE, AIR_FEATURE, SSR_FEATURE, TRAA_FEATURE, PARTICLES_FEATURE]; // prettier-ignore
+
 /** Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them. */
 export function defineFeatures(registry: Registry = sharedRegistry): void {
   if (!registry.kinds().includes('feature')) {
@@ -154,6 +169,7 @@ export function defineFeatures(registry: Registry = sharedRegistry): void {
     advice: 'GFX_SMALL_BUFFERS',
     downgrade: 'GPU techniques with large buffers run smaller or stay off',
   });
+  for (const { id, ...spec } of TECHNIQUES) feature(id, spec);
   const declared = registry.kinds().includes('setting') && registry.has('setting', 'gfx.featuresOff');
   if (!declared) defineSettings(FEATURE_SETTINGS, registry);
 }
@@ -201,3 +217,92 @@ export function resolveFeatures(
   report.downgrades = [...new Set(report.off.map((feature) => feature.advice))].sort();
   return report;
 }
+
+/**
+ * The GPU timing a renderer gets (engine/gfx/enhanced/timing.ts, WP 11.2): measuring when `feature:timestamps` is on
+ * in `report`, which also says whether to make the renderer with `trackTimestamp`; idle (no `gpuMs`) when it is off.
+ */
+export function gpuTimingFor(renderer: Parameters<typeof createGpuTiming>[0], report: FeatureReport): GpuTiming {
+  return createGpuTiming(renderer, report.on.includes('feature:timestamps'));
+}
+
+/**
+ * Gives `renderer` tiled lighting (engine/gfx/enhanced/lighting.ts, WP 11.5) when `feature:tiledLighting` is on in
+ * `report`, before its first frame; returns the light pool a sky on it may make: `TILED.pool` lights tiled, else the
+ * pool's default.
+ */
+export function lightingFor(renderer: Pick<WebGPURenderer, 'lighting'>, report: FeatureReport): LightPoolSize {
+  if (!report.on.includes(TILED_FEATURE.id)) return { size: POOL_SIZES.default, tiled: false };
+  renderer.lighting = new PoolTiledLighting();
+  return { size: TILED.pool, tiled: true };
+}
+
+/** The light pool a renderer lights: how many lights, and whether tiled lighting lets it pass `POOL_SIZES.max`. */
+export interface LightPoolSize {
+  size: number;
+  tiled: boolean;
+}
+
+/** The light pool a sky may make on a renderer whose features are `report` (none: the pool's default). */
+export function lightPoolOf(report?: FeatureReport): LightPoolSize {
+  const tiled = report?.on.includes(TILED_FEATURE.id) ?? false;
+  return { size: tiled ? TILED.pool : POOL_SIZES.default, tiled };
+}
+
+/**
+ * Makes `sun` cast through cascades (engine/gfx/enhanced/csm.ts, WP 11.5) when `feature:cascadedShadows` is on in
+ * `report`; null otherwise (and with no report), so it casts its one shadow map.
+ */
+export function cascadeSunFor(sun: DirectionalLight, report?: FeatureReport): CascadedSun | null {
+  return report?.on.includes(CSM_FEATURE.id) ? cascadeSun(sun) : null;
+}
+
+/** The post chain's shading techniques a renderer whose features are `report` has (engine/gfx/post/shading.ts). */
+export interface ShadingTechniques {
+  /** Ambient occlusion (engine/gfx/enhanced/ao.ts), with `feature:ao`. */
+  occlusion: typeof createOcclusion | null;
+  /** Bounce light, the WGSL and its screen scale (engine/gfx/enhanced/gi.ts), with `feature:gi`. */
+  gi: { shade: typeof shadeGi; scale: typeof giScale } | null;
+  /** The air, the WGSL and its gathering (engine/gfx/enhanced/air.ts), with `feature:air`. */
+  air: { shade: typeof shadeAir; lights: typeof createAirLights } | null;
+  /** Screen-space reflections (engine/gfx/enhanced/ssr.ts), with `feature:ssr`. */
+  reflections: typeof createReflections | null;
+}
+
+/** The shading techniques whose features are on in `report` (none without a report). */
+export function shadingFor(report?: FeatureReport): ShadingTechniques {
+  const on = (feature: { id: string }) => report?.on.includes(feature.id) ?? false;
+  return {
+    occlusion: on(AO_FEATURE) ? createOcclusion : null,
+    gi: on(GI_FEATURE) ? { shade: shadeGi, scale: giScale } : null,
+    air: on(AIR_FEATURE) ? { shade: shadeAir, lights: createAirLights } : null,
+    reflections: on(SSR_FEATURE) ? createReflections : null,
+  };
+}
+
+/**
+ * The GPU's particle ring's maker (engine/gfx/enhanced/particles.ts, WP 11.3) when `feature:gpuParticles` is on in
+ * `report`, else null (and with no report): the CPU pool takes every emitter's particles.
+ */
+export function gpuParticlesFor(report?: FeatureReport): typeof createGpuParticles | null {
+  return report?.on.includes(PARTICLES_FEATURE.id) ? createGpuParticles : null;
+}
+
+/** TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA). */
+export function temporalAaFor(report?: FeatureReport): typeof createTemporalAa | null {
+  return report?.on.includes(TRAA_FEATURE.id) ? createTemporalAa : null;
+}
+
+/** The scene pass's extra targets the techniques on in `report` read, for a chain smoothing with `aa` (mrt.ts). */
+export function sceneTargetsFor(report?: FeatureReport, aa?: string): { metalrough: boolean; velocity: boolean } {
+  const on = (feature: { id: string }) => report?.on.includes(feature.id) ?? false;
+  return { metalrough: on(SSR_FEATURE), velocity: aa === 'traa' && on(TRAA_FEATURE) };
+}
+
+export type { TemporalAa } from './enhanced/aa';
+export type { AirLights } from './enhanced/air';
+export type { Occlusion } from './enhanced/ao';
+export type { CascadedSun } from './enhanced/csm';
+export type { Reflections } from './enhanced/ssr';
+export type { GpuParticles } from './enhanced/particles';
+export type { GpuTiming } from './enhanced/timing';

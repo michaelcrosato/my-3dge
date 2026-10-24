@@ -14,8 +14,8 @@
  * Invariants: queries read and never change the world. They see colliders as of the last physics step: Rapier updates
  * its broad phase inside the step, so a body added since is seen from the next step on. Sensors never block a query.
  * `groups` names the collision groups a query hits (engine/physics/groups.ts; all of them by default, the ground's
- * `world` and `prop` for `probe`); `exclude` skips one body (the caster's own). `overlap` lists body ids in id order,
- * each once. A bad argument throws `PHYSICS_BAD_ARGUMENT` naming it.
+ * `world` and `prop` for `probe`); `exclude` skips one body (the caster's own); `fixed` meets fixed bodies only (the
+ * level, never a door, a lift or a prop that moves: a camera's walls). `overlap` lists body ids in id order, each once. A bad argument throws `PHYSICS_BAD_ARGUMENT` naming it.
  *
  * Rapier's own names differ, a trap §4.8 measured: `timeOfImpact` on ray hits, `time_of_impact` on shape-cast hits,
  * and `castShape`'s `targetDistance` (here `margin`). This module is the only place that meets them.
@@ -73,6 +73,8 @@ export interface QueryOptions {
   groups?: GroupName | readonly GroupName[];
   /** A body id it ignores: the caster's own body. */
   exclude?: number;
+  /** Whether it meets fixed bodies only: the level, never what moves (a door, a lift, a prop). False by default. */
+  fixed?: boolean;
 }
 
 /** A raycast's options. */
@@ -130,6 +132,8 @@ export interface Ground {
 const FAR = 1000;
 /** Sensors never block a query. */
 const FLAGS = RAPIER.QueryFilterFlags.EXCLUDE_SENSORS;
+/** Nor, with `fixed`, any body that moves. */
+const FIXED_FLAGS = FLAGS | RAPIER.QueryFilterFlags.ONLY_FIXED;
 /** The groups `probe` counts as ground by default. */
 const GROUND: readonly GroupName[] = ['world', 'prop'];
 
@@ -251,14 +255,15 @@ function rapierShape(shape: Shape, where: string): RAPIER.Shape {
 
 /** The Rapier filter arguments of query options: flags, groups, the excluded body. */
 function filter(world: RAPIER.World, options: QueryOptions, where: string, groups?: readonly GroupName[]) {
-  const { exclude } = options;
+  const { exclude, fixed } = options;
+  check(fixed === undefined || typeof fixed === 'boolean', `${where}({ fixed })`, fixed, 'true or false');
   let body: RAPIER.RigidBody | undefined;
   if (exclude !== undefined) {
     check(Number.isInteger(exclude) && exclude >= 0, `${where}({ exclude })`, exclude, 'a body id');
     body = liveBody(world, exclude) ?? undefined;
     check(body !== undefined, `${where}({ exclude })`, exclude, 'the id of a body in this world');
   }
-  return [FLAGS, queryBits(options.groups ?? groups), undefined, body] as const;
+  return [fixed ? FIXED_FLAGS : FLAGS, queryBits(options.groups ?? groups), undefined, body] as const;
 }
 
 /** The id of the body a collider belongs to. */

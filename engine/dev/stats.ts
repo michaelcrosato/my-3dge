@@ -2,7 +2,8 @@
  * @file The inspector member `stats()` and the meter behind it (PLAN.md §8.3, §8.7, WP 5.5; doctrine: Verifiable):
  * performance as counters, never frames per second. `stats()` gives the mean milliseconds of the last 60 sim steps
  * (`simMs`) and of their `physics` and `anim` phases (`physicsMs`, `animMs`; the phases of engine/sim/systems.ts),
- * the mean CPU milliseconds of the last 60 drawn frames (`renderMs`), and the renderer's counts: the last frame's
+ * the mean CPU milliseconds of the last 60 drawn frames (`renderMs`), the GPU's (`gpuMs`, where the device has
+ * timestamp queries: engine/gfx/enhanced/timing.ts; absent elsewhere), and the renderer's counts: the last frame's
  * draw calls, triangles and compute dispatches, the textures and geometries alive on the GPU, the pipelines built
  * since startup and those built after the warm-up (0, or a frame stalled: §8.7). The split is the prototype
  * benchmark's (physics, logic and drawing): the step's logic is `simMs - physicsMs - animMs`. Means, not medians: a
@@ -47,10 +48,17 @@ export const TIMED_PARTS = ['sim', 'physics', 'anim', 'render'] as const;
 /** One timed part. */
 export type TimedPart = (typeof TIMED_PARTS)[number];
 
-/** The renderer's counts the meter reports (engine/gfx/renderer.ts `GfxStats`). */
+/** The renderer's counts the meter reports (engine/gfx/renderer.ts `GfxStats`), and its GPU time where it has one. */
 export type RenderCounts = Pick<
   GfxStats,
-  'drawCalls' | 'triangles' | 'computeCalls' | 'textures' | 'geometries' | 'pipelines' | 'pipelinesAfterWarmUp'
+  | 'drawCalls'
+  | 'triangles'
+  | 'computeCalls'
+  | 'textures'
+  | 'geometries'
+  | 'pipelines'
+  | 'pipelinesAfterWarmUp'
+  | 'gpuMs'
 >;
 
 /** The count fields of `EngineStats`, in report order. */
@@ -74,6 +82,8 @@ export interface EngineStats {
   animMs: number | null;
   /** The mean CPU time of the last 60 drawn frames (the view's update and the draw calls' encoding); null headless. */
   renderMs: number | null;
+  /** The GPU's mean time a frame over the last 60 read, from timestamp queries; absent without them, null before one. */
+  gpuMs?: number | null;
   /** Steps timed since the engine started. */
   steps: number;
   /** Frames timed since the engine started. */
@@ -174,6 +184,7 @@ export function createStatsMeter(options: StatsMeterOptions = {}): StatsMeter {
         physicsMs: mean('physics'),
         animMs: mean('anim'),
         renderMs: mean('render'),
+        ...(counts?.gpuMs !== undefined ? { gpuMs: counts.gpuMs } : {}),
         steps,
         frames,
         ...(Object.fromEntries(COUNT_KEYS.map((key) => [key, counts ? counts[key] : null])) as Pick<
@@ -197,6 +208,6 @@ export function meterOf(host: InspectorHost): StatsMeter {
 }
 
 defineMember('stats', {
-  help: "Performance counters, never fps: mean sim, physics, anim and render ms of the last 60 steps or frames; the last frame's draw calls, triangles and compute calls; textures, geometries and pipelines (after warm-up).",
+  help: "Performance counters, never fps: mean sim, physics, anim and render ms of the last 60 steps or frames, and the GPU's (gpuMs, with timestamp queries); the last frame's draw calls, triangles and compute calls; textures, geometries and pipelines (after warm-up).",
   impl: (host) => meterOf(host).read(),
 });

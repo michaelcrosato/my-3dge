@@ -7,17 +7,17 @@
  * The step (shardfall's order): movers set their velocities (`intents`, `ai`), the system `actors` moves every actor in
  * id order (`anim`), the world steps (`physics`), and `actors.readback` copies the feet into `x`, `y`, `z`
  * (`readback`). A player actor reads the step's intents: `move`, `jump` (held, pressed) and `dash` (pressed); any other
- * the intents its AI writes into `actor.intents`, its presses from the edges of `b`. Events: `jump` `{ id }`, `land` `{
- * id, speed }`, `dash` `{ id }`. Gravity: `physics.characterGravity` unless the settings name one; the weight on
- * dynamic floors uses `physics.gravity`. The component `oneWay` makes its body a one-way platform. WP 3.7: `anim` adds
- * the component `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP 7.8) and, with
- * `preciseHits`, posed by `actors.pose` after `actors.readback` (event `footstep` `{ id, side, speed }`). WP 8.9:
- * `body` adds the component `puppet` (the body drawn), `clips` the clip layer (engine/sim/actorClips.ts).
- *
+ * the intents its AI writes into `actor.intents`, its presses from the edges of `b`. Events: `jump` `{ id, at }`,
+ * `land` `{ id, speed, at }`, `dash` `{ id, at }`, `at` its feet as the step began (where it happened, however late a
+ * sound map reads it). Gravity: `physics.characterGravity` unless the settings name one; the weight on dynamic floors
+ * uses `physics.gravity`. The component `oneWay` makes its body a one-way platform. WP 3.7: `anim` adds the component
+ * `animator`, stepped by `actors.anim` after `actors` (its `reactions` first, WP 7.8) and, with `preciseHits`, posed by
+ * `actors.pose` after `actors.readback` (`footstep` `{ id, side, speed, at, gait? }`, the gait its movement model's).
+ * WP 8.9: `body` adds the component `puppet` (the body drawn), `clips` the clip layer (engine/sim/actorClips.ts).
  * WP 13.3 and 13.7: an actor on a movement model also holds `motion`, the model's state, and reads its buttons, view
- * and rides (`spawnActor` says which); launchers set off any actor: event `launch` `{ id }`. WP 13.9: a player's sprint
- * and crouch work as the recorded settings `input.sprint` and `input.crouch` say (held, or toggled by a press); WP
- * 13.10: an animated actor's duck is its animator's pose `crouch` (a planted stride's shorter step).
+ * and rides (`spawnActor` says which), and tells the move it enters (`move` `{ id, what, at }`, WP 13.22); launchers
+ * set off any actor (`launch` `{ id, at }`). WP 13.9: a player's sprint and crouch work as `input.sprint` and
+ * `input.crouch` say (held, or toggled by a press); WP 13.10: an animated actor's duck is its animator's pose `crouch`.
  *
  * Invariants: systems are added once per world, on the first (animated) spawn; all an actor remembers is in its
  * components (the sim's animators are loaded from them). Despawning leaves the body; `removeActor` removes both.
@@ -293,13 +293,16 @@ export function placeActor<C extends object>(
 /** The bodies of the one-way platforms (the component `oneWay`). */
 const oneWayOf = (w: World) => new Set((w.query('oneWay') as unknown as ActorComponents[]).map((e) => e.oneWay.body));
 
-/** Removes an actor and its body. */
+/** Removes an actor and its body (its ragdoll's parts too, engine/sim/ragdolls.ts). */
 export function removeActor<C extends object>(world: World<C>, id: number): void {
   const w = world as unknown as World;
   const actor = (w.get(id) as Partial<ActorComponents> | undefined)?.actor;
   if (!actor)
     throw codeError('SIM_BAD_ARGUMENT', { where: 'removeActor(w, id)', value: String(id), expected: 'an actor’s id' });
-  physicsOf(w).removeBody(actor.body);
+  const physics = physicsOf(w);
+  physics.removeBody(actor.body);
+  const parts = (w.get(id) as { ragdoll?: { bodies: number[] } }).ragdoll?.bodies ?? []; // its ragdoll's, if it lies so
+  for (const body of parts) if (physics.hasBody(body)) physics.removeBody(body);
   w.despawn(id);
 }
 
@@ -313,6 +316,7 @@ function moveActors(w: World, intents: Intents): void {
   const rides = ridesOf(w);
   const controls = { holdSprint: w.settings.get('input.sprint') === 'hold', toggleCrouch: w.settings.get('input.crouch') === 'toggle' }; // prettier-ignore
   for (const e of w.query('actor') as unknown as (ActorComponents & { id: number })[]) {
+    if ((e as { ragdoll?: unknown }).ragdoll) continue; // its ragdoll moves it (engine/sim/ragdolls.ts)
     const { actor, motion } = e;
     const wants = intentsOf(actor, intents);
     const input: CharacterInput = {
@@ -320,14 +324,16 @@ function moveActors(w: World, intents: Intents): void {
       jump: held(wants, 'jump'),
       jumpPressed: pressed(wants, 'jump'),
       dashPressed: pressed(wants, 'dash'),
-      ...(motion ? motionInput(actor, wants, controls, (e as { interactor?: { usedAt: number } }).interactor?.usedAt === w.tick) : {}), // prettier-ignore
+      ...(motion ? motionInput(actor, wants, controls, (e as { interactor?: { usedAt: number } }).interactor?.usedAt === w.tick, ((e as { melee?: { move: string } }).melee?.move ?? '') !== '', ((e as { weapons?: { slot: number } }).weapons?.slot ?? -1) >= 0 && held(wants, 'aim')) : {}), // prettier-ignore
     };
     const character = motion ? tuneCharacter(actor.character, tuning) : actor.character;
     const step = stepCharacter(physics, actor.body, character, actor, input, { dt: w.dt, gravity, worldGravity, oneWay, rides }, motion); // prettier-ignore
-    if (step.jumped) w.emit('jump', { id: e.id });
-    if (step.landed) w.emit('land', { id: e.id, speed: step.landed });
-    if (step.dashed) w.emit('dash', { id: e.id });
-    if (step.launched) w.emit('launch', { id: e.id });
+    const at = [actor.x, actor.y, actor.z]; // its feet as the step began
+    if (step.jumped) w.emit('jump', { id: e.id, at });
+    if (step.landed) w.emit('land', { id: e.id, speed: step.landed, at });
+    if (step.dashed) w.emit('dash', { id: e.id, at });
+    if (step.launched) w.emit('launch', { id: e.id, at });
+    if (step.entered) w.emit('move', { id: e.id, what: step.entered, at });
   }
 }
 
@@ -364,7 +370,8 @@ function stepAnimators(w: World): void {
     const ducked = motion?.duck === 'ducking' || motion?.duck === 'ducked'; // the movement model's crouch
     const pose = told.pose ?? (ducked ? 'crouch' : undefined);
     animator.step({ ...told, pose, velocity, yaw: actor.yaw, air: !actor.grounded, dash: actor.dash > 0 }).save(data);
-    for (const { type, ...event } of animator.events) w.emit(type, { id, ...event });
+    const [at, gait] = [[actor.x, actor.y, actor.z], motion?.gait];
+    for (const { type, ...event } of animator.events) w.emit(type, { id, ...event, at, ...(gait ? { gait } : {}) });
   }
 }
 

@@ -38,8 +38,8 @@
  * @see engine/gfx/post/mrt.test.ts
  * @see tests/e2e/post.spec.ts
  */
-import { dot, float, Fn, mrt, normalView, output, pass, renderGroup, select, uniform, uniformArray, vec3, vec4 } from 'three/tsl'; // prettier-ignore
-import { Vector4 } from 'three/webgpu';
+import { dot, float, Fn, metalness, mrt, normalView, output, pass, renderGroup, roughness, select, uniform, uniformArray, vec3, vec4, velocity } from 'three/tsl'; // prettier-ignore
+import { UnsignedByteType, Vector4 } from 'three/webgpu';
 import type { Camera, Node, NodeBuilder, Object3D, PassNode, Scene, UniformArrayNode, WebGPURenderer } from 'three/webgpu'; // prettier-ignore
 
 /** The parts of the scene a filter can be scoped to. */
@@ -208,7 +208,7 @@ function behindEverything(object: Object3D | undefined): boolean {
  * decided as the object's program is built, which holds because such an object's material is its own (it draws it at
  * the far plane) and r182 keys a program by material and geometry, never by object.
  */
-function sceneMrt(table: FlagTable): Node {
+function sceneMrt(table: FlagTable, extra: SceneTargets): Node {
   const slot = uniform(0);
   slot.onObjectUpdate(({ object }) => (object ? table.slotOf(object) : 0));
   const row = slot.div(4).floor();
@@ -222,19 +222,37 @@ function sceneMrt(table: FlagTable): Node {
         ? vec4(normalView, flags)
         : vec4(vec3(0, 0, 1), flags),
   )();
-  return mrt({ output, normal });
+  const outputs: Record<string, Node> = { output, normal };
+  if (extra.metalrough) outputs.metalrough = vec4(metalness, roughness, 0, 1);
+  if (extra.velocity) outputs.velocity = velocity;
+  return mrt(outputs);
+}
+
+/** The scene pass's targets beyond colour and normals (WP 11.5): metalness and roughness for SSR, motion for TRAA. */
+export interface SceneTargets {
+  /** `metalrough`: (metalness, roughness), 8 bits each, for screen-space reflections (`feature:ssr`). */
+  metalrough?: boolean;
+  /** `velocity`: each pixel's motion on screen since the last frame, for TRAA (`feature:traa`). */
+  velocity?: boolean;
 }
 
 /** Each scene pass's flag table. */
 const tables = new WeakMap<PassNode, FlagTable>();
 
-/** The scene pass: `scene` through `camera` into colour, normals with flags, and depth (the fixed MRT). */
-export function createScenePass(scene: Scene, camera: Camera): PassNode {
+/**
+ * The scene pass: `scene` through `camera` into colour, normals with flags, and depth (the fixed MRT), and the `extra`
+ * targets the page's features ask for, fixed from then on.
+ */
+export function createScenePass(scene: Scene, camera: Camera, extra: SceneTargets = {}): PassNode {
   const scenePass = pass(scene, camera);
   const table = createFlagTable();
   tables.set(scenePass, table);
-  scenePass.setMRT(sceneMrt(table) as ReturnType<typeof mrt>);
-  scenePass.getTextureNode('normal'); // its attachment, before anything compiles for the target (see the file comment)
+  scenePass.setMRT(sceneMrt(table, extra) as ReturnType<typeof mrt>);
+  // Every attachment before anything compiles for the target (see the file comment).
+  for (const name of ['normal', ...Object.keys(extra).filter((key) => extra[key as keyof SceneTargets])])
+    scenePass.getTextureNode(name);
+  // 0 to 1 at 8 bits is plenty for both, and half a float target's bandwidth, as three.js's own SSR example keeps it.
+  if (extra.metalrough) scenePass.getTexture('metalrough').type = UnsignedByteType;
   return scenePass;
 }
 

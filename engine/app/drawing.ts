@@ -33,8 +33,11 @@ import type { Chrome } from '../ui/chrome';
 import type { Overlay } from '../ui/overlay';
 import type { TouchLayer } from '../ui/touch';
 import { queryViewOf } from '../sim/queryView';
+import type { CameraPose } from '../gfx/cameras/pose';
+import type { QueryView } from '../sim/queryView';
+import type { Scene } from '../sim/scene';
+import type { World, WorldEvents } from '../sim/world';
 import type { DamageNumbers } from './damageNumbers';
-import type { EngineFrame } from './engine';
 import type { AppRun, Drawing } from './headless';
 import type { PageLook } from './look';
 import { HEADLESS_ASPECT } from './view';
@@ -54,6 +57,34 @@ export interface PageParts {
   numbers: DamageNumbers | null;
   /** Whether the first frame is drawn. */
   ready: boolean;
+}
+
+/** The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events. */
+export type FrameWorld = Pick<World, 'tick' | 'hz' | 'get' | 'query'> & { readonly events: Pick<WorldEvents, 'trace'> };
+
+/**
+ * What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the
+ * hash), the camera the frame was drawn from, and the emitters to run.
+ */
+export interface EngineFrame {
+  /** The run's world: the same object until the run starts again (a new seed, a replay), so a reader compares it. */
+  readonly world: FrameWorld;
+  /** The running scene: its id, its level and whether it has physics. */
+  readonly scene: Scene;
+  /** The camera's pose this frame: where a listener goes. */
+  readonly camera: CameraPose;
+  /** The sim's physics queries, read-only, in a physics scene; null without physics. */
+  readonly queries: QueryView | null;
+  /** Real seconds since the last frame. */
+  readonly dt: number;
+  /** The value setting `key` has now, view settings among them (`x set`, `__engine.set`, the URL). */
+  setting(key: string): unknown;
+  /**
+   * Runs emitter `id` at its rate times `scale` (1) at `at` (m) for the next frame, `key` naming it so its fractions
+   * and light carry over: rain over the player, a fire in a hearth (engine/gfx/fx/effects.ts `emit`). An emitter that
+   * says `gpu` has its particles on the GPU's ring where `feature:gpuParticles` is on (WP 11.3). Presentation only.
+   */
+  emit(id: string, at: readonly [number, number, number], key: string, scale?: number): void;
 }
 
 /** What `createPageDrawing` draws with besides the parts. */
@@ -102,7 +133,9 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
     parts.post ? parts.post.view(parts.look!.sync(viewNow().stage, view)) : view;
   const warmBoth = async () => {
     const view = viewNow();
-    for (const camera of view.cameras) await parts.gfx!.warmup.run(through({ scene: view.stage.scene, camera }));
+    const particles = view.stage.fx.gpuParticles; // the GPU's, so the warm frame builds what draws them (WP 11.3)
+    for (const camera of view.cameras)
+      await parts.gfx!.warmup.run(through({ scene: view.stage.scene, camera, ...(particles ? { particles } : {}) }));
   };
   const frame = (alpha: number, dt: number): FrameReport =>
     parts.run!.meter.time('render', () => {
@@ -121,7 +154,10 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
       if (options.onFrame) {
         const { world, scene } = parts.run!.session;
         const queries = scene.physics ? queryViewOf(world) : null;
-        options.onFrame({ world, scene, camera: viewNow().camera.pose(), queries, dt });
+        const emit = (id: string, at: readonly [number, number, number], key: string, scale?: number) =>
+          viewNow().stage.fx.effects.emit(id, at, key, scale);
+        const setting = (key: string) => parts.run!.session.settings.get(key);
+        options.onFrame({ world, scene, camera: viewNow().camera.pose(), queries, dt, emit, setting });
       }
       return report;
     });

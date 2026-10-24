@@ -5,16 +5,16 @@
  * id, a bad variant, a missing replay), naming the closest.
  *
  * `<id>` is an `sfx` or `song` entry (the engine's, or a game's from `labs/<name>/sounds/`), rendered as the DSP does
- * (engine/audio/data). It prints the audio QA family's metrics (tools/qa/audio.ts): duration, peak, RMS, DC offset,
- * clicks, leading silence, spectral centroid, and the hash; it fails when the QA would report the render and its
- * baseline does not accept it. `--wav` writes `sound.wav` (16-bit mono PCM); `--spectrogram` writes `spectrogram.png`,
- * 512 × 256: time left to right with a line every 0.1 s (1 s past 2 s, 10 s past 20 s), log frequency bottom to top
- * from 20 Hz to Nyquist with lines at 100 Hz, 1 kHz and 10 kHz, level from black (−96 dBFS) through blue, magenta and
- * orange to pale yellow (0 dBFS). Files go in `out/audio/<id>/`, beside the report.
+ * and heard as it plays (a loop folded onto its pass: tools/qa/audio.ts `asHeard`). It prints the QA's metrics:
+ * duration, peak, RMS, DC offset, clicks, leading silence, spectral centroid, and the hash; it fails when the QA would
+ * report it and its baseline does not accept it. `--wav` writes `sound.wav` (16-bit mono PCM); `--spectrogram` writes
+ * `spectrogram.png`, 512 × 256: time left to right with a line every 0.1 s (1 s past 2 s, 10 s past 20 s), log
+ * frequency bottom to top from 20 Hz to Nyquist with lines at 100 Hz, 1 kHz and 10 kHz, level from black (−96 dBFS)
+ * through blue, magenta and orange to pale yellow (0 dBFS). Files go in `out/audio/<id>/`, beside the report.
  *
  * `--replay` plays a replay (engine/sim/replay.ts) in Node, step by step, against its goldens, and reads its sound
- * events: the sound its scene's `sounds` gives each traced sim event, `{ sfx, vol?, variant? }` (engine/sim/scene.ts:
- * by default the event payload's own `sfx`; the box maps its events as its page does, labs/box/sounds/events.ts). `vol`
+ * events: the sounds its scene's `sounds` gives each traced sim event, `{ sfx, vol?, variant? }` or a list (engine/
+ * sim/scene.ts: by default the payload's own `sfx`; the box and the playground map theirs as their pages do). `vol`
  * is a gain, 1 by default; without `variant` an effect plays its variants in turn. The events are read after setup
  * and after each step, as the page reads them, so an event read at step k plays at k / hz seconds. It mixes them offline into one mono mix, unspatialized (every source at
  * the listener: the loudest the mix can be), and fails when the mix clips, naming the sounds playing at its peak, when
@@ -38,10 +38,10 @@ import { EngineError } from '../../engine/core/log';
 import { registry as sharedRegistry, type Registry } from '../../engine/core/registry';
 import { show } from '../../engine/core/schema';
 import { checkpointsOf, checkReplay, judgeRuns, playReplay, type Replay } from '../../engine/sim/replay';
-import { getScene, type Scene } from '../../engine/sim/scene';
+import { getScene } from '../../engine/sim/scene';
 import type { World } from '../../engine/sim/world';
 import { targetSlug, type Artifact, type Finding } from '../lib/report';
-import { dbfs, frameSpectrum, loadSoundModules, soundMetrics, soundProblems, type SoundMetrics } from '../qa/audio';
+import { asHeard, dbfs, frameSpectrum, loadSoundModules, soundMetrics, soundProblems, type SoundMetrics } from '../qa/audio'; // prettier-ignore
 import { compareWithBaselines, readBaselines } from './qa';
 import { resolveSceneModule } from '../lib/scenes';
 import { closest, UsageError, wholeFlag, type Command, type CommandResult } from '../x';
@@ -136,20 +136,20 @@ export function spectrogram(samples: ArrayLike<number>, rate: number): Picture {
   return { width, height, rgba };
 }
 
+/** A sound a scene's `sounds` gives a traced sim event (by default its payload's sfx, engine/sim/scene.ts), unchecked. */
+type Made = { sfx: unknown; vol?: unknown; variant?: unknown };
+
 /**
- * The sound event a traced sim event makes when its scene's `sounds` gives it one (by default its payload's sfx, engine/
- * sim/scene.ts), its variant the one given or the effect's next in turn (`turns`); or the problem with it.
+ * One sound a scene's `sounds` gave a traced sim event as a sound event, its variant the one given or the effect's
+ * next in turn (`turns`); or the problem with it.
  */
 function soundEventOf(
+  { sfx, vol = 1, variant }: Made,
   record: TraceRecord,
   world: World,
-  scene: Scene,
   registry: Registry,
   turns: Map<string, number>,
-): SoundEvent | string | undefined {
-  const made = scene.sounds(record, world) as { sfx: unknown; vol?: unknown; variant?: unknown } | null;
-  if (!made) return undefined;
-  const { sfx, vol = 1, variant } = made;
+): SoundEvent | string {
   const where = `step ${world.tick}, event ${record.type}`;
   if (typeof sfx !== 'string' || !registry.has('sfx', sfx)) {
     const near = closest(
@@ -192,9 +192,11 @@ export function replaySoundEvents(replay: Replay, registry: Registry = sharedReg
       problems.push(`step ${world.tick}: ${trace[0].seq - seen - 1} events left the trace (256) before they were read`);
     }
     for (const record of trace.filter((item) => item.seq > seen)) {
-      const event = soundEventOf(record, world, scene, registry, turns);
-      if (typeof event === 'string') problems.push(event);
-      else if (event) events.push(event);
+      const made = (scene.sounds(record, world) as Made | readonly Made[] | null) ?? []; // one sound, a list or none
+      for (const event of [made].flat().map((one) => soundEventOf(one, record, world, registry, turns))) {
+        if (typeof event === 'string') problems.push(event);
+        else events.push(event);
+      }
     }
     seen = trace.at(-1)?.seq ?? seen;
   };
@@ -282,7 +284,7 @@ async function runSound(root: string, id: string, values: Values): Promise<Comma
     throw new UsageError(`--intensity takes a number from 0 to 1, not ${String(values.intensity)}`);
   let samples: Float32Array;
   try {
-    samples = kind === 'sfx' ? renderSfx(id, { variant, seed }) : renderSong(id, { seed, intensity });
+    samples = kind === 'sfx' ? asHeard(id, renderSfx(id, { variant, seed })) : renderSong(id, { seed, intensity });
   } catch (error) {
     if (error instanceof EngineError) throw new UsageError(error.message);
     throw error;

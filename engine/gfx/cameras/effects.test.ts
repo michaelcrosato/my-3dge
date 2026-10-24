@@ -2,8 +2,12 @@
  * @file Unit tests for the camera effects (engine/gfx/cameras/effects.ts): Apex's lens from its slider; the duck's share
  * and the eye on the shooter model; at rest nothing moves the pose; the sprint lowers the eye 0.15 m and rolls into a
  * turn up to 2°; a boosted slide widens the lens ×1.1 and rolls toward a slide across the view up to 15°; a landing
- * dips the view by its speed and springs back, a jump kicks it up, a hard landing shakes the screen; the sights zoom
+ * dips the view by its speed and springs back, a jump kicks it up, a hard landing shakes the screen, and so does a
+ * melee hit, kicking the view back once (the component `melee`'s `hitAt`, read by `cameraPlayer`); the sights zoom
  * to 55° at a 70° lens in 0.25 s; the bob dips once each 0.4 s at a run; a weapon's kick; each camera takes its share.
+ * WP 13.20: a burst's kick climbs the view as the sim has it, whole in the cameras that aim with their centre and not
+ * at all in the others, the sights zoom to the weapon's own lens, and with weapons only one out aims (`cameraPlayer`
+ * reading the component `weapons`).
  * @see engine/gfx/cameras/effects.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -19,7 +23,9 @@ import {
   NO_EFFECTS,
   type CameraPlayer,
 } from './effects';
+import { FOLLOW_EFFECTS } from './follow';
 import { makePose } from './pose';
+import { SHOULDER_EFFECTS } from './shoulder';
 
 const DEG = Math.PI / 180;
 
@@ -91,6 +97,24 @@ describe('the camera effects', () => {
     expect(highest).toBeGreaterThan(EFFECTS.punch.jump * 0.8);
   });
 
+  it('kick the view back and shake the screen once when a melee hit lands', () => {
+    const effects = createCameraEffects();
+    run(effects, player(), 0.1);
+    effects.step(player({ struck: 40 }));
+    const first = effects.frame(1 / 60, { yaw: 0 });
+    expect(first.shake).toBeCloseTo(EFFECTS.shake.hit, 9);
+    let highest = first.pitch;
+    for (let k = 0; k < 30; k++) {
+      effects.step(player({ struck: 40 })); // the same hit: no second kick
+      const frame = effects.frame(1 / 60, { yaw: 0 });
+      expect(frame.shake).toBe(0);
+      highest = Math.max(highest, frame.pitch);
+    }
+    expect(highest).toBeGreaterThan(EFFECTS.punch.hit * 0.8);
+    const entity = { id: 1, actor: { vx: 0, vy: 0, vz: 0, grounded: true }, melee: { hitAt: 12 } };
+    expect([cameraPlayer(entity)?.struck, cameraPlayer({ ...entity, melee: { hitAt: -1 } })?.struck]).toEqual([12, undefined]); // prettier-ignore
+  });
+
   it('zoom to the sights in 0.25 s, bob once each 0.4 s at a run, and take a weapon’s kick', () => {
     const effects = createCameraEffects();
     const aimed = run(effects, player({ aiming: true }), EFFECTS.ads.time);
@@ -106,5 +130,27 @@ describe('the camera effects', () => {
     runner.kick(0.05, 0.02);
     const kicked = runner.frame(1 / 60, { yaw: 0 });
     expect([kicked.pitch > 0, kicked.yaw > 0]).toEqual([true, true]);
+  });
+
+  it('climb with a burst’s kick as the sim has it, by the aim’s share, and zoom to the weapon’s own sights (WP 13.20)', () => {
+    const effects = createCameraEffects();
+    run(effects, player(), 0.1);
+    const climbed = run(effects, player({ recoil: [2 * DEG, -0.5 * DEG] }), 1 / 60);
+    expect(climbed.recoil.map((r) => r / DEG)).toEqual([expect.closeTo(2, 9), expect.closeTo(-0.5, 9)]); // as it is
+    const pose = makePose({ position: [0, 1.5, 0], fov: 74 });
+    const drawn = (weights: typeof FIRST_EFFECTS) => applyEffects(pose, climbed, weights).pitch - pose.pitch;
+    expect(drawn(FIRST_EFFECTS)).toBeCloseTo(climbed.pitch + climbed.recoil[0], 9);
+    expect(drawn(SHOULDER_EFFECTS)).toBeCloseTo(climbed.pitch * SHOULDER_EFFECTS.punch + climbed.recoil[0], 9); // the climb whole
+    expect(drawn(FOLLOW_EFFECTS)).toBeCloseTo(climbed.pitch * FOLLOW_EFFECTS.punch, 9); // no centre aims: no climb
+    const settled = run(effects, player(), 1 / 60);
+    expect(settled.recoil).toEqual([0, 0]); // the sim's kick gone, the climb gone
+    const aimed = run(createCameraEffects(), player({ aiming: true, zoom: 30 }), EFFECTS.ads.time);
+    expect(aimed.zoom).toBeCloseTo(Math.tan(35 * DEG) / Math.tan(15 * DEG), 9);
+    const entity = { id: 1, actor: { vx: 0, vy: 0, vz: 0, grounded: true }, weapons: { slots: ['weapon:gun'], slot: 0, kick: [1.5, 0.5], shots: 3 } }; // prettier-ignore
+    const out = cameraPlayer(entity, true)!;
+    expect([out.aiming, out.recoil![0] / DEG, out.recoil![1] / DEG, out.zoom, out.shots]).toEqual([true, expect.closeTo(1.5, 9), expect.closeTo(-0.5, 9), 60, 3]); // prettier-ignore
+    const holstered = cameraPlayer({ ...entity, weapons: { ...entity.weapons, slot: -1 } }, true)!;
+    expect([holstered.aiming, holstered.recoil, holstered.zoom, holstered.shots]).toEqual([false, undefined, undefined, 3]); // prettier-ignore
+    expect(cameraPlayer({ id: 1, actor: entity.actor }, true)!.aiming).toBe(true); // no weapons: the sights as before
   });
 });

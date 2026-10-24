@@ -7,7 +7,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ENGINE_MOVES } from '../../engine/anim/moves-data';
+import { ADDED_MOVES, ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { dispatch, loadCommand, ROOT } from '../x';
 import { animSheet } from '../../engine/anim/sheet';
 import { createSkeleton } from '../../engine/anim/skeleton';
@@ -18,7 +18,7 @@ const commands = { sheet: () => loadCommand(ROOT, 'sheet') };
 describe('subjectIds', () => {
   it('names one state, every state a prefix starts, or all of them', () => {
     expect(subjectIds('move:slash')).toEqual(['move:slash']);
-    expect(subjectIds('move:')).toEqual(Object.keys(ENGINE_MOVES));
+    expect(subjectIds('move:')).toEqual([...Object.keys(ENGINE_MOVES), ...Object.keys(ADDED_MOVES)]);
     expect(subjectIds('humanoid').length).toBeGreaterThan(40);
     expect(subjectIds('move:slsh')).toEqual([]);
   });

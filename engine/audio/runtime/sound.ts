@@ -3,7 +3,8 @@
  * has a position, a lowpass for occlusion and a `PannerNode` (engine/audio/runtime/spatial.ts), into a mixer bus.
  * `createVoice` wires it and starts it; the runtime (engine/audio/runtime/audio.ts) hands out the `Sound` side.
  *
- * Invariants: a voice's gain is its `vol`, times `OCCLUSION.gain` while occluded; `stop` fades it to 0 over
+ * Invariants: a voice's gain is its `vol` (`volume` changes it), times the gain of the walls muffling it
+ * (engine/audio/runtime/spatial.ts `muffling`); `stop` fades it to 0 over
  * `STOP_FADE` seconds, then stops the source (once: stopping again does nothing); it reports `playing: false` from
  * then on. When the source ends, the voice disconnects every node it made and calls `onEnded`. Options are checked
  * before anything is made: a value out of range throws `AUDIO_BAD_OPTION`.
@@ -22,7 +23,7 @@
  */
 import { codeError, defineCodes } from '../../core/log';
 import type { AudioBus } from './mixer';
-import { OCCLUSION, PANNER, placePanner, type Vec3 } from './spatial';
+import { muffling, OCCLUSION, PANNER, placePanner, type Vec3 } from './spatial';
 
 /** The codes of a sound's options, with their fixes. */
 export const SOUND_CODES = defineCodes('audio', {
@@ -68,18 +69,21 @@ export interface Sound {
   readonly position: Vec3 | null;
   /** True until it ends or is stopped. */
   readonly playing: boolean;
-  /** Whether a wall stands between it and the listener. */
+  /** Whether a wall stands between it and the listener, and how many (up to `OCCLUSION.walls`). */
   readonly occluded: boolean;
+  readonly walls: number;
   /** Moves a placed sound. */
   move(position: Vec3): void;
   /** Fades it out over `fade` seconds (`STOP_FADE`) and stops it. */
   stop(fade?: number): void;
+  /** Sets its gain, 0 to 4, easing over `ease` seconds (`OCCLUSION.ease`): a bed's level, the wind's. */
+  volume(vol: number, ease?: number): void;
 }
 
 /** A sound as the runtime holds it: it can be occluded. */
 export interface RuntimeSound extends Sound {
-  /** Muffles it (`on`) or opens it, easing with `OCCLUSION.ease` or at once. */
-  occlude(on: boolean, ease: boolean): void;
+  /** Muffles it behind `walls` walls (0 opens it), easing with `OCCLUSION.ease` or at once. */
+  occlude(walls: number, ease: boolean): void;
 }
 
 /** Throws `AUDIO_BAD_OPTION` unless `value` is undefined or a number (whole when `whole`) in [min, max]. */
@@ -122,7 +126,7 @@ export interface VoiceSpec {
 /** Wires and starts one voice (see the file comment). */
 export function createVoice(c: BaseAudioContext, spec: VoiceSpec): RuntimeSound {
   const { id, bus, buffer, input, when, options } = spec;
-  const vol = options.vol ?? 1;
+  let vol = options.vol ?? 1;
   const loop = options.loop ?? false;
   const source = new AudioBufferSourceNode(c, { buffer, loop, playbackRate: options.pitch ?? 1 });
   const gain = new GainNode(c, { gain: vol });
@@ -141,6 +145,7 @@ export function createVoice(c: BaseAudioContext, spec: VoiceSpec): RuntimeSound 
     start: when,
     loop,
     occluded: false,
+    walls: 0,
     get playing() {
       return playing;
     },
@@ -163,17 +168,23 @@ export function createVoice(c: BaseAudioContext, spec: VoiceSpec): RuntimeSound 
       gain.gain.linearRampToValueAtTime(0, now + fade);
       source.stop(Math.max(now + fade, when));
     },
-    occlude(on, ease) {
+    occlude(walls, ease) {
       if (!filter || stopping) return;
-      (voice as { occluded: boolean }).occluded = on;
-      const [frequency, level] = on ? [OCCLUSION.cutoff, vol * OCCLUSION.gain] : [open, vol];
+      Object.assign(voice, { walls, occluded: walls > 0 });
+      const { cutoff, gain: through } = muffling(walls, open);
       if (!ease) {
-        filter.frequency.value = frequency;
-        gain.gain.value = level;
+        filter.frequency.value = cutoff;
+        gain.gain.value = vol * through;
         return;
       }
-      filter.frequency.setTargetAtTime(frequency, c.currentTime, OCCLUSION.ease);
-      gain.gain.setTargetAtTime(level, c.currentTime, OCCLUSION.ease);
+      filter.frequency.setTargetAtTime(cutoff, c.currentTime, OCCLUSION.ease);
+      gain.gain.setTargetAtTime(vol * through, c.currentTime, OCCLUSION.ease);
+    },
+    volume(to, ease = OCCLUSION.ease) {
+      checkRange('vol', to, 0, 4);
+      if (stopping) return;
+      vol = to;
+      gain.gain.setTargetAtTime(vol * muffling(voice.walls, open).gain, c.currentTime, Math.max(ease, 1e-3));
     },
   };
   source.addEventListener('ended', () => {

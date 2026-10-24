@@ -35,6 +35,7 @@ import { codeError, defineCodes } from '../core/log';
 import { drawMarks, marksOf, type Mark } from './idmarks';
 import { decodeIds, listDrawables, withIdScene, type IdPass, type IdTable } from './idpass';
 import { judgeLook, lookMetrics, type LookMetrics, type LookNote } from './lookMetrics';
+import type { GpuTiming } from './features';
 import { advanceFrame, type PipelineCounter } from './pipelines';
 import { thumbnail, type Thumbnail } from './thumbnail';
 import type { Warmup, WarmupView } from './warmup';
@@ -100,6 +101,8 @@ export interface ShotGfx {
   renderer: WebGPURenderer;
   warmup: Pick<Warmup, 'running' | 'run'>;
   pipelines: PipelineCounter;
+  /** The GPU timing, told that a shot's passes are not a frame's (engine/gfx/enhanced/timing.ts). */
+  timing?: Pick<GpuTiming, 'taint' | 'drain'>;
 }
 
 /** Bytes per row WebGPU copies for `width` pixels: aligned up to 256 (`copyTextureToBuffer`'s rule). */
@@ -236,6 +239,8 @@ export async function shot(gfx: ShotGfx, view: WarmupView, options: ShotOptions 
     }
   } finally {
     putBack();
+    gfx.timing?.taint(); // its passes: not a frame's GPU time, and read off so a run of shots never fills the pool
+    gfx.timing?.drain();
   }
   const { pixels, readback } = await readPixels(renderer, targets.colour, width, height);
   const result: ShotResult = { width, height, readback, built: 0, ms: 0 };

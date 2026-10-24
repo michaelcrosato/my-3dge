@@ -10,7 +10,8 @@
  * - `events`: the event types it answers (`effects.event('hit', { position })`): ask the entry, never the id;
  * - a `rate` per second for an emitter that keeps going (a brazier's fire, rain), with a `light` that flickers and
  *   pulses as shardfall's object lights do;
- * - camera `shake` (metres) and a floor `ring` (a shockwave decal) with each burst.
+ * - camera `shake` (metres) and a floor `ring` (a shockwave decal) with each burst;
+ * - `gpu`: its particles go to the GPU's ring (engine/gfx/enhanced/particles.ts) while `feature:gpuParticles` is on.
  * The engine's emitters are shardfall's 13 presets and the 2D engine's particle kinds and event effects
  * (engine/gfx/fx/presets.ts); a game adds its own with `defineEmitter` (`x new emitter`).
  *
@@ -144,6 +145,12 @@ export const EMITTER_FIELDS = {
     description: "The event types it bursts at (effects.event): 'hit', 'explosion'…",
   },
   shake: amount(0, 'm', 'Camera shake each burst adds (camera only).'),
+  gpu: {
+    type: 'boolean',
+    default: false,
+    description:
+      "Whether its particles go to the GPU's ring while feature:gpuParticles is on (WP 11.3): for decorative ones in their thousands, rain and dust; the CPU pool takes them otherwise.",
+  },
   ring: {
     type: 'object',
     default: defaultsOf(RING_FIELDS),

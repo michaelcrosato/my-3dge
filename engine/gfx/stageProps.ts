@@ -10,7 +10,9 @@
  * flames dance; each prop is drawn under its entity id, so its flames keep their own phase, and on or off as its
  * `propLight` says (a lamp its switch turned off: WP 13.16); `hide(test, key)` leaves out those on a storey the cut
  * takes off (engine/gfx/storeyCut.ts), lights and all, and says when its key changed. `lights()` lists this frame's
- * light spots in world space (the brazier's torch, the lamps that are on), for the light pool (WP 7.1).
+ * light spots in world space (the brazier's torch, the lamps that are on), for the light pool (WP 7.1). `carry(guns)`
+ * adds the guns in the actors' hands (engine/gfx/puppets/actors.ts `carried`, WP 13.20) to the draws after it, each as
+ * its weapon's prop where its grip stands, never hidden by the cut (its actor is not).
  *
  * The prop meshes are made when the first prop arrives, with a batch for every registered prop, and added to the
  * stage's scene then: a stage with no prop has none, and its scene graph is the one it had before props. `register`
@@ -31,6 +33,7 @@ import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { EntityData } from '../sim/state';
 import { createPropMeshes, type PropLight, type PropMeshes } from './props';
 import type { Warmup } from './warmup';
+import type { HeldGun } from './weapons';
 
 /** What `createStageProps` takes. */
 export interface StagePropsOptions {
@@ -72,6 +75,8 @@ export interface StageProps {
    * is out of date (the stage draws them again only then).
    */
   hide(test: ((x: number, y: number, z: number) => boolean) | null, key?: string): boolean;
+  /** From the next draw, draws `guns` too, by entity id (see the file comment); true when who carries one changed. */
+  carry(guns: ReadonlyMap<number, HeldGun>): boolean;
   /** The light spots of the last frame's props, in world space. */
   lights(): PropLight[];
   /** Registers the prop meshes with `warmup`, now or when they are made, and their presence in the shader key. */
@@ -99,6 +104,7 @@ export function createStageProps(options: StagePropsOptions): StageProps {
   let meshes: PropMeshes | null = null;
   let [time, step] = [0, 1 / 60];
   let hidden: ((x: number, y: number, z: number) => boolean) | null = null;
+  let guns: [number, HeldGun][] = [];
   /** What `hidden` hides, as its last `hide` named it. */
   let hiddenKey = '';
 
@@ -149,7 +155,15 @@ export function createStageProps(options: StagePropsOptions): StageProps {
         a.fromArray(before.q).slerp(b.fromArray(after.q), k);
         meshes.add(prop, { position: at, rotation: a, on }, id);
       }
+      for (const [id, gun] of guns) meshes.add(gun.kind.prop, { position: gun.position, rotation: gun.rotation }, id);
       meshes.end();
+    },
+    carry(next) {
+      const list = [...next].filter(([, gun]) => gun.kind.prop !== '');
+      const changed = list.map(([id]) => id).join() !== guns.map(([id]) => id).join();
+      guns = list;
+      if (guns.length > 0) made();
+      return changed;
     },
     hide(test, key = '') {
       const changed = key !== hiddenKey;
@@ -178,6 +192,7 @@ export function createStageProps(options: StagePropsOptions): StageProps {
       meshes = null;
       held.clear();
       ids.clear();
+      guns = [];
     },
   };
   return props;

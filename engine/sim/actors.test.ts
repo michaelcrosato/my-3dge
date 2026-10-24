@@ -11,7 +11,7 @@
  * crouch follow the recorded settings `input.sprint` (Apex's sticky sprint, or held) and `input.crouch` (held, or
  * toggled), and the AI keeps Apex's. `placeActor` with `crouch` puts one ducked under a low ceiling, kept down until it
  * walks out; a place with a ceiling over its feet lower than its hull, or a crouch for an actor on no movement model,
- * throws.
+ * throws. WP 13.22: it tells each move it enters once, as the event `move` (a crouch, standing up, a slide).
  */
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../app/headless';
@@ -249,6 +249,18 @@ describe('actors on the shooter model', () => {
     toggled.world.step({ ...east, b: ['crouch'], p: ['crouch'] }); // pressed again: up
     for (let i = 0; i < 30; i++) toggled.world.step(east);
     expect(toggled.player.motion.duck).toBe('standing');
+  });
+
+  it('tell the move they enter, once each: a crouch and standing up, a slide from a sprint', () => {
+    const east = { move: [1, 0], look: [Math.PI / 2, 0] } as const;
+    const told = ({ world, player }: ReturnType<typeof onTrack>) => world.events.trace().filter((r) => r.type === 'move' && (r.payload as { id: number }).id === player.id).map((r) => (r.payload as { what: string }).what); // prettier-ignore
+    const crouched = onTrack({ ...east, b: ['crouch'] }, 60);
+    for (let i = 0; i < 30; i++) crouched.world.step(east); // let go: up
+    expect(told(crouched)).toEqual(['crouch', 'stand']);
+    const sprint = onTrack({ ...east, b: ['sprint'] }, 120);
+    for (let i = 0; i < 90; i++) sprint.world.step({ ...east, b: ['crouch'], p: i === 0 ? ['crouch'] : [] });
+    for (let i = 0; i < 30; i++) sprint.world.step(east);
+    expect(told(sprint)).toEqual(['slide', 'stand']); // it slid into a crouch, then stood
   });
 
   it('are placed ducked with crouch where only that hull fits, and stand once out; else a low ceiling throws', () => {

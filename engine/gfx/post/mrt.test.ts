@@ -2,9 +2,10 @@
  * @file Unit tests for the fixed MRT's flags (engine/gfx/post/mrt.ts): packing round-trips for every part, group and
  * pixel-art flag within a half float's exact integers, the parts objects are drawn as, tagged or not (the engine's
  * prop meshes and crowds among them), and the flag table: a slot per drawable object for life, its flags as they are
- * at each write.
+ * at each write; and the scene pass's targets, the extra ones only when asked for (WP 11.5), metalness and roughness at
+ * 8 bits.
  */
-import { Group, Line, Mesh, Object3D, Scene, type Vector4 } from 'three/webgpu';
+import { Group, HalfFloatType, Line, Mesh, Object3D, PerspectiveCamera, Scene, UnsignedByteType, type Vector4 } from 'three/webgpu'; // prettier-ignore
 import { describe, expect, it } from 'vitest';
 import type { InstancedBatch } from '../instancing';
 import { createMaterialLibrary } from '../materials/library';
@@ -13,7 +14,17 @@ import { BLOB_BODY } from '../puppets/bodies/blob';
 import '../puppets/bodies/humanoid';
 import { compileBody } from '../puppets/compile';
 import { createCrowd } from '../puppets/crowd';
-import { createFlagTable, flagsOf, foldGroup, GROUPS, packFlags, PARTS, setPart, unpackFlags } from './mrt';
+import {
+  createFlagTable,
+  createScenePass,
+  flagsOf,
+  foldGroup,
+  GROUPS,
+  packFlags,
+  PARTS,
+  setPart,
+  unpackFlags,
+} from './mrt';
 
 describe('packFlags and unpackFlags', () => {
   it('round-trip every part, group and pixel-art flag, within ±2,047', () => {
@@ -122,5 +133,21 @@ describe('the flag table', () => {
     expect(table.slotOf(hero)).toBe(slots[0]);
     expect(at(table, slots[0])).toBe(packFlags('character', hero.id, true));
     expect(at(table, slots[1])).toBe(packFlags('environment', 12, false));
+  });
+});
+
+describe('createScenePass', () => {
+  it('makes colour and normals with flags, and the extra targets only when asked: metalness and roughness at 8 bits', () => {
+    const names = (extra = {}) => {
+      const scenePass = createScenePass(new Scene(), new PerspectiveCamera(), extra);
+      return scenePass.renderTarget.textures.map((texture) => [texture.name, texture.type]);
+    };
+    expect(names().map(([name]) => name)).toEqual(['output', 'normal']);
+    expect(names({ metalrough: true, velocity: true })).toEqual([
+      ['output', HalfFloatType],
+      ['normal', HalfFloatType],
+      ['metalrough', UnsignedByteType],
+      ['velocity', HalfFloatType],
+    ]);
   });
 });

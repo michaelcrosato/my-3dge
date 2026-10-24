@@ -12,6 +12,8 @@
  *   contact, and `pop`, the farthest a point jumps in one step against its neighbours (the anim QA's rules); `handGap`,
  *   the closest either hand comes to `point`; `handContact`, the farthest a hand held on its contact (a lip, a rung, a
  *   hold, a cable, the floor) is from it (WP 13.11), past any bound (the largest number) for a span that `holds` and never held one;
+ *   `muzzle`, the farthest the gun hand's barrel line points from the aim while the sights are fully up (rad, WP 13.20),
+ *   past any bound for a span that never aims;
  * - a camera's (engine/dev/feel/camera.ts), the code in `camera`: `cameraJump`, the most one frame moves it beyond the
  *   player's own move, and `cameraTurn`, the most it turns (rad); `cameraInside`, the frames it stands inside the
  *   level; `cameraLost`, the frames the player (in first person, its arms) is out of its view; `cameraClip`, the frames
@@ -55,7 +57,7 @@ import type { InputEntry } from '../../sim/replay';
 export const MOVE_METRICS = ['speed', 'topSpeed', 'speedGain', 'velocityChange', 'apex', 'top', 'height', 'heightAt', 'distance', 'time', 'duration', 'topRise', 'topFall', 'standHeight', 'grounded', 'rideSpeed', 'rideGain', 'catches'] as const; // prettier-ignore
 
 /** The metrics of the player's animation, posed as the page poses it. */
-export const ANIM_METRICS = ['footSlide', 'pop', 'handGap', 'handContact'] as const;
+export const ANIM_METRICS = ['footSlide', 'pop', 'handGap', 'handContact', 'muzzle'] as const;
 
 /** The metrics of a camera following the player. */
 export const CAMERA_METRICS = ['cameraJump', 'cameraTurn', 'cameraInside', 'cameraLost', 'cameraClip'] as const;

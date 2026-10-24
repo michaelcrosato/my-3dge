@@ -3,13 +3,18 @@
  * spots (the hall's 30 torches, engine/world/level); every lit shader would pay for each light in the scene, and
  * adding or removing one rebuilds every lit pipeline (r182's lights node keys shaders on the light list). So the pool
  * makes `size` point lights once (8 to 16; 12 by default), never adds or removes one, and on each frame's `update`
- * gives them to the light sources that matter most near the focus: the shaders never rebuild as the focus moves.
+ * gives them to the light sources that matter most near the focus: the shaders never rebuild as the focus moves. On a
+ * renderer with tiled lighting (`feature:tiledLighting`, engine/gfx/enhanced/lighting.ts) it may hold up to 64
+ * (`tiled`), since a lit shader then pays for the lights of its screen tile alone.
  *
  * Choosing: a source's rank is its distance from the focus divided by its kind's `priority` (a light of priority 2
  * counts as if it were half as far), ties going to the earlier source; the `size` best take the slots in rank order,
  * so the first slots, which cast shadows within the budget (engine/gfx/shadows.ts), hold the most important lights.
  * Lights near the cut-off fade out over the last `FADE` of the rank (the rank of the first source left out), so a
  * source handed from one frame's choice to the next never pops. A slot with no source shines with intensity 0.
+ *
+ * Lamps (WP 13.23): `update` also ranks the frame's lamps, the props' lights that are on (engine/gfx/props.ts), each
+ * with its own colour, intensity and reach; one standing on a level's spot of its kind is that spot's, lit once.
  *
  * Light kinds (registry kind `light`): what a level's light-spot tag means, as three.js's `PointLight` parameters
  * (`color`, `intensity` in candela, `distance`, `decay`) plus the pool's `priority` and how much it `flicker`s; the
@@ -45,7 +50,7 @@ import { configurePointCaster, MAX_SHADOW_CASTERS } from './shadows';
 export const LIGHTS_CODES = defineCodes('gfx', {
   GFX_BAD_LIGHT_POOL: {
     template: 'a light pool of {size} lights: it holds {min} to {max}',
-    fix: 'give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)',
+    fix: 'give createLightPool a whole size from 8 to 16 (12 by default), or to 64 with tiled: true on a renderer with tiled lighting (feature:tiledLighting, WP 11.5)',
   },
 });
 
@@ -97,9 +102,21 @@ export interface LightSource {
   readonly position: readonly [number, number, number];
 }
 
+/** A lamp the pool may light this frame: a prop's light spot in the world (engine/gfx/props.ts `PropLight`). */
+export interface PoolLamp {
+  /** Its kind's tag: a `light:<tag>` declared gives its priority. */
+  readonly tag: string;
+  readonly position: readonly [number, number, number];
+  readonly color: string;
+  /** Its intensity this frame (cd), its own flicker included. */
+  readonly intensity: number;
+  readonly distance: number;
+  readonly decay: number;
+}
+
 /** One slot of the pool, as the last `update` left it. */
 export interface PoolSlot {
-  /** The source it lights (an index into the pool's sources), or -1. */
+  /** The source it lights (an index into the pool's sources, then into the frame's lamps after them), or -1. */
   source: number;
   /** The source's light kind, or `''`. */
   light: string;
@@ -108,8 +125,8 @@ export interface PoolSlot {
   intensity: number;
 }
 
-/** The pool's sizes: the fewest and most lights, and the default. */
-export const POOL_SIZES = { min: 8, max: 16, default: 12 } as const;
+/** The pool's sizes: the fewest and most lights, the default, and the most with tiled lighting (WP 11.5). */
+export const POOL_SIZES = { min: 8, max: 16, default: 12, tiled: 64 } as const;
 
 /** Phases (s) without a stream: the golden angle's step, so neighbouring sources never flicker in step. */
 const GOLDEN = 2.399963229728653;
@@ -197,6 +214,15 @@ export function fadeOf(rank: number, cutoff: number): number {
   return span > 0 ? Math.min(1, Math.max(0, (cutoff - rank) / span)) : 0;
 }
 
+/** How near (m) a lamp stands to a level's spot of its kind to be that spot's light. */
+const ON_SPOT = 0.05;
+
+/** Whether `lamp` stands on one of `sources` of its kind (see the file comment). */
+function onSpot(sources: readonly LightSource[], lamp: PoolLamp): boolean {
+  const kind = `light:${lamp.tag}`;
+  return sources.some(({ light, position: [x, y, z] }) => light === kind && Math.hypot(x - lamp.position[0], y - lamp.position[1], z - lamp.position[2]) < ON_SPOT); // prettier-ignore
+}
+
 /** A fixed pool of point lights; see the file comment. */
 export interface LightPool {
   /** Its lights, under one group: add it to the scene once. */
@@ -211,19 +237,28 @@ export interface LightPool {
   /** The sources it chooses from, each given a flicker phase from `rng` (a visual stream, `world.fxRng`), else spread. */
   setSources(sources: readonly LightSource[], rng?: Rng): void;
   readonly sources: readonly LightSource[];
-  /** Gives the slots to the sources that matter most at `focus` (m), flickering at `time` (s); returns the slots. */
-  update(focus: readonly number[], time: number): PoolSlot[];
+  /**
+   * Gives the slots to the sources and the frame's `lamps` that matter most at `focus` (m), flickering at `time` (s);
+   * returns the slots. A lamp is a prop's light spot that is on (a room's lamp its switch turned on, a street lamp
+   * lit at dusk), its flicker in its intensity, a declared `light:<tag>` giving its priority; one standing on one of
+   * the level's spots of its kind (a brazier on its torch spot, where the level places it) is that spot's light.
+   */
+  update(focus: readonly number[], time: number, lamps?: readonly PoolLamp[]): PoolSlot[];
   /** The slots as the last `update` left them. */
   slots(): PoolSlot[];
   /** Takes the group out of its parent; the lights hold no GPU memory of their own. */
   dispose(): void;
 }
 
-/** Makes a light pool of `size` lights (8 to 16; 12 by default). Throws `GFX_BAD_LIGHT_POOL`. */
-export function createLightPool(options: { size?: number; registry?: Registry } = {}): LightPool {
+/**
+ * Makes a light pool of `size` lights (8 to 16, or to 64 on a renderer with tiled lighting, `tiled`; 12 by default).
+ * Throws `GFX_BAD_LIGHT_POOL`.
+ */
+export function createLightPool(options: { size?: number; tiled?: boolean; registry?: Registry } = {}): LightPool {
   const { size = POOL_SIZES.default, registry = sharedRegistry } = options;
-  if (!Number.isInteger(size) || size < POOL_SIZES.min || size > POOL_SIZES.max) {
-    throw codeError('GFX_BAD_LIGHT_POOL', { size: String(size), min: POOL_SIZES.min, max: POOL_SIZES.max });
+  const max = options.tiled ? POOL_SIZES.tiled : POOL_SIZES.max;
+  if (!Number.isInteger(size) || size < POOL_SIZES.min || size > max) {
+    throw codeError('GFX_BAD_LIGHT_POOL', { size: String(size), min: POOL_SIZES.min, max });
   }
   const group = new Group();
   group.name = 'lights:pool';
@@ -260,12 +295,15 @@ export function createLightPool(options: { size?: number; registry?: Registry } 
     get sources() {
       return sources;
     },
-    update(focus, time) {
+    update(focus, time, given = []) {
+      const lamps = given.filter((lamp) => !onSpot(sources, lamp));
+      const kinds = lamps.map((lamp) => `light:${lamp.tag}`);
+      const priority = (kind: string) => (registry.has('light', kind) ? (registry.get('light', kind) as LightEntry).priority : 1); // prettier-ignore
       const ranking = rankSources(
-        sources,
+        [...sources, ...lamps.map((lamp, i) => ({ light: kinds[i], position: lamp.position }))],
         focus,
         size,
-        entries.map((entry) => entry.priority),
+        [...entries.map((entry) => entry.priority), ...kinds.map(priority)],
       );
       slots = lights.map((light, i) => {
         const source = ranking.order[i] ?? -1;
@@ -273,8 +311,17 @@ export function createLightPool(options: { size?: number; registry?: Registry } 
           light.intensity = 0;
           return { source, light: '', castShadow: light.castShadow, intensity: 0 };
         }
-        const entry = entries[source];
         const fade = fadeOf(ranking.ranks[i], ranking.cutoff);
+        if (source >= sources.length) {
+          const lamp = lamps[source - sources.length];
+          light.position.fromArray(lamp.position);
+          light.color.set(lamp.color);
+          light.distance = lamp.distance;
+          light.decay = lamp.decay;
+          light.intensity = lamp.intensity * pool.scale * fade;
+          return { source, light: kinds[source - sources.length], castShadow: light.castShadow, intensity: light.intensity }; // prettier-ignore
+        }
+        const entry = entries[source];
         light.position.fromArray(sources[source].position);
         light.color.set(entry.color);
         light.distance = entry.distance;

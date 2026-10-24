@@ -3,8 +3,8 @@
  * means cover the last 60 steps or frames, readings in coarse steps included; the probe adds each `physics` and
  * `anim` system's time to its phase for the step under way and passes the other phases through, each system run once;
  * phases timed outside a step are not counted; the renderer's counts are read live, and are null headless with
- * `renderMs`; `reset` forgets the samples; the `stats` member reads its host's meter, or throws `DEV_NO_METER` naming
- * the fix; and in an engine
+ * `renderMs`; its GPU time is passed through where it measures one, absent where it cannot; `reset` forgets the
+ * samples; the `stats` member reads its host's meter, or throws `DEV_NO_METER` naming the fix; and in an engine
  * (`createHeadless`), the world's probe runs each system once in order, every step is timed with its physics phase,
  * nothing is counted headless, and the hash is the same as a run without the meter.
  * @see engine/dev/stats.ts
@@ -97,6 +97,16 @@ describe('the meter', () => {
     expect(meter.read()).toMatchObject({ ...COUNTS, renderMs: 2, frames: 1 });
     meter.reset();
     expect(meter.read()).toMatchObject({ ...COUNTS, renderMs: null, simMs: null, frames: 0, steps: 0 });
+  });
+
+  it('passes the GPU’s time through where the renderer measures it, and leaves it out where it cannot', () => {
+    let counts: RenderCounts = COUNTS;
+    const { meter } = clocked(() => counts);
+    expect('gpuMs' in meter.read()).toBe(false); // no timestamp queries: absent, not null
+    counts = { ...COUNTS, gpuMs: null };
+    expect(meter.read()).toMatchObject({ gpuMs: null }); // measuring, no read back yet
+    counts = { ...COUNTS, gpuMs: 0.84 };
+    expect(meter.read()).toMatchObject({ gpuMs: 0.84 });
   });
 });
 

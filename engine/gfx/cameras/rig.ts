@@ -10,8 +10,9 @@
  * Its options come from the view settings `cam.*` (`CAMERA_SETTINGS`, `rigOptions`): the player's field of view
  * (Apex's horizontal degrees at 4:3, the lens first person and the shooter take), the blend's time, the effects on or
  * off, and whole-number zooms for the classic views. `step(player)` after a sim step hands the effects the player's
- * state; `update(input, dt)` steps the cameras by a rendered frame and returns the pose to draw; `blend()` says how
- * far into a blend the frame is and what the blend moved on its own, which the camera metrics allow it.
+ * state; `update(input, dt)` steps the cameras by a rendered frame and returns the pose to draw, and `aimPose()` the
+ * same pose without the burst's climb (the effects' `recoil`, WP 13.20), which the aim's ray leaves along; `blend()`
+ * says how far into a blend the frame is and what the blend moved on its own, which the camera metrics allow it.
  *
  * Invariants: view only (cameras never reach the sim or the hash); a switch without a blend, or any switch before the
  * first frame, cuts; a blend's first frame is the old camera's and its last the new one's; with the effects off the
@@ -115,11 +116,13 @@ export interface CameraRig {
   readonly camera: AnyCamera;
   /** The pose the last update drew. */
   pose(): CameraPose;
+  /** The pose the last update drew without the burst's climb: what the aim's ray leaves along (see the file comment). */
+  aimPose(): CameraPose;
   /** The effects' last frame (the bob for the weapon), or null with the effects off. */
   effects(): EffectsFrame | null;
   /** The screen shake this frame's camera takes, m: the effects' landing shake by its share of the punch (views none). */
   shake(): number;
-  /** A weapon's recoil, rad (+ up, + left): kicks the view on the punch's spring (WP 13.20's firearms fire it). */
+  /** A kick of the view, rad (+ up, + left), on the punch's spring: a game's own (the firearms' climb is `recoil`). */
   kick(pitch: number, yaw?: number): void;
   /** This frame's blend. */
   blend(): RigBlend;
@@ -157,6 +160,7 @@ export function createCameraRig(
   let blending: { from: AnyCamera | null; frozen: CameraPose; t: number } | null = null;
   let base = camera.pose();
   let drawn = base;
+  let aimed = base;
   let frame: EffectsFrame | null = null;
   let shaken = 0;
   let last: RigBlend = { weight: 1, move: 0, turn: 0 };
@@ -167,6 +171,7 @@ export function createCameraRig(
       return camera;
     },
     pose: () => drawn,
+    aimPose: () => aimed,
     effects: () => frame,
     shake: () => shaken,
     kick: (pitch, yaw) => effects.kick(pitch, yaw),
@@ -177,7 +182,7 @@ export function createCameraRig(
       camera = createCamera(next, { ...create, from: base });
       const time = settings.blend ?? BLEND_TIME;
       blending = blend && updated && time > 0 ? { from: blending ? null : from, frozen: base, t: 0 } : null;
-      if (!blending) [base, drawn, first] = [camera.pose(), camera.pose(), firstOf(camera)];
+      if (!blending) [base, drawn, aimed, first] = [camera.pose(), camera.pose(), camera.pose(), firstOf(camera)];
       return camera;
     },
     configure(next) {
@@ -221,6 +226,7 @@ export function createCameraRig(
       base = pose;
       shaken = frame ? frame.shake * weights.punch : 0;
       drawn = frame ? applyEffects(pose, frame, weights) : pose;
+      aimed = frame && frame.recoil.some((r) => r !== 0) ? applyEffects(pose, { ...frame, recoil: [0, 0] }, weights) : drawn; // prettier-ignore
       return drawn;
     },
   };

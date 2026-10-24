@@ -1,0 +1,28 @@
+{
+  "format": "my3dge-replay/1",
+  "description": "Ragdolls (WP 10.2) in the box: the hero walks south-east to the third partner, turns south and attacks: it falls from his blow before its own (at 2.5 s, which adds its push as it lies), between the first two partners' falls, and gets up the way it lies.",
+  "engine": "0.0.0",
+  "three": "0.182.0",
+  "rapier": "simd-compat 0.21.0",
+  "scene": "box:ragdoll",
+  "settings": {},
+  "seed": 1,
+  "hz": 60,
+  "steps": 300,
+  "inputs": [
+    [0, { "move": [0.67, 0.74] }],
+    [50, { "move": [0, 1] }],
+    [58, { "move": null }],
+    [66, { "p": ["attack"] }]
+  ],
+  "hashes": {
+    "linux-x64": {
+      "0": "76942c2f27535b64",
+      "60": "d0b9dd0d9edb543b",
+      "120": "8eeb5ecdd1c195d2",
+      "180": "5f3dbcac1b70d899",
+      "240": "9ca558234f83a9e6",
+      "300": "bf7a2b0025e7155e"
+    }
+  }
+}

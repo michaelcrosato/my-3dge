@@ -403,6 +403,9 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Clip sets in the registry (WP 8.9)**: the kind clipset, one entry per set of readable clips, which a page or tool registers from data/anim/sets/ (defineClipSet), and the clip layer of an entity kept as plain data, loaded from it at every use (ClipLayerPool), as an actor's component clips holds it.
 `defineClipSet`, `clipSetFromFiles`, `getClipSet`, `clipSetId`, `clipSetIds`, `defineSetBuild`, `CLIPSET_FIELDS`, `CLIPS_FIELDS`, `emptyClipState`, `ClipLayerPool`; types `ClipSetEntry`, `ClipsData`.
 
+**The quadruped rig (WP 13.21)**: a dog on the planted gait for a crowd body (the rig `quadruped`), its state plain data, its pose the joints its body is drawn on, and its rig contract for the anim QA.
+`Quadruped`, `QUADRUPED`, `QUADRUPED_LEGS`, `QUADRUPED_RIG`; types `QuadrupedOptions`, `QuadrupedInput`, `QuadrupedState`, `QuadrupedPose`, `QuadrupedBone`.
+
 **Physics (WP 3.1)**: Rapier behind plain terms. A scene with `physics: true` has a physics world: bodies by id, raycasts, shape casts, overlaps and ground probes, collision groups by name, a level's bodies; presentation reads it through the read-only QueryView.
 `physicsOf`, `COLLISION_GROUPS`, `PHYSICS_SETTINGS`, `addLevelBodies`, `queryViewOf`; types `Physics`, `BodySpec`, `ColliderSpec`, `BodyState`, `BodyChange`, `BodyType`, `Shape`, `Vec3Like`, `QuatLike`, `Hit`, `Ground`, `QueryOptions`, `RayOptions`, `ShapeCastOptions`, `OverlapOptions`, `ProbeOptions`, `GroupName`, `QueryView`.
 
@@ -439,6 +442,21 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Combat helpers (WP 6.3)**: hit queries against hurt capsules found through a spatial hash (cones with height windows, weapon sweeps), damage on health and crowd bodies (knockback as momentum, launches, death into the corpse group, the event damage), hit-stop handed to the frame clock's budget, and projectiles with swept tests.
 `PROJECTILE_FIELDS`, `PROJECTILE`, `stepProjectiles`, `capsuleCast`, `inCone`, `coneHits`, `sweepTouches`, `sweepHits`, `physicsWalls`, `HEALTH_FIELDS`, `HEALTH`, `damage`, `requestHitStop`; types `Projectile`, `ProjectileState`, `ProjectileStep`, `ProjectileHit`, `HurtCapsule`, `HurtSet`, `WallTest`, `WallContact`, `Health`, `DamageTarget`, `HitSpec`, `DamageEvent`, `DamageEvents`.
 
+**Melee (WP 13.19)**: Apex's punch, kicks and the door kick, a lunge to the target in reach, one hit a swing landing at its moment with its damage and hit-stop; the fan of rays that finds what a strike reaches.
+`MELEE`, `MELEE_MOVES`, `MELEE_FIELDS`, `addMelee`, `meleeTargets`, `fanHits`; types `MeleeState`, `MeleeReach`, `Fan`, `FanHit`.
+
+**Firearms (WP 13.20)**: the kind `weapon`, a player's weapons drawn and holstered, hip fire and the sights, hitscan shots with spread and a climbing recoil, reloads.
+`WEAPON_FIELDS`, `defineWeapon`, `getWeapon`, `recoilStep`, `spreadOf`, `WEAPONS_FIELDS`, `weaponsFor`, `addWeapons`; types `WeaponKind`, `WeaponSpec`, `WeaponsState`.
+
+**Ragdolls (WP 10.2)**: joints as data, a humanoid's body handed off to physics on a hard hit or a death, lying still and getting up the way it lies.
+`addJoint`, `removeJoint`, `hasJoint`, `jointBodies`, `RAGDOLL_SIM`, `RAGDOLL_FIELDS`, `addRagdolls`, `handOff`, `removeRagdollOf`, `standUp`; types `JointKind`, `JointSpec`, `RagdollState`, `RagdollHit`.
+
+**A town's daily round (WP 13.21)**: routes walked on a schedule, and stepping aside for someone in the way.
+`ROUTE_FIELDS`, `followRoute`, `ASIDE`, `stepAside`; types `RouteStop`, `RouteState`, `RouteLeg`.
+
+**A crowd body's ground (WP 13.21)**: the physics world's, for a gait's feet (a quadruped's).
+`crowdGround`.
+
 **Clips on actors (WP 8.9)**: the clip layer in an actor's animator as sim data, the component clips, stepped at the actor's ground speed and drawn over its body by the view; its events come as `clip`. spawnActor's `body` names the body it is drawn as (body:mannequin).
 `addClips`, `playClip`, `stopClip`, `seekClip`, `locomoteClips`, `clipLayerOf`; types `ClipsSpec`, `PuppetComponent`.
 
@@ -460,7 +478,10 @@ types `EventMap`, `Listener`, `TraceRecord`.
 **Sites (WP 13.15)**: levels standing on a terrain, each placed and turned in quarter turns, the terrain cut under them; the queries over all of it, the bodies, the ladders and the navigation over every storey and the terrain.
 `defineSite`, `getSite`, `makeSite`, `SITE_FIELDS`, `toWorld`, `toLocal`, `siteFloorBelow`, `siteSurfaceBelow`, `siteStructureAt`, `siteSolidAt`, `siteClearSight`, `siteRescueGrid`, `createSiteNav`, `addSiteBodies`, `addSiteLadders`; types `Site`, `SiteSpec`, `SiteStructure`, `StructureSpec`, `SiteRescueGrid`, `SiteNav`, `SiteNavOptions`.
 
-**Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop; a melee strike), the kinds `usable` and `strikable`, and the body-to-entity lookup.
+**The scene's props as navigation blocks (WP 13.21)**: what a site's walkers go round.
+`propObstacles`; types `NavBlock`.
+
+**Use (WP 13.16)**: the system `interact` (a player's use of the thing in reach and in view, with its prompt; carrying and throwing a light prop), the kinds `usable` and `strikable`, and the body-to-entity lookup.
 `addInteraction`, `defineUsable`, `defineStrikable`, `strikeEntity`, `USE_REACH`, `CARRY_MASS`, `THROW_SPEED`, `propOfBody`; types `UsableSpec`, `InteractorComponent`, `StrikeForce`, `SpawnPropOptions`, `PropHealthComponent`, `PropLightComponent`.
 
 **Doors (WP 13.16)**: hung on a hinge or sliding, opened away from the user, locked, blocked, burst open and broken.
@@ -471,6 +492,36 @@ types `EventMap`, `Listener`, `TraceRecord`.
 
 **Switches (WP 13.16)**: a room's lights and the garage door, as sim state the view reads.
 `addSwitch`, `switchGroup`, `flipSwitch`; types `SwitchSpec`, `SwitchComponent`.
+
+**Strikes (WP 13.19)**: a strikable entry by entity (the move a melee plays on it: a door's kick), what takes one, and whose a body is (a prop's or an actor's, WP 13.20).
+`strikeEntry`, `takesStrike`, `entityOfBody`; types `StrikeEntry`.
+
+**Light and time (WP 13.23)**: the world's clock, and the light groups it switches at dusk and dawn.
+`setDaytime`, `daytimeOf`, `lightsAtDusk`, `litAt`, `DUSK`, `DAWN`; types `DaytimeComponent`, `DuskComponent`.
+
+**Things (WP 10.4)**: what can be hit, as a range's targets and a ring's dummies: the kind `thing` (its prop, hit points, rise, track and hooks), a thing's state (hits, down and up, its place on its track), and things in a scene (spawned as their prop, struck as hits, stood back up and driven along their tracks by the system `things`).
+`defineThing`, `getThing`, `thingState`, `hitThing`, `stepThing`, `thingAt`, `THING_FIELDS`, `THING_KIND_FIELDS`, `spawnThing`, `strikeThing`; types `Thing`, `ThingKind`, `ThingSpec`, `ThingTouch`, `ThingHit`, `ThingOutcome`, `ThingStanding`.
+
+**Projectile patterns (WP 10.4)**: a shot emitter's volleys (aimed, forward, ring, spiral, random) and timing (delay, interval, bursts and their pause, range), and the shots it looses over WP 6.3's projectiles.
+`SHOT_EMITTER`, `SHOT_EMITTER_FIELDS`, `PATTERNS`, `MOST_VOLLEYS`, `volley`, `stepVolleys`, `loose`, `direction`, `headingTo`; types `ShotEmitter`, `Pattern`, `VolleyAim`, `LooseOptions`.
+
+**Awareness (WP 10.4)**: beyond WP 5.2's sight, the noises an agent hears and its memory of where it last saw or heard.
+`AWARENESS`, `AWARENESS_FIELDS`, `AWARENESS_STATES`, `sense`, `hears`, `earshot`; types `Awareness`, `AwarenessState`, `Noise`, `SenseInput`, `Sensed`.
+
+**Springs and blends (WP 10.1)**: numbers, vectors and turns on exact damped springs with kicks; named weights eased up and down; the pose stack, angles averaged round the circle, a pitch and a yaw as a direction.
+`Spring1`, `Spring3`, `SpringQuat`, `StateWeights`, `layerPose`, `blendAngles`, `aimDirection`; types `SpringOptions`, `BlendRates`, `PoseLayer`.
+
+**Legs and bodies (WP 10.1)**: the digitigrade leg's reverse knee; sway chains and lagging parts; the planted gait for N legs in groups, its feet on raycast ground or gripping walls; path chains following their head.
+`digitigrade`, `SwayChain`, `LagPart`, `LegGait`, `PathChain`; types `DigitigradeLeg`, `DigitigradeFrame`, `DigitigradeSolve`, `SwayOptions`, `LagOptions`, `GaitLeg`, `GaitOptions`, `GaitFoot`, `GaitProbe`, `GaitBody`, `PathOptions`.
+
+**Faces and floating parts (WP 10.1)**: looking within bounds and blinking from a named stream; hovering, banking, leaning and folding; orbiters and detached parts; pose history played back late; extras on sockets; tip trails.
+`LookAt`, `Blink`, `Hover`, `Orbiters`, `DetachedPart`, `PoseHistory`, `socketMatrix`, `placeExtras`, `along`, `alongDirection`, `TipTrail`; types `LookAtOptions`, `BlinkOptions`, `HoveringOptions`, `OrbitOptions`, `DetachedOptions`, `HistoryOptions`, `Socket`, `SocketJoints`, `TrailOptions`, `TipSample`.
+
+**Reach and the rig contract (WP 10.1)**: an attack's reach measured off its animation; what a procedural rig names (its points, bones, feet and states) and the check it passes, as anim.check holds the humanoid.
+`measureReach`, `driveRig`, `rigCheck`, `rigClosed`; types `ReachPose`, `ReachOptions`, `Reach`, `ProcRig`, `ProcRigBody`, `RigRun`.
+
+**Footsteps (WP 13.22)**: which step a surface tag plays at a gait, sound data a scene's sound map reads sim-side.
+`footstepSound`, `stepGait`, `SURFACE_STEPS`, `STEP_GAITS`; types `StepGait`.
 
 For the page (the browser side), not for code that runs in the sim:
 
@@ -486,6 +537,9 @@ For the page (the browser side), not for code that runs in the sim:
 **Aiming and look (WP 13.9)**: the point the intents' aim carries by a map's rule, and the look settings input.*.
 `aimPoint`, `screenRay`, `onFloor`, `AIM_RULES`, `AIM_RANGE`, `STICK_REACH`, `lookOptions`, `scaleLook`, `LOOK_SETTING_FIELDS`, `LOOK_SETTINGS`, `DEGREES_PER_COUNT`; types `AimRule`, `AimPose`, `AimView`, `AimDevices`, `AimRay`, `LookOptions`, `RawLook`, `ScaledLook`.
 
+**Held bindings (WP 13.20)**: a key or a button kept down for an action of its own (Apex's pad reload on X held), and the device a code is of.
+`holdCode`, `heldBase`, `HOLD_PREFIX`, `HOLD_TIME`, `deviceOf`.
+
 **Geometry kit and level meshes (WP 2.4)**: shapes standing on the ground with UVs in metres, the geometry registry (props and levels name geometry by id), their QA measures, and a compiled level drawn as meshes.
 `boxGeometry`, `roundedBoxGeometry`, `limbGeometry`, `rampGeometry`, `frustumGeometry`, `pillarGeometry`, `pillarParts`, `ringGeometry`, `sidesThenTops`, `mergeGeometries`, `defineGeometry`, `getGeometry`, `buildGeometry`, `inspectGeometry`, `createLevelMeshes`, `LEVEL_RECIPES`, `createTerrainMeshes`; types `BoxOptions`, `RoundedBoxOptions`, `LimbOptions`, `RampOptions`, `FrustumOptions`, `PillarOptions`, `PillarPart`, `RingOptions`, `GeometryEntry`, `GeometrySpec`, `GeometryRef`, `GeometryReport`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `LevelCell`, `LevelRecipe`, `LevelShape`, `TerrainMeshes`, `TerrainMeshesOptions`.
 
@@ -494,6 +548,9 @@ For the page (the browser side), not for code that runs in the sim:
 
 **The audio runtime (WP 9.3)**: a page's sound through Web Audio, started by the first gesture: buses with ducking and voice limits, sounds placed in 3D and occluded through the QueryView, room reverb, and music in intensity layers that change on the beat and the bar line.
 `createAudio`, `BUS_VOLUMES`, `ROOMS`, `roomReverb`, `VOICE_LIMITS`; types `Audio`, `AudioOptions`, `AudioState`, `AudioInfo`, `PlayOptions`, `Sound`, `ListenerPose`, `GestureTarget`, `AudioBus`, `MixerInfo`, `MusicChange`, `MusicPosition`, `Quantize`, `RoomName`, `RoomSpec`, `VoiceLimits`.
+
+**Sound for places (WP 13.22)**: a room's reverb out of its size and what it is made of (Sabine's RT60), the walls between a sound and the listener counted, each muffling it more.
+`roomAcoustics`, `ABSORPTION`, `CONTENTS`, `wallsBetween`, `muffling`, `OCCLUSION`; types `RoomMake`.
 
 **The engine in a page (WP 2.7)**: createEngine reads the routes, starts the scene with its view, publishes window.__engine, warms up and runs the frame loop; createHeadless({ view: true }) builds the same view in Node.
 `createEngine`, `parseRoutes`, `routeQuery`; types `Engine`, `EngineOptions`, `Routes`, `CameraInfo`, `PlayResult`, `PlayIntoOptions`, `ViewChange`.
@@ -532,7 +589,7 @@ types `EngineFrame`, `FrameWorld`, `CameraPose`.
 `createPropMeshes`, `FLICKER`, `buildPropPart`, `partMatrix`; types `PropMeshes`, `PropMeshesOptions`, `PropMeshPose`, `PropLight`.
 
 **Crowd rendering and pose LOD (WP 5.4)**: thousands of humanoids, blobs and floaters in a few dozen draw calls over the instancing service, each body seen through bands of detail by its distance (the animator's pose level, capes), culled by the view; the blob and floater bodies as data.
-`createCrowd`, `createCrowdLod`, `CROWD_LOD`, `BLOB_BODY`, `blobBody`, `FLOATER_BODY`; types `Crowd`, `CrowdDraw`, `CrowdRigDraw`, `CrowdStats`, `RigBody`, `RigPart`, `RigJoints`, `RigShape`, `CrowdLod`, `CrowdLodOptions`, `CrowdLodCounts`, `CrowdBand`, `CrowdBandSpec`, `BlobFeatures`.
+`createCrowd`, `createCrowdLod`, `CROWD_LOD`, `BLOB_BODY`, `blobBody`, `FLOATER_BODY`, `QUADRUPED_BODY`; types `Crowd`, `CrowdDraw`, `CrowdRigDraw`, `CrowdStats`, `RigBody`, `RigPart`, `RigJoints`, `RigShape`, `CrowdLod`, `CrowdLodOptions`, `CrowdLodCounts`, `CrowdBand`, `CrowdBandSpec`, `BlobFeatures`.
 
 **Performance counters (WP 5.5)**: what `__engine.stats()` returns, means in ms and the renderer's counts, never fps.
 types `EngineStats`.

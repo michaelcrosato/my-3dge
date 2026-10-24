@@ -1,0 +1,22 @@
+/**
+ * @file Unit tests for the rig `rig:{{name}}` ({{id}}.ts): it passes the rig check in every state (finite, on the
+ * floor, its bones their lengths, the same every run and at any step), and walking, its feet keep up with it.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { rigCheck } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+describe('rig:{{name}}', () => {
+  it('passes the rig check in every state, and keeps its feet up with it as it walks', () => {
+    expect(rigCheck({{name}}).problems.map((p) => p.message)).toEqual([]);
+    const body = {{name}}.make('walk', 0, 1 / 60);
+    let root = body.step();
+    for (let k = 0; k < 120; k++) root = body.step(k / 60);
+    expect(root.z).toBeGreaterThan(1.5); // walked on
+    for (const foot of {{name}}.feet!) {
+      const at = body.points()[{{name}}.names.indexOf(foot)];
+      expect(Math.hypot(at.x - root.x, at.z - root.z)).toBeLessThan(0.45); // stepped along, never left behind
+    }
+  });
+});

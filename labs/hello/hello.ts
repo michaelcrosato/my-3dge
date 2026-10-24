@@ -6,7 +6,8 @@
  * Invariants: every frame clears to the opaque `BACKGROUND` and is a function of the time it is drawn at alone (the
  * cube turns at `SPIN`), so under the e2e fixture's virtual clock a frame repeats exactly; the first frame is drawn
  * and done on the GPU before `startHello` resolves. The post pass changes colours only: the grade saturates and warms
- * them, so the two ways of drawing differ in colour, never in what covers the frame.
+ * them, so the two ways of drawing differ in colour, never in what covers the frame. Each frame, drawn outside the
+ * renderer's `frame()`, is told to its GPU timing (engine/gfx/enhanced/timing.ts), which reads its time.
  *
  * @see labs/hello/boot.ts
  * @see tests/e2e/hello.spec.ts
@@ -88,6 +89,7 @@ export async function startHello(canvas: HTMLCanvasElement, options: { post: boo
       cube.rotation.y = 0.6 + seconds * SPIN;
       if (options.post) post.render();
       else renderer.render(scene, camera);
+      gfx.timing.afterFrame(); // drawn outside the renderer's frame(): its GPU timing reads the frame's queries
     },
     resize(width, height) {
       renderer.setPixelRatio(window.devicePixelRatio);

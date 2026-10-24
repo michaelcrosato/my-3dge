@@ -11,7 +11,7 @@
  *    crowd's bands and culling too), and with `looks` (Box 3's hall with its props, the hero and the three parts a
  *    filter scopes; WP 7.8) up to the checkpoint after the first of the engine's looks in each material style is
  *    switched in, 5 steps each (each joins its style to the box page's style set and warm-up), and the effects off and
- *    on. What the box page adds to a look is its style set and its sky: every one of the engine's 86 looks building
+ *    on. What the box page adds to a look is its style set and its sky: every one of the engine's 98 looks building
  *    no pipeline and leaving the hash as it is, is tests/e2e/post.spec.ts's on the room; the box's looks, under their
  *    torch-lit sky, whose point shadows make a frame several times dearer on SwiftShader, are
  *    tests/e2e/box-look.spec.ts's, with the same replay. The looks and the scene each test covered are its

@@ -47,6 +47,14 @@ Raised by `Animator.use` (engine/anim/character.ts) for a slot that takes no lay
 
 Raised by `boneMask` (engine/anim/skeleton.ts) for a weight that is not a number from 0 to 1.
 
+### ANIM_BAD_RIG
+
+- Message: `the rig {id} {problem}{suggestion}`
+- Fix: use its own names in bones, feet, closed and runs; give one point a name, bones and states sizes above 0
+- Registered in: [`engine/anim/proc/rig.ts` line 39](../engine/anim/proc/rig.ts)
+
+Raised by `driveRig` and `rigCheck` (engine/anim/proc/rig.ts) for a rig that breaks its own contract.
+
 ### ANIM_BAD_STATE
 
 - Message: `body state {name} is {value}, not {expected}{suggestion}; it is ignored`
@@ -185,6 +193,14 @@ Raised by the clip library (engine/anim/clip/library.ts) when a clip names a sou
 
 Thrown by `strikeSegment` (engine/anim/moves.ts) for an `Animator` without `preciseHits`. A strike’s span is read from a pose, and the sim poses only animators with `preciseHits` (engine/sim/actors.ts, the system `actors.pose`); any other animator holds whatever the view last drew, nothing headless, so hits read from it would depend on rendering and visibility.
 
+### ANIM_SOCKET_JOINT
+
+- Message: `the socket names the joint {name}, which the rig’s pose lacks{suggestion}; it has {joints}`
+- Fix: name one of the pose’s joints in the socket’s `on`
+- Registered in: [`engine/anim/proc/sockets.ts` line 29](../engine/anim/proc/sockets.ts)
+
+Raised by `socketMatrix` (engine/anim/proc/sockets.ts) for a socket on a joint the pose does not have.
+
 ### ANIM_UNKNOWN_BEAT
 
 - Message: `action {action} has no beat {name}{suggestion}`
@@ -253,31 +269,31 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 97](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 65](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 67](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 69](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 71](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -301,7 +317,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
 
 ### APP_STORE_BLOCKED
 
@@ -333,7 +349,7 @@ Raised by `noteFreq` and `render` (engine/audio/dsp/voice.ts, render.ts) for a p
 
 - Message: `{option} is {value}, not {expected}`
 - Fix: pass {expected} as {option}
-- Registered in: [`engine/audio/runtime/sound.ts` line 29](../engine/audio/runtime/sound.ts)
+- Registered in: [`engine/audio/runtime/sound.ts` line 30](../engine/audio/runtime/sound.ts)
 
 Raised by `audio.play` and `Sound.move` (engine/audio/runtime/sound.ts) for a volume, pitch, variant or position out of range.
 
@@ -349,7 +365,7 @@ Raised by `render` (engine/audio/dsp/render.ts).
 
 - Message: `room {room} is not a preset{hint}`
 - Fix: name one of the ROOMS presets ({names}), or pass { decay, predelay, damping, wet }
-- Registered in: [`engine/audio/runtime/reverb.ts` line 29](../engine/audio/runtime/reverb.ts)
+- Registered in: [`engine/audio/runtime/reverb.ts` line 36](../engine/audio/runtime/reverb.ts)
 
 Raised by `impulseResponse` and `audio.room` (engine/audio/runtime/reverb.ts) for a room name that is not in `ROOMS`, or numbers out of range.
 
@@ -373,7 +389,7 @@ Raised by `render` (engine/audio/dsp/render.ts) for a value of the wrong type or
 
 - Message: `{id} has variants 0 to {last}; {variant} is not one of them`
 - Fix: ask for a whole number from 0 to {last}, or give the effect more variants
-- Registered in: [`engine/audio/data/sfx.ts` line 51](../engine/audio/data/sfx.ts)
+- Registered in: [`engine/audio/data/sfx.ts` line 55](../engine/audio/data/sfx.ts)
 
 Raised by `renderSfx` (engine/audio/data/sfx.ts).
 
@@ -381,7 +397,7 @@ Raised by `renderSfx` (engine/audio/data/sfx.ts).
 
 - Message: `{id} contains itself through its layers: {path}`
 - Fix: remove one layer of the cycle: a layer mixes another effect in, which cannot contain the first
-- Registered in: [`engine/audio/data/sfx.ts` line 46](../engine/audio/data/sfx.ts)
+- Registered in: [`engine/audio/data/sfx.ts` line 50](../engine/audio/data/sfx.ts)
 
 Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following layers leads back to an effect already on the path.
 
@@ -389,7 +405,7 @@ Raised by `sfxVoices` and `renderSfx` (engine/audio/data/sfx.ts) when following 
 
 - Message: `sound is off: {reason}`
 - Fix: open the page in a browser with Web Audio (every current one has it); the game runs on in silence
-- Registered in: [`engine/audio/runtime/audio.ts` line 55](../engine/audio/runtime/audio.ts)
+- Registered in: [`engine/audio/runtime/audio.ts` line 56](../engine/audio/runtime/audio.ts)
 
 Advice from `createAudio` (engine/audio/runtime/audio.ts) when there is no Web Audio, or the context could not be made.
 
@@ -627,7 +643,7 @@ Warned for a deep link (`#gallery/<kind>/<id>`, engine/dev/gallery.ts `galleryRo
 
 - Message: `__engine.stats() has no meter to read on this host ({runtime})`
 - Fix: start the engine with createEngine or createHeadless (engine/app), which time its steps and frames; a host made by hand carries a meter from createStatsMeter() as `meter`
-- Registered in: [`engine/dev/stats.ts` line 35](../engine/dev/stats.ts)
+- Registered in: [`engine/dev/stats.ts` line 36](../engine/dev/stats.ts)
 
 Raised by `__engine.stats()` (engine/dev/stats.ts) on an inspector whose host was made without a stats meter, such as a test host built by hand.
 
@@ -643,7 +659,7 @@ Raised by `__engine.stats()` (engine/dev/stats.ts) on an inspector whose host wa
 
 - Message: `the frame alpha must be a number from 0 to 1, not {alpha}`
 - Fix: pass the clock's interpolation alpha (clock.advance(now).alpha), which is always from 0 to 1
-- Registered in: [`engine/gfx/renderer.ts` line 72](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 75](../engine/gfx/renderer.ts)
 
 ### GFX_BAD_BODY
 
@@ -688,20 +704,20 @@ Raised by the geometry kit (engine/gfx/geometry/) when a builder gets sizes it c
 ### GFX_BAD_LIGHT_POOL
 
 - Message: `a light pool of {size} lights: it holds {min} to {max}`
-- Fix: give createLightPool a whole size from 8 to 16 (12 by default); more lights than that need tiled lighting (WP 11.5)
-- Registered in: [`engine/gfx/lights.ts` line 46](../engine/gfx/lights.ts)
+- Fix: give createLightPool a whole size from 8 to 16 (12 by default), or to 64 with tiled: true on a renderer with tiled lighting (feature:tiledLighting, WP 11.5)
+- Registered in: [`engine/gfx/lights.ts` line 51](../engine/gfx/lights.ts)
 
 ### GFX_BAD_SHOT_SIZE
 
 - Message: `a shot must be at least 1 × 1 whole pixels, not {width} × {height}`
 - Fix: pass size: { width, height } in whole pixels of at least 1, or leave it out to shoot at the drawing buffer's size
-- Registered in: [`engine/gfx/shot.ts` line 44](../engine/gfx/shot.ts)
+- Registered in: [`engine/gfx/shot.ts` line 45](../engine/gfx/shot.ts)
 
 ### GFX_COLD_PIPELINE
 
 - Message: `{count} GPU pipeline(s) were built while drawing frame {frame}, after the warm-up: the frame stalled`
 - Fix: register what the frame drew for the first time with gfx.warmup.register(id, { objects }), or add what changed to the shader key with gfx.warmup.keyPart(name, part), so the warm-up builds it first
-- Registered in: [`engine/gfx/renderer.ts` line 63](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 66](../engine/gfx/renderer.ts)
 
 Advice from `frame()` (engine/gfx/renderer.ts): the pipeline counter (engine/gfx/pipelines.ts) saw a pipeline built during a drawn frame after the first warm-up, the stall PLAN.md §8.7 budgets at 0.
 
@@ -725,7 +741,7 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 
 - Message: `the GPU device was lost ({reason}): {message}`
 - Fix: reload the page; the sim runs on the CPU and is intact (capture it first with __engine.capture()), but nothing draws until the renderer starts again
-- Registered in: [`engine/gfx/renderer.ts` line 59](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 62](../engine/gfx/renderer.ts)
 
 ### GFX_DUPLICATE_WARMUP
 
@@ -751,7 +767,7 @@ Raised by `levelFloorTexture` (engine/gfx/textures/contactShadow.ts) when a tile
 
 - Message: `WebGPU refused a call ({kind}): {message}`
 - Fix: fix the resource or pipeline the message names; GPU errors never change play, but what that call draws is missing or wrong
-- Registered in: [`engine/gfx/renderer.ts` line 54](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 57](../engine/gfx/renderer.ts)
 
 Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a validation, out-of-memory or internal error nothing caught.
 
@@ -795,13 +811,53 @@ Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
+### GFX_NO_AIR
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/air.ts` line 38](../engine/gfx/enhanced/air.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when the air is off: a look's `air` section (haze, light shafts, lamp halos) draws nothing.
+
+### GFX_NO_AO
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/ao.ts` line 25](../engine/gfx/enhanced/ao.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when ambient occlusion is off: a look's `ao` section draws nothing.
+
+### GFX_NO_CASCADED_SHADOWS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/csm.ts` line 32](../engine/gfx/enhanced/csm.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows are off: the sky's sun casts one shadow map over the whole level.
+
 ### GFX_NO_FLOAT32_FILTERING
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 46](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 58](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
+
+### GFX_NO_GI
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/gi.ts` line 32](../engine/gfx/enhanced/gi.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when bounce light is off: a look's `gi` section draws nothing.
+
+### GFX_NO_GPU_PARTICLES
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/particles.ts` line 48](../engine/gfx/enhanced/particles.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) while GPU particles are off: the emitters that ask for them burst into the CPU pool.
 
 ### GFX_NO_MANNEQUIN
 
@@ -811,35 +867,59 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 
 Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names.
 
+### GFX_NO_SSR
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/ssr.ts` line 31](../engine/gfx/enhanced/ssr.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when screen-space reflections are off: a look's `ssr` section draws nothing.
+
+### GFX_NO_TILED_LIGHTING
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/lighting.ts` line 43](../engine/gfx/enhanced/lighting.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is off: the light pool lights only its 12 lights nearest the focus.
+
 ### GFX_NO_TIMESTAMPS
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 41](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 53](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
+
+### GFX_NO_TRAA
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/aa.ts` line 37](../engine/gfx/enhanced/aa.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when temporal edge smoothing is off: the chain smooths edges with FXAA even where post.aa asks for 'traa'.
 
 ### GFX_NO_WEBGPU
 
 - Message: `WebGPU is unavailable: {reason}`
 - Fix: open the page in a browser with WebGPU and hardware acceleration on (Chrome or Edge 113+, Safari 26+); headless, launch Chromium with WEBGPU_FLAGS from tools/lib/browser.ts (PLAN.md §8.8)
-- Registered in: [`engine/gfx/renderer.ts` line 45](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 48](../engine/gfx/renderer.ts)
 
 Raised at startup, before anything touches the GPU, when the browser has no `navigator.gpu`, gives no adapter or device, or three.js starts another backend than WebGPU. WebGPU is the only renderer: there is no WebGL fallback (PLAN.md §6.7), so nothing starts, and a page shows this message with its fix.
 
 ### GFX_OUTLINE_TARGET
 
 - Message: `outline shells cannot outline {object}: {problem}`
-- Fix: give shells to meshes and instanced batches; outline a skinned mesh with the edge outline filter (WP 7.4) instead
-- Registered in: [`engine/gfx/materials/outline.ts` line 74](../engine/gfx/materials/outline.ts)
+- Fix: give shells to meshes (skinned ones too) and instanced batches; outline anything else with the edge outline filter (WP 7.4)
+- Registered in: [`engine/gfx/materials/outline.ts` line 81](../engine/gfx/materials/outline.ts)
 
-Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh, or a skinned mesh: the shell's push reads the vertex before skinning.
+Raised by `outline.shell` (engine/gfx/materials/outline.ts) for an object that is not a mesh.
 
 ### GFX_OUTLINE_UNPINNED
 
 - Message: `outline shells cannot find the instance matrix of {object}`
 - Fix: instanced shells are pushed as if their instances stood unturned at the origin; check the new release's InstanceNode (instanceMatrixNode, and whether it still moves positionNode's result) and update instanceMatrixOf and pushNode in engine/gfx/materials/outline.ts
-- Registered in: [`engine/gfx/materials/outline.ts` line 69](../engine/gfx/materials/outline.ts)
+- Registered in: [`engine/gfx/materials/outline.ts` line 76](../engine/gfx/materials/outline.ts)
 
 Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, when an instanced mesh's vertex stage holds no r182 `InstanceNode` with an `instanceMatrixNode`: the push reads the instance's matrix there, so on another three.js release instanced shells are pushed the wrong way.
 
@@ -847,7 +927,7 @@ Advice from an outline shell's push (engine/gfx/materials/outline.ts), once, whe
 
 - Message: `three.js r{revision}'s renderer internals differ from r182's: {problems}`
 - Fix: re-pin engine/gfx/pipelines.ts to the new release's internals (its pin test names what changed); the device's pipeline counts stay exact meanwhile
-- Registered in: [`engine/gfx/pipelines.ts` line 36](../engine/gfx/pipelines.ts)
+- Registered in: [`engine/gfx/pipelines.ts` line 37](../engine/gfx/pipelines.ts)
 
 Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipelines` no longer has r182's shape, usually after a three.js upgrade: the count of pipelines three.js keeps cached is then unknown (null). Builds are counted at the device and stay exact.
 
@@ -855,7 +935,7 @@ Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipel
 
 - Message: `post.filters.outline.color is {color}, which is no colour: the outline darkens the surface instead`
 - Fix: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface
-- Registered in: [`engine/gfx/post/settings.ts` line 37](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 38](../engine/gfx/post/settings.ts)
 
 Advice from the post chain when `post.filters` sets an outline colour that is none; looks are checked when they are defined.
 
@@ -863,7 +943,7 @@ Advice from the post chain when `post.filters` sets an outline colour that is no
 
 - Message: `{where} asks for {levels} levels per channel; the chain draws 8`
 - Fix: posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)
-- Registered in: [`engine/gfx/post/settings.ts` line 32](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 33](../engine/gfx/post/settings.ts)
 
 Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.
 
@@ -871,7 +951,7 @@ Advice from the post chain when `post.filters` sets 1–7 levels; looks are chec
 
 - Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
 - Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
-- Registered in: [`engine/gfx/post/settings.ts` line 42](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 43](../engine/gfx/post/settings.ts)
 
 Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
 
@@ -879,7 +959,7 @@ Advice from the post chain: more live drawable objects than the fixed MRT’s fl
 
 - Message: `bloom is off at the {tier} quality tier: {look} draws without its glow`
 - Fix: raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes
-- Registered in: [`engine/gfx/post/settings.ts` line 27](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 28](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).
 
@@ -887,9 +967,17 @@ Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, 
 
 - Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
 - Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
-- Registered in: [`engine/gfx/post/settings.ts` line 47](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 48](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
+
+### GFX_POST_TIER
+
+- Message: `{effect} is off at the '{tier}' quality tier, though the look {look} asks for it`
+- Fix: nothing to do for play; set the view setting quality to 'high' to draw it
+- Registered in: [`engine/gfx/post/shading.ts` line 39](../engine/gfx/post/shading.ts)
+
+Advice from the chain's shading stage (engine/gfx/post/shading.ts): the quality tier turns bounce light and light shafts off below `high`, and lamp halos at `low` (engine/gfx/quality.ts).
 
 ### GFX_RIG_BODY
 
@@ -903,7 +991,7 @@ Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 51](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 63](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
 
@@ -914,6 +1002,14 @@ Advice from the feature registry (engine/gfx/features.ts) when the device cannot
 - Registered in: [`engine/gfx/textures/codes.ts` line 16](../engine/gfx/textures/codes.ts)
 
 Raised by `bakeTexture` (engine/gfx/textures/bake.ts) and by `defineTexture` for a default size that is not a whole number of pattern tiles (a running bond needs whole cells across and an even number of courses), or is not 2 to 4096 texels on a side: such a texture would show a seam where it repeats.
+
+### GFX_TILES_PAST
+
+- Message: `a {width} × {height} px target is past tiled lighting's {max} px buffers: its outer tiles draw the ordinary lights alone`
+- Fix: draw at {max} px or less (a shot's size, the resolution setting); nothing to do for play
+- Registered in: [`engine/gfx/enhanced/lighting.ts` line 48](../engine/gfx/enhanced/lighting.ts)
+
+Advice from tiled lighting (engine/gfx/enhanced/lighting.ts), once a size: the tiles' buffers are made once for `TILED.width` × `TILED.height`, so a larger target's outer tiles get the lights that are not tiled (the shadow casters) and none of the pool's others.
 
 ### GFX_UNKNOWN_CAMERA
 
@@ -943,7 +1039,7 @@ Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material:
 
 - Message: `the warm-up failed: {message}`
 - Fix: the cause is recorded with this error; frames draw without a warm-up meanwhile, building pipelines as they meet them
-- Registered in: [`engine/gfx/renderer.ts` line 68](../engine/gfx/renderer.ts)
+- Registered in: [`engine/gfx/renderer.ts` line 71](../engine/gfx/renderer.ts)
 
 ## input
 
@@ -1169,6 +1265,12 @@ Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts
 - Fix: use an id addBody() returned while its body exists (hasBody(id) tells); bodies() lists them
 - Registered in: [`engine/physics/world.ts` line 84](../engine/physics/world.ts)
 
+### PHYSICS_NO_JOINT
+
+- Message: `there is no joint {id}{why}`
+- Fix: use an id addJoint() returned while its joint exists (removing a body removes its joints; joints() lists them)
+- Registered in: [`engine/physics/joints.ts` line 48](../engine/physics/joints.ts)
+
 ### PHYSICS_NONE
 
 - Message: `{what} has no physics world`
@@ -1225,7 +1327,7 @@ Raised by `checkReplay` and `playReplay` (engine/sim/replay.ts) before a step ru
 
 - Message: `{where} got the seed {value}, which a replay cannot hold`
 - Fix: pass a whole number, 0 or more (x sim --seed 3, __engine.seed(3)): record() writes the seed into the replay
-- Registered in: [`engine/sim/scene.ts` line 47](../engine/sim/scene.ts)
+- Registered in: [`engine/sim/scene.ts` line 48](../engine/sim/scene.ts)
 
 ### SIM_BAD_SYSTEM
 

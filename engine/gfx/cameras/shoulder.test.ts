@@ -2,7 +2,8 @@
  * @file Unit tests for the shooter's camera (engine/gfx/cameras/shoulder.ts): over the right shoulder 3.8 m back from
  * the eye, looking along the view, the hero left of the screen's centre; the swap eases it over the left shoulder; the
  * sim's look sets the view and the devices turn it; raised sights pull the arm in to 1.5 m; the player's lens; backing
- * into a wall the camera never jumps, never stands in it and keeps his chest in the picture; codes round-trip.
+ * into a wall the camera never jumps, never stands in it and keeps his chest in the picture; a frame of no time reads
+ * no way from it; codes round-trip.
  * @see engine/gfx/cameras/shoulder.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -85,6 +86,18 @@ describe('the shooter camera', () => {
     }
     expect(last.position[2]).toBeGreaterThan(-3 + COLLIDE_RADIUS);
     expect(Math.abs(last.position[0] - poseRight(last)[0] * -SHOULDER.right)).toBeGreaterThan(0.2); // drawn in toward the eye
+  });
+
+  it('takes a frame of no time (a page’s warm-up) without reading a way from it', () => {
+    const queries = walls();
+    const camera = createShoulderCamera();
+    camera.update({ follow: [0, 0, 3], queries }, 1 / 60);
+    camera.update({ follow: [0, 0, 2.9], queries, player: { velocity: [0, 0, -6], grounded: true, mode: 'ground', sprinting: false, sliding: false, boosted: false, aiming: false } }, 1 / 60); // prettier-ignore
+    for (const look of [0, 0.4]) {
+      const pose = camera.update({ follow: [0, 0, 2.9], queries, look: [0, look] }, 0); // the pitch turned, no time
+      expect(pose.position.every(Number.isFinite)).toBe(true);
+    }
+    expect(camera.update({ follow: [0, 0, 2.8], queries }, 1 / 60).position.every(Number.isFinite)).toBe(true);
   });
 
   it('refuses a side that is not 1 or -1, and reads and writes its codes', () => {

@@ -1,16 +1,18 @@
 /**
  * @file One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned
- * `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-500`), keys renamed (engine/gfx/post/looks.ts
+ * `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-462`), keys renamed (engine/gfx/post/looks.ts
  * says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/
  * 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA). Each is `look:<group>/<name>`; its `group`
  * is the filter it sets. A preset that turns its filter off (`look:outline/none`) is the clean picture for that menu.
+ * WP 11.5 added shardfall's air presets and its bounce light (`looks.toml:414-462`, the `gi` of its glow section as a
+ * group of its own) and one preset each for the sections shardfall lacked, ambient occlusion and reflections.
  *
  * Invariants: data only; each preset sets one filter (grain also sets chroma, as shardfall's grain section did) or
  * the style, with scope `all` when on.
  *
  * @example
  * PRESETS['look:palette/game-boy'].filters; // { palette: { scope: 'all', palette: 'gameboy', dither: 0.6 } }
- * Object.keys(PRESETS).length; // 66
+ * Object.keys(PRESETS).length; // 76
  * @see engine/gfx/post/looks.test.ts
  */
 import type { LookSpec } from './looks';
@@ -56,6 +58,8 @@ const glow = (description: string, strength: number, threshold: number): LookSpe
   group: 'bloom',
   filters: { bloom: { scope: 'all', strength, threshold } },
 });
+const air = (description: string, haze: number, height: number, shafts: number, forward: number, halos: number) =>
+  ({ description, group: 'air', filters: { air: { scope: 'all', haze, height, shafts, forward, halos } } }) as LookSpec;
 
 /** The presets, by id (see the file comment). */
 export const PRESETS: Record<string, LookSpec> = {
@@ -149,5 +153,27 @@ export const PRESETS: Record<string, LookSpec> = {
     description: 'Edge smoothing (FXAA) over the whole picture.',
     group: 'aa',
     filters: { aa: { scope: 'all' } },
+  },
+  'look:gi/bounce-light': {
+    description: 'Screen-space bounce light and soft occlusion.',
+    group: 'gi',
+    filters: { gi: { scope: 'all', strength: 1 } },
+  },
+  'look:air/clear-air': { description: 'No haze, no halos.', group: 'air' },
+  'look:air/light-haze': air('A touch of atmosphere.', 0.35, 4, 1, 0.4, 0.3),
+  'look:air/dusty-sunbeams': air('Bright dusty air; shadows cut dark shafts through it.', 0.7, 6, 2.4, 0.6, 0.3),
+  'look:air/morning-mist': air('Low mist hugging the ground.', 1.4, 1.2, 0.8, 0.3, 0.3),
+  'look:air/smoky-hall': air('Thick smoke: lamps glow in it and the sun streaks through.', 1, 8, 1.6, 0.5, 1.2),
+  'look:air/lamplight': air('Clear air, big glowing halos around every light.', 0.15, 4, 0.5, 0.4, 1.6),
+  'look:air/pea-soup': air('Fog so thick you lose the far side of the room.', 2.6, 6, 0.6, 0.3, 0.6),
+  'look:ao/corners': {
+    description: 'Creases, corners and the ground under things darken (ambient occlusion).',
+    group: 'ao',
+    filters: { ao: { scope: 'all' } },
+  },
+  'look:ssr/metal': {
+    description: 'Metal reflects what is round it (where the style draws metal: look:shading/smooth-lit).',
+    group: 'ssr',
+    filters: { ssr: { scope: 'all' } },
   },
 };

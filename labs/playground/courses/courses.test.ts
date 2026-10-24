@@ -6,7 +6,8 @@
  * number within its tolerance: the run `node x feel labs/playground` makes (tools/cmd/feel.test.ts runs it through
  * the command). The bounds take four numbers for each
  * camera, three for first person, and watch a camera's where a course names the WP that will make it pass. The hill's
- * course runs on the hill's terrain (WP 10.5).
+ * course runs on the hill's terrain (WP 10.5), the range's at the site's range with the guns drawn, §5.1's muzzle bound
+ * among its numbers (WP 13.20).
  * @see labs/playground/courses/strip.ts
  * @see labs/playground/courses/jumps.ts
  * @see labs/playground/courses/air.ts
@@ -30,14 +31,16 @@
  * @see labs/playground/courses/landing.ts
  * @see labs/playground/courses/cameras.ts
  * @see labs/playground/courses/camera-walls.ts
+ * @see labs/playground/courses/range.ts
  * @see labs/playground/courses/bounds.ts
  */
 import { describe, expect, it } from 'vitest';
 import { getCourse, runCourse } from '../../../engine';
 import { topHeight } from '../../../engine/sim-api';
 import { GYM } from '../scenes/gym';
+import '../scenes/site'; // the range's course runs at the site's range
 import { AIR_START } from './air';
-import { bodyBounds, cameraBounds } from './bounds';
+import { BOUNDS, bodyBounds, cameraBounds, muzzleBound } from './bounds';
 import { CAMERA_WALLS } from './camera-walls';
 import { CAMERAS_START } from './cameras';
 import { BOUNCE_RUNS, CLIMB_RUNS } from './climb';
@@ -48,6 +51,7 @@ import { FENCE_RUNS } from './fences';
 import { GAP_RUNS } from './gaps';
 import { HANG_STARTS } from './hang';
 import './hill';
+import './range';
 import { JUMPS_START } from './jumps';
 import { LADDER_STARTS } from './ladder';
 import { LANDING_RUNS } from './landing';
@@ -120,6 +124,16 @@ describe('the playground’s courses', () => {
       expect(result.pass).toBe(true);
     });
   }
+
+  it('range: keeps every number within its tolerance at the site’s range, the muzzle on the aim', () => {
+    const course = getCourse('course:playground-range');
+    expect(course.scene).toBe('playground:site-range');
+    expect(muzzleBound(60)).toMatchObject({ metric: 'muzzle', from: 60, tolerance: { abs: BOUNDS.muzzle } });
+    expect(course.measures.map((m) => m.metric)).toContain('muzzle');
+    const result = runCourse(course);
+    expect(result.results.filter((r) => !r.pass)).toEqual([]);
+    expect(result.pass).toBe(true);
+  }, 120_000);
 
   it('hill: keeps every number within its tolerance, on the hill’s terrain', () => {
     const course = getCourse('course:playground-hill');

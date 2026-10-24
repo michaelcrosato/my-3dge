@@ -5,7 +5,13 @@
  * A room's `decay` is its RT60, the seconds its tail takes to fall 60 dB; `predelay` the silence before the tail;
  * `damping` the cutoff of the one-pole lowpass the tail goes through (soft or large rooms sound darker); `wet` the
  * level the mixer sends into it (engine/audio/runtime/mixer.ts). `ROOMS` holds the presets; a game passes its own
- * numbers where a name goes, and `roomReverb` picks one for a level's room by its volume.
+ * numbers where a name goes, and `roomReverb` picks one for a level's room by its volume. `roomAcoustics` (WP 13.22)
+ * works a room's numbers out of what it is: its floor's area, its height and what its floor, walls and ceiling are made
+ * of (`ABSORPTION`, the share of a sound each surface soaks up, at the mids and at the highs; a footstep's tags, so a
+ * carpeted bedroom is soft and the basement's concrete rings), by Sabine's formula, RT60 = 0.161 V / A, the room taken
+ * as square, its contents soaking up `CONTENTS` of its floor's area besides (furnished; less when bare): the highs'
+ * RT60 over the mids' darkens
+ * the tail (`damping`), a longer one is sent in louder (`wet`), and the predelay is the mean free path's flight.
  *
  * Invariants: `impulseResponse` is a pure function of the room, the rate and the seed: seeded white noise per channel
  * (the stream `derive(seed, 'reverb', channel)`, so left and right are uncorrelated and the image is wide), lowpassed,
@@ -19,6 +25,7 @@
  * left.length; // 106,800: 0.025 s of predelay and 2.2 s of tail at 48 kHz
  * impulseResponse('none', 48000); // null
  * [roomReverb({ area: 4 }, 2.7), roomReverb({ area: 18 }, 2.7), roomReverb({ area: 300 }, 6)]; // ['small', 'room', 'hall']
+ * roomAcoustics({ area: 16, height: 2.7, floor: 'carpet' }).decay; // 0.53 s: a carpeted bedroom
  * @see engine/audio/runtime/reverb.test.ts
  */
 import { codeError, defineCodes, didYouMean } from '../../core/log';
@@ -57,6 +64,51 @@ export const ROOMS = Object.freeze({
 
 /** A preset's name. */
 export type RoomName = keyof typeof ROOMS;
+
+/** The share of a sound a surface soaks up (its absorption coefficient), at the mids (500 Hz to 1 kHz) and the highs (4 kHz), by a footstep's tag (engine/world/footsteps.ts); `'*'` for any other. */ // prettier-ignore
+export const ABSORPTION: Readonly<Record<string, { readonly mid: number; readonly high: number }>> = Object.freeze({
+  concrete: { mid: 0.02, high: 0.03 },
+  tile: { mid: 0.02, high: 0.02 },
+  wood: { mid: 0.09, high: 0.08 },
+  carpet: { mid: 0.35, high: 0.6 },
+  plaster: { mid: 0.06, high: 0.05 },
+  glass: { mid: 0.12, high: 0.04 },
+  '*': { mid: 0.04, high: 0.05 },
+});
+
+/** How much a furnished room's contents soak up at the mids, as a share of its floor's area; the highs 1.4 times it. */
+export const CONTENTS = 0.25;
+
+/** What `roomAcoustics` hears a room as: its floor's area (m²), its height (m) and its surfaces' tags. */
+export interface RoomMake {
+  readonly area: number;
+  readonly height: number;
+  /** The floor's tag (`ABSORPTION`'s); the walls' and the ceiling's are plaster unless named. */
+  readonly floor: string;
+  readonly walls?: string;
+  readonly ceiling?: string;
+  /** What its contents soak up at the mids, a share of its floor's area: `CONTENTS` (furnished) unless given. */
+  readonly contents?: number;
+}
+
+/** The speed of sound in air at 20 °C, m/s. */
+const SOUND_SPEED = 343;
+
+/** A room's reverb from what it is made of (see the file comment): a `RoomSpec`. */
+export function roomAcoustics(room: RoomMake): RoomSpec {
+  const { area, height } = room;
+  const [a, h] = [Math.max(area, 0.25), Math.max(height, 0.5)];
+  const [volume, walls] = [a * h, 4 * Math.sqrt(a) * h];
+  const of = (tag: string | undefined, band: 'mid' | 'high') => (ABSORPTION[tag ?? 'plaster'] ?? ABSORPTION['*'])[band];
+  const stuff = (band: 'mid' | 'high') => (room.contents ?? CONTENTS) * (band === 'high' ? 1.4 : 1);
+  const soak = (band: 'mid' | 'high') => a * (of(room.floor, band) + of(room.ceiling, band) + stuff(band)) + walls * of(room.walls, band); // prettier-ignore
+  const [mid, high] = [(0.161 * volume) / soak('mid'), (0.161 * volume) / soak('high')];
+  const decay = Math.min(mid, 10);
+  const damping = Math.min(12000, Math.max(1500, 12000 * (high / mid) ** 2));
+  const wet = Math.min(0.4, Math.max(0.1, 0.1 + 0.08 * decay));
+  const predelay = Math.min(0.05, Math.max(0.002, (4 * volume) / (2 * a + walls) / SOUND_SPEED));
+  return { decay, predelay, damping, wet };
+}
 
 /** −ln(10⁻³): the decay exponent that falls 60 dB over one RT60. */
 const SIXTY_DB = 6.907755278982137;

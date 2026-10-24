@@ -19,6 +19,7 @@
  */
 import { addTerrainBody, defineScene, defineTerrain, getTerrain, physicsOf, terrainHeight } from '../../../engine/sim-api'; // prettier-ignore
 import { spawnPlayer } from '../cast/player';
+import { playgroundSounds, terrainGround } from '../sounds/events';
 import { gym } from './gym';
 
 /** The block's ground and its hill (see the file comment), and its layers' materials (labs/playground/ground.ts). */
@@ -42,6 +43,7 @@ export const hill = defineScene('playground:hill', {
   description: "The playground's hill: the block's ground rising to 10 m in slopes up to 29°, to run and slide down (docs/PLAYGROUND.md §2.2).", // prettier-ignore
   terrain: 'terrain:block',
   physics: true,
+  sounds: playgroundSounds(terrainGround(HILL)), // its events' sounds, for x audio --replay (WP 13.22)
   setup(w) {
     addTerrainBody(physicsOf(w), HILL);
     const speed = w.settings.get<number>('playground.gym.speed');

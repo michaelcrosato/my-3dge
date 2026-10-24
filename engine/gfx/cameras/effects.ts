@@ -11,13 +11,15 @@
  * - the sprint lowers the eye `sprintDrop` and rolls up to `sprintRoll` into a turn of `sprintTurn` rad/s or faster;
  * - a boosted slide (its boost not yet taken back) widens the lens ×`slideFov` and rolls up to `slideRoll` toward a
  *   slide across the view;
- * - a jump kicks the view up, a landing down by its speed, a mantle's grab down a little (`punch`, a damped spring);
+ * - a jump kicks the view up, a landing down by its speed, a mantle's grab down a little, a melee hit back (`punch`, a
+ *   damped spring: the step it landed, `melee.hitAt`, WP 13.19);
  * - the bob, one dip each `bob.period` at a run on the ground, a sway every two: the eye's, and its phase and share for
  *   the weapon (WP 13.12);
- * - aiming down sights zooms to the weapon's lens (Apex's rifles: 55° at a 70° lens) in `ads.time`, as `zoom`;
- * - a landing faster than `shake.from` shakes the screen (`frame.shake`, by the camera's share of the punch: the rig's
- *   `shake()`, which the view adds to engine/gfx/fx/shake.ts);
- * - `kick(pitch, yaw)`, a weapon's recoil (WP 13.20's firearms, through the rig's `kick`), on the punch's spring.
+ * - aiming down sights zooms to the weapon's lens in `ads.time` (its `zoom`, WP 13.20; Apex's rifles' 55° without);
+ * - a burst's climb (`weapons.kick`, WP 13.20) tilts the view as `recoil`, as the sim has it, by the aim's share;
+ * - a landing faster than `shake.from` shakes the screen, and so does a melee hit (`shake.hit`): `frame.shake`, by the
+ *   camera's share of the punch (the rig's `shake()`, which the view adds to engine/gfx/fx/shake.ts);
+ * - `kick(pitch, yaw)`, a game's own kick of the view (through the rig's `kick`), on the punch's spring.
  * The drop, the rolls and the lens ease with a time constant of `ease`, so no effect cuts. `apexFov(h)` is the lens
  * Apex's slider makes (`h` horizontal degrees at 4:3), in the vertical degrees three.js takes.
  *
@@ -38,6 +40,7 @@
  */
 import { MathUtils } from '../../core/math';
 import type { EntityData } from '../../sim/state';
+import { weaponOut } from '../weapons';
 import { makePose, poseRight, type CameraPose, type Vec3 } from './pose';
 
 const DEG = MathUtils.DEG2RAD;
@@ -51,13 +54,13 @@ export const EFFECTS = Object.freeze({
   slideRoll: 15 * DEG,
   ease: 0.12,
   /** The spring (Hz, damping ratio); the kicks' peaks (rad): a landing's per m/s over `from`, at most `max`. */
-  punch: Object.freeze({ frequency: 2.5, damping: 0.6, land: 0.4 * DEG, from: 3, max: 5 * DEG, jump: 1 * DEG, grab: 1.5 * DEG }), // prettier-ignore
+  punch: Object.freeze({ frequency: 2.5, damping: 0.6, land: 0.4 * DEG, from: 3, max: 5 * DEG, jump: 1 * DEG, grab: 1.5 * DEG, hit: 1.5 * DEG }), // prettier-ignore
   /** A dip each `period` s at `run` m/s or faster: `height` down, `side` across. */
   bob: Object.freeze({ period: 0.4, height: 0.012, side: 0.006, run: 5 }),
   /** The sights' lens (`fov` degrees at a lens of `at`) and the time to raise them. */
   ads: Object.freeze({ fov: 55, at: 70, time: 0.25 }),
-  /** Metres of screen shake per m/s of a landing over `from`. */
-  shake: Object.freeze({ from: 10, per: 0.004 }),
+  /** Metres of screen shake per m/s of a landing over `from`, and a melee hit's (ours). */
+  shake: Object.freeze({ from: 10, per: 0.004, hit: 0.02 }),
 });
 
 /** The eye's height over the feet on the shooter model, m: Apex's, standing and crouched. */
@@ -76,8 +79,15 @@ export interface CameraPlayer {
   readonly sliding: boolean;
   /** Its slide's boost is not yet taken back. */
   readonly boosted: boolean;
-  /** It aims down sights. */
+  /** It aims down sights (with weapons, only while one is out). */
   readonly aiming: boolean;
+  /** The step its last melee hit landed (`melee.hitAt`; −1 or absent: none). */
+  readonly struck?: number;
+  /** With a weapon out (WP 13.20): its burst's kick so far (rad: + up, + left) and its sights' lens (deg at a 70° lens). */ // prettier-ignore
+  readonly recoil?: readonly [number, number];
+  readonly zoom?: number;
+  /** With weapons: the shots it has fired, all told. */
+  readonly shots?: number;
 }
 
 /** How much of each effect a camera takes, 0 to 1 (see the file comment). */
@@ -115,6 +125,11 @@ export interface EffectsFrame {
   /** The punch and the kick, rad: + up, + left. */
   readonly pitch: number;
   readonly yaw: number;
+  /**
+   * The burst's climb, rad (+ up, + left): the player's `recoil`, the sim's kick as it is (no easing: the next shot
+   * goes where the centre is); the rig's `aimPose` leaves it out, so the aim's ray is not turned by it again.
+   */
+  readonly recoil: readonly [number, number];
   /** How far the sights are raised, 0 to 1, and their zoom (× three.js's `zoom`). */
   readonly aim: number;
   readonly zoom: number;
@@ -143,14 +158,21 @@ export function cameraPlayer(entity: EntityData, aiming = false): CameraPlayer |
   const velocity: Vec3 = [actor.vx ?? 0, actor.vy ?? 0, actor.vz ?? 0];
   const grounded = actor.grounded === true;
   const motion = entity.motion as Readonly<Record<string, unknown>> | undefined;
+  const hitAt = (entity.melee as { hitAt?: number } | undefined)?.hitAt;
+  const struck = hitAt !== undefined && hitAt >= 0 ? { struck: hitAt } : {};
+  const weapons = entity.weapons as { kick?: readonly number[]; shots?: number } | undefined;
+  const out = weapons ? weaponOut(entity) : null;
+  const [up, right] = weapons?.kick ?? [0, 0];
+  const armed = !weapons ? {} : out ? { recoil: [up * DEG, -right * DEG] as const, zoom: out.zoom, shots: weapons.shots ?? 0 } : { shots: weapons.shots ?? 0 }; // prettier-ignore
+  const aims = aiming && (!weapons || out !== null); // with weapons, only one out aims
   if (!motion) {
     const mode = grounded ? 'ground' : 'air';
-    return { velocity, grounded, mode, sprinting: false, sliding: false, boosted: false, aiming };
+    return { velocity, grounded, mode, sprinting: false, sliding: false, boosted: false, aiming: aims, ...struck, ...armed }; // prettier-ignore
   }
   const eye = CAMERA_EYE.stand + (CAMERA_EYE.crouch - CAMERA_EYE.stand) * crouchShare(motion);
   const sliding = motion.sliding === true;
   const boosted = sliding && Number(motion.slideBoost) > 0;
-  return { velocity, grounded, eye, mode: String(motion.mode), sprinting: motion.sprinting === true, sliding, boosted, aiming }; // prettier-ignore
+  return { velocity, grounded, eye, mode: String(motion.mode), sprinting: motion.sprinting === true, sliding, boosted, aiming: aims, ...struck, ...armed }; // prettier-ignore
 }
 
 /** The effects' state (see the file comment). */
@@ -169,8 +191,10 @@ export interface CameraEffects {
 export function createCameraEffects(): CameraEffects {
   const { punch, bob, ads } = EFFECTS;
   const omega = 2 * Math.PI * punch.frequency;
-  const zoomed = Math.tan(((ads.at / 2) * Math.PI) / 180) / Math.tan(((ads.fov / 2) * Math.PI) / 180);
+  /** The sights' zoom for a lens of `fov` degrees at `ads.at`: × three.js's `zoom`. */
+  const zoomOf = (fov: number) => Math.tan(((ads.at / 2) * Math.PI) / 180) / Math.tan(((fov / 2) * Math.PI) / 180);
   let player: CameraPlayer | null = null;
+  const recoil: [number, number] = [0, 0];
   let [sprint, boost, drop, roll, slideRoll, aim, phase, share, shake] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
   let [pitch, pitchV, yaw, yawV] = [0, 0, 0, 0];
   let lastYaw: number | null = null;
@@ -190,6 +214,10 @@ export function createCameraEffects(): CameraEffects {
         shake += EFFECTS.shake.per * Math.max(0, speed - EFFECTS.shake.from);
       } else if (!next.grounded && was.grounded && next.velocity[1] > 1) kick(punch.jump);
       if (next.mode === 'mantle' && was.mode !== 'mantle') kick(-punch.grab);
+      if (next.struck !== undefined && next.struck !== was.struck) {
+        kick(punch.hit); // a melee hit jolts the view back
+        shake += EFFECTS.shake.hit;
+      }
     },
     frame(dt, view) {
       const k = 1 - Math.exp(-dt / EFFECTS.ease);
@@ -219,6 +247,8 @@ export function createCameraEffects(): CameraEffects {
       const shaken = shake;
       shake = 0;
       const raise = MathUtils.smoothstep(aim, 0, 1);
+      [recoil[0], recoil[1]] = [p?.recoil?.[0] ?? 0, p?.recoil?.[1] ?? 0]; // the sim's kick: it rises and falls itself
+      const zoomed = zoomOf(p?.zoom ?? ads.fov);
       return {
         drop,
         bob: [bob.side * Math.sin(phase / 2) * share, (-bob.height * (1 - Math.cos(phase)) * share) / 2],
@@ -228,6 +258,7 @@ export function createCameraEffects(): CameraEffects {
         fov: 1 + (EFFECTS.slideFov - 1) * boost,
         pitch,
         yaw,
+        recoil: [recoil[0], recoil[1]],
         aim,
         zoom: 1 + (zoomed - 1) * raise,
         shake: shaken,
@@ -239,6 +270,7 @@ export function createCameraEffects(): CameraEffects {
       lastYaw = null;
       [sprint, boost, drop, roll, slideRoll, aim, phase, share, shake] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
       [pitch, pitchV, yaw, yawV] = [0, 0, 0, 0];
+      [recoil[0], recoil[1]] = [0, 0];
     },
   };
 }
@@ -250,7 +282,13 @@ const still = (x: number) => Math.abs(x) < 1e-9;
 export function applyEffects(pose: CameraPose, frame: EffectsFrame, weights: EffectWeights): CameraPose {
   const drop = frame.drop * weights.eye;
   const [across, up] = [frame.bob[0] * weights.bob, frame.bob[1] * weights.bob];
-  const [pitch, yaw, roll] = [frame.pitch * weights.punch, frame.yaw * weights.punch, frame.roll * weights.roll];
+  const [lift, turn] = frame.recoil;
+  // the climb by the aim's share: the cameras that aim with their centre take it whole, so it is where shots go
+  const [pitch, yaw, roll] = [
+    frame.pitch * weights.punch + lift * weights.aim,
+    frame.yaw * weights.punch + turn * weights.aim,
+    frame.roll * weights.roll,
+  ];
   const fov = 1 + (frame.fov - 1) * weights.fov;
   const zoom = 1 + (frame.zoom - 1) * weights.aim;
   if ([drop, across, up, pitch, yaw, roll, fov - 1, zoom - 1].every(still)) return pose;

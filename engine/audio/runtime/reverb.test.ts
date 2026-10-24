@@ -3,10 +3,11 @@
  * `decay` (measured by Schroeder's backward integration, within 5%), starts after its `predelay`, carries unit energy
  * per channel, is darker the lower its `damping`, has uncorrelated channels, and is the same bits for the same seed;
  * a room without reverb has none; unknown names and bad numbers are refused with the fix; a level's room takes its
- * preset by its volume.
+ * preset by its volume; a room's own numbers (WP 13.22) follow Sabine's formula: a soft floor rings shorter and darker
+ * than a hard one, a bigger or a barer room longer, a longer one is sent in louder, and every one is a valid room.
  */
 import { describe, expect, it } from 'vitest';
-import { ROOMS, impulseResponse, roomReverb, roomSpec, type RoomName } from './reverb';
+import { ROOMS, impulseResponse, roomAcoustics, roomReverb, roomSpec, type RoomName } from './reverb';
 
 const RATE = 48000;
 
@@ -93,5 +94,30 @@ describe('roomReverb', () => {
       [300, 6],
     ] as const; // 10.8, 29.7, 30, 199.8, 200, 1,800 m³
     expect(volumes.map(([area, height]) => roomReverb({ area }, height))).toEqual(['small', 'small', 'room', 'room', 'hall', 'hall']); // prettier-ignore
+  });
+});
+
+describe('roomAcoustics', () => {
+  const bedroom = { area: 16, height: 2.7, floor: 'carpet' } as const;
+  it('rings shorter and darker on a soft floor than a hard one, longer when bigger or barer, louder the longer', () => {
+    const [soft, hard] = [roomAcoustics(bedroom), roomAcoustics({ ...bedroom, floor: 'tile' })];
+    expect(soft.decay).toBeLessThan(hard.decay);
+    expect(soft.damping).toBeLessThan(hard.damping);
+    expect(soft.wet).toBeLessThan(hard.wet);
+    expect(roomAcoustics({ ...bedroom, area: 64 }).decay).toBeGreaterThan(soft.decay);
+    expect(roomAcoustics({ ...bedroom, contents: 0.05 }).decay).toBeGreaterThan(soft.decay);
+    expect(roomAcoustics({ ...bedroom, area: 64 }).predelay).toBeGreaterThan(soft.predelay); // a longer flight
+  });
+
+  it('follows Sabine’s RT60 = 0.161 V / A for a square room, and gives valid rooms from a closet to a hall', () => {
+    const [a, h] = [16, 2.7];
+    const absorbed = a * (0.35 + 0.06 + 0.25) + 4 * Math.sqrt(a) * h * 0.06; // carpet, plaster, contents; the walls
+    expect(roomAcoustics(bedroom).decay).toBeCloseTo((0.161 * a * h) / absorbed, 9);
+    for (const area of [0.1, 4, 16, 80, 400, 5000]) {
+      for (const floor of ['carpet', 'concrete', 'grass']) {
+        const room = roomAcoustics({ area, height: area > 100 ? 6 : 2.7, floor, contents: 0 });
+        expect(roomSpec(room)).toBe(room);
+      }
+    }
   });
 });

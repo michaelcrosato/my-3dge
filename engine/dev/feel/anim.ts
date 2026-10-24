@@ -7,8 +7,10 @@
  * stood them on (`FootPlant.floorAt`, for the slide), so a sole on a deck or a ramp stands on its floor as one on the
  * ground does; off the ground (traversing, flying) from the physics ground under them (WP 13.11). Over a range of frames it reads the anim QA's rules (engine/anim/motionMetrics.ts): `footSlide`, the
  * most a sole slides on the floor in one contact, and `pop`, the largest one-step jump of a point against its
- * neighbours (m; 0 when nothing qualifies); and `handGap(point)`, the closest either hand comes to a point (m). §5.1's
- * bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a contact. Each frame keeps the eyes too (`eye(k)`),
+ * neighbours (m; 0 when nothing qualifies); `handGap(point)`, the closest either hand comes to a point (m); and
+ * `muzzle`, the farthest the gun hand's barrel line points from the aim while the sights are fully up (rad, WP 13.20).
+ * §5.1's bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a contact, the muzzle within 2° of the aim.
+ * Each frame keeps the eyes too (`eye(k)`),
  * where the first-person camera stands, and the last frame's body gives first person's arms their input (`armsInput`,
  * engine/gfx/viewmodel/rig.ts `armsInputOf`: the hands it holds on contacts, a carried gun, a kick).
  *
@@ -22,17 +24,17 @@
  */
 import { AnimatorPool, type Animator, type AnimatorData } from '../../anim/character';
 import { getBuild } from '../../anim/builds';
-import { jointPosition, socketPosition } from '../../anim/fk';
+import { jointPosition, jointRotation, socketPosition } from '../../anim/fk';
 import { FOOT_PLANT, FootPlant, queryGround, type GroundQueries } from '../../anim/footPlant';
 import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
 import type { HullView, RideView, TraversalView } from '../../anim/traversal/contacts';
-import { HoldPlant, LookPose, type Look } from '../../anim/traversal/hold';
+import { HOLD, HoldPlant, LookPose, type HeldLook, type Look } from '../../anim/traversal/hold';
 import { TraversalPlant } from '../../anim/traversal/plant';
 import { TraversalPose } from '../../anim/traversal/pose';
 import { motionTrack, worstPop, worstSlide } from '../../anim/motionMetrics';
 import { JOINTS, SOCKETS } from '../../anim/skeleton';
 import { RUN_POINTS } from '../../anim/stateMatrix';
-import { Vector3 } from '../../core/math';
+import { MathUtils, Vector3 } from '../../core/math';
 import { eyePoint } from '../../gfx/cameras/first';
 import type { Vec3 } from '../../gfx/cameras/pose';
 import { armsInputOf, type ArmsInput } from '../../gfx/viewmodel/rig';
@@ -52,6 +54,19 @@ interface AnimFrame {
   /** How far each hand held on its contact was from it (m); NaN for a hand holding none. */
   held: number[];
   eye: Vec3;
+  /** How far the gun hand's barrel line pointed from the aim (rad), its sights fully up; NaN otherwise. */
+  muzzle: number;
+}
+
+/**
+ * How far the right hand's +Z, which the hold puts on the gun's barrel (engine/anim/traversal/hold.ts), points from
+ * `look`'s aim (rad): its heading as far round as the hold turns the gun from the body's (`HOLD.yaw`), its pitch.
+ */
+function muzzleOff(animator: Animator, look: HeldLook): number {
+  const heading = animator.body.yaw;
+  const yaw = heading + MathUtils.clamp(Math.atan2(Math.sin(look.yaw - heading), Math.cos(look.yaw - heading)), -HOLD.yaw, HOLD.yaw); // prettier-ignore
+  const aim = new Vector3(Math.sin(yaw) * Math.cos(look.pitch), Math.sin(look.pitch), Math.cos(yaw) * Math.cos(look.pitch)); // prettier-ignore
+  return new Vector3(0, 0, 1).applyQuaternion(jointRotation(animator.body.world, 'handR')).angleTo(aim);
 }
 
 /** What a traversing body is on (the ride, its component: engine/anim/traversal/contacts.ts `rideOf`), its hull and its look. */ // prettier-ignore
@@ -68,6 +83,8 @@ export interface TrackTraverse {
 export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
   const pool = new AnimatorPool();
   const planted = new WeakMap<object, { plant: FootPlant; traversal: TraversalPlant; hold: HoldPlant }>();
+  /** Each actor's last hold: a new one, made with its animator when the weapon changes, follows its draw. */
+  const holds = new Map<number, HoldPlant>();
   const moving = new Map<number, MovementPose>();
   const traversing = new Map<number, TraversalPose>();
   const looking = new Map<number, LookPose>();
@@ -117,8 +134,9 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
       if (!own) {
         const plant = new FootPlant({ name: 'feel:footPlant' }).attach(animator);
         const traversal = new TraversalPlant({ name: 'feel:traversal' }).attach(animator);
-        const hold = Object.assign(new HoldPlant({ name: 'feel:hold' }).attach(animator), { contacts: traversal });
+        const hold = Object.assign(new HoldPlant({ name: 'feel:hold' }).follow(holds.get(id)).attach(animator), { contacts: traversal }); // prettier-ignore
         planted.set(animator, (own = { plant, traversal, hold }));
+        holds.set(id, hold);
       }
       const { plant, traversal, hold } = own;
       const at = new Vector3(feet[0], feet[1], feet[2]);
@@ -146,7 +164,9 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
       const floor = (p: Vector3) => (grounded && plant.weight > 0 ? plant.floorAt(p.x, p.z) : floorUnder(p)); // off the ground, or the plant skipped: the real one
       const soles = SOLES.map((name) => socketPosition(skeleton, world, name)).map((p) => p.setY(p.y - floor(p)));
       const points = [...joints, ...sockets].map((p) => p.setY(p.y - feet[1]));
-      frames.push({ points, soles, position: new Vector3(feet[0], 0, feet[2]), hands, held, eye: eyePoint(skeleton, world) }); // prettier-ignore
+      const aimed = hold.holding && look.look !== null && look.look.raised >= 1 && look.look.weight >= 1 && hold.busy === 0; // prettier-ignore
+      const muzzle = aimed ? muzzleOff(animator, look.look!) : Number.NaN;
+      frames.push({ points, soles, position: new Vector3(feet[0], 0, feet[2]), hands, held, eye: eyePoint(skeleton, world), muzzle }); // prettier-ignore
       size = getBuild(data.build).size;
     },
     /** First person's arms' input off the last frame's body, for a frame with `frame`'s camera inputs; null before one. */
@@ -173,6 +193,15 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
       let [gap, held] = [0, 0];
       for (const f of frames.slice(from, to + 1)) for (const d of f.held) if (!Number.isNaN(d)) [gap, held] = [Math.max(gap, d), held + 1]; // prettier-ignore
       return { gap, held };
+    },
+    /**
+     * The farthest the gun hand's barrel line pointed from the aim over frames `from` to `to` while its sights were fully
+     * up and nothing held its hands (rad; 0 when it never aimed), and how many frames aimed.
+     */
+    muzzle(from: number, to: number): { angle: number; aimed: number } {
+      let [angle, aimed] = [0, 0];
+      for (const f of frames.slice(from, to + 1)) if (!Number.isNaN(f.muzzle)) [angle, aimed] = [Math.max(angle, f.muzzle), aimed + 1]; // prettier-ignore
+      return { angle, aimed };
     },
     /** The closest either hand came to `point` (world, m) over frames `from` to `to` (m). */
     handGap(point: readonly [number, number, number], from: number, to: number): number {

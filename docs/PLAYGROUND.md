@@ -207,7 +207,8 @@ isometric G uses, since Q and E turn the view. A click takes the pointer lock in
 gives it back). The look settings `input.sensitivity` (Apex's units: 0.022° a count times it, 5 by default),
 `input.adsSensitivity`, `input.invert` and the stick's three are view settings; the sprint and the crouch hold or
 toggle by the recorded settings `input.sprint` and `input.crouch`. The camera keys are the maps' view actions, rebound
-like the others and never sent to the sim. The pad's reload and holster wait for a held binding (WP 13.19, WP 13.20).
+like the others and never sent to the sim. The pad's reload and holster are held bindings (WP 13.20: X and Y kept
+down 0.3 s; a tap of X uses and of Y swaps the weapons, as in Apex), and 1 and 2 draw the pistol and the rifle.
 
 ### 3.4 Feel beyond the numbers
 
@@ -263,7 +264,7 @@ planted so that feet and hands stay where they touch (WP 13.10, WP 13.11, WP 8.8
 | Jump, fall, landings | rise, apex and fall poses by vertical speed; the soft and the hard landing (Mesh2Motion's three-point landing) by landing speed (until WP 8.8's contacts call the clip in, the procedural body's right hand flat on the floor in the hardest: ADR-0025 amendment 11) |
 | Mantle, mantle hang | the hands on the sim's contact points, the body over (Quaternius's climb warped to the height); a fence's top under one hand at a sprint; Mesh2Motion's ledge hang (until WP 8.8's contacts call the clips in, the procedural body: the hands hooked over the lip, the feet up the face and over it, the hang under the hands, every limb off the wall: ADR-0025 amendment 11) |
 | Wall-climb, ladder, zipline, skydive | hand over hand with the feet pushing; the ladder cycle locked to the vertical speed; both hands on the cable; the skydive's spread pose and its dive |
-| Door kick, melee | Mesh2Motion's `Kick_Breach`, its hit at the strike; the engine's 12 fist and kick moves |
+| Door kick, melee | Mesh2Motion's `Kick_Breach`, its hit at the strike; the engine's 12 fist and kick moves (until WP 8.8's contacts call the clips in, the procedural door kick, `move:breach`, its hit at the clip's strike, 0.83 s in: ADR-0025 amendment 24) |
 | Holding and aiming | the weapon lowered at a sprint; the support hand on the grip; aim offsets by pitch and yaw; the head and eyes toward the aim (ahead of WP 13.20's weapons, the gun carried as the view says, down the sights through the right eye: ADR-0025 amendment 11) |
 
 The bounds, over every course (§9.1): a planted foot drifts at most 5 cm per contact (the anim QA's limit, ADR-0009
@@ -285,6 +286,14 @@ Both are tuned for each of the five cameras, by day and by night (WP 13.24).
   the shooter, where snapping cannot hold.
 - The look metrics (WP 13.24): thumbnails per look and camera; the shimmer metric (pixels changed by a sub-pixel
   orthographic pan) is 0 in the pixel look; contrast and palette use within each look's bounds.
+
+As built (WP 13.24, ADR-0025 amendment 33): each material's ramp is its own colour, lit, down to its shade (the colour
+shifted toward violet and saturated, the toon style's `shade`), so a ramp per material needs no data per material.
+The pixel look draws the engine's own pixels (270 lines on a 1080 or 540-line screen), the pixel filter's `size` 0
+taking whatever whole block keeps 240 to 360 lines in another resolution mode; the glide moves the whole canvas by
+the remainder (the page's canvas has a margin of two drawn pixels); its perspective variant serves the platformer too.
+Night has a key: the ambient lower by night and higher at dusk (engine/gfx/daylight.ts), the streetlights' light
+falling off more slowly (decay 0.75), so their pools reach the cel look's first band.
 
 ## 6. Levels with storeys, and sites
 
@@ -341,12 +350,22 @@ the sim's raycasts, spread and a recoil pattern as data, reloading, holstering (
 impacts with decals, particles and sounds, tracers. The range's targets pop up and move; the HUD keeps hits and
 accuracy. Every camera aims, isometric and top-down with the pointer.
 
+As built (WP 13.20, ADR-0025 amendment 25): the player carries both, holstered, everywhere on the site. A shot leaves
+the eye toward the crosshair's point in first person and the shooter, and level from the chest toward what the
+pointer is over in isometric and top-down (where he faces in the platformer); the burst's climb turns the shots and
+the view, so the crosshair stays where they go, and falls away after the burst. The range's pop-ups (10 and 25 m)
+fall back at a hit and stand 2.5 s later; its 50 m targets slide 2 m across their lanes.
+
 ### 7.3 Melee and the ring
 
 The punch and the kick (WP 13.19), with Apex's numbers (§3.2): a lunge to a target in reach, 30 damage, the uppercut from
 a slide; their hits land on props, doors, dummies and people; the second kick breaks a door off its hinges; hit-stop,
 a shake and a sound sell each one. The ring's dummies spring back; two of them ragdoll on a hard hit
 and get up (WP 10.2).
+
+As built (WP 10.2, ADR-0025 amendment 26): the two that ragdoll are sparring partners, people on the canvas's south
+corners (labs/playground/cast/partners.ts): a punch or a shot flinches one, a kick or the uppercut sends it down as a
+ragdoll, and it gets up the way it lies once it lies still.
 
 ### 7.4 The neighbours and the dog
 
@@ -417,6 +436,8 @@ profile and its saved replay), never as a blocker:
 8. In the platformer camera: run and jump around the yard; does the recentring help or fight?
 9. In isometric and top-down: walk every storey; the right floors cut away; aim with the pointer.
 10. Everything in both looks, at noon and at night.
+11. A downpour (`?playground.rain=1`) on the street, and the dust indoors (`playground.dust=1`): does the frame rate
+    hold? `__engine.stats().gpuMs` should rise by under 1 ms (`GPU_RING.budgetMs`, WP 11.3).
 
 ## 10. The work
 

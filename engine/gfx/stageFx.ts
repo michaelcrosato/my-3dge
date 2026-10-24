@@ -15,7 +15,9 @@
  * - **Trails**: every actor's trail as its puppet's last pose sampled it (engine/gfx/puppets/actors.ts `trails`), as a
  *   ribbon in the blade's tint (engine/gfx/fx/ribbons.ts `TRAIL_TINTS`), while its strike sweeps.
  * - **Events**: `frame` feeds the sim world's event trace (`world.events.trace()`, read without listening): every
- *   emitter answering an event's type bursts where its payload says (`hit`, `slain`, `shot`, `slam`…).
+ *   emitter answering an event's type bursts where its payload says (`hit`, `slain`, `shot`, `slam`…), and each
+ *   `gunshot` draws its tracer, flash, impact and hole (engine/gfx/weapons.ts `createWeaponFx`, `shots`), from the
+ *   shooter's muzzle as `muzzle(id)` finds it (the stage's puppets' carried gun).
  *
  * The view setting `gfx.effects` (true) turns them on and off; off, they draw nothing and draw no random number, and
  * claim no bolt, so bolts draw as their stand-ins, which the ID pass names (§6.7: a view setting never hides a
@@ -36,7 +38,7 @@
  * // fx.capture(entities); fx.draw(0.5); fx.frame(dt, camera, world.events.trace());
  * @see engine/gfx/stageFx.test.ts
  */
-import type { Camera } from 'three/webgpu';
+import type { Camera, Vector3 } from 'three/webgpu';
 import type { TrailSample } from '../anim/character';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
@@ -44,9 +46,11 @@ import type { Field } from '../core/schema';
 import { defineSettings } from '../core/settings';
 import type { EntityData } from '../sim/state';
 import type { TelegraphPlace } from '../world/telegraphs';
+import { gpuParticlesFor, type FeatureReport, type GpuParticles } from './features';
 import { createEffects, type Effects } from './fx/effects';
 import { TRAIL_TINTS } from './fx/ribbons';
 import type { Warmup } from './warmup';
+import { createWeaponFx, type WeaponFx } from './weapons';
 
 /** The view setting that turns the stage's effects on and off. */
 export const STAGE_FX_SETTINGS = defineSettings({
@@ -92,12 +96,18 @@ export interface StageFxOptions {
   fxRng?: (...keys: readonly (string | number)[]) => Rng;
   /** The actors' trails, by entity id (the stage's puppets'). */
   trails?: () => ReadonlyMap<number, readonly TrailSample[]>;
+  /** Where actor `id`'s carried gun's muzzle is now (the stage's puppets'), or null. */
+  muzzle?: (id: number) => Vector3 | null;
 }
 
 /** The stage's effects (see the file comment). */
 export interface StageFx {
   /** The effects (engine/gfx/fx/effects.ts): its `root` is under the stage's scene, its `shake` moves the camera. */
   readonly effects: Effects;
+  /** The shots' tracers and holes (engine/gfx/weapons.ts), under the effects' root. */
+  readonly shots: WeaponFx;
+  /** The GPU's particle ring the effects burst `gpu` emitters into (WP 11.3), made by `register`; null until then. */
+  readonly gpuParticles: GpuParticles | null;
   /** The component kinds it reads: the bolts' and the telegraphs'. */
   readonly kinds: readonly string[];
   /** Reads the entities after a sim step; returns the ids it draws as bolts (no stand-in for them): none while off. */
@@ -106,8 +116,12 @@ export interface StageFx {
   draw(alpha: number): void;
   /** Hands this frame's bolts, telegraphs and trails to the effects, plays the trace's new events, and moves them on. */
   frame(dt: number, camera: Camera, trace: readonly { seq: number; type: string; payload: unknown }[]): void;
-  /** Registers the effects' pools with the warm-up. */
-  register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
+  /**
+   * Registers the effects' pools with the warm-up, and gives the effects the GPU's particle ring where `features` has
+   * `feature:gpuParticles` on and an emitter of the registry asks for it (`gpu`): a page with none makes none. The
+   * frame hands it to the post chain, which draws it and warms it up.
+   */
+  register(warmup: Pick<Warmup, 'register'>, features?: FeatureReport): { dispose(): void };
   /** Forgets what runs and the trace read: a new world, never the same one restored (it would play its trace again). */
   reset(): void;
   dispose(): void;
@@ -117,12 +131,16 @@ export interface StageFx {
 export function createStageFx(options: StageFxOptions = {}): StageFx {
   const registry = options.registry ?? sharedRegistry;
   const effects = createEffects({ registry, ...(options.fxRng ? { fxRng: options.fxRng } : {}) });
+  const shots = createWeaponFx({ effects });
+  effects.root.add(shots.root);
+  let gpu: GpuParticles | null = null;
   const { bolts: boltKinds, telegraphs: telegraphKinds } = fxKinds(registry);
   const bolts = new Map<number, { before: [number, number, number]; after: [number, number, number] }>();
   const shown: [number, number, number][] = [];
   let places: TelegraphPlace[] = [];
   return {
     effects,
+    shots,
     kinds: [...boltKinds, ...telegraphKinds],
     capture(entities) {
       const flying = new Set<number>();
@@ -156,21 +174,36 @@ export function createStageFx(options: StageFxOptions = {}): StageFx {
     },
     frame(dt, camera, trace) {
       effects.feed(trace);
+      shots.feed(trace, options.muzzle ?? (() => null), effects.enabled); // off, read but not played
+      shots.root.visible = effects.enabled;
+      shots.frame(dt);
       for (const at of shown) effects.bolt(at);
       for (const place of places) effects.telegraph(place);
       for (const trail of options.trails?.().values() ?? [])
         if (trail.length > 1) effects.trail(trail, TRAIL_TINTS.blade);
       effects.frame(dt, camera);
     },
-    register: (warmup) => effects.register(warmup),
+    get gpuParticles() {
+      return gpu;
+    },
+    register(warmup, features) {
+      const make = gpuParticlesFor(features);
+      const asked = (registry.list('emitter') as unknown as { gpu: boolean }[]).some((entry) => entry.gpu);
+      if (make && asked && !gpu) effects.useGpuParticles((gpu = make()));
+      const both = [effects.register(warmup), shots.register(warmup)];
+      return { dispose: () => both.forEach((registration) => registration.dispose()) };
+    },
     reset() {
       effects.reset();
+      shots.reset();
       bolts.clear();
       shown.length = 0;
       places = [];
     },
     dispose() {
       effects.dispose();
+      shots.dispose();
+      gpu?.dispose();
       bolts.clear();
     },
   };
