@@ -9412,6 +9412,21 @@ For the agents who maintain the engine.
 - `VirtualClock` (interface): The page's virtual clock and seeded streams, installed as `window.__clock`.
 - `WEBGPU_FLAGS` (const): Shardfall's WebGPU flags (PLAN.md §8.8): SwiftShader through Vulkan, presenting to the page's own canvas.
 
+### [`tools/lib/ciShards.ts`](../tools/lib/ciShards.ts)
+
+- `E2eReport` (interface): The parts of Playwright's JSON report it reads: each suite's file and its tests' results' durations (ms).
+- `E2eSuite` (interface): A suite of a Playwright JSON report, as far as `minutesFromReports` reads it.
+- `minutesFromReports` (function): Each spec file's minutes over `reports` (the shards'), to a tenth, by name.
+- `minutesOf` (const): What `spec` weighs in `table`.
+- `planShards` (function): Deals `specs` out to `total` machines by their minutes (see the file comment); each machine's files by name.
+- `readT2Minutes` (function): The table under `root`; empty when there is none.
+- `SPEC_DIR` (const): Where the spec files are (playwright.config.ts's `testDir`).
+- `specFiles` (function): The spec files under `root`, by name.
+- `T2_MINUTES` (const): The table of T2's minutes a spec file on the workflow's runner, under the root (a baseline: tests/baselines/).
+- `T2Minutes` (interface): The table: which run measured it, the first machine's other steps, and each spec file's minutes.
+- `UNMEASURED_MINUTES` (const): What a spec file the table does not list weighs, until a full run measures it.
+- `writeMinutes` (function): Rewrites the T2 minutes table under `root` from full-run reports (`paths`, Playwright's JSON), keeping its steps.
+
 ### [`tools/lib/ciStatus.ts`](../tools/lib/ciStatus.ts)
 
 - `mainStatus` (function): How main's last full run went, for `x ci --status`: fails only when the last finished run did not pass.

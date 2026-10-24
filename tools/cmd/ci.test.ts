@@ -3,8 +3,8 @@
  * step list against PLAN.md §8.9; the quick gate (no T2) and the full run (`--full`, T2 in full: ADR-0023); the order,
  * the logs and the green commit; a failed step that leaves the next ones running, and a failed `npm ci` that skips
  * them; the quick gate's budget (its steps together, over warns, never fails: ADR-0022); the cache kept across
- * `npm ci`; `--long`; a shard of the full run (`--shard`, ADR-0023 amendment 1); the summary; `--status`; and the exit
- * codes and the 20-line output through the dispatcher. The
+ * `npm ci`; `--long`; a shard of the full run (`--shard`, its spec files dealt by minutes: ADR-0023 amendments 1 and
+ * 3); `--minutes`; the summary; `--status`; and the exit codes and the 20-line output through the dispatcher. The
  * real suite never runs here: `node x ci --local` is WP 0.9's Verify.
  */
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -15,6 +15,7 @@ import { LAST_GREEN, LONG_RUNS, TIERS } from '../lib/tiers';
 import { dispatch, MAX_LINES } from '../x';
 import { CI_STEPS, createCiCommand, FULL_ONLY, parseShard, runCi, type CiDeps, type StepOutcome } from './ci';
 import { CI_OUT, renderSummary } from '../lib/ciSummary';
+import { T2_MINUTES } from '../lib/ciShards';
 import type { WorkflowRun } from '../lib/ciStatus';
 
 const temporary: string[] = [];
@@ -69,6 +70,15 @@ function fakeDeps(fakes: Record<string, Fake> = {}, runs: WorkflowRun[] = [ghRun
   };
   return { deps, calls };
 }
+
+/**
+ * A root with five spec files and their minutes: over four machines, the first starting with the steps' 10, a goes to
+ * the second, b to the third, c to the fourth, d (8) to the first, and e (unmeasured: 5) to the fourth.
+ */
+const SPECS = {
+  ...Object.fromEntries(['a', 'b', 'c', 'd', 'e'].map((name) => [`tests/e2e/${name}.spec.ts`, ''])),
+  [T2_MINUTES]: JSON.stringify({ measured: 'a test', steps: 10, minutes: { 'a.spec.ts': 30, 'b.spec.ts': 20, 'c.spec.ts': 12, 'd.spec.ts': 8 } }), // prettier-ignore
+};
 
 /** The argv each step runs, as the runner receives it. */
 const STEP_COMMANDS = CI_STEPS.map((step) => step.command.join(' '));
@@ -143,24 +153,30 @@ describe('runCi', () => {
     expect(read(root, CI_OUT.summary)).toContain('# x ci --local --full: ok');
   });
 
-  it('runs a share of T2 with --shard, and the other steps but npm ci on the first shard alone', async () => {
-    const first = sandbox();
+  it('runs a share of T2 with --shard, its spec files by minutes, and the other steps but npm ci on the first alone', async () => {
+    const first = sandbox(SPECS);
     const one = fakeDeps();
     const run = await runCi(first, { ...one.deps, cores: 4 }, { full: true, shard: { index: 1, total: 4 } });
-    expect(one.calls).toEqual([...STEP_COMMANDS.slice(0, -1), 'npm run e2e -- --shard=1/4']);
-    expect(run.steps.at(-1)).toMatchObject({ status: 'ok', note: 'shard 1 of 4, 1 worker on 4 cores' });
+    expect(one.calls).toEqual([...STEP_COMMANDS.slice(0, -1), 'npm run e2e -- tests/e2e/d.spec.ts']);
+    expect(run.steps.at(-1)).toMatchObject({ status: 'ok', note: 'shard 1 of 4: 1 spec file, ~8 min, 1 worker on 4 cores' }); // prettier-ignore
     expect(existsSync(join(first, LAST_GREEN)), 'a share is no whole run: no green commit').toBe(false);
     expect(read(first, CI_OUT.summary)).toContain('# x ci --local --full --shard 1/4: ok');
     expect(read(first, CI_OUT.summary)).not.toContain(`recorded in ${LAST_GREEN}`);
 
-    const third = sandbox();
-    const three = fakeDeps();
-    const later = await runCi(third, three.deps, { full: true, shard: { index: 3, total: 4 } });
-    expect(three.calls).toEqual(['npm ci', 'npm run e2e -- --shard=3/4']);
+    const fourth = sandbox(SPECS);
+    const four = fakeDeps();
+    const later = await runCi(fourth, four.deps, { full: true, shard: { index: 4, total: 4 } });
+    expect(four.calls).toEqual(['npm ci', 'npm run e2e -- tests/e2e/c.spec.ts tests/e2e/e.spec.ts']);
     expect(later.ok).toBe(true);
     const skipped = later.steps.filter((step) => step.status === 'skipped');
     expect(skipped.map((step) => step.name)).toEqual(CI_STEPS.slice(1, -1).map((step) => step.name));
     expect(skipped[0].note).toContain("shard 1's");
+
+    const eighth = sandbox(SPECS); // more machines than spec files: none runs T2 with no file, which would run them all
+    const eight = fakeDeps();
+    const idle = await runCi(eighth, eight.deps, { full: true, shard: { index: 8, total: 8 } });
+    expect(eight.calls).toEqual(['npm ci']);
+    expect(idle.steps.at(-1)).toMatchObject({ status: 'skipped', note: 'no spec file falls to shard 8' });
   });
 
   it('keeps running after a failed step, fails the gate and keeps the last lines', async () => {
@@ -322,9 +338,16 @@ describe('node x ci through the dispatcher', () => {
     expect(alone.lines.join('\n')).toContain('give it with --full');
     expect((await x(sandbox(), ['--local', '--full', '--shard', '9/4'], deps)).code).toBe(2);
     expect(calls).toEqual([]);
-    const shard = await x(sandbox(), ['--local', '--full', '--shard', '2/4'], deps);
+    const shard = await x(sandbox(SPECS), ['--local', '--full', '--shard', '2/4'], deps);
     expect(shard.code).toBe(0);
-    expect(calls).toEqual(['npm ci', 'npm run e2e -- --shard=2/4']);
+    expect(calls).toEqual(['npm ci', 'npm run e2e -- tests/e2e/a.spec.ts']);
+  });
+
+  it('reads --minutes with reports alone (tools/lib/ciShards.test.ts tests the table it writes)', async () => {
+    const { deps, calls } = fakeDeps();
+    for (const argv of [['--minutes'], ['--minutes', '--local', 'r.json'], ['--local', 'r.json']])
+      expect((await x(sandbox(), argv, deps)).code, argv.join(' ')).toBe(2);
+    expect(calls).toEqual([]);
   });
 
   it('runs the full run with --full', async () => {

@@ -2,10 +2,12 @@
 # ADR-0023). After each merge to main, and by hand, it runs `node x ci --local --full` (tools/cmd/ci.ts, `CI_STEPS`):
 # npm ci, x src, T0, T1, x port refs --check, x new --test-all, x engine --test (a new game passes its own gate) and
 # T2 in full, split over four jobs (ADR-0023 amendment 1: T2 outgrew one job's 120 minutes): each runs
-# `--shard <i>/4`, T2's i-th share, and the first also every other step. Nobody waits on it: agents merge on the quick
-# gate (`node x ci --local`, without those last three), and `node x ci --status`, which the SessionStart hook runs,
-# reads these runs, so a red main is fixed before other work. Each merge gets a run of its own, none cancelled (no
-# shard stops the others: fail-fast is off), so a failure names its merge; the run passes when every shard does.
+# `--shard <i>/4`, the spec files dealt to it by their minutes here (amendment 3: tests/baselines/t2-minutes.json,
+# rewritten from these jobs' `out-<i>` artifacts by `node x ci --minutes`), and the first also every other step.
+# Nobody waits on it: agents merge on the quick gate (`node x ci --local`, without those last three), and
+# `node x ci --status`, which the SessionStart hook runs, reads these runs, so a red main is fixed before other work.
+# Each merge gets a run of its own, none cancelled (no shard stops the others: fail-fast is off), so a failure names
+# its merge; the run passes when every shard does.
 #
 # The platform, as scripts/setup.sh builds it: both read-only sources at their pinned commits in .cache/src-*, fetched
 # with the job's read-only token and no secret (both repositories are public; LFS off), Node from .nvmrc, and Chrome for

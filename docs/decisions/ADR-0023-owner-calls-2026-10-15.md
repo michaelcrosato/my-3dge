@@ -36,7 +36,8 @@ names it. The leaks between suites that C1's full runs found are still found, an
 before it.
 
 ## Enforced by
-tools/cmd/ci.ts (`CI_STEPS`' `full`, `FULL_ONLY`, `--status`, `--shard`), tools/lib/tierBudgets.ts
+tools/cmd/ci.ts (`CI_STEPS`' `full`, `FULL_ONLY`, `--status`, `--shard`, `--minutes`), tools/lib/ciShards.ts and
+tests/baselines/t2-minutes.json, tools/lib/tierBudgets.ts
 (`GATE_BUDGET_MS`), tools/lib/ciStatus.ts, .github/workflows/ci.yml and tools/cmd/ci-workflow.test.ts,
 tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop, merging, gates).
 
@@ -64,3 +65,14 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    texture, so the 85% check holds it); materials-v2's shell measure lists the page's own shells, which the ID pass
    leaves out. Two waits were too short on GitHub's runners: the gallery's pages get 120 s to be ready, and the
    camera sweep runs one replay a test, as test 1 does (Box 5's two passed 240 s).
+3. **2026-10-24: the shards dealt by minutes** (my call). Amendment 1's `--shard` balanced test counts, and the
+   playground's three heaviest spec files, next to each other by name, all fell to the fourth job: 90 minutes of T2
+   there against 7 on the second, 45 on the first (plus its 14.5 minutes of other steps) and 55 on the third, on
+   d1d707b; G12's and G13's specs would have pushed it past the 120. Now `x ci --local --full --shard <i>/<n>` runs the
+   spec files tools/lib/ciShards.ts deals to machine i: longest first, each to the machine with the fewest minutes so
+   far, the first starting with the other steps', by tests/baselines/t2-minutes.json (each spec file's minutes on
+   GitHub's runner, measured on d1d707b; a file it does not list weighs 5 until measured). On those numbers each job
+   runs about 53 minutes. `node x ci --minutes <report.json…>` rewrites the table from a full run's `out-<i>`
+   artifacts, and T1 fails when the table names a gone spec file or its plan puts any job past 100 minutes, which
+   asks for a fifth shard. Alternatives not taken: more count-balanced shards, or Playwright's `fullyParallel` to
+   split files by test: both still balance counts, blind to minutes, so heavy files can still meet on one job.
