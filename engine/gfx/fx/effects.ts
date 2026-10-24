@@ -15,7 +15,9 @@
  *
  * Budgets (`FX_BUDGET`): every pool is made at its full size before the warm-up and never grows: 4,096 particles and
  * 1,024 glows (sprites, in pages of 1,024), 1,024 decals, 32 ribbons, so a frame costs at most 7 draw calls and builds
- * no pipeline. Past a budget, particles are not born and shapes are left out; `stats()` counts them.
+ * no pipeline. Past a budget, particles are not born and shapes are left out; `stats()` counts them. An emitter whose
+ * entry says `gpu` bursts into the GPU's ring instead while the effects have one (`useGpuParticles`, WP 11.3), which the
+ * chain draws (engine/gfx/enhanced/particles.ts); the floor rings are engine/gfx/fx/rings.ts's.
  * `register(warmup)` registers every pool. With `enabled` false it draws nothing, draws no random number and plays
  * no event (the trace is still read, so turning it on again plays only what comes next).
  *
@@ -51,8 +53,15 @@ import {
   type Emitter,
   type FxLight,
 } from './emitters';
-import { ParticlePool, type BurstOptions, type ParticleStats, type ParticleView } from './particles';
+import {
+  ParticlePool,
+  type BurstOptions,
+  type ParticleBounds,
+  type ParticleRing,
+  type ParticleStats,
+} from './particles';
 import { createRibbons, type TrailSampleLike } from './ribbons';
+import { createRings } from './rings';
 import { eventOptions, eventPosition, type FxEventPayload } from './payload';
 import { ScreenShake } from './shake';
 import { createSprites, STREAK } from './sprites';
@@ -74,6 +83,8 @@ export interface EffectsOptions {
 /** What `stats()` reports. */
 export interface FxStats {
   particles: ParticleStats;
+  /** The GPU's ring's, while the effects have one (`useGpuParticles`). */
+  gpuParticles: (ParticleStats & { recycled: number }) | null;
   sprites: number;
   decals: number;
   ribbons: number;
@@ -93,6 +104,10 @@ export interface Effects {
   enabled: boolean;
   /** The camera shake the bursts add to. */
   readonly shake: ScreenShake;
+  /** The GPU's ring that the particles of `gpu` emitters burst into (WP 11.3), or null: the CPU pool takes them. */
+  readonly gpuParticles: ParticleRing | null;
+  /** Gives the effects the GPU's ring (`gpuParticlesFor`, engine/gfx/features.ts), or takes it away with null. */
+  useGpuParticles(ring: ParticleRing | null): void;
   /** Bursts emitter `id` at `at`, scaled by `options.size`; returns the particles born. */
   burst(id: string, at: PointLike, options?: BurstOptions & { size?: number }): number;
   /** Bursts every emitter answering `type` where `payload` says; returns the particles born (0: none answers). */
@@ -102,8 +117,11 @@ export interface Effects {
    * trace keeps the latest 256 events: feed it after every step.
    */
   feed(trace: readonly { seq: number; type: string; payload: unknown }[]): number;
-  /** Runs emitter `id` at `at` for this frame at its rate; `key` names it, so its fractions and light carry over. */
-  emit(id: string, at: PointLike, key: string | number): void;
+  /**
+   * Runs emitter `id` at `at` for this frame at its rate times `scale` (1); `key` names it, so its fractions and light
+   * carry over.
+   */
+  emit(id: string, at: PointLike, key: string | number, scale?: number): void;
   /** Draws a telegraph this frame, filled as far as its wind-up. */
   telegraph(place: TelegraphPlace): void;
   /** Draws a ribbon along `samples` (oldest first, an animator's trail) this frame, in `tint` (hex). */
@@ -135,18 +153,6 @@ export interface Effects {
 /** A ring's fields when a decal leaves them out: the emitter kind's defaults (a 0.35 s shockwave). */
 const RING = EMITTER_FIELDS.ring.default as Emitter['ring'];
 
-/** A floor ring growing and fading: a burst's shockwave, or a decal. */
-interface Ring {
-  at: [number, number, number];
-  r0: number;
-  r1: number;
-  width: number;
-  rgb: number[];
-  alpha: number;
-  life: number;
-  age: number;
-}
-
 /** A bolt of this frame: where, its colour (hex and linear), its core's and its size. */
 interface Bolt {
   at: [number, number, number];
@@ -163,7 +169,9 @@ export function createEffects(options: EffectsOptions = {}): Effects {
   const streams = new RngStreams(1);
   const fxRng = options.fxRng ?? ((...keys) => streams.stream(...keys));
   const pool = new ParticlePool(FX_BUDGET.particles);
-  const reading = {} as ParticleView; // the particle `bounds` reads
+  let gpu: ParticleRing | null = null;
+  /** Where `entry`'s particles go: the GPU's ring when it asks for it and there is one, else the pool. */
+  const sink = (entry: Emitter) => (entry.gpu && gpu) || pool;
   const sprites = createSprites({ capacity: FX_BUDGET.particles + FX_BUDGET.glows });
   const decals = createDecals({ capacity: FX_BUDGET.decals });
   const ribbons = createRibbons({ capacity: FX_BUDGET.ribbons });
@@ -171,9 +179,9 @@ export function createEffects(options: EffectsOptions = {}): Effects {
   const root = new Group();
   root.name = 'fx';
   root.add(decals.batch.root, ribbons.mesh, sprites.batch.root);
-  const rings: Ring[] = [];
+  const rings = createRings(FX_BUDGET.decals);
   const running = new Map<string, { carry: number; seed: number }>();
-  let queued = { emits: [] as [Emitter, number[], string][], places: [] as TelegraphPlace[] };
+  let queued = { emits: [] as [Emitter, number[], string, number][], places: [] as TelegraphPlace[] };
   let shapes = { trails: [] as [readonly TrailSampleLike[], number[]][], bolts: [] as Bolt[] };
   let frameLights: FxLight[] = [];
   let [time, seen, played] = [0, -Infinity, 0];
@@ -197,27 +205,27 @@ export function createEffects(options: EffectsOptions = {}): Effects {
     const place = (offset: readonly number[]) => at.map((v, k) => v + (entry.offset[k] + offset[k]) * size);
     let born = 0;
     const counted = (count: number) => (count > 0 ? Math.max(1, Math.round(count * more)) : 0);
-    born += pool.burst(particleSpec(entry), counted(entry.count), place([0, 0, 0]), fxRng('fx'), options);
+    born += sink(entry).burst(particleSpec(entry), counted(entry.count), place([0, 0, 0]), fxRng('fx'), options);
     for (const layer of entry.layers) {
-      const spec = particleSpec(getEmitter(layer.emitter, registry), layer.set);
-      born += pool.burst(spec, counted(layer.count), place(layer.offset), fxRng('fx'), options);
+      const other = getEmitter(layer.emitter, registry);
+      born += sink(other).burst(particleSpec(other, layer.set), counted(layer.count), place(layer.offset), fxRng('fx'), options); // prettier-ignore
     }
     shake.add(entry.shake * size);
-    lay([at[0], options.ground!, at[2]], entry.ring, size);
+    rings.lay([at[0], options.ground!, at[2]], entry.ring, size);
     return born;
-  }
-
-  /** Lays a timed floor ring at `at` (on the floor), its lengths scaled by `size`, within the decals' budget. */
-  function lay(at: [number, number, number], ring: Emitter['ring'], size: number): void {
-    if (!(ring.radius[1] > 0) || rings.length >= FX_BUDGET.decals) return;
-    const [r0, r1, width] = [ring.radius[0] * size, ring.radius[1] * size, ring.width * size];
-    rings.push({ at, r0, r1, width, rgb: toLinear(ring.color), alpha: ring.alpha, life: ring.life, age: 0 });
   }
 
   const fx: Effects = {
     root,
     enabled: true,
     shake,
+    get gpuParticles() {
+      return gpu;
+    },
+    useGpuParticles(given) {
+      gpu?.clear();
+      gpu = given;
+    },
     burst(id, at, burstOptions = {}) {
       if (!fx.enabled) return 0;
       return burstEntry(getEmitter(id, registry), pointOf(at), burstOptions.size ?? 1, burstOptions);
@@ -241,8 +249,8 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       }
       return n;
     },
-    emit(id, at, key) {
-      if (fx.enabled) queued.emits.push([getEmitter(id, registry), pointOf(at), String(key)]);
+    emit(id, at, key, scale = 1) {
+      if (fx.enabled) queued.emits.push([getEmitter(id, registry), pointOf(at), String(key), scale]);
     },
     telegraph(place) {
       if (fx.enabled) queued.places.push(place);
@@ -251,7 +259,7 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       if (fx.enabled) shapes.trails.push([samples, toLinear(tint)]);
     },
     decal(at, ring) {
-      if (fx.enabled) lay(pointOf(at), { ...RING, ...ring }, 1);
+      if (fx.enabled) rings.lay(pointOf(at), { ...RING, ...ring }, 1);
     },
     bolt(at, look = {}) {
       if (!fx.enabled) return;
@@ -268,20 +276,14 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       time += dt;
       frameLights = [];
       if (fx.enabled) {
-        for (const [entry, at, key] of queued.emits) {
+        for (const [entry, at, key, scale] of queued.emits) {
           let state = running.get(key);
           if (!state) running.set(key, (state = { carry: 0, seed: fxRng('fx', 'emit', key).range(0, 100) }));
-          state.carry += entry.rate * dt;
+          state.carry += entry.rate * scale * dt;
           const n = Math.floor(state.carry);
           state.carry -= n;
-          if (n > 0)
-            pool.burst(
-              particleSpec(entry),
-              n,
-              at.map((v, k) => v + entry.offset[k]),
-              fxRng('fx'),
-              { ground: at[1] },
-            );
+          const from = at.map((v, k) => v + entry.offset[k]);
+          if (n > 0) sink(entry).burst(particleSpec(entry), n, from, fxRng('fx'), { ground: at[1] });
           if (entry.light.intensity > 0) {
             const [x, y, z] = at.map((v, k) => v + entry.light.offset[k]);
             const { color, distance } = entry.light;
@@ -295,7 +297,8 @@ export function createEffects(options: EffectsOptions = {}): Effects {
           }
         }
         pool.update(dt, time);
-      } else pool.clear();
+        gpu?.update(dt, time);
+      } else [pool, gpu].forEach((each) => each?.clear());
       shake.update(dt);
       sprites.begin(camera);
       sprites.particles(pool);
@@ -314,27 +317,7 @@ export function createEffects(options: EffectsOptions = {}): Effects {
       sprites.end();
       decals.begin();
       for (const place of queued.places) decals.telegraph(getTelegraph(place.telegraph, registry), place);
-      for (let i = rings.length - 1; i >= 0; i--) {
-        const ring = rings[i];
-        ring.age += dt;
-        if (ring.age >= ring.life || !fx.enabled) rings.splice(i, 1);
-      }
-      for (const ring of rings) {
-        const u = ring.age / ring.life;
-        const r = ring.r0 + (ring.r1 - ring.r0) * (1 - (1 - u) * (1 - u));
-        const fade = ring.alpha * (1 - u);
-        decals.sector(
-          ring.at,
-          0,
-          Math.max(0, r - ring.width / 2),
-          r + ring.width / 2,
-          Math.PI,
-          r + ring.width / 2,
-          ring.rgb,
-          fade,
-          0,
-        );
-      }
+      rings.draw(dt, decals, fx.enabled);
       decals.end();
       ribbons.begin();
       for (const [samples, rgb] of shapes.trails) ribbons.add(samples, rgb);
@@ -345,20 +328,14 @@ export function createEffects(options: EffectsOptions = {}): Effects {
     lights: () => frameLights.map((light) => ({ ...light, position: [...light.position] })),
     drawCalls: () => sprites.batch.drawCalls() + decals.batch.drawCalls() + (ribbons.count > 0 ? 1 : 0),
     bounds() {
-      if (!pool.count) return null;
-      const [min, max]: [number, number, number][] = [
-        [Infinity, Infinity, Infinity],
-        [-Infinity, -Infinity, -Infinity],
-      ];
-      for (let i = 0; i < pool.count; i++) {
-        const { x, y, z, vx, vy, vz, size, stretch } = pool.read(i, reading);
-        const r = size + (stretch ? Math.hypot(vx, vy, vz) * STREAK : 0); // a streak's reach (sprites.ts)
-        [x, y, z].forEach((v, k) => ([min[k], max[k]] = [Math.min(min[k], v - r), Math.max(max[k], v + r)]));
-      }
-      return { min, max };
+      const boxes = [pool.bounds(STREAK), gpu?.bounds() ?? null].filter((box): box is ParticleBounds => box !== null); // prettier-ignore
+      if (!boxes.length) return null;
+      const pick = (side: 'min' | 'max', k: number) => (side === 'min' ? Math.min : Math.max)(...boxes.map((box) => box[side][k])); // prettier-ignore
+      return { min: [pick('min', 0), pick('min', 1), pick('min', 2)], max: [pick('max', 0), pick('max', 1), pick('max', 2)] }; // prettier-ignore
     },
     stats: () => ({
       particles: pool.stats(),
+      gpuParticles: gpu?.stats() ?? null,
       sprites: sprites.batch.count,
       decals: decals.batch.count,
       ribbons: ribbons.count,
@@ -376,7 +353,8 @@ export function createEffects(options: EffectsOptions = {}): Effects {
     },
     reset() {
       pool.clear();
-      rings.length = 0;
+      gpu?.clear();
+      rings.clear();
       running.clear();
       queued = { emits: [], places: [] };
       shapes = { trails: [], bolts: [] };

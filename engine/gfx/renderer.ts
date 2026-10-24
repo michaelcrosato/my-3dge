@@ -38,7 +38,7 @@ import { codeError, defineCodes, log as sharedLog, type Log } from '../core/log'
 import type { Registry } from '../core/registry';
 import { createSettings, type Settings } from '../core/settings';
 import { readCaps, requestDevice, type GfxCaps } from './caps';
-import { gpuTimingFor, lightingFor, resolveFeatures, type FeatureReport, type GpuTiming } from './features';
+import { gpuTimingFor, lightingFor, resolveFeatures, type FeatureReport, type GpuParticles, type GpuTiming } from './features'; // prettier-ignore
 import { advanceFrame, checkPinned, countPipelines, type PipelineCounter } from './pipelines';
 import { createResolution, type Resolution, type ResolutionMode } from './resolution';
 import { createWarmup, type Warmup, type WarmupView } from './warmup';
@@ -116,9 +116,13 @@ export interface GfxInfo {
   downgrades: string[];
 }
 
-/** One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default). */
+/**
+ * One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default) and
+ * the GPU's particles the post chain draws in a pass of their own (engine/gfx/enhanced/particles.ts, WP 11.3).
+ */
 export interface FrameView extends WarmupView {
   alpha?: number;
+  particles?: GpuParticles;
 }
 
 /** What `frame()` did. */

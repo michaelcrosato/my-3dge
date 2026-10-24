@@ -4,7 +4,8 @@
  * 1. the scene pass with the fixed MRT (engine/gfx/post/mrt.ts): colour, view normals with each object's flags (its
  *    tag as it is when the frame starts, `writeFlags`), depth;
  * 2. the shading (engine/gfx/post/shading.ts, WP 11.5: occlusion, reflections, bounce light, air) on the scene's light,
- *    then `bloom` (three.js's `BloomNode`) added, never scoped; off at the `low` quality tier (WP 3.12), with advice
+ *    the GPU's particles laid over it (engine/gfx/post/particles.ts, WP 11.3; a plain frame draws them straight), then
+ *    `bloom` (three.js's `BloomNode`) added, never scoped; off at the `low` quality tier (WP 3.12), with advice
  *    `GFX_POST_NO_BLOOM` when a look asks for it there;
  * 3. the picture in display colours (`renderOutput`: the renderer's tone mapping and colour space), into a texture;
  * 4. `aa`, edge smoothing (engine/gfx/post/aa.ts: FXAA, SMAA or TRAA, as `post.aa` says), into a texture to read;
@@ -26,7 +27,6 @@
  *
  * Use: `gfx.frame(post.view(frameView))` draws a frame through the chain; `post.attach(gfx.warmup)` once, before the
  * first warm-up, adds the chain's key part.
- *
  * Invariants: presentation only: nothing here reaches the sim or the hash (the settings are view settings); the
  * output graph is built once (`builds`), again only when the renderer's tone mapping or colour space changes, which
  * changes the warm-up's key; the camera is the same after a frame as before it.
@@ -50,7 +50,7 @@ import { qualityBudget, type QualityBudget, type QualitySetting } from '../quali
 import type { FrameView } from '../renderer';
 import type { Warmup, WarmupPass } from '../warmup';
 import { AA_CHOICE, aaKindFor, createAa, gateUpdates, type Aa, type AaKind } from './aa';
-import { sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
+import { gpuParticlesFor, sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
 import {
   createFilterUniforms,
@@ -65,6 +65,7 @@ import {
 } from './filters';
 import { defineLooks, type LookEntry } from './looks';
 import { clearMrt, createScenePass, FLAG_SLOTS, PART_BITS, useSceneMrt, writeFlags } from './mrt';
+import { createParticleLayer } from './particles';
 import { definePostSettings } from './settings';
 import { createShading } from './shading';
 import { snapToBlocks } from './snap';
@@ -169,6 +170,7 @@ export function createPost(
   const glow = bloomNode(scenePass.getTextureNode('output'), 0, 0.4, 0.9);
   let warming = false;
   const shading = createShading({ scenePass, features: gfx.features, warming: () => warming, log });
+  const layer = gpuParticlesFor(gfx.features) ? createParticleLayer(scenePass) : null; // the GPU's particles
   const empty = new Scene();
   let bloomRuns = false;
   gateUpdates(glow, () => warming || bloomRuns);
@@ -181,7 +183,8 @@ export function createPost(
   const build = () => {
     built?.aa.dispose();
     built?.display.renderTarget?.dispose();
-    const lit = shading.apply(scenePass.getTextureNode('output')).add(glow.mul(bloomGate));
+    const shaded = shading.apply(scenePass.getTextureNode('output'));
+    const lit = (layer ? layer.over(shaded) : shaded).add(glow.mul(bloomGate));
     const display = rtt(renderOutput(vec4(lit.rgb, 1), renderer.toneMapping, renderer.outputColorSpace));
     display.name = 'postDisplay'; // a WGSL identifier: r182 names the binding after it
     const runs = () => warming || aaGate.value > 0.5;
@@ -285,9 +288,11 @@ export function createPost(
     const chain = sync();
     // Straight only in the style the warm-up's frame drew: the warm-up compiles every other style for the MRT alone.
     plain = isPlain(chain) && uniforms.frame.value.x === 0 && (!styles || !own || styles.style === own.style);
+    const particles = layer?.prepare(renderer, warming) ?? false;
     if (plain || warming) {
       clearMrt(renderer);
       straight();
+      if (particles) layer!.straight(renderer);
       if (!warming) return;
     }
     if (!built || built.tone !== renderer.toneMapping || built.space !== renderer.outputColorSpace) build();
@@ -313,6 +318,7 @@ export function createPost(
       scenePass.scene = scene;
       restore?.();
       warming = false;
+      layer?.done();
     }
   };
 
@@ -337,6 +343,7 @@ export function createPost(
     view(frame) {
       scenePass.scene = frame.scene;
       scenePass.camera = frame.camera;
+      layer?.view(frame.particles, frame.camera);
       return { ...frame, draw, passes };
     },
     use(id) {
@@ -354,6 +361,7 @@ export function createPost(
       built?.display.renderTarget?.dispose();
       glow.dispose();
       shading.dispose();
+      layer?.dispose();
       scenePass.dispose();
       processing.dispose();
     },

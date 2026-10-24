@@ -1,9 +1,10 @@
 /**
  * @file The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`,
- * `camera.advance`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember`
- * (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
- * Headless, `render` and `shot` throw `DEV_NO_RENDERER` (they need a GPU); `camera` and `scene.dump` need the
- * scene's view (`createHeadless({ view: true })`, else `APP_NO_VIEW`); `ready` and `replay` work everywhere.
+ * `camera.advance`, `scene.dump`, `fx.stats` (WP 11.3) and `replay`, registered from here as entries of the registry
+ * kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the
+ * same members. Headless, `render` and `shot` throw `DEV_NO_RENDERER` (they need a GPU); `camera`, `scene.dump` and
+ * `fx.stats` need the scene's view (`createHeadless({ view: true })`, else `APP_NO_VIEW`); `ready` and `replay` work
+ * everywhere.
  *
  * The members work on an `AppHost`: the inspector's host plus the view, the ready flag and the drawing
  * (engine/app/headless.ts makes it headless, engine/app/engine.ts in a page). Cameras and view settings are view
@@ -109,6 +110,11 @@ defineMember('scene.dump', {
     },
   },
   impl: (h, options: { depth?: number; filter?: string }) => viewOf(h, 'scene.dump').dump(options),
+});
+
+defineMember('fx.stats', {
+  help: "The effects' counts: the CPU pool's particles (live, born, dropped), the GPU's ring's while it has one (WP 11.3: its recycled too), sprites, decals, ribbons, draw calls and events played.", // prettier-ignore
+  impl: (h) => viewOf(h, 'fx.stats').stage.fx.effects.stats(),
 });
 
 defineMember('replay', {

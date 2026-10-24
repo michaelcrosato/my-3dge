@@ -269,13 +269,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 97](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -287,7 +287,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -317,7 +317,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
 
 ### APP_STORE_BLOCKED
 
@@ -839,7 +839,7 @@ Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 57](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 58](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
 
@@ -850,6 +850,14 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 - Registered in: [`engine/gfx/enhanced/gi.ts` line 32](../engine/gfx/enhanced/gi.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when bounce light is off: a look's `gi` section draws nothing.
+
+### GFX_NO_GPU_PARTICLES
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
+- Registered in: [`engine/gfx/enhanced/particles.ts` line 48](../engine/gfx/enhanced/particles.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) while GPU particles are off: the emitters that ask for them burst into the CPU pool.
 
 ### GFX_NO_MANNEQUIN
 
@@ -879,7 +887,7 @@ Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 52](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 53](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
 
@@ -983,7 +991,7 @@ Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 62](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 63](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
 

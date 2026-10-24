@@ -46,6 +46,7 @@ import type { Field } from '../core/schema';
 import { defineSettings } from '../core/settings';
 import type { EntityData } from '../sim/state';
 import type { TelegraphPlace } from '../world/telegraphs';
+import { gpuParticlesFor, type FeatureReport, type GpuParticles } from './features';
 import { createEffects, type Effects } from './fx/effects';
 import { TRAIL_TINTS } from './fx/ribbons';
 import type { Warmup } from './warmup';
@@ -105,6 +106,8 @@ export interface StageFx {
   readonly effects: Effects;
   /** The shots' tracers and holes (engine/gfx/weapons.ts), under the effects' root. */
   readonly shots: WeaponFx;
+  /** The GPU's particle ring the effects burst `gpu` emitters into (WP 11.3), made by `register`; null until then. */
+  readonly gpuParticles: GpuParticles | null;
   /** The component kinds it reads: the bolts' and the telegraphs'. */
   readonly kinds: readonly string[];
   /** Reads the entities after a sim step; returns the ids it draws as bolts (no stand-in for them): none while off. */
@@ -113,8 +116,12 @@ export interface StageFx {
   draw(alpha: number): void;
   /** Hands this frame's bolts, telegraphs and trails to the effects, plays the trace's new events, and moves them on. */
   frame(dt: number, camera: Camera, trace: readonly { seq: number; type: string; payload: unknown }[]): void;
-  /** Registers the effects' pools with the warm-up. */
-  register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
+  /**
+   * Registers the effects' pools with the warm-up, and gives the effects the GPU's particle ring where `features` has
+   * `feature:gpuParticles` on and an emitter of the registry asks for it (`gpu`): a page with none makes none. The
+   * frame hands it to the post chain, which draws it and warms it up.
+   */
+  register(warmup: Pick<Warmup, 'register'>, features?: FeatureReport): { dispose(): void };
   /** Forgets what runs and the trace read: a new world, never the same one restored (it would play its trace again). */
   reset(): void;
   dispose(): void;
@@ -126,6 +133,7 @@ export function createStageFx(options: StageFxOptions = {}): StageFx {
   const effects = createEffects({ registry, ...(options.fxRng ? { fxRng: options.fxRng } : {}) });
   const shots = createWeaponFx({ effects });
   effects.root.add(shots.root);
+  let gpu: GpuParticles | null = null;
   const { bolts: boltKinds, telegraphs: telegraphKinds } = fxKinds(registry);
   const bolts = new Map<number, { before: [number, number, number]; after: [number, number, number] }>();
   const shown: [number, number, number][] = [];
@@ -175,7 +183,13 @@ export function createStageFx(options: StageFxOptions = {}): StageFx {
         if (trail.length > 1) effects.trail(trail, TRAIL_TINTS.blade);
       effects.frame(dt, camera);
     },
-    register(warmup) {
+    get gpuParticles() {
+      return gpu;
+    },
+    register(warmup, features) {
+      const make = gpuParticlesFor(features);
+      const asked = (registry.list('emitter') as unknown as { gpu: boolean }[]).some((entry) => entry.gpu);
+      if (make && asked && !gpu) effects.useGpuParticles((gpu = make()));
       const both = [effects.register(warmup), shots.register(warmup)];
       return { dispose: () => both.forEach((registration) => registration.dispose()) };
     },
@@ -189,6 +203,7 @@ export function createStageFx(options: StageFxOptions = {}): StageFx {
     dispose() {
       effects.dispose();
       shots.dispose();
+      gpu?.dispose();
       bolts.clear();
     },
   };

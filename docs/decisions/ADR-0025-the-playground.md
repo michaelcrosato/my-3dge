@@ -1725,3 +1725,61 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   the street's four lamps shine in the pool at dusk and night and not at noon, the moon and the nearest lamp casting
   (tests/e2e/lights.spec.ts). Dusk and night are dim and flat (luma spreads 0.13 to 0.16, the pixel look 36 to 39
   colours): WP 13.24 tunes both looks by night.
+
+## Amendment 32 (2026-10-23, WP 11.3): GPU particles
+
+- **Where it lives.** engine/gfx/enhanced/particles.ts is the technique `feature:gpuParticles`: a ring of 65,536
+  particles (`GPU_RING`) the GPU moves in compute and draws, decorative only, handed out by engine/gfx/features.ts
+  (`gpuParticlesFor`) while the feature is on. The stage's effects get it when they register with the warm-up
+  (engine/gfx/stageFx.ts `gpuParticles`, `useGpuParticles`), where an emitter of the registry asks for it: a page with
+  none makes none, so the box's pages pay nothing. The frame carries it (`FrameView.particles`), and the post chain
+  draws it through its particle layer (engine/gfx/post/particles.ts). Which particles go to it is the emitter's to
+  say: the kind's new field `gpu` (false by default), so the engine's own emitters keep the CPU pool, their tests and
+  pictures as they were, and the playground's rain and dust ask for the ring. The CPU pool takes them where the
+  feature is off, thinned to its 4,096 and the rest counted (`GFX_NO_GPU_PARTICLES` says so once). Beyond the plan's
+  Owns: engine/gfx/fx/{particles,emitters,effects}.ts, engine/gfx/fx/rings.ts (the floor rings, split from effects.ts
+  to keep it under 400 lines), engine/gfx/{features,stageFx,stage,renderer}.ts, engine/gfx/post/{particles,chain}.ts,
+  engine/app/{view,drawing,engine,viewMembers}.ts, labs/playground/{weather,main}.ts and README.md, docs/PLAYGROUND.md
+  §9.3.
+- **Births on the CPU, into a buffer of their own.** shardfall writes each birth into the ring itself. r182 uploads a
+  storage buffer's whole array when it first creates it and keeps the update ranges asked for before that, so a later
+  upload would put back births the GPU had moved on. So the CPU writes births only into a births buffer, through the
+  CPU pool's own writer (`planBurst`, `writeParticle`: the same floats and the same draws, so a burst gives the same
+  particles on either), and one compute pass a frame copies each into its slot of the ring and moves every slot used,
+  as the CPU pool moves its particles. Nothing is read back: the CPU counts the live ones by their lives.
+- **No normal written: a pass of its own.** r182 has one colour write mask for every target of a pass and blends only
+  the first, so a transparent object drawn in the scene pass replaces the normals and flags under it (the CPU's
+  sprites do). The ring is drawn in a pass of its own, cleared to nothing (r182 clears a pass to the renderer's clear
+  colour, so the layer's pass sets it for its draw), tested by hand against the scene pass's depth, and laid
+  premultiplied over the scene's light before bloom's glow and the display pass, so the looks' filters reach the rain;
+  a plain frame draws it straight after the scene, against the screen's own depth. It is out of the ID pass for free:
+  the ID pass draws the stage's scene, and the ring's mesh is in a scene of its own.
+- **The warm-up.** The warm frame draws a slot of the ring and steps it, building the pass's, the plain frame's and
+  the step's pipelines. Found by a probe at the device: `warmBoth` (engine/app/drawing.ts) handed the warm-up views
+  without the ring, and the first rainy frame built two; it hands them over now.
+- **The page's frame.** `EngineFrame` gains `emit(id, at, key, scale)`, which runs an emitter at its rate times
+  `scale` (`Effects.emit` takes the scale too), and `setting(key)`, so a page's own presentation follows a view
+  setting live; both types moved with `FrameWorld` to engine/app/drawing.ts (engine/app/engine.ts was at its cap),
+  re-exported from engine.ts, so engine/index.ts is as it was. The inspector's new `fx.stats()` gives the effects'
+  counts, the ring's among them.
+- **The playground's weather** (labs/playground/weather.ts): rain over a 36 m square round the player, falling 13 m at
+  14 m/s, and dust motes about him indoors, at `playground.rain` and `playground.dust` (0 to 1, view settings, 0 by
+  default); no rain falls while he is indoors, since no drop finds a roof.
+- **The budget.** `GPU_RING.budgetMs`: a downpour adds at most 1 ms of GPU time a frame on a desktop GPU, which the
+  owner's playtest checks (docs/PLAYGROUND.md §9.3, item 11): SwiftShader's GPU time is a CPU's (WP 11.2), so here it
+  is measured and ranks nothing (ADR-0022).
+- **Debris stays on the CPU.** The trigger names rain, dust and debris; the debris the block makes (a kicked door's
+  splinters, a shot's impact, `emitter:bits`) bursts in tens of particles, well inside the CPU pool, so the engine's
+  emitters keep `gpu` false; one that needs more says so.
+- **Measured** (tests/e2e/enhanced-particles.spec.ts, the street from cam iso, the sim paused): a downpour holds
+  28,524 drops on the ring and none in the CPU pool, changes 22.5% of the picture's pixels, builds nothing after the
+  warm-up and leaves the ID pass and the normals view the same pixel for pixel; a light rain (2,895 drops) drawn by
+  the ring and, the feature off, by the CPU pool's sprites, the same frames in the clean look, differs in 0.10% of the
+  pixels (`PARITY` 1%); a rain drawn plain and through the chain (a neutral grade laid on, the chain's draw calls
+  telling it apart) is the same picture, 0 pixels apart: the hand-made depth test against the scene pass's hides what
+  the screen's does; the feature off, a downpour fills the CPU pool to 3,804 of its 4,096 with 24,871 drops left out
+  in 60 frames, building nothing; the street replay, a frame every 10 steps through a downpour on the ring, gives its
+  goldens to step 240. `x perf labs/playground --scene site-street --set playground.rain=1 --feature
+  feature:gpuParticles`, on less off (SwiftShader, ranking only): GPU ms +113 (737 against 623, about 28,500 drops
+  against the pool's 4,096), CPU render ms −1.2, one compute call, 52,454 triangles, five pipelines more, 0 after the
+  warm-up.

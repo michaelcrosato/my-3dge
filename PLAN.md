@@ -3432,7 +3432,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Verify:** `npm run e2e -- tests/e2e/timing.spec.ts`
 
 #### WP-11.3 GPU particles
-- **Owns:** `engine/gfx/enhanced/particles.ts`
+- **Owns:** `engine/gfx/enhanced/particles.ts`, `engine/gfx/post/particles.ts`, `labs/playground/weather.ts` (ADR-0025 amendment 32)
 - **Needs:** WP 11.1, WP 11.2
 - **Size:** M
 - **Trigger:** the CPU particles of WP 6.4 exceed their budget in the box's densest fight, or a look needs more particles than the CPU path carries (§9.1). Fired 2026-10-17 by the playground (ADR-0025): rain, dust and debris beyond the CPU particles.

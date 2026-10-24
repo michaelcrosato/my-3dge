@@ -135,6 +135,8 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
 | `playground.day` | How many minutes of play a day on the block takes (0, the default, holds the hour), when the scene starts. Changes play: recorded in replays. |
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
+| `playground.rain` | How hard it rains on the block, 0 (dry, the default) to 1 (a downpour, about 29,000 drops falling round the player as GPU particles, WP 11.3); none falls while he is indoors. A view setting, live. |
+| `playground.dust` | How thick the dust motes hang about the player indoors, 0 (none, the default) to 1. A view setting, live. |
 | `movement.gaits.run` | One of the shooter model's numbers, live: every number and switch of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them; `movement.mantle.boost` turns on the mantle boost), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |
 | `input.sprint` | The sprint button: `toggle` (Apex's: a press keeps the sprint while the player moves on) or `hold`. Changes play: recorded in replays. |
 | `input.crouch` | The crouch button: `hold` or `toggle` (a press crouches until pressed again). Changes play: recorded in replays. |

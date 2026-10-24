@@ -43,6 +43,7 @@ import { AO_FEATURE, createOcclusion } from './enhanced/ao';
 import { cascadeSun, CSM_FEATURE, type CascadedSun } from './enhanced/csm';
 import { GI_FEATURE, giScale, shadeGi } from './enhanced/gi';
 import { PoolTiledLighting, TILED, TILED_FEATURE } from './enhanced/lighting';
+import { createGpuParticles, PARTICLES_FEATURE } from './enhanced/particles';
 import { createReflections, SSR_FEATURE } from './enhanced/ssr';
 import { createGpuTiming, type GpuTiming } from './enhanced/timing';
 import { POOL_SIZES } from './lights';
@@ -131,7 +132,7 @@ export interface FeatureReport {
 }
 
 /** The techniques' entries (WP 11.5), each declared by its module in engine/gfx/enhanced/. */
-const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE, AO_FEATURE, GI_FEATURE, AIR_FEATURE, SSR_FEATURE, TRAA_FEATURE];
+const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE, AO_FEATURE, GI_FEATURE, AIR_FEATURE, SSR_FEATURE, TRAA_FEATURE, PARTICLES_FEATURE]; // prettier-ignore
 
 /** Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them. */
 export function defineFeatures(registry: Registry = sharedRegistry): void {
@@ -279,6 +280,14 @@ export function shadingFor(report?: FeatureReport): ShadingTechniques {
   };
 }
 
+/**
+ * The GPU's particle ring's maker (engine/gfx/enhanced/particles.ts, WP 11.3) when `feature:gpuParticles` is on in
+ * `report`, else null (and with no report): the CPU pool takes every emitter's particles.
+ */
+export function gpuParticlesFor(report?: FeatureReport): typeof createGpuParticles | null {
+  return report?.on.includes(PARTICLES_FEATURE.id) ? createGpuParticles : null;
+}
+
 /** TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA). */
 export function temporalAaFor(report?: FeatureReport): typeof createTemporalAa | null {
   return report?.on.includes(TRAA_FEATURE.id) ? createTemporalAa : null;
@@ -295,4 +304,5 @@ export type { AirLights } from './enhanced/air';
 export type { Occlusion } from './enhanced/ao';
 export type { CascadedSun } from './enhanced/csm';
 export type { Reflections } from './enhanced/ssr';
+export type { GpuParticles } from './enhanced/particles';
 export type { GpuTiming } from './enhanced/timing';

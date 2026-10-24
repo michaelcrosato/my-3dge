@@ -428,6 +428,8 @@ profile and its saved replay), never as a blocker:
 8. In the platformer camera: run and jump around the yard; does the recentring help or fight?
 9. In isometric and top-down: walk every storey; the right floors cut away; aim with the pointer.
 10. Everything in both looks, at noon and at night.
+11. A downpour (`?playground.rain=1`) on the street, and the dust indoors (`playground.dust=1`): does the frame rate
+    hold? `__engine.stats().gpuMs` should rise by under 1 ms (`GPU_RING.budgetMs`, WP 11.3).
 
 ## 10. The work
 

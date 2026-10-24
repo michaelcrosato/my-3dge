@@ -439,7 +439,7 @@ game agent's manual.
 - `EmitterSpec` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
 - `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
-- `EngineFrame` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), and the camera the frame was drawn from.
+- `EngineFrame` (interface from [`engine/app/drawing.ts`](../engine/app/drawing.ts)): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), the camera the frame was drawn from, and the emitters to run.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
 - `EngineStats` (interface from [`engine/dev/stats.ts`](../engine/dev/stats.ts)): What `__engine.stats()` returns: means in milliseconds, then the renderer's counts (null when not measured).
@@ -498,7 +498,7 @@ game agent's manual.
 - `FootPlantState` (type from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): What `footPlant` keeps between ticks for one character: the left and right `feet`'s locks.
 - `footstepSound` (function from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): The step a foot on `surface` plays at `gait`: its effect, gain and pitch ratio; null when the gait has none.
 - `forwardKinematics` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): Each joint's world matrix, position and rotation for `pose` on `skeleton`, written into `out` (a new `WorldPose` by default) and returned.
-- `FrameWorld` (type from [`engine/app/engine.ts`](../engine/app/engine.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
+- `FrameWorld` (type from [`engine/app/drawing.ts`](../engine/app/drawing.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `fromCamera` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): Turns a stick or keys into a world-space move, so pushing forward walks away from the camera: `axes` is `[right, forward]` (W is `[0, 1]`, D is `[1, 0]`) and `yaw` the camera heading.
 - `fromLegacy` (function from [`engine/anim/moves-data.ts`](../engine/anim/moves-data.ts)): A legacy `E.MOVES` spec in the new fields (Appendix C, `LEGACY_FIELDS`); defaults are written out only when needed.
 - `FRU` (type from [`engine/anim/authoring.ts`](../engine/anim/authoring.ts)): A rig-local point or direction: metres (or a direction's parts) forward, right and up.
@@ -3338,6 +3338,8 @@ For the agents who maintain the engine.
 
 - `createPageDrawing` (function): The page's drawing over `parts` (see the file comment).
 - `DRAWING` (const): GPU frames drawn while a replay plays before the queue is drained (`drain`); frames tried before a warm-up counts as stuck (`tries`).
+- `EngineFrame` (interface): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), the camera the frame was drawn from, and the emitters to run.
+- `FrameWorld` (type): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `PageDrawing` (interface): The page's drawing (see the file comment).
 - `PageDrawingOptions` (interface): What `createPageDrawing` draws with besides the parts.
 - `PageParts` (interface): What the page has started so far, read at each call: each part is null until the engine starts it.
@@ -3347,9 +3349,9 @@ For the agents who maintain the engine.
 - `createEngine` (function): Starts the engine in a page (see the file comment); resolves once it is up or has failed.
 - `Engine` (interface): A started engine.
 - `ENGINE_CODES` (const): The codes this module raises, with their fixes.
-- `EngineFrame` (interface): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), and the camera the frame was drawn from.
+- `EngineFrame` (interface from [`engine/app/drawing.ts`](../engine/app/drawing.ts)): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), the camera the frame was drawn from, and the emitters to run.
 - `EngineOptions` (interface): How a page starts the engine.
-- `FrameWorld` (type): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
+- `FrameWorld` (type from [`engine/app/drawing.ts`](../engine/app/drawing.ts)): The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events.
 - `recordOf` (function): The log record for a thrown value: its own code and values when it is a coded error (a `GfxError` carries only its message, so the values are read back from it through the code's template), else `code` with the message.
 
 ### [`engine/app/feelMember.ts`](../engine/app/feelMember.ts)
@@ -4581,6 +4583,16 @@ For the agents who maintain the engine.
 - `TILED_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
 - `tileGrid` (function): The tile grid a drawing buffer of `width` × `height` px covers, clamped to the buffers made.
 
+### [`engine/gfx/enhanced/particles.ts`](../engine/gfx/enhanced/particles.ts)
+
+- `createGpuParticles` (function): Makes the ring (see the file comment): `slots` particles, at most `births` born between two steps.
+- `GPU_RING` (const): The ring's numbers: its slots, the most births between two steps, the step's workgroup, the floor of none, and its budget, the GPU milliseconds a frame a downpour may add (WP 11.2's `gpuMs`) on a desktop GPU, which the owner's playtest checks (docs/PLAYGROUND.md §9.3): SwiftShader's GPU time is a CPU's, ranking nothing (ADR-0022).
+- `GpuParticles` (interface): GPU particles (see the file comment).
+- `GpuParticleStats` (interface): What the ring did: the CPU pool's counts, with the live ones a newer birth overwrote.
+- `ParticleCompute` (interface): What runs the step: the renderer, as far as the ring uses it.
+- `PARTICLES_CODES` (const): Its advice code, raised by the feature registry when it is off.
+- `PARTICLES_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+
 ### [`engine/gfx/enhanced/ssr.ts`](../engine/gfx/enhanced/ssr.ts)
 
 - `createReflections` (function): Makes the reflections over the scene pass's `inputs` (see the file comment).
@@ -4609,6 +4621,8 @@ For the agents who maintain the engine.
 - `FeatureOff` (interface): One feature that is off: its id, the advice raised and why.
 - `FeatureReport` (interface): What `resolveFeatures` found: the features on, those off and why, and the downgrades as advice codes.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
+- `GpuParticles` (interface from [`engine/gfx/enhanced/particles.ts`](../engine/gfx/enhanced/particles.ts)): GPU particles (see the file comment).
+- `gpuParticlesFor` (function): The GPU's particle ring's maker (engine/gfx/enhanced/particles.ts, WP 11.3) when `feature:gpuParticles` is on in `report`, else null (and with no report): the CPU pool takes every emitter's particles.
 - `GpuTiming` (interface from [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)): A renderer's GPU timing (see the file comment).
 - `gpuTimingFor` (function): The GPU timing a renderer gets (engine/gfx/enhanced/timing.ts, WP 11.2): measuring when `feature:timestamps` is on in `report`, which also says whether to make the renderer with `trackTimestamp`; idle (no `gpuMs`) when it is off.
 - `lightingFor` (function): Gives `renderer` tiled lighting (engine/gfx/enhanced/lighting.ts, WP 11.5) when `feature:tiledLighting` is on in `report`, before its first frame; returns the light pool a sky on it may make: `TILED.pool` lights tiled, else the pool's default.
@@ -4659,10 +4673,16 @@ For the agents who maintain the engine.
 ### [`engine/gfx/fx/particles.ts`](../engine/gfx/fx/particles.ts)
 
 - `BurstOptions` (interface): How a burst differs from its spec.
+- `BurstPlan` (interface): What every particle of one burst shares: its scale, origin, added velocity, floor and colours (`planBurst`).
+- `PARTICLE_FLOATS` (const): The floats a particle keeps, by name: offsets into its stride.
 - `PARTICLE_STRIDE` (const): Floats per particle.
+- `ParticleBounds` (interface): The box round live particles (m).
 - `ParticlePool` (class): The CPU particle pool: see the file comment.
+- `ParticleRing` (interface): What bursts the particles of an emitter whose entry says `gpu`, as the effects meet it: the GPU's ring (engine/gfx/enhanced/particles.ts, WP 11.3), moved by `update` and counted by `stats` as the pool is.
 - `ParticleStats` (interface): What a pool did.
 - `ParticleView` (interface): A particle as the drawing reads it.
+- `planBurst` (function): The plan of a burst of `spec` at `origin` (m) as `options` change it (see the file comment).
+- `writeParticle` (function): Writes one particle of a burst into `d` from float `o` (a slot's first, `PARTICLE_STRIDE` floats), drawing from `rng` in a fixed order: its place in the area, its direction in the unit ball, its life, and its age when prewarmed.
 
 ### [`engine/gfx/fx/payload.ts`](../engine/gfx/fx/payload.ts)
 
@@ -4681,6 +4701,11 @@ For the agents who maintain the engine.
 - `RibbonsOptions` (interface): What `createRibbons` takes.
 - `TRAIL_TINTS` (const): The tints of the Stress test's trails: the hero's blade and the monsters' claws.
 - `TrailSampleLike` (interface): One sample of a trail: where the part's base and tip were, and its ribbon's weight (1).
+
+### [`engine/gfx/fx/rings.ts`](../engine/gfx/fx/rings.ts)
+
+- `createRings` (function): Makes the rings: at most `capacity` at once.
+- `Rings` (interface): The floor rings (see the file comment).
 
 ### [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)
 
@@ -5109,6 +5134,11 @@ For the agents who maintain the engine.
 - `useSceneMrt` (function): Turns the scene pass's MRT on for what the renderer compiles or draws next (the warm-up's compile steps).
 - `writeFlags` (function): Writes the flags of everything `scenePass` draws into its table, as they are now: call it before each frame, so a tag takes effect on the next one.
 
+### [`engine/gfx/post/particles.ts`](../engine/gfx/post/particles.ts)
+
+- `createParticleLayer` (function): Makes the layer over `scenePass`, whose camera and depth it shares (see the file comment).
+- `ParticleLayer` (interface): The chain's particle layer (see the file comment).
+
 ### [`engine/gfx/post/presets.ts`](../engine/gfx/post/presets.ts)
 
 - `PRESETS` (const): The presets, by id (see the file comment).
@@ -5329,7 +5359,7 @@ For the agents who maintain the engine.
 - `createRenderer` (function): Starts three.js's `WebGPURenderer` on `canvas`, on WebGPU only: the adapter check, a device with every feature and limit the adapter offers, `await renderer.init()`, the backend assertion, then the report, the feature registry and the error routes.
 - `FRAME_CODES` (const): The codes a running renderer raises through the log.
 - `FrameReport` (interface): What `frame()` did.
-- `FrameView` (interface): One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default).
+- `FrameView` (interface): One frame to draw: the warm-up's view, plus the clock's interpolation alpha (1, the latest state, by default) and the GPU's particles the post chain draws in a pass of their own (engine/gfx/enhanced/particles.ts, WP 11.3).
 - `Gfx` (interface): A started renderer: three.js's `WebGPURenderer`, its device, its report, and what draws a frame.
 - `GFX_CODES` (const): The codes the renderer raises at startup, with their fixes (collected into docs/ERRORS.md by `x docs`).
 - `GfxCode` (type): A code the renderer raises at startup: a key of `GFX_CODES`.
@@ -8357,6 +8387,12 @@ For the agents who maintain the engine.
 - `RANGE_TARGETS` (const): Where the range's targets stand (m) and of which kind: down each lane, facing the bench (−X).
 - `standRange` (function): Stands the range's targets (`RANGE_TARGETS`): their entities, in order.
 - `standTarget` (function): Stands a range target of `kind` (its id) on its base at `at` (m), facing `yaw`: its entity.
+
+### [`labs/playground/weather.ts`](../labs/playground/weather.ts)
+
+- `PLAYGROUND_WEATHER_SETTINGS` (const): The weather's view settings: how hard it rains and how thick the dust hangs.
+- `runWeather` (function): Runs the weather for this frame (see the file comment): the rain over the player while he is outdoors, the dust about him while he is in, each at its setting's share of its rate; nothing without a player.
+- `WEATHER` (const): The weather's emitters and their rates at full strength (particles a second).
 
 ### [`playwright.config.ts`](../playwright.config.ts)
 

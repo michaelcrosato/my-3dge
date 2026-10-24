@@ -323,7 +323,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createDamageNumbers`, `DAMAGE_RISE`, `DamageNumbers`, `TracedWorld`
   - Tests: [`engine/app/damageNumbers.test.ts`](../engine/app/damageNumbers.test.ts)
 - [`drawing.ts`](../engine/app/drawing.ts): The page's drawing (PLAN.md §6.4, §6.7, WP 2.7): what engine/app/engine.ts `createEngine` draws with once its renderer is up.
-  - Exports: `createPageDrawing`, `DRAWING`, `PageDrawing`, `PageDrawingOptions`, `PageParts`
+  - Exports: `createPageDrawing`, `DRAWING`, `EngineFrame`, `FrameWorld`, `PageDrawing`, `PageDrawingOptions`, `PageParts`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts)
 - [`engine.ts`](../engine/app/engine.ts): The engine in a page (PLAN.md §6.4, §6.9, §8.3, WP 2.7): `createEngine({ canvas, scenes, levels })` registers the levels the page imported as text, reads the page's routes (engine/app/routes.ts: `?scene ?seed ?cam ?replay`, settings by path, a gallery link `#gallery/<kind>/<id>` with its driver, engine/dev/galleryShoot.ts), starts the scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline the view needs through both cameras (perspective and orthographic), draws the first frame, then runs the frame loop (engine/app/loop.ts): the devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the view drawn at the clock's alpha; the map follows the camera, the look the view settings `input.*`, the aim the view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
   - Exports: `createEngine`, `Engine`, `ENGINE_CODES`, `EngineFrame`, `EngineOptions`, `FrameWorld`, `recordOf`
@@ -352,7 +352,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
   - Exports: `ADVANCE_FRAME`, `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
   - Tests: [`engine/app/view.test.ts`](../engine/app/view.test.ts)
-- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `camera.advance`, `scene.dump` and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
+- [`viewMembers.ts`](../engine/app/viewMembers.ts): The view's inspector members (PLAN.md §8.3, WP 2.7): `ready`, `render`, `shot`, `camera.get`, `camera.set`, `camera.advance`, `scene.dump`, `fx.stats` (WP 11.3) and `replay`, registered from here as entries of the registry kind `inspectorMember` (engine/dev/members.ts), so `window.__engine` in a page and `createHeadless` in Node list the same members.
   - Exports: `AppHost`
   - Tests: [`engine/app/viewMembers.test.ts`](../engine/app/viewMembers.test.ts)
 
@@ -568,7 +568,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `DAYLIGHT`, `daylightAt`, `defineDaylight`, `lightAt`, `SUN`
   - Tests: [`engine/gfx/daylight.test.ts`](../engine/gfx/daylight.test.ts), [`tests/e2e/lights.spec.ts`](../tests/e2e/lights.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
-  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `TemporalAa`, `temporalAaFor`
+  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuParticles`, `gpuParticlesFor`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `TemporalAa`, `temporalAaFor`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
 - [`idmarks.ts`](../engine/gfx/idmarks.ts): The ID pass's marks (PLAN.md §8.5, I-28; split from engine/gfx/idpass.ts after G9, ADR-0014 amendment 17): `marksOf` numbers what the pass sees, largest first, and `drawMarks` draws the numbers onto a frame, for `x shot --marks` (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
   - Exports: `drawMarks`, `Mark`, `marksOf`
@@ -736,6 +736,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`lighting.ts`](../engine/gfx/enhanced/lighting.ts): Tiled lighting (PLAN.md WP 11.5, I-17): every lamp lit at once, not only the light pool's nearest 12.
   - Exports: `LIGHTING_CODES`, `PoolTiledLighting`, `splitLights`, `TILED`, `TILED_FEATURE`, `tileGrid`
   - Tests: [`engine/gfx/enhanced/lighting.test.ts`](../engine/gfx/enhanced/lighting.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
+- [`particles.ts`](../engine/gfx/enhanced/particles.ts): GPU particles (PLAN.md WP 11.3, §5.8; ADR-0025 amendment 32): the technique `feature:gpuParticles`, a ring of `GPU_RING.slots` particles the GPU moves and draws, decorative only, for the emitters that ask for it (`gpu`, engine/gfx/fx/emitters.ts) while the feature is on; the CPU pool (engine/gfx/fx/particles.ts) takes them otherwise.
+  - Exports: `createGpuParticles`, `GPU_RING`, `GpuParticles`, `GpuParticleStats`, `ParticleCompute`, `PARTICLES_CODES`, `PARTICLES_FEATURE`
+  - Tests: [`engine/gfx/enhanced/particles.test.ts`](../engine/gfx/enhanced/particles.test.ts), [`tests/e2e/enhanced-particles.spec.ts`](../tests/e2e/enhanced-particles.spec.ts)
 - [`ssr.ts`](../engine/gfx/enhanced/ssr.ts): Screen-space reflections (PLAN.md WP 11.5): r182's `SSRNode` addon for the look's `ssr` section: a ray from each metal pixel, reflected about its normal, marched through the depth buffer, takes the colour where it lands, fading with distance and growing at grazing angles; rougher surfaces read a blurrier level of the result.
   - Exports: `createReflections`, `ReflectionInputs`, `Reflections`, `SSR`, `SSR_CODES`, `SSR_FEATURE`
   - Tests: [`engine/gfx/enhanced/ssr.test.ts`](../engine/gfx/enhanced/ssr.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
@@ -755,7 +758,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `defineEmitter`, `Emitter`, `EMITTER_FIELDS`, `emitterKind`, `EmitterLayer`, `EmitterSpec`, `FxLight`, `getEmitter`, `lightLevel`, `PARTICLE_FIELDS`, `ParticleFields`, `particleSpec`, `ParticleSpec`
   - Tests: [`engine/gfx/fx/emitters.test.ts`](../engine/gfx/fx/emitters.test.ts)
 - [`particles.ts`](../engine/gfx/fx/particles.ts): CPU particles (PLAN.md WP 6.4, §6.4's view state): `ParticlePool` holds up to `capacity` live particles in flat arrays, bursts them from an emitter's `ParticleSpec` (engine/gfx/fx/emitters.ts) with a visual random stream (`fxRng`: never the sim's), and moves them a rendered frame at a time.
-  - Exports: `BurstOptions`, `PARTICLE_STRIDE`, `ParticlePool`, `ParticleStats`, `ParticleView`
+  - Exports: `BurstOptions`, `BurstPlan`, `PARTICLE_FLOATS`, `PARTICLE_STRIDE`, `ParticleBounds`, `ParticlePool`, `ParticleRing`, `ParticleStats`, `ParticleView`, `planBurst`, `writeParticle`
   - Tests: [`engine/gfx/fx/particles.test.ts`](../engine/gfx/fx/particles.test.ts)
 - [`payload.ts`](../engine/gfx/fx/payload.ts): What an event carries for its effects (PLAN.md WP 6.4): `FxEventPayload`, the keys engine/gfx/fx/effects.ts reads of a sim event's payload, and how they become a burst.
   - Exports: `eventOptions`, `eventPosition`, `FxEventPayload`
@@ -766,6 +769,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`ribbons.ts`](../engine/gfx/fx/ribbons.ts): Socket trails (PLAN.md WP 6.4): ribbons between a part's base and tip over its last positions, a blade's sweep or a claw's, from an animator's trail (engine/anim/character.ts `TrailSample`: base, tip, weight), fading to nothing at the tail.
   - Exports: `createRibbons`, `Ribbons`, `RibbonsOptions`, `TRAIL_TINTS`, `TrailSampleLike`
   - Tests: [`engine/gfx/fx/ribbons.test.ts`](../engine/gfx/fx/ribbons.test.ts)
+- [`rings.ts`](../engine/gfx/fx/rings.ts): Floor rings (PLAN.md WP 6.4): a burst's shockwave or a laid decal, a band on the floor growing out and fading over its life (eased out: fast, then slow), drawn each frame through the decals (engine/gfx/fx/decals.ts) as a whole circle.
+  - Exports: `createRings`, `Rings`
+  - Tests: [`engine/gfx/fx/effects.test.ts`](../engine/gfx/fx/effects.test.ts)
 - [`shake.ts`](../engine/gfx/fx/shake.ts): Screen shake (PLAN.md WP 6.4, §6.4: camera only): `ScreenShake` keeps an amplitude in metres that hits and explosions add to (capped at `SHAKE.max`) and that dies away by `exp(−9 t)`; `apply(camera)` moves the camera along its own right and up by two sums of sines of the presentation time, and `restore(camera)` takes the move back, so the view places the camera, applies the shake, draws, and restores.
   - Exports: `ScreenShake`, `SHAKE`
   - Tests: [`engine/gfx/fx/shake.test.ts`](../engine/gfx/fx/shake.test.ts)
@@ -916,6 +922,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`mrt.ts`](../engine/gfx/post/mrt.ts): The one fixed MRT of post-processing (PLAN.md WP 7.4, §6.7, I-46): the scene pass draws, once per frame and always the same way, the colour (`output`) and the view normals (`normal`), whose spare channel `w` carries what the composite needs to know about each pixel's object: its outline group, its part of the scene (a character, an object or the environment) and whether it is drawn as pixel art.
   - Exports: `clearMrt`, `createFlagTable`, `createScenePass`, `FLAG_BITS`, `FLAG_SLOTS`, `Flags`, `flagsOf`, `FlagTable`, `foldGroup`, `GROUPS`, `packFlags`, `Part`, `PART_BITS`, `PARTS`, `PostTag`, `SceneTargets`, `setPart`, `unpackFlags`, `useSceneMrt`, `writeFlags`
   - Tests: [`engine/gfx/post/mrt.test.ts`](../engine/gfx/post/mrt.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
+- [`particles.ts`](../engine/gfx/post/particles.ts): The post chain's particle layer (PLAN.md WP 11.3; ADR-0025 amendment 32): the frame's GPU particles (engine/gfx/enhanced/particles.ts) drawn in a pass of their own and laid premultiplied over the scene's light, before bloom's glow and the display pass, so the looks' filters reach them.
+  - Exports: `createParticleLayer`, `ParticleLayer`
+  - Tests: [`tests/e2e/enhanced-particles.spec.ts`](../tests/e2e/enhanced-particles.spec.ts)
 - [`presets.ts`](../engine/gfx/post/presets.ts): One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-462`), keys renamed (engine/gfx/post/looks.ts says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/ 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA).
   - Exports: `PRESETS`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts)
@@ -1714,6 +1723,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`views.ts`](../labs/playground/views.ts): The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its two looks, in the order the keys step through them: the maps' view actions (labs/playground/controls.ts, WP 13.9) cycle the cameras (T, `nextCamera`), swap the shooter's shoulder (X, `swapShoulder`) and turn isometric by 90° (Q and E, `turnView`), and P (`LOOK_KEY`) switches the looks, live, on the page (labs/playground/main.ts), each camera switch blended; the menu (labs/playground/menu.ts) links each.
   - Exports: `cameraMode`, `CameraMode`, `LOOK_KEY`, `nextCamera`, `nextLook`, `PLAYGROUND_CAMERAS`, `PLAYGROUND_LOOKS`, `swapShoulder`, `turnView`
   - Tests: [`labs/playground/views.test.ts`](../labs/playground/views.test.ts)
+- [`weather.ts`](../labs/playground/weather.ts): The playground's weather (docs/PLAYGROUND.md §8.2, PLAN.md WP 11.3): rain over the player outdoors and dust motes hanging about him indoors, two running emitters the page runs each drawn frame (`runWeather`, through `EngineFrame.emit`) and draws as GPU particles (`gpu`): the GPU's ring of 65,536 while `feature:gpuParticles` is on, the CPU pool otherwise, which thins the rain to its 4,096 and counts the drops it leaves out.
+  - Exports: `PLAYGROUND_WEATHER_SETTINGS`, `runWeather`, `WEATHER`
+  - Tests: [`labs/playground/weather.test.ts`](../labs/playground/weather.test.ts)
 
 ## labs/playground/bodies
 

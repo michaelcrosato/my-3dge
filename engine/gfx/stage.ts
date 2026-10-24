@@ -368,7 +368,7 @@ export function createStage(options: StageOptions): Stage {
         props.register(warmup),
         rides.register(warmup),
         crowd.register(warmup),
-        fx.register(warmup),
+        fx.register(warmup, features),
         lights.register(warmup, features),
       ];
       return { dispose: () => registrations.forEach((registration) => registration.dispose()) };

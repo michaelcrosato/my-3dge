@@ -317,7 +317,7 @@ export function createRunView(options: RunViewOptions): RunView {
       stage.sky.update({ camera: drawn, focus: stage.actors.player()?.feet ?? stage.centre, time, hour, lamps });
       drawCrowd();
       stage.fx.frame(frame.dt, drawn, options.run().world.events.trace());
-      return { scene: stage.scene, camera: drawn, alpha: frame.alpha };
+      return { scene: stage.scene, camera: drawn, alpha: frame.alpha, ...(stage.fx.gpuParticles ? { particles: stage.fx.gpuParticles } : {}) }; // prettier-ignore
     },
     cameraInfo: info,
     queries,

@@ -67,12 +67,8 @@ import { attachSwipes } from '../ui/swipe';
 import { createTouchLayer, getTouchLayout, type TouchLayout } from '../ui/touch';
 import type { Inspector } from '../dev/inspector';
 import { createOverlay as createUi, type Overlay } from '../ui/overlay';
-import type { CameraPose } from '../gfx/cameras/pose';
-import type { QueryView } from '../sim/queryView';
-import type { Scene } from '../sim/scene';
-import type { World, WorldEvents } from '../sim/world';
 import { createDamageNumbers } from './damageNumbers';
-import { createPageDrawing, type PageParts } from './drawing';
+import { createPageDrawing, type EngineFrame, type PageParts } from './drawing';
 import { createPageLook } from './look';
 import { createAppHost, type AppRun } from './headless';
 import { createLoop, type Loop } from './loop';
@@ -99,6 +95,8 @@ export const ENGINE_CODES = defineCodes('app', {
     fix: 'read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless',
   },
 });
+
+export type { EngineFrame, FrameWorld } from './drawing';
 
 /** How a page starts the engine. */
 export interface EngineOptions {
@@ -134,26 +132,6 @@ export interface EngineOptions {
   onMenu?: () => void;
   /** The page's own presentation (its sound): called once per drawn frame, after the draw, with the run to read. */
   onFrame?: (frame: EngineFrame) => void;
-}
-
-/** The read side of the run's world a page gets each frame: its step, rate, entities and the trace of its events. */
-export type FrameWorld = Pick<World, 'tick' | 'hz' | 'get' | 'query'> & { readonly events: Pick<WorldEvents, 'trace'> };
-
-/**
- * What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the
- * hash), and the camera the frame was drawn from.
- */
-export interface EngineFrame {
-  /** The run's world: the same object until the run starts again (a new seed, a replay), so a reader compares it. */
-  readonly world: FrameWorld;
-  /** The running scene: its id, its level and whether it has physics. */
-  readonly scene: Scene;
-  /** The camera's pose this frame: where a listener goes. */
-  readonly camera: CameraPose;
-  /** The sim's physics queries, read-only, in a physics scene; null without physics. */
-  readonly queries: QueryView | null;
-  /** Real seconds since the last frame. */
-  readonly dt: number;
 }
 
 /** A started engine. */
