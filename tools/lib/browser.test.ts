@@ -46,7 +46,7 @@ describe('the launch options', () => {
     expect(chromiumPath({}, none)).toBe(DEFAULT_CHROMIUM);
     expect(chromiumPath({ CHROMIUM_PATH: '/x/chrome' }, none)).toBe('/x/chrome');
     expect(chromiumPath({ HOME: '/h' }, only(DEFAULT_CHROMIUM))).toBe(DEFAULT_CHROMIUM);
-    const cached = '/h/.cache/my3dge/chrome-141.0.7390.37/chrome-linux64/chrome';
+    const cached = '/h/.cache/my3dge/chrome-153.0.8010.12/chrome-linux64/chrome';
     expect(cachedChromium({ HOME: '/h' })).toBe(cached);
     expect(chromiumPath({ HOME: '/h' }, only(cached))).toBe(cached);
     expect(chromiumPath({ HOME: '/h', CHROMIUM_PATH: '/x/chrome' }, only(cached))).toBe('/x/chrome');
@@ -54,7 +54,7 @@ describe('the launch options', () => {
       executablePath: '/x/chrome',
       args: [...WEBGPU_FLAGS],
     });
-    expect(browserRuntime('141.0.7390.37')).toBe('chromium141');
+    expect(browserRuntime('153.0.8010.12')).toBe('chromium153');
   });
 });
 

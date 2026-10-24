@@ -110,7 +110,7 @@
       },
       "rule": "compatible",
       "next": null,
-      "reason": "Browser tests (T2): Playwright Test drives the container's Chromium 141 on WebGPU through executablePath (Verifiable)."
+      "reason": "Browser tests (T2): Playwright Test drives the container's Chromium (153 since WP U-8) on WebGPU through executablePath (Verifiable)."
     },
     "@types/node": {
       "qualifying": {
@@ -512,11 +512,11 @@
     },
     "chromium": {
       "pin": {
-        "version": "141.0.7390.37"
+        "version": "153.0.8010.12"
       },
       "rule": "platform",
       "next": null,
-      "reason": "The platform's browser (/opt/pw-browsers/chromium, chromium-1194), WebGPU on SwiftShader; it changes when the environment does (Discovery first). It bounds three.js: r186 needs a WebGPU texture-view feature it lacks (§4.7)."
+      "reason": "The platform's browser (/opt/pw-browsers/chromium: chromium-1243, Chrome for Testing 153, since the environment's update of 2026-10-22; chromium-1194, release 141, before: WP U-8), WebGPU on SwiftShader; it changes when the environment does (Discovery first). Release 141 bounded three.js, r186 needing a WebGPU texture-view feature it lacked (§4.7); on 153 that bound is U-7's to measure."
     }
   },
   "knowledge": {

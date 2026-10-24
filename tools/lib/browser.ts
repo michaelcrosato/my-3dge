@@ -36,11 +36,11 @@ export const WEBGPU_FLAGS: readonly string[] = [
 /** The repository root, two levels above this file. */
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** The container's Chromium 141; `$CHROMIUM_PATH` overrides it. Nothing ever runs `playwright install`. */
+/** The container's Chromium (153 since 2026-10-22); `$CHROMIUM_PATH` overrides it. Nothing runs `playwright install`. */
 export const DEFAULT_CHROMIUM = '/opt/pw-browsers/chromium';
 
 /** The platform's Chromium release (tools/deps.json), which scripts/setup.sh fetches where the container's is absent. */
-export const CHROMIUM_VERSION = '141.0.7390.37';
+export const CHROMIUM_VERSION = '153.0.8010.12';
 
 /** Where scripts/setup.sh keeps Chrome for Testing `CHROMIUM_VERSION` on a machine without `DEFAULT_CHROMIUM`. */
 export function cachedChromium(env: Record<string, string | undefined> = process.env): string {
@@ -75,7 +75,7 @@ export function launchBrowser(): Promise<Browser> {
   return chromium.launch(launchOptions());
 }
 
-/** The browser part of a report's runtime: `141.0.7390.37` → `chromium141`. */
+/** The browser part of a report's runtime: `153.0.8010.12` → `chromium153`. */
 export function browserRuntime(version: string): string {
   return `chromium${version.split('.')[0]}`;
 }

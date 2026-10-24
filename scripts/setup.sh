@@ -155,7 +155,7 @@ GIT_LFS_SKIP_SMUDGE=1 resolve_source SHARDFALL_SRC .cache/src-shardfall fa2dab6c
 # 3. Chromium (the platform's release, where the container's is absent)
 # ---------------------------------------------------------------------------------------------------------------------
 
-chromium_version="141.0.7390.37"
+chromium_version="153.0.8010.12"
 chromium_dir="$cache_dir/chrome-${chromium_version}"
 if [ -n "${CHROMIUM_PATH:-}" ] || [ -x /opt/pw-browsers/chromium ]; then
   say "Chromium: ${CHROMIUM_PATH:-/opt/pw-browsers/chromium}"

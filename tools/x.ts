@@ -47,7 +47,7 @@ export interface CommandResult {
   lines?: string[];
   /** The report's directory under `out/<cmd>/`: a page, scene or file; `all` when omitted. */
   target?: string;
-  /** The browser it ran, for the report's runtime (`chromium141`). */
+  /** The browser it ran, for the report's runtime (`chromium153`). */
   browser?: string;
   failures?: Finding[];
   warnings?: Finding[];
