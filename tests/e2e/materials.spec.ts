@@ -15,8 +15,9 @@
 import type { Material, Mesh, PerspectiveCamera, Scene } from 'three/webgpu';
 import type { Gfx, FrameReport } from '../../engine/gfx/renderer';
 import { bakeTexture } from '../../engine/gfx/textures/bake';
-import { registry } from '../../engine/core/registry';
-import '../../engine/gfx/materials/material';
+import { createRegistry } from '../../engine/core/registry';
+import { materialKind } from '../../engine/gfx/materials/material';
+import { textureKind } from '../../engine/gfx/textures/texture';
 import { expect, test, type Frame } from './fixtures';
 
 /** What the scene page publishes as `window.__scene` (tests/pages/scene.ts), as far as this suite uses it. */
@@ -37,6 +38,15 @@ interface Card {
   color: string;
   window: { x0: number; y0: number; x1: number; y1: number };
 }
+
+/**
+ * The engine's built-in materials and textures alone, as the scene page has them: a registry of this suite's own. The
+ * shared one in this worker also holds whatever the suites before it imported (the props' materials, in the full run's
+ * first shard once it was dealt by minutes), which the page never defines.
+ */
+const BUILT_INS = createRegistry();
+textureKind(BUILT_INS);
+materialKind(BUILT_INS);
 
 /** The page's window as this suite reads it (renderer.spec.ts declares `__scene` globally with its own type). */
 type SceneWindow = { __scene: ScenePage };
@@ -138,7 +148,7 @@ test('every material renders on the scene page after the warm-up, building 0 pip
     return { frame, ids: library.ids, entries: gfx.warmup.last!.entries, stats: gfx.stats() };
   }, MODULES);
   expect(warmed.entries).toContain('materials');
-  const expected = registry.list('material').map((entry) => entry.id);
+  const expected = BUILT_INS.list('material').map((entry) => entry.id);
   expect(warmed.ids).toEqual([...expected, 'material:test-ember', 'material:test-unlitChecker'].sort());
   expect(warmed.frame).toMatchObject({ drawn: true, built: 0 });
   expect(warmed.stats.pipelinesAfterWarmUp).toBe(0);
@@ -245,7 +255,7 @@ test('every material renders on the scene page after the warm-up, building 0 pip
 test("the page's bakes match Node's, byte for byte", async ({ page, harness }) => {
   await page.goto(PAGE);
   await harness.ready();
-  const ids = registry.list('texture').map((entry) => entry.id);
+  const ids = BUILT_INS.list('texture').map((entry) => entry.id);
   const inPage = await page.evaluate(
     async ({ modules, ids }) => {
       const { bakeTexture } = (await import(modules.bake)) as typeof import('../../engine/gfx/textures/bake');

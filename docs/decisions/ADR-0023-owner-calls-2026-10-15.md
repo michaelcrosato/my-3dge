@@ -77,4 +77,7 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    runs about 53 minutes. `node x ci --minutes <report.json…>` rewrites the table from a full run's `out-<i>`
    artifacts, and T1 fails when the table names a gone spec file or its plan puts any job past 100 minutes, which
    asks for a fifth shard. Alternatives not taken: more count-balanced shards, or Playwright's `fullyParallel` to
-   split files by test: both still balance counts, blind to minutes, so heavy files can still meet on one job.
+   split files by test: both still balance counts, blind to minutes, so heavy files can still meet on one job. The
+   new order's first run (on 1c4c540, d289543's tree) ran materials.spec.ts after box-hall.spec.ts, whose imports
+   put the props' materials in the worker's shared registry, which the spec read for what the page should have: it
+   now reads the built-ins from a registry of its own.
