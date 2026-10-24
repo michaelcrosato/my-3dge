@@ -177,7 +177,8 @@ describe('x replay in Node', () => {
     expect((await replay('tests/replays', '--browser', 'film')).code).toBe(2);
     expect((await replay('tests/replays', '--browser', 'page', '--swap', 'none')).code).toBe(2);
     expect((await replay('tests/replays', '--swap', 'none')).code).toBe(2);
-    expect((await replay('tests/replays', '--browser', 'sim', '--swap', 'tan')).code).toBe(2);
+    // a name the swap refuses: sqrt, exact in every runtime (tan was one until WP U-8 ported it)
+    expect((await replay('tests/replays', '--browser', 'sim', '--swap', 'sqrt')).code).toBe(2);
     expect((await replay('tests/nowhere')).code).toBe(2);
   });
 });
