@@ -1,9 +1,10 @@
 /**
  * @file Unit tests for the GPU timing (engine/gfx/enhanced/timing.ts), against a stand-in renderer whose timestamp
  * reads resolve when the test says: off, it never reads and reports nothing; on, the first read (the warm-up's) is
- * discarded, then each read is a frame's time, render and compute, a type read only when it ran; reads never overlap;
- * a taint or a drain discards a read; the mean covers the last reads; three's record of every pass is emptied after
- * each read; a failed read keeps the samples. And the pin: r182's sources still behave as the module expects.
+ * discarded, then each read is a frame's time, render and compute, a type read only when it ran; reads never overlap,
+ * and while one is in flight the renderer queries nothing; a taint or a drain discards a read; the mean covers the
+ * last reads; three's record of every pass is emptied after each read; a failed read keeps the samples. And the pin:
+ * r182's sources still behave as the module expects.
  * The real renderer is tests/e2e/timing.spec.ts's.
  */
 import { readFileSync } from 'node:fs';
@@ -16,7 +17,7 @@ function standIn() {
   const timestamps = new Map([['r:0:1:f1', 1]]);
   const renderer = {
     info: { render: { calls: 0 }, compute: { calls: 0 } },
-    backend: { timestampQueryPool: { render: { timestamps }, compute: null } },
+    backend: { trackTimestamp: true, timestampQueryPool: { render: { timestamps }, compute: null } },
     resolveTimestampsAsync: (type: string) =>
       new Promise<number | undefined>((resolve, reject) => pending.push({ type, resolve, reject })),
   };
@@ -33,7 +34,8 @@ function standIn() {
     renderer.info.render.calls += 2; // a scene pass and the output pass
     renderer.info.compute.calls += compute;
   };
-  return { renderer: renderer as TimedRenderer, pending, timestamps, settle, fail, draw };
+  const tracking = () => renderer.backend.trackTimestamp;
+  return { renderer: renderer as TimedRenderer, pending, timestamps, settle, fail, draw, tracking };
 }
 
 describe('GPU timing', () => {
@@ -65,18 +67,24 @@ describe('GPU timing', () => {
     expect(timing.gpuMs()).toBe(3); // (2 + 4) / 2
   });
 
-  it('never overlaps reads: frames drawn during one are read by the next', async () => {
-    const { renderer, pending, settle, draw } = standIn();
+  it('never overlaps reads, and queries nothing while one is in flight: the frames drawn meanwhile fill no pool', async () => {
+    const { renderer, pending, settle, draw, tracking } = standIn();
     const timing = createGpuTiming(renderer, true);
     draw();
     timing.afterFrame();
+    expect(tracking()).toBe(false);
     await settle(9);
+    expect(tracking()).toBe(true);
     draw();
     timing.afterFrame();
-    draw();
-    timing.afterFrame(); // in flight: no second read
+    for (let k = 0; k < 2000; k++) {
+      draw(); // the virtual clock's tick(2000): every frame in one task, the read still out
+      timing.afterFrame();
+      expect(tracking()).toBe(false);
+    }
     expect(pending).toHaveLength(1);
     await settle(1.5);
+    expect(tracking()).toBe(true);
     draw();
     timing.afterFrame();
     expect(pending).toHaveLength(1);
@@ -131,7 +139,7 @@ describe('GPU timing', () => {
   });
 
   it('keeps its samples when a read fails (a lost device), and reads again after', async () => {
-    const { renderer, pending, settle, fail, draw } = standIn();
+    const { renderer, pending, settle, fail, draw, tracking } = standIn();
     const timing = createGpuTiming(renderer, true);
     draw();
     timing.afterFrame();
@@ -143,6 +151,7 @@ describe('GPU timing', () => {
     timing.afterFrame();
     await fail();
     expect(timing.gpuMs()).toBe(2);
+    expect(tracking()).toBe(true);
     draw();
     timing.afterFrame();
     expect(pending).toHaveLength(1);
@@ -166,5 +175,28 @@ describe('the pin to r182', () => {
     const renderer = source('renderers/common/Renderer.js');
     expect(renderer).toContain('this.info.render.calls ++;');
     expect(renderer).toContain('this.info.compute.calls ++;');
+  });
+
+  it('queries a pass only while trackTimestamp is on, and a read empties its pool before it returns', () => {
+    const webgpu = source('renderers/webgpu/WebGPUBackend.js');
+    expect(webgpu).toMatch(
+      /initTimestampQuery\( type, uid, descriptor \) \{\s+if \( ! this\.trackTimestamp \) return;/,
+    );
+    const backend = source('renderers/common/Backend.js');
+    expect(backend).toMatch(
+      /async resolveTimestampsAsync\( type = 'render' \) \{\s+if \( ! this\.trackTimestamp \) \{[^}]+\}\s+const queryPool = this\.timestampQueryPool\[ type \];\s+if \( ! queryPool \) \{\s+return;\s+\}\s+const duration = await queryPool\.resolveQueriesAsync\(\);/,
+    );
+    const renderer = source('renderers/common/Renderer.js');
+    expect(renderer).toMatch(
+      /async resolveTimestampsAsync\( type = 'render' \) \{\s+if \( this\._initialized === false \) await this\.init\(\);\s+return this\.backend\.resolveTimestampsAsync\( type \);/,
+    );
+    const pool = source('renderers/webgpu/utils/WebGPUTimestampQueryPool.js');
+    const start = pool.indexOf('async _resolveQueries()');
+    const reset = pool.indexOf('this.currentQueryIndex = 0;', start);
+    expect(reset).toBeGreaterThan(start);
+    expect(reset).toBeLessThan(pool.indexOf('await this.resultBuffer.mapAsync(', start));
+    expect(pool.slice(start, reset)).not.toContain('await ');
+    const resolve = pool.slice(pool.indexOf('async resolveQueriesAsync()'), start);
+    expect(resolve.indexOf('this.pendingResolve = this._resolveQueries();')).toBeLessThan(resolve.indexOf('await '));
   });
 });

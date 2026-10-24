@@ -8,8 +8,9 @@
  * texels, the unlit ones their exact colours), and no frame is blank. The page's bakes hash the same as Node's.
  *
  * Invariants: the page runs at `gfx.resolution=full`, so a card's window is read in canvas pixels; frames are drawn
- * by calling the page (`__scene.settle`); cards are planes whose UVs are in metres (the engine's convention), facing
- * the camera, casting and receiving shadows like the probes.
+ * by calling the page (`__scene.settle`); cards are planes whose UVs are in metres (the engine's convention; `SPANS`
+ * maps more over a card whose pattern is wider than its window), facing the camera, casting and receiving shadows like
+ * the probes.
  */
 import type { Material, Mesh, PerspectiveCamera, Scene } from 'three/webgpu';
 import type { Gfx, FrameReport } from '../../engine/gfx/renderer';
@@ -85,6 +86,17 @@ function near(a: string, b: string, tolerance = 2): boolean {
   );
 }
 
+/**
+ * Materials whose pattern repeats wider than a card's window: how many metres of texture their card maps across, and
+ * why. The rest map their card's own 1.2 m (UVs in metres, the engine's convention).
+ */
+const SPANS: Readonly<Record<string, { metres: number; why: string }>> = {
+  'material:glass': {
+    metres: 2.4,
+    why: 'its two reflection bands repeat every 2 m (texture:glass, WP 13.17): over 0.72 m a window sees the bare pane',
+  },
+};
+
 test('every material renders on the scene page after the warm-up, building 0 pipelines, and no frame is blank', async ({
   page,
   harness,
@@ -133,20 +145,24 @@ test('every material renders on the scene page after the warm-up, building 0 pip
   const before = await harness.readFrame();
   expect(before.blank).toBe(false);
 
-  // A card per material, added after the warm-up: two rows in front of the fixture, each facing the camera.
-  const cards: Card[] = await page.evaluate(() => {
+  // A card per material, added after the warm-up: rows of seven in front of the fixture, each facing the camera (a
+  // row of ten put the end cards out of the frame once there were 19 materials, at G12).
+  const spans = Object.fromEntries(Object.entries(SPANS).map(([id, { metres }]) => [id, metres]));
+  const cards: Card[] = await page.evaluate((spans) => {
     const { scene, camera, three } = (window as unknown as SceneWindow).__scene;
     const { materials } = window.__cards;
     const canvas = (window as unknown as SceneWindow).__scene.gfx.renderer.domElement;
     const size = 1.2;
-    const perRow = Math.ceil(materials.length / 2);
+    const perRow = 7;
     return materials.map((material, i) => {
+      const entry = material.userData.material as string;
+      const span = spans[entry] ?? size;
       const geometry = new three.PlaneGeometry(size, size);
       const uv = geometry.getAttribute('uv');
-      for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * size, uv.getY(k) * size);
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, uv.getX(k) * span, uv.getY(k) * span);
       const mesh = new three.Mesh(geometry, material);
       const [row, col] = [Math.floor(i / perRow), i % perRow];
-      mesh.position.set((col - (perRow - 1) / 2) * 1.45, 2.3 - row * 1.5, 2.5);
+      mesh.position.set((col - (perRow - 1) / 2) * 1.45, 3.2 - row * 1.3, 2.5);
       mesh.lookAt(camera.position);
       mesh.castShadow = mesh.receiveShadow = true;
       scene.add(mesh);
@@ -157,7 +173,6 @@ test('every material renders on the scene page after the warm-up, building 0 pip
       );
       const xs = corners.map((v) => ((v.x + 1) / 2) * canvas.clientWidth);
       const ys = corners.map((v) => ((1 - v.y) / 2) * canvas.clientHeight);
-      const entry = material.userData.material as string;
       const lambert = material as import('three/webgpu').MeshLambertMaterial;
       return {
         id: entry,
@@ -173,7 +188,7 @@ test('every material renders on the scene page after the warm-up, building 0 pip
         },
       };
     });
-  });
+  }, spans);
   const drawn = await page.evaluate(async () => ({
     frame: await (window as unknown as SceneWindow).__scene.settle(),
     stats: (window as unknown as SceneWindow).__scene.gfx.stats(),
@@ -184,6 +199,11 @@ test('every material renders on the scene page after the warm-up, building 0 pip
   expect(after.blank).toBe(false);
 
   for (const card of cards) {
+    // Every card in the frame: a window past its edge would read pixels of another row, or none.
+    const { x0, y0, x1, y1 } = card.window;
+    expect(x0 >= 0 && y0 >= 0 && x1 <= after.width && y1 <= after.height, `${card.id}'s window is in the frame`).toBe(
+      true,
+    );
     const [count, total] = changed(before, after, card.window);
     expect(total, `${card.id}'s window`).toBeGreaterThan(400);
     expect(count / total, `${card.id} changed its window`).toBeGreaterThan(0.6);

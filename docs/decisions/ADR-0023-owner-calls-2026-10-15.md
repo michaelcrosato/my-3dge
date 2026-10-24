@@ -52,3 +52,15 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    what `x engine --test` found too late: every file a game gets imports only files a game gets
    (tools/game/imports.test.ts). Alternative not taken: a longer limit (up to 360 minutes), simpler, but main's
    verdict would come two and a half hours after each merge and grow with T2.
+2. **2026-10-24: what main's first run in shards found** (my calls). The full run on d1d707b (#29) took T2 to its
+   end for the first time since G10, on Chromium 141, and failed in shards 1–3 on faults from G11 and G12 that no
+   full run had reached; each is fixed where it lies, no test loosened: tiled lighting dropped a lamp of unlimited
+   range (WP 11.5); the outline shells kept their pages' stale bounds (WP 13.24); GPU timing let three.js's query
+   pool fill, since the virtual clock's `tick(n)` draws n frames in one task, before a read can come back, so the
+   renderer now queries nothing while a read is out (WP 11.2; tests/e2e/timing.spec.ts draws such a burst). Specs
+   had fallen behind the engine: the box room's shot counts the shots' two batches (WP 13.20), and its inspector
+   check calls `fx.stats` (WP 11.3); the materials cards, rows of ten, left the frame at 19 materials (now rows of
+   seven, each window checked in the frame), and glass's 2 m bands never fit a card's window (its card maps 2.4 m of
+   texture, so the 85% check holds it); materials-v2's shell measure lists the page's own shells, which the ID pass
+   leaves out. Two waits were too short on GitHub's runners: the gallery's pages get 120 s to be ready, and the
+   camera sweep runs one replay a test, as test 1 does (Box 5's two passed 240 s).

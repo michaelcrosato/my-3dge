@@ -14,7 +14,8 @@
  *   after each step and switching to the next style every `every` steps, and returns the hashes every 60 steps and
  *   the pipelines each frame built;
  * - `part(i)` shows part `i` alone (the ball alone for -1) and shoots the parts camera's ID pass (400 × 300): the
- *   object's and its shell's entries.
+ *   object's and its shell's entries. The ID pass leaves a look's shells out (engine/gfx/idpass.ts, WP 13.24), so for
+ *   this shot, which measures them, the page lists its own shells as objects.
  *
  * The comparison scene (`compare(look)`): an orthographic camera looking down at 35°, a sphere on a floor, a
  * shadow-casting sun, a point light's pool and a hemisphere light, in `lambert`, the toon `bands` or the baseline
@@ -193,7 +194,7 @@ async function start(): Promise<void> {
   ball.position.set(0, 20, 0);
   ball.castShadow = ball.receiveShadow = true;
   scene.add(ball);
-  round.shell(ball);
+  const ballShell = round.shell(ball);
   const partsCamera = new THREE.PerspectiveCamera(40, PARTS_SHOT.width / PARTS_SHOT.height, 0.5, 60);
   partsCamera.position.set(0, 27, 7);
   partsCamera.lookAt(0, 20, 0);
@@ -263,7 +264,13 @@ async function start(): Promise<void> {
       ball.visible = i < 0;
       await settle();
       const size = PARTS_SHOT;
-      const result = await shot(gfx, { scene, camera: partsCamera }, { size, metrics: false, thumbnail: false });
+      const measured = [...shells.shells, ballShell];
+      for (const shell of measured) shell.userData.outline = false;
+      const result = await shot(
+        gfx,
+        { scene, camera: partsCamera },
+        { size, metrics: false, thumbnail: false },
+      ).finally(() => measured.forEach((shell) => (shell.userData.outline = true)));
       place();
       ball.visible = true;
       const visible = result.ids!.visible;
