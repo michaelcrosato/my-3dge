@@ -204,6 +204,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`frames.ts`](../engine/anim/clip/frames.ts): The readable codec's frame math (PLAN.md §10.2, WP 8.2 and WP 8.5; ADR-0010 amendment 4): vectors, frames `[F, R, U]` (forward, right and up as columns), quaternions `[x, y, z, w]`, `[turn, lean, tilt]` degrees, the hint a limb's twist is measured from, and `torso`, which places a key pose's spine, neck, head, shoulders and hips on a rest body.
   - Exports: `add`, `compose`, `cross`, `DG`, `dot`, `Frame`, `fromEuler`, `hintFor`, `len`, `Limb`, `limbEnd`, `mul`, `norm`, `qFromTo`, `qrot`, `qslerp`, `reachOf`, `SG`, `sub`, `torso`, `V`, `wld`
   - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts), [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
+- [`hands.ts`](../engine/anim/clip/hands.ts): Format 2's hands (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `handL`/`handR` `[flex, side, roll]` turn the hand at the wrist, and `gripL`/`gripR` (0–100) close it.
+  - Exports: `encodeHand`, `HALF_SPAN`, `handBase`, `handFrame`, `HandPoints`, `HandPose`, `HandSizes`, `placeHand`
+  - Tests: [`engine/anim/clip/hands.test.ts`](../engine/anim/clip/hands.test.ts)
 - [`layer.ts`](../engine/anim/clip/layer.ts): The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7, engine/anim/weights.ts), stacked, the last played on top (`current`), each fading in over what plays under it.
   - Exports: `CLIP_LAYER`, `ClipLayer`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerState`, `ClipPlay`, `ClipSlot`, `ClipStepInput`
   - Tests: [`engine/anim/clip/layer-play.test.ts`](../engine/anim/clip/layer-play.test.ts), [`engine/anim/clip/layer.test.ts`](../engine/anim/clip/layer.test.ts)
@@ -217,7 +220,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `mirrorClip`
   - Tests: [`engine/anim/clip/mirror.test.ts`](../engine/anim/clip/mirror.test.ts)
 - [`readable.ts`](../engine/anim/clip/readable.ts): Readable key poses, the stored clip format (PLAN.md §10.2, WP 8.2; ADR-0010): its types, format 1 and the fields format 2 adds, and the decode that rebuilds 36 body points from a key pose on a measured rest body.
-  - Exports: `Clip`, `ClipContact`, `ClipEvent`, `ClipKey`, `decodePose`, `keyAt`, `KeyPose`, `LimbPose`, `moveAt`, `POINT_COUNT`, `POINT_INDEX`, `PointArray`, `POSE_POINTS`, `samplePose`, `Triple`
+  - Exports: `armOf`, `Clip`, `ClipContact`, `ClipEvent`, `ClipKey`, `decodePose`, `keyAt`, `KeyPose`, `LimbPose`, `moveAt`, `POINT_COUNT`, `POINT_INDEX`, `PointArray`, `POSE_POINTS`, `samplePose`, `Torso`, `Triple`
   - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
 - [`rest.ts`](../engine/anim/clip/rest.ts): A clip library's rest body as a skeleton (PLAN.md §10.4, WP 8.4; split from engine/anim/clip/retarget.ts after G9, ADR-0014 amendment 17): `restSkeleton(R)` has the humanoid topology with the library's measured bones and rest curve, so FK of a baked pose on it rebuilds the decode's body points (`restPoints`): the parity proof.
   - Exports: `restBuild`, `restPoints`, `restSkeleton`

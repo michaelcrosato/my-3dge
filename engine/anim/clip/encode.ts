@@ -24,6 +24,7 @@
  * @see engine/anim/clip/encode.test.ts
  */
 import {
+  add,
   compose,
   cross,
   DG,
@@ -44,7 +45,8 @@ import {
   type Frame,
   type V,
 } from './frames';
-import { POINT_COUNT, POINT_INDEX, samplePose, type Clip, type ClipKey, type KeyPose } from './readable';
+import { encodeHand } from './hands';
+import { armOf, POINT_COUNT, POINT_INDEX, samplePose, type Clip, type ClipKey, type KeyPose } from './readable';
 import { poseError, poseMeanError, type RestBody } from './validate';
 
 /** A captured clip, the importer's input: `n` frames at `fps` of the 36 body points (mm, rig frame). */
@@ -71,6 +73,8 @@ export interface EncodeExtra {
   tags?: string[];
   desc?: string;
   blade?: boolean;
+  /** Format 2: write each hand's turn and grip (engine/anim/clip/hands.ts), the arm reaching a straight hand's fist. */
+  hands?: boolean;
 }
 
 /* ---- the encode's own frame math, the inverses of frames.ts's (which it shares with the decode) ---- */
@@ -244,7 +248,12 @@ export function measure(clips: Record<string, Capture>, tposeName = 'A_TPose'): 
 type Key = Record<string, V>;
 
 /** One key pose from captured body points `X`; `prev`, the key before, lets angles continue without jumps. */
-export function encodePose(R: RestBody, X: ArrayLike<number>, prev?: KeyPose | null): KeyPose {
+export function encodePose(
+  R: RestBody,
+  X: ArrayLike<number>,
+  prev?: KeyPose | null,
+  opts: { hands?: boolean } = {},
+): KeyPose {
   const [lower, p, k, pr] = [R.fore + R.fist, (name: string) => pt(X, name), {} as Key, (prev ?? {}) as Key];
   const uw = (a: V, b: V | undefined) => a.map((v, i) => r0(unwrap(v, b && b[i])));
   // a turn, lean and tilt has a second reading (turn + 180, 180 - lean, tilt + 180): take whichever continues from
@@ -275,7 +284,12 @@ export function encodePose(R: RestBody, X: ArrayLike<number>, prev?: KeyPose | n
       ['leg', tq.hip(s), tq.RP, 'ankle', 'knee', R.thigh, R.shin],
     ] as const;
     for (const [limb, root, M, end, mid, L1, L2] of limbs) {
-      let v = loc(M, sub(p(end + s), root));
+      // with format 2's hands, the arm reaches the fist a straight hand would hold, on the forearm's line: the hand's
+      // own turn is written apart, so the elbow and the wrist decode where they were
+      const wrist = p(`wrist${s}`);
+      const reach =
+        limb === 'arm' && opts.hands ? add(wrist, mul(norm(sub(wrist, p(`elbow${s}`))), R.fist)) : p(end + s);
+      let v = loc(M, sub(reach, root));
       // a fist curled in past the shoulder (a bent wrist, mid roll) is closer than a straight hand can fold: point the
       // fully bent limb away from the elbow instead, so the elbow, the bigger shape, stays where it was
       if (len(v) < Math.abs(L1 - L2) + 10) v = mul(norm(loc(M, sub(p(mid + s), root))), -Math.abs(L1 - L2));
@@ -292,6 +306,15 @@ export function encodePose(R: RestBody, X: ArrayLike<number>, prev?: KeyPose | n
     const toes = down - Math.asin(Math.max(-1, Math.min(1, -td[2]))) / DG - (R.abPitch - R.btPitch);
     k[`foot${s}`] = [r0(down - R.abPitch), r0(unwrap(Math.atan2(fd[1] * SG[s], fd[0]) / DG, pf && pf[1])), r0(toes)];
   }
+  if (opts.hands) {
+    for (const s of ['L', 'R'] as const) {
+      const { wr, fd, hint } = armOf(R, tq, k as KeyPose, s);
+      const points = { knuck: p(`knuck${s}`), fist: p(`fist${s}`), index: p(`index${s}`), pinky: p(`pinky${s}`) };
+      const { hand, grip } = encodeHand(R, wr, fd, hint, s, points);
+      k[`hand${s}`] = hand;
+      (k as Record<string, unknown>)[`grip${s}`] = grip;
+    }
+  }
   return k as KeyPose;
 }
 
@@ -302,7 +325,8 @@ export function encodeClip(R: RestBody, cap: Capture, kf: readonly number[], ext
   for (const f of kf) {
     capSample(cap, f / cap.fps, X);
     // (to the millisecond: a key lands on its frame)
-    const k = Object.assign({ t: Math.round((f / cap.fps) * 1000) / 1000 }, encodePose(R, X, prev)) as ClipKey;
+    const pose = encodePose(R, X, prev, { hands: extra.hands });
+    const k = Object.assign({ t: Math.round((f / cap.fps) * 1000) / 1000 }, pose) as ClipKey;
     if (extra.blade) {
       const aim = loc(compose(fromEuler(k.body), fromEuler(k.chest)), norm(sub(pt(X, 'indexR'), pt(X, 'pinkyR'))));
       k.blade = aim.map((x) => r0(x * 100)) as ClipKey['blade'];

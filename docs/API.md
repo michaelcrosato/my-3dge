@@ -2656,6 +2656,17 @@ For the agents who maintain the engine.
 - `V` (type): A vector `[f, r, z]` (mm, or a direction), or a quaternion `[x, y, z, w]`.
 - `wld` (const): A local vector `l` of frame `M` (axes F, R, U as columns) in the parent's coordinates.
 
+### [`engine/anim/clip/hands.ts`](../engine/anim/clip/hands.ts)
+
+- `encodeHand` (function): The hand pose and grip that put a hand at the wrist `wr`, forearm `F` and pole `hint` (the decode's) on the captured `points`, to the degree and to the whole grip.
+- `HALF_SPAN` (const): Half the knuckles' span: the index and pinky knuckles either side of the middle one, mm (format 1's 20).
+- `handBase` (function): The hand's base frame at the wrist: the thumb's side `T0` and the palm's `N0` (see the file comment).
+- `handFrame` (function): The hand's direction `H`, thumb axis `T` and palm normal `N` after `pose`'s three turns.
+- `HandPoints` (interface): The hand's points: the middle knuckle, the fist point, and the index and pinky knuckles.
+- `HandPose` (type): A hand's turn at the wrist, degrees: toward the palm, toward the thumb, the thumb toward the palm.
+- `HandSizes` (interface): The rest body's hand lengths: wrist to middle knuckle, and wrist to the fist point with the fingers straight.
+- `placeHand` (function): The hand's points from the wrist `wr` and the forearm `F` (unit), as `pose` turns it and `grip` closes it.
+
 ### [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)
 
 - `CLIP_LAYER` (const): The layer's defaults: fades (s), the cancel speed (m/s), the locomotion crossfade (shardfall's `FADE`).
@@ -2698,6 +2709,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)
 
+- `armOf` (function): The decode's arm on side `s`: the shoulder, the elbow, the IK's end (format 1's fist), the forearm's direction, the wrist and the elbow's pole.
 - `Clip` (interface): One clip: its header, then its keys in time order.
 - `ClipContact` (interface): Format 2: when a foot or hand holds the ground or a surface, from `from` to `to` seconds (detected at import).
 - `ClipEvent` (interface): Format 2: a moment in a clip, such as `{ t: 0.42, name: 'land' }` or `{ t: 0.8, name: 'step', side: 'L' }`.
@@ -2712,6 +2724,7 @@ For the agents who maintain the engine.
 - `PointArray` (type): A decoded pose: 36 points × `[f, r, z]` in mm, in `POSE_POINTS` order.
 - `POSE_POINTS` (const): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
 - `samplePose` (function): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
+- `Torso` (type): The torso `torso()` rebuilds for a key: its frames and the points the limbs hang from.
 - `Triple` (type): Three numbers: a point or direction `[f, r, z]`, or `[turn, lean, tilt]` in degrees.
 
 ### [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)

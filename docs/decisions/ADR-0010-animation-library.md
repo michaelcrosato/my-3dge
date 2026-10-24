@@ -109,3 +109,21 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   tests/baselines/qa-anim-library.json rather than special-cased: a fold limit for the pole would trade one clip's
   flip for every deep get-up's swing.
 - Evidence: `engine/anim/clip/retarget.test.ts`, `engine/gfx/puppets/bodies/mannequin.test.ts`, `node x qa anim`.
+
+## Amendment 7 (2026-10-24, WP-8.8): format 2's decode, defined with its encode
+- **Hands: `handL`/`handR` `[flex, side, roll]` and `gripL`/`gripR` (0–100)** (engine/anim/clip/hands.ts). The frame
+  sits at the decoded wrist: the forearm's direction, the thumb's side opposite the elbow's pole (the decode's own
+  hint, so it turns with the arm), the palm's side their cross product signed per side. `roll` turns the thumb toward
+  the palm, `flex` the hand toward the palm, `side` the hand toward the thumb; the index and pinky knuckles sit 20 mm
+  either side of the middle knuckle along the turned thumb axis (they are the captured knuckles, `index_01` and
+  `pinky_01`, where format 1 hangs them off the fist), and the fist point curls toward the palm by `grip` × 0.9°.
+  Every turn is toward a vector of the same side, so the same numbers draw the mirror image on the other side and
+  mirroring stays a swap.
+- **A key with a hand reaches a straight hand's fist.** With hands on, the encoder aims the arm's IK at the point a
+  straight hand would hold, on the captured forearm's line, so the elbow and the wrist decode where the capture had
+  them and the hand's own turn is written apart. A key without `hand` and `grip` decodes as format 1 does, bit for
+  bit (the oracle tests).
+- Evidence: engine/anim/clip/hands.test.ts (random turns and grips back to the degree and the whole, either side; the
+  mirror image; a capture with turning, closing hands fitted within 30 mm and its hands within 15 mm, more than three
+  times closer than format 1), engine/anim/clip/mirror.test.ts (a mirrored clip with hands decodes to the reflected
+  body, every finger point with it).
