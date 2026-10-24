@@ -5,8 +5,9 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## Next: the rest of stage G12, then gate G12 (Phase 13, ADR-0025)
 
-- G12's first part (U-1, 13.27 to 13.24: fourteen WPs) merged in PR #28. Next: restart `claude/pensive-cray-9pa1n6`
-  from main (PLAN.md §11.1), open the stage's draft PR; WP 8.8 (the Quaternius clips: `node x esc open` for the
+- G12's first part (U-1, 13.27 to 11.3 done; 13.24 built) merged in PR #28. Next: restart `claude/pensive-cray-9pa1n6`
+  from main (PLAN.md §11.1), open the stage's draft PR; finish WP 13.24 (its ledger row lists what is left: specs, the
+  verifier); WP 8.8 (the Quaternius clips: `node x esc open` for the
   owner's GLBs, at most 15 minutes on the alternative, then decide) and WP 10.8 (lab pages); gate G12 (the verifier,
   the ledger, this file, the PR with docs/PLAYGROUND.md §9.3's checklist, `node x ci --local`, the merge, main's run);
   then G13 (13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26). `node x deps --qualify` listed no upgrade on 2026-10-24.
