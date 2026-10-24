@@ -4424,7 +4424,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | U-5 | Node 26 LTS (from 2027-05-05) | T | todo | | |
 | U-6 | Rapier after 0.21 (when a release measures better) | P | todo | | |
 | U-7 | three r184 and later (when one measures better, or 12 months after release) | R | todo | | |
-| U-8 | The platform's Chromium (when the environment changes) | T | todo | | |
+| U-8 | The platform's Chromium (when the environment changes) | T | todo | | Fired (found 2026-10-24): the container's `/opt/pw-browsers/chromium` is Chrome for Testing 153.0.8010.12 (chromium-1243, installed 2026-10-22), while tools/deps.json, scripts/setup.sh and .github/workflows/ci.yml pin 141.0.7390.37, so T2 here and main's full run on GitHub drive different browsers. Measured on 153 at dd3005a: tests/e2e/drift.spec.ts fails, 18 Math functions giving other bits than Node 24.22.1 (tan, asin, acos, atan, atan2, exp, expm1, log, log1p, log2, log10, cbrt, sinh, cosh, tanh, asinh, acosh, atanh; the test names each one's @stdlib fdlibm port for `SIM_MATH`, new dependencies, so an escalation) and three.js with them inside `withSimMath`; `node x engine --test`'s starter bot replay parts from its golden in Chromium at step 120; tests/e2e/hello.spec.ts fails (the post pass draws 4 colours, over 50 expected; an extra "No available adapters." warning without WebGPU). Opens R22's door: U-7 (three r186 and later) becomes measurable here once it is done |
 
 ---
 
