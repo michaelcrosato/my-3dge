@@ -3,21 +3,19 @@
 Read this first: where things stand, what is next and the open issues, on one screen (`node x docs --check` fails it
 past 40 lines). The integrator rewrites it at each gate; every WP's status and notes are in the ledger, PLAN.md §14.
 
-## Next: main green, then U-8, the rest of stage G12 and G13 (Phase 13, ADR-0025)
+## Next: the rest of stage G12, then G13 (Phase 13, ADR-0025)
 
 - Main was red, unseen (found 2026-10-24): its full runs on 39e06b0 (#27) and 9b988aa (#28) hit the job's 120 min in
-  T2 and failed `x engine --test`, and `x ci --status` passed over cancelled runs. #29 fixed those (ADR-0023
-  amendment 1); its run, the first to finish T2 since G10, failed 12 tests on faults from G11 and G12, which PR #30
-  fixes (amendment 2), and deals the shards by minutes, about 53 each (amendment 3). Main's run on #30 proves it.
-- U-8 fired: the container's Chromium is 153 since 2026-10-22, while the pins and GitHub's run stay on 141. On 153 the
-  drift test fails (18 Math functions), the starter's replay parts in Chromium and hello.spec.ts fails: its ledger
-  row. Its own PR, the drift test first; till then `CHROMIUM_PATH` can point T2 at 141 (scripts/setup.sh's download).
-- Then G12's stage PR: WP 13.24 (its ledger row lists what is left: specs, the verifier); WP 8.8 (`node x esc open`
+  T2. #29, #30 and #31 fixed it (ADR-0023 amendments 1–3): a game's imports guarded, the full run in four shards
+  dealt by minutes (about 53 each), a cancelled run red, and 13 failing tests' faults from G11 and G12 fixed.
+- U-8 is done (ADR-0014 amendment 18): the platform's Chromium is 153, the pins and GitHub's run with it; ports of
+  V8's own fdlibm for the 18 Math functions 153 computes otherwise keep every golden; U-7 (three r186+) is measurable.
+- Next, G12's stage PR: WP 13.24 (its ledger row lists what is left: specs, the verifier); WP 8.8 (`node x esc open`
   for the owner's Quaternius GLBs, 15 minutes on the alternative, then decide); WP 10.8 (lab pages); gate G12 (the
   verifier, the ledger, this file, docs/PLAYGROUND.md §9.3's checklist, `node x ci --local`, the merge, main's run);
   then G13 (13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26). `node x deps --qualify` listed no upgrade on 2026-10-24.
-- The owner's: the GLBs (WP 8.8), model access for WP 12.2's live evals, the new dependencies U-8 and WPs 7.6 and
-  12.2 name, ESC-0002's call. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
+- The owner's: the GLBs (WP 8.8), model access for WP 12.2's live evals, the new dependencies WPs 7.6 and 12.2
+  name, ESC-0002's call. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
 ## Where things stand (2026-10-24)
 
