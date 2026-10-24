@@ -1,9 +1,9 @@
 /**
  * @file Unit tests for engine/core/simMath.ts (T1), in Node: inside `withSimMath`, `Math.sin`, `cos` and `pow` are
  * stdlib's ports (three.js's math classes use them too); outside, `Math` holds what it held before, also after a
- * throw and after nested calls; a narrowed swap leaves the rest native; and the ports' results over 300,000 seeded
- * inputs hash to the recorded digest, so a stdlib update that changes a bit (and with it every replay golden) fails
- * here first. The swapped `pow` gives ECMAScript's results wherever the spec fixes them exactly (the drift probe's
+ * throw and after nested calls; a narrowed swap leaves the rest native; and the ports' results over seeded inputs
+ * hash to the recorded digests, stdlib's and engine/core/fdlibm/'s, so a stdlib update or an edit that changes a bit
+ * (and with it every replay golden) fails here first. The swapped `pow` gives ECMAScript's results wherever the spec fixes them exactly (the drift probe's
  * edge pairs and more), and the right sign for negative bases with |y| ≥ 2^53. tests/e2e/drift.spec.ts proves that
  * Chromium gives the same bits.
  * @see engine/core/simMath.ts
@@ -127,11 +127,30 @@ describe('the ports', () => {
     expect(hash.hex()).toBe('b4ed1c0a7b2b310a');
   });
 
-  it('are pure JavaScript, not the native functions', () => {
+  it('are pure JavaScript, not the native functions: stdlib for sin, cos and pow, engine/core/fdlibm/ for the rest', () => {
     for (const name of SIM_MATH_NAMES) {
       expect(SIM_MATH[name].port).not.toBe(SIM_MATH[name].native);
-      expect(SIM_MATH[name].package).toBe(`@stdlib/math-base-special-${name}`);
+      expect(SIM_MATH[name].native).toBe((Math as unknown as Record<string, unknown>)[name]);
     }
+    expect(SIM_MATH_NAMES.slice(0, 3).map((name) => SIM_MATH[name].source)).toEqual(
+      ['sin', 'cos', 'pow'].map((name) => `@stdlib/math-base-special-${name}`),
+    );
+    expect(SIM_MATH_NAMES.length).toBe(21);
+    for (const name of SIM_MATH_NAMES.slice(3))
+      expect(SIM_MATH[name].source).toMatch(/^engine\/core\/fdlibm\/\w+\.ts$/);
+  });
+
+  it("give the fdlibm ports' recorded digest over 18 × 20,000 seeded inputs (a changed bit changes the goldens)", () => {
+    const rng = new Rng(0xfd1b);
+    const hash = new Fnv64();
+    for (const name of SIM_MATH_NAMES.slice(3)) {
+      const port = SIM_MATH[name].port;
+      for (let i = 0; i < 20_000; i++) {
+        const x = i % 2 ? rng.range(-1, 1) : rng.range(-30, 30) * rng.next();
+        hash.number(name === 'atan2' ? port(x, rng.range(-30, 30)) : port(name === 'acosh' ? 1 + Math.abs(x) : x));
+      }
+    }
+    expect(hash.hex()).toBe('4195c0421c485364');
   });
 });
 

@@ -67,7 +67,10 @@ const INT32 = integers(-2147483648, 4294967295);
 export interface DriftFunction {
   name: string;
   args: Domain[];
-  /** The stdlib package with its pure-JavaScript port; `null` where ECMAScript defines the result exactly. */
+  /**
+   * Where its pure-JavaScript port comes from: engine/core/fdlibm/'s module (V8's own code, Node's bits) or a stdlib
+   * package; `null` where ECMAScript defines the result exactly.
+   */
   port: string | null;
   /** Called instead of `Math[name]`: the `**` operator, which no swap can reach. */
   call?: (a: number, b: number) => number;
@@ -78,19 +81,27 @@ const special = (name: string, args: Domain[], port = `@stdlib/math-base-special
   args,
   port,
 });
+/** A function whose port is engine/core/fdlibm/'s `file` (WP U-8). */
+const fdlibm = (name: string, args: Domain[], file: string): DriftFunction => special(name, args, `engine/core/fdlibm/${file}.ts`); // prettier-ignore
 const exact = (name: string, args: Domain[]): DriftFunction => ({ name, args, port: null });
 
 /** Every `Math` function but `random`, and the `**` operator. */
 export const DRIFT_FUNCTIONS: readonly DriftFunction[] = [
-  ...['sin', 'cos', 'tan'].map((name) => special(name, [ANGLE])),
-  ...['asin', 'acos', 'atanh'].map((name) => special(name, [UNIT])),
-  ...['atan', 'asinh', 'cbrt'].map((name) => special(name, [REAL])),
-  ...['exp', 'expm1', 'sinh', 'cosh', 'tanh'].map((name) => special(name, [EXP])),
-  ...['log2', 'log10', 'sqrt'].map((name) => special(name, [POSITIVE])),
-  special('log', [POSITIVE], '@stdlib/math-base-special-ln'),
-  special('log1p', [mixed([1, uniform(-1, 1)], [1, spread(-60, 60, false)])]),
-  special('acosh', [(rng) => 1 + spread(-40, 20, false)(rng)]),
-  special('atan2', [REAL, REAL]),
+  ...['sin', 'cos'].map((name) => special(name, [ANGLE])),
+  fdlibm('tan', [ANGLE], 'tan'),
+  ...['asin', 'acos'].map((name) => fdlibm(name, [UNIT], 'inverse')),
+  fdlibm('atanh', [UNIT], 'hyperbolic'),
+  fdlibm('atan', [REAL], 'inverse'),
+  fdlibm('asinh', [REAL], 'hyperbolic'),
+  fdlibm('cbrt', [REAL], 'cbrt'),
+  ...['exp', 'expm1'].map((name) => fdlibm(name, [EXP], 'exp')),
+  ...['sinh', 'cosh', 'tanh'].map((name) => fdlibm(name, [EXP], 'hyperbolic')),
+  ...['log2', 'log10'].map((name) => fdlibm(name, [POSITIVE], 'log')),
+  special('sqrt', [POSITIVE]),
+  fdlibm('log', [POSITIVE], 'log'),
+  fdlibm('log1p', [mixed([1, uniform(-1, 1)], [1, spread(-60, 60, false)])], 'log'),
+  fdlibm('acosh', [(rng) => 1 + spread(-40, 20, false)(rng)], 'hyperbolic'),
+  fdlibm('atan2', [REAL, REAL], 'inverse'),
   special('hypot', [REAL, REAL]),
   special('pow', [BASE, EXPONENT]),
   { name: '**', args: [BASE, EXPONENT], port: '@stdlib/math-base-special-pow', call: (a, b) => a ** b },
@@ -211,13 +222,14 @@ function finding(name: string, swapped: boolean, node: string, page: string): st
     return `${subject} differs between Node and Chromium inside withSimMath ${hashes}: its port, ${fn.port}, no longer gives the same bits in both; pin a release that does (PLAN.md §6.5)`;
   if (!fn.port)
     return `${subject} differs between Node and Chromium ${hashes}, though ECMAScript defines its result exactly: a runtime bug; report it upstream`;
-  return `${subject} differs between Node and Chromium ${hashes} and withSimMath does not swap it: add its fdlibm port, ${fn.port}, to SIM_MATH in engine/core/simMath.ts and pin it in package.json (PLAN.md §6.5)`;
+  return `${subject} differs between Node and Chromium ${hashes} and withSimMath does not swap it: add a port that gives Node's bits to SIM_MATH in engine/core/simMath.ts (${fn.port} is the one to check first; a package is pinned in package.json), PLAN.md §6.5`;
 }
 
 /**
  * Compares Node's result with Chromium's, given the swap both ran under: a swapped function or a composite must give
- * the same bits inside `withSimMath`, every other function natively; every `Math` function must be probed. Returns
- * one finding per failure (none: reproducible).
+ * the same bits inside `withSimMath`, every other function natively; every `Math` function Node has must be probed,
+ * and Chromium must have it too. A function only Chromium has (Chromium 153's `Math.sumPrecise`) is no drift: sim code
+ * that called it would fail in Node, where T1 runs it. Returns one finding per failure (none: reproducible).
  */
 export function compareDrift(
   node: ProbeResult,
@@ -226,13 +238,13 @@ export function compareDrift(
 ): string[] {
   const findings: string[] = [];
   const probed = new Set(DRIFT_FUNCTIONS.map((fn) => fn.name));
-  for (const name of new Set([...node.functions, ...page.functions])) {
+  for (const name of node.functions) {
     if (!probed.has(name))
       findings.push(
-        `Math.${name} is not probed: add it to DRIFT_FUNCTIONS in tests/pages/driftProbe.ts, with its input domain and stdlib port`,
+        `Math.${name} is not probed: add it to DRIFT_FUNCTIONS in tests/pages/driftProbe.ts, with its input domain and its port's source`,
       );
-    if (!node.functions.includes(name) || !page.functions.includes(name))
-      findings.push(`Math.${name} exists in only one runtime (${node.functions.includes(name) ? 'Node' : 'Chromium'})`);
+    if (!page.functions.includes(name))
+      findings.push(`Math.${name} exists in Node only: sim code that calls it breaks in the page`);
   }
   for (const [name, mine] of Object.entries(node.hashes)) {
     const theirs = page.hashes[name];

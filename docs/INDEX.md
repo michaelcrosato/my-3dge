@@ -477,7 +477,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`settings.ts`](../engine/core/settings.ts): Settings from one schema (PLAN.md WP 1.2, I-37; doctrine: Agent-operable): `defineSettings` declares each setting as an entry of the registry kind `setting` (a schema.ts field keyed by its dotted path, `hero.runSpeed`), and `createSettings` makes a store with a validated `get` and `set`, URL parameters, JSON export (`toJSON`, a preset) and import (`load`), a "differs from default" marker, and scoped overrides.
   - Exports: `createSettings`, `defineSettings`, `SettingChange`, `SettingRow`, `Settings`, `SETTINGS_CODES`, `SettingsOptions`, `SettingValue`, `SimSettings`
   - Tests: [`engine/core/settings.test.ts`](../engine/core/settings.test.ts)
-- [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps stdlib's fdlibm ports of `sin`, `cos` and `pow` into `Math` while `fn` runs and puts the native functions back afterwards.
+- [`simMath.ts`](../engine/core/simMath.ts): Deterministic `Math` while the sim runs (PLAN.md §6.5; doctrines: Reproducible, Quality under the hood): `withSimMath(fn)` swaps pure-JavaScript ports into `Math` while `fn` runs and puts the native functions back afterwards.
   - Exports: `inSimMath`, `SIM_MATH`, `SIM_MATH_CODES`, `SIM_MATH_NAMES`, `SimMathEntry`, `SimMathName`, `withSimMath`
   - Tests: [`engine/core/simMath.test.ts`](../engine/core/simMath.test.ts), [`tests/e2e/drift.spec.ts`](../tests/e2e/drift.spec.ts)
 - [`time.ts`](../engine/core/time.ts): The frame clock (PLAN.md §6.3, §6.4, WP 1.3, ADR-0005; doctrine: Reproducible): it turns real time into fixed 60 Hz sim steps plus an interpolation `alpha`, under a time scale, a stack of slowdowns, a hit-stop with a leaky budget and pause; plus a virtual clock for tests.
@@ -486,6 +486,25 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`timers.ts`](../engine/core/timers.ts): Sim time (PLAN.md §6.3, WP 1.3, ADR-0005; doctrine: Reproducible): timers `after` and `every` that count sim ticks and return `{ cancel }`, and per-entity clocks, plain numbers a component holds, that run an entity's time at its own rate (a slowed foe, a time well) or freeze it (the attacker and victim of a hit).
   - Exports: `advanceEntityClock`, `createEntityClock`, `createTimers`, `EntityClock`, `freezeEntityClock`, `Timer`, `TimerCallback`, `Timers`, `TimersCapture`, `TimersState`
   - Tests: [`engine/core/timers.test.ts`](../engine/core/timers.test.ts)
+
+## engine/core/fdlibm
+
+- [`cbrt.ts`](../engine/core/fdlibm/cbrt.ts): The cube root in pure JavaScript, as V8 13.6 computes it (PLAN.md §6.5, WP U-8): a port of src/base/ieee754.cc's cbrt, FreeBSD's msun s_cbrt.c after Sun's fdlibm, so it gives Node 24's native bits.
+  - Exports: `cbrt`
+- [`exp.ts`](../engine/core/fdlibm/exp.ts): `exp` and `expm1` in pure JavaScript, as V8 13.6 computes them (PLAN.md §6.5, WP U-8): ports of src/base/ieee754.cc, which carries FreeBSD's msun after Sun's fdlibm, so they give Node 24's native bits.
+  - Exports: `exp`, `expm1`
+- [`hyperbolic.ts`](../engine/core/fdlibm/hyperbolic.ts): The hyperbolic functions and their inverses in pure JavaScript, as V8 13.6 computes them (PLAN.md §6.5, WP U-8): `sinh`, `cosh`, `tanh`, `asinh`, `acosh` and `atanh`, ports of src/base/ieee754.cc, which carries Sun's fdlibm through FreeBSD's msun, built on this folder's `exp`, `expm1`, `log` and `log1p`, so they give Node 24's native bits.
+  - Exports: `acosh`, `asinh`, `atanh`, `cosh`, `sinh`, `tanh`
+- [`inverse.ts`](../engine/core/fdlibm/inverse.ts): `asin`, `acos`, `atan` and `atan2` in pure JavaScript, as V8 13.6 computes them (PLAN.md §6.5, WP U-8): ports of src/base/ieee754.cc, which carries Sun's fdlibm through FreeBSD's msun, so they give Node 24's native bits.
+  - Exports: `acos`, `asin`, `atan`, `atan2`
+- [`log.ts`](../engine/core/fdlibm/log.ts): `log`, `log1p`, `log2` and `log10` in pure JavaScript, as V8 13.6 computes them (PLAN.md §6.5, WP U-8): ports of src/base/ieee754.cc, which carries FreeBSD's msun after Sun's fdlibm (`log10` the older fdlibm algorithm, through `log`; `log2` FreeBSD's, through `kLog1p`), so they give Node 24's native bits.
+  - Exports: `log`, `log10`, `log1p`, `log2`
+- [`remPio2.ts`](../engine/core/fdlibm/remPio2.ts): x mod π/2, as V8 13.6 reduces a trigonometric argument (PLAN.md §6.5, WP U-8): ports of src/base/ieee754.cc's __ieee754_rem_pio2 and __kernel_rem_pio2, Sun's fdlibm 5.3.
+  - Exports: `NPIO2_HW`, `remPio2`, `TWO_OVER_PI`
+- [`tan.ts`](../engine/core/fdlibm/tan.ts): The tangent in pure JavaScript, as V8 13.6 computes it (PLAN.md §6.5, WP U-8): ports of src/base/ieee754.cc's tan and __kernel_tan, Sun's fdlibm 5.3 (the kernel of 2004), reducing through engine/core/fdlibm/remPio2.ts, so it gives Node 24's native bits.
+  - Exports: `tan`
+- [`words.ts`](../engine/core/fdlibm/words.ts): The two 32-bit words of a double, as fdlibm reads and writes them (PLAN.md §6.5, WP U-8): the high word holds the sign, the exponent and the top 20 bits of the fraction, the low word the other 32.
+  - Exports: `fromWords`, `high`, `low`, `withHigh`, `withLow`
 
 ## engine/dev
 

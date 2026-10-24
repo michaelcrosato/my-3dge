@@ -4,11 +4,12 @@
  * in tests/pages/drift.html; both run tests/pages/driftProbe.ts on the same seeded inputs: every `Math` function on
  * 200,000 inputs, the `**` operator, three.js's math classes and a feedback sim, natively and inside `withSimMath`.
  *
- * What fails: a swapped function (`sin`, `cos`, `pow`) or a composite that differs inside the swap; any other
- * function that differs natively (the finding names the stdlib port to add to `SIM_MATH`); a `Math` function the
- * probe does not cover; `Math` not restored after the swap, also after a throw. The swapped functions are also
- * compared result by result, bit for bit, and the fixture that leaves `cos` out of the swap must fail, naming
- * `@stdlib/math-base-special-cos`. Native differences inside the swap's coverage are recorded as annotations.
+ * What fails: a swapped function (`SIM_MATH`: stdlib's `sin`, `cos` and `pow`, and since Chromium 153 engine/core/
+ * fdlibm/'s 18, WP U-8) or a composite that differs inside the swap; any other function that differs natively (the
+ * finding names where a port comes from); a `Math` function of Node's the probe does not cover, or Chromium lacks;
+ * `Math` not restored after the swap, also after a throw. The swapped functions are also compared result by result,
+ * bit for bit, and the fixture that leaves `cos` out of the swap must fail, naming `@stdlib/math-base-special-cos`.
+ * Native differences inside the swap's coverage are recorded as annotations.
  */
 import { SIM_MATH_NAMES, type SimMathName } from '../../engine/core/simMath';
 import {
@@ -63,7 +64,9 @@ test('every Math function, three.js and a feedback sim give the same bits in Nod
   });
 });
 
-test('under withSimMath, sin, cos and pow give the same bits in Node and Chromium on every input', async ({ page }) => {
+test('under withSimMath, every swapped function gives the same bits in Node and Chromium on every input', async ({
+  page,
+}) => {
   const notes = test.info().annotations;
   for (const name of SIM_MATH_NAMES) {
     const fn = probed(name);
@@ -119,7 +122,8 @@ test('the drift test fails on a fixture that leaves cos out of the swap, naming 
     cos,
     'native Math.cos must differ between Node and Chromium for this fixture to fail; if it no longer does, cos may leave SIM_MATH (PLAN.md §6.5)',
   ).toHaveLength(1);
-  expect(cos[0]).toContain('add its fdlibm port, @stdlib/math-base-special-cos, to SIM_MATH');
+  expect(cos[0]).toContain("add a port that gives Node's bits to SIM_MATH");
+  expect(cos[0]).toContain('@stdlib/math-base-special-cos');
   expect(findings.filter((finding) => /Math\.(sin|pow)\b/.test(finding))).toEqual([]);
   test.info().annotations.push({ type: 'findings', description: findings.join(' | ') });
 });
