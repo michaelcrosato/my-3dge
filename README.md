@@ -57,7 +57,7 @@ node x ci --local               # the merge gate: every tier, summary in out/ci/
 
 `scripts/setup.sh` is idempotent and prints the `export` lines for `PATH`, `MY3D2DGE_SRC` and `SHARDFALL_SRC` (it
 appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is Linux x64 with Node 24.22.1 and
-Chromium 141 (WebGPU on SwiftShader). The rest of the toolchain is `npm run check` (types, lint, format and the
+Chromium 153 (WebGPU on SwiftShader). The rest of the toolchain is `npm run check` (types, lint, format and the
 repository checks), `npm run e2e` (the browser suites) and the `node x` command line (`node x help`).
 
 ## Deploying

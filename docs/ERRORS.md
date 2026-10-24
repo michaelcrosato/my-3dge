@@ -561,7 +561,7 @@ Raised by `Fnv64.value`, `hashValue` and `serialize` (engine/core/hash.ts) for `
 
 - Message: `withSimMath ran a function that returned a promise`
 - Fix: keep sim entry points synchronous: the fdlibm swap ends when withSimMath returns, so code after an await would run on the native Math; do the async work outside the sim and pass its result in as an intent
-- Registered in: [`engine/core/simMath.ts` line 33](../engine/core/simMath.ts)
+- Registered in: [`engine/core/simMath.ts` line 44](../engine/core/simMath.ts)
 
 Raised by withSimMath (engine/core/simMath.ts) when its function returns a promise or another thenable: only the part before the first await would run under the swap, and replays would drift between Node and Chromium.
 

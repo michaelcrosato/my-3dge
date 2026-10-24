@@ -33,6 +33,13 @@ import { describeUnlisted, findUnlisted, loadAllowList, type Warning } from '../
 /** Playwright's `expect`, re-exported so a suite imports everything from this file. */
 export { expect };
 
+/**
+ * Chromium's own warning when `navigator.gpu.requestAdapter()` finds no adapter. Since Chromium 153 it carries the
+ * calling script's URL, so it lands among a page's own console lines; the startup tests leave it out with Chromium's
+ * other lines about WebGPU (it is not the page's doing).
+ */
+export const CHROMIUM_NO_ADAPTER = 'No available adapters.';
+
 /** What WebGPU did in the page, as `assertWebGPU` measured it. */
 export interface WebGPUProof {
   /** The adapter the page got (on this platform: vendor `google`, architecture `swiftshader`). */

@@ -40,7 +40,7 @@ goldens are recorded on 24. npm's warning that an .npmrc allow-scripts setting i
    → ESLint public-API rule, x docs --check, ADR-0020
 9. Mastery: only the pins tools/deps.json records, and an upgrade is a work package of its own; write the pinned
    release's idioms (docs/THREE-DELTA.md). → x deps --check, banned names
-10. Discovery first: target this container (Node 24, Chromium 141, WebGPU on SwiftShader); no production hardening
+10. Discovery first: target this container (Node 24, Chromium 153, WebGPU on SwiftShader); no production hardening
     outside Phase H, except ADR-0021's touch controls and Vercel deployment.
 
 ## Escalate, don't stall

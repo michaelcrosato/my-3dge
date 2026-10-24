@@ -48,8 +48,8 @@ rewrites this page (PLAN.md §9, Upgrade work packages); `node x deps --check` f
   additively).
 - **`renderMultiDrawInstances`** still exists in r182, deprecated; r184 removes it. Use `renderMultiDraw` with
   indirection.
-- **r186 does not run here:** it passes a `swizzle` to `GPUTexture.createView()`, which the platform's Chromium 141
-  rejects at startup (PLAN.md §4.7).
+- **r186 did not run on Chromium 141:** it passes a `swizzle` to `GPUTexture.createView()`, which 141 rejected at
+  startup (PLAN.md §4.7). The platform's Chromium is 153 since WP U-8; r186 and later are U-7's to measure there.
 - **Lights in id order.** r182's `LightsNode` sorts its light list by id, in place, whenever it builds a shader, while
   the render list hands it the lights in scene order. Where the two orders differ, the lights' cache key flips every
   frame and every instanced mesh rebuilds its pipelines (each build names its own instance buffer). Add lights to the

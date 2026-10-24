@@ -39,7 +39,7 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     env:
-      CHROMIUM: 141.0.7390.37
+      CHROMIUM: 153.0.8010.12
     steps:
       - name: Check out my-3dge
         uses: actions/checkout@v5

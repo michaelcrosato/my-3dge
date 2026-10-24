@@ -318,3 +318,21 @@ Core proposal accepted at integration. Calls made where PLAN.md ยง9 WP 5.5 and ย
 - **Unchanged:** the names engine/anim/api.ts exported, now from the new files (it adds `FootPlant` and its options),
   and every replay golden; the retargeter's own changes (the lift, the knee pole) are WP 8.4's and 8.6's rows.
 - **Plan edit:** the Owns of WPs 2.6, 3.2, 4.1, 4.3, 6.2 and 8.4.
+
+## Amendment 18 (2026-10-24, WP U-8): the platform's Chromium is 153
+
+- **What changed.** The container's `/opt/pw-browsers/chromium` became Chrome for Testing 153.0.8010.12
+  (`chromium-1243`) on 2026-10-22, which fired U-8 (found 2026-10-24). The pins follow it: tools/deps.json,
+  tools/lib/browser.ts's `CHROMIUM_VERSION`, scripts/setup.sh's download (the workstation's and GitHub's) and the
+  workflow's `CHROMIUM`, so T2 here and on GitHub drive one browser again, as amendment 8 asks.
+- **The drift test first.** On 153, V8 computes 18 `Math` functions otherwise than Node 24.22.1, which carries
+  fdlibm: `tan`, `asin`, `acos`, `atan`, `atan2`, `exp`, `expm1`, `log`, `log1p`, `log2`, `log10`, `cbrt`, `sinh`,
+  `cosh`, `tanh`, `asinh`, `acosh`, `atanh`. engine/core/fdlibm/ ports V8's own code (Sun's fdlibm through
+  FreeBSD's msun) to pure JavaScript, giving Node's native bits on about 150 million inputs, and `withSimMath` swaps
+  them in beside stdlib's `sin`, `cos` and `pow`: every golden recorded in Node holds in Chromium. stdlib's ports
+  were measured and not taken (Cephes' inverse and hyperbolic functions, a later `log10`, no `exp(1)` case), so no
+  new dependency and no escalation. A function only Chromium has (153's `Math.sumPrecise`) is no drift.
+- **Re-recorded:** the 15 text thumbnails (14 the same byte for byte; box-hall-iso by at most 1 of 255 in 5
+  cells). **Left out:** Chromium's own "No available adapters." warning, which since 153 carries the calling
+  script's URL, from the startup tests' page lines.
+- **Opens U-7** (risk R22): three.js r186 and later, which 141 could not start, can be measured here.

@@ -380,7 +380,7 @@ Each fact below was measured in this cloud container, the platform development t
 | TypeScript | 5.9.3 (2025-09-30) | `5.9.3` | The newest 5.x | 6.0 (2026-03-23) on 2027-03-23 |
 | Vite | 7.1.9 (2025-10-03) | `7.3.7` (2026-10-06) | The newest 7.x | 8.0.0 (2026-03-12) on 2027-03-12 |
 | Vitest | 4.0.0 (2025-10-22) | `4.1.12` (2026-10-15) | The newest 4.x (U-1) | 5.0.0 (2026-09-03) on 2027-09-03 |
-| `@playwright/test` | 1.56.0 (2025-10-06) | `1.64.1` (2026-10-14) | The newest 1.x. It drives the container's Chromium 141 (below) | None yet |
+| `@playwright/test` | 1.56.0 (2025-10-06) | `1.64.1` (2026-10-14) | The newest 1.x. It drives the container's Chromium 153 (below) | None yet |
 | ESLint, `@eslint/js` | 9.37.0 (2025-10-03) | `9.39.5` (2026-07-10) | The newest 9.x | 10.0.0 (2026-02-06) on 2027-02-06 |
 | `typescript-eslint` | 8.46.0 (2025-10-06) | `8.71.1` (2026-10-05) | The newest 8.x; its peer range admits TypeScript 5.9 | None yet |
 | `eslint-plugin-jsdoc` | 61.1.0 (2025-10-09) | `61.7.1` (2026-01-08) | The newest 61.x | 62.0.0 (2026-01-09) on 2027-01-09 |
@@ -389,7 +389,7 @@ Each fact below was measured in this cloud container, the platform development t
 | tsx | 4.20.6 (2025-09-26) | `4.23.15` (2026-09-20) | The newest 4.x | None yet |
 | Node | 24.10.0 (2025-10-08) | `24.22.1` (2026-10-20), LTS | The newest 24.x. The container ships 22.22.0, so `scripts/setup.sh` installs it (§6.10) | Node 26 LTS on 2027-05-05. Node 25 qualifies on 2026-10-15 but is already end-of-life (odd lines never get LTS), so it is skipped |
 | `@types/node` | 24.7.1 (2025-10-09) | `24.19.2` (2026-10-09) | Matches Node 24 | Follows Node |
-| Chromium | — | 141.0.7390.37, the container's (`chromium-1194`) | The platform's browser (doctrine: Discovery first) | Changes when the environment does |
+| Chromium | — | 153.0.8010.12, the container's (`chromium-1243`, since 2026-10-22; 141.0.7390.37 until WP U-8) | The platform's browser (doctrine: Discovery first) | Changes when the environment does |
 
 **three.js releases on the platform.** The prototype's `tools/stress-world-test.mjs` (both of its backends, every camera and filter, a fight, the stairs, a crate) was run in a scratch copy with only the import map changed:
 
@@ -1121,7 +1121,7 @@ h.step(600, script); h.hash(); h.trace(); h.state();
 
 **The platform:**
 - **Node 24.22.1**, named in `.nvmrc`. The container ships Node 22.22.0, so `scripts/setup.sh` downloads the official 24.22.1 build from nodejs.org, checks its SHA-256, installs it under `~/.cache/my3dge/` and puts it first on `PATH` for the session (the SessionStart hook runs it; §8.10). The owner can make it permanent through the environment's setup script (§11.5). Everything also runs on Node 22 (measured), but Node goldens are recorded on 24.
-- **Chromium 141.0.7390.37**, the container's (`/opt/pw-browsers/chromium`, from `CHROMIUM_PATH` when set), with WebGPU on SwiftShader. Playwright 1.64 drives it through `executablePath`; nothing ever runs `playwright install`. It also bounds the internals rule: a three.js release that needs WebGPU features Chromium 141 lacks (r186 does) cannot be adopted here.
+- **Chromium 153.0.8010.12** (141.0.7390.37 until WP U-8, 2026-10-24), the container's (`/opt/pw-browsers/chromium`, from `CHROMIUM_PATH` when set), with WebGPU on SwiftShader. Playwright 1.64 drives it through `executablePath`; nothing ever runs `playwright install`. It also bounds the internals rule: a three.js release that needs WebGPU features the platform's Chromium lacks cannot be adopted here (r186 needed one 141 lacked; on 153 it is U-7's to measure).
 
 **Adopting and upgrading.**
 - `node x deps --update` runs at the start of every WP. It asks the registry for newer compatible releases and adopts them in a commit of their own (`deps: adopt compatible releases`), which must pass T0–T2 and re-baselines anything that changed, with the reason recorded.
@@ -1280,7 +1280,7 @@ A command arrives with the WP that needs it; on-demand commands do not exist, ev
 - **Browser work is T2.** A test that drives Chromium, even through a child Playwright, is a spec in `tests/e2e/`, never a Vitest test; T1 runs one Vitest worker per core.
 - A test that waits on wall-clock time is a bug. Tests step the engine (`step(n)`) on a virtual clock.
 - A flaky test is quarantined only through a WP that fixes it. Skipping a test to get green is forbidden.
-- Tests run on the development platform only (doctrine: Discovery first): Node 24 and headless Chromium 141, with WebGPU on SwiftShader.
+- Tests run on the development platform only (doctrine: Discovery first): Node 24 and headless Chromium 153, with WebGPU on SwiftShader.
 
 ### 8.3 `window.__engine`: one inspector API, also headless (`createHeadless`) minus the rendering members
 
@@ -1378,10 +1378,10 @@ ESLint checks code. `x qa` checks content: motion, meshes, textures, sounds and 
 ### 8.8 The headless browser recipe
 
 - **In this cloud container:**
-  - Chromium 141 at `/opt/pw-browsers/chromium` (`chromium-1194`), launched by Playwright 1.64 through `launchOptions.executablePath`. `CHROMIUM_PATH` overrides the path. Nothing runs `playwright install`.
+  - Chromium 153 at `/opt/pw-browsers/chromium` (`chromium-1243`; 141 until WP U-8), launched by Playwright 1.64 through `launchOptions.executablePath`. `CHROMIUM_PATH` overrides the path. Nothing runs `playwright install`.
   - WebGPU via SwiftShader, with shardfall's flags: `--enable-unsafe-webgpu --enable-features=Vulkan --use-vulkan=swiftshader --use-angle=swiftshader`, set in the Playwright project. With them, headless Chromium presents frames to the real canvas (§4.8).
   - The prototype's stand-in `getContext('webgpu')` (`tools/lab3d-test.mjs:70-102`) is therefore not used. It stays in the source checkout as the fallback if a Chromium update brings the device loss back.
-- **In GitHub Actions** (WP 0.9, ADR-0016 amendment 1): ubuntu-24.04 set up as a fresh machine is, by `scripts/setup.sh`, whose Chrome for Testing is the same build 141 (tools/deps.json's 141.0.7390.37), with Playwright's system libraries (`npx playwright install-deps chromium`) and Node from `.nvmrc`; WebGPU runs on SwiftShader there with the same flags (§8.9: the workflow runs green). Mesa lavapipe (`mesa-vulkan-drivers`) plus `xvfb-run` only if SwiftShader is ever unavailable there.
+- **In GitHub Actions** (WP 0.9, ADR-0016 amendment 1): ubuntu-24.04 set up as a fresh machine is, by `scripts/setup.sh`, whose Chrome for Testing is the same build 153 (tools/deps.json's 153.0.8010.12), with Playwright's system libraries (`npx playwright install-deps chromium`) and Node from `.nvmrc`; WebGPU runs on SwiftShader there with the same flags (§8.9: the workflow runs green). Mesa lavapipe (`mesa-vulkan-drivers`) plus `xvfb-run` only if SwiftShader is ever unavailable there.
 - **Every suite asserts, through the fixture:**
   - that WebGPU actually ran (the renderer's backend and the adapter info);
   - that the frame is not blank;
@@ -4204,8 +4204,8 @@ Humans give direction remotely; agents fly the plane. The owner's part is small,
 | R18 | Game content creeps into the engine, or the box becomes a game | M | M | The exclusion list (§5.7); box content stays in `labs/box/`; stages are defined by engine capabilities, not game design; the verifier checks both | All |
 | R19 | Escalations stall work or get lost | M | M | The 15-minute rule; `x esc` records; `x check` fails on an overdue open escalation; SessionStart lists open ones; gate notes list the calls made | T, Integrator |
 | R20 | Hardening work leaks in early and slows discovery | M | L | Phase H is not scheduled; the verifier flags hardening outside it | All |
-| R21 | Playwright 1.64 drives the container's older Chromium 141 through `executablePath`, a pairing Playwright does not promise | M | M | Measured working (§4.7); the harness spec (WP 0.2) catches a regression at once; on a failure, pin the newest 1.x that works and record the call, or the owner updates the environment's browser | T |
-| R22 | Newer three.js releases need WebGPU features the platform's Chromium 141 lacks (r186 fails at startup), so three.js upgrades stall until the environment's browser changes | H | L | r182 does what the box needs; U-7 waits for U-8; a newer internal is adopted only after it is measured on the platform | R |
+| R21 | Playwright 1.64 drives the container's Chromium 153 (141 until WP U-8) through `executablePath`, a pairing Playwright does not promise | M | M | Measured working (§4.7); the harness spec (WP 0.2) catches a regression at once; on a failure, pin the newest 1.x that works and record the call, or the owner updates the environment's browser | T |
+| R22 | Newer three.js releases need WebGPU features the platform's Chromium lacks (r186 failed at startup on 141), so three.js upgrades stall until the environment's browser changes | H | L | r182 does what the box needs; U-8 moved the platform to 153 (2026-10-24), so U-7 measures r186 and later when it fires; a newer internal is adopted only after it is measured on the platform | R |
 | R23 | On demand goes wrong both ways: work built ahead of need, or a needed tool never built because nobody measured its trigger (doctrine: North Star) | M | M | Concrete triggers in §9.1; the ledger records each trigger's measurement; each gate note lists the on-demand WPs that came close to triggering | All |
 | R24 | The touch controls and the Vercel deployment are untested by design (ADR-0021), so a problem on phones or in the deployed pages goes unseen until the owner reports it | M | L | The desktop suites keep the shared code green; WP 3.12 copies shardfall's design, which was checked only under phone emulation (its `docs/HISTORY.md:99-105`); errors show as page text (WP 0.8); a failed Vercel build seen in the one look before a stage PR's merge is fixed first, when it reproduces in a clean checkout; a reported problem is reproduced first (`npm ci && npm run build` for the build) | I, T |
 
@@ -4424,7 +4424,7 @@ Status is `todo`, `doing`, `done`, `blocked`, or `on demand` (not scheduled unti
 | U-5 | Node 26 LTS (from 2027-05-05) | T | todo | | |
 | U-6 | Rapier after 0.21 (when a release measures better) | P | todo | | |
 | U-7 | three r184 and later (when one measures better, or 12 months after release) | R | todo | | |
-| U-8 | The platform's Chromium (when the environment changes) | T | todo | | Fired (found 2026-10-24): the container's `/opt/pw-browsers/chromium` is Chrome for Testing 153.0.8010.12 (chromium-1243, installed 2026-10-22), while tools/deps.json, scripts/setup.sh and .github/workflows/ci.yml pin 141.0.7390.37, so T2 here and main's full run on GitHub drive different browsers. Measured on 153 at dd3005a: tests/e2e/drift.spec.ts fails, 18 Math functions giving other bits than Node 24.22.1 (tan, asin, acos, atan, atan2, exp, expm1, log, log1p, log2, log10, cbrt, sinh, cosh, tanh, asinh, acosh, atanh; the test names each one's @stdlib fdlibm port for `SIM_MATH`, new dependencies, so an escalation) and three.js with them inside `withSimMath`; `node x engine --test`'s starter bot replay parts from its golden in Chromium at step 120; tests/e2e/hello.spec.ts fails (the post pass draws 4 colours, over 50 expected; an extra "No available adapters." warning without WebGPU). Opens R22's door: U-7 (three r186 and later) becomes measurable here once it is done |
+| U-8 | The platform's Chromium (when the environment changes) | T | done | 402aaae (#32) | Fired 2026-10-24 (ADR-0014 amendment 18): the container's `/opt/pw-browsers/chromium` became Chrome for Testing 153.0.8010.12 (chromium-1243) on 2026-10-22 while tools/deps.json, scripts/setup.sh and the workflow pinned 141.0.7390.37. The pins moved to 153. The drift test first: on 153, 18 Math functions gave other bits than Node 24.22.1 (tan, asin, acos, atan, atan2, exp, expm1, log, log1p, log2, log10, cbrt, sinh, cosh, tanh, asinh, acosh, atanh), so the starter's replay, the box's and the playground's goldens parted in Chromium; engine/core/fdlibm/ ports V8's own fdlibm (FreeBSD msun) to pure JavaScript, Node's native bits on about 150 million inputs (fdlibm.test.ts keeps 20,000 a domain), and `SIM_MATH` swaps them in: the drift test 4 of 4 on 153, every golden unchanged. stdlib's ports measured and not taken (Cephes' inverse and hyperbolic functions), so no new dependency and no escalation. The startup tests leave out Chromium's own "No available adapters." line (since 153 it carries a URL). The 15 thumbnails re-recorded on 153: 14 the same byte for byte, box-hall-iso by at most 1 of 255 in 5 cells. Verified: GitHub's full run on 153 at 12d80d2 ([run](https://github.com/michaelcrosato/my-3dge/actions/runs/40122431807)): shards 2 to 4 green, `x engine --test` (the starter's replay) green, its two failures fixed since, materials.spec.ts's registry leak (#31) and replay.test.ts's `--swap tan`, now a port (01b86f1); the quick gate on the head. Opens R22's door: U-7 (three r186 and later) is measurable here now |
 
 ---
 
@@ -4701,7 +4701,7 @@ In this table, `engine` §N means section N of `engine/my-3d2dge.js`, not a sect
 | `vite build` of a page with three r182, a TSL post pass and Rapier 0.21 | one HTML page and one 5.40 MB script (1.86 MB gzipped), no `.wasm` (§4.8) |
 
 **The platform (October 2026)**
-- The development platform: Linux x64 (4 cores); Node 24.22.1, installed by `scripts/setup.sh` over the container's Node 22.22.0; Chromium 141.0.7390.37 (`/opt/pw-browsers/chromium-1194`, which the container's global Playwright 1.56.1 installed), driven by the project's Playwright 1.64.1; SwiftShader for WebGPU.
+- The development platform: Linux x64 (4 cores); Node 24.22.1, installed by `scripts/setup.sh` over the container's Node 22.22.0; Chromium 141.0.7390.37 (`/opt/pw-browsers/chromium-1194`, which the container's global Playwright 1.56.1 installed; 153.0.8010.12 since WP U-8), driven by the project's Playwright 1.64.1; SwiftShader for WebGPU.
 - Measured on it (§4.7): Rapier 0.21 gives the same state in Node and Chromium, and restores exactly; stdlib's fdlibm ports make `sin`, `cos` and `pow` identical across Node 22, Node 24 and Chromium 141. Against Node 22, Chromium's `Math.sin` differs in 3.46% of results, `Math.cos` in 3.35% and `Math.pow` in 9.99%, each by 1 ulp; against Node 24, only `sin` and `cos` differ.
 - WebGPU reaches 83.3% of devices and WebGL 2 97.8% (web3dsurvey). By group: Linux 17.8%, Firefox 60.4%, Android 73.6%. This matters for Phase H, not before.
 - Versions: §4.7 has every pin, its qualifying release and its next line. The newest releases today, for reference: three r186.1 (2026-09-24), Rapier JS 0.21.0 (2026-09-25), TypeScript 7.0.2 (2026-07-08), Vite 8.3.4 (2026-10-08), Vitest 5.0.3 (2026-09-30), ESLint 10.12.0 (2026-10-02), Playwright 1.64.1 (2026-10-14), Node 26.11.1 (2026-10-07).
@@ -4745,7 +4745,7 @@ anticipation. On-demand work packages wait for their measured trigger (PLAN.md �
 9. Mastery: each pin is the newest release compatible with the newest one ≥ 12 months old, adopted at once;
    internals may go newer when measured. Write the pinned release's idioms (docs/THREE-DELTA.md).
                                                             → x deps --check, x deps --update, banned names
-10. Discovery first: target this container (Node 24 through scripts/setup.sh; its Chromium 141, WebGPU on
+10. Discovery first: target this container (Node 24 through scripts/setup.sh; its Chromium 153, WebGPU on
     SwiftShader); no production hardening outside Phase H, except ADR-0021's touch controls and Vercel deployment.
 
 ## Escalate, don't stall
@@ -4803,7 +4803,7 @@ baselines) · docs/ (generated INDEX/API/ERRORS, ADRs, escalations, reference) �
 |---|---|
 | **Stress Box** | The engine's integration target, benchmark and sample in `labs/box/`: the prototype's *Stress test: 3D world*, rebuilt in six stages (§9.0) |
 | **Box stage** | One of the six phases that grow the box, each ending at a gate (Box 1 = G2 … Box 6 = G7) |
-| **Development platform** | The cloud container development targets: Linux x64, Node 24.22.1 (installed by `scripts/setup.sh`), headless Chromium 141 with SwiftShader, driven by Playwright 1.64 (doctrine: Discovery first) |
+| **Development platform** | The cloud container development targets: Linux x64, Node 24.22.1 (installed by `scripts/setup.sh`), headless Chromium 153 with SwiftShader, driven by Playwright 1.64 (doctrine: Discovery first) |
 | **Qualifying release** | A release at least 12 months old (doctrine: Mastery, §6.10) |
 | **Compatible release** | A newer release that is backward compatible with a qualifying one (the same major; the same minor for 0.x packages), or that works the same way. It is adopted at once (§6.10) |
 | **Common ground** | The doctrine's principle of building on the most widely used tools, libraries and patterns (§3, ADR-0019) |

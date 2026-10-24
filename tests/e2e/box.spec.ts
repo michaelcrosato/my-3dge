@@ -23,7 +23,7 @@ import { CAMERA_3D, VIEW_NAMES } from '../../engine/gfx/cameras/codes';
 import { RESOLUTION_MODES } from '../../engine/gfx/resolution';
 import { chromiumPath, preparePage, VIEWPORT, type GpuLog } from '../../tools/lib/browser';
 import { findUnlisted, loadAllowList } from '../setup/adviceTrap';
-import { expect, test, type Harness } from './fixtures';
+import { CHROMIUM_NO_ADAPTER, expect, test, type Harness } from './fixtures';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
@@ -141,9 +141,10 @@ test.describe('the box, stage 1', () => {
       expect(await page.evaluate(() => (__engine.info() as { tick: number }).tick)).toBe(5);
       expect(await watch.errors()).toEqual([]);
       // The page prints one line, the log's (engine/core/log.ts: the code, the message, the fix, then the cause).
-      // Chromium itself says WebGPU is missing in lines without a source URL, and Vite's client logs its connection:
-      // neither is the page's doing.
-      const pageLines = watch.console.filter((line) => line.url && !line.url.endsWith('/@vite/client'));
+      // Chromium itself says WebGPU is missing in lines without a source URL and in its no-adapter warning, and
+      // Vite's client logs its connection: none is the page's doing.
+      const theirs = (line: { url?: string; text: string }) => line.url?.endsWith('/@vite/client') || line.text === CHROMIUM_NO_ADAPTER; // prettier-ignore
+      const pageLines = watch.console.filter((line) => line.url && !theirs(line));
       expect(pageLines.map(({ type, text }) => ({ type, text }))).toEqual([
         { type: 'error', text: expect.stringMatching(/^\[GFX_NO_WEBGPU\] /) },
       ]);

@@ -3739,6 +3739,56 @@ For the agents who maintain the engine.
 - `Scope` (interface): Listeners that leave together: `dispose()` removes every one added through this scope or its children.
 - `TraceRecord` (interface): One traced emit.
 
+### [`engine/core/fdlibm/cbrt.ts`](../engine/core/fdlibm/cbrt.ts)
+
+- `cbrt` (function): The real cube root of `x`, as V8's ieee754::cbrt computes it.
+
+### [`engine/core/fdlibm/exp.ts`](../engine/core/fdlibm/exp.ts)
+
+- `exp` (function): e^x, as V8's ieee754::exp computes it.
+- `expm1` (function): e^x − 1, accurate near 0, as V8's ieee754::expm1 computes it.
+
+### [`engine/core/fdlibm/hyperbolic.ts`](../engine/core/fdlibm/hyperbolic.ts)
+
+- `acosh` (function): The inverse hyperbolic cosine of `x`, NaN below 1, as V8's ieee754::acosh computes it.
+- `asinh` (function): The inverse hyperbolic sine of `x`, as V8's ieee754::asinh computes it.
+- `atanh` (function): The inverse hyperbolic tangent of `x`, NaN beyond ±1, as V8's ieee754::atanh computes it.
+- `cosh` (function): The hyperbolic cosine of `x`, as V8's ieee754::cosh computes it.
+- `sinh` (function): The hyperbolic sine of `x`, as V8's ieee754::sinh computes it.
+- `tanh` (function): The hyperbolic tangent of `x`, as V8's ieee754::tanh computes it.
+
+### [`engine/core/fdlibm/inverse.ts`](../engine/core/fdlibm/inverse.ts)
+
+- `acos` (function): The arccosine of `x`, in [0, π], as V8's ieee754::acos computes it.
+- `asin` (function): The arcsine of `x`, in [−π/2, π/2], as V8's ieee754::asin computes it.
+- `atan` (function): The arctangent of `x`, in [−π/2, π/2], as V8's ieee754::atan computes it.
+- `atan2` (function): The angle of the point (x, y) from the +x axis, in [−π, π], as V8's ieee754::atan2 computes it.
+
+### [`engine/core/fdlibm/log.ts`](../engine/core/fdlibm/log.ts)
+
+- `log` (function): The natural logarithm of `x`, as V8's ieee754::log computes it.
+- `log10` (function): The base-10 logarithm of `x`, as V8's ieee754::log10 computes it: n·log10(2) + log(x·2^-n)/ln(10).
+- `log1p` (function): ln(1 + x), accurate near 0, as V8's ieee754::log1p computes it.
+- `log2` (function): The base-2 logarithm of `x`, as V8's ieee754::log2 computes it (exact at powers of two).
+
+### [`engine/core/fdlibm/remPio2.ts`](../engine/core/fdlibm/remPio2.ts)
+
+- `NPIO2_HW` (const): The high words of n·π/2 for n = 1 … 32: a reduction near one of them takes the slower, longer path.
+- `remPio2` (function): Writes x − n·π/2 into y as two doubles (|y[0] + y[1]| ≤ π/4) and returns n, as V8's __ieee754_rem_pio2 does.
+- `TWO_OVER_PI` (const): 2/π's first 1,584 bits, in 24-bit chunks (fdlibm's two_over_pi).
+
+### [`engine/core/fdlibm/tan.ts`](../engine/core/fdlibm/tan.ts)
+
+- `tan` (function): The tangent of `x` (radians), as V8's ieee754::tan computes it.
+
+### [`engine/core/fdlibm/words.ts`](../engine/core/fdlibm/words.ts)
+
+- `fromWords` (function): The double whose high word is `hi` and low word `lo` (INSERT_WORDS).
+- `high` (function): The high word of `x`, as a signed int32.
+- `low` (function): The low word of `x`, unsigned.
+- `withHigh` (function): `x` with its high word replaced by `hi` (SET_HIGH_WORD).
+- `withLow` (function): `x` with its low word replaced by `lo` (SET_LOW_WORD).
+
 ### [`engine/core/gallery.ts`](../engine/core/gallery.ts)
 
 - `Gallery` (interface): How the gallery shows an entry: its camera, how long it plays (s) and the states it is shown in.
@@ -3882,7 +3932,7 @@ For the agents who maintain the engine.
 - `SIM_MATH` (const): What the swap puts into `Math`, by function name (PLAN.md §6.5): the functions that differ between runtimes.
 - `SIM_MATH_CODES` (const): The codes this module raises, with their fixes (collected into docs/ERRORS.md by `x docs`).
 - `SIM_MATH_NAMES` (const): Every swapped name, in `SIM_MATH`'s order.
-- `SimMathEntry` (interface): A `Math` function the sim swaps: its pure-JavaScript port, the npm package it comes from, and the native one.
+- `SimMathEntry` (interface): A `Math` function the sim swaps: its pure-JavaScript port, where the port comes from, and the native one.
 - `SimMathName` (type): The names of the swapped `Math` functions.
 - `withSimMath` (function): Runs `fn` with the fdlibm ports in `Math` and returns its result; the previous functions are back afterwards, whether `fn` returns or throws; a `fn` that returns a promise throws `CORE_SIM_ASYNC`.
 
@@ -8436,6 +8486,7 @@ For the agents who maintain the engine.
 
 ### [`tests/e2e/fixtures.ts`](../tests/e2e/fixtures.ts)
 
+- `CHROMIUM_NO_ADAPTER` (const): Chromium's own warning when `navigator.gpu.requestAdapter()` finds no adapter.
 - `decodePng` (re-export): (undocumented)
 - `expect` (re-export): Playwright's `expect`, re-exported so a suite imports everything from this file.
 - `Frame` (interface): A frame read from the page: decoded RGBA pixels plus the PNG.
@@ -8506,7 +8557,7 @@ For the agents who maintain the engine.
 ### [`tests/pages/driftProbe.ts`](../tests/pages/driftProbe.ts)
 
 - `bitDiff` (function): How two result arrays differ, bit for bit: the count of differing entries and the index of the first.
-- `compareDrift` (function): Compares Node's result with Chromium's, given the swap both ran under: a swapped function or a composite must give the same bits inside `withSimMath`, every other function natively; every `Math` function must be probed.
+- `compareDrift` (function): Compares Node's result with Chromium's, given the swap both ran under: a swapped function or a composite must give the same bits inside `withSimMath`, every other function natively; every `Math` function Node has must be probed, and Chromium must have it too.
 - `DRIFT_FUNCTIONS` (const): Every `Math` function but `random`, and the `**` operator.
 - `DRIFT_INPUTS` (const): Seeded inputs per function, as PLAN.md WP 1.1 asks.
 - `DriftFunction` (interface): One probed function: its `Math` name (or the operator), its argument domains, and the port that would cover it.
@@ -9389,12 +9440,12 @@ For the agents who maintain the engine.
 ### [`tools/lib/browser.ts`](../tools/lib/browser.ts)
 
 - `AdapterRecord` (interface): One adapter WebGPU returned: its identity and features.
-- `browserRuntime` (function): The browser part of a report's runtime: `141.0.7390.37` → `chromium141`.
+- `browserRuntime` (function): The browser part of a report's runtime: `153.0.8010.12` → `chromium153`.
 - `cachedChromium` (function): Where scripts/setup.sh keeps Chrome for Testing `CHROMIUM_VERSION` on a machine without `DEFAULT_CHROMIUM`.
 - `CHROMIUM_VERSION` (const): The platform's Chromium release (tools/deps.json), which scripts/setup.sh fetches where the container's is absent.
 - `chromiumPath` (function): The Chromium executable: `$CHROMIUM_PATH`; else `DEFAULT_CHROMIUM` when it exists; else `cachedChromium()` when it exists (a machine outside the container, after scripts/setup.sh); else `DEFAULT_CHROMIUM`, so the launch error names the platform's path.
 - `ConsoleRecord` (interface): One console message the page printed.
-- `DEFAULT_CHROMIUM` (const): The container's Chromium 141; `$CHROMIUM_PATH` overrides it.
+- `DEFAULT_CHROMIUM` (const): The container's Chromium (153 since 2026-10-22); `$CHROMIUM_PATH` overrides it.
 - `describePageError` (function): One line for a page error: its message and where it was thrown (`tests/pages/harness.ts:12:9`).
 - `GpuLog` (interface): What WebGPU really did in the page, counted by the probe: `window.__gpu`.
 - `initScript` (function): The init script for `page.addInitScript`: the virtual clock seeded with `seed`, then the WebGPU probe.
