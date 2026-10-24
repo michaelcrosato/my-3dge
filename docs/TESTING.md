@@ -25,10 +25,10 @@ Each tier's command, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib
   to five minutes together (tools/lib/tierBudgets.ts); over them warns, and wall-clock time never
   fails a gate (ADR-0022).
 - **The full run**, `node x ci --local --full`: the same steps, x new --test-all, x engine --test (a game made from
-  this checkout passes its own gate) and T2 in full (`--long` adds the long runs). GitHub
-  runs it after each merge to main and by hand, nobody waiting on it; `node x ci --status`, which the SessionStart
-  hook runs, says how main's last one went, and a red one is fixed before other work. An agent waits on it only at
-  the end of a goal or a stage (AGENTS.md).
+  this checkout passes its own gate) and T2 in full (`--long` adds the long runs). GitHub runs it after each merge to
+  main and by hand, in four shards (`--shard <i>/4`), nobody waiting on it; `node x ci --status`, which the
+  SessionStart hook runs, says how main's last one went (a cancelled one, the time limit, is red too), and a red one is
+  fixed before other work. An agent waits on it only at the end of a goal or a stage (AGENTS.md).
 
 ## What a change selects
 

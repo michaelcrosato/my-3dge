@@ -3,7 +3,8 @@
  * step list against PLAN.md §8.9; the quick gate (no T2) and the full run (`--full`, T2 in full: ADR-0023); the order,
  * the logs and the green commit; a failed step that leaves the next ones running, and a failed `npm ci` that skips
  * them; the quick gate's budget (its steps together, over warns, never fails: ADR-0022); the cache kept across
- * `npm ci`; `--long`; the summary; `--status`; and the exit codes and the 20-line output through the dispatcher. The
+ * `npm ci`; `--long`; a shard of the full run (`--shard`, ADR-0023 amendment 1); the summary; `--status`; and the exit
+ * codes and the 20-line output through the dispatcher. The
  * real suite never runs here: `node x ci --local` is WP 0.9's Verify.
  */
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -12,7 +13,7 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { LAST_GREEN, LONG_RUNS, TIERS } from '../lib/tiers';
 import { dispatch, MAX_LINES } from '../x';
-import { CI_STEPS, createCiCommand, FULL_ONLY, runCi, type CiDeps, type StepOutcome } from './ci';
+import { CI_STEPS, createCiCommand, FULL_ONLY, parseShard, runCi, type CiDeps, type StepOutcome } from './ci';
 import { CI_OUT, renderSummary } from '../lib/ciSummary';
 import type { WorkflowRun } from '../lib/ciStatus';
 
@@ -140,6 +141,26 @@ describe('runCi', () => {
       note: 'in full, 1 worker on 4 cores',
     });
     expect(read(root, CI_OUT.summary)).toContain('# x ci --local --full: ok');
+  });
+
+  it('runs a share of T2 with --shard, and the other steps but npm ci on the first shard alone', async () => {
+    const first = sandbox();
+    const one = fakeDeps();
+    const run = await runCi(first, { ...one.deps, cores: 4 }, { full: true, shard: { index: 1, total: 4 } });
+    expect(one.calls).toEqual([...STEP_COMMANDS.slice(0, -1), 'npm run e2e -- --shard=1/4']);
+    expect(run.steps.at(-1)).toMatchObject({ status: 'ok', note: 'shard 1 of 4, 1 worker on 4 cores' });
+    expect(existsSync(join(first, LAST_GREEN)), 'a share is no whole run: no green commit').toBe(false);
+    expect(read(first, CI_OUT.summary)).toContain('# x ci --local --full --shard 1/4: ok');
+    expect(read(first, CI_OUT.summary)).not.toContain(`recorded in ${LAST_GREEN}`);
+
+    const third = sandbox();
+    const three = fakeDeps();
+    const later = await runCi(third, three.deps, { full: true, shard: { index: 3, total: 4 } });
+    expect(three.calls).toEqual(['npm ci', 'npm run e2e -- --shard=3/4']);
+    expect(later.ok).toBe(true);
+    const skipped = later.steps.filter((step) => step.status === 'skipped');
+    expect(skipped.map((step) => step.name)).toEqual(CI_STEPS.slice(1, -1).map((step) => step.name));
+    expect(skipped[0].note).toContain("shard 1's");
   });
 
   it('keeps running after a failed step, fails the gate and keeps the last lines', async () => {
@@ -290,6 +311,20 @@ describe('node x ci through the dispatcher', () => {
     });
     expect(code).toBe(0);
     expect(lines.some((line) => line.startsWith('CI_DIRTY: 1 uncommitted changes (M a.ts…)'))).toBe(true);
+  });
+
+  it('reads --shard as <i>/<n>, 1 ≤ i ≤ n, and refuses it without --full', async () => {
+    expect(parseShard('2/4')).toEqual({ index: 2, total: 4 });
+    for (const bad of ['0/4', '5/4', '2', 'a/b', '2/4/1']) expect(() => parseShard(bad), bad).toThrow('--shard takes');
+    const { deps, calls } = fakeDeps();
+    const alone = await x(sandbox(), ['--local', '--shard', '1/4'], deps);
+    expect(alone.code).toBe(2);
+    expect(alone.lines.join('\n')).toContain('give it with --full');
+    expect((await x(sandbox(), ['--local', '--full', '--shard', '9/4'], deps)).code).toBe(2);
+    expect(calls).toEqual([]);
+    const shard = await x(sandbox(), ['--local', '--full', '--shard', '2/4'], deps);
+    expect(shard.code).toBe(0);
+    expect(calls).toEqual(['npm ci', 'npm run e2e -- --shard=2/4']);
   });
 
   it('runs the full run with --full', async () => {

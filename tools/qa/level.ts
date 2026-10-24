@@ -15,16 +15,17 @@
  *
  * Invariants: files are read in name order, so violations come in a fixed order; the legend is the shared
  * registry's (the engine's glyphs; a game's glyphs need their module imported first), or for a place that names its
- * glyphs, a fresh registry with them.
+ * glyphs, a fresh registry with them, from the module beside its levels, imported at run time where the place is: a
+ * game gets tools/ but never the engine's fixtures/, so no file here imports them.
  *
  * @example
  * import { ROOT } from '../x';
- * levelFiles(ROOT).map((level) => level.id).includes('level:fixtures/room'); // true
+ * (await levelFiles(ROOT)).map((level) => level.id).includes('level:fixtures/room'); // true
  * @see tools/qa/level.test.ts
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { defineStoreyFixtureGlyphs } from '../../fixtures/levels/storeys/glyphs';
+import { pathToFileURL } from 'node:url';
 import { hashValue, type Canonical } from '../../engine/core/hash';
 import { createRegistry, type Registry } from '../../engine/core/registry';
 import { withSimMath } from '../../engine/core/simMath';
@@ -33,11 +34,23 @@ import { LEVEL_CONTENT_CODES, type LevelProblem } from '../../engine/world/level
 import { validateLevel } from '../../engine/world/level/validate';
 import type { QaFamily, QaViolation } from '../cmd/qa';
 
+/** The module beside a place's levels that names the glyphs they need beyond the engine's, and its function. */
+export interface PlaceGlyphs {
+  /** Its file in the place's folder. */
+  file: string;
+  /** The function it exports that defines the glyphs on the registry it is given. */
+  define: string;
+}
+
 /** Where level files live, the id prefix of each place's levels, and the glyphs they need beyond the engine's. */
-export const LEVEL_DIRS: readonly { dir: string; prefix: string; glyphs?: (registry: Registry) => void }[] = [
+export const LEVEL_DIRS: readonly { dir: string; prefix: string; glyphs?: PlaceGlyphs }[] = [
   { dir: 'labs/box/levels', prefix: 'level:' },
   { dir: 'fixtures/levels', prefix: 'level:fixtures/' },
-  { dir: 'fixtures/levels/storeys', prefix: 'level:fixtures/storeys/', glyphs: defineStoreyFixtureGlyphs },
+  {
+    dir: 'fixtures/levels/storeys',
+    prefix: 'level:fixtures/storeys/',
+    glyphs: { file: 'glyphs.ts', define: 'defineStoreyFixtureGlyphs' },
+  },
 ];
 
 /** One level file: its QA id, its path from the repository root, and the registry holding its legend. */
@@ -48,17 +61,29 @@ export interface LevelFile {
   registry?: Registry;
 }
 
+/** A fresh registry holding a place's glyphs, from the module `glyphs` names in the place's folder `path`. */
+async function placeRegistry(path: string, glyphs: PlaceGlyphs): Promise<Registry> {
+  const registry = createRegistry();
+  const module = (await import(pathToFileURL(join(path, glyphs.file)).href)) as Record<string, unknown>;
+  const define = module[glyphs.define];
+  if (typeof define !== 'function') {
+    throw new Error(`${join(path, glyphs.file)} exports no function ${glyphs.define}: tools/qa/level.ts's LEVEL_DIRS names it to define the place's glyphs`); // prettier-ignore
+  }
+  (define as (registry: Registry) => void)(registry);
+  return registry;
+}
+
 /** Every level file under `root`, in `LEVEL_DIRS` order, then by name. */
-export function levelFiles(root: string): LevelFile[] {
-  return LEVEL_DIRS.flatMap(({ dir, prefix, glyphs }) => {
+export async function levelFiles(root: string): Promise<LevelFile[]> {
+  const places = LEVEL_DIRS.map(async ({ dir, prefix, glyphs }): Promise<LevelFile[]> => {
     const path = join(root, dir);
     if (!existsSync(path)) return [];
     const names = readdirSync(path).filter((name) => name.endsWith('.txt'));
     if (!names.length) return [];
-    const registry = glyphs ? createRegistry() : undefined;
-    if (registry && glyphs) glyphs(registry);
+    const registry = glyphs ? await placeRegistry(path, glyphs) : undefined;
     return names.sort().map((name) => ({ id: `${prefix}${name.slice(0, -4)}`, file: `${dir}/${name}`, registry }));
   });
+  return (await Promise.all(places)).flat();
 }
 
 /** `LEVEL_UNKNOWN_GLYPH` → `unknownGlyph`. */
@@ -91,9 +116,9 @@ function stableHash(text: string, file: string, registry?: Registry): boolean {
 
 /** The family: every level file's problems, and whether it compiles reproducibly. */
 const family: QaFamily = {
-  run({ root, only, keep }) {
+  async run({ root, only, keep }) {
     const violations: QaViolation[] = [];
-    for (const level of levelFiles(root)) {
+    for (const level of await levelFiles(root)) {
       if (!(keep ? keep(level.id) : !only.length || only.some((prefix) => level.id.startsWith(prefix)))) continue;
       const text = readFileSync(join(root, level.file), 'utf8');
       const problems = validateLevel(text, { file: level.file, registry: level.registry });

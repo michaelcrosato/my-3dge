@@ -53,7 +53,17 @@ import { defineActions } from '../anim/library';
 import { readSet } from '../anim/repack';
 import type { QaFamily, QaViolation } from '../cmd/qa';
 import { ANIM_QA, closure, footSlide, limbs, m, motionTrack, pops, type Track } from './anim/metrics';
-import { AHEAD, BEHIND, checkPointRig, facingTurn, LEFT, POINT_RIGS, type Report } from './anim/points';
+import {
+  AHEAD,
+  BEHIND,
+  checkPointRig,
+  facingTurn,
+  LEFT,
+  pointRigs,
+  POINT_RIGS,
+  type PointRig,
+  type Report,
+} from './anim/points';
 
 /** The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step. */
 export const HUMANOIDS: readonly { build: string; weapon: Weapon; kind?: string }[] = [
@@ -219,8 +229,14 @@ function checkHumanoid(
   }
 }
 
-/** Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order. */
-export function animViolations(keep: (id: string) => boolean = () => true): QaViolation[] {
+/**
+ * Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order: the humanoids, then
+ * `rigs` (the engine's point rigs by default; the family adds the fixtures' where the checkout has them, `pointRigs`).
+ */
+export function animViolations(
+  keep: (id: string) => boolean = () => true,
+  rigs: readonly PointRig[] = POINT_RIGS,
+): QaViolation[] {
   const found = new Map<string, QaViolation>();
   const report: Report = (id, metric, value) => {
     const key = `${id}\u0000${metric}`;
@@ -234,7 +250,7 @@ export function animViolations(keep: (id: string) => boolean = () => true): QaVi
     if (Object.keys(states).length === 0) return;
     checkHumanoid(body, states, i === 0, (id, metric, found) => report(kind + id, metric, found));
   });
-  for (const { rig, prefix } of POINT_RIGS) checkPointRig(rig, prefix, keep, report);
+  for (const { rig, prefix } of rigs) checkPointRig(rig, prefix, keep, report);
   return [...found.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : a.metric < b.metric ? -1 : 1));
 }
 
@@ -243,7 +259,7 @@ const family: QaFamily = {
   async run({ root, only, keep: asked }) {
     const keep = asked ?? ((id: string) => only.length === 0 || only.some((prefix) => id.startsWith(prefix)));
     const { clipViolations } = await import('./anim/clips'); // loaded here: it measures with this file's metrics
-    return [...animViolations(keep), ...clipViolations(root, keep)];
+    return [...animViolations(keep, await pointRigs(root)), ...clipViolations(root, keep)];
   },
 };
 

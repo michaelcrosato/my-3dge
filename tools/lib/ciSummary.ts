@@ -28,10 +28,11 @@ export const CI_OUT = {
 export function renderSummary(run: CiRun): string {
   const { head } = run;
   const dirty = head.dirty.length ? ` with ${head.dirty.length} uncommitted changes` : '';
+  const shard = run.shard ? ` --shard ${run.shard.index}/${run.shard.total}` : '';
   const out = [
-    `# x ci --local${run.full ? ' --full' : ''}: ${run.ok ? 'ok' : 'FAIL'}`,
+    `# x ci --local${run.full ? ' --full' : ''}${shard}: ${run.ok ? 'ok' : 'FAIL'}`,
     '',
-    `- Commit: ${head.sha.slice(0, 7)} on ${head.branch}${dirty}${run.ok ? `, recorded in ${LAST_GREEN}` : ''}`,
+    `- Commit: ${head.sha.slice(0, 7)} on ${head.branch}${dirty}${run.ok && !run.shard ? `, recorded in ${LAST_GREEN}` : ''}`,
     `- Started: ${run.started} on ${run.runtime}, ${run.cores} cores`,
     `- Budget: ${run.budget.message}`,
     '',

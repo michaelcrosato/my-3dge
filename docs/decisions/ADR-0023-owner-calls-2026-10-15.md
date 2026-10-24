@@ -36,6 +36,19 @@ names it. The leaks between suites that C1's full runs found are still found, an
 before it.
 
 ## Enforced by
-tools/cmd/ci.ts (`CI_STEPS`' `full`, `FULL_ONLY`, `--status`), tools/lib/tierBudgets.ts (`GATE_BUDGET_MS`),
-tools/lib/ciStatus.ts, .github/workflows/ci.yml and tools/cmd/ci-workflow.test.ts, .claude/hooks/session-start.sh,
-AGENTS.md (the loop, merging, gates).
+tools/cmd/ci.ts (`CI_STEPS`' `full`, `FULL_ONLY`, `--status`, `--shard`), tools/lib/tierBudgets.ts
+(`GATE_BUDGET_MS`), tools/lib/ciStatus.ts, .github/workflows/ci.yml and tools/cmd/ci-workflow.test.ts,
+tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop, merging, gates).
+
+## Amendments
+1. **2026-10-24: the full run in four shards; a cancelled run is red** (my call, found at the hand-off after PR #28).
+   Main's full runs on 39e06b0 (#27) and 9b988aa (#28) hit the job's 120 minutes inside T2 (86 min of the 96 at G10;
+   past 107 min by then) and were cancelled, and `x ci --status` passed over cancelled runs, so main read green on
+   14e1810 for two merges while both runs had also failed `x engine --test` (tools/qa imported fixtures/, which games
+   never get). Now: the workflow runs four jobs, fail-fast off, each `node x ci --local --full --shard <i>/4`: T2's
+   i-th share through Playwright's `--shard` (it balances by test count, so parity.spec.ts, about 45 minutes, bounds
+   the slowest), and on the first job every other step too; a run passes when every shard does. The workflow cancels
+   no run, so `x ci --status` reads a cancelled one, a timeout as GitHub reports it, as not passing. And T1 checks
+   what `x engine --test` found too late: every file a game gets imports only files a game gets
+   (tools/game/imports.test.ts). Alternative not taken: a longer limit (up to 360 minutes), simpler, but main's
+   verdict would come two and a half hours after each merge and grow with T2.

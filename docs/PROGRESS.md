@@ -5,10 +5,10 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 
 ## Next: main green, then U-8, the rest of stage G12 and G13 (Phase 13, ADR-0025)
 
-- Main is red, unseen (found 2026-10-24): its full runs on 39e06b0 (#27) and 9b988aa (#28) hit the job's 120 min limit
-  in T2 (86 min at G10, parity.spec.ts 42 of them), and both failed `x engine --test`: tools/qa/{level,anim/points}.ts
-  import fixtures/, which games never get. `x ci --status` passes over cancelled runs, so it still names 14e1810's
-  pass. Fix all three first, in a PR of their own.
+- Main was red, unseen (found 2026-10-24): its full runs on 39e06b0 (#27) and 9b988aa (#28) hit the job's 120 min in
+  T2 and failed `x engine --test` (tools/qa imported fixtures/, which games never get), and `x ci --status` passed
+  over cancelled runs. PR #29 fixes all three (ADR-0023 amendment 1): T1 guards a game's imports, the full run runs in
+  four shards, a cancelled run reads red. Main's full run on its merge proves it.
 - U-8 fired: the container's Chromium is 153 since 2026-10-22, while the pins and GitHub's run stay on 141. On 153 the
   drift test fails (18 Math functions), the starter's replay parts in Chromium and hello.spec.ts fails: its ledger
   row. Its own PR, the drift test first; till then `CHROMIUM_PATH` can point T2 at 141 (scripts/setup.sh's download).
