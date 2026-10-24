@@ -73,7 +73,7 @@ const KEYS: Record<string, SkySpec> = {
     pointLights: 1,
     dome: { show: true, turbidity: 6, rayleigh: 3, mieCoefficient: 0.012, mieDirectionalG: 0.85, exposure: 0.28 },
     sun: { color: '#ff9a60', intensity: 1.6 },
-    ambient: { sky: '#e0b0a0', ground: '#2e2620', intensity: 0.9 },
+    ambient: { sky: '#e0b0a0', ground: '#2e2620', intensity: 1.1 },
     fog: { color: '#d8a890', start: 30, end: 200, amount: 0.55 },
   },
   'sky:night': {
@@ -82,8 +82,8 @@ const KEYS: Record<string, SkySpec> = {
     pointLights: 1,
     dome: { show: true, turbidity: 2, rayleigh: 1, mieCoefficient: 0.003, mieDirectionalG: 0.8, exposure: 0.04 },
     sun: { color: '#a8b8ff', intensity: 0.5 },
-    ambient: { sky: '#5a6aa0', ground: '#18141c', intensity: 0.55 },
-    fog: { color: '#101830', start: 30, end: 180, amount: 0.7 },
+    ambient: { sky: '#5a6aa0', ground: '#18141c', intensity: 0.25 },
+    fog: { color: '#101830', start: 30, end: 180, amount: 0.55 },
   },
 };
 

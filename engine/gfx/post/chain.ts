@@ -13,23 +13,23 @@
  *    order, straight to the screen (the chain's colour transform is off: the composite ends in display colours).
  * Every filter is a uniform, so switching any filter, scope or look builds no pipeline and recompiles no material;
  * passes that are off do not run (bloom's, SMAA's), except in the warm-up's frame, which draws all of them. A plain
- * frame (`look:clean`) skips the chain's passes and draws the scene straight (`Post.plain` says when, and what it
- * saves); the warm-up's frame draws both ways (`Post.view` says how), so switching between them builds nothing.
+ * frame (`look:clean`) skips the chain's passes and draws the scene straight (`Post.plain`); the warm-up's frame draws
+ * both ways (`Post.view` says how), so switching between them builds nothing.
  *
- * What it draws comes from three view settings, `post.look`, `post.filters` and `post.show` (`POST_SETTINGS`,
- * engine/gfx/post/settings.ts), which act on the frames drawn through `post.view`: `createEngine`
- * (engine/app/engine.ts) draws every frame and shot of its pages through one chain, so `x set`, URL parameters
- * (`x shot --set`) and `__engine.set` reach them there (`definePostSettings` says how). A look's style is applied to
- * the style set given (`styles.setStyle`, WP 7.2); a look with style `''` puts back the style the set had when the
- * chain was made, and its toon look; without a style set a look draws only its filters, with advice
- * `GFX_POST_NO_STYLES` (`createEngine` gives none). Pixel art on the environment, or the whole screen's low
- * resolution, snaps the camera to its block grid for the frame (`snapBlock`, engine/gfx/post/snap.ts) and puts it back.
+ * What it draws comes from the view settings `post.look`, `post.filters` and `post.show` (engine/gfx/post/settings.ts)
+ * on the frames drawn through `post.view`: `createEngine` (engine/app/engine.ts) draws every frame and shot of its
+ * pages through one chain, so `x set`, URL parameters and `__engine.set` reach them. A look's style is applied to the
+ * style set given (`styles.setStyle`, WP 7.2); a look with style `''` puts back the set's own style and toon look;
+ * without a style set a look draws only its filters, with advice `GFX_POST_NO_STYLES`. Each frame's pixel grid
+ * (engine/gfx/post/grid.ts, WP 13.24): pixel art on the environment, or the whole screen's low resolution, snaps the
+ * camera to its block grid for the frame and puts it back, the dithers' cells and the page's glide
+ * (`gfx.resolution.shift`) following it; the art block and the ink's width follow the drawing buffer's lines. A look's
+ * perspective variant (`perspective`) gives its filters and toon numbers while the camera is a perspective one.
  *
  * Use: `gfx.frame(post.view(frameView))` draws a frame through the chain; `post.attach(gfx.warmup)` once, before the
- * first warm-up, adds the chain's key part.
- * Invariants: presentation only: nothing here reaches the sim or the hash (the settings are view settings); the
- * output graph is built once (`builds`), again only when the renderer's tone mapping or colour space changes, which
- * changes the warm-up's key; the camera is the same after a frame as before it.
+ * first warm-up, adds the chain's key part. Invariants: presentation only: nothing here reaches the sim or the hash;
+ * the output graph is built once (`builds`), again only when the renderer's tone mapping or colour space changes,
+ * which changes the warm-up's key; the camera is the same after a frame as before it.
  *
  * @example
  * // const post = createPost(gfx, { settings, styles });
@@ -48,6 +48,7 @@ import type { StyleSet } from '../materials/styles';
 import type { ToonLook } from '../materials/toon';
 import { qualityBudget, type QualityBudget, type QualitySetting } from '../quality';
 import type { FrameView } from '../renderer';
+import type { Resolution } from '../resolution';
 import type { Warmup, WarmupPass } from '../warmup';
 import { AA_CHOICE, aaKindFor, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { gpuParticlesFor, sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
@@ -58,17 +59,16 @@ import {
   fixLevels,
   isPlain,
   layerChain,
-  scopeMask,
   writeFilters,
   type FilterChain,
   type FilterSpec,
 } from './filters';
 import { defineLooks, type LookEntry } from './looks';
-import { clearMrt, createScenePass, FLAG_SLOTS, PART_BITS, useSceneMrt, writeFlags } from './mrt';
+import { clearMrt, createScenePass, FLAG_SLOTS, useSceneMrt, writeFlags } from './mrt';
 import { createParticleLayer } from './particles';
 import { definePostSettings } from './settings';
 import { createShading } from './shading';
-import { snapToBlocks } from './snap';
+import { frameGrid, inkWidth } from './grid';
 
 /** How `createPost` makes a chain. */
 export interface PostOptions {
@@ -129,22 +129,12 @@ export interface Post {
   dispose(): void;
 }
 
-/**
- * The block grid the camera snaps to for `chain`: pixel art's when it covers the environment and snaps (characters
- * and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), else the whole
- * screen's low resolution; 1 for none.
- */
-export function snapBlock(chain: FilterChain): number {
-  if (chain.pixel.snap && (scopeMask(chain.pixel.scope) & PART_BITS.environment) !== 0) return chain.pixel.size;
-  return chain.screen.scope === 'all' ? chain.screen.pixelate : 1;
-}
-
 /** Chains made so far: each adds its key part under its own number. */
 let chains = 0;
 
 /** Makes the chain on `gfx.renderer` (see the file comment). */
 export function createPost(
-  gfx: { renderer: WebGPURenderer; features?: FeatureReport },
+  gfx: { renderer: WebGPURenderer; features?: FeatureReport; resolution?: Pick<Resolution, 'shift'> },
   options: PostOptions = {},
 ): Post {
   const { renderer } = gfx;
@@ -206,9 +196,21 @@ export function createPost(
     builds++;
   };
 
-  let resolved: { id: string; over: unknown; look: LookEntry; chain: FilterChain } | null = null;
-  /** The look and chain the settings name now (the last ones while the settings are unchanged). */
-  const resolve = () => {
+  type Resolved = { id: string; over: unknown; look: LookEntry; chain: FilterChain; toon: ToonLook; variant?: Resolved }; // prettier-ignore
+  let resolved: Resolved | null = null;
+  /**
+   * The look and chain the settings name now (the last ones while the settings are unchanged); for a `perspective`
+   * camera, the look's variant's filters and toon numbers when it names one.
+   */
+  const resolve = (perspective = false): Resolved => {
+    const base = resolveBase();
+    if (!perspective || !base.look.perspective) return base;
+    if (base.variant) return base.variant;
+    const variant = registry.get('look', base.look.perspective) as LookEntry;
+    base.variant = { ...base, chain: layerChain(variant.filters, fixColor(fixLevels(base.over as FilterSpec).spec).spec), toon: variant.toon }; // prettier-ignore
+    return base.variant;
+  };
+  const resolveBase = (): Resolved => {
     const id = settings.get<string>('post.look');
     const over = settings.get('post.filters');
     if (resolved && resolved.id === id && resolved.over === over) return resolved;
@@ -219,24 +221,28 @@ export function createPost(
     }
     const { spec, dropped } = fixColor(levelled);
     if (dropped !== null) log.warnOnce('GFX_POST_BAD_COLOR', { color: JSON.stringify(dropped) }, dropped);
-    resolved = { id, over, look, chain: layerChain(look.filters, spec) };
+    resolved = { id, over, look, chain: layerChain(look.filters, spec), toon: look.toon };
     return resolved;
   };
 
   let applied: LookEntry | null = null;
   let appliedChain: FilterChain | null = null;
-  /** Writes the uniforms and the style when the look or the filters changed; returns the chain. */
+  let appliedToon: ToonLook | null = null;
+  /** Writes the uniforms and the style when the look, its variant or the filters changed; returns the chain. */
   const sync = () => {
-    const state = resolve();
+    const state = resolve((scenePass.camera as PerspectiveCamera).isPerspectiveCamera === true);
     if (state.chain !== appliedChain) writeFilters(uniforms, state.chain);
     appliedChain = state.chain;
     if (state.look !== applied && styles && own) {
       styles.setStyle(state.look.style || own.style, scenePass.scene);
-      styles.toon.set(state.look.style === 'toon' ? state.look.toon : own.toon);
     } else if (state.look !== applied && state.look.style) {
       log.warnOnce('GFX_POST_NO_STYLES', { look: state.look.id, style: state.look.style }, state.look.id);
     }
+    if ((state.look !== applied || state.toon !== appliedToon) && styles && own) {
+      styles.toon.set(state.look.style === 'toon' ? state.toon : own.toon);
+    }
     applied = state.look;
+    appliedToon = state.toon;
     const chain = state.chain;
     uniforms.frame.value.x = POST_SHOW.indexOf(settings.get<PostShow>('post.show'));
     const budget = quality();
@@ -293,6 +299,7 @@ export function createPost(
       clearMrt(renderer);
       straight();
       if (particles) layer!.straight(renderer);
+      gfx.resolution?.shift(0, 0);
       if (!warming) return;
     }
     if (!built || built.tone !== renderer.toneMapping || built.space !== renderer.outputColorSpace) build();
@@ -300,8 +307,13 @@ export function createPost(
     camera.updateMatrixWorld();
     invProj.value.copy(camera.projectionMatrixInverse);
     renderer.getDrawingBufferSize(size);
-    const block = snapBlock(chain);
-    const restore = block > 1 ? snapToBlocks(camera, block, { width: size.x, height: size.y }) : null;
+    const grid = frameGrid(chain, camera, { width: size.x, height: size.y });
+    uniforms.pixel.value.y = grid.block;
+    uniforms.outline.value.y = inkWidth(chain.outline, size.y);
+    uniforms.frame.value.z = grid.cells[0];
+    uniforms.frame.value.w = grid.cells[1];
+    styles?.toon.grid.value.set(grid.cells[0], grid.cells[1], grid.block);
+    gfx.resolution?.shift(grid.shift[0], grid.shift[1]);
     // After the snap: the shading reconstructs positions through the camera the scene pass draws with.
     shading.frame(camera, scenePass.scene, frames, size.y);
     built?.temporal?.follow(camera);
@@ -316,7 +328,7 @@ export function createPost(
       processing.render();
     } finally {
       scenePass.scene = scene;
-      restore?.();
+      grid.restore();
       warming = false;
       layer?.done();
     }

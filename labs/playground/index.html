@@ -21,11 +21,14 @@
         overflow: hidden;
         background: #15171c;
       }
+      /* A margin of two drawn pixels round the screen (engine/gfx/resolution.ts's --my3dge-pixel), drawn and hidden,
+         so the pixel look's glide (a fraction of a pixel, resolution.ts shift) never shows an edge. */
       canvas {
         display: block;
-        width: 100vw;
-        height: 100vh;
-        height: 100dvh;
+        width: calc(100vw + 4 * var(--my3dge-pixel, 0px));
+        height: calc(100vh + 4 * var(--my3dge-pixel, 0px));
+        height: calc(100dvh + 4 * var(--my3dge-pixel, 0px));
+        margin: calc(-2 * var(--my3dge-pixel, 0px));
         outline: none;
         touch-action: none;
       }

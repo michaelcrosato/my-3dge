@@ -9,7 +9,8 @@
  * with no instances), `background` (it or an ancestor carries `userData.background`: the sky's dome and backdrop,
  * which the frame draws at the far plane, behind everything, so the pass leaves them out as it leaves out the scene's
  * background; it would draw their real shapes, a 100 m box and a cylinder round the camera, over whatever lies
- * beyond them) or `outside` (its bounds miss the view frustum). `withIdScene(renderer, scene, table, draw)`
+ * beyond them) or `outside` (its bounds miss the view frustum). A look's outline shells (`userData.outline`,
+ * engine/gfx/stageShells.ts) are neither listed nor drawn: a shot's objects are the same in every look. `withIdScene(renderer, scene, table, draw)`
  * hands `draw` a stand-in scene sharing the scene's children, with no background and the ID material as its
  * override material, and the clear colour transparent black; the scene itself is never touched. `decodeIds` turns
  * the RGBA readback into the result, `visible: [{ id, name, px, share, bbox, centre }]` (largest first) and
@@ -164,6 +165,7 @@ export function listDrawables(scene: Object3D, camera: Camera, options: { protag
   scene.traverse((node) => {
     const object = node as Drawn;
     if (!(object.isMesh || object.isLine || object.isPoints || object.isSprite)) return;
+    if (object.userData.outline === true) return; // a look's outline shell, not an object of its own
     const named = object.parent && lookUp(object.parent, (up) => (up.name ? up.name : undefined));
     const name = object.name || `${named ? `${named}/` : ''}${object.type}#${object.id}`;
     const instanced = object as unknown as InstancedMesh;
@@ -226,7 +228,8 @@ function kitOf(renderer: WebGPURenderer): IdKit {
   const side = uniform(FrontSide as number);
   side.onObjectUpdate(({ object }) => void (side.value = object ? sideOf(object) : FrontSide));
   const background = uniform(0, 'uint');
-  background.onObjectUpdate(({ object }) => (background.value = object && current.get(object)?.reason === 'background' ? 1 : 0)); // prettier-ignore
+  // Discarded: the background, and what the table leaves out (outline shells).
+  background.onObjectUpdate(({ object }) => (background.value = object && (!current.has(object) || current.get(object)!.reason === 'background') ? 1 : 0)); // prettier-ignore
   const material = new MeshBasicNodeMaterial({ side: DoubleSide, fog: false });
   material.name = 'IdPass.material';
   material.lights = false;

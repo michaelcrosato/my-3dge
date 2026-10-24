@@ -10,7 +10,8 @@
  * only: the dome and the backdrop stay in the scene, registered with the warm-up, the sun and the pool's lights are
  * made once, and the fog node stays installed. The one exception is who casts shadows (engine/gfx/shadows.ts): a
  * preset with a sun gives the sun the first caster, which changes the shader key, so the renderer warms up again
- * before the next frame instead of stalling it. Nothing here touches the sim, so no preset changes the hash.
+ * before the next frame instead of stalling it. Nothing here touches the sim, so no preset changes the hash. A look
+ * may draw the dome as a clean gradient instead (`gradient`, WP 13.24: the cel look's), a uniform too.
  *
  * The backdrop is baked on the CPU into one strip (engine/gfx/backdrop.ts `bakeBackdrop`), which wraps three times
  * round an open cylinder that follows the camera, its foot just under eye level, drawn at the far plane like the
@@ -25,9 +26,8 @@
  * scene. And a TSL uniform in the object group (the default) refreshes only when its object or material changes, so
  * a still floor keeps its first fog: the dome's knobs and the fog's numbers are render-group uniforms.
  *
- * Carried from `my-3d2dge:engine/my-3d2dge.js:3859-3958` (§21b: the `day` preset's colours), rebuilt as a cylinder
- * round a 3D camera instead of screen layers. Invariants: equal presets bake equal strips; the scene's light count
- * never changes after `createSky`.
+ * Carried from `my-3d2dge:engine/my-3d2dge.js:3859-3958` (§21b: the `day` preset's colours), as a cylinder round a 3D
+ * camera. Invariants: equal presets bake equal strips; the scene's light count never changes after `createSky`.
  *
  * @example
  * bakeBackdrop({ haze: '#c8e4f8', layers: [{ kind: 'hills', color: '#5aa060', height: 0.5, haze: 0, seed: 1 }] }, 64, 16).length; // 4096
@@ -56,7 +56,7 @@ import {
   type Node,
   type Scene,
 } from 'three/webgpu';
-import { Fn, modelViewProjection, renderGroup, uniform, vec4 } from 'three/tsl';
+import { cameraPosition, Fn, mix, modelViewProjection, positionWorld, renderGroup, smoothstep, uniform, vec4 } from 'three/tsl'; // prettier-ignore
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
 import { registry as sharedRegistry, type Entry, type Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
@@ -204,6 +204,8 @@ export interface Sky {
   show(entry: SkyEntry): SkyEntry;
   /** Takes a quality tier's shadow budget (engine/gfx/quality.ts). */
   budget(budget: Pick<QualityBudget, 'shadowCasters'>): void;
+  /** Draws `share` (0 to 1) of the dome as a clean gradient, the haze at the horizon to a deeper zenith (WP 13.24). */
+  gradient(share: number): void;
   /**
    * Follows the camera and the focus (m), flickering at `time` (s), the frame's `lamps` among the pool's sources
    * (engine/gfx/lights.ts); call it each frame. Returns the pool's slots.
@@ -279,7 +281,11 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
   for (const knob of [dome.turbidity, dome.rayleigh, dome.mieCoefficient, dome.mieDirectionalG, dome.sunPosition])
     knob.setGroup(renderGroup);
   const exposure = uniform(1).setGroup(renderGroup);
-  dome.material.colorNode = vec4((dome.material.colorNode as Node).rgb.mul(exposure), 1);
+  // A look's gradient (WP 13.24): from the fog's haze at the horizon to the background deepened at the zenith.
+  const [gradient, zenith, horizon] = [uniform(0), uniform(new Color()), uniform(new Color())];
+  for (const knob of [gradient, zenith, horizon]) knob.setGroup(renderGroup);
+  const ramp = mix(horizon, zenith, smoothstep(0, 0.45, positionWorld.sub(cameraPosition).normalize().y));
+  dome.material.colorNode = vec4(mix((dome.material.colorNode as Node).rgb.mul(exposure), ramp, gradient), 1);
   Object.assign(dome, { frustumCulled: false, renderOrder: -2 });
   dome.userData.background = true; // drawn at the far plane, behind everything: the ID pass's empty space (idpass.ts)
   const strip = new DataTexture(bakeBackdrop({ haze: '#000000', layers: [] }), BACKDROP.width, BACKDROP.height);
@@ -304,6 +310,7 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
 
   let preset = registry.get('sky', 'sky:daylight') as SkyEntry;
   let baked = ''; // the backdrop baked into the strip, as its spec's text
+  const hsl = { h: 0, s: 0, l: 0 };
   let casters = shadowCasters({ shadowCasters: null });
   let split: Casters = { sun: false, points: 0 };
   const applyCasters = () => {
@@ -341,6 +348,9 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
       dome.mieCoefficient.value = preset.dome.mieCoefficient;
       dome.mieDirectionalG.value = preset.dome.mieDirectionalG;
       exposure.value = preset.dome.exposure;
+      horizon.value.set(preset.fog.color);
+      zenith.value.set(preset.background).getHSL(hsl);
+      zenith.value.setHSL(hsl.h, Math.min(1, hsl.s * 1.3), hsl.l * 0.78);
       backdrop.visible = preset.backdrop.layers.length > 0;
       material.color.set(preset.backdrop.tint);
       const strips = JSON.stringify([preset.backdrop.haze, preset.backdrop.layers]);
@@ -356,6 +366,7 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
       casters = shadowCasters(budget);
       applyCasters();
     },
+    gradient: (share) => void (gradient.value = Math.min(1, Math.max(0, share))),
     update({ camera, focus, time, lamps }) {
       const eye = camera.position;
       dome.position.copy(eye);

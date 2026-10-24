@@ -32,7 +32,7 @@ describe('the look kind', () => {
     expect(hd.filters.bloom).toMatchObject({ scope: 'all', strength: 1, threshold: 0.7 });
     expect(hd.filters.grade).toMatchObject({ scope: 'environment', temperature: 0.25, saturation: 1.2 });
     const cartoon = looks().get('look', 'look:cartoon') as LookEntry;
-    expect([cartoon.style, cartoon.toon]).toEqual(['toon', { bands: 2, rim: 0.4 }]);
+    expect([cartoon.style, cartoon.toon]).toEqual(['toon', { bands: 2, rim: 0.4, shade: 0, dither: 0 }]);
   });
 
   it('turns on in each preset only the filters of its group (grain with chroma), or only the style', () => {

@@ -96,12 +96,13 @@ fn post_view_depth(depth: texture_depth_2d, q: vec2<i32>, dims: vec2<i32>, inv_p
   return -v.z / v.w;
 }`);
 
-/** The 4 × 4 Bayer threshold of a cell, 0 to 1. */
+/** The 4 × 4 Bayer threshold of a cell, 0 to 1; any whole cell, negative ones too, wraps into the pattern. */
 export const postBayer = wgsl(`
 fn post_bayer4(p: vec2<f32>) -> f32 {
   var m = array<f32, 16>(0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-  let x = u32(abs(p.x)) % 4u;
-  let y = u32(abs(p.y)) % 4u;
+  let c = vec2<i32>(floor(p));
+  let x = u32(((c.x % 4) + 4) % 4);
+  let y = u32(((c.y % 4) + 4) % 4);
   return (m[y * 4u + x] + 0.5) / 16.0;
 }`);
 

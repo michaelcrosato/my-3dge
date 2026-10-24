@@ -147,6 +147,8 @@ export interface GfxStats {
   mode: ResolutionMode | null;
   width: number;
   height: number;
+  /** The picture's offset in drawn pixels, right and down: a snapped camera's remainder (resolution.ts `shift`). */
+  shift: readonly [number, number];
   /** The last frame's draw calls (`renderer.info.render`). */
   drawCalls: number;
   /** The last frame's triangles. */
@@ -331,6 +333,7 @@ export async function createRenderer(canvas: HTMLCanvasElement, options: GfxOpti
       mode: fit?.mode ?? null,
       width: fit?.width ?? 0,
       height: fit?.height ?? 0,
+      shift: resolution.offset,
       drawCalls: render.drawCalls,
       triangles: render.triangles,
       points: render.points,

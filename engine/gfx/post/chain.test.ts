@@ -1,16 +1,15 @@
 /**
  * @file Unit tests for the post chain's GPU-free parts (engine/gfx/post/chain.ts): its view settings, declared on the
- * shared registry and on another when asked, are reachable like any other and are kept out of the hash; the block
- * grid the camera snaps to; and the edge smoothing it draws, TRAA only while `feature:traa` is on (WP 11.5).
+ * shared registry and on another when asked, are reachable like any other and are kept out of the hash; and the edge
+ * smoothing it draws, TRAA only while `feature:traa` is on (WP 11.5). The block grid the camera snaps to is
+ * engine/gfx/post/grid.test.ts's.
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry, registry as sharedRegistry } from '../../core/registry';
 import { createSettings } from '../../core/settings';
 import { temporalAaFor } from '../features';
 import { aaKindFor } from './aa';
-import { snapBlock } from './chain';
 import { definePostSettings, POST_SETTINGS } from './settings';
-import { chainOf } from './filters';
 
 describe('the chain’s settings', () => {
   it('exist on the shared registry, and on another once a chain or an engine declares them', () => {
@@ -39,17 +38,6 @@ describe('the chain’s settings', () => {
     expect(() => settings.set('post.show', 'depth')).toThrow(/parts/);
     settings.set('post.look', 'look:hd-2d');
     expect(Object.keys(settings.values({ view: false })).filter((path) => path.startsWith('post.'))).toEqual([]);
-  });
-});
-
-describe('snapBlock', () => {
-  it("snaps to pixel art's blocks only while the environment is pixel art, else to the screen's low resolution", () => {
-    expect(snapBlock(chainOf())).toBe(1);
-    expect(snapBlock(chainOf({ pixel: { scope: 'all', size: 6 } }))).toBe(6);
-    expect(snapBlock(chainOf({ pixel: { scope: 'objects+environment', size: 5 } }))).toBe(5);
-    expect(snapBlock(chainOf({ pixel: { scope: 'characters+objects', size: 5 } }))).toBe(1);
-    expect(snapBlock(chainOf({ pixel: { scope: 'all', size: 6, snap: false } }))).toBe(1);
-    expect(snapBlock(chainOf({ screen: { scope: 'all', pixelate: 3 } }))).toBe(3);
   });
 });
 

@@ -159,7 +159,13 @@ export const FILTER_FIELDS = {
   }),
   pixel: filter('Pixel art: whole blocks on the scoped parts and on objects tagged pixel art.', {
     scope: scope(),
-    size: int('The block size.', 4, 2, 32, 'px'),
+    size: int(
+      'The block size; 0 takes the largest whole block giving the picture 240 to 360 lines (`artBlock`).',
+      4,
+      0,
+      32,
+      'px',
+    ),
     levels: int(
       'Shades per channel for the blocks: 0 keeps every colour, else 8 or more (24 suits pixel art).',
       0,
@@ -172,6 +178,12 @@ export const FILTER_FIELDS = {
       default: true,
       description: 'Snap the camera to the block grid while the environment is pixel art, so it does not shimmer.',
     },
+    smooth: {
+      type: 'boolean',
+      default: false,
+      description:
+        "Carry the snapped camera's sub-block remainder as a smooth offset of the whole picture on the page (its canvas needs a margin of `--my3dge-block`).",
+    },
   }),
   palette: filter('Colour reduction: levels per channel or a fixed palette, with ordered (Bayer) dithering.', {
     scope: scope(),
@@ -182,6 +194,12 @@ export const FILTER_FIELDS = {
   outline: filter('Outlines where depth jumps, surfaces crease or outline groups meet.', {
     scope: scope(),
     width: int('Line width.', 1, 1, 4, 'px'),
+    lines: int(
+      "Scale the width with the picture: `width` px at this many lines, in whole pixels; 0 doesn't.",
+      0,
+      0,
+      2160,
+    ),
     darken: num('The line is the surface times this (0 is black), unless a colour is given.', 0.35, 0, 1),
     color: {
       type: 'string',
@@ -259,59 +277,14 @@ export function isPlain(chain: FilterChain): boolean {
   return FILTER_NAMES.every((name) => chain[name].scope === 'off');
 }
 
-/** Checks a level count: 0, or 8 and more (see the file comment). */
-export function levelsProblem(levels: number, where: string): string | null {
-  return levels > 0 && levels < 8
-    ? `${where} is ${levels}: posterize with 0 (off) or 8 levels and more, so dull colours keep their hue`
-    : null;
-}
-
-/**
- * Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js
- * knows (`Color.NAMES`). `new Color` also reads `rgb()` and `hsl()`; a look writes those as hex, so data keeps one form
- * of each colour, and they are refused too.
- */
-export function colorProblem(color: string, where: string): string | null {
-  const known =
-    color === '' || /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(color) || Object.hasOwn(Color.NAMES, color.toLowerCase());
-  return known
-    ? null
-    : `${where} is ${JSON.stringify(color)}, which is no colour: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface`;
-}
-
-/**
- * `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null
- * when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
- */
-export function fixColor(spec: FilterSpec): { spec: FilterSpec; dropped: string | null } {
-  const color = spec.outline?.color;
-  if (color === undefined || !colorProblem(color, 'color')) return { spec, dropped: null };
-  const { color: _dropped, ...outline } = spec.outline ?? {};
-  return { spec: { ...spec, outline }, dropped: color };
-}
-
-/**
- * `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look
- * (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
- */
-export function fixLevels(spec: FilterSpec): {
-  spec: FilterSpec;
-  raised: { name: 'pixel' | 'palette'; levels: number }[];
-} {
-  const out: FilterSpec = { ...spec };
-  const raised: { name: 'pixel' | 'palette'; levels: number }[] = [];
-  for (const name of ['pixel', 'palette'] as const) {
-    const levels = spec[name]?.levels;
-    if (levels === undefined || !levelsProblem(levels, name)) continue;
-    out[name] = { ...spec[name], levels: 8 };
-    raised.push({ name, levels });
-  }
-  return { spec: out, raised };
-}
+export { colorProblem, fixColor, fixLevels, levelsProblem } from './filterChecks';
 
 /** The composite's uniforms: one vec4 per filter (and a second for the long ones), render-group, set up once. */
 export interface FilterUniforms {
-  /** (show, time in s, 0, 0): `show` 0 is the picture, 1 the parts, 2 the normals, 3 the outline groups. */
+  /**
+   * (show, time in s, the dither's cells across and down): `show` 0 is the picture, 1 the parts, 2 the normals, 3 the
+   * outline groups; the cells count blocks from where the chain snapped the camera (engine/gfx/post/chain.ts).
+   */
   frame: ReturnType<typeof uniform<Vector4>>;
   /** (mask, bands, punch, ink). */
   cel: ReturnType<typeof uniform<Vector4>>;

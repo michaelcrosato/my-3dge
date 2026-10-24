@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for outline shells (engine/gfx/materials/outline.ts), in Node: the material (back faces, no fog,
  * the push as its `positionNode`, width and colour as uniforms), a mesh's shell (a child sharing its geometry, no
- * shadows, `userData.outline`), an instanced mesh's shell sharing its instance matrices, the refusals
- * (`GFX_OUTLINE_TARGET` for a skinned mesh or a group), and a batch's shells: one per page inside the batch's root,
+ * shadows, `userData.outline`), an instanced mesh's shell sharing its instance matrices, a skinned mesh's shell bound
+ * to its skeleton (WP 13.24), the refusal (`GFX_OUTLINE_TARGET` for a group), widths given at a number of lines, and
+ * a batch's shells: one per page inside the batch's root,
  * sharing each page's matrices, following its count and visibility on `sync()`, growing with the pages, registered
  * with the warm-up and removed by `dispose()`. Where the push puts the line (the ID pass's bounding boxes on
  * instanced box parts) is tests/e2e/materials-v2.spec.ts.
@@ -56,7 +57,7 @@ describe('createOutline', () => {
     expect(shell.userData).toEqual({ entity: 7, outline: true });
   });
 
-  it("shares an instanced mesh's matrices, and refuses a skinned mesh and anything not a mesh", () => {
+  it("shares an instanced mesh's matrices, binds a skinned mesh's to its skeleton, and refuses anything not a mesh", () => {
     const outline = createOutline({ mode: 'centre' });
     const instanced = new InstancedMesh(new BoxGeometry(), new MeshBasicMaterial(), 1100);
     instanced.count = 5;
@@ -68,7 +69,12 @@ describe('createOutline', () => {
     const skinned = new SkinnedMesh(new BoxGeometry(), new MeshBasicMaterial());
     skinned.add(bone);
     skinned.bind(new Skeleton([bone]));
-    expect(() => outline.shell(skinned)).toThrow(expect.objectContaining({ code: 'GFX_OUTLINE_TARGET' }));
+    skinned.userData.entity = 3;
+    const body = outline.shell(skinned) as SkinnedMesh;
+    expect([body.isSkinnedMesh, body.skeleton, body.parent, body.geometry]).toEqual([true, skinned.skeleton, skinned, skinned.geometry]); // prettier-ignore
+    expect([body.bindMode, body.bindMatrix.equals(skinned.bindMatrix)]).toEqual([skinned.bindMode, true]);
+    expect(body.userData).toEqual({ entity: 3, outline: true });
+    expect(createOutline({ lines: 270 }).material.positionNode).not.toBeNull(); // the width scaled in the shader
     expect(() => outline.shell(new Group() as unknown as Mesh)).toThrow(
       expect.objectContaining({ code: 'GFX_OUTLINE_TARGET' }),
     );

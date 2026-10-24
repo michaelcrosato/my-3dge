@@ -114,6 +114,8 @@ describe('createStage', () => {
       'stage:stand-ins',
       'stage:actors',
       'stage:rides',
+      'shells:props', // the outline shells round the props and the bodies (WP 13.24)
+      'shells:bodies',
       'fx:sprites',
       'fx:decals',
       'fx:ribbons',

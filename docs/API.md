@@ -1226,8 +1226,8 @@ game agent's manual.
 - `TipSample` (interface from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): A sample of a trail: its tip, its base and its age, s.
 - `TipTrail` (class from [`engine/anim/proc/trails.ts`](../engine/anim/proc/trails.ts)): The streak a tip leaves (see the file comment).
 - `toLocal` (function from [`engine/world/site.ts`](../engine/world/site.ts)): A structure's own (x, z) from world (wx, wz): `toWorld` undone.
-- `TOON_LOOK` (const from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): The default look: three bands (shadow, base, lit) and shardfall's rim.
-- `ToonLook` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look: how many bands of light, and how strong the rim is (0 for none).
+- `TOON_LOOK` (const from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): The default look: three bands (shadow, base, lit), shardfall's rim, shadows darkened, smoothed edges.
+- `ToonLook` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look: how many bands of light, how strong the rim is, how far shadows shift in hue, and the bands' dither.
 - `ToonUniforms` (interface from [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)): A toon look as uniforms: set `.value` (or `set`) and every material reading them follows, building nothing.
 - `topHeight` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The top (m) of whatever stands at (x, z): a wall's top over its tiles, a brazier's within its radius, the floor elsewhere; 0 outside the map.
 - `TouchButtonSpec` (interface from [`engine/ui/touch.ts`](../engine/ui/touch.ts)): One button of a touch layout.
@@ -5030,15 +5030,20 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/materials/toon.ts`](../engine/gfx/materials/toon.ts)
 
-- `BandedToonLighting` (class): The toon lighting model (see the file comment): banded direct light and a gated rim per light, on Lambert's diffuse scale; indirect light and the environment as Lambert's (it extends three.js's Phong model without specular).
+- `BandedToonLighting` (class): The toon lighting model (see the file comment): banded direct light and a gated rim per light, on Lambert's diffuse scale; indirect light and the environment as Lambert's on the material's shade (it extends three.js's Phong model without specular).
 - `bandsOf` (function): A share of light, 0–1, cut into `bands` bands: the levels 0, 1/(bands − 1) … 1, each edge smoothed over about a pixel (`fwidth`) so it never shimmers; 2 bands or fewer is lit wherever the share passes 0.02.
-- `createToonUniforms` (function): Makes a look's uniforms, from `TOON_LOOK` and `look`.
+- `bayer4` (function): The 4 × 4 ordered pattern's threshold (0–1, a cell's rank plus a half, over 16) at the whole cell `cell`: the composite's table (engine/gfx/post/shaders/common.ts `post_bayer4`), built from the 2 × 2 order, any cell (negative ones too) in the pattern.
+- `createToonUniforms` (function): Makes a look's uniforms, from `TOON_LOOK` and `look`: render-group uniforms, so a still mesh draws a change the next frame (an object-group one waits for its object or material to change, engine/gfx/sky.ts).
+- `ditheredBandsOf` (function): A share of light, 0–1, in `bands` hard bands (the levels of `bandsOf`), each step's edge at its middle moved by `threshold` (0–1; 0.5 is the middle), so a threshold from an ordered pattern dithers the edge; 2 bands or fewer is lit wherever the share passes 0.02.
 - `gradientToonMaterial` (function): The measured baseline (see the file comment): three.js's toon material with the carried gradient map.
+- `gridThreshold` (function): The ordered threshold this fragment takes on `grid` (cells counted from the snapped camera; see the file comment).
 - `MeshBandedToonNodeMaterial` (class): The toon material: Lambert's parameters (`color`, `map`, `normalMap`, `emissive`…), drawn by `BandedToonLighting`.
+- `SHADE_TINT` (const): What a shade multiplies a colour by before its saturation is raised: cooler, toward violet (see the file comment).
+- `shadeOf` (function): A colour's shade (see the file comment): `colour` times `SHADE_TINT`, more saturated, `shade` (0–1) of the way.
 - `TOON_BANDS` (const): The carried gradient map's levels (0–255): shadow, base, lit, as the prototype's puppets drew them.
-- `TOON_LOOK` (const): The default look: three bands (shadow, base, lit) and shardfall's rim.
+- `TOON_LOOK` (const): The default look: three bands (shadow, base, lit), shardfall's rim, shadows darkened, smoothed edges.
 - `toonGradientMap` (function): The carried baseline's gradient map: one texel per level (`TOON_BANDS`), grey, nearest, for `MeshToonMaterial`.
-- `ToonLook` (interface): A toon look: how many bands of light, and how strong the rim is (0 for none).
+- `ToonLook` (interface): A toon look: how many bands of light, how strong the rim is, how far shadows shift in hue, and the bands' dither.
 - `ToonUniforms` (interface): A toon look as uniforms: set `.value` (or `set`) and every material reading them follows, building nothing.
 
 ### [`engine/gfx/pipelines.ts`](../engine/gfx/pipelines.ts)
@@ -5067,7 +5072,6 @@ For the agents who maintain the engine.
 - `createPost` (function): Makes the chain on `gfx.renderer` (see the file comment).
 - `Post` (interface): A post-processing chain (see the file comment).
 - `PostOptions` (interface): How `createPost` makes a chain.
-- `snapBlock` (function): The block grid the camera snaps to for `chain`: pixel art's when it covers the environment and snaps (characters and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), else the whole screen's low resolution; 1 for none.
 
 ### [`engine/gfx/post/composite.ts`](../engine/gfx/post/composite.ts)
 
@@ -5076,10 +5080,17 @@ For the agents who maintain the engine.
 - `POST_SHOW` (const): The views `show` picks, in the uniform's order.
 - `PostShow` (type): What the composite draws.
 
+### [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)
+
+- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
+- `fixColor` (function): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
+- `fixLevels` (function): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
+- `levelsProblem` (function): Checks a level count: 0, or 8 and more (see the file comment).
+
 ### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
 
 - `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
-- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
+- `colorProblem` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
 - `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
 - `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
 - `FILTER_NAMES` (const): Every filter, in the composite's order (the shading's, bloom and aa run before it).
@@ -5087,11 +5098,11 @@ For the agents who maintain the engine.
 - `FilterName` (type): A filter's name.
 - `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FilterUniforms` (interface): The composite's uniforms: one vec4 per filter (and a second for the long ones), render-group, set up once.
-- `fixColor` (function): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
-- `fixLevels` (function): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
+- `fixColor` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
+- `fixLevels` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
 - `isPlain` (function): Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`).
 - `layerChain` (function): `chain` with `over` laid on it, filter by filter and field by field.
-- `levelsProblem` (function): Checks a level count: 0, or 8 and more (see the file comment).
+- `levelsProblem` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Checks a level count: 0, or 8 and more (see the file comment).
 - `PALETTES` (const): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
 - `partialSchema` (function): `schema` with every default left out, so a value holds only what was given (`post.filters` layers it).
 - `Scope` (type): A filter's scope.
@@ -5100,6 +5111,16 @@ For the agents who maintain the engine.
 - `SCREEN_SCOPES` (const): The scopes of the filters that cover the whole screen.
 - `STYLIZE_KINDS` (const): The painterly and print styles.
 - `writeFilters` (function): Writes `chain` into `uniforms`: a uniform write per filter, nothing more.
+
+### [`engine/gfx/post/grid.ts`](../engine/gfx/post/grid.ts)
+
+- `ART_LINES` (const): The lines pixel art's picture keeps to: at least `least`, at most `most` wherever a whole block allows it.
+- `artBlock` (function): The art block for a picture `lines` high: the largest whole block giving it at least 240 lines (1 below that).
+- `frameGrid` (function): Snaps `camera` for a frame of `chain` drawn `size` big (see the file comment); call `restore()` after it.
+- `FrameGrid` (interface): A frame's grid: its pixel art's block, the snap's cells and the picture's glide, and how to put the camera back.
+- `inkWidth` (function): The outline's width in pixels on a picture `lines` high: `width`, scaled when `lines` is set (see the file comment).
+- `pixelBlock` (function): The pixel filter's block for a picture `lines` high: its `size`, or the art block for `size` 0.
+- `snapBlock` (function): The block grid the camera snaps to for `chain` on a picture `lines` high: pixel art's when it covers the environment and snaps (characters and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), one drawn pixel included; else the whole screen's low resolution of 2 px or more; 0 for none.
 
 ### [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)
 
@@ -5153,7 +5174,7 @@ For the agents who maintain the engine.
 
 - `postAimed` (const): Whether a filter with scope mask `mask` applies to a pixel whose flags are `w`.
 - `postBase` (const): The display colour at a pixel, clamped to the target (shardfall's \`base_color\`).
-- `postBayer` (const): The 4 × 4 Bayer threshold of a cell, 0 to 1.
+- `postBayer` (const): The 4 × 4 Bayer threshold of a cell, 0 to 1; any whole cell, negative ones too, wraps into the pattern.
 - `postFlags` (const): The MRT's normal and flags at a pixel, clamped to the target.
 - `postHash` (const): A hash of a position, 0 to 1.
 - `postHex` (const): A 0xRRGGBB colour as 0–1 channels.
@@ -5192,7 +5213,9 @@ For the agents who maintain the engine.
 
 - `blockSize` (function): The size of one block in world units, across and up, for `camera` drawing `size` pixels.
 - `SNAP_FALLBACK_DEPTH` (const): How far ahead a perspective camera snaps when its line of sight never meets the ground, in metres.
-- `snapToBlocks` (function): Moves `camera` to the nearest whole block in its screen plane (see the file comment); returns how to undo it.
+- `snapGrid` (function): Moves `camera` to the nearest whole block (1 px or more) in its screen plane; see the file comment.
+- `SnapGrid` (interface): Where `snapGrid` put the camera: its whole blocks, the remainder as the picture's offset, and how to undo it.
+- `snapToBlocks` (function): Moves `camera` to the nearest whole block of 2 px or more in its screen plane; returns how to undo it.
 
 ### [`engine/gfx/propLooks.ts`](../engine/gfx/propLooks.ts)
 
@@ -5476,6 +5499,13 @@ For the agents who maintain the engine.
 - `RUNG` (const): A rung every this many metres up a ladder.
 - `StageRides` (interface): The rides on a stage (see the file comment).
 - `StageRidesOptions` (interface): What `createStageRides` takes.
+
+### [`engine/gfx/stageShells.ts`](../engine/gfx/stageShells.ts)
+
+- `createStageShells` (function): Makes the stage's shells over its props and its actors' puppets (see the file comment).
+- `SHELL_LINES` (const): The lines a look's shell width is given at: scaled to the picture's height in whole pixels.
+- `ShellLook` (interface): What a look asks of the shells: their width in pixels at 270 lines (0 for none), and their colour, hex.
+- `StageShells` (interface): The stage's shells (see the file comment).
 
 ### [`engine/gfx/stageSite.ts`](../engine/gfx/stageSite.ts)
 
@@ -8235,11 +8265,17 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/looks/cel.ts`](../labs/playground/looks/cel.ts)
 
-- `look` (const): The look `look:playground-cel`: three bands of daylight with a rim, everything inked in a dark tint.
+- `look` (const): The look `look:playground-cel`: three bands and a rim per material, hue-shifted shadows, ink, shells, a gradient sky.
 
 ### [`labs/playground/looks/pixel.ts`](../labs/playground/looks/pixel.ts)
 
-- `look` (const): The look `look:playground-pixel`: daylight in 3-pixel blocks, 24 shades a channel, lightly dithered.
+- `look` (const): The look `look:playground-pixel`: a low-resolution picture, ramps dithered on the world, snapped and gliding.
+
+### [`labs/playground/looks/pixelPerspective.ts`](../labs/playground/looks/pixelPerspective.ts)
+
+- `look` (const): The look `look:playground-pixel-perspective` (see the file comment).
+- `PIXEL_FILTERS` (const): The pixel looks' filters: the art block from the lines, 1-pixel ink, 24 shades a channel.
+- `PIXEL_TOON` (const): The pixel looks' toon numbers: four bands and a rim, shadows shifted in hue, the steps dithered.
 
 ### [`labs/playground/menu.ts`](../labs/playground/menu.ts)
 

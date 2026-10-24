@@ -10,8 +10,14 @@
  * The block's size in world units comes from the projection matrix (`2 / (m00 · width)` per pixel across, `2 /
  * (m11 · height)` up), so a zoomed or boosted camera snaps by its own scale.
  *
+ * `snapGrid` (WP 13.24) snaps at any whole block, one of the drawing buffer's pixels too (the pixel look's low
+ * resolution), and says where: the whole blocks the camera stands at (`cells`, across and down the screen, which a
+ * dither adds to its screen cells so its pattern stays on the world) and the remainder the snap took off as the
+ * picture's offset in pixels (`shift`, right and down), which the page may carry as a smooth offset of the whole
+ * picture (engine/gfx/resolution.ts `shift`), so the snapped picture still glides as the camera does.
+ *
  * Invariants: presentation only (doctrine: WebGPU only): the camera is put back exactly after the frame, so nothing
- * that reads it between frames, and nothing in the sim, ever sees the snap.
+ * that reads it between frames, and nothing in the sim, ever sees the snap; `shift` is within half a block.
  *
  * @example
  * import { OrthographicCamera } from 'three/webgpu';
@@ -45,22 +51,40 @@ export function blockSize(camera: Camera, block: number, size: { width: number; 
   return [(block * 2 * depth) / (e[0] * size.width), (block * 2 * depth) / (e[5] * size.height)];
 }
 
-/** Moves `camera` to the nearest whole block in its screen plane (see the file comment); returns how to undo it. */
-export function snapToBlocks(camera: Camera, block: number, size: { width: number; height: number }): () => void {
-  if (!(block > 1) || size.width <= 0 || size.height <= 0) return () => undefined;
+/** Where `snapGrid` put the camera: its whole blocks, the remainder as the picture's offset, and how to undo it. */
+export interface SnapGrid {
+  /** The whole blocks the camera stands at, across (right) and down the screen. */
+  cells: [number, number];
+  /** The remainder the snap took off, as the picture's offset in pixels, right and down. */
+  shift: [number, number];
+  /** Puts the camera back where it was. */
+  restore(): void;
+}
+
+/** Moves `camera` to the nearest whole block (1 px or more) in its screen plane; see the file comment. */
+export function snapGrid(camera: Camera, block: number, size: { width: number; height: number }): SnapGrid {
+  const none: SnapGrid = { cells: [0, 0], shift: [0, 0], restore: () => undefined };
+  if (!(block >= 1) || size.width <= 0 || size.height <= 0) return none;
   const [across, up] = blockSize(camera, block, size);
-  if (!(Number.isFinite(across) && Number.isFinite(up) && across > 0 && up > 0)) return () => undefined;
+  if (!(Number.isFinite(across) && Number.isFinite(up) && across > 0 && up > 0)) return none;
   const right = new Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
   const upward = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
   const kept = camera.position.clone();
-  const a = kept.dot(right);
-  const b = kept.dot(upward);
-  camera.position
-    .addScaledVector(right, Math.round(a / across) * across - a)
-    .addScaledVector(upward, Math.round(b / up) * up - b);
+  const [a, b] = [kept.dot(right) / across, kept.dot(upward) / up];
+  const [x, y] = [Math.round(a), Math.round(b)];
+  camera.position.addScaledVector(right, (x - a) * across).addScaledVector(upward, (y - b) * up);
   camera.updateMatrixWorld();
-  return () => {
-    camera.position.copy(kept);
-    camera.updateMatrixWorld();
+  return {
+    cells: [x, 0 - y],
+    shift: [(x - a) * block, (b - y) * block],
+    restore() {
+      camera.position.copy(kept);
+      camera.updateMatrixWorld();
+    },
   };
+}
+
+/** Moves `camera` to the nearest whole block of 2 px or more in its screen plane; returns how to undo it. */
+export function snapToBlocks(camera: Camera, block: number, size: { width: number; height: number }): () => void {
+  return block > 1 ? snapGrid(camera, block, size).restore : () => undefined;
 }

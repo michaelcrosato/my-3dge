@@ -11,6 +11,11 @@
  * `setSize(width, height, false)`). The page sizes the canvas with CSS; this module never writes its CSS size. The
  * frame calls `update()` first (engine/gfx/renderer.ts), so a resize or a mode change takes effect on the next frame.
  *
+ * The picture's glide (WP 13.24): `shift(x, y)` moves the whole picture by a fraction of a pixel (CSS `transform`), the
+ * remainder a camera snapped to the pixel grid took off (engine/gfx/post/snap.ts `snapGrid`), so a snapped picture
+ * still glides as the camera does; the CSS variable `--my3dge-pixel`, one drawn pixel's size in CSS pixels, lets the
+ * page give its canvas a margin of two drawn pixels so the glide never shows an edge (labs/playground/index.html).
+ *
  * Phones (WP 3.12, built, not tested): `cap(budget)` caps the buffer's pixels and the pixel ratio by the quality tier
  * (engine/gfx/quality.ts; `pixels` mode by a coarser whole scale), and `keepWidth` widens a portrait picture's
  * vertical field of view so the horizontal one is kept (`2·atan(tan(fov/2)/aspect)`, at most 150°).
@@ -131,6 +136,10 @@ export interface Resolution {
   update(): boolean;
   /** Caps the buffer from the next `update()` on (the quality tier's budget, engine/gfx/quality.ts). */
   cap(cap: PixelCap): void;
+  /** The picture's offset now, in drawn pixels, right and down (see the file comment). */
+  readonly offset: readonly [number, number];
+  /** Moves the whole picture by (`x`, `y`) drawn pixels, right and down; (0, 0) puts it back. */
+  shift(x: number, y: number): void;
 }
 
 /** How `createResolution` measures: the canvas's CSS size and the device pixel ratio (the browser's by default). */
@@ -151,9 +160,21 @@ export function createResolution(options: ResolutionOptions): Resolution {
   let current: Fit | null = null;
   let key = '';
   let limit: PixelCap = {};
+  let offset: [number, number] = [0, 0];
+  /** CSS pixels per drawn pixel. */
+  const cssPixel = () => (current && current.width > 0 ? current.css.width / current.width : 1);
   return {
     get current() {
       return current;
+    },
+    get offset() {
+      return offset;
+    },
+    shift(x, y) {
+      if (x === offset[0] && y === offset[1]) return;
+      offset = [x, y];
+      const k = cssPixel();
+      canvas.style.transform = x === 0 && y === 0 ? '' : `translate(${x * k}px, ${y * k}px)`;
     },
     update() {
       const css = { width: canvas.clientWidth, height: canvas.clientHeight };
@@ -166,6 +187,7 @@ export function createResolution(options: ResolutionOptions): Resolution {
       renderer.setPixelRatio(1);
       renderer.setSize(current.width, current.height, false);
       canvas.style.imageRendering = current.pixelated ? 'pixelated' : '';
+      canvas.style.setProperty('--my3dge-pixel', `${cssPixel()}px`);
       return true;
     },
     cap(next) {

@@ -1783,3 +1783,76 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   feature:gpuParticles`, on less off (SwiftShader, ranking only): GPU ms +113 (737 against 623, about 28,500 drops
   against the pool's 4,096), CPU render ms −1.2, one compute call, 52,454 triangles, five pipelines more, 0 after the
   warm-up.
+
+## Amendment 33 (2026-10-24, WP 13.24): the two looks, finished
+
+- **A ramp per material, from its own colour.** The toon style (engine/gfx/materials/toon.ts) gains `shade` and
+  `dither`. Each material's light falls from its lit colour to its shade: the indirect light, what lights its shadows,
+  falls on the colour times `SHADE_TINT` (cooler, toward violet) with its saturation raised (`shadeOf`), `shade` of
+  the way, so a shadow keeps its material's hue shifted rather than going grey; a ramp per material then needs no data
+  per material, and a material whose shade reads wrong can say so later. `dither` makes the bands' edges hard and
+  mixes neighbouring bands over that share of each step by a 4 × 4 ordered pattern (`bayer4`, the composite's table
+  built from Bayer's 2 × 2 order) laid on the grid the chain hands it (`toon.grid`). The toon uniforms are
+  render-group uniforms now, as the sky's knobs are (an object-group uniform reaches a still mesh only when its object
+  or material changes, and switching between two toon looks changes neither); `shade` and `dither` 0 draw as before
+  them.
+- **The pixel grid** (engine/gfx/post/grid.ts, the chain's per-frame part, split from chain.ts at its cap): the pixel
+  filter's `size` 0 is the art block, the largest whole block giving 240 to 360 lines (one drawn pixel at the engine's
+  `pixels` resolution, 270 lines on a 1080 or 540-line screen; four at `full` on 1080); the snap now holds at one
+  drawn pixel too (`snapBlock` gives 0 for none; it gave 1); `snapGrid` (engine/gfx/post/snap.ts) says where it put
+  the camera: the whole blocks (`cells`), which both dithers add to their screen cells so their patterns stay on the
+  world (the composite's palette dither through `frame.zw`; `post_bayer4` wraps negative cells now), and the remainder
+  as the picture's offset (`shift`). The outline filter's new `lines` scales its width with the picture's lines in
+  whole pixels (`inkWidth`): 1 px at 270 lines is 4 at 1080.
+- **The glide.** The pixel filter's new `smooth` hands the snap's remainder to the page: engine/gfx/resolution.ts
+  `shift(x, y)` moves the canvas by that fraction of a pixel (a CSS transform; `stats().shift` reports it), so the
+  snapped picture glides as the camera does and never shimmers. One drawn pixel's CSS size is the canvas's variable
+  `--my3dge-pixel`, which the playground's page uses to give its canvas a margin of two drawn pixels, drawn and
+  hidden, so the glide never shows an edge: its picture is 484 × 274 at 960 × 540 (it was 480 × 270). The offset is a
+  page's, so a shot reads the snapped picture: the shimmer metric is measured there.
+- **The perspective variant.** A look's new `perspective` names the look whose filters and toon numbers the chain
+  draws while the camera is a perspective one (its style and sky stay the look's, so no camera change warms up);
+  `look:playground-pixel-perspective` draws unsnapped, with no glide and a lighter dither on the screen, for first
+  person, the shooter and the platformer (the plan names two; the platformer's lens is a perspective one too).
+- **Outline shells on the stage** (engine/gfx/stageShells.ts): every prop batch's pages (pushed from each part's
+  centre) and every actor's puppet get a shell as they appear; a skinned mesh's shell is a skinned mesh bound to its
+  skeleton, its push skinning the geometry's vertex and normal through r182's `SkinningNode` read off the vertex
+  stage's stack, as the instance's matrix is (`GFX_OUTLINE_TARGET` no longer refuses skinned meshes). A look's new
+  `shells` (`width` px at 270 lines, scaled in the shader to the target's lines; `color`) shows them, through the
+  page's look (engine/app/look.ts); 0 hides them. They are registered with the warm-up whatever the look, so switching
+  builds nothing, and the ID pass leaves them out (`userData.outline`), so a shot's objects are the same in every
+  look. The crowd's batches keep only the chain's ink: a crowd of hundreds would double its draw calls.
+- **The sky's gradient.** A look's new `skyGradient` (0 to 1) mixes the dome toward a clean gradient, the fog's haze
+  at the horizon to the background deepened at the zenith (engine/gfx/sky.ts `gradient`, render-group uniforms, so the
+  hour's sky keeps it); the cel look draws it whole.
+- **Night has a key.** Night was dim and flat (amendment 31: luma spreads 0.13 to 0.16). A toon band's share is the
+  light's falloff alone (its intensity only brightens the band), and the streetlights' falloff (decay 1 from 4.2 m up)
+  left the ground under them at a share of 0.23, below the cel look's first band (0.25): their pools never showed. The
+  streetlight's decay is 0.75 now (labs/playground/props/outdoors.ts), `sky:night`'s ambient 0.25 (it was 0.55) and
+  its fog 0.55 (0.7), and `sky:dusk`'s ambient 1.1 (0.9), so dusk stays brighter than night (the ambient's change a
+  minute stays under daylight.test's bound); the moon and the lamps' brightness are as they were. A flat surface whose
+  share sat at a band's edge dithered whole (a quarter of the frame in 1-pixel checkers at dusk, the moon low), so the
+  dither works only where the light changes across the picture (`fwidth` of the share) and a flat share keeps a hard
+  band. The visual review asked for the pixel look's sky to be a gradient too (its dusk read overcast): it is.
+- **The looks.** `look:playground-cel`: three bands and a rim, `shade` 0.7, ink 1 px at 270 lines at sharp creases,
+  shells of 1 px, the gradient sky. `look:playground-pixel`: the art block, four bands, `shade` 0.6, `dither` 0.5, ink
+  1 px at 270 lines, 24 shades a channel, snapped and gliding, the gradient sky, its perspective variant. Ink never
+  comes from texture brightness: the outline filter reads depth and normals.
+- Split for the line caps: the filter chain's checks to engine/gfx/post/filterChecks.ts (re-exported from filters.ts).
+  Beyond the plan's Owns: engine/gfx/{stage,stageShells,idpass,sky,daylight,renderer}.ts,
+  engine/gfx/post/{grid,filterChecks,chain}.ts, engine/gfx/post/shaders/common.ts, engine/app/look.ts,
+  labs/playground/index.html and README.md, docs/PLAYGROUND.md §5.2, tests/e2e/playground-looks.spec.ts (the plan's
+  Verify names it now), tests/baselines/thumbs (ten cases).
+- **Measured** (tests/e2e/playground-looks.spec.ts, the street, the sim paused): each look from each of the five
+  cameras at noon and at 22:00, none blank or empty, the player in view in the four that show him, night darker than
+  noon; at night the cel look's luma spread is 0.29 to 0.85 and the pixel look's 0.56 to 0.69 (WP 13.23 measured 0.13
+  to 0.16, low contrast in four cameras of five), `LOOK_FEW_COLOURS` left on top-down (25 to 31 colours, a few large
+  ground materials) and some night frames; 0 pipelines built through the night after the noon round; the noon
+  thumbnails recorded (tests/baselines/thumbs/playground-*.json); 177 of 214 shells shown in the cel look and none in
+  the pixel look, the ID pass the same objects in both; the pixel look at 274 lines (484 × 274 with the margin). The
+  visual review passed both looks. The shimmer metric is 0 in the pixel look: isometric panned 1.4 mm at a time in its
+  image plane changes no pixel in seven steps, the glide carrying the remainder (within half a pixel), while the same
+  pans change 2.3 to 2.7% of the cel look's pixels; top-down is pixel-exact by itself (WP 13.8), so its pans move
+  neither look. A pan with a dolly in it (camera codes keep 1 mm, so a target moved off the plane by their rounding)
+  changed 1 to 8 pixels, the cascades off too: an orthographic picture ignores a dolly, its depth-dependent parts do
+  not; the spec pans in whole millimetres along the plane.

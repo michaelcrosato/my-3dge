@@ -3798,12 +3798,12 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Verify:** `npm test -- engine/gfx/daylight engine/sim/lights && npm run e2e -- tests/e2e/lights.spec.ts`
 
 #### WP-13.24 The two looks, finished
-- **Owns:** `labs/playground/looks/`, extends `engine/gfx/post/{looks,presets,snap,filters,composite}.ts`, `engine/gfx/materials/{toon,outline,styles}.ts`, `engine/gfx/resolution.ts`
+- **Owns:** `labs/playground/looks/`, extends `engine/gfx/post/{looks,presets,snap,filters,composite}.ts`, `engine/gfx/materials/{toon,outline,styles}.ts`, `engine/gfx/resolution.ts`; `engine/gfx/post/grid.ts`, `engine/gfx/stageShells.ts`, `tests/e2e/playground-looks.spec.ts` (ADR-0025 amendment 33)
 - **Needs:** WP 13.8, WP 13.17, WP 13.23
 - **Size:** L
 - **Build** (docs/PLAYGROUND.md §5.2): the cel look (a ramp per material, hue-shifted shadows, a rim, ink from depth and normals at a width scaled to the resolution, the outline shell wired to the stage and to skinned bodies) and the pixel look (a low-resolution render at a whole-number scale, 1-pixel ink, palette ramps with dither fixed to the world, the orthographic cameras snapped to the pixel grid in translation with sub-pixel smoothing, whole-number zooms, and a perspective variant for first person and the shooter); each tuned for the five cameras, by day and by night.
 - **Done when:** look metrics and thumbnails per look and camera; the shimmer metric (pixels changed by a sub-pixel orthographic pan) is 0 in the pixel look; visual-reviewer verdicts pass.
-- **Verify:** `npm test -- engine/gfx/post engine/gfx/materials && npm run e2e -- tests/e2e/post.spec.ts tests/e2e/playground-cameras.spec.ts`
+- **Verify:** `npm test -- engine/gfx/post engine/gfx/materials && npm run e2e -- tests/e2e/post.spec.ts tests/e2e/playground-cameras.spec.ts tests/e2e/playground-looks.spec.ts`
 
 #### WP-13.27 Follow cameras indoors
 - **Owns:** extends `engine/gfx/cameras/{shoulder,follow,collide}.ts`, `labs/playground/scenes/site-soak.test.ts`

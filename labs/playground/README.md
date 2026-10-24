@@ -91,10 +91,12 @@ T steps through them in this order, each switch blended over 0.35 s; `labs/playg
 and never stand in a wall, and what stands between them and the player fades (WP 13.8, docs/PLAYGROUND.md §4); the field of view
 is the view setting `cam.fov` (Apex's degrees, 90).
 
-The looks (`labs/playground/looks/`): `look:playground-cel` (the default: three bands of daylight with a rim, every
-edge inked) and `look:playground-pixel` (the same light cut into 3-pixel blocks with a dark rim, 24 shades a channel,
-lightly dithered). P switches them; `?post.look=look:playground-pixel` opens one. Looks and cameras are view
-settings: they never change play or a hash.
+The looks (`labs/playground/looks/`, WP 13.24): `look:playground-cel` (the default: each material a ramp of three bands
+and a rim, its shadows shifted in hue, ink and outline shells round the props and bodies scaled to the picture, a
+gradient sky) and `look:playground-pixel` (a picture of 240 to 360 lines, 1-pixel ink, each material a ramp of four
+shades dithered on the world, isometric and top-down snapped to the pixels and gliding, so a pan never shimmers; the
+perspective cameras draw its variant, `look:playground-pixel-perspective`). P switches them;
+`?post.look=look:playground-pixel` opens one. Looks and cameras are view settings: they never change play or a hash.
 
 ## Controls
 

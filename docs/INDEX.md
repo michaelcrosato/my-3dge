@@ -334,7 +334,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`headless.ts`](../engine/app/headless.ts): The engine without a page (PLAN.md §8.3, §6.9, WPs 1.6 and 2.7; doctrine: Verifiable): `createHeadless({ scene, seed, settings, view })` starts a scene as a recorded session (engine/sim/scene.ts) and returns its inspector, the same object a page publishes as `window.__engine` minus a renderer: `render` and `shot` throw `DEV_NO_RENDERER`.
   - Exports: `AppHostOptions`, `AppRun`, `createAppHost`, `createHeadless`, `Drawing`, `Headless`, `HEADLESS_CODES`, `headlessHost`, `HeadlessOptions`
   - Tests: [`engine/app/headless.test.ts`](../engine/app/headless.test.ts)
-- [`look.ts`](../engine/app/look.ts): The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 10): what `createEngine` (engine/app/engine.ts) does before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts) reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts): - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the quality tier's shadow budget (engine/gfx/quality.ts); - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles the drawn meshes in the set's own style and in each style a look has asked for; and while it is joined, meshes shown since the last frame (a crowd entering, a stand-in) are re-pointed to the style drawn now.
+- [`look.ts`](../engine/app/look.ts): The page's look (PLAN.md WP 7.8, §6.7, ADR-0008 amendment 10): what `createEngine` (engine/app/engine.ts) does before every warm-up, frame and shot, so the look the view setting `post.look` names (engine/gfx/post/looks.ts) reaches the whole picture and not only the post chain's filters (engine/gfx/post/chain.ts): - **its sky:** the stage's lights show the look's sky, or the stage's own for `''` (engine/gfx/stageSky.ts), with the quality tier's shadow budget (engine/gfx/quality.ts), its dome as the look's gradient asks (`skyGradient`); - **its shells:** the outline shells round the stage's props and bodies, as the look's `shells` ask (WP 13.24, engine/gfx/stageShells.ts); - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles the drawn meshes in the set's own style and in each style a look has asked for; and while it is joined, meshes shown since the last frame (a crowd entering, a stand-in) are re-pointed to the style drawn now.
   - Exports: `createPageLook`, `PageLook`, `PageLookOptions`
   - Tests: [`engine/app/look.test.ts`](../engine/app/look.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
 - [`loop.ts`](../engine/app/loop.ts): The frame loop (PLAN.md §6.4, WP 2.7; doctrine: Reproducible): fixed sim steps plus interpolation, once per animation frame.
@@ -632,6 +632,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`stageRides.ts`](../engine/gfx/stageRides.ts): Rides on the stage (PLAN.md WP 13.7): every entity holding the component `zipline`, `ladder` or `launcher` (engine/sim/rides.ts) drawn from it.
   - Exports: `createStageRides`, `RIDE_KINDS`, `RUNG`, `StageRides`, `StageRidesOptions`
   - Tests: [`engine/gfx/stageRides.test.ts`](../engine/gfx/stageRides.test.ts)
+- [`stageShells.ts`](../engine/gfx/stageShells.ts): The stage's outline shells (PLAN.md WP 13.24; docs/PLAYGROUND.md §5.2's cel look): engine/gfx/materials/ outline.ts's inverted hulls, wired to the stage (engine/gfx/stage.ts) round its props and its bodies.
+  - Exports: `createStageShells`, `SHELL_LINES`, `ShellLook`, `StageShells`
+  - Tests: [`engine/gfx/stageShells.test.ts`](../engine/gfx/stageShells.test.ts), [`tests/e2e/playground-looks.spec.ts`](../tests/e2e/playground-looks.spec.ts)
 - [`stageSite.ts`](../engine/gfx/stageSite.ts): A site drawn (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): `createStageSite(site, options)` draws each of a site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in its level entry's looks (`registry`'s: its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
   - Exports: `createStageSite`, `StageSite`, `StageStructure`
   - Tests: [`engine/gfx/stageSite.test.ts`](../engine/gfx/stageSite.test.ts)
@@ -899,7 +902,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `checkStyle`, `compileStyled`, `createStyleSet`, `FlatStyleLighting`, `MATERIAL_STYLES`, `MaterialStyle`, `MeshFlatStyleNodeMaterial`, `STYLE_CODES`, `STYLE_WARMUP_IDS`, `StyleSet`, `StyleSetOptions`, `StyleWarmup`
   - Tests: [`engine/gfx/materials/styles.test.ts`](../engine/gfx/materials/styles.test.ts), [`tests/e2e/materials-v2.spec.ts`](../tests/e2e/materials-v2.spec.ts)
 - [`toon.ts`](../engine/gfx/materials/toon.ts): Toon shading (PLAN.md WP 7.2, §5.8; doctrine: Quality under the hood): the `toon` material style.
-  - Exports: `BandedToonLighting`, `bandsOf`, `createToonUniforms`, `gradientToonMaterial`, `MeshBandedToonNodeMaterial`, `TOON_BANDS`, `TOON_LOOK`, `toonGradientMap`, `ToonLook`, `ToonUniforms`
+  - Exports: `BandedToonLighting`, `bandsOf`, `bayer4`, `createToonUniforms`, `ditheredBandsOf`, `gradientToonMaterial`, `gridThreshold`, `MeshBandedToonNodeMaterial`, `SHADE_TINT`, `shadeOf`, `TOON_BANDS`, `TOON_LOOK`, `toonGradientMap`, `ToonLook`, `ToonUniforms`
   - Tests: [`engine/gfx/materials/toon.test.ts`](../engine/gfx/materials/toon.test.ts), [`tests/e2e/materials-v2.spec.ts`](../tests/e2e/materials-v2.spec.ts)
 
 ## engine/gfx/post
@@ -908,14 +911,20 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Aa`, `AA_CHOICE`, `AA_KINDS`, `AA_MEASURED`, `AaKind`, `aaKindFor`, `createAa`, `gateUpdates`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`chain.ts`](../engine/gfx/post/chain.ts): Post-processing (PLAN.md WP 7.4, §6.7, I-46): `createPost` sets up, once, one `PostProcessing` chain (r182) that every frame draws through, and draws the look the view settings name.
-  - Exports: `createPost`, `Post`, `PostOptions`, `snapBlock`
+  - Exports: `createPost`, `Post`, `PostOptions`
   - Tests: [`engine/gfx/post/chain.test.ts`](../engine/gfx/post/chain.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`composite.ts`](../engine/gfx/post/composite.ts): The one composite pass (PLAN.md WP 7.4, I-46): every filter over the finished picture in a single full-screen pass, each gated by a uniform, in a fixed order, so switching any of them is a uniform write (shardfall's design, `shardfall:crates/pav_render/src/shaders/post.wgsl:731-860`).
   - Exports: `CompositeInputs`, `createComposite`, `POST_SHOW`, `PostShow`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
+- [`filterChecks.ts`](../engine/gfx/post/filterChecks.ts): The filter chain's checks (PLAN.md WP 7.4; split from engine/gfx/post/filters.ts at its size cap in WP 13.24): the posterize rule (levels per channel 0, or 8 and more, so dull colours keep their hue, `shardfall:docs/HISTORY.md:424-426`) and the outline's colour (hex or a CSS name), as problems a look's check reports (engine/gfx/post/looks.ts) and as fixes the chain applies to the setting `post.filters`, a layer over a look, reporting what it fixed (engine/gfx/post/chain.ts).
+  - Exports: `colorProblem`, `fixColor`, `fixLevels`, `levelsProblem`
+  - Tests: [`engine/gfx/post/filters.test.ts`](../engine/gfx/post/filters.test.ts)
 - [`filters.ts`](../engine/gfx/post/filters.ts): The filters (PLAN.md WP 7.4, §6.7): what each one takes, as data, and the uniforms the composite reads them through.
   - Exports: `chainOf`, `colorProblem`, `createFilterUniforms`, `FILTER_FIELDS`, `FILTER_NAMES`, `FilterChain`, `FilterName`, `FilterSpec`, `FilterUniforms`, `fixColor`, `fixLevels`, `isPlain`, `layerChain`, `levelsProblem`, `PALETTES`, `partialSchema`, `Scope`, `scopeMask`, `SCOPES`, `SCREEN_SCOPES`, `STYLIZE_KINDS`, `writeFilters`
   - Tests: [`engine/gfx/post/filters.test.ts`](../engine/gfx/post/filters.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
+- [`grid.ts`](../engine/gfx/post/grid.ts): The pixel grid a frame draws on (PLAN.md WP 7.4, WP 13.24; docs/PLAYGROUND.md §5.2): what the post chain (engine/gfx/post/chain.ts) works out each frame from its filter chain and the drawing buffer's lines.
+  - Exports: `ART_LINES`, `artBlock`, `frameGrid`, `FrameGrid`, `inkWidth`, `pixelBlock`, `snapBlock`
+  - Tests: [`engine/gfx/post/grid.test.ts`](../engine/gfx/post/grid.test.ts), [`tests/e2e/playground-looks.spec.ts`](../tests/e2e/playground-looks.spec.ts)
 - [`looks.ts`](../engine/gfx/post/looks.ts): Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a filter chain (engine/gfx/post/filters.ts), as data, and the sky that lights the scene (WP 7.8, a `sky` id, engine/gfx/sky.ts).
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
@@ -935,7 +944,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createShading`, `Shading`, `SHADING_CODES`
   - Tests: [`engine/gfx/post/shading.test.ts`](../engine/gfx/post/shading.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
 - [`snap.ts`](../engine/gfx/post/snap.ts): Snapping the camera to pixel art's block grid (PLAN.md WP 7.4; shardfall's lesson, `shardfall:docs/ HISTORY.md:478-479`): the composite cuts the picture into blocks fixed to the screen, so a camera sliding by less than a block changes what every block shows, and the pixel art shimmers.
-  - Exports: `blockSize`, `SNAP_FALLBACK_DEPTH`, `snapToBlocks`
+  - Exports: `blockSize`, `SNAP_FALLBACK_DEPTH`, `snapGrid`, `SnapGrid`, `snapToBlocks`
   - Tests: [`engine/gfx/post/snap.test.ts`](../engine/gfx/post/snap.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 
 ## engine/gfx/post/shaders
@@ -1862,11 +1871,14 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## labs/playground/looks
 
-- [`cel.ts`](../labs/playground/looks/cel.ts): The look `look:playground-cel`, the playground's cel-shaded look as it starts (docs/PLAYGROUND.md §5.2, PLAN.md WP 13.1): daylight, every material banded in three steps of light with a rim, everything inked.
+- [`cel.ts`](../labs/playground/looks/cel.ts): The look `look:playground-cel`, the playground cel-shaded (docs/PLAYGROUND.md §5.2, PLAN.md WP 13.24): the toon style's ramp per material (three bands of light and a rim, each material's shadows its own colour shifted in hue, cooler and more saturated, rather than darkened: `shade`), ink from depth and normals at sharp creases, the outline shells round the props and the bodies (skinned ones too, engine/gfx/stageShells.ts), both 1 px at 270 lines and scaled to the picture's lines in whole pixels, and the sky's dome as a clean gradient (`skyGradient`).
   - Exports: `look`
-  - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts)
-- [`pixel.ts`](../labs/playground/looks/pixel.ts): The look `look:playground-pixel`, the playground's pixel-art look as it starts (docs/PLAYGROUND.md §5.2, PLAN.md WP 13.1): daylight, toon bands, then the picture cut into 3-pixel blocks with a one-block rim and 24 shades a channel, lightly dithered.
+  - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts), [`tests/e2e/playground-looks.spec.ts`](../tests/e2e/playground-looks.spec.ts)
+- [`pixel.ts`](../labs/playground/looks/pixel.ts): The look `look:playground-pixel`, the playground as pixel art (docs/PLAYGROUND.md §5.2, PLAN.md WP 13.24): a low-resolution picture at a whole-number scale (the pixel filter's `size` 0: the largest whole block giving 240 to 360 lines, one drawn pixel in the engine's `pixels` resolution, engine/gfx/post/grid.ts), 1-pixel ink from depth and normals, each material a ramp of four shades its shadows shifted in hue, its steps mixed by an ordered dither fixed to the world (the toon style's `dither`, its cells counted from the snap), 24 shades a channel.
   - Exports: `look`
+  - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts), [`tests/e2e/playground-looks.spec.ts`](../tests/e2e/playground-looks.spec.ts)
+- [`pixelPerspective.ts`](../labs/playground/looks/pixelPerspective.ts): The look `look:playground-pixel-perspective`, the pixel look's variant for the perspective cameras (first person, the shooter and the platformer; docs/PLAYGROUND.md §5.2, PLAN.md WP 13.24): the chain draws its filters and toon numbers in place of `look:playground-pixel`'s while the camera is a perspective one (the look's `perspective`, engine/gfx/post/chain.ts), its style and sky staying the pixel look's.
+  - Exports: `look`, `PIXEL_FILTERS`, `PIXEL_TOON`
   - Tests: [`labs/playground/looks/looks.test.ts`](../labs/playground/looks/looks.test.ts)
 
 ## labs/playground/props

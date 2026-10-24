@@ -287,6 +287,14 @@ Both are tuned for each of the five cameras, by day and by night (WP 13.24).
 - The look metrics (WP 13.24): thumbnails per look and camera; the shimmer metric (pixels changed by a sub-pixel
   orthographic pan) is 0 in the pixel look; contrast and palette use within each look's bounds.
 
+As built (WP 13.24, ADR-0025 amendment 33): each material's ramp is its own colour, lit, down to its shade (the colour
+shifted toward violet and saturated, the toon style's `shade`), so a ramp per material needs no data per material.
+The pixel look draws the engine's own pixels (270 lines on a 1080 or 540-line screen), the pixel filter's `size` 0
+taking whatever whole block keeps 240 to 360 lines in another resolution mode; the glide moves the whole canvas by
+the remainder (the page's canvas has a margin of two drawn pixels); its perspective variant serves the platformer too.
+Night has a key: the ambient lower by night and higher at dusk (engine/gfx/daylight.ts), the streetlights' light
+falling off more slowly (decay 0.75), so their pools reach the cel look's first band.
+
 ## 6. Levels with storeys, and sites
 
 ### 6.1 Storeys (level format 2)
