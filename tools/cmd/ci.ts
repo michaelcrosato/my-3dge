@@ -4,7 +4,9 @@
  * machine, held to one budget for them together
  * (tools/lib/tierBudgets.ts, five minutes). `x ci --local --full` is the full run: every step, T2 in full. Nobody waits
  * on it: the GitHub workflow (.github/workflows/ci.yml) runs it after each merge to main and by hand, and an agent at
- * the end of a goal or a stage. `x ci --status` says how main's last full run went (tools/lib/ciStatus.ts). Each run
+ * the end of a goal or a stage. `--shard <i>/<n>` splits the full run over n machines, as the workflow does on four
+ * (ADR-0023 amendment 1): shard i runs T2's i-th share (Playwright's `--shard`), shard 1 every other step too, and
+ * the rest only `npm ci`. `x ci --status` says how main's last full run went (tools/lib/ciStatus.ts). Each run
  * writes `out/ci/summary.md` (tools/lib/ciSummary.ts) and, when everything passed, records HEAD in
  * `out/ci/last-green`, the base of the selections until main holds a gate.
  *
@@ -22,12 +24,13 @@
  *   and Vitest's file durations, so T1 starts its longest files first.
  * - `--long` also runs tiers.ts's `LONG_RUNS` after the steps (at each gate).
  *
- * Usage: node x ci --local [--full] [--long] | node x ci --status. Exit 0 when every step passed (or main's last full
- * run did); 1 otherwise; 2 on a usage error, `--local` and `--status` both missing included.
+ * Usage: node x ci --local [--full [--shard <i>/<n>]] [--long] | node x ci --status. Exit 0 when every step passed
+ * (or main's last full run did); 1 otherwise; 2 on a usage error, `--local` and `--status` both missing included.
  *
  * @example
  * CI_STEPS.map((step) => step.name); // ['npm ci', 'x src', 'npm run check', 'npm test', …, 'npm run e2e']
  * CI_STEPS.filter((step) => step.full).map((step) => step.name); // ['x new --test-all', 'x engine --test', 'npm run e2e']
+ * parseShard('2/4'); // { index: 2, total: 4 }
  * @see tools/cmd/ci.test.ts
  */
 import { execFileSync, spawn } from 'node:child_process';
@@ -70,6 +73,26 @@ export const CI_STEPS: readonly CiStep[] = [
 /** Why the quick gate leaves a step out. */
 export const FULL_ONLY =
   "the full run's: node x ci --local --full, on GitHub after each merge, nobody waiting on it (ADR-0023)";
+
+/** One machine's share of a sharded full run: the `index`th of `total`, from 1. */
+export interface Shard {
+  index: number;
+  total: number;
+}
+
+/** `--shard`'s `<i>/<n>`, 1 ≤ i ≤ n; a usage error otherwise. */
+export function parseShard(text: string): Shard {
+  const match = /^(\d+)\/(\d+)$/.exec(text);
+  const [index, total] = match ? [Number(match[1]), Number(match[2])] : [0, 0];
+  if (index < 1 || index > total) {
+    throw new UsageError(`--shard takes <i>/<n> with 1 ≤ i ≤ n, as 2/4, not "${text}"`);
+  }
+  return { index, total };
+}
+
+/** Why a shard other than the first leaves a step out. */
+const shardOne = (shard: Shard) =>
+  `shard 1's: in a run split over ${shard.total} machines, the steps but npm ci and T2 run once, on the first`;
 
 /** What running one command gave: its exit code (1 when it could not start), its wall time and its output. */
 export interface StepOutcome {
@@ -151,6 +174,8 @@ export interface CiRun {
   ok: boolean;
   /** The full run (`--full`), else the quick gate. */
   full: boolean;
+  /** This machine's share of a sharded full run (`--shard`). */
+  shard?: Shard;
   head: Head;
   /** When it started (ISO 8601). */
   started: string;
@@ -200,17 +225,18 @@ const slug = (name: string) =>
     .replace(/^-|-$/g, '');
 
 /**
- * Runs the gate in `root`: the quick steps, or every step with `full`; then the long runs with `long`, the budget, the
- * summary and, when green, `out/ci/last-green`.
+ * Runs the gate in `root`: the quick steps, or every step with `full` (a share of them with `shard`); then the long runs
+ * with `long`, the budget, the summary and, when green and whole, `out/ci/last-green`.
  */
 export async function runCi(
   root: string,
   deps: CiDeps,
-  options: { full?: boolean; long?: boolean } = {},
+  options: { full?: boolean; long?: boolean; shard?: Shard } = {},
 ): Promise<CiRun> {
   const started = deps.now().toISOString();
   const head = deps.head(root);
   const full = options.full === true;
+  const { shard } = options;
   rmSync(join(root, CI_OUT.logs), { recursive: true, force: true });
   mkdirSync(join(root, CI_OUT.logs), { recursive: true });
 
@@ -219,8 +245,10 @@ export async function runCi(
   let quickMs = 0;
   let stop: string | undefined;
   for (const [i, step] of queue.entries()) {
-    const command = [...step.command];
-    const left = stop ?? (step.full && !full ? FULL_ONLY : undefined);
+    const share = step.tier === 'T2' && shard ? ['--', `--shard=${shard.index}/${shard.total}`] : [];
+    const command = [...step.command, ...share];
+    const elsewhere = shard && shard.index > 1 && !step.required && step.tier !== 'T2' ? shardOne(shard) : undefined;
+    const left = stop ?? (step.full && !full ? FULL_ONLY : elsewhere);
     if (left) {
       steps.push({ name: step.name, command: [], status: 'skipped', ms: 0, tier: step.tier, note: left });
       continue;
@@ -233,8 +261,9 @@ export async function runCi(
     const ok = outcome.code === 0;
     const lines = outcome.output.trimEnd().split('\n');
     const workers = t2Workers(deps.cores);
+    const part = shard ? `shard ${shard.index} of ${shard.total}` : 'in full';
     const note =
-      step.tier === 'T2' ? `in full, ${workers} worker${workers === 1 ? '' : 's'} on ${deps.cores} cores` : undefined;
+      step.tier === 'T2' ? `${part}, ${workers} worker${workers === 1 ? '' : 's'} on ${deps.cores} cores` : undefined;
     steps.push({
       name: step.name,
       command,
@@ -254,6 +283,7 @@ export async function runCi(
   const run: CiRun = {
     ok,
     full,
+    shard,
     head,
     started,
     runtime: runtime(),
@@ -261,7 +291,7 @@ export async function runCi(
     steps,
     budget: checkGate(quickMs),
   };
-  if (ok) recordGreen(head.sha, root);
+  if (ok && !shard) recordGreen(head.sha, root);
   writeFileSync(join(root, CI_OUT.summary), renderSummary(run));
   return run;
 }
@@ -285,10 +315,11 @@ export function createCiCommand(overrides: Partial<CiDeps> = {}): Command {
   const defaults = { runStep: spawnStep, head: readHead, now: () => new Date(), cores: availableParallelism(), runs: readRuns, origin: readOrigin }; // prettier-ignore
   const deps: CiDeps = { ...defaults, ...overrides };
   return {
-    usage: 'ci --local [--full] [--long] | ci --status',
+    usage: 'ci --local [--full [--shard <i>/<n>]] [--long] | ci --status',
     options: {
       local: { type: 'boolean' },
       full: { type: 'boolean' },
+      shard: { type: 'string' },
       long: { type: 'boolean' },
       status: { type: 'boolean' },
     },
@@ -302,7 +333,11 @@ export function createCiCommand(overrides: Partial<CiDeps> = {}): Command {
           'x ci runs with --local (the quick gate; --full for every step, as the GitHub workflow does after each merge) or alone with --status (ADR-0023)',
         );
       }
-      return toResult(await runCi(root, deps, { full: values.full === true, long: values.long === true }));
+      if (typeof values.shard === 'string' && values.full !== true) {
+        throw new UsageError('--shard splits the full run: give it with --full (ADR-0023 amendment 1)');
+      }
+      const shard = typeof values.shard === 'string' ? parseShard(values.shard) : undefined;
+      return toResult(await runCi(root, deps, { full: values.full === true, long: values.long === true, shard }));
     },
   };
 }

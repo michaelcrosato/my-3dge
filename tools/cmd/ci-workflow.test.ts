@@ -1,12 +1,12 @@
 /**
  * @file Unit tests for the GitHub Actions workflow (.github/workflows/ci.yml, PLAN.md §8.9, WP 0.9, ADR-0023): read as
- * text (no YAML dependency), it runs after each merge to main and by hand, never on pull requests, within 120 minutes,
- * and cancels no run; it runs the full run, `node x ci --local --full`, so its commands are `CI_STEPS`
- * (tools/cmd/ci.ts) and nothing runs a step of its own; it checks out both
- * read-only sources at the commits scripts/setup.sh pins (tools/lib/source.ts `sourceSpecs`) into their `.cache/`
- * clones, with the job's read-only token (no secret) and without LFS; it takes Node from .nvmrc; and its Chromium is
- * tools/deps.json's pin, the one scripts/setup.sh downloads and tools/lib/browser.ts looks for. It always publishes the
- * summary (to the step summary and the job's log) and out/.
+ * text (no YAML dependency), it runs after each merge to main and by hand, never on pull requests, within 120 minutes
+ * a job, and cancels no run nor shard; it runs the full run, `node x ci --local --full`, split over its matrix's shards
+ * (ADR-0023 amendment 1), so its commands are `CI_STEPS` (tools/cmd/ci.ts) and nothing runs a step of its own; it
+ * checks out both read-only sources at the commits scripts/setup.sh pins (tools/lib/source.ts `sourceSpecs`) into
+ * their `.cache/` clones, with the job's read-only token (no secret) and without LFS; it takes Node from .nvmrc; and
+ * its Chromium is tools/deps.json's pin, the one scripts/setup.sh downloads and tools/lib/browser.ts looks for. It
+ * always publishes each shard's summary (to the step summary and the job's log) and out/.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -50,11 +50,17 @@ describe('the GitHub Actions workflow', () => {
     expect(text).toMatch(/^on:\n {2}push:\n {4}branches: \[main\]\n {2}workflow_dispatch:\n\n/m);
     expect(lines.join('\n')).not.toMatch(/pull_request|concurrency|cancel-in-progress/);
     expect(text).toMatch(/^ {4}timeout-minutes: 120$/m);
+    expect(text, 'a failed shard must not cancel the others').toMatch(/^ {4}strategy:\n {6}fail-fast: false\n/m);
   });
 
-  it('runs the full run, node x ci --local --full, so its commands are CI_STEPS and none runs on its own', () => {
+  it('runs the full run, node x ci --local --full, split over its shards, so its commands are CI_STEPS', () => {
+    const shards = /^ {8}shard: \[([\d, ]+)\]$/m.exec(text)?.[1].split(',').map(Number);
+    expect(shards?.length, 'a matrix of shards').toBeGreaterThan(1);
+    expect(shards).toEqual(shards?.map((_, i) => i + 1));
     const commands = runs();
-    expect(commands.filter((command) => command.startsWith('node x ci'))).toEqual(['node x ci --local --full']);
+    expect(commands.filter((command) => command.startsWith('node x ci'))).toEqual([
+      `node x ci --local --full --shard \${{ matrix.shard }}/${shards?.length}`,
+    ]);
     for (const step of CI_STEPS) {
       const own = step.command.join(' ');
       expect(
@@ -97,7 +103,7 @@ describe('the GitHub Actions workflow', () => {
     expect(runs()).toContain('if [ -f out/ci/summary.md ]; then tee -a "$GITHUB_STEP_SUMMARY" < out/ci/summary.md; fi');
     expect(text).toMatch(/- name: Summary\n {8}if: always\(\)/);
     expect(text).toMatch(
-      /- name: Upload out\/\n {8}if: always\(\)\n {8}uses: actions\/upload-artifact@v4\n {8}with:\n {10}name: out\n {10}path: out\/\*\*/,
+      /- name: Upload out\/\n {8}if: always\(\)\n {8}uses: actions\/upload-artifact@v4\n {8}with:\n {10}name: out-\$\{\{ matrix\.shard \}\}\n {10}path: out\/\*\*/,
     );
   });
 });

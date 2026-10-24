@@ -6,7 +6,9 @@
  * agent sees, and fixes before other work (AGENTS.md).
  *
  * Invariants: it never fails for want of an answer: with no GitHub origin, offline or refused, it says the status is
- * unknown and passes. Only a finished run that did not pass fails it; a cancelled or skipped one is passed over.
+ * unknown and passes. Only a finished run that did not pass fails it, a cancelled one too: the workflow cancels no
+ * run, so a cancelled one hit the job's time limit (GitHub reports a timeout as cancelled) or was stopped by hand, and
+ * proves nothing either way. A skipped run is passed over.
  *
  * @example
  * repoSlug('https://github.com/michaelcrosato/my-3dge.git'); // 'michaelcrosato/my-3dge'
@@ -54,6 +56,12 @@ export const readRuns: RunsReader = async (slug) => {
   return runs as WorkflowRun[];
 };
 
+/** How a finished run's conclusion reads in the summary, where it differs from `ended <conclusion>`. */
+const VERDICTS: Readonly<Record<string, string>> = {
+  failure: 'failed',
+  cancelled: 'was cancelled (the time limit, or by hand)',
+};
+
 /** `abc1234 (2026-10-15 06:41 UTC)`. */
 const when = (run: WorkflowRun) => `${run.head_sha.slice(0, 7)} (${run.created_at.slice(0, 16).replace('T', ' ')} UTC)`;
 
@@ -80,9 +88,7 @@ export async function mainStatus(slug: string | undefined, read: RunsReader): Pr
   } catch (error) {
     return unknown(`GitHub's API did not answer: ${firstLine(error)}`);
   }
-  const at = runs.findIndex(
-    (run) => run.status === 'completed' && run.conclusion !== 'cancelled' && run.conclusion !== 'skipped',
-  );
+  const at = runs.findIndex((run) => run.status === 'completed' && run.conclusion !== 'skipped');
   const going = runs.slice(0, at < 0 ? runs.length : at).filter((run) => run.status !== 'completed');
   const still = going.length ? `; ${going.length} newer still running, the latest on ${when(going[0])}` : '';
   if (at < 0) {
@@ -93,8 +99,8 @@ export async function mainStatus(slug: string | undefined, read: RunsReader): Pr
   if (last.conclusion === 'success') {
     return { ok: true, summary: `main's last full run passed on ${when(last)}${still}`, target: 'status' };
   }
-  const verdict = last.conclusion === 'failure' ? 'failed' : `ended ${last.conclusion ?? 'without a verdict'}`;
-  const message = `main's last full run ${verdict} on ${when(last)}: fix it before other work (AGENTS.md); its job's log names the failing step and its out/ artifact holds the reports: ${last.html_url}`;
+  const verdict = VERDICTS[last.conclusion ?? ''] ?? `ended ${last.conclusion ?? 'without a verdict'}`;
+  const message = `main's last full run ${verdict} on ${when(last)}: fix it before other work (AGENTS.md); its job's log names the failing step and its out/ artifact holds the reports${last.conclusion === 'cancelled' ? ' (a run cancelled at the time limit: make the slow step fit, .github/workflows/ci.yml)' : ''}: ${last.html_url}`;
   return {
     ok: false,
     summary: `main's last full run ${verdict} on ${when(last)}${still}`,

@@ -4,7 +4,8 @@
 
 - `node --version` should print v24.22.1 (the SessionStart hook puts it first on PATH); if not, run
   `bash scripts/setup.sh`.
-- **Cloud container.** Chromium 141 is at `/opt/pw-browsers/chromium` (`$CHROMIUM_PATH` when set); never run
+- **Cloud container.** Its Chromium is at `/opt/pw-browsers/chromium` (`$CHROMIUM_PATH` when set): 153 since
+  2026-10-22, while tools/deps.json and GitHub's full run still pin 141 until WP U-8 moves them. Never run
   `playwright install`. Never disable TLS verification for the environment's proxy. If the sources cannot be
   resolved, the session must reach GitHub (both are public) or include `michaelcrosato/my-3d2dge` and
   `michaelcrosato/shardfall`: escalate once (PLAN.md §11.5).

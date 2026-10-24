@@ -2,7 +2,9 @@
  * @file The `anim` QA family's point rigs (PLAN.md §8.6, WP 6.6, WP 10.1): the bodies that are not a humanoid, each a
  * procedural rig (engine/anim/proc/rig.ts `ProcRig`): the blob and the wisp (engine/anim/blob.ts, floater.ts; their QA
  * ids are their states', `blob:<state>`, `floater:<state>`), the quadruped (engine/anim/quadruped.ts, WP 13.21:
- * `rig:quadruped/<state>`) and the six fixture rigs of fixtures/rigs/ (WP 10.1; `<rig id>/<state>`, `rig:biped/walk`). `checkPointRig` drives each state at both facings (`driveRig`), from rest
+ * `rig:quadruped/<state>`) and, where the checkout has fixtures/rigs/ (the engine's repository; a game has no
+ * fixtures/), its six rigs (WP 10.1; `<rig id>/<state>`, `rig:biped/walk`), imported at run time by `pointRigs`, so no
+ * file a game gets imports the engine's fixtures. `checkPointRig` drives each state at both facings (`driveRig`), from rest
  * and back to rest, and reports their points not finite (`nan`) or under the floor (`underFloor`), their bones off
  * their length (`stretch`), the motion metrics (`pop`, `footSlide` for the feet a rig names, `loopClosure` for the
  * first points it closes, `rigClosed`), another run giving other points (`unstableHash`) and points straying at half
@@ -11,9 +13,14 @@
  * Split from tools/qa/anim.ts to keep each under 400 lines (ADR-0014 amendment 16).
  *
  * @example
- * POINT_RIGS.map(({ rig }) => rig.id); // ['rig:blob', 'rig:floater (the wisp)', 'rig:biped', …]
+ * POINT_RIGS.map(({ rig }) => rig.id); // ['rig:blob', 'rig:floater (the wisp)', 'rig:quadruped']
+ * import { ROOT } from '../../x';
+ * (await pointRigs(ROOT)).map(({ rig }) => rig.id).includes('rig:biped'); // true
  * @see tools/qa/anim.test.ts
  */
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { Fnv64 } from '../../../engine/core/hash';
 import { Vector3 } from '../../../engine/core/math';
 import { Blob, BLOB_MOVES, blobMoveTimes, type BlobInput } from '../../../engine/anim/blob';
@@ -21,12 +28,6 @@ import { Floater, FLOATER } from '../../../engine/anim/floater';
 import { QUADRUPED_RIG } from '../../../engine/anim/quadruped';
 import { driveRig, rigClosed, type ProcRig } from '../../../engine/anim/proc/rig';
 import { rateDrift, STATE_MATRIX } from '../../../engine/anim/stateMatrix';
-import { BIPED } from '../../../fixtures/rigs/biped';
-import { FLOATER as FLOATER_FIXTURE } from '../../../fixtures/rigs/floater';
-import { HEXAPOD } from '../../../fixtures/rigs/hexapod';
-import { MULTIARM } from '../../../fixtures/rigs/multiarm';
-import { SERPENT } from '../../../fixtures/rigs/serpent';
-import { TENTACLE } from '../../../fixtures/rigs/tentacle';
 import { closure, footSlide, m, motionTrack, pops, worse, type Found, type Track } from './metrics';
 
 export const [AHEAD, BEHIND, LEFT] = [new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(1, 0, 0)];
@@ -164,10 +165,38 @@ function stretch(rig: ProcRig, t: Track): Found {
   return found;
 }
 
-/** The point rigs the family drives, and the prefix of their QA ids (none for the blob's and the wisp's own). */
-export const POINT_RIGS: readonly { readonly rig: ProcRig; readonly prefix: string }[] = [
+/** A rig the family drives, and the prefix of its QA ids (none for the blob's and the wisp's own). */
+export interface PointRig {
+  readonly rig: ProcRig;
+  readonly prefix: string;
+}
+
+/** The engine's point rigs, which every checkout has. */
+export const POINT_RIGS: readonly PointRig[] = [
   { rig: BLOB_RIG, prefix: '' },
   { rig: FLOATER_RIG, prefix: '' },
   { rig: QUADRUPED_RIG, prefix: `${QUADRUPED_RIG.id}/` },
-  ...[BIPED, HEXAPOD, SERPENT, FLOATER_FIXTURE, MULTIARM, TENTACLE].map((rig) => ({ rig, prefix: `${rig.id}/` })),
 ];
+
+/** The fixture rigs of fixtures/rigs/ (WP 10.1), each a folder's index.ts and the rig it exports, in the family's order. */
+export const FIXTURE_RIGS = [
+  ['biped', 'BIPED'],
+  ['hexapod', 'HEXAPOD'],
+  ['serpent', 'SERPENT'],
+  ['floater', 'FLOATER'],
+  ['multiarm', 'MULTIARM'],
+  ['tentacle', 'TENTACLE'],
+] as const;
+
+/**
+ * The point rigs under `root`: `POINT_RIGS`, then `FIXTURE_RIGS` where `root` has fixtures/rigs/, imported here at run
+ * time by path, since a game gets tools/ but never the engine's fixtures/.
+ */
+export async function pointRigs(root: string): Promise<PointRig[]> {
+  const dir = join(root, 'fixtures', 'rigs');
+  if (!existsSync(dir)) return [...POINT_RIGS];
+  const load = async ([folder, name]: (typeof FIXTURE_RIGS)[number]) =>
+    ((await import(pathToFileURL(join(dir, folder, 'index.ts')).href)) as Record<string, ProcRig>)[name];
+  const fixtures = await Promise.all(FIXTURE_RIGS.map(load));
+  return [...POINT_RIGS, ...fixtures.map((rig) => ({ rig, prefix: `${rig.id}/` }))];
+}

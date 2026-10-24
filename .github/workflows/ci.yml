@@ -1,9 +1,11 @@
 # .github/workflows/ci.yml: the full run on GitHub Actions (PLAN.md §8.9, WP 0.9; ESC-0001, answered 2026-10-14;
 # ADR-0023). After each merge to main, and by hand, it runs `node x ci --local --full` (tools/cmd/ci.ts, `CI_STEPS`):
 # npm ci, x src, T0, T1, x port refs --check, x new --test-all, x engine --test (a new game passes its own gate) and
-# T2 in full. Nobody waits on it: agents merge on the quick gate (`node x ci --local`, without those last three), and
-# `node x ci --status`, which the SessionStart hook runs, reads these runs, so a red main is fixed before other work.
-# Each merge gets a run of its own, none cancelled, so a failure names its merge.
+# T2 in full, split over four jobs (ADR-0023 amendment 1: T2 outgrew one job's 120 minutes): each runs
+# `--shard <i>/4`, T2's i-th share, and the first also every other step. Nobody waits on it: agents merge on the quick
+# gate (`node x ci --local`, without those last three), and `node x ci --status`, which the SessionStart hook runs,
+# reads these runs, so a red main is fixed before other work. Each merge gets a run of its own, none cancelled (no
+# shard stops the others: fail-fast is off), so a failure names its merge; the run passes when every shard does.
 #
 # The platform, as scripts/setup.sh builds it: both read-only sources at their pinned commits in .cache/src-*, fetched
 # with the job's read-only token and no secret (both repositories are public; LFS off), Node from .nvmrc, and Chrome for
@@ -30,6 +32,10 @@ jobs:
   ci:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     env:
       CHROMIUM: 141.0.7390.37
     steps:
@@ -65,8 +71,8 @@ jobs:
           npx playwright install-deps chromium
           "$HOME/.cache/my3dge/chrome-$CHROMIUM/chrome-linux64/chrome" --version | grep -F "$CHROMIUM"
 
-      - name: x ci --local --full
-        run: node x ci --local --full
+      - name: x ci --local --full, shard ${{ matrix.shard }} of 4
+        run: node x ci --local --full --shard ${{ matrix.shard }}/4
 
       - name: Summary
         if: always()
@@ -76,6 +82,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: out
+          name: out-${{ matrix.shard }}
           path: out/**
           if-no-files-found: warn

@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for main's full-run status (tools/lib/ciStatus.ts), with a fake GitHub: the slug from https, ssh
- * and git-proxy remotes; passed, failed, timed out, cancelled (passed over) and still running; and unknown, never a
- * failure, without a GitHub origin, without an answer or without a finished run.
+ * and git-proxy remotes; passed, failed, timed out, cancelled (red: the workflow cancels none), skipped (passed over)
+ * and still running; and unknown, never a failure, without a GitHub origin, without an answer or without a finished
+ * run.
  */
 import { describe, expect, it } from 'vitest';
 import { mainStatus, repoSlug, type RunsReader, type WorkflowRun } from './ciStatus';
@@ -47,8 +48,8 @@ describe('mainStatus', () => {
     );
   });
 
-  it('fails when the last finished run failed or timed out, and passes over cancelled runs', async () => {
-    const red = await mainStatus('o/r', answers(run('completed', 'cancelled', NEWER), run('completed', 'failure')));
+  it('fails when the last finished run failed, timed out or was cancelled, and passes over skipped runs', async () => {
+    const red = await mainStatus('o/r', answers(run('completed', 'skipped', NEWER), run('completed', 'failure')));
     expect(red.ok).toBe(false);
     expect(red.summary).toBe("main's last full run failed on c0ffee0 (2026-10-15 06:41 UTC)");
     expect(red.failures?.[0].id).toBe('CI_MAIN_RED');
@@ -56,6 +57,12 @@ describe('mainStatus', () => {
     expect(red.failures?.[0].message).toContain('https://github.com/o/r/actions/runs/c0ff');
     const late = await mainStatus('o/r', answers(run('completed', 'timed_out')));
     expect(late).toMatchObject({ ok: false, summary: "main's last full run ended timed_out on c0ffee0 (2026-10-15 06:41 UTC)" }); // prettier-ignore
+    const stopped = await mainStatus('o/r', answers(run('completed', 'cancelled', NEWER), run('completed', 'success')));
+    expect(stopped).toMatchObject({
+      ok: false,
+      summary: "main's last full run was cancelled (the time limit, or by hand) on beef000 (2026-10-15 06:41 UTC)",
+    });
+    expect(stopped.failures?.[0].message).toContain('make the slow step fit, .github/workflows/ci.yml');
   });
 
   it("is unknown and passes without a GitHub origin, without GitHub's answer or before any run finished", async () => {

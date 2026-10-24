@@ -2160,7 +2160,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `assetRules`, `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
   - Tests: [`tools/cmd/check.test.ts`](../tools/cmd/check.test.ts)
 - [`ci.ts`](../tools/cmd/ci.ts): The merge gate and the full run (PLAN.md §8.9, WP 0.9; ADR-0023).
-  - Exports: `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `FULL_ONLY`, `Head`, `KEPT_CACHES`, `readHead`, `readOrigin`, `runCi`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`
+  - Exports: `CI_STEPS`, `CiDeps`, `CiRun`, `CiStep`, `createCiCommand`, `default`, `FULL_ONLY`, `Head`, `KEPT_CACHES`, `parseShard`, `readHead`, `readOrigin`, `runCi`, `Shard`, `spawnStep`, `StepOutcome`, `StepResult`, `StepRunner`
   - Tests: [`tools/cmd/ci.test.ts`](../tools/cmd/ci.test.ts)
 - [`deps.ts`](../tools/cmd/deps.ts): Checks the dependency pins against `tools/deps.json` (offline), and asks the registry for compatible releases to adopt and for lines that have qualified (PLAN.md §6.10; doctrine: Mastery, Common ground).
   - Exports: `check`, `createDepsCommand`, `default`
@@ -2376,7 +2376,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `checkGeometries`, `checkLevelMeshes`, `checkProps`, `default`, `geometryModules`, `labModules`, `LEVEL_DRAW_CALLS`, `LEVEL_VERTICES_PER_TILE`, `MAX_SIZE`, `PROP_FLOAT`
   - Tests: [`tools/qa/geo.test.ts`](../tools/qa/geo.test.ts)
 - [`level.ts`](../tools/qa/level.ts): The `level` QA family (PLAN.md §8.6, WP 2.2, WP 13.13, I-29): `node x qa level` validates every level file, the box's (`labs/box/levels/*.txt`, ids `level:<name>`), the fixtures' (`fixtures/levels/*.txt`, ids `level:fixtures/<name>`; the seeded errors under `fixtures/levels/broken/` are the unit tests' business and are skipped) and the storey fixtures' (`fixtures/levels/storeys/*.txt`, ids `level:fixtures/storeys/<name>`, read with their room markers), and runs in T1 through `runQa` (tools/qa/level.test.ts).
-  - Exports: `default`, `LEVEL_DIRS`, `LevelFile`, `levelFiles`
+  - Exports: `default`, `LEVEL_DIRS`, `LevelFile`, `levelFiles`, `PlaceGlyphs`
   - Tests: [`tools/qa/level.test.ts`](../tools/qa/level.test.ts)
 - [`tex.ts`](../tools/qa/tex.ts): The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
   - Exports: `checkPropTextures`, `checkTextures`, `default`, `textureModules`, `textureSheet`
@@ -2390,6 +2390,6 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`metrics.ts`](../tools/qa/anim/metrics.ts): The `anim` QA family's motion metrics (PLAN.md §8.6, WP 6.6): what tools/qa/anim.ts and tools/qa/anim/clips.ts measure on a run, as a `Track` (points per step, world and measured from the body), each returning the worst case (`Found`, larger is worse) and the sentence naming where it happened.
   - Exports: `ANIM_QA`, `closure`, `footSlide`, `Found`, `limbs`, `m`, `motionTrack`, `pops`, `Track`, `worse`
   - Tests: [`tools/qa/anim.test.ts`](../tools/qa/anim.test.ts)
-- [`points.ts`](../tools/qa/anim/points.ts): The `anim` QA family's point rigs (PLAN.md §8.6, WP 6.6, WP 10.1): the bodies that are not a humanoid, each a procedural rig (engine/anim/proc/rig.ts `ProcRig`): the blob and the wisp (engine/anim/blob.ts, floater.ts; their QA ids are their states', `blob:<state>`, `floater:<state>`), the quadruped (engine/anim/quadruped.ts, WP 13.21: `rig:quadruped/<state>`) and the six fixture rigs of fixtures/rigs/ (WP 10.1; `<rig id>/<state>`, `rig:biped/walk`).
-  - Exports: `checkPointRig`, `facingTurn`, `POINT_RIGS`, `Report`
+- [`points.ts`](../tools/qa/anim/points.ts): The `anim` QA family's point rigs (PLAN.md §8.6, WP 6.6, WP 10.1): the bodies that are not a humanoid, each a procedural rig (engine/anim/proc/rig.ts `ProcRig`): the blob and the wisp (engine/anim/blob.ts, floater.ts; their QA ids are their states', `blob:<state>`, `floater:<state>`), the quadruped (engine/anim/quadruped.ts, WP 13.21: `rig:quadruped/<state>`) and, where the checkout has fixtures/rigs/ (the engine's repository; a game has no fixtures/), its six rigs (WP 10.1; `<rig id>/<state>`, `rig:biped/walk`), imported at run time by `pointRigs`, so no file a game gets imports the engine's fixtures.
+  - Exports: `checkPointRig`, `facingTurn`, `FIXTURE_RIGS`, `POINT_RIGS`, `PointRig`, `pointRigs`, `Report`
   - Tests: [`tools/qa/anim.test.ts`](../tools/qa/anim.test.ts)

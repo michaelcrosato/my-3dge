@@ -293,7 +293,7 @@ const family: QaFamily = {
     propKind(sharedRegistry);
     const props = sharedRegistry.list('prop').map((entry) => entry.id);
     violations.push(...checkProps(sharedRegistry, props.filter(keep)));
-    for (const level of levelFiles(root)) {
+    for (const level of await levelFiles(root)) {
       if (!keep(level.id)) continue;
       let compiled: CompiledLevel;
       try {

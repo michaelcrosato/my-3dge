@@ -9025,9 +9025,11 @@ For the agents who maintain the engine.
 - `FULL_ONLY` (const): Why the quick gate leaves a step out.
 - `Head` (interface): HEAD's commit and branch, and the uncommitted changes (`git status --porcelain` lines).
 - `KEPT_CACHES` (const): What `npm ci` must not wipe, relative to the root: the tools' caches, and Vitest's record of each file's duration, from which it starts the longest files first (without it, T1 took 39 s instead of 36 s).
+- `parseShard` (function): `--shard`'s `<i>/<n>`, 1 ≤ i ≤ n; a usage error otherwise.
 - `readHead` (function): Reads `Head` with git.
 - `readOrigin` (function): The repository's `origin` URL, or undefined (no git, no remote).
-- `runCi` (function): Runs the gate in `root`: the quick steps, or every step with `full`; then the long runs with `long`, the budget, the summary and, when green, `out/ci/last-green`.
+- `runCi` (function): Runs the gate in `root`: the quick steps, or every step with `full` (a share of them with `shard`); then the long runs with `long`, the budget, the summary and, when green and whole, `out/ci/last-green`.
+- `Shard` (interface): One machine's share of a sharded full run: the `index`th of `total`, from 1.
 - `spawnStep` (const): Runs `command` as a child process, stdout and stderr captured together, colours off.
 - `StepOutcome` (interface): What running one command gave: its exit code (1 when it could not start), its wall time and its output.
 - `StepResult` (interface): One step's result.
@@ -9781,7 +9783,7 @@ For the agents who maintain the engine.
 ### [`tools/qa/anim.ts`](../tools/qa/anim.ts)
 
 - `actionStates` (function): Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`).
-- `animViolations` (function): Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order.
+- `animViolations` (function): Every violation of the bodies whose ids `keep` keeps, the worst per id and metric, in id order: the humanoids, then `rigs` (the engine's point rigs by default; the family adds the fixtures' where the checkout has them, `pointRigs`).
 - `default` (default): The `anim` QA family (PLAN.md §8.6, WP 6.6, I-29): `node x qa anim` drives every body the engine animates through its state matrix and measures the motion, in Node.
 - `humanoidPrefixes` (function): The kinds of the humanoid's QA ids (`state:`, `pose:`, …), from its matrix, then the kinds of the builds that have ids of their own (`adult/`): as `only`, the humanoid without clips.
 - `HUMANOIDS` (const): The humanoid bodies the family drives through the whole matrix; the first also runs it twice and at half the step.
@@ -9818,7 +9820,10 @@ For the agents who maintain the engine.
 
 - `checkPointRig` (function): A point rig's states, each reported as `prefix` and its name: its own checks, the motion, the hash and the rate.
 - `facingTurn` (const): A direction in the body's frame, turned to its facing.
-- `POINT_RIGS` (const): The point rigs the family drives, and the prefix of their QA ids (none for the blob's and the wisp's own).
+- `FIXTURE_RIGS` (const): The fixture rigs of fixtures/rigs/ (WP 10.1), each a folder's index.ts and the rig it exports, in the family's order.
+- `POINT_RIGS` (const): The engine's point rigs, which every checkout has.
+- `PointRig` (interface): A rig the family drives, and the prefix of its QA ids (none for the blob's and the wisp's own).
+- `pointRigs` (function): The point rigs under `root`: `POINT_RIGS`, then `FIXTURE_RIGS` where `root` has fixtures/rigs/, imported here at run time by path, since a game gets tools/ but never the engine's fixtures/.
 - `Report` (type): Adds what a finding says to the violations, keeping the worst per id and metric.
 
 ### [`tools/qa/audio.ts`](../tools/qa/audio.ts)
@@ -9858,6 +9863,7 @@ For the agents who maintain the engine.
 - `LEVEL_DIRS` (const): Where level files live, the id prefix of each place's levels, and the glyphs they need beyond the engine's.
 - `LevelFile` (interface): One level file: its QA id, its path from the repository root, and the registry holding its legend.
 - `levelFiles` (function): Every level file under `root`, in `LEVEL_DIRS` order, then by name.
+- `PlaceGlyphs` (interface): The module beside a place's levels that names the glyphs they need beyond the engine's, and its function.
 
 ### [`tools/qa/tex.ts`](../tools/qa/tex.ts)
 
