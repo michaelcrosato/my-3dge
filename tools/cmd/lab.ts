@@ -1,7 +1,8 @@
 /**
  * @file `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and
- * the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts. Ported from `my-3d2dge:tools/labs-test.mjs`
- * (its checks), with a temporary lab's `answer` and `expires` added.
+ * the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts, which this command loads by path where the
+ * checkout has it (a game made from the engine gets tools/, never the labs: tools/game/imports.test.ts). Ported from
+ * `my-3d2dge:tools/labs-test.mjs` (its checks), with a temporary lab's `answer` and `expires` added.
  * - `list` (the default) prints every page and lab with its links and its `x` command, and fails on a temporary lab
  *   past its `expires` date (settle it: `answer`, then `rm`, or keep it as a lab) and on any problem with the file
  *   (`checkLabs`), each naming its fix.
@@ -16,8 +17,39 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkLabs, expiredLabs, type LabRecord, type LabsIndex } from '../../labs/index/labs';
+import { pathToFileURL } from 'node:url';
 import { UsageError, type Command, type CommandResult } from '../x';
+
+/** A lab of the index, as labs/index/labs.ts's `LabRecord` has it (the fields this command writes and reads). */
+interface LabRecord {
+  page: string;
+  title: string;
+  what: string;
+  command: string;
+  links: [label: string, suffix: string][];
+  added?: string;
+  question?: string;
+  answer?: string;
+  expires?: string;
+}
+
+/** labs/labs.json, as labs/index/labs.ts's `LabsIndex` has it. */
+interface LabsIndex {
+  $about: string;
+  sections: { id: string; title: string; entries: LabRecord[] }[];
+}
+
+/** What this command calls of labs/index/labs.ts. */
+interface LabsModel {
+  checkLabs(index: LabsIndex): string[];
+  expiredLabs(index: LabsIndex, today: string): LabRecord[];
+}
+
+/** The index's model, beside the index in the engine's checkout. */
+export const LABS_MODEL = 'labs/index/labs.ts';
+
+/** The index's model, loaded by path from the checkout at `root`. */
+const labsModel = (root: string): Promise<LabsModel> => import(pathToFileURL(join(root, LABS_MODEL)).href);
 
 /** The index's file, from the repository root. */
 export const LABS_FILE = 'labs/labs.json';
@@ -43,11 +75,18 @@ export function createLabCommand(options: { today?: () => string } = {}): Comman
       if (!(SUBCOMMANDS as readonly string[]).includes(sub))
         throw new UsageError(`lab takes ${SUBCOMMANDS.join(', ')}, not ${sub}`);
       const path = join(root, LABS_FILE);
-      if (!existsSync(path)) throw new UsageError(`no ${LABS_FILE} here: the labs index is the engine's (labs/index/)`);
+      if (!existsSync(path) || !existsSync(join(root, LABS_MODEL)))
+        throw new UsageError(`no ${LABS_FILE} and ${LABS_MODEL} here: the labs index is the engine's (labs/index/)`);
+      const { checkLabs, expiredLabs } = await labsModel(root);
       const index = JSON.parse(readFileSync(path, 'utf8')) as LabsIndex;
       const temporary = index.sections.find((section) => section.id === 'temporary');
       if (!temporary) throw new Error(`${LABS_FILE} has no temporary section: add { "id": "temporary", … } back`);
-      const write = () => writeFileSync(path, `${JSON.stringify(index, null, 2)}\n`);
+      /** Writes the index as Prettier formats it, as the committed file is. */
+      const write = async () => {
+        const prettier = await import('prettier');
+        const options = (await prettier.resolveConfig(path)) ?? {};
+        writeFileSync(path, await prettier.format(JSON.stringify(index), { ...options, filepath: path }));
+      };
       const find = (name: string | undefined, verb: string): LabRecord => {
         if (!name) throw new UsageError(`lab ${verb} needs the lab's page: one of ${temporary.entries.map((lab) => lab.page).join(', ') || 'none yet'}`); // prettier-ignore
         const lab = temporary.entries.find((entry) => entry.page === name);
@@ -73,20 +112,20 @@ export function createLabCommand(options: { today?: () => string } = {}): Comman
         temporary.entries.push(lab);
         const problems = checkLabs(index);
         if (problems.length) throw new UsageError(problems[0]);
-        write();
+        await write();
         return { ok: true, summary: `added ${page}: it expires ${expires}`, target: 'add' };
       }
       if (sub === 'answer') {
         const lab = find(page, 'answer');
         if (!text) throw new UsageError('lab answer needs the answer, in a few words');
         lab.answer = text;
-        write();
+        await write();
         return { ok: true, summary: `${page}: answered; take it off with node x lab rm ${page} or keep it as a lab`, target: 'answer' }; // prettier-ignore
       }
       if (sub === 'rm') {
         const lab = find(page, 'rm');
         temporary.entries.splice(temporary.entries.indexOf(lab), 1);
-        write();
+        await write();
         return { ok: true, summary: `took ${page} off the index (labs/${page}/ stays)`, target: 'rm' };
       }
       const failures = [

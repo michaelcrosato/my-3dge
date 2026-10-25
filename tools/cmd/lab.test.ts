@@ -1,21 +1,23 @@
 /**
  * @file Tests `x lab` (tools/cmd/lab.ts, WP 10.8) on a copy of the labs index in a scratch root: `list` passes on the
- * committed index and fails on a temporary lab past its date, naming how to settle it; `add` dates a lab and refuses a
- * page that does not exist; `answer` and `rm` settle and remove one; and labs/index/labs.ts's checks name each problem.
+ * committed index and fails on a temporary lab past its date, naming how to settle it; `add` dates a lab, writing the
+ * file as Prettier formats it, and refuses a page that does not exist, and a checkout without the labs (a game's);
+ * `answer` and `rm` settle and remove one; and labs/index/labs.ts's checks name each problem.
  */
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkLabs, labLinks, type LabsIndex } from '../../labs/index/labs';
 import { ROOT, UsageError } from '../x';
-import { createLabCommand, LAB_DAYS, LABS_FILE } from './lab';
+import { createLabCommand, LAB_DAYS, LABS_FILE, LABS_MODEL } from './lab';
 
 /** A scratch root holding a copy of labs/labs.json and a page `glow`. */
 function scratch(): string {
   const root = mkdtempSync(join(tmpdir(), 'x-lab-'));
   mkdirSync(join(root, 'labs', 'glow'), { recursive: true });
   cpSync(join(ROOT, LABS_FILE), join(root, LABS_FILE));
+  cpSync(join(ROOT, LABS_MODEL), join(root, LABS_MODEL)); // the model x lab loads from the checkout
   writeFileSync(join(root, 'labs', 'glow', 'index.html'), '<!doctype html>');
   return root;
 }
@@ -37,6 +39,9 @@ describe('x lab', () => {
     const root = scratch();
     const flags = { title: 'Glow', what: 'Bloom against the tone map.', command: 'node x shot labs/glow', question: 'Does bloom read at night?' }; // prettier-ignore
     expect((await run(root, '2026-10-25', ['add', 'glow'], { ...flags, link: ['Night=?hour=22'] })).ok).toBe(true);
+    const prettier = await import('prettier');
+    const options = { ...(await prettier.resolveConfig(join(ROOT, LABS_FILE))), filepath: join(ROOT, LABS_FILE) };
+    expect(await prettier.check(readFileSync(join(root, LABS_FILE), 'utf8'), options), 'written as Prettier formats it').toBe(true); // prettier-ignore
     const lab = read(root).sections.find((section) => section.id === 'temporary')!.entries[0];
     expect([lab.added, lab.expires, lab.links]).toEqual(['2026-10-25', '2026-11-08', [['Night', '?hour=22']]]);
     expect(LAB_DAYS).toBe(14);
@@ -57,6 +62,8 @@ describe('x lab', () => {
     await expect(run(root, '2026-10-25', ['add', 'glow'], { title: 't' })).rejects.toThrow(/needs --what, --command, --question/); // prettier-ignore
     await expect(run(root, '2026-10-25', ['rm', 'glow'])).rejects.toThrow(UsageError);
     await expect(run(root, '2026-10-25', ['open'])).rejects.toThrow(/lab takes list, add, answer, rm/);
+    rmSync(join(root, LABS_MODEL)); // a game made from the engine: tools/, never the labs
+    await expect(run(root, '2026-10-25', [])).rejects.toThrow(/the labs index is the engine's/);
   });
 
   it("names each problem with an index's file: sections, a page listed twice, a lab's fields and dates", () => {

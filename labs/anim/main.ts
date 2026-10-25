@@ -17,9 +17,9 @@
  * @see tests/e2e/labs.spec.ts
  */
 /// <reference types="vite/client" />
-import { createEngine, defineMannequin, getMove, type EngineFrame } from '../../engine';
+import { createEngine, getMove, type EngineFrame } from '../../engine';
 import quaternius from '../../data/anim/sets/quaternius/_set.json?raw';
-import { loadLibrary } from '../box/library';
+import { loadLibrary, loadMannequin } from '../box/library';
 import { button, el, entryList, labPanel } from '../index/lab';
 import { drawBones } from './overlay';
 import { LINEUP_STATES, lineup } from './scenes/lineup';
@@ -39,7 +39,7 @@ const play = params.get('lab.anim.play') ?? 'idle';
 // a library clip needs every set registered (and the mannequin with them); else the mannequin alone
 if (play.startsWith('clip:'))
   await loadLibrary(import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' })); // prettier-ignore
-else defineMannequin(JSON.parse(quaternius) as Parameters<typeof defineMannequin>[0]);
+else loadMannequin(quaternius);
 
 const panel = labPanel(document, {
   title: 'Animation Lab',

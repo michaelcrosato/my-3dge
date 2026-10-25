@@ -13,9 +13,9 @@
  *   hidden margin of two drawn pixels left out). Isometric's pan crosses whole pixels, so the dithers, the shading's
  *   derivatives and the shadows' filter are seen moving with the world, and its glide (the canvas's CSS transform,
  *   within a drawn pixel) carries the remainder and wraps as the picture moves. In the cel look the same pans shimmer,
- *   so the metric measures something. Top-down is pixel-exact by itself (WP 13.8): its pans, a few millimetres, move
- *   neither look and nothing glides (a top-down pan across a whole pixel changes a few pixels of a shadow's edge:
- *   docs/PROGRESS.md's open issues).
+ *   so the metric measures something. Top-down's pan, half of its 1/24 m drawn pixel a frame (its target snaps to that
+ *   grid, WP 13.8), does the same, its glide wrapping too; beyond each move it may change at most `OVERHEAD_RESIDUAL`
+ *   pixels, a soft shadow band's edge (ADR-0025 amendment 35, its cause an open issue for the owner in PROGRESS).
  * - The cel look's shells round the props and the bodies, shown there and hidden in the pixel look, the ID pass the
  *   same objects in both; the pixel look draws one art pixel a drawn pixel at the page's lines (the canvas's height),
  *   its perspective variant in first person: unsnapped, no glide.
@@ -37,9 +37,16 @@ const CAMERAS = ['cam3=first', 'cam3=shoulder', 'cam3=follow', 'cam=iso', 'cam=o
 const HOURS = [12, 22] as const;
 /**
  * Each view's pan: how far it moves the fixed target each frame on each axis it moves along (m) and how many frames
- * it draws. Iso's, about a sixth of a pixel a frame, crosses two whole pixels; top-down's, a twentieth, crosses none.
+ * it draws. Iso's, about a sixth of a pixel a frame, crosses two whole pixels; top-down's, 20 mm, about half of its
+ * 1/24 m drawn pixel a frame, crosses three.
  */
-const PANS = { iso: { step: 0.006, frames: 16 }, overhead: { step: 0.002, frames: 8 } } as const;
+const PANS = { iso: { step: 0.006, frames: 16 }, overhead: { step: 0.02, frames: 8 } } as const;
+/**
+ * The pixels a top-down frame of the pixel look may change beyond its whole-pixel move: measured at 7 to 10 on the
+ * street at noon (a soft shadow band's edge; 0 with the shadows off, ADR-0025 amendment 35), so a regression past it
+ * fails while its cause stays open.
+ */
+const OVERHEAD_RESIDUAL = 10;
 /** The page's margin, in drawn pixels (labs/playground/index.html): drawn for the glide, hidden, never compared. */
 const MARGIN = 2;
 
@@ -97,9 +104,9 @@ function shoot(page: Page, look: string, camera: string, hour: number | null, op
 
 /**
  * The share of pixels two pictures differ in (more than 2 of 255 a channel) when `b` is moved by (dx, dy), within
- * `margin` pixels of neither picture's edge.
+ * `margin` pixels of neither picture's edge, and how many.
  */
-function differs(a: Buffer, b: Buffer, width: number, height: number, dx = 0, dy = 0, margin = 0): number {
+function differs(a: Buffer, b: Buffer, width: number, height: number, dx = 0, dy = 0, margin = 0) {
   let [changed, seen] = [0, 0];
   for (let y = Math.max(margin, margin + dy); y < Math.min(height - margin, height - margin + dy); y++) {
     for (let x = Math.max(margin, margin + dx); x < Math.min(width - margin, width - margin + dx); x++) {
@@ -109,7 +116,7 @@ function differs(a: Buffer, b: Buffer, width: number, height: number, dx = 0, dy
       seen++;
     }
   }
-  return changed / seen;
+  return { share: changed / seen, changed };
 }
 
 /** The page's glide, in drawn pixels (right, down): the canvas's CSS transform over one drawn pixel's CSS size. */
@@ -135,13 +142,13 @@ const cross = (a: number[], b: number[]) => [
  * The shimmer between two frames: the least share they differ in, the hidden margin left out, over every whole-pixel
  * move of at most a quad (2 pixels) each way, and the move that gives it (no move first).
  */
-function shimmer(a: Shot, b: Shot): { share: number; move: [number, number] } {
+function shimmer(a: Shot, b: Shot): { share: number; changed: number; move: [number, number] } {
   const [p, q] = [Buffer.from(a.pixels!, 'base64'), Buffer.from(b.pixels!, 'base64')];
-  let best = { share: 1, move: [0, 0] as [number, number] };
+  let best = { share: 1, changed: Infinity, move: [0, 0] as [number, number] };
   for (const dy of [0, -1, 1, -2, 2]) {
     for (const dx of [0, -1, 1, -2, 2]) {
-      const share = differs(q, p, a.width, a.height, dx, dy, MARGIN);
-      if (share < best.share) best = { share, move: [dx, dy] };
+      const { share, changed } = differs(q, p, a.width, a.height, dx, dy, MARGIN);
+      if (share < best.share) best = { share, changed, move: [dx, dy] };
     }
   }
   return best;
@@ -237,16 +244,16 @@ test('the pixel look does not shimmer: pans move its picture by whole pixels, th
     const pixel = await pan('look:playground-pixel', view);
     const cel = await pan('look:playground-cel', view);
     console.log(`${view}: pixel ${JSON.stringify(pixel)}, cel ${JSON.stringify(cel)}`);
-    const shares = pixel.shimmers.map((s) => s.share);
-    expect(shares, `${view}: the pixel look under pans, beyond its whole-pixel moves`).toEqual(shares.map(() => 0));
+    const changed = pixel.shimmers.map((s) => s.changed);
+    const bound = view === 'overhead' ? OVERHEAD_RESIDUAL : 0;
+    expect(Math.max(...changed), `${view}: the pixel look under pans, beyond its whole-pixel moves`).toBeLessThanOrEqual(bound); // prettier-ignore
     for (const shift of pixel.glides) expect(Math.max(...shift.map(Math.abs))).toBeLessThanOrEqual(1 + 1e-6);
     expect(cel.glides.every((shift) => shift[0] === 0 && shift[1] === 0), `${view}: the cel look never glides`).toBe(true); // prettier-ignore
-    if (view === 'overhead') continue; // top-down is pixel-exact by itself (WP 13.8): nothing glides, nothing shimmers
     expect(
       pixel.shimmers.some((s) => s.move.some(Boolean)),
       `${view}: the pan crosses a whole pixel`,
     ).toBe(true);
-    expect(new Set(pixel.glides.map((shift) => shift.join())).size, `${view}: the glide carries the remainder`).toBeGreaterThan(4); // prettier-ignore
+    expect(new Set(pixel.glides.map((shift) => shift.join())).size, `${view}: the glide carries the remainder`).toBeGreaterThan(PANS[view].frames / 4); // prettier-ignore
     const wraps = pixel.glides.slice(1).some((shift, i) => shift.some((v, axis) => Math.abs(v - pixel.glides[i][axis]) > 0.5)); // prettier-ignore
     expect(wraps, `${view}: the glide wraps as the picture moves a whole pixel`).toBe(true);
     expect(Math.max(...cel.shimmers.map((s) => s.share)), `${view}: the cel look shimmers under the same pans`).toBeGreaterThan(0); // prettier-ignore

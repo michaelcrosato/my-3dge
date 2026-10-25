@@ -7851,6 +7851,8 @@ For the agents who maintain the engine.
 ### [`labs/box/library.ts`](../labs/box/library.ts)
 
 - `loadLibrary` (function): Registers the sets in `files` (path → its text, loaded on demand), then the mannequin from the Quaternius set.
+- `loadMannequin` (function): Registers the mannequin, its build and body, from the Quaternius set's `_set.json` text (the page's `?raw`).
+- `registerEdit` (function): Registers the clip `name` from its edited `text` as the set `set` of its own, with the sources of the set `from` (`clipset:cmu`), and returns the clip's path to play (`lab1/<name>`).
 
 ### [`labs/box/looks/daylight.ts`](../labs/box/looks/daylight.ts)
 
@@ -9346,9 +9348,10 @@ For the agents who maintain the engine.
 ### [`tools/cmd/lab.ts`](../tools/cmd/lab.ts)
 
 - `createLabCommand` (function): Builds the command; tests inject the day.
-- `default` (default): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts.
+- `default` (default): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts, which this command loads by path where the checkout has it (a game made from the engine gets tools/, never the labs: tools/game/imports.test.ts).
 - `LAB_DAYS` (const): How long a temporary lab lasts by default, in days.
 - `LABS_FILE` (const): The index's file, from the repository root.
+- `LABS_MODEL` (const): The index's model, beside the index in the engine's checkout.
 
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 

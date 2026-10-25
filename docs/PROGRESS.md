@@ -27,7 +27,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - The box's sound map reads its actors when it reads, not where an event says (amendment 29). Amendment 22 proposes
   triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Owner: top-down's pixel look panned
   across a whole pixel changes 7–10 pixels of a soft shadow band (0 without shadows; amendment 35). Clip contacts:
-  walks' and swaying idles' hands can read as holds; no foot lock reads a clip's foot contacts yet (ADR-0010 am. 7).
+  hands read as holds in walks, idles and a dozen more (WP 8.8's row); no foot lock reads a clip's foot contacts yet.
   Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs` on the owner's: the rain's 1 ms),
   the pixel look's glide on a screen.
 - At their size cap (395–400 lines), split on the next change: engine/world/siteNav.ts, gfx/{sky,stage,instancing}.ts,

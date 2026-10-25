@@ -1,5 +1,5 @@
 {
-  "$about": "The labs index (labs/index/, PLAN.md WP 10.8) is built from this list. Each entry is a page under labs/ (page: its directory) with links [label, what to add to its address], what it is for and the x command that does the same job without the page. keep: pages and labs worth keeping. temporary: one-off comparisons and experiments, each with the date it was added, the question it answers, its answer once settled, and the date it expires; node x lab list fails on one past its date. node x lab add|rm|list keeps this file; tests/e2e/labs.spec.ts opens every link.",
+  "$about": "The labs index (labs/index/, PLAN.md WP 10.8) is built from this list. Each entry is a page under labs/ (page: its directory) with links [label, what to add to its address], what it is for and the x command that does the same job without the page. keep: pages and labs worth keeping. temporary: one-off comparisons and experiments, each with the date it was added, the question it answers, its answer once settled, and the date it expires; node x lab list fails on one past its date. node x lab add|rm|list keeps this file; tests/e2e/labs.spec.ts checks that the index lists every link and opens each lab at its first.",
   "sections": [
     {
       "id": "pages",
