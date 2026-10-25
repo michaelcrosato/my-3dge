@@ -2,14 +2,17 @@
  * @file The sample of mutants `npx stryker run` tests (PLAN.md WP 12.2; stryker.config.json): a StrykerJS ignore
  * plugin, `sample`, that keeps the mutants of a fixed, random share of the mutated files' outermost functions and
  * ignores the rest, so a run over every file of engine/sim and engine/anim measures their mutation score in a run's
- * time instead of a day's (measured: 4 s of a runner's time a mutant, about 16,000 mutants that are not static).
+ * time instead of most of a day's (measured: 1,714 mutants that are not static in 105 minutes at two runners).
  *
  * A function is kept when the hash of its file, its name and its place among the functions of that name in that file
  * (`functionKey`) falls under `SAMPLE.rate` (FNV-1a, `share`), seeded by `SAMPLE.seed`: whole functions, so every
  * mutant of one is in or out together, each with the same chance, and the same set on every run while the functions
- * keep their names (an edit elsewhere in a file moves no function in or out). Code outside every function runs as its
- * module loads: those mutants are static, which the config ignores (`ignoreStatic`). An ignored mutant counts in no
- * score; Stryker reports it with this plugin's reason.
+ * keep their names (an edit elsewhere in a file moves no function in or out). A function with no name of its own, its
+ * key's or its variable's (a private method, a callback) goes by `anonymous` and its place among the file's: adding
+ * one before it can move it in or out. Code outside every function runs as its module loads, static mutants the config
+ * ignores (`ignoreStatic`), but for a class's field initializers, which run as an instance is made: every class's are
+ * kept, a stratum of their own (WP 12.2's run: 63 of 1,714 mutants). An ignored mutant counts in no score; Stryker
+ * reports it with this plugin's reason.
  *
  * `OUT_OF_SCOPE` names the functions whose mutants no run tests, each with its measured reason: a function so hot that
  * instrumenting it (a check before every mutable expression, a count after) makes the suites too slow to test its

@@ -126,6 +126,7 @@ export function reactTo<C extends object, E extends EventMap>(
   const w = world as unknown as World<ReactionComponents>;
   if (!w.has(id))
     throw codeError('SIM_BAD_ARGUMENT', { where: 'reactTo(w, id, act)', value: String(id), expected: 'a live id' });
+  // Stryker disable next-line OptionalChaining: the id lives (checked above), so w.get(id) is there
   const state = w.get(id)?.reactions ?? w.add(id, 'reactions');
   const reactions = reactionsAt(w.dt).load(state);
   act(reactions);

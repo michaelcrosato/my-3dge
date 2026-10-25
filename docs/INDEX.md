@@ -2508,7 +2508,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/stryker
 
-- [`sample.ts`](../tools/stryker/sample.ts): The sample of mutants `npx stryker run` tests (PLAN.md WP 12.2; stryker.config.json): a StrykerJS ignore plugin, `sample`, that keeps the mutants of a fixed, random share of the mutated files' outermost functions and ignores the rest, so a run over every file of engine/sim and engine/anim measures their mutation score in a run's time instead of a day's (measured: 4 s of a runner's time a mutant, about 16,000 mutants that are not static).
+- [`sample.ts`](../tools/stryker/sample.ts): The sample of mutants `npx stryker run` tests (PLAN.md WP 12.2; stryker.config.json): a StrykerJS ignore plugin, `sample`, that keeps the mutants of a fixed, random share of the mutated files' outermost functions and ignores the rest, so a run over every file of engine/sim and engine/anim measures their mutation score in a run's time instead of most of a day's (measured: 1,714 mutants that are not static in 105 minutes at two runners).
   - Exports: `functionKey`, `functionName`, `OUT_OF_SCOPE`, `resetPlaces`, `sample`, `SAMPLE`, `SamplePath`, `share`, `strykerPlugins`
   - Tests: [`tools/stryker/sample.test.ts`](../tools/stryker/sample.test.ts)
 - [`vitest.config.ts`](../tools/stryker/vitest.config.ts): Vitest's settings for StrykerJS's runs (stryker.config.json's `vitest.configFile`; PLAN.md WP 12.2): the repository's own (vite.config.ts), with longer timeouts and no report file.

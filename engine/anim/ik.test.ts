@@ -168,7 +168,10 @@ describe('twoBoneRot', () => {
     const skeleton = createSkeleton();
     const { pose, world } = placed(skeleton);
     expect(() => twoBoneRot(skeleton, pose, world, 'head' as LimbEnd, new Vector3())).toThrow(/ANIM_UNKNOWN_JOINT/);
-    expect(() => twoBoneRot(skeleton, pose, world, 'footL', new Vector3(0, NaN, 0))).toThrow(/ANIM_BAD_TARGET/);
+    expect(() => twoBoneRot(skeleton, pose, world, 'footL', new Vector3(0, NaN, 0))).toThrow(
+      /ANIM_BAD_TARGET\] the target given to twoBoneRot is/,
+    );
+    expect(() => twoBoneRot(skeleton, pose, world, 'footL', new Vector3(), { pole: new Vector3(NaN, 0, 0) })).toThrow(/ANIM_BAD_TARGET\] the pole given to twoBoneRot is/); // prettier-ignore
   });
 });
 
