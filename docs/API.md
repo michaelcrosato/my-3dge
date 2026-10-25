@@ -7781,6 +7781,23 @@ For the agents who maintain the engine.
 - `default` (default): ESLint's settings for T0 (PLAN.md §6.10; `npm run lint`, inside `npm run check`): typescript-eslint's recommended rules without type information (so T0 stays fast), the file-comment and size rules, then the doctrine's rule families from tools/eslint/, one block per family, each message naming the fix.
 - `SWITCHES` (const): Rules written ahead of the code they guard.
 
+### [`labs/anim/overlay.ts`](../labs/anim/overlay.ts)
+
+- `BONES` (const): Each joint and its parent in the humanoid skeleton (engine/anim/skeleton.ts): the bones the overlay draws.
+- `drawBones` (function): Draws each skeleton of `skeletons` (joint name → world position) on `canvas` through `camera`; clears it first.
+- `project` (function): Where world point `p` (m) falls on a `width` × `height` picture seen through `camera`; null behind it.
+
+### [`labs/anim/scenes/lineup.ts`](../labs/anim/scenes/lineup.ts)
+
+- `LAB_FIGURE` (const): The component `labFigure` (see `FigureData`).
+- `lineup` (const): The Animation Lab's lineup (see the file comment).
+- `LINEUP_AT` (const): Where the row stands: the middle of the stage's ground, as the gallery stands its subject (m).
+- `LINEUP_BUILDS` (const): The builds in the row, left to right; the mannequin's only with `lab.anim.mannequin`.
+- `LINEUP_GAP` (const): How far apart the figures stand (m).
+- `LINEUP_SETTINGS` (const): The scene's settings (see the file comment).
+- `LINEUP_STATES` (const): Every name `lab.anim.play` takes besides a move's id: walk and run, the sample states, the poses and the stances.
+- `REST` (const): How long a figure rests between two swings of a move (s).
+
 ### [`labs/box/cast/hero.ts`](../labs/box/cast/hero.ts)
 
 - `HERO` (const): The hero's character, untuned.
@@ -8094,6 +8111,34 @@ For the agents who maintain the engine.
 
 - `HelloView` (interface): A started hello scene.
 - `startHello` (function): Starts the renderer on `canvas` (rejecting with `GfxError` `GFX_NO_WEBGPU` without WebGPU), builds the scene, and draws the first frame, directly or through the post pass; resolves once the GPU has finished it.
+
+### [`labs/index/gallery.ts`](../labs/index/gallery.ts)
+
+- `galleryBoot` (function): Starts the engine in `doc`'s `#view` on the gallery entry `hash` names, everything registered (see the file comment).
+- `GalleryInspector` (interface): What a lab reads through the engine's inspector (`__engine`): the gallery's lists and `describe`.
+- `galleryLab` (function): Starts a gallery lab for `spec.kinds` in `doc` (see the file comment); resolves once its panel is filled.
+- `hashEntry` (function): The kind and entry a gallery hash names: `#gallery/prop/prop:crate` → ['prop', 'prop:crate'].
+
+### [`labs/index/lab.ts`](../labs/index/lab.ts)
+
+- `button` (function): A button in `parent` labelled `label` that runs `act` when pressed; returns it.
+- `el` (function): An element `tag` with `attributes` and `children`.
+- `entryList` (function): Lists `entries` as links in `parent`, the current one marked (`aria-current`); returns the list.
+- `labPanel` (function): The lab's panel in `#lab` (made when the page lacks one): its header, then the sections the lab adds.
+- `LabPanel` (interface): A lab's panel: its sections and a status line.
+- `LabSpec` (interface): What a lab says about itself: its title, what it is for, and the `x` command that does the same job.
+- `ListItem` (interface): One entry of a list: what it says and where it leads.
+- `reloadOnHash` (function): Reloads the page when its hash changes, so a deep link (`#gallery/<kind>/<id>`) opens what it names.
+
+### [`labs/index/labs.ts`](../labs/index/labs.ts)
+
+- `checkLabs` (function): Every problem with `index` (see the file comment), each naming its fix; none when it is sound.
+- `expiredLabs` (function): The temporary labs whose `expires` date is before `today` (`YYYY-MM-DD`).
+- `labLinks` (function): Every link of the index, from the index page's own directory: its address, its label and its page.
+- `LabRecord` (interface): One lab or page: where it lives, its links, what it is for, its `x` command; a temporary one's question and dates.
+- `LabsIndex` (interface): labs/labs.json.
+- `LabsSection` (interface): A section of the index: the engine's pages, the labs kept, the temporary ones.
+- `SECTIONS` (const): The sections the index has, in order.
 
 ### [`labs/playground/bodies/neighbours.ts`](../labs/playground/bodies/neighbours.ts)
 
@@ -9289,6 +9334,13 @@ For the agents who maintain the engine.
 - `sessionShot` (function): The session's `shot` op: the open tab when it shows `path`, else a new tab of the browser opened on `path`.
 - `SessionTab` (interface): What the session's `shot` op works with: its tab, the page open in it, its browser, Vite's URL and the root.
 - `shootInSession` (function): Shoots `path` through the running inspect session (tools/cmd/inspect.ts): its page when it shows `path`, else a new tab of its browser; null when the page has no `__engine.shot` (then `x shot` screenshots it itself).
+
+### [`tools/cmd/lab.ts`](../tools/cmd/lab.ts)
+
+- `createLabCommand` (function): Builds the command; tests inject the day.
+- `default` (default): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts.
+- `LAB_DAYS` (const): How long a temporary lab lasts by default, in days.
+- `LABS_FILE` (const): The index's file, from the repository root.
 
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 

@@ -4,8 +4,9 @@
  * mannequin when its build is registered (the clip library's rest body), all told the same thing from one clock, so
  * the lineup stays in step:
  * - `lab.anim.play`: a sample state, a pose or a stance as engine/anim/states.ts and poses.ts name them (`idle`,
- *   `cheer`, `ready`…), `walk` or `run` (each figure walks forward and is put back where it started), or a move
- *   (`move:jab`…) swung again and again, a rest of `REST` s between swings, its blade's trail drawn while it strikes;
+ *   `cheer`, `ready`…), `walk` or `run` (each figure walks forward and is put back where it started), a move
+ *   (`move:jab`…) swung again and again, a rest of `REST` s between swings, its blade's trail drawn while it strikes,
+ *   or a clip of the library (`clip:cmu/Cartwheel`: retargeted to every build, looped; the page registers the sets);
  * - `lab.anim.time`: timeline scrubbing, a move held that many seconds from its start (−1 plays), so its wind-up,
  *   strike and recovery can be stepped through frame by frame; `lab.anim.speed`: the rate a move plays at.
  * The page (labs/anim/main.ts) draws the move's phases as a timeline and the figures' bones over them.
@@ -20,17 +21,21 @@
  * @see labs/anim/scenes/lineup.test.ts
  */
 import {
+  addClips,
   Attack,
+  clipSetIds,
   createCharacter,
   defineComponent,
   defineScene,
   defineSettings,
   physicsOf,
   placeActor,
+  playClip,
   POSES,
   SAMPLE_STATES,
   spawnActor,
   STANCES,
+  stopClip,
   type AnimatorInput,
   type AttackState,
   type World,
@@ -58,7 +63,7 @@ export const LINEUP_SETTINGS = defineSettings({
     type: 'string',
     default: 'idle',
     description:
-      'What the lineup plays: a state, a pose or a stance (idle, cheer, ready…), walk or run, or a move (move:jab…).',
+      'What the lineup plays: a state, a pose or a stance (idle, cheer, ready…), walk or run, a move (move:jab…), or a library clip (clip:<set>/<clip>).',
   },
   'lab.anim.time': {
     type: 'number',
@@ -148,12 +153,20 @@ function tell(w: World): void {
     w.settings.get<number>('lab.anim.speed'),
   ];
   const move = play.startsWith('move:');
-  const plain = move ? null : told(play);
-  for (const e of w.query('labFigure') as unknown as ({ id: number } & Components)[]) {
+  const clip = play.startsWith('clip:') ? play.slice('clip:'.length) : null;
+  const plain = move || clip ? null : told(play);
+  for (const e of w.query('labFigure') as unknown as ({ id: number; clips?: object } & Components)[]) {
     const figure = e.labFigure;
     if (figure.played !== play) {
       placeActor(w, e.id, [figure.x, LINEUP_AT[1], LINEUP_AT[2]], 0);
       [figure.attack, figure.rest] = [null, REST];
+      if (clip && !e.clips) addClips(w, e.id, { sets: clipSetIds(), ik: true });
+      if (clip) playClip(w, e.id, clip, { loop: true, walk: true, fade: 0.2 });
+      else if (e.clips) stopClip(w, e.id, 0.2);
+    }
+    if (clip) {
+      [e.animator.states, e.actor.intents, figure.played] = [{}, {}, play];
+      continue;
     }
     e.animator.states = move ? swing(figure, play, w.dt * speed, time) : { ...(plain?.states ?? {}) };
     e.actor.intents = plain?.walk ? { move: [0, plain.walk] } : {};

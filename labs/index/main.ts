@@ -9,11 +9,11 @@
  * // labs/index/ lists every link of labs/labs.json in #list
  * @see tests/e2e/labs.spec.ts
  */
-import labs from '../labs.json';
+import labsText from '../labs.json?raw';
 import { el } from './lab';
 import type { LabsIndex } from './labs';
 
-const index = labs as LabsIndex;
+const index = JSON.parse(labsText) as LabsIndex;
 const today = new Date().toISOString().slice(0, 10);
 const list = document.getElementById('list')!;
 for (const section of index.sections) {

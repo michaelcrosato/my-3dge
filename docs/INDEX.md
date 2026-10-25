@@ -1601,6 +1601,20 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `defineProp`, `getProp`, `Prop`, `PROP_FIELDS`, `PROP_PART_FIELDS`, `PROP_SHAPES`, `propCentre`, `PropDefinition`, `propKind`, `PropKnock`, `PropPart`, `PropTouch`
   - Tests: [`engine/world/props/prop.test.ts`](../engine/world/props/prop.test.ts)
 
+## labs/anim
+
+- [`main.ts`](../labs/anim/main.ts): The Animation Lab (PLAN.md WP 10.8; my-3d2dge's animlab, `src/starter/60-animlab.js`): its scene, `lab:lineup` (labs/anim/scenes/lineup.ts), the humanoid on every build and the mannequin in a row, all told one thing from one clock.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+- [`overlay.ts`](../labs/anim/overlay.ts): The Animation Lab's bone overlay (PLAN.md WP 10.8; the animlab's skeleton key, `my-3d2dge:src/starter/ 60-animlab.js`): every figure's skeleton drawn over the picture, a line from each joint to its parent, as `__engine.anim(id).joints` places them (the animator's FK, world metres), projected through the camera's pose of the frame (`EngineFrame.camera`) onto a 2D canvas laid over the engine's.
+  - Exports: `BONES`, `drawBones`, `project`
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/anim/scenes
+
+- [`lineup.ts`](../labs/anim/scenes/lineup.ts): The Animation Lab's scene, `lab:lineup` (PLAN.md WP 10.8; my-3d2dge's animlab, `src/starter/60-animlab.js`: its lineup, its timeline and its frozen key poses): the humanoid body on every build in a row, chibi to adult, and the mannequin when its build is registered (the clip library's rest body), all told the same thing from one clock, so the lineup stays in step: - `lab.anim.play`: a sample state, a pose or a stance as engine/anim/states.ts and poses.ts name them (`idle`, `cheer`, `ready`…), `walk` or `run` (each figure walks forward and is put back where it started), a move (`move:jab`…) swung again and again, a rest of `REST` s between swings, its blade's trail drawn while it strikes, or a clip of the library (`clip:cmu/Cartwheel`: retargeted to every build, looped; the page registers the sets); - `lab.anim.time`: timeline scrubbing, a move held that many seconds from its start (−1 plays), so its wind-up, strike and recovery can be stepped through frame by frame; `lab.anim.speed`: the rate a move plays at.
+  - Exports: `LAB_FIGURE`, `lineup`, `LINEUP_AT`, `LINEUP_BUILDS`, `LINEUP_GAP`, `LINEUP_SETTINGS`, `LINEUP_STATES`, `REST`
+  - Tests: [`labs/anim/scenes/lineup.test.ts`](../labs/anim/scenes/lineup.test.ts)
+
 ## labs/box
 
 - [`library.ts`](../labs/box/library.ts): The animation library on the box page (PLAN.md §10, WP 8.9): `loadLibrary(files)` registers every set of `data/anim/sets/` the page loaded as text (labs/box/main.ts, through `import.meta.glob`, never a fetch), each as a `clipset` entry (engine/anim/clip/clipsets.ts: its `_set.json` and its clip files joined, `clipSetFromFiles`), then the mannequin, its build and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts): what clip mode (labs/box/scenes/clips.ts) plays and draws.
@@ -1714,6 +1728,16 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `BOX_ROOMS`, `BoxSound`, `BoxSoundInfo`, `createBoxSound`, `LOG_SIZE`, `MUSIC`, `nearestTorches`, `SoundFrame`, `TORCH`
   - Tests: [`labs/box/sounds/page.test.ts`](../labs/box/sounds/page.test.ts)
 
+## labs/cameras
+
+- [`main.ts`](../labs/cameras/main.ts): The Cameras Lab (PLAN.md WP 10.8; my-3d2dge's Perspective Lab: one room in every camera view): the gallery's look set on its stage (a crate, a barrel, three cubes and a figure: `#gallery/look/look:clean`, engine/dev/ gallery.ts) seen through every camera the engine has, each a camera code (engine/gfx/cameras/codes.ts): the classic views (isometric, three-quarter, top-down, brawler, side, overhead) fixed on the set, orbit round it, fly and fixed.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/fx
+
+- [`main.ts`](../labs/fx/main.ts): The Effects Lab (PLAN.md WP 10.8): every emitter the repository registers (particle effects as data), burst on the gallery's stage again and again as it plays in a game, one at a time (labs/index/gallery.ts), with the entry as `x describe` prints it: how its particles start, move and look.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
 ## labs/game
 
 - [`best.ts`](../labs/game/best.ts): The starter game's best round (PLAN.md WP 10.9): the fastest round won, kept across sessions in the engine's store (engine/app/store.ts) under the game's own prefix.
@@ -1742,6 +1766,34 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hello.ts`](../labs/hello/hello.ts): The hello page's scene (labs/hello/): a lit procedural cube with a `MeshStandardMaterial`, drawn on WebGPU through engine/gfx/renderer.ts, either directly or through one `PostProcessing` pass whose output is a TSL colour grade (no MRT).
   - Exports: `HelloView`, `startHello`
   - Tests: [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+
+## labs/index
+
+- [`gallery.ts`](../labs/index/gallery.ts): A gallery lab (PLAN.md WP 10.8): a lab page over the gallery (engine/dev/gallery.ts) for some of its kinds.
+  - Exports: `galleryBoot`, `GalleryInspector`, `galleryLab`, `hashEntry`
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+- [`lab.ts`](../labs/index/lab.ts): A lab page's panel (PLAN.md WP 10.8): what every lab shows beside its canvas, so people watching find the same things in each: its title and what it is for, the `x` command that does the same job without the page (each lab is a view; the command is what an agent runs), a link back to the labs index, and the sections a lab fills: lists of entries to open, settings to set, read-outs.
+  - Exports: `button`, `el`, `entryList`, `labPanel`, `LabPanel`, `LabSpec`, `ListItem`, `reloadOnHash`
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+- [`labs.ts`](../labs/index/labs.ts): The labs index's data (labs/labs.json; PLAN.md WP 10.8, carried from `my-3d2dge:src/labs.json`, with an answer and an expiry date added): sections of entries, each a page under labs/ with its links, what it is for and the `x` command that does the same job without the page.
+  - Exports: `checkLabs`, `expiredLabs`, `labLinks`, `LabRecord`, `LabsIndex`, `LabsSection`, `SECTIONS`
+- [`main.ts`](../labs/index/main.ts): The labs index's page (labs/index/index.html; PLAN.md WP 10.8): labs/labs.json as sections of entries, each with its links, what it is for and the `x` command that does the same job without the page; a temporary lab also shows its question, its answer when settled and the date it expires, marked once past it.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/library
+
+- [`main.ts`](../labs/library/main.ts): The Library Lab (PLAN.md WP 10.8; the Mocap Lab's UX, `my-3d2dge:src/mocap.game.js`): the animation library on the box's clip mode (labs/box/scenes/clips.ts), the mannequin and the hero playing the clip the address names (`?box.clips.clip=cmu/Cartwheel`; Quaternius' dance by default).
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/materials
+
+- [`main.ts`](../labs/materials/main.ts): The Materials Lab (PLAN.md WP 10.8): every material the repository registers on the gallery's cube, and every look over the gallery's set (a crate, a barrel, three cubes and a figure), one at a time (labs/index/gallery.ts), with the entry as `x describe` prints it.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/physics
+
+- [`main.ts`](../labs/physics/main.ts): The Physics Lab (PLAN.md WP 10.8; my-3d2dge's physics playground): the box's two physics scenes with their settings at hand.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
 
 ## labs/playground
 
@@ -1959,6 +2011,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`range.ts`](../labs/playground/weapons/range.ts): The range's targets (docs/PLAYGROUND.md §2.2, §7.2; PLAN.md WP 13.20): things (WP 10.4, engine/world/things.ts) standing as `prop:playground-target` down its three lanes (z 3, 6 and 9), facing the bench at x 4 (`RANGE_TARGETS`): pop-up targets at 10 and 25 m (`thing:playground-popper`), and at 50 m moving ones sliding across their lane (`thing:playground-mover`, 2 m to and fro at 1 m/s).
   - Exports: `FALL`, `MOVER`, `POPPER`, `Popup`, `POPUP_FIELDS`, `RANGE_TARGETS`, `standRange`, `standTarget`
   - Tests: [`labs/playground/weapons/range.test.ts`](../labs/playground/weapons/range.test.ts)
+
+## labs/props
+
+- [`main.ts`](../labs/props/main.ts): The Props Lab (PLAN.md WP 10.8): every prop the repository registers, standing on the gallery's stage as play stands it (on the floor, or hung 1.2 m up when it has no body), one at a time (labs/index/gallery.ts), with the entry as `x describe` prints it: its meshes, its body, its light spot.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
 
 ## tests/e2e
 
@@ -2241,6 +2298,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`inspect.ts`](../tools/cmd/inspect.ts): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
   - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`lab.ts`](../tools/cmd/lab.ts): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts.
+  - Exports: `createLabCommand`, `default`, `LAB_DAYS`, `LABS_FILE`
+  - Tests: [`tools/cmd/lab.test.ts`](../tools/cmd/lab.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `nextIn`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)

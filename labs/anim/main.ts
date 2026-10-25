@@ -5,7 +5,8 @@
  * for a move, its phases on a timeline (wind-up, strike with its hit window, recovery) with a slider that scrubs it
  * (`lab.anim.time`) and the rates it plays at (`lab.anim.speed`); and the bones drawn over the figures
  * (labs/anim/overlay.ts, from `__engine.anim(id).joints`). The page registers the mannequin from the Quaternius set,
- * so the row ends with it (`lab.anim.mannequin`), and stands the camera in front of the row unless `?cam` says.
+ * so the row ends with it (`lab.anim.mannequin`), and stands the camera in front of the row unless `?cam` says; for a
+ * library clip (`lab.anim.play=clip:<set>/<clip>`, the Library Lab's retarget preview) it registers every set first.
  *
  * The same job without the page: `node x gallery move` (each move on the humanoid at its phases, on a contact sheet),
  * `node x sheet` (a body's states as a contact sheet) and `node x sim labs/anim/scenes/lineup --set
@@ -15,8 +16,10 @@
  * // labs/anim/?lab.anim.play=move:jab&lab.anim.time=0.2
  * @see tests/e2e/labs.spec.ts
  */
+/// <reference types="vite/client" />
 import { createEngine, defineMannequin, getMove, type EngineFrame } from '../../engine';
 import quaternius from '../../data/anim/sets/quaternius/_set.json?raw';
+import { loadLibrary } from '../box/library';
 import { button, el, entryList, labPanel } from '../index/lab';
 import { drawBones } from './overlay';
 import { LINEUP_STATES, lineup } from './scenes/lineup';
@@ -30,10 +33,13 @@ interface AnimInspector {
   camera: { set(code: string): unknown };
 }
 
-defineMannequin(JSON.parse(quaternius) as Parameters<typeof defineMannequin>[0]);
 const params = new URLSearchParams(location.search);
 if (!params.has('lab.anim.mannequin')) params.set('lab.anim.mannequin', 'true');
 const play = params.get('lab.anim.play') ?? 'idle';
+// a library clip needs every set registered (and the mannequin with them); else the mannequin alone
+if (play.startsWith('clip:'))
+  await loadLibrary(import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' })); // prettier-ignore
+else defineMannequin(JSON.parse(quaternius) as Parameters<typeof defineMannequin>[0]);
 
 const panel = labPanel(document, {
   title: 'Animation Lab',

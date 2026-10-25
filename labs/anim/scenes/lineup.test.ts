@@ -1,12 +1,14 @@
 /**
  * @file Tests the Animation Lab's lineup (labs/anim/scenes/lineup.ts, WP 10.8) headless: a figure per registered build
  * in a row; a move swung on every figure in step, held at a time for scrubbing exactly as an attack updated that long;
- * a pose told to all; a walk that is put back where it started; and the same hashes run after run.
+ * a pose told to all; a walk that is put back where it started; a library clip on every figure, retargeted to each
+ * build; and the same hashes run after run.
  */
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../../engine';
 import { Attack } from '../../../engine/sim-api';
 import { startScene } from '../../../engine/sim/scene';
+import { defineLibrary } from '../../../tools/anim/library';
 import { LINEUP_AT, LINEUP_BUILDS, LINEUP_GAP, LINEUP_STATES, lineup } from './lineup';
 
 type Figure = {
@@ -18,12 +20,12 @@ type Figure = {
 
 /** The scene started with `settings`, stepped by `step(n)`, and its figures. */
 function started(settings: Record<string, unknown> = {}) {
-  const { world } = startScene(lineup, { settings } as never);
+  const { world, settings: store } = startScene(lineup, { settings } as never);
   const figures = () => world.query('labFigure') as unknown as Figure[];
   const step = (n: number) => {
     for (let i = 0; i < n; i++) world.step({});
   };
-  return { world, figures, step };
+  return { world, store, figures, step };
 }
 
 describe('lab:lineup', () => {
@@ -65,6 +67,18 @@ describe('lab:lineup', () => {
     }
     expect(farthest).toBeGreaterThan(1);
     expect(farthest).toBeLessThan(4);
+  });
+
+  it('plays a library clip on every figure, each retargeted to its build, and leaves it for a pose', () => {
+    defineLibrary();
+    const run = started({ 'lab.anim.play': 'clip:cmu/Cartwheel' });
+    run.step(30);
+    const playing = (f: { clips?: { state: { slots: { clip: string }[] } } }) =>
+      f.clips?.state.slots.map((s) => s.clip);
+    for (const figure of run.figures()) expect(playing(figure as never)).toEqual(['CMU/Cartwheel']); // the set's own name
+    run.store.set('lab.anim.play', 'cheer');
+    run.step(60);
+    for (const figure of run.figures()) expect([playing(figure as never), figure.animator.states.pose]).toEqual([[], 'cheer']); // prettier-ignore
   });
 
   it('gives the same hash run after run', async () => {
