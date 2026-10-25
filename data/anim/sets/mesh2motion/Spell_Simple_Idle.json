@@ -1,14 +1,14 @@
-{"clip": "Spell_Simple_Idle", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Spell_Simple_Idle_Loop", "dur": 2.667, "loop": true, "tags": ["magic","idle","alt"], "desc": "holds a spell ready", "keys": [
+{"clip": "Spell_Simple_Idle", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Spell_Simple_Idle_Loop", "dur": 2.667, "loop": true, "tags": ["magic","idle","alt"], "desc": "holds a spell ready", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.667},{"part":"footR","from":0,"to":2.667}], "keys": [
   {"t":0,
    "hips":[-10,-3,100], "body":[41,-5,-1], "chest":[16,7,-3], "head":[-7,4,4],
-   "shL":[1,7], "shR":[5,-6], "armL":[52,81,27,4,36], "armR":[16,36,-92,29,-7],
-   "legL":[-8,24,-97,24,35], "legR":[-16,19,-97,21,-35], "footL":[3,38,0], "footR":[5,2,0]},
+   "shL":[1,7], "shR":[5,-6], "armL":[50,85,15,7,9], "armR":[7,40,-91,28,-11], "handL":[-24,24,4], "handR":[-4,28,22], "gripL":0, "gripR":15,
+   "legL":[-8,24,-97,24,35], "legR":[-16,19,-97,21,-35], "footL":[3,38,0], "footR":[5,2,0], "rollL":-5, "rollR":1},
   {"t":1.433,
    "hips":[-9,-3,100], "body":[41,-5,-1], "chest":[16,10,-4], "head":[-7,3,4],
-   "shL":[0,5], "shR":[4,-8], "armL":[49,81,32,22,32], "armR":[28,27,-92,38,-6],
-   "legL":[-9,23,-97,25,36], "legR":[-17,20,-97,21,-35], "footL":[3,38,0], "footR":[5,2,0]},
+   "shL":[0,5], "shR":[4,-8], "armL":[50,84,21,22,17], "armR":[19,32,-93,39,-8], "handL":[-23,17,11], "handR":[-2,26,15], "gripL":0, "gripR":14,
+   "legL":[-9,23,-97,28,36], "legR":[-17,20,-97,23,-35], "footL":[3,38,0], "footR":[5,2,0], "rollL":-5, "rollR":1},
   {"t":2.667,
    "hips":[-10,-3,100], "body":[41,-5,-1], "chest":[16,7,-3], "head":[-7,4,4],
-   "shL":[1,7], "shR":[5,-6], "armL":[52,81,27,4,36], "armR":[16,36,-92,29,-7],
-   "legL":[-8,24,-97,24,35], "legR":[-16,19,-97,21,-35], "footL":[3,38,0], "footR":[5,2,0]}
+   "shL":[1,7], "shR":[5,-6], "armL":[50,85,15,7,9], "armR":[7,40,-91,28,-11], "handL":[-24,24,4], "handR":[-4,28,22], "gripL":0, "gripR":15,
+   "legL":[-8,24,-97,24,35], "legR":[-16,19,-97,21,-35], "footL":[3,38,0], "footR":[5,2,0], "rollL":-5, "rollR":1}
 ]}

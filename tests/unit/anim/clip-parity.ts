@@ -5,10 +5,11 @@
  * format 1 writes to the millisecond). The numbers and the worst cases are recorded in
  * tests/baselines/anim-clips.json (`ANIM_CLIPS_BASELINE=write` rewrites it, with a reason in the commit).
  *
- * Two measures. `restParity`: the baked pose on the rest body's own skeleton (retarget.ts `restSkeleton`) against the
- * decode, over 34 points; index and pinky are left out, since the decode places them 2 cm either side of the fist
- * along the chest's right axis or the blade whatever way the hand points, so no rotation of the hand can hold them
- * (the hand's roll is checked instead, as the across direction made perpendicular to the forearm). `buildParity`: the
+ * Two measures, each against the decode with format 2's grips open (the skeleton has no fingers). `restParity`: the
+ * baked pose on the rest body's own skeleton (retarget.ts `restSkeleton`) against the decode, over 34 points; index
+ * and pinky are left out, since format 1's decode places them 2 cm either side of the fist along the chest's right
+ * axis or the blade whatever way the hand points, so no rotation of the hand can hold them (the hand's roll is checked
+ * instead, as the across direction made perpendicular to the forearm). `buildParity`: the
  * clip layer's pose on a build (the mannequin's) against the decode scaled by the hip-height ratio, over the 22
  * points a build's joints stand for.
  *
@@ -83,7 +84,10 @@ function scan(
     const R = set.sources![clip.src!].rest;
     let worst: Case = { clip: name, t: 0, point: '', mm: -1 };
     for (const t of TIMES[at](clip)) {
-      decodePose(R, keyAt(clip, t), decoded);
+      // the skeleton has no fingers: it holds what the decode draws with each format-2 grip open
+      const key = keyAt(clip, t);
+      for (const grip of ['gripL', 'gripR'] as const) if (key[grip] !== undefined) key[grip] = 0;
+      decodePose(R, key, decoded);
       for (const [point, mm] of measure(name, t, decoded)) {
         [sum, n] = [sum + mm, n + 1];
         if (mm > worst.mm) worst = { clip: name, t, point, mm };

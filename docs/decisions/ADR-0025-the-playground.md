@@ -1856,3 +1856,84 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   neither look. A pan with a dolly in it (camera codes keep 1 mm, so a target moved off the plane by their rounding)
   changed 1 to 8 pixels, the cascades off too: an orthographic picture ignores a dolly, its depth-dependent parts do
   not; the spec pans in whole millimetres along the plane.
+
+## Amendment 34 (2026-10-24, WP 13.24): the shells priced, as a feature
+
+- **The shells are a feature,** `feature:shells` (engine/gfx/features.ts, advice `GFX_NO_SHELLS`): they need nothing
+  of the device, so only `gfx.featuresOff` turns them off, and then the stage makes, registers and shows no shell
+  (engine/gfx/stageShells.ts, handed the renderer's report at `register` as the stage's effects are). That is what
+  `x perf --feature` prices a technique by (WP 11.1), and what the feature matrix (tests/e2e/features.spec.ts) plays
+  the box's climb under, its goldens and entities kept with the shells off.
+- **Measured,** `node x perf labs/playground --scene site-street --feature feature:shells` on SwiftShader (the cel
+  look, 60 frames; ADR-0022: its times are noise to compare runs, not proof): the shells cost 177 draw calls (3,509
+  against 3,332), 72,060 triangles (834,653 against 762,593), 10 pipelines and 26.7 ms of the GPU's 816.8 a frame, 0
+  pipelines after the warm-up either way.
+
+## Amendment 35 (2026-10-25, WP 13.24): the pixel look's pans cross whole pixels
+
+- **Found at review:** amendment 33's shimmer metric panned isometric 2 mm along each axis it uses (about a twentieth
+  of a pixel) for seven steps, a third of a pixel in all, so its picture never moved a whole pixel; the amendment
+  said 1.4 mm. Panned 6 mm a frame for fifteen frames, two whole pixels, the pixel look changed pixels each time the
+  snap moved the picture, in two ways, both mended:
+  - **The shadows' noise.** r182's PCF filters turn each pixel's five samples by a noise read where the pixel lies on
+    the screen (`interleavedGradientNoise(screenCoordinate)`), fixed to the screen while the snapped picture moves by
+    whole pixels, so a shadow's edge changed at every snap. Every caster now filters through copies of r182's filters
+    (engine/gfx/shadows.ts `SNAPPED_PCF`, `SNAPPED_POINT`, set by `snapShadow` as the light's `filterNode`, which
+    r182's shadow node reads before the renderer's map type) whose noise is read where the pixel lies on the frame's
+    grid, `screen + cells × block` (`SHADOW_GRID`, set by the post chain each frame and put back after, so outside its
+    frames, and on every unsnapped frame, the filters give r182's values exactly). A cascade's shadow is a clone of
+    the sun's, which `LightShadow.copy` makes without the filter: the sun's shadow makes clones that take it again
+    (engine/gfx/enhanced/csm.ts).
+  - **The shading's derivatives.** The GPU takes a shader's screen derivatives (`fwidth`, which the toon ramp's dither
+    gate and rim read) over 2 × 2 pixels fixed to the screen; a picture moved by one pixel paired each pixel with other
+    neighbours, and 11 of the street's 130,000 pixels changed band at each crossing, back again at the next. A gliding
+    snap of one drawn pixel now moves the camera by two (engine/gfx/post/grid.ts `QUAD`), the glide carrying up to a
+    drawn pixel each way (the page's margin is two), so every pixel keeps its neighbours. A block of 3 or more keeps
+    its own snap (twice it would pass the margin); its pixels may still pair anew as it crosses.
+- **Measured** (tests/e2e/playground-looks.spec.ts, the street, the sim paused): isometric panned 6 mm a frame for
+  fifteen frames moves its picture by two whole pixels once and changes no other pixel, its glide wrapping from −0.85
+  to +0.99 of a drawn pixel; the cel look's same pans change 6.6 to 7.6% of its pixels a frame; the noon thumbnails
+  hold. Top-down (its target snaps to its 1/24 m grid), panned across a whole pixel, changed 7 to 10 pixels in one
+  soft shadow band, the red channel one palette step (0 with no shadow casters, the `low` tier; as many with the
+  cascades off); the cause is not found after cheap tests (ADR-0022) and docs/PROGRESS.md lists it for the owner. At
+  the gate's review its pan, 2 mm a frame, was found never to move the camera at all: it now pans 20 mm a frame for
+  eight frames, across three whole pixels (moved by whole quads, its glide wrapping, as isometric's), and the spec
+  bounds what changes beyond each move at 10 pixels a frame (`OVERHEAD_RESIDUAL`; 7 measured); WP 13.24's Done-when
+  says isometric 0, top-down that bound.
+- Files: engine/gfx/{shadows,sky,stageSky}.ts, engine/gfx/enhanced/csm.ts, engine/gfx/post/{chain,grid,filters}.ts
+  and their tests, tests/e2e/playground-looks.spec.ts. `--my3dge-pixel` is the CSS variable the page's margin uses
+  (the pixel filter's `smooth` said `--my3dge-block`).
+
+## Amendment 36 (2026-10-25, WP 10.8): the lab pages
+
+- **Seven labs and an index** (labs/index/): each lab a page under labs/ with a panel beside its canvas (labs/index/
+  lab.ts: its title, what it is for, the `x` command that does the same job without the page, entries that are links,
+  so the address is what shows), each a view over the inspector (`__engine`) and the registries: the Animation Lab
+  (the scene `lab:lineup`, labs/anim/scenes/lineup.ts: every humanoid build and the mannequin in a row, told one
+  state, pose, stance or move from one clock; a move's phases on a timeline that scrubs it, `lab.anim.time`; the bones
+  drawn over the figures from `__engine.anim(id).joints`, labs/anim/overlay.ts), the Materials, Props and Effects labs
+  (the gallery's kinds, labs/index/gallery.ts), the Cameras Lab (one set seen through every camera code, each a link,
+  and a blend to each), the Physics Lab (the box's ragdolls and the hall's props, their settings as links, gravity,
+  the sim's speed, pause and step) and the Library Lab (the box's clip mode with the catalog searched, the clip's
+  text applied, reset, mirrored and copied, its frames stepped). labs/labs.json lists them, with the engine's own pages
+  (the box, the playground, the starter game); a temporary lab carries its question, its answer once settled and the
+  date it expires (labs/index/labs.ts `checkLabs`, `expiredLabs`), and `node x lab list|add|answer|rm` keeps the file,
+  `list` failing on a lab past its date (tools/cmd/lab.ts; `my-3d2dge:tools/labs-test.mjs`, ported).
+- **Beyond Owns, a core change:** the animator's inspect report (engine/anim/character.ts, what `__engine.anim(id)`
+  returns) gains `joints`, each joint's world position at the frame, so a page can draw bones without importing the
+  engine's FK; its snapshot test grows with it. The lineup scene lives in the lab (labs/anim/scenes/), as each lab's
+  content does (PLAN.md §5.7).
+- **Calls:** the Library Lab's Apply plays the edited text as a set of its own (`lab<n>`, registered by the page) and
+  starts the scene again with its seed (`__engine.seed(n)`): a set registered while a scene runs reaches it only at its
+  next start. The Animation Lab shows the moves and states the engine's registries hold; the my-3d2dge animlab's skins
+  are the builds in its row, its frozen key poses the scrubbed timeline, its dummy the mannequin; the Mocap Lab's
+  retarget preview across the builds is that row playing a library clip (`lab.anim.play=clip:<set>/<clip>`, the
+  Library Lab's link `On every build`).
+- **At the gate's review:** no page entry calls a `define…` itself, so `x describe` loads every module that registers
+  content in Node: the mannequin and an edited clip register through labs/box/library.ts (`loadMannequin`,
+  `registerEdit`). `x lab` loads labs/index/labs.ts by path from the checkout (a game made from the engine gets tools/,
+  never the labs: tools/game/imports.test.ts), and the lab pages and labs/labs.json stay in the engine's repository
+  (tools/game/files.mjs).
+- Evidence: tests/e2e/labs.spec.ts (the index's links; each lab ready on WebGPU with its panel, no advice; the
+  Animation Lab's phases and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search, mirror
+  and apply), tools/cmd/lab.test.ts, labs/anim/scenes/lineup.test.ts, engine/anim/character.test.ts (`joints`).

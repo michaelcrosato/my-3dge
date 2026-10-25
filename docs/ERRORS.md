@@ -831,7 +831,7 @@ Advice from the feature registry (engine/gfx/features.ts) when ambient occlusion
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/enhanced/csm.ts` line 32](../engine/gfx/enhanced/csm.ts)
+- Registered in: [`engine/gfx/enhanced/csm.ts` line 37](../engine/gfx/enhanced/csm.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows are off: the sky's sun casts one shadow map over the whole level.
 
@@ -866,6 +866,14 @@ Advice from the feature registry (engine/gfx/features.ts) while GPU particles ar
 - Registered in: [`engine/gfx/puppets/bodies/mannequin.ts` line 40](../engine/gfx/puppets/bodies/mannequin.ts)
 
 Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set without a `body` or without the rest body it names.
+
+### GFX_NO_SHELLS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take feature:shells out of gfx.featuresOff to see the looks' outline shells again
+- Registered in: [`engine/gfx/features.ts` line 68](../engine/gfx/features.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) when `feature:shells` is off, which only `gfx.featuresOff` does: the stage makes no outline shell (engine/gfx/stageShells.ts), so a look's shells are left out and `x perf --feature feature:shells` prices them.
 
 ### GFX_NO_SSR
 

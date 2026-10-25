@@ -1,6 +1,7 @@
 /**
  * @file Tests for retargeting (WP 8.4): the rest body's own skeleton and build, the rotation copy aligned at rest, the
- * hip joints by the hip-height ratio, contact IK for feet and hands, the lift, the held blade kept above the floor,
+ * hip joints by the hip-height ratio, contact IK for feet and hands (a hand's faded in and out at its contact's edges,
+ * across a loop's seam without a fade), the lift, the held blade kept above the floor,
  * the libraries' clips standing on the floor on builds whatever their hips' layout (CMU's, mesh2motion's,
  * Quaternius'), and three.js's `AnimationClip` played by an `AnimationMixer` matching the clip layer's pose within
  * 0.1 mm (Done when).
@@ -21,7 +22,7 @@ import { ClipLayer } from './layer';
 import { loadClipLibrary } from './library';
 import type { ClipKey } from './readable';
 import { restBuild, restSkeleton } from './rest';
-import { clipJSON, hipRatio, RETARGET, retargetPose, standingHipHeight } from './retarget';
+import { clipJSON, handWeight, hipRatio, RETARGET, retargetPose, standingHipHeight } from './retarget';
 
 const heroic = createSkeleton('build:heroic');
 const stand = bakeClip(clipOf([standing(0), standing(1)]), REST);
@@ -128,6 +129,25 @@ describe('retargetPose', () => {
     const own = lowest(restSkeleton(REST), source) * ratio;
     expect(own).toBeLessThan(0);
     expect(lowest(heroic, world)).toBeGreaterThan(own - 1e-9);
+  });
+
+  it("fades a hand's IK in before its contact and out after it, over handFade, and never across a loop's seam", () => {
+    const F = RETARGET.handFade;
+    const contacts = [{ part: 'handL', from: 1, to: 2 }];
+    const at = (t: number, loop = false, d = 4) => handWeight(contacts, 'handL', t, d, loop);
+    expect([at(1), at(1.5), at(2), handWeight(contacts, 'handR', 1.5, 4, false)]).toEqual([1, 1, 1, 0]);
+    expect([at(1 - 1.01 * F), at(2 + 1.01 * F), at(0.5), at(3)]).toEqual([0, 0, 0, 0]);
+    expect(at(1 - F) + at(2 + F)).toBeCloseTo(0, 12);
+    expect(at(1 - F / 2)).toBeCloseTo(0.5, 10); // eased: half way at half the fade
+    expect(at(1 - F / 4)).toBeGreaterThan(0.75);
+    // a loop's hold across its seam, an interval at each end, never fades; one that ends at the seam fades into lap 2
+    const seam = [
+      { part: 'handR', from: 0, to: 0.5 },
+      { part: 'handR', from: 3.5, to: 4 },
+    ];
+    for (const t of [0, 3.99, 4 - F / 2, F / 2]) expect(handWeight(seam, 'handR', t, 4, true)).toBe(1);
+    expect(handWeight([{ part: 'handR', from: 3, to: 4 }], 'handR', F / 2, 4, true)).toBeCloseTo(0.5, 10);
+    expect(handWeight([{ part: 'handR', from: 3, to: 4 }], 'handR', F / 2, 4, false)).toBe(0);
   });
 
   it('keeps a held blade’s tip above the floor: lowered only to lie along it, its heading kept, the wrist still', () => {

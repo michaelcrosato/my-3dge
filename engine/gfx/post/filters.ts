@@ -182,7 +182,7 @@ export const FILTER_FIELDS = {
       type: 'boolean',
       default: false,
       description:
-        "Carry the snapped camera's sub-block remainder as a smooth offset of the whole picture on the page (its canvas needs a margin of `--my3dge-block`).",
+        "Carry the snapped camera's sub-block remainder as a smooth offset of the whole picture on the page (its canvas needs a margin of two drawn pixels, `--my3dge-pixel` each).",
     },
   }),
   palette: filter('Colour reduction: levels per channel or a fixed palette, with ordered (Bayer) dithering.', {

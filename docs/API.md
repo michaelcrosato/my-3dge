@@ -949,7 +949,7 @@ game agent's manual.
 - `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
 - `restPoints` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
 - `restSkeleton` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
-- `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+- `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units); the time (s) a hand's IK fades in before its contact and out after it.
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
 - `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
@@ -1915,7 +1915,7 @@ game agent's manual.
 - `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
 - `restPoints` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
 - `restSkeleton` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
-- `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+- `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units); the time (s) a hand's IK fades in before its contact and out after it.
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
 - `RideCable` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A zipline as the model rides it: its cable from `from` to `to` (m); a balloon's top launches a skydive.
@@ -2425,7 +2425,7 @@ For the agents who maintain the engine.
 - `restBuild` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The proportions of rest body `R` as a build's fields (metres, size 1): the mannequin's, for the quaternius set.
 - `restPoints` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The 36 decode points of `world` (FK on `restSkeleton(R)`), written into `out` as the decode writes them: mm in the rig frame, `[forward, right, up]` in `POSE_POINTS` order.
 - `restSkeleton` (function from [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)): The humanoid skeleton of rest body `R`: its bones measured, its rest curve kept (see the file comment).
-- `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+- `RETARGET` (const from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units); the time (s) a hand's IK fades in before its contact and out after it.
 - `RetargetOptions` (interface from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function from [`engine/anim/clip/retarget.ts`](../engine/anim/clip/retarget.ts)): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
@@ -2631,6 +2631,12 @@ For the agents who maintain the engine.
 - `measure` (function): A body's rest measurements (plain, rounded data, saved in the set) from its own captures: proportions and rest offsets from the T-pose clip `tposeName` (else the first clip's first frame), and how much of the hips-to-chest turn each spine bone takes (and the neck of the chest-to-head turn), fitted from about six frames of every clip.
 - `reduce` (function): The key frames (Ramer–Douglas–Peucker over whole poses): in-betweening the rest stays within `tol` mm.
 
+### [`engine/anim/clip/feet.ts`](../engine/anim/clip/feet.ts)
+
+- `encodeRoll` (function): The roll and the toes' angle off the ankle-to-ball line `d` (both degrees) that point the toes along `toe`, in the foot's upright plane with normal `down` (format 1's).
+- `footLine` (function): A key's ankle-to-ball line and its upright plane's `down`, as the decode builds them from the pelvis frame `RP` and the foot's `[down, out]` (degrees; `abPitch`, the rest body's ankle-to-ball pitch).
+- `rolledToe` (function): The toes' direction, unit: `delta` degrees from the ankle-to-ball line `d` toward `down`, the foot's upright plane's normal to `d` on the sole's side (format 1's toe plane), that plane turned about `d` by side `s`'s `roll`.
+
 ### [`engine/anim/clip/frames.ts`](../engine/anim/clip/frames.ts)
 
 - `add` (const): `a + b`.
@@ -2644,17 +2650,43 @@ For the agents who maintain the engine.
 - `len` (const): The length of `a`.
 - `Limb` (type): A limb kind: an arm (shoulder, elbow, fist) or a leg (hip, knee, ankle).
 - `limbEnd` (const): Where a limb from `root` ends: direction `v` in frame `M` (mirrored for side `s`) at distance `l`.
+- `MIDDLE` (const): The spine bones format 2's `spine` override turns: the two between `spine1` and the chest.
 - `mul` (const): `a` scaled by `k`.
 - `norm` (function): `a` at length 1 (a zero vector stays zero).
 - `qFromTo` (const): The rotation that takes rest frame A to frame B, as a quaternion.
+- `qmul` (const): The quaternion product `a b`: `b`'s turn, then `a`'s.
 - `qrot` (const): `v` turned by quaternion `q`.
 - `qslerp` (function): The quaternion a fraction `t` of the shortest way from `a` to `b`.
 - `reachOf` (const): A two-bone limb's root-to-end distance for a bend (degrees, 0 = straight).
 - `SG` (const): Each side's sign across the body: left −1, right 1.
 - `sub` (const): `a − b`.
-- `torso` (function): The torso and head frames of key pose `k` on rest body `R`, and the joints placed from them.
+- `torso` (function): A key pose's torso on rest body `R`: the pelvis, chest and head frames, the spine's points (format 2's `spine` turning its middle bones), the neck and head, and the shoulders and hips the limbs hang from.
 - `V` (type): A vector `[f, r, z]` (mm, or a direction), or a quaternion `[x, y, z, w]`.
 - `wld` (const): A local vector `l` of frame `M` (axes F, R, U as columns) in the parent's coordinates.
+
+### [`engine/anim/clip/hands.ts`](../engine/anim/clip/hands.ts)
+
+- `encodeHand` (function): The hand pose and grip that put a hand at the wrist `wr`, forearm `F` and pole `hint` (the decode's) on the captured `points`, to the degree and to the whole grip.
+- `HALF_SPAN` (const): Half the knuckles' span: the index and pinky knuckles either side of the middle one, mm (format 1's 20).
+- `handBase` (function): The hand's base frame at the wrist: the thumb's side `T0` and the palm's `N0` (see the file comment).
+- `handFrame` (function): The hand's direction `H`, thumb axis `T` and palm normal `N` after `pose`'s three turns.
+- `HandPoints` (interface): The hand's points: the middle knuckle, the fist point, and the index and pinky knuckles.
+- `HandPose` (type): A hand's turn at the wrist, degrees: toward the palm, toward the thumb, the thumb toward the palm.
+- `HandSizes` (interface): The rest body's hand lengths: wrist to middle knuckle, and wrist to the fist point with the fingers straight.
+- `placeHand` (function): The hand's points from the wrist `wr` and the forearm `F` (unit), as `pose` turns it and `grip` closes it.
+
+### [`engine/anim/clip/inverse.ts`](../engine/anim/clip/inverse.ts)
+
+- `bendOf` (const): The bend at a two-bone limb's middle joint (degrees, 0 = straight) for a root-to-end distance (`reachOf` back).
+- `bodyFrames` (const): The pelvis, chest and head frames `[F, R, U]` of the body points `p` reads.
+- `euler` (function): `[turn, lean, tilt]` degrees of a frame: yaw about up, then pitch about right (+ forward), then roll.
+- `frameFR` (function): A frame `[F, R, U]` from a right and a forward direction (f × r = u).
+- `frameUF` (function): A frame `[F, R, U]` from an up and a forward direction.
+- `loc` (const): `v` in frame `M`'s own coordinates (the inverse of `wld`).
+- `poleOf` (function): The signed angle (degrees) round axis `d` from hint `h` to the bend direction `b`.
+- `pt` (const): Body point `name` of the decoded or captured points `X`.
+- `rel` (const): Frame `child` relative to frame `parent` (the inverse of `compose`).
+- `unwrap` (const): An angle moved by whole turns to continue from the one before (none: unchanged).
 
 ### [`engine/anim/clip/layer.ts`](../engine/anim/clip/layer.ts)
 
@@ -2698,6 +2730,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/clip/readable.ts`](../engine/anim/clip/readable.ts)
 
+- `armOf` (function): The decode's arm on side `s`: the shoulder, the elbow, the IK's end (format 1's fist), the forearm's direction, the wrist and the elbow's pole.
 - `Clip` (interface): One clip: its header, then its keys in time order.
 - `ClipContact` (interface): Format 2: when a foot or hand holds the ground or a surface, from `from` to `to` seconds (detected at import).
 - `ClipEvent` (interface): Format 2: a moment in a clip, such as `{ t: 0.42, name: 'land' }` or `{ t: 0.8, name: 'step', side: 'L' }`.
@@ -2712,6 +2745,7 @@ For the agents who maintain the engine.
 - `PointArray` (type): A decoded pose: 36 points × `[f, r, z]` in mm, in `POSE_POINTS` order.
 - `POSE_POINTS` (const): The 36 body points a pose rebuilds, in order: three numbers each (f, r, z) in the decoded array.
 - `samplePose` (function): The 36 body points at time `t` on rest body `R`, written into `out` (a new Float32Array, as the source's, unless given; pass a Float64Array for full precision).
+- `Torso` (type): The torso `torso()` rebuilds for a key: its frames and the points the limbs hang from.
 - `Triple` (type): Three numbers: a point or direction `[f, r, z]`, or `[turn, lean, tilt]` in degrees.
 
 ### [`engine/anim/clip/rest.ts`](../engine/anim/clip/rest.ts)
@@ -2724,11 +2758,18 @@ For the agents who maintain the engine.
 
 - `AnimationClipJSON` (interface): What three.js's `AnimationClip.parse` reads: the clip's name, length and tracks.
 - `clipJSON` (function): `baked` as three.js `AnimationClip` JSON for `skeleton`: a `<joint>.quaternion` track per joint (the rotation copy) and `root.position` (the hip joints by the hip-height ratio; with `travel`, plus the clip's travel), keyed on bones named as the puppets' are (`root` and the joints).
+- `handWeight` (function): How much hand `part`'s IK weighs at `lap` s into a clip `duration` s long (0 to 1): 1 inside its `contacts`, eased to 0 over `RETARGET.handFade` s either side; a loop's contacts repeat every lap, so one across its seam never fades.
 - `hipRatio` (const): The hip-height ratio of `skeleton` to the rest body `baked` was measured on (their standing hip joints): the clip's places scale by it on that skeleton (the hip joints, the feet's goals, the travel).
-- `RETARGET` (const): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+- `RETARGET` (const): Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units); the time (s) a hand's IK fades in before its contact and out after it.
 - `RetargetOptions` (interface): What `retargetPose` does beyond the rotation copy.
 - `retargetPose` (function): `baked` at `t` seconds on `skeleton`, written into `out` (a new pose by default): the rotations copied and aligned at rest, the hip joints where the clip's are times the hip-height ratio, the root at the origin unturned; then the feet planted, the pose lifted and a held blade kept above the floor (`options`).
 - `standingHipHeight` (const): A skeleton's standing hip height, metres: its hip joints' rest height (straight legs; for a build, its pelvis's, `legUpper + legLower` times `size`).
+
+### [`engine/anim/clip/spine.ts`](../engine/anim/clip/spine.ts)
+
+- `SPINE_MISS` (const): How far (mm) the spine's shares may miss a capture's neck before format 2 writes the `spine` override: half the importer's 30 mm tolerance, past which the shares alone spend most of a key's error.
+- `spineMiss` (function): The worst miss (mm) over a capture's frames between its neck and the neck the spine's shares rebuild from its pelvis point and its pelvis and chest frames: past `SPINE_MISS`, the importer writes format 2's `spine` override.
+- `spineOf` (function): Format 2's `spine` for key `k` (its hips, body and chest written) on the body points `p` reads: the turn of the spine's middle bones, relative to the body, that takes the decoded `spine1` toward the captured chest, its twist about the spine the shares' own (two bones lying almost in line say little about it).
 
 ### [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)
 
@@ -4684,6 +4725,7 @@ For the agents who maintain the engine.
 - `sceneTargetsFor` (function): The scene pass's extra targets the techniques on in `report` read, for a chain smoothing with `aa` (mrt.ts).
 - `shadingFor` (function): The shading techniques whose features are on in `report` (none without a report).
 - `ShadingTechniques` (interface): The post chain's shading techniques a renderer whose features are `report` has (engine/gfx/post/shading.ts).
+- `shellsOn` (function): Whether the stage makes outline shells (engine/gfx/stageShells.ts): `feature:shells` on in `report`, or no report.
 - `TemporalAa` (interface from [`engine/gfx/enhanced/aa.ts`](../engine/gfx/enhanced/aa.ts)): The smoothing (see the file comment).
 - `temporalAaFor` (function): TRAA (engine/gfx/enhanced/aa.ts) when `feature:traa` is on in `report`, else null (the chain smooths with FXAA).
 
@@ -5170,6 +5212,7 @@ For the agents who maintain the engine.
 - `FrameGrid` (interface): A frame's grid: its pixel art's block, the snap's cells and the picture's glide, and how to put the camera back.
 - `inkWidth` (function): The outline's width in pixels on a picture `lines` high: `width`, scaled when `lines` is set (see the file comment).
 - `pixelBlock` (function): The pixel filter's block for a picture `lines` high: its `size`, or the art block for `size` 0.
+- `QUAD` (const): How many drawn pixels a gliding snap of one drawn pixel moves the camera by: the GPU's derivative quads (above).
 - `snapBlock` (function): The block grid the camera snaps to for `chain` on a picture `lines` high: pixel art's when it covers the environment and snaps (characters and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), one drawn pixel included; else the whole screen's low resolution of 2 px or more; 0 for none.
 
 ### [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)
@@ -5472,8 +5515,12 @@ For the agents who maintain the engine.
 - `enableShadows` (function): Turns the renderer's shadow map on, with the engine's one shadow map type.
 - `MAX_SHADOW_CASTERS` (const): The most lights that cast shadows at once: the budget at the `high` tier.
 - `POINT_SHADOW` (const): A point caster's shadow settings, carried from the prototype's shadow lights.
+- `SHADOW_GRID` (const): The frame's pixel grid as the filters' noise reads it: (whole blocks across, whole blocks down, the block in pixels), the post chain's each frame (engine/gfx/post/grid.ts `frameGrid`), (0, 0, 1) outside its frames.
 - `SHADOW_MAP_TYPE` (const): The shadow map type every caster uses (r182's `PCFShadowMap`; see the file comment).
 - `shadowCasters` (function): How many lights may cast shadows under `budget` (a quality tier's, engine/gfx/quality.ts).
+- `SNAPPED_PCF` (const): r182's `PCFShadowFilter` (ShadowFilterNode.js), its noise on the frame's grid: the sun's and its cascades'.
+- `SNAPPED_POINT` (const): r182's `PointShadowFilter` (PointShadowNode.js), its noise on the frame's grid: the light pool's casters'.
+- `snapShadow` (function): Gives `shadow` the engine's filter for its kind (see the file comment): a point light's for a cube map.
 - `splitCasters` (function): Who casts under a budget of `casters`: the sun first when it shines, then the point lights when they shine.
 
 ### [`engine/gfx/shot.ts`](../engine/gfx/shot.ts)
@@ -7740,6 +7787,23 @@ For the agents who maintain the engine.
 - `default` (default): ESLint's settings for T0 (PLAN.md §6.10; `npm run lint`, inside `npm run check`): typescript-eslint's recommended rules without type information (so T0 stays fast), the file-comment and size rules, then the doctrine's rule families from tools/eslint/, one block per family, each message naming the fix.
 - `SWITCHES` (const): Rules written ahead of the code they guard.
 
+### [`labs/anim/overlay.ts`](../labs/anim/overlay.ts)
+
+- `BONES` (const): Each joint and its parent in the humanoid skeleton (engine/anim/skeleton.ts): the bones the overlay draws.
+- `drawBones` (function): Draws each skeleton of `skeletons` (joint name → world position) on `canvas` through `camera`; clears it first.
+- `project` (function): Where world point `p` (m) falls on a `width` × `height` picture seen through `camera`; null behind it.
+
+### [`labs/anim/scenes/lineup.ts`](../labs/anim/scenes/lineup.ts)
+
+- `LAB_FIGURE` (const): The component `labFigure` (see `FigureData`).
+- `lineup` (const): The Animation Lab's lineup (see the file comment).
+- `LINEUP_AT` (const): Where the row stands: the middle of the stage's ground, as the gallery stands its subject (m).
+- `LINEUP_BUILDS` (const): The builds in the row, left to right; the mannequin's only with `lab.anim.mannequin`.
+- `LINEUP_GAP` (const): How far apart the figures stand (m).
+- `LINEUP_SETTINGS` (const): The scene's settings (see the file comment).
+- `LINEUP_STATES` (const): Every name `lab.anim.play` takes besides a move's id: walk and run, the sample states, the poses and the stances.
+- `REST` (const): How long a figure rests between two swings of a move (s).
+
 ### [`labs/box/cast/hero.ts`](../labs/box/cast/hero.ts)
 
 - `HERO` (const): The hero's character, untuned.
@@ -7787,6 +7851,8 @@ For the agents who maintain the engine.
 ### [`labs/box/library.ts`](../labs/box/library.ts)
 
 - `loadLibrary` (function): Registers the sets in `files` (path → its text, loaded on demand), then the mannequin from the Quaternius set.
+- `loadMannequin` (function): Registers the mannequin, its build and body, from the Quaternius set's `_set.json` text (the page's `?raw`).
+- `registerEdit` (function): Registers the clip `name` from its edited `text` as the set `set` of its own, with the sources of the set `from` (`clipset:cmu`), and returns the clip's path to play (`lab1/<name>`).
 
 ### [`labs/box/looks/daylight.ts`](../labs/box/looks/daylight.ts)
 
@@ -8053,6 +8119,34 @@ For the agents who maintain the engine.
 
 - `HelloView` (interface): A started hello scene.
 - `startHello` (function): Starts the renderer on `canvas` (rejecting with `GfxError` `GFX_NO_WEBGPU` without WebGPU), builds the scene, and draws the first frame, directly or through the post pass; resolves once the GPU has finished it.
+
+### [`labs/index/gallery.ts`](../labs/index/gallery.ts)
+
+- `galleryBoot` (function): Starts the engine in `doc`'s `#view` on the gallery entry `hash` names, everything registered (see the file comment).
+- `GalleryInspector` (interface): What a lab reads through the engine's inspector (`__engine`): the gallery's lists and `describe`.
+- `galleryLab` (function): Starts a gallery lab for `spec.kinds` in `doc` (see the file comment); resolves once its panel is filled.
+- `hashEntry` (function): The kind and entry a gallery hash names: `#gallery/prop/prop:crate` → ['prop', 'prop:crate'].
+
+### [`labs/index/lab.ts`](../labs/index/lab.ts)
+
+- `button` (function): A button in `parent` labelled `label` that runs `act` when pressed; returns it.
+- `el` (function): An element `tag` with `attributes` and `children`.
+- `entryList` (function): Lists `entries` as links in `parent`, the current one marked (`aria-current`); returns the list.
+- `labPanel` (function): The lab's panel in `#lab` (made when the page lacks one): its header, then the sections the lab adds.
+- `LabPanel` (interface): A lab's panel: its sections and a status line.
+- `LabSpec` (interface): What a lab says about itself: its title, what it is for, and the `x` command that does the same job.
+- `ListItem` (interface): One entry of a list: what it says and where it leads.
+- `reloadOnHash` (function): Reloads the page when its hash changes, so a deep link (`#gallery/<kind>/<id>`) opens what it names.
+
+### [`labs/index/labs.ts`](../labs/index/labs.ts)
+
+- `checkLabs` (function): Every problem with `index` (see the file comment), each naming its fix; none when it is sound.
+- `expiredLabs` (function): The temporary labs whose `expires` date is before `today` (`YYYY-MM-DD`).
+- `labLinks` (function): Every link of the index, from the index page's own directory: its address, its label and its page.
+- `LabRecord` (interface): One lab or page: where it lives, its links, what it is for, its `x` command; a temporary one's question and dates.
+- `LabsIndex` (interface): labs/labs.json.
+- `LabsSection` (interface): A section of the index: the engine's pages, the labs kept, the temporary ones.
+- `SECTIONS` (const): The sections the index has, in order.
 
 ### [`labs/playground/bodies/neighbours.ts`](../labs/playground/bodies/neighbours.ts)
 
@@ -8837,6 +8931,19 @@ For the agents who maintain the engine.
 - `parseMotionList` (function): The takes on the site's full motion list (`search.php?subjectnumber=%&motion=%`), from its HTML.
 - `SITE` (const): The site; it serves plain HTTP.
 
+### [`tools/anim/contacts.ts`](../tools/anim/contacts.ts)
+
+- `AIRBORNE` (const): How long (s) nothing may be held before a foot's contact is a landing: a jump's, not a run's flight.
+- `CARRY` (const): How far (mm) the pelvis must move past a held hand or raised foot over its hold.
+- `detectContacts` (function): A capture's contacts and events (see the file comment), on its rest body `R`; `clip` is the capture fitted (its strike is timed on what plays) and `tags` its catalog words.
+- `FOOT_CLEAR` (const): How far above the floor (mm) a foot's sole may be and still stand on it.
+- `HAND_FLOOR` (const): How far above the floor (mm) a hand's knuckle may be and still lie on it.
+- `HANG` (const): How far (mm) under a hand held above the head the pelvis hangs when the body hangs from it.
+- `HOLD` (const): How long (s) a hand or a raised foot must hold still to count.
+- `HOLD_REACH` (const): How far (mm) a held point may stray from where its hold began.
+- `STILL` (const): How slowly (mm/s) a held point moves in the ground's frame.
+- `treadmill` (function): The ground's velocity under an in-place loop (mm/s; zero for any other clip): of the planted balls' median velocity along the floor and the velocity most hand and foot frames share (a ladder's, a wall's), whichever more of the hand and foot frames move with.
+
 ### [`tools/anim/cut.ts`](../tools/anim/cut.ts)
 
 - `cutSet` (function): Cuts the clips `picks` out of `sets` into a new set named `name` (see the file comment).
@@ -8844,6 +8951,14 @@ For the agents who maintain the engine.
 ### [`tools/anim/cycle.ts`](../tools/anim/cycle.ts)
 
 - `bestCycle` (function): The best cycle in seconds `from`–`to` of a take of `count` frames at `src` a second: `[start, end, seam]`, in seconds, `seam` the cost that remained.
+
+### [`tools/anim/fetch.ts`](../tools/anim/fetch.ts)
+
+- `fetchMesh2Motion` (function): Mesh2Motion's three files in `dir` (from the repository root `root`), fetched when missing or changed; each is checked against its sha256, and a file that does not match is an error naming it and the fix.
+- `MESH2MOTION` (const): Mesh2Motion's commit and its three files' sha256.
+- `MESH2MOTION_CACHE` (const): Where `x anim fetch` keeps Mesh2Motion's files.
+- `SET_SOURCES` (const): Every set's originals (a set not named here has none to re-import).
+- `SetSource` (interface): Whether a set's originals can be re-imported here, and why not when they cannot.
 
 ### [`tools/anim/find.ts`](../tools/anim/find.ts)
 
@@ -8856,8 +8971,9 @@ For the agents who maintain the engine.
 ### [`tools/anim/glb-fixture.ts`](../tools/anim/glb-fixture.ts)
 
 - `FixtureTrack` (interface): One animation track: a bone, a path, key times and flat values, optionally quantized or splined.
+- `FixtureVertex` (interface): A vertex of `riggedGlb`'s skinned mesh: where it sits in the bind pose (metres) and its bones' weights.
 - `GlbBuilder` (class): Packs elements into one binary buffer, one buffer view and accessor each.
-- `riggedGlb` (function): A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`.
+- `riggedGlb` (function): A T-posed Unreal-named humanoid with `clips` (by name, each a list of tracks) as a `.glb`; with `mesh`, a skinned mesh of those vertices too, each bone's inverse bind matrix taking the bind pose to the bone's own frame.
 - `turn` (function): A rotation of `deg` degrees about `axis` as `[x, y, z, w]`.
 
 ### [`tools/anim/glb-library.ts`](../tools/anim/glb-library.ts)
@@ -8891,6 +9007,7 @@ For the agents who maintain the engine.
 ### [`tools/anim/import.ts`](../tools/anim/import.ts)
 
 - `Catalog` (type): A catalog: each clip's `[tags, desc, orig?]`, plus `$sources`, `$skip` and (CMU) `$pick`.
+- `fitFormat2` (function): A capture fitted in format 2: hands, grips and foot roll on every key, and the spine override where the shares miss the capture by more than `SPINE_MISS` and it brings the worst frame closer (it can bare a long neck's own miss: CMU's).
 - `ImportOptions` (interface): What to import and how (see the file comment).
 - `importSet` (function): Imports a set (see the file comment); `notes` says what was left out, warned of or measured.
 
@@ -8953,12 +9070,13 @@ For the agents who maintain the engine.
 - `clipSlug` (function): The file name of a clip, without `.json`: its name with each run of characters other than letters, digits, `_` and `-` made one `_`, and `_` and `-` trimmed from the ends.
 - `CMU_CREDIT` (const): The credit every CMU set carries: CMU's terms in short (data/anim/SOURCES.md has them verbatim) and the acknowledgment the database asks for, verbatim.
 - `joinSet` (function): Reads a set's directory files back into the set it was split from (`where` names it in errors): the clips in the order `_set.json`'s `fit` lists them, then any others by file name.
+- `keepUpgrades` (function): `set` with the clips its committed version in `root` re-imported from their source (WP 8.8: `via: "source"`, tools/anim/upgrade.ts) taken from it, with their fits and its format, so a curated set repacks as committed and never undoes the upgrade; every other clip stays the source's.
 - `legacySetFiles` (function): The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory.
 - `main` (function): The command line (see the file comment).
 - `readPlainSet` (function): A plain JSON set, as shardfall writes it (text, or an object), read through the codec's parser.
 - `readSet` (function): The set stored in `data/anim/sets/<dir>/` (or under `root`, or at `dir` when absolute), rejoined.
 - `readSetDir` (function): Reads a set's directory: every file in it, by name.
-- `repackSets` (function): Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius); with `check` it only compares.
+- `repackSets` (function): Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius), their clips re-imported from the source kept (`keepUpgrades`); with `check` it only compares.
 - `SET_FILE` (const): The file that holds a set's header: everything but its clips.
 - `setDirName` (const): A set's directory name: its name, slugged, in lower case (`STYLE100_BACK` → `style100_back`).
 - `SetFiles` (type): A set's directory as text: file name → contents.
@@ -9003,6 +9121,19 @@ For the agents who maintain the engine.
 - `SurveyOptions` (interface): What the survey does: which subjects, legacy reading, the ledger and library tolerances, and where things go.
 - `usedBy` (function): Which clips of the CMU set each take feeds: `{ '13_17': ['Boxing_Guard_Loop', 'Boxing_Jab'] }`.
 
+### [`tools/anim/upgrade.ts`](../tools/anim/upgrade.ts)
+
+- `apartOf` (function): How far apart (mm) two clips decode, mean and worst, at 30 fps over the shorter.
+- `judge` (function): The verdict on swapping `fresh` in for `held` (see the file comment).
+- `readUpgraded` (function): `UPGRADE_FILE` as committed (empty when there is none).
+- `reimport` (function): Set directory `dir`'s originals imported again in format 2, from the repository root `root` (see fetch.ts).
+- `UPGRADE_FILE` (const): The clips each re-imported set kept, and why: `{ set: { swapped, of, kept: { clip: why } } }`.
+- `Upgraded` (interface): One set's line in `UPGRADE_FILE`.
+- `upgradedOf` (function): Set `dir`'s line for `UPGRADE_FILE` from its verdicts.
+- `upgradeSet` (function): `held` with `fresh`'s clips swapped in where they keep parity (see the file comment): the set, now format 2, and a verdict per clip in the set's order.
+- `Verdict` (interface): What happened to one clip: swapped or kept, why, and the numbers (mm) that decided it.
+- `writeUpgraded` (function): Writes set `dir`'s line into `UPGRADE_FILE`, the others kept, sets in name order.
+
 ### [`tools/anim/view.ts`](../tools/anim/view.ts)
 
 - `bakedPoints` (function): The 36 decode points of `baked` at `t`, by FK on its rest body's own skeleton (mm, rig frame).
@@ -9034,7 +9165,7 @@ For the agents who maintain the engine.
 
 ### [`tools/cmd/anim.ts`](../tools/cmd/anim.ts)
 
-- `default` (default): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries and fetch CMU takes, all from the command line, with no browser.
+- `default` (default): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries, fetch their sources and re-import them, all from the command line, with no browser.
 - `subcommandOf` (function): The subcommand named first, or a usage error naming the closest.
 - `targetOf` (const): The report's target: the subcommand and its first arguments.
 
@@ -9213,6 +9344,14 @@ For the agents who maintain the engine.
 - `sessionShot` (function): The session's `shot` op: the open tab when it shows `path`, else a new tab of the browser opened on `path`.
 - `SessionTab` (interface): What the session's `shot` op works with: its tab, the page open in it, its browser, Vite's URL and the root.
 - `shootInSession` (function): Shoots `path` through the running inspect session (tools/cmd/inspect.ts): its page when it shows `path`, else a new tab of its browser; null when the page has no `__engine.shot` (then `x shot` screenshots it itself).
+
+### [`tools/cmd/lab.ts`](../tools/cmd/lab.ts)
+
+- `createLabCommand` (function): Builds the command; tests inject the day.
+- `default` (default): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts, which this command loads by path where the checkout has it (a game made from the engine gets tools/, never the labs: tools/game/imports.test.ts).
+- `LAB_DAYS` (const): How long a temporary lab lasts by default, in days.
+- `LABS_FILE` (const): The index's file, from the repository root.
+- `LABS_MODEL` (const): The index's model, beside the index in the engine's checkout.
 
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 

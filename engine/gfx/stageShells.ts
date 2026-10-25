@@ -27,6 +27,7 @@
  * @see tests/e2e/playground-looks.spec.ts
  */
 import type { Mesh } from 'three/webgpu';
+import { shellsOn, type FeatureReport } from './features';
 import type { Puppet } from './puppets/draw';
 import type { ActorPuppets } from './puppets/actors';
 import type { InstancedBatch } from './instancing';
@@ -53,8 +54,11 @@ export interface StageShells {
   set(look: ShellLook): void;
   /** Gives shells to the batches and puppets that appeared since, and matches every shell to its frame. */
   sync(): void;
-  /** Registers every shell, present and future, with `warmup`. */
-  register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
+  /**
+   * Registers every shell, present and future, with `warmup`. With `features` (the renderer's report,
+   * engine/gfx/features.ts) where `feature:shells` is off, it makes none from then on, registers none and shows none.
+   */
+  register(warmup: Pick<Warmup, 'register'>, features?: FeatureReport): { dispose(): void };
   /** Removes the shells and frees their materials. */
   dispose(): void;
 }
@@ -71,6 +75,7 @@ export function createStageShells(parts: {
   const batches = new Map<InstancedBatch, OutlineShells>();
   const puppets = new Map<Puppet, Mesh>();
   let shown = false;
+  let off = false; // feature:shells off: no shell is made
 
   return {
     get width() {
@@ -81,12 +86,13 @@ export function createStageShells(parts: {
       bodies: puppets.size,
     }),
     set(look) {
-      shown = look.width > 0;
+      shown = look.width > 0 && !off;
       objects.width = bodies.width = look.width;
       objects.color.set(look.color);
       bodies.color.set(look.color);
     },
     sync() {
+      if (off) return;
       for (const batch of parts.props.meshes?.batches() ?? []) {
         if (!batches.has(batch)) batches.set(batch, objects.batch(batch));
       }
@@ -104,7 +110,9 @@ export function createStageShells(parts: {
         shell.visible = shown;
       }
     },
-    register(warmup) {
+    register(warmup, features) {
+      off = !shellsOn(features);
+      if (off) return { dispose: () => undefined };
       const entries = [
         warmup.register('shells:props', { objects: () => [...batches.values()].flatMap((group) => group.shells) }),
         warmup.register('shells:bodies', { objects: () => [...puppets.values()] }),

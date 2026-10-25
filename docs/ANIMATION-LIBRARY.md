@@ -104,8 +104,8 @@ Why it is shaped this way (measured in my-3d2dge, and why it stays):
 How it was chosen: on the first library's 46 clips, readable key poses (615 poses, 31 KB gzipped, about 12 mm from the
 capture on average) could not be told from every captured frame (2,078 poses, 118 KB) side by side, where halving the
 frame rate cost more and could skip a punch's moment of contact. Its known misses are hard wrist bends (the hand
-continues the forearm) and a spine curled into a C; format 2 has fields for hands and a spine override (WP 8.2),
-which the re-import from the sources fills (WP 8.8).
+continues the forearm) and a spine curled into a C; format 2's hands, grips, foot roll and spine override mend them
+where a clip is re-imported from its source (WP 8.8: `x anim upgrade`; ADR-0010 amendment 7).
 
 ## Playing clips
 
@@ -264,8 +264,9 @@ where each stands here:
    creatures and four-legged rigs come from procedural building blocks (WP 10.1).
 3. **The renderer has to honour what the format says.** Clips are baked to rotations on the canonical skeleton, so
    chest twist and head turn reach the 3D puppet exactly (WP 8.4).
-4. **Gameplay needs events.** Format 2 carries `events` and `contacts` (WP 8.2, detected at import in WP 8.8), and an
-   attack that plays a clip lands at the clip's strike time when it has no `hit` event (WP 8.4).
+4. **Gameplay needs events.** Format 2 carries `events` (`step`, `land`, `hit`) and `contacts` (feet and hands),
+   detected at import (tools/anim/contacts.ts, WP 8.8), and an attack that plays a clip lands at the clip's strike time
+   when it has no `hit` event (WP 8.4).
 5. **Root motion against physics.** Clips play in place by default and expose their root path as data. Keep it so.
 6. **Layering.** The clip layer has weights, bone masks and additive clips (WP 8.4).
 7. **Style.** Motion capture is realistic; procedural moves are snappy. Mixed in one game they can feel inconsistent,
@@ -282,8 +283,10 @@ where each stands here:
 
 ## Limits
 
-- **Fingers are not imported**: hands are fists. Format 2 has a hand's flex, side and roll and a grip (WP 8.2), which
-  the re-import fills (WP 8.8).
+- **Fingers are not imported**: format 2's hands turn at the wrist and close by a grip (WP 8.8), but the skeleton has
+  no finger joints, so a puppet's hand turns and its fingers stay as they are; the grip closes only the decoded fist.
+- **Not every clip is re-imported:** `data/anim/upgrade.json` lists each set's clips kept in format 1, with why; the
+  Quaternius set waits for the owner's GLBs (ESC-0003) and the 100STYLE sets for a defect that touches them.
 - **CMU's hands have one finger bone and a thumb**, so the knuckle line is set across the hand toward the thumb: a CMU
   fist turns with the wrist but never curls.
 - **Rigs:** Rigify `DEF-` bones and Unreal-style names in GLB files, and CMU's ASF/AMC. 100STYLE's BVH rig is

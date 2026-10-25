@@ -67,7 +67,7 @@ import { BACKDROP, BACKDROP_KINDS, bakeBackdrop } from './backdrop';
 import { cascadeSunFor, lightPoolOf, type FeatureReport } from './features';
 import { createLightPool, lightSources, type LightPool, type PoolLamp, type PoolSlot } from './lights';
 import type { QualityBudget } from './quality';
-import { shadowCasters, splitCasters, type Casters } from './shadows';
+import { shadowCasters, snapShadow, splitCasters, type Casters } from './shadows';
 import type { Warmup } from './warmup';
 
 const text = (description: string, value: string) => ({ type: 'string', default: value, description }) as const;
@@ -265,6 +265,7 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
   sun.target.name = 'sky/sun/target';
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.bias = -0.0005;
+  snapShadow(sun.shadow);
   const { min, max } = options.level?.bounds ?? options.bounds ?? { min: [-8, 0, -8], max: [8, 4, 8] };
   const centre = [(min[0] + max[0]) / 2, min[1], (min[2] + max[2]) / 2] as const;
   const half = Math.hypot(max[0] - min[0], max[2] - min[2]) / 2 + 2;

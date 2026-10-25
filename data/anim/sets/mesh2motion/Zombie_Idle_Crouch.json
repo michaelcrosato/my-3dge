@@ -1,10 +1,10 @@
-{"clip": "Zombie_Idle_Crouch", "src": "M2M_ANIMATED", "dur": 2.958, "loop": true, "tags": ["zombie","idle","crouch"], "desc": "crouched low and swaying: a zombie at rest", "keys": [
+{"clip": "Zombie_Idle_Crouch", "src": "M2M_ANIMATED", "dur": 2.958, "loop": true, "tags": ["zombie","idle","crouch"], "desc": "crouched low and swaying: a zombie at rest", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.958},{"part":"footR","from":0,"to":2.958},{"part":"handL","from":0,"to":2.958},{"part":"handR","from":0,"to":2.958}], "keys": [
   {"t":0,
    "hips":[-16,-2,55], "body":[12,15,11], "chest":[-56,77,34], "head":[4,-27,-23],
-   "shL":[49,-16], "shR":[22,-12], "armL":[74,-66,13,50,5], "armR":[89,21,40,69,-3],
-   "legL":[47,20,-86,112,60], "legR":[64,53,-56,126,-13], "footL":[0,48,-1], "footR":[22,19,36]},
+   "shL":[49,-16], "shR":[22,-12], "armL":[75,-66,8,48,1], "armR":[98,10,15,40,53], "handL":[-13,-2,83], "handR":[-69,-74,47], "gripL":6, "gripR":6,
+   "legL":[47,20,-86,112,60], "legR":[64,53,-56,126,-13], "footL":[0,48,0], "footR":[22,19,41], "rollL":20, "rollR":-31},
   {"t":2.967,
    "hips":[-16,-2,55], "body":[12,15,11], "chest":[-56,77,34], "head":[4,-27,-23],
-   "shL":[49,-16], "shR":[22,-12], "armL":[74,-66,13,50,5], "armR":[89,21,40,69,-3],
-   "legL":[47,20,-86,112,60], "legR":[64,53,-56,126,-13], "footL":[0,48,-1], "footR":[22,19,36]}
+   "shL":[49,-16], "shR":[22,-12], "armL":[75,-66,8,48,1], "armR":[98,10,15,40,53], "handL":[-13,-2,83], "handR":[-69,-74,47], "gripL":6, "gripR":6,
+   "legL":[47,20,-86,112,60], "legR":[64,53,-56,126,-13], "footL":[0,48,0], "footR":[22,19,41], "rollL":20, "rollR":-31}
 ]}

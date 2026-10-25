@@ -50,7 +50,9 @@ catalog's `"$library"`), and the sets `STYLE100…` because a set's name must no
     add-on; the raw BVH captures are in `Mesh2Motion/mesh2motion-assets` (`motion-capture`).
 - **License:** CC0 1.0 Universal; the legal code is in `LICENSES/CC0-1.0.txt`. No credit is required.
 - **Files:** `human-base-animations.glb`, `human-addon-animations.glb` and `human-mocap-animations.glb`, all in
-  mesh2motion-app's `static/animations/`.
+  mesh2motion-app's `static/animations/`. WP 8.8 re-imported the set in format 2 from these files at
+  mesh2motion-app@653a969 (`653a9698f5f315523072f1c3ff3496100401317b`), each checked by its sha256
+  (tools/anim/fetch.ts `MESH2MOTION`, `node x anim fetch`).
 
 ## CMU Graphics Lab Motion Capture Database
 

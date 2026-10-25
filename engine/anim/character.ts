@@ -44,7 +44,7 @@ import { forwardKinematics, jointPosition, jointRotation, socketPosition } from 
 import { Humanoid, type HumanoidOptions, type HumanoidState } from './humanoid';
 import { blendPoses, Pose } from './pose';
 import { WEAPONS, type Weapon } from './poses';
-import { SOCKETS, type SocketName } from './skeleton';
+import { JOINTS, SOCKETS, type SocketName } from './skeleton';
 import { checkBodyStates, TRAILS, type AnimatorInput, type TrailName } from './states';
 import { activeWeights, LAYER_SLOTS, LOD, SLOTS, type AnimLayer, type LayerSlot, type SlotName } from './weights';
 
@@ -305,6 +305,7 @@ export class Animator {
         blade: effector(E.blade),
       },
       sockets: Object.fromEntries(SOCKETS.map((s) => [s, xyz(this.socket(s, at))])),
+      joints: Object.fromEntries(JOINTS.map((j) => [j, xyz(jointPosition(body.world, j, at))])),
       events: this.events.map((event) => ({ ...event, speed: r(event.speed) })),
       trailing: this.trailing ?? null,
       trail: this.trail.map(({ base, tip, clock, weight }) => ({

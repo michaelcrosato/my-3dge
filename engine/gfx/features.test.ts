@@ -35,6 +35,9 @@ const TECHNIQUES = [
   'feature:traa',
 ];
 
+/** The features that need nothing of the device, off only when `gfx.featuresOff` lists them: the stage's shells. */
+const ALWAYS = ['feature:shells'];
+
 /** Feature ids in the registry's order (by id). */
 const sorted = (ids: string[]) => [...ids].sort();
 
@@ -52,7 +55,7 @@ function setup(off: string[] = []) {
 describe('the feature kind', () => {
   it('declares the built-in features and gfx.featuresOff on the shared registry', () => {
     expect(sharedRegistry.describe('feature').ids).toEqual(
-      sorted(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps', ...TECHNIQUES]),
+      sorted(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps', ...ALWAYS, ...TECHNIQUES]),
     );
     const setting = sharedRegistry.get('setting', 'gfx.featuresOff');
     expect(setting).toMatchObject({ view: true, default: [] });
@@ -67,7 +70,7 @@ describe('the feature kind', () => {
   it('defines everything once, however often it is called', () => {
     const { registry } = setup();
     defineFeatures(registry);
-    expect(registry.list('feature')).toHaveLength(3 + TECHNIQUES.length);
+    expect(registry.list('feature')).toHaveLength(3 + ALWAYS.length + TECHNIQUES.length);
   });
 });
 
@@ -76,7 +79,7 @@ describe('resolveFeatures', () => {
     const { registry, settings, log, printed } = setup();
     const report = resolveFeatures(caps(FULL), { registry, settings, log });
     expect(report).toEqual({
-      on: sorted(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps', ...TECHNIQUES]),
+      on: sorted(['feature:float32Filtering', 'feature:largeBuffers', 'feature:timestamps', ...ALWAYS, ...TECHNIQUES]),
       off: [],
       downgrades: [],
     });
@@ -87,7 +90,7 @@ describe('resolveFeatures', () => {
     const { registry, settings, log, printed } = setup();
     const small = caps(['float32-filterable'], { maxStorageBufferBindingSize: 134217728 });
     const report = resolveFeatures(small, { registry, settings, log });
-    expect(report.on).toEqual(sorted(['feature:float32Filtering', ...TECHNIQUES]));
+    expect(report.on).toEqual(sorted(['feature:float32Filtering', ...ALWAYS, ...TECHNIQUES]));
     expect(report.off).toEqual([
       {
         id: 'feature:largeBuffers',

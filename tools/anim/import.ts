@@ -12,9 +12,14 @@
  *   (`crates/pav_tools/src/mocap/mod.rs:308-316`): round(stride / H0 × 100 / dur), left out below 10, the stride
  *   being the root's travel over one cycle; and with a root-motion twin per library (`rm`, Quaternius' `_RM` files,
  *   `mod.rs:326-366`), each in-place loop takes its twin's travel as its stride, and each one-shot whose twin travels
- *   more than 50 mm is added as `<clip>_RM`;
+ *   more than 50 mm is added as `<clip>_RM`; every key with its hands, grips and feet's roll, a clip whose spine
+ *   shares miss its capture by more than `SPINE_MISS` with the spine override too where it brings the clip's worst
+ *   frame closer (engine/anim/clip/hands.ts, feet.ts, spine.ts), and each clip's contacts and events, detected
+ *   (tools/anim/contacts.ts);
  * - **`legacy`**: nearest-frame sampling and format 1, exactly as the source's importer, so `x anim import --cmu
- *   --legacy` writes the CMU set byte for byte.
+ *   --legacy` writes the CMU set byte for byte; into the committed set, the clips WP 8.8 re-imported from their source
+ *   stay as committed (tools/anim/repack.ts `keepUpgrades`, from tools/cmd/anim.ts), so `--check` compares the rest
+ *   byte for byte and a write never undoes the upgrade.
  *
  * The catalog: `{ clip: [tags, what the body does, orig?] }`; the tags `loop` and `once` set whether a clip loops (for
  * libraries whose names do not say: `_Loop`, `Idle`); `"$sources": { ID: { label, origin, license, url } }` records
@@ -31,10 +36,12 @@
  * @see tools/anim/import.test.ts
  */
 import { basename } from 'node:path';
-import { fitClip, measure, type Capture } from '../../engine/anim/clip/encode';
+import { fitClip, measure, type Capture, type EncodeExtra, type Fitted } from '../../engine/anim/clip/encode';
+import { SPINE_MISS, spineMiss } from '../../engine/anim/clip/spine';
 import type { Clip } from '../../engine/anim/clip/readable';
 import type { ClipSet, ClipSource, RestBody } from '../../engine/anim/clip/validate';
 import { cmuGet, cmuIndex, CMU_CACHE, type IndexedTake } from './cmu';
+import { detectContacts } from './contacts';
 import { readCmu, type Pick as TakePick } from './cmu-capture';
 import { readGlbLibrary, type GlbLibrary } from './glb-library';
 import { readLedger, type Ledger } from './ledger';
@@ -224,8 +231,9 @@ export function importSet(options: ImportOptions): { set: ClipSet; notes: string
         if (tags.includes('once')) cap.loop = false;
         Object.assign(extra, { tags: tags.filter((t) => t !== 'loop' && t !== 'once'), desc: entry[1] });
       } else if (catalogued) notes.push(`no catalog entry for ${clipName}`);
-      const { clip, max, mean } = fitClip(rest, cap, tol, extra);
-      set.clips[clipName] = ordered(clip, id, cap, entry?.[2], legacy ? null : rest.H0);
+      const { clip, max, mean } = legacy ? fitClip(rest, cap, tol, extra) : fitFormat2(rest, cap, tol, extra);
+      const found = legacy ? null : detectContacts(cap, rest, clip, extra.tags);
+      set.clips[clipName] = ordered(clip, id, cap, entry?.[2], legacy ? null : rest.H0, found);
       (set.fit as Record<string, [number, number]>)[clipName] = [Math.round(mean), Math.round(max)];
       kept++;
     }
@@ -236,13 +244,26 @@ export function importSet(options: ImportOptions): { set: ClipSet; notes: string
   return { set, notes };
 }
 
-/** A fitted clip's header in the set's order; with `H0` (format 2) its speed, source rate and `via` too. */
+/**
+ * A capture fitted in format 2: hands, grips and foot roll on every key, and the spine override where the shares miss
+ * the capture by more than `SPINE_MISS` and it brings the worst frame closer (it can bare a long neck's own miss:
+ * CMU's). The survey fits the CMU ledger's takes the same way.
+ */
+export function fitFormat2(rest: RestBody, cap: Capture, tol: number, extra: EncodeExtra = {}): Fitted {
+  const fitted = fitClip(rest, cap, tol, { ...extra, hands: true, feet: true });
+  if (spineMiss(rest, cap) <= SPINE_MISS) return fitted;
+  const over = fitClip(rest, cap, tol, { ...extra, hands: true, feet: true, spine: true });
+  return over.max < fitted.max ? over : fitted;
+}
+
+/** A fitted clip's header in the set's order; with `H0` (format 2) its speed, source rate, `via` and contacts too. */
 function ordered(
   clip: Clip,
   src: string,
   cap: Capture & { sourceFps?: number },
   orig: string | undefined,
   H0: number | null,
+  found: Pick<Clip, 'events' | 'contacts'> | null = null,
 ): Clip {
   const out: Omit<Clip, 'keys'> = {
     clip: clip.clip,
@@ -259,5 +280,7 @@ function ordered(
   if (clip.desc) out.desc = clip.desc;
   if (H0 && cap.sourceFps) out.fps = cap.sourceFps;
   if (H0) out.via = 'source';
+  if (found?.events?.length) out.events = found.events;
+  if (found?.contacts?.length) out.contacts = found.contacts;
   return { ...out, keys: clip.keys };
 }

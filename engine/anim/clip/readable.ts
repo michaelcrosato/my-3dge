@@ -9,9 +9,10 @@
  * `LEGEND`). Limbs are a direction plus a bend, so the same clip fits any build and mirrors by swapping L and R.
  * Between keys every stored number is in-betweened linearly; loops wrap, one-shots hold their last pose (`keyAt`).
  *
- * Invariants: the decode reads format-1 fields only; format 2's key fields (hands, foot roll, root yaw, the spine
- * override, grips) are carried, in-betweened, mirrored and printed, and WP 8.8's importer, which first writes them,
- * adds their decode with their encode. The frame math and `torso` are frames.ts's, which the encode (encode.ts)
+ * Invariants: a format-1 key decodes as the source's does; format 2's key fields are carried, in-betweened, mirrored
+ * and printed, and decoded with the encode that writes them (WP 8.8, ADR-0010 amendment 7): a hand's turn and grip
+ * place its four points (hands.ts), a foot's roll its toes (feet.ts), the spine override the spine's middle bones
+ * (frames.ts `torso`). The frame math and `torso` are frames.ts's, which the encode (encode.ts)
  * shares, as the source shares them. Points are millimetres in the rig frame: f forward, r right, z up. validate.ts
  * reads clips and sets in (and types the `RestBody` their sources measured); lens.ts prints them; mirror.ts mirrors
  * them.
@@ -25,6 +26,8 @@
  * @see engine/anim/clip/readable.test.ts
  */
 import { add, cross, DG, dot, hintFor, len, limbEnd, mul, norm, reachOf, SG, sub, torso, wld, type V } from './frames';
+import { rolledToe } from './feet';
+import { placeHand } from './hands';
 import { KEY_ARRAYS, KEY_NUMBERS } from './lens';
 import type { RestBody } from './validate';
 
@@ -166,9 +169,31 @@ function poleHint(d: V, h: V, deg: number): V {
   return add(mul(hn, Math.cos(a)), mul(cross(d, hn), Math.sin(a)));
 }
 
-/** Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it. */
-export function decodePose<T extends PointArray>(R: RestBody, k: KeyPose, out: T): T {
+/** The torso `torso()` rebuilds for a key: its frames and the points the limbs hang from. */
+export type Torso = ReturnType<typeof torso>;
+
+/**
+ * The decode's arm on side `s`: the shoulder, the elbow, the IK's end (format 1's fist), the forearm's direction, the
+ * wrist and the elbow's pole. The encoder reads it too, to write a hand against the frame its decode rebuilds.
+ */
+export function armOf(R: RestBody, tq: Torso, k: KeyPose, s: 'L' | 'R') {
   const lower = R.fore + R.fist;
+  const sh = tq.sh(s);
+  const a = k[`arm${s}`] as V;
+  const aN = norm(a);
+  const fT = limbEnd(sh, tq.RC, aN, s, reachOf(a[3] || 0, R.up, lower));
+  const ad = norm(sub(fT, sh));
+  const hint = poleHint(ad, hintFor('arm', SG[s], tq.RC, [aN[0], aN[1] * SG[s], aN[2]]), a[4] || 0);
+  const [el, end] = ik3(sh, fT, R.up, lower, hint);
+  const fd = norm(sub(end, el));
+  return { sh, el, end, fd, wr: add(el, mul(fd, R.fore)), hint };
+}
+
+/**
+ * Writes the 36 body points of key pose `k`, rebuilt on rest body `R`, into `out` (mm, rig frame) and returns it. A
+ * key with format 2's `hand` or `grip` on a side places that hand as engine/anim/clip/hands.ts does.
+ */
+export function decodePose<T extends PointArray>(R: RestBody, k: KeyPose, out: T): T {
   const tq = torso(R, k);
   const set = (name: string, v: V) => {
     const i = POINT_INDEX[name] * 3;
@@ -187,24 +212,22 @@ export function decodePose<T extends PointArray>(R: RestBody, k: KeyPose, out: T
   set('faceF', add(head, wld(RH, R.faceH)));
   const blade = k.blade ? norm(wld(RC, k.blade)) : null;
   for (const s of ['L', 'R'] as const) {
-    const sh = tq.sh(s);
-    const a = k[`arm${s}`] as V;
-    const aN = norm(a);
-    const fT = limbEnd(sh, RC, aN, s, reachOf(a[3] || 0, R.up, lower));
-    const ad = norm(sub(fT, sh));
-    const hint = poleHint(ad, hintFor('arm', SG[s], RC, [aN[0], aN[1] * SG[s], aN[2]]), a[4] || 0);
-    const [el, fist] = ik3(sh, fT, R.up, lower, hint);
-    const fd = norm(sub(fist, el));
-    const wr = add(el, mul(fd, R.fore));
+    const { sh, el, end, fd, wr, hint } = armOf(R, tq, k, s);
     set(`clav${s}`, add(neck, wld(RC, R.clav[s])));
     set(`sh${s}`, sh);
     set(`elbow${s}`, el);
     set(`wrist${s}`, wr);
-    set(`knuck${s}`, add(wr, mul(fd, R.knuck)));
-    set(`fist${s}`, fist);
-    const acr = s === 'R' && blade ? blade : RC[1];
-    set(`index${s}`, add(fist, mul(acr, 20)));
-    set(`pinky${s}`, add(fist, mul(acr, -20)));
+    const [pose, grip] = [k[`hand${s}`], k[`grip${s}`]];
+    if (pose || grip !== undefined) {
+      const hand = placeHand(R, wr, fd, hint, s, pose, grip);
+      for (const part of ['knuck', 'fist', 'index', 'pinky'] as const) set(part + s, hand[part]);
+    } else {
+      set(`knuck${s}`, add(wr, mul(fd, R.knuck)));
+      set(`fist${s}`, end);
+      const acr = s === 'R' && blade ? blade : RC[1];
+      set(`index${s}`, add(end, mul(acr, 20)));
+      set(`pinky${s}`, add(end, mul(acr, -20)));
+    }
     const hip = tq.hip(s);
     const l = k[`leg${s}`] as V;
     const ln = norm(l);
@@ -220,7 +243,9 @@ export function decodePose<T extends PointArray>(R: RestBody, k: KeyPose, out: T
     const dir = (q: number) => wld(RP, [Math.cos(q) * Math.cos(yw), SG[s] * Math.cos(q) * Math.sin(yw), -Math.sin(q)]);
     const ball = add(an, mul(dir(pa), R.ab));
     set(`ball${s}`, ball);
-    set(`toe${s}`, add(ball, mul(dir(pb), R.bt)));
+    const roll = k[`roll${s}`];
+    const toe = roll === undefined ? dir(pb) : rolledToe(dir(pa), dir(pa + Math.PI / 2), (pb - pa) / DG, roll, s);
+    set(`toe${s}`, add(ball, mul(toe, R.bt)));
   }
   return out;
 }

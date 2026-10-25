@@ -1,9 +1,10 @@
 /**
  * @file The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole
- * takes, 30 frames a second, fitted within 30 mm) and measured into its ledger row (tools/anim/ledger.ts): its fit,
- * the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off
- * the floor, loose, short, an assumed rate). With `library`, every take also becomes a set, one directory a subject,
- * in `.cache/anim/cmu-lib/` (fitted looser, within 50 mm, for browsing). Ported from `my-3d2dge:tools/cmu.mjs:147-232`
+ * takes, 30 frames a second, fitted within 30 mm, in format 2 unless `legacy`: tools/anim/import.ts `fitFormat2`) and
+ * measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how
+ * high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate, and `f2`
+ * for a fit in format 2, which rows surveyed before WP 8.8 lack). With `library`, every take also becomes a set, one
+ * directory a subject, in `.cache/anim/cmu-lib/` (fitted looser, within 50 mm, for browsing). Ported from `my-3d2dge:tools/cmu.mjs:147-232`
  * with its measurements kept (`legacy` reads the takes as the source does; tools/anim/cmu-capture.ts).
  *
  * What it keeps: each row's `note` (people's), and a verified rate: a take missing from the site's motion list
@@ -28,6 +29,7 @@ import { ROOT } from '../x';
 import { ANIM_CACHE, asfOf, CMU_CACHE, cmuIndex, type IndexedTake } from './cmu';
 import { readCmu, type CmuCapture, type Pick } from './cmu-capture';
 import { categoryOf, readLedger, writeLedger, type Ledger, type Take } from './ledger';
+import { fitFormat2 } from './import';
 import { CMU_CREDIT, splitSet, writeSetDir } from './repack';
 
 /** The converted library's directory, `.cache/anim/cmu-lib/`. */
@@ -130,6 +132,7 @@ export function surveyCmu(options: SurveyOptions = {}): { done: number; secs: nu
         cap,
         rest,
         tol,
+        legacy,
         options.ledger !== false,
         set,
         libraryTol,
@@ -141,6 +144,7 @@ export function surveyCmu(options: SurveyOptions = {}): { done: number; secs: nu
       const all = [
         ...flags,
         ...flagsOf({ ...m, n: cap.n, dur: cap.dur, mean: options.ledger !== false ? mean : undefined }),
+        ...(options.ledger !== false && !legacy ? ['f2'] : []), // the fit is format 2's (WP 8.8)
       ];
       rows.set(id, {
         ...row,
@@ -237,6 +241,7 @@ function fitPieces(
   cap: Capture,
   rest: ReturnType<typeof measure>,
   tol: number,
+  legacy: boolean,
   ledger: boolean,
   set: ClipSet | null,
   libraryTol: number,
@@ -252,7 +257,7 @@ function fitPieces(
       ...{ name: cap.name, n: b - a + 1, dur: (b - a) / 30, loop: false, fps: 30 },
       ...{ data: cap.data.subarray(a * F, (b + 1) * F), move: cap.move ? cap.move.subarray(a * 2, (b + 1) * 2) : null },
     };
-    const fitted = ledger ? fitClip(rest, piece, tol) : null;
+    const fitted = ledger ? (legacy ? fitClip(rest, piece, tol) : fitFormat2(rest, piece, tol)) : null;
     if (fitted) [sum, worst] = [sum + fitted.mean * piece.n, Math.max(worst, fitted.max)];
     if (set) {
       const { clip, max, mean } = fitted && libraryTol === tol ? fitted : fitClip(rest, piece, libraryTol);

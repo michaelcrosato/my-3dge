@@ -7,7 +7,7 @@
 import { OrthographicCamera, PerspectiveCamera } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { chainOf } from './filters';
-import { ART_LINES, artBlock, frameGrid, inkWidth, pixelBlock, snapBlock } from './grid';
+import { ART_LINES, artBlock, frameGrid, inkWidth, pixelBlock, QUAD, snapBlock } from './grid';
 
 describe('artBlock', () => {
   it('takes the largest whole block giving at least 240 lines, at most 360 from 480 lines up', () => {
@@ -54,7 +54,7 @@ describe('frameGrid', () => {
   it("snaps the pixel look's camera to one drawn pixel, its cells for the dithers, its glide only when smooth", () => {
     const camera = iso();
     const still = frameGrid(chainOf({ pixel: { scope: 'all', size: 0 } }), camera, SIZE);
-    expect([still.block, still.cells[0], still.shift]).toEqual([1, 26, [0, 0]]);
+    expect([still.block, still.cells[0], still.snap, still.shift]).toEqual([1, 26, 1, [0, 0]]);
     still.restore();
     const smooth = frameGrid(chainOf({ pixel: { scope: 'all', size: 0, smooth: true } }), camera, SIZE);
     expect(smooth.shift[0]).toBeCloseTo(0.35, 10);
@@ -62,11 +62,28 @@ describe('frameGrid', () => {
     expect(camera.position.x).toBe(0.513);
   });
 
+  it('moves a gliding one-pixel snap by whole 2 × 2 quads: even cells, the glide within a drawn pixel', () => {
+    const camera = iso();
+    camera.position.x = 0.533; // 26.65 pixels across: 27 by itself, 26 by quads
+    camera.updateMatrixWorld();
+    const still = frameGrid(chainOf({ pixel: { scope: 'all', size: 0 } }), camera, SIZE);
+    expect([still.cells[0], still.shift[0]]).toEqual([27, 0]);
+    still.restore();
+    const smooth = frameGrid(chainOf({ pixel: { scope: 'all', size: 0, smooth: true } }), camera, SIZE);
+    expect([smooth.cells[0], smooth.snap, QUAD]).toEqual([26, 1, 2]);
+    expect(smooth.shift[0]).toBeCloseTo(-0.65, 10);
+    expect(camera.position.x).toBeCloseTo(0.52, 10); // 13 quads of 0.04 m
+    smooth.restore();
+    const big = frameGrid(chainOf({ pixel: { scope: 'all', size: 3, smooth: true } }), camera, SIZE);
+    expect([big.cells[0], big.snap]).toEqual([9, 3]); // a block of 3 keeps its own snap: 8.88 blocks
+    big.restore();
+  });
+
   it('leaves the camera where it is without a snap, the cells and the glide at 0', () => {
     const camera = new PerspectiveCamera(60, 16 / 9, 0.1, 100);
     camera.position.set(0.513, 1.5, 0);
     const grid = frameGrid(chainOf({ pixel: { scope: 'all', size: 0, snap: false, smooth: true } }), camera, SIZE);
-    expect([grid.block, grid.cells, grid.shift]).toEqual([1, [0, 0], [0, 0]]);
+    expect([grid.block, grid.cells, grid.snap, grid.shift]).toEqual([1, [0, 0], 0, [0, 0]]);
     grid.restore();
     expect(camera.position.x).toBe(0.513);
   });

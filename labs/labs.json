@@ -1,0 +1,119 @@
+{
+  "$about": "The labs index (labs/index/, PLAN.md WP 10.8) is built from this list. Each entry is a page under labs/ (page: its directory) with links [label, what to add to its address], what it is for and the x command that does the same job without the page. keep: pages and labs worth keeping. temporary: one-off comparisons and experiments, each with the date it was added, the question it answers, its answer once settled, and the date it expires; node x lab list fails on one past its date. node x lab add|rm|list keeps this file; tests/e2e/labs.spec.ts checks that the index lists every link and opens each lab at its first.",
+  "sections": [
+    {
+      "id": "pages",
+      "title": "The engine's pages",
+      "entries": [
+        {
+          "page": "box",
+          "title": "The Stress Box",
+          "what": "The engine's integration target: every capability in a scene of its own, from a room with the hero to crowds, fights, ragdolls and clip mode.",
+          "command": "node x sim labs/box/scenes/<scene> · node x shot labs/box --scene <scene>",
+          "links": [
+            ["The room", ""],
+            ["Clip mode", "?scene=clips"],
+            ["Ragdolls", "?scene=ragdoll"],
+            ["The hall", "?scene=hall"]
+          ]
+        },
+        {
+          "page": "playground",
+          "title": "The playground",
+          "what": "The third-person playground: the gym, the house and the town, its five cameras and two looks.",
+          "command": "node x feel · node x shot labs/playground",
+          "links": [["Open", ""]]
+        },
+        {
+          "page": "game",
+          "title": "The starter game",
+          "what": "The game a new game starts from: rounds, a best score and a bot that plays it.",
+          "command": "node x sim labs/game/scenes/<scene>",
+          "links": [["Play", ""]]
+        }
+      ]
+    },
+    {
+      "id": "keep",
+      "title": "Labs",
+      "entries": [
+        {
+          "page": "anim",
+          "title": "Animation Lab",
+          "what": "The humanoid on every build and the mannequin in a row, told one state, pose, stance or move from one clock; a move's phases on a timeline to scrub; the bones drawn over them.",
+          "command": "node x gallery move · node x sheet · node x sim labs/anim/scenes/lineup",
+          "links": [
+            ["Idle", ""],
+            ["A jab, scrubbed", "?lab.anim.play=move:jab&lab.anim.time=0.2"],
+            ["Running", "?lab.anim.play=run"]
+          ]
+        },
+        {
+          "page": "materials",
+          "title": "Materials Lab",
+          "what": "Every material on its cube and every look over its set of things.",
+          "command": "node x gallery material · node x gallery look",
+          "links": [
+            ["Materials", ""],
+            ["Looks", "#gallery/look"]
+          ]
+        },
+        {
+          "page": "props",
+          "title": "Props Lab",
+          "what": "Every prop where it stands, turned on the gallery's stage.",
+          "command": "node x gallery prop",
+          "links": [
+            ["Props", ""],
+            ["A crate", "#gallery/prop/prop:crate"]
+          ]
+        },
+        {
+          "page": "fx",
+          "title": "Effects Lab",
+          "what": "Every emitter, burst again and again.",
+          "command": "node x gallery emitter",
+          "links": [
+            ["Emitters", ""],
+            ["Fire", "#gallery/emitter/emitter:fire"]
+          ]
+        },
+        {
+          "page": "cameras",
+          "title": "Cameras Lab",
+          "what": "One set of things seen through every camera the engine has: the classic views, orbit, fly and fixed, each switched to with its blend.",
+          "command": "node x shot <page> --cam <code>",
+          "links": [
+            ["Isometric", ""],
+            ["Orbit", "?cam3=orbit,30,25,6,8,0.8,8"]
+          ]
+        },
+        {
+          "page": "physics",
+          "title": "Physics Lab",
+          "what": "The box's physics scenes with their settings at hand: ragdolls falling and getting up, and the hall's props by the hundred.",
+          "command": "node x sim labs/box/scenes/ragdoll · node x inspect",
+          "links": [
+            ["Ragdolls", ""],
+            ["The hall's props", "?scene=hall-props"]
+          ]
+        },
+        {
+          "page": "library",
+          "title": "Library Lab",
+          "what": "The clip library: search it, play a clip on the mannequin and the hero, read and edit its text, mirror it, step its frames.",
+          "command": "node x anim find · node x anim show · node x anim bake",
+          "links": [
+            ["Dance", ""],
+            ["A cartwheel, from CMU", "?box.clips.clip=cmu/Cartwheel"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "temporary",
+      "title": "Temporary labs",
+      "entries": []
+    }
+  ]
+}

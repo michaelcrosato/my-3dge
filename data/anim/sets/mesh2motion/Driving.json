@@ -1,10 +1,10 @@
-{"clip": "Driving", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Driving_Loop", "dur": 2.083, "loop": true, "tags": ["sit","vehicle","alt"], "desc": "seated, hands on a steering wheel, small turns", "keys": [
+{"clip": "Driving", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Driving_Loop", "dur": 2.083, "loop": true, "tags": ["sit","vehicle","alt"], "desc": "seated, hands on a steering wheel, small turns", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.067},{"part":"footR","from":0,"to":2.067}], "keys": [
   {"t":0,
    "hips":[-35,0,62], "body":[0,-18,0], "chest":[0,14,0], "head":[0,1,0],
-   "shL":[0,0], "shR":[0,0], "armL":[96,-13,-24,77,16], "armR":[96,-9,-26,66,-11],
-   "legL":[37,11,-92,84,12], "legR":[36,17,-92,83,-10], "footL":[18,0,0], "footR":[18,4,0]},
+   "shL":[0,0], "shR":[0,0], "armL":[96,-10,-25,73,18], "armR":[94,-6,-33,56,-9], "handL":[-8,4,-39], "handR":[0,15,-58], "gripL":87, "gripR":87,
+   "legL":[37,11,-92,85,12], "legR":[36,17,-92,83,-10], "footL":[18,0,0], "footR":[18,4,0], "rollL":0, "rollR":-1},
   {"t":2.067,
    "hips":[-35,0,62], "body":[0,-18,0], "chest":[0,14,0], "head":[0,1,0],
-   "shL":[0,0], "shR":[0,0], "armL":[96,-13,-24,77,16], "armR":[96,-9,-26,66,-11],
-   "legL":[37,11,-92,84,12], "legR":[36,17,-92,83,-10], "footL":[18,0,0], "footR":[18,4,0]}
+   "shL":[0,0], "shR":[0,0], "armL":[96,-10,-25,73,18], "armR":[94,-6,-33,56,-9], "handL":[-8,4,-39], "handR":[0,15,-58], "gripL":87, "gripR":87,
+   "legL":[37,11,-92,85,12], "legR":[36,17,-92,83,-10], "footL":[18,0,0], "footR":[18,4,0], "rollL":0, "rollR":-1}
 ]}

@@ -229,16 +229,34 @@ export function withCmuTerms(set: ClipSet, catalog: string = CMU_CATALOG): ClipS
 }
 
 /** The files of my-3d2dge's three curated sets (HERO dropped), from the checkout at `sourcePath`, by directory. */
-export function legacySetFiles(sourcePath: string): Record<string, SetFiles> {
+export function legacySetFiles(sourcePath: string, root: string = SETS_DIR): Record<string, SetFiles> {
   const sets = CURATED_SETS.map((name) => tagAlternates(readPlainSet(readLegacySet(sourcePath, name)))).map((set) =>
     set.set === 'CMU' ? withCmuTerms(set) : set,
   );
-  return Object.fromEntries(sets.map((set) => [setDirName(set.set), splitSet(set)]));
+  return Object.fromEntries(sets.map((set) => [setDirName(set.set), splitSet(keepUpgrades(set, root))]));
+}
+
+/**
+ * `set` with the clips its committed version in `root` re-imported from their source (WP 8.8: `via: "source"`,
+ * tools/anim/upgrade.ts) taken from it, with their fits and its format, so a curated set repacks as committed and
+ * never undoes the upgrade; every other clip stays the source's.
+ */
+export function keepUpgrades(set: ClipSet, root: string = SETS_DIR): ClipSet {
+  const dir = join(root, setDirName(set.set));
+  if (!existsSync(join(dir, SET_FILE))) return set;
+  const held = joinSet(readSetDir(dir));
+  const swapped = new Set(Object.keys(held.clips).filter((name) => held.clips[name].via === 'source' && set.clips[name])); // prettier-ignore
+  if (!swapped.size) return set;
+  const pick = <T>(entries: Record<string, T>, from: Record<string, T>) =>
+    Object.fromEntries(Object.entries(entries).map(([name, v]) => [name, swapped.has(name) ? from[name] : v]));
+  const fit = set.fit && held.fit && pick(set.fit, held.fit);
+  return { ...set, format: held.format, ...(fit && { fit }), clips: pick(set.clips, held.clips) };
 }
 
 /**
  * Repacks sets into `root` (see the file comment): plain JSON sets from `paths`, else the curated sets the my-3d2dge
- * checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius); with `check` it only compares. Returns a line per set and how many files differ.
+ * checkout still provides (mesh2motion and cmu; WP 8.10 replaced quaternius), their clips re-imported from the source
+ * kept (`keepUpgrades`); with `check` it only compares. Returns a line per set and how many files differ.
  */
 export function repackSets(
   paths: string[],
@@ -255,7 +273,7 @@ export function repackSets(
     if (!source?.ok || !source.path) throw new Error(source?.problem ?? 'no my-3d2dge source in scripts/setup.sh');
     // quaternius is v2's now, which tools/anim/shardfall.ts writes (WP 8.10): only the others come from my-3d2dge
     sets = Object.fromEntries(
-      Object.entries(legacySetFiles(source.path)).filter(([dir]) => !SHARDFALL_WRITES.has(dir)),
+      Object.entries(legacySetFiles(source.path, root)).filter(([dir]) => !SHARDFALL_WRITES.has(dir)),
     );
   }
   const lines: string[] = [];

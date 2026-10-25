@@ -89,6 +89,23 @@ describe('mirrorClip', () => {
       }
     }
   });
+
+  it("decodes format 2's keys to the reflected body, every hand, spine and toe point with it", () => {
+    const { blade: _blade, ...free } = busy(0);
+    const hands = {
+      ...{ handL: [20, -10, 35], handR: [-15, 25, -40], gripL: 80, gripR: 30 },
+      ...{ spine: [12, 30, -9], rollL: 20, rollR: -15, footL: [25, 10, 35], footR: [-10, -5, -20] },
+    } as const;
+    const clip = clipOf([{ ...free, ...hands } as ClipKey, { ...standing(1), ...hands } as ClipKey]);
+    const other = (name: string) => name.replace(/[LR]$/, (side) => (side === 'L' ? 'R' : 'L'));
+    for (const t of [0, 0.4, 1]) {
+      const [a, b] = [samplePose(REST, clip, t), samplePose(REST, mirrorClip(clip), t)];
+      for (const name of POSE_POINTS) {
+        const [i, j] = [POINT_INDEX[name] * 3, POINT_INDEX[other(name)] * 3];
+        expect(Math.hypot(a[i] - b[j], a[i + 1] + b[j + 1], a[i + 2] - b[j + 2]), name).toBeLessThan(1e-6);
+      }
+    }
+  });
 });
 
 describe('the curated library (it needs the my-3d2dge checkout)', () => {

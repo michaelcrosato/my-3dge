@@ -1,14 +1,14 @@
-{"clip": "Tired Hunched", "src": "M2M_ANIMATED", "dur": 1.042, "loop": true, "tags": ["rest","hurt"], "desc": "crouched low and doubled over, exhausted, catching breath", "keys": [
+{"clip": "Tired Hunched", "src": "M2M_ANIMATED", "dur": 1.042, "loop": true, "tags": ["rest","hurt"], "desc": "crouched low and doubled over, exhausted, catching breath", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":1.033},{"part":"footR","from":0,"to":1.033},{"part":"handL","from":0,"to":1.033}], "keys": [
   {"t":0,
    "hips":[-2,0,48], "body":[0,55,0], "chest":[0,26,0], "head":[0,-38,0],
-   "shL":[0,0], "shR":[0,0], "armL":[99,11,-2,87,25], "armR":[43,-77,-46,121,46],
-   "legL":[25,29,-92,122,-15], "legR":[15,17,-97,117,10], "footL":[47,180,-19], "footR":[45,153,-19]},
+   "shL":[0,0], "shR":[0,0], "armL":[97,10,-24,35,7], "armR":[70,-67,-23,108,19], "handL":[-83,-13,75], "handR":[40,-55,-84], "gripL":0, "gripR":0,
+   "legL":[25,29,-92,122,-15], "legR":[15,17,-97,117,10], "footL":[47,-180,-19], "footR":[45,153,-19], "rollL":0, "rollR":23},
   {"t":0.567,
    "hips":[-2,0,48], "body":[0,57,0], "chest":[0,26,0], "head":[0,-30,0],
-   "shL":[0,0], "shR":[0,0], "armL":[99,11,1,91,23], "armR":[46,-77,-45,120,44],
-   "legL":[28,30,-91,123,-15], "legR":[18,17,-97,117,9], "footL":[49,180,-19], "footR":[47,149,-19]},
+   "shL":[0,0], "shR":[0,0], "armL":[98,9,-20,47,8], "armR":[72,-66,-21,107,16], "handL":[-76,-16,78], "handR":[40,-56,-81], "gripL":0, "gripR":1,
+   "legL":[28,30,-91,122,-15], "legR":[18,17,-97,117,9], "footL":[49,-180,-19], "footR":[47,149,-19], "rollL":0, "rollR":28},
   {"t":1.033,
    "hips":[-2,0,48], "body":[0,55,0], "chest":[0,26,0], "head":[0,-38,0],
-   "shL":[0,0], "shR":[0,0], "armL":[99,11,-2,87,25], "armR":[43,-77,-46,121,46],
-   "legL":[25,29,-92,122,-15], "legR":[15,17,-97,117,10], "footL":[47,180,-19], "footR":[45,153,-19]}
+   "shL":[0,0], "shR":[0,0], "armL":[97,10,-24,35,7], "armR":[70,-67,-23,108,19], "handL":[-83,-13,75], "handR":[40,-55,-84], "gripL":0, "gripR":0,
+   "legL":[25,29,-92,122,-15], "legR":[15,17,-97,117,10], "footL":[47,-180,-19], "footR":[45,153,-19], "rollL":0, "rollR":23}
 ]}

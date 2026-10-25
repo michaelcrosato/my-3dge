@@ -3,7 +3,7 @@
  * `[F, R, U]` (forward, right and up as columns), quaternions `[x, y, z, w]`, `[turn, lean, tilt]` degrees, the hint
  * a limb's twist is measured from, and `torso`, which places a key pose's spine, neck, head, shoulders and hips on a
  * rest body. The decode (readable.ts) and the encode (encode.ts) both use this one copy, so a key encodes against
- * exactly the torso its decode rebuilds, and a change to it (format 2's spine, roll and yaw, WP 8.8) reaches both.
+ * exactly the torso its decode rebuilds, and a change to it (format 2's spine override, WP 8.8) reaches both.
  *
  * Invariants: every operation is written as `my-3d2dge:src/mocap/readable.js` writes it, in its order, on the
  * standard `Math`, for its bits (readable.test.ts decodes every curated clip bit-identical to the source, and
@@ -78,7 +78,8 @@ function quatOf(M: Frame): V {
   const l = Math.hypot(...q);
   return q.map((v) => v / l);
 }
-const qmul = (a: V, b: V): V => [
+/** The quaternion product `a b`: `b`'s turn, then `a`'s. */
+export const qmul = (a: V, b: V): V => [
   a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
   a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
   a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
@@ -157,15 +158,23 @@ export const SG = { L: -1, R: 1 } as const;
 export const limbEnd = (root: V, M: Frame, v: V, s: 'L' | 'R', l: number) =>
   add(root, wld(M, [v[0] * l, v[1] * SG[s] * l, v[2] * l]));
 
-/** The torso and head frames of key pose `k` on rest body `R`, and the joints placed from them. */
+/** The spine bones format 2's `spine` override turns: the two between `spine1` and the chest. */
+export const MIDDLE = [false, true, true, false];
+
+/**
+ * A key pose's torso on rest body `R`: the pelvis, chest and head frames, the spine's points (format 2's `spine`
+ * turning its middle bones), the neck and head, and the shoulders and hips the limbs hang from.
+ */
 export function torso(R: RestBody, k: KeyPose) {
   const p = mul(k.hips as V, R.H0 / 100);
   const RP = fromEuler(k.body as V);
   const RC = compose(RP, fromEuler(k.chest as V));
   const RH = compose(RC, fromEuler(k.head as V));
   const [qP, qC, qH] = [qFromTo(R.Pr, RP), qFromTo(R.Cr, RC), qFromTo(R.Hr, RH)];
+  // format 2's spine override turns the spine's two middle bones together, relative to the body, in their shares' place
+  const qS = k.spine ? qFromTo(R.Pr, compose(RP, fromEuler(k.spine as V))) : null;
   const sp = [p];
-  R.spineW.forEach((w, i) => sp.push(add(sp[i], qrot(qslerp(qP, qC, w), R.spine[i]))));
+  R.spineW.forEach((w, i) => sp.push(add(sp[i], qrot(qS && MIDDLE[i] ? qS : qslerp(qP, qC, w), R.spine[i]))));
   const neck = sp[4];
   const head = add(neck, qrot(qslerp(qC, qH, R.neckW), R.neckSeg));
   const sh = (s: 'L' | 'R') => {

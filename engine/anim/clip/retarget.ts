@@ -22,11 +22,11 @@
  * Invariants: a skeleton's standing hip height is its hip joints' rest height (straight legs: `legUpper + legLower`
  * times `size` for a build); the hip-height ratio is the target's over the rest body's, and every place of the clip
  * scales by it: the hip joints' centre, the feet, the hands, the travel. Feet: each ankle aims where the source's is,
- * at the height that puts the foot's lowest point (sole, ball or toe tip) where the source's is, never below the
- * floor, and keeps the clip's turn; the knee bends toward the source's knee once it stands `KNEE_POLE` off its
- * hip–ankle line (after G9); the pelvis drops as far as the lower foot needs to reach with a straight leg
- * (footPlant.ts `footPlant`'s rule), fully for a foot on the floor, not at all `soleFade` up. Hands reach only inside a
- * format-2 `contacts` interval (a loop's on every lap). Places are metres in the character's frame, root at the origin.
+ * at the height that puts the foot's lowest point (sole, ball or toe tip) where the source's is, never below the floor,
+ * and keeps the clip's turn; the knee bends toward the source's knee once it stands `KNEE_POLE` off its hip–ankle line
+ * (after G9); the pelvis drops as far as the lower foot needs to reach with a straight leg (footPlant.ts `footPlant`'s
+ * rule), fully for a foot on the floor, not at all `soleFade` up. A hand reaches the source's inside a format-2
+ * `contacts` interval, eased in and out (`handWeight`). Places are metres in the character's frame, root at the origin.
  *
  * @example
  * import { createSkeleton } from '../skeleton';
@@ -42,7 +42,7 @@ import { MathUtils, Quaternion, Vector3 } from '../../core/math';
 import { holdAlong } from '../authoring';
 import { createWorldPose, forwardKinematics, jointPosition, jointRotation, socketPosition, tipPosition } from '../fk';
 import type { WorldPose } from '../fk';
-import { twoBoneRot, type LimbEnd } from '../ik';
+import { twoBoneRot } from '../ik';
 import { Pose } from '../pose';
 import { JOINT_COUNT, JOINTS, jointIndex, PARENTS } from '../skeleton';
 import type { JointName, Skeleton } from '../skeleton';
@@ -52,9 +52,10 @@ import type { RestBody } from './validate';
 
 /**
  * Contact IK's tuning: the height (m) of the source's foot's lowest point at which the foot stops pulling the pelvis
- * down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units).
+ * down; the height (m) a held blade's tip keeps over the floor (drive's 0.3 units); the time (s) a hand's IK fades in
+ * before its contact and out after it.
  */
-export const RETARGET = { soleFade: 0.3, bladeFloor: 0.3 / 16 } as const;
+export const RETARGET = { soleFade: 0.3, bladeFloor: 0.3 / 16, handFade: 0.2 } as const;
 
 const HIPS = [jointIndex('thighL') * 3, jointIndex('thighR') * 3] as const;
 const [at, rot] = [new Vector3(), new Quaternion()];
@@ -166,6 +167,32 @@ function lowest(k: Skeleton, world: WorldPose): number {
   return low;
 }
 
+/**
+ * How much hand `part`'s IK weighs at `lap` s into a clip `duration` s long (0 to 1): 1 inside its `contacts`, eased
+ * to 0 over `RETARGET.handFade` s either side; a loop's contacts repeat every lap, so one across its seam never fades.
+ * The hand's goal moves from the copy's hand toward the source's by it, so a hand the copy puts elsewhere on a build
+ * never jumps at a contact's edge (without it, WP 8.8's review measured up to 410 mm in one 60 Hz step).
+ */
+export function handWeight(
+  contacts: readonly { part: string; from: number; to: number }[],
+  part: string,
+  lap: number,
+  duration: number,
+  loop: boolean,
+): number {
+  let weight = 0;
+  for (const c of contacts) {
+    if (c.part !== part) continue;
+    for (const shift of loop && duration > 0 ? [-duration, 0, duration] : [0]) {
+      const out = Math.max(c.from - (lap + shift), lap + shift - c.to, 0) / RETARGET.handFade; // fades from 0 to 1
+      if (out < 1) weight = Math.max(weight, MathUtils.smoothstep(1 - out, 0, 1));
+    }
+  }
+  return weight;
+}
+
+const HANDS = ['handL', 'handR'] as const;
+
 /** How far (m) the source's knee must stand off its hip–ankle line before contact IK bends the leg its way. */
 const KNEE_POLE = 0.02;
 const [poles, bends] = [
@@ -250,9 +277,11 @@ export function retargetPose(
     plantFeet(rest, m, skeleton, out, world);
     const d = baked.duration;
     const lap = baked.loop && d > 0 ? ((t % d) + d) % d : t;
-    for (const c of options.contacts ?? baked.contacts) {
-      if ((c.part !== 'handL' && c.part !== 'handR') || lap < c.from || lap > c.to) continue;
-      twoBoneRot(skeleton, out, world, c.part as LimbEnd, jointPosition(sourceWorld, c.part, target).multiplyScalar(m.ratio)); // prettier-ignore
+    for (const end of HANDS) {
+      const weight = handWeight(options.contacts ?? baked.contacts, end, lap, d, baked.loop);
+      if (weight === 0) continue;
+      const goal = jointPosition(sourceWorld, end, target).multiplyScalar(m.ratio);
+      twoBoneRot(skeleton, out, world, end, goal.lerp(jointPosition(world, end, hip), 1 - weight));
     }
   }
   if (options.lift ?? true) {

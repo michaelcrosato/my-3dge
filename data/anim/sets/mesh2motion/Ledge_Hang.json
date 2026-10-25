@@ -1,14 +1,14 @@
-{"clip": "Ledge Hang", "src": "M2M_ANIMATED", "dur": 1.917, "loop": true, "tags": ["climb","idle"], "desc": "hangs from a ledge by both hands, legs dangling", "keys": [
+{"clip": "Ledge Hang", "src": "M2M_ANIMATED", "dur": 1.917, "loop": true, "tags": ["climb","idle"], "desc": "hangs from a ledge by both hands, legs dangling", "fps": 24, "via": "source", "contacts": [{"part":"handL","from":0,"to":1.9},{"part":"handR","from":0,"to":1.9}], "keys": [
   {"t":0,
    "hips":[-5,0,100], "body":[0,0,0], "chest":[0,-13,0], "head":[23,17,-5],
-   "shL":[31,15], "shR":[25,18], "armL":[44,-8,90,34,-69], "armR":[46,-7,88,35,64],
-   "legL":[-6,0,-100,11,-5], "legR":[-7,-5,-100,44,-1], "footL":[61,0,0], "footR":[61,0,0]},
+   "shL":[31,15], "shR":[25,18], "armL":[39,-3,92,4,-71], "armR":[44,-3,90,13,64], "handL":[3,18,-70], "handR":[-6,15,-60], "gripL":69, "gripR":72,
+   "legL":[-6,0,-100,11,-5], "legR":[-7,-5,-100,44,-1], "footL":[61,0,0], "footR":[61,0,0], "rollL":0, "rollR":0},
   {"t":0.9,
    "hips":[-5,0,101], "body":[0,0,0], "chest":[0,-15,0], "head":[24,19,-6],
-   "shL":[24,13], "shR":[24,12], "armL":[51,-8,86,28,-73], "armR":[51,-8,86,30,73],
-   "legL":[-8,0,-100,32,-3], "legR":[-7,-3,-100,45,1], "footL":[61,0,0], "footR":[61,0,0]},
+   "shL":[24,13], "shR":[24,12], "armL":[47,-3,88,0,-97], "armR":[47,-3,88,0,94], "handL":[-1,17,-91], "handR":[-2,18,-88], "gripL":67, "gripR":72,
+   "legL":[-8,0,-100,30,-3], "legR":[-7,-3,-100,43,1], "footL":[61,0,0], "footR":[61,0,0], "rollL":0, "rollR":0},
   {"t":1.9,
    "hips":[-5,0,100], "body":[0,0,0], "chest":[0,-13,0], "head":[23,17,-5],
-   "shL":[31,15], "shR":[25,18], "armL":[44,-8,90,34,-69], "armR":[46,-7,88,35,64],
-   "legL":[-6,0,-100,11,-5], "legR":[-7,-5,-100,44,-1], "footL":[61,0,0], "footR":[61,0,0]}
+   "shL":[31,15], "shR":[25,18], "armL":[39,-3,92,4,-71], "armR":[44,-3,90,13,64], "handL":[3,18,-70], "handR":[-6,15,-60], "gripL":69, "gripR":72,
+   "legL":[-6,0,-100,11,-5], "legR":[-7,-5,-100,44,-1], "footL":[61,0,0], "footR":[61,0,0], "rollL":0, "rollR":0}
 ]}

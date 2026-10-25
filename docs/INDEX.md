@@ -201,9 +201,18 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`encode.ts`](../engine/anim/clip/encode.ts): The importer half of the readable codec (PLAN.md §10, WP 8.5; ADR-0010 amendment 1): a captured clip, 36 body points a frame, turned into readable key poses.
   - Exports: `capSample`, `Capture`, `encodeClip`, `EncodeExtra`, `encodePose`, `fitClip`, `Fitted`, `measure`, `reduce`
   - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts)
+- [`feet.ts`](../engine/anim/clip/feet.ts): Format 2's foot roll (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `rollL`/`rollR` turn each foot about its ankle-to-ball line, + turning the sole inward.
+  - Exports: `encodeRoll`, `footLine`, `rolledToe`
+  - Tests: [`engine/anim/clip/feet.test.ts`](../engine/anim/clip/feet.test.ts)
 - [`frames.ts`](../engine/anim/clip/frames.ts): The readable codec's frame math (PLAN.md §10.2, WP 8.2 and WP 8.5; ADR-0010 amendment 4): vectors, frames `[F, R, U]` (forward, right and up as columns), quaternions `[x, y, z, w]`, `[turn, lean, tilt]` degrees, the hint a limb's twist is measured from, and `torso`, which places a key pose's spine, neck, head, shoulders and hips on a rest body.
-  - Exports: `add`, `compose`, `cross`, `DG`, `dot`, `Frame`, `fromEuler`, `hintFor`, `len`, `Limb`, `limbEnd`, `mul`, `norm`, `qFromTo`, `qrot`, `qslerp`, `reachOf`, `SG`, `sub`, `torso`, `V`, `wld`
+  - Exports: `add`, `compose`, `cross`, `DG`, `dot`, `Frame`, `fromEuler`, `hintFor`, `len`, `Limb`, `limbEnd`, `MIDDLE`, `mul`, `norm`, `qFromTo`, `qmul`, `qrot`, `qslerp`, `reachOf`, `SG`, `sub`, `torso`, `V`, `wld`
   - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts), [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
+- [`hands.ts`](../engine/anim/clip/hands.ts): Format 2's hands (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `handL`/`handR` `[flex, side, roll]` turn the hand at the wrist, and `gripL`/`gripR` (0–100) close it.
+  - Exports: `encodeHand`, `HALF_SPAN`, `handBase`, `handFrame`, `HandPoints`, `HandPose`, `HandSizes`, `placeHand`
+  - Tests: [`engine/anim/clip/hands.test.ts`](../engine/anim/clip/hands.test.ts)
+- [`inverse.ts`](../engine/anim/clip/inverse.ts): The encode's own frame math (PLAN.md §10.2, WP 8.5; ADR-0010 amendment 4): the inverses of frames.ts's, which the decode and the encode share.
+  - Exports: `bendOf`, `bodyFrames`, `euler`, `frameFR`, `frameUF`, `loc`, `poleOf`, `pt`, `rel`, `unwrap`
+  - Tests: [`engine/anim/clip/encode.test.ts`](../engine/anim/clip/encode.test.ts)
 - [`layer.ts`](../engine/anim/clip/layer.ts): The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7, engine/anim/weights.ts), stacked, the last played on top (`current`), each fading in over what plays under it.
   - Exports: `CLIP_LAYER`, `ClipLayer`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerState`, `ClipPlay`, `ClipSlot`, `ClipStepInput`
   - Tests: [`engine/anim/clip/layer-play.test.ts`](../engine/anim/clip/layer-play.test.ts), [`engine/anim/clip/layer.test.ts`](../engine/anim/clip/layer.test.ts)
@@ -217,14 +226,17 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `mirrorClip`
   - Tests: [`engine/anim/clip/mirror.test.ts`](../engine/anim/clip/mirror.test.ts)
 - [`readable.ts`](../engine/anim/clip/readable.ts): Readable key poses, the stored clip format (PLAN.md §10.2, WP 8.2; ADR-0010): its types, format 1 and the fields format 2 adds, and the decode that rebuilds 36 body points from a key pose on a measured rest body.
-  - Exports: `Clip`, `ClipContact`, `ClipEvent`, `ClipKey`, `decodePose`, `keyAt`, `KeyPose`, `LimbPose`, `moveAt`, `POINT_COUNT`, `POINT_INDEX`, `PointArray`, `POSE_POINTS`, `samplePose`, `Triple`
+  - Exports: `armOf`, `Clip`, `ClipContact`, `ClipEvent`, `ClipKey`, `decodePose`, `keyAt`, `KeyPose`, `LimbPose`, `moveAt`, `POINT_COUNT`, `POINT_INDEX`, `PointArray`, `POSE_POINTS`, `samplePose`, `Torso`, `Triple`
   - Tests: [`engine/anim/clip/readable.test.ts`](../engine/anim/clip/readable.test.ts)
 - [`rest.ts`](../engine/anim/clip/rest.ts): A clip library's rest body as a skeleton (PLAN.md §10.4, WP 8.4; split from engine/anim/clip/retarget.ts after G9, ADR-0014 amendment 17): `restSkeleton(R)` has the humanoid topology with the library's measured bones and rest curve, so FK of a baked pose on it rebuilds the decode's body points (`restPoints`): the parity proof.
   - Exports: `restBuild`, `restPoints`, `restSkeleton`
   - Tests: [`engine/anim/clip/bake.test.ts`](../engine/anim/clip/bake.test.ts)
 - [`retarget.ts`](../engine/anim/clip/retarget.ts): Retargeting (PLAN.md §10.4, WP 8.4): a baked clip (bake.ts) played on a skeleton.
-  - Exports: `AnimationClipJSON`, `clipJSON`, `hipRatio`, `RETARGET`, `RetargetOptions`, `retargetPose`, `standingHipHeight`
+  - Exports: `AnimationClipJSON`, `clipJSON`, `handWeight`, `hipRatio`, `RETARGET`, `RetargetOptions`, `retargetPose`, `standingHipHeight`
   - Tests: [`engine/anim/clip/retarget.test.ts`](../engine/anim/clip/retarget.test.ts)
+- [`spine.ts`](../engine/anim/clip/spine.ts): Format 2's spine override, encoded (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `spine [turn, lean, tilt]` turns the spine's two middle bones together, relative to the body, in place of the library's shares, which turn each bone a measured fraction of the way from the pelvis to the chest (validate.ts `RestBody.spineW`).
+  - Exports: `SPINE_MISS`, `spineMiss`, `spineOf`
+  - Tests: [`engine/anim/clip/spine.test.ts`](../engine/anim/clip/spine.test.ts)
 - [`validate.ts`](../engine/anim/clip/validate.ts): Reading clips in, and checking them (PLAN.md §10.2, WP 8.2): `parseClip` and `parseClipSet` turn text or objects into clips and sets of format 1 or 2, refusing a broken one with an error that names the clip, the key, its time and the field, and the fix; `validateClip` then warns about poses that read but play badly.
   - Exports: `CLIP_CODES`, `ClipCode`, `ClipSet`, `ClipSource`, `ClipWarning`, `parseClip`, `parseClipSet`, `poseError`, `poseMeanError`, `RestBody`, `validateClip`
   - Tests: [`engine/anim/clip/validate.test.ts`](../engine/anim/clip/validate.test.ts)
@@ -587,7 +599,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `DAYLIGHT`, `daylightAt`, `defineDaylight`, `lightAt`, `SUN`
   - Tests: [`engine/gfx/daylight.test.ts`](../engine/gfx/daylight.test.ts), [`tests/e2e/lights.spec.ts`](../tests/e2e/lights.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
-  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuParticles`, `gpuParticlesFor`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `TemporalAa`, `temporalAaFor`
+  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuParticles`, `gpuParticlesFor`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `shellsOn`, `TemporalAa`, `temporalAaFor`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
 - [`idmarks.ts`](../engine/gfx/idmarks.ts): The ID pass's marks (PLAN.md §8.5, I-28; split from engine/gfx/idpass.ts after G9, ADR-0014 amendment 17): `marksOf` numbers what the pass sees, largest first, and `drawMarks` draws the numbers onto a frame, for `x shot --marks` (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
   - Exports: `drawMarks`, `Mark`, `marksOf`
@@ -625,7 +637,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `DumpOptions`, `dumpScene`
   - Tests: [`engine/gfx/sceneDump.test.ts`](../engine/gfx/sceneDump.test.ts)
 - [`shadows.ts`](../engine/gfx/shadows.ts): The shadow budget (PLAN.md WP 7.1, I-17): how many lights cast shadows, and how a caster is set up.
-  - Exports: `Casters`, `configurePointCaster`, `enableShadows`, `MAX_SHADOW_CASTERS`, `POINT_SHADOW`, `SHADOW_MAP_TYPE`, `shadowCasters`, `splitCasters`
+  - Exports: `Casters`, `configurePointCaster`, `enableShadows`, `MAX_SHADOW_CASTERS`, `POINT_SHADOW`, `SHADOW_GRID`, `SHADOW_MAP_TYPE`, `shadowCasters`, `SNAPPED_PCF`, `SNAPPED_POINT`, `snapShadow`, `splitCasters`
   - Tests: [`engine/gfx/shadows.test.ts`](../engine/gfx/shadows.test.ts)
 - [`shot.ts`](../engine/gfx/shot.ts): Shots (PLAN.md §8.5, §8.3's `shot`): what the frame draws, read back from the GPU as numbers and text, never as a committed image.
   - Exports: `Readback`, `readPixels`, `rowBytes`, `shot`, `SHOT_CODES`, `shotForJson`, `ShotGfx`, `ShotJson`, `ShotOptions`, `ShotResult`, `stripRowPadding`, `toBase64`
@@ -942,7 +954,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `chainOf`, `colorProblem`, `createFilterUniforms`, `FILTER_FIELDS`, `FILTER_NAMES`, `FilterChain`, `FilterName`, `FilterSpec`, `FilterUniforms`, `fixColor`, `fixLevels`, `isPlain`, `layerChain`, `levelsProblem`, `PALETTES`, `partialSchema`, `Scope`, `scopeMask`, `SCOPES`, `SCREEN_SCOPES`, `STYLIZE_KINDS`, `writeFilters`
   - Tests: [`engine/gfx/post/filters.test.ts`](../engine/gfx/post/filters.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`grid.ts`](../engine/gfx/post/grid.ts): The pixel grid a frame draws on (PLAN.md WP 7.4, WP 13.24; docs/PLAYGROUND.md §5.2): what the post chain (engine/gfx/post/chain.ts) works out each frame from its filter chain and the drawing buffer's lines.
-  - Exports: `ART_LINES`, `artBlock`, `frameGrid`, `FrameGrid`, `inkWidth`, `pixelBlock`, `snapBlock`
+  - Exports: `ART_LINES`, `artBlock`, `frameGrid`, `FrameGrid`, `inkWidth`, `pixelBlock`, `QUAD`, `snapBlock`
   - Tests: [`engine/gfx/post/grid.test.ts`](../engine/gfx/post/grid.test.ts), [`tests/e2e/playground-looks.spec.ts`](../tests/e2e/playground-looks.spec.ts)
 - [`looks.ts`](../engine/gfx/post/looks.ts): Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a filter chain (engine/gfx/post/filters.ts), as data, and the sky that lights the scene (WP 7.8, a `sky` id, engine/gfx/sky.ts).
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`
@@ -1589,10 +1601,24 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `defineProp`, `getProp`, `Prop`, `PROP_FIELDS`, `PROP_PART_FIELDS`, `PROP_SHAPES`, `propCentre`, `PropDefinition`, `propKind`, `PropKnock`, `PropPart`, `PropTouch`
   - Tests: [`engine/world/props/prop.test.ts`](../engine/world/props/prop.test.ts)
 
+## labs/anim
+
+- [`main.ts`](../labs/anim/main.ts): The Animation Lab (PLAN.md WP 10.8; my-3d2dge's animlab, `src/starter/60-animlab.js`): its scene, `lab:lineup` (labs/anim/scenes/lineup.ts), the humanoid on every build and the mannequin in a row, all told one thing from one clock.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+- [`overlay.ts`](../labs/anim/overlay.ts): The Animation Lab's bone overlay (PLAN.md WP 10.8; the animlab's skeleton key, `my-3d2dge:src/starter/ 60-animlab.js`): every figure's skeleton drawn over the picture, a line from each joint to its parent, as `__engine.anim(id).joints` places them (the animator's FK, world metres), projected through the camera's pose of the frame (`EngineFrame.camera`) onto a 2D canvas laid over the engine's.
+  - Exports: `BONES`, `drawBones`, `project`
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/anim/scenes
+
+- [`lineup.ts`](../labs/anim/scenes/lineup.ts): The Animation Lab's scene, `lab:lineup` (PLAN.md WP 10.8; my-3d2dge's animlab, `src/starter/60-animlab.js`: its lineup, its timeline and its frozen key poses): the humanoid body on every build in a row, chibi to adult, and the mannequin when its build is registered (the clip library's rest body), all told the same thing from one clock, so the lineup stays in step: - `lab.anim.play`: a sample state, a pose or a stance as engine/anim/states.ts and poses.ts name them (`idle`, `cheer`, `ready`…), `walk` or `run` (each figure walks forward and is put back where it started), a move (`move:jab`…) swung again and again, a rest of `REST` s between swings, its blade's trail drawn while it strikes, or a clip of the library (`clip:cmu/Cartwheel`: retargeted to every build, looped; the page registers the sets); - `lab.anim.time`: timeline scrubbing, a move held that many seconds from its start (−1 plays), so its wind-up, strike and recovery can be stepped through frame by frame; `lab.anim.speed`: the rate a move plays at.
+  - Exports: `LAB_FIGURE`, `lineup`, `LINEUP_AT`, `LINEUP_BUILDS`, `LINEUP_GAP`, `LINEUP_SETTINGS`, `LINEUP_STATES`, `REST`
+  - Tests: [`labs/anim/scenes/lineup.test.ts`](../labs/anim/scenes/lineup.test.ts)
+
 ## labs/box
 
 - [`library.ts`](../labs/box/library.ts): The animation library on the box page (PLAN.md §10, WP 8.9): `loadLibrary(files)` registers every set of `data/anim/sets/` the page loaded as text (labs/box/main.ts, through `import.meta.glob`, never a fetch), each as a `clipset` entry (engine/anim/clip/clipsets.ts: its `_set.json` and its clip files joined, `clipSetFromFiles`), then the mannequin, its build and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts): what clip mode (labs/box/scenes/clips.ts) plays and draws.
-  - Exports: `loadLibrary`
+  - Exports: `loadLibrary`, `loadMannequin`, `registerEdit`
 - [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for every scene.
 - [`menu.ts`](../labs/box/menu.ts): The box page's menu for humans (labs/box/index.html): what the box offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
   - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `ControlRow`, `controlRows`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
@@ -1702,6 +1728,16 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `BOX_ROOMS`, `BoxSound`, `BoxSoundInfo`, `createBoxSound`, `LOG_SIZE`, `MUSIC`, `nearestTorches`, `SoundFrame`, `TORCH`
   - Tests: [`labs/box/sounds/page.test.ts`](../labs/box/sounds/page.test.ts)
 
+## labs/cameras
+
+- [`main.ts`](../labs/cameras/main.ts): The Cameras Lab (PLAN.md WP 10.8; my-3d2dge's Perspective Lab: one room in every camera view): the gallery's look set on its stage (a crate, a barrel, three cubes and a figure: `#gallery/look/look:clean`, engine/dev/ gallery.ts) seen through every camera the engine has, each a camera code (engine/gfx/cameras/codes.ts): the classic views (isometric, three-quarter, top-down, brawler, side, overhead) fixed on the set, orbit round it, fly and fixed.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/fx
+
+- [`main.ts`](../labs/fx/main.ts): The Effects Lab (PLAN.md WP 10.8): every emitter the repository registers (particle effects as data), burst on the gallery's stage again and again as it plays in a game, one at a time (labs/index/gallery.ts), with the entry as `x describe` prints it: how its particles start, move and look.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
 ## labs/game
 
 - [`best.ts`](../labs/game/best.ts): The starter game's best round (PLAN.md WP 10.9): the fastest round won, kept across sessions in the engine's store (engine/app/store.ts) under the game's own prefix.
@@ -1730,6 +1766,34 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hello.ts`](../labs/hello/hello.ts): The hello page's scene (labs/hello/): a lit procedural cube with a `MeshStandardMaterial`, drawn on WebGPU through engine/gfx/renderer.ts, either directly or through one `PostProcessing` pass whose output is a TSL colour grade (no MRT).
   - Exports: `HelloView`, `startHello`
   - Tests: [`tests/e2e/hello.spec.ts`](../tests/e2e/hello.spec.ts)
+
+## labs/index
+
+- [`gallery.ts`](../labs/index/gallery.ts): A gallery lab (PLAN.md WP 10.8): a lab page over the gallery (engine/dev/gallery.ts) for some of its kinds.
+  - Exports: `galleryBoot`, `GalleryInspector`, `galleryLab`, `hashEntry`
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+- [`lab.ts`](../labs/index/lab.ts): A lab page's panel (PLAN.md WP 10.8): what every lab shows beside its canvas, so people watching find the same things in each: its title and what it is for, the `x` command that does the same job without the page (each lab is a view; the command is what an agent runs), a link back to the labs index, and the sections a lab fills: lists of entries to open, settings to set, read-outs.
+  - Exports: `button`, `el`, `entryList`, `labPanel`, `LabPanel`, `LabSpec`, `ListItem`, `reloadOnHash`
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+- [`labs.ts`](../labs/index/labs.ts): The labs index's data (labs/labs.json; PLAN.md WP 10.8, carried from `my-3d2dge:src/labs.json`, with an answer and an expiry date added): sections of entries, each a page under labs/ with its links, what it is for and the `x` command that does the same job without the page.
+  - Exports: `checkLabs`, `expiredLabs`, `labLinks`, `LabRecord`, `LabsIndex`, `LabsSection`, `SECTIONS`
+- [`main.ts`](../labs/index/main.ts): The labs index's page (labs/index/index.html; PLAN.md WP 10.8): labs/labs.json as sections of entries, each with its links, what it is for and the `x` command that does the same job without the page; a temporary lab also shows its question, its answer when settled and the date it expires, marked once past it.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/library
+
+- [`main.ts`](../labs/library/main.ts): The Library Lab (PLAN.md WP 10.8; the Mocap Lab's UX, `my-3d2dge:src/mocap.game.js`): the animation library on the box's clip mode (labs/box/scenes/clips.ts), the mannequin and the hero playing the clip the address names (`?box.clips.clip=cmu/Cartwheel`; Quaternius' dance by default).
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/materials
+
+- [`main.ts`](../labs/materials/main.ts): The Materials Lab (PLAN.md WP 10.8): every material the repository registers on the gallery's cube, and every look over the gallery's set (a crate, a barrel, three cubes and a figure), one at a time (labs/index/gallery.ts), with the entry as `x describe` prints it.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
+## labs/physics
+
+- [`main.ts`](../labs/physics/main.ts): The Physics Lab (PLAN.md WP 10.8; my-3d2dge's physics playground): the box's two physics scenes with their settings at hand.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
 
 ## labs/playground
 
@@ -1948,6 +2012,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `FALL`, `MOVER`, `POPPER`, `Popup`, `POPUP_FIELDS`, `RANGE_TARGETS`, `standRange`, `standTarget`
   - Tests: [`labs/playground/weapons/range.test.ts`](../labs/playground/weapons/range.test.ts)
 
+## labs/props
+
+- [`main.ts`](../labs/props/main.ts): The Props Lab (PLAN.md WP 10.8): every prop the repository registers, standing on the gallery's stage as play stands it (on the floor, or hung 1.2 m up when it has no body), one at a time (labs/index/gallery.ts), with the entry as `x describe` prints it: its meshes, its body, its light spot.
+  - Tests: [`tests/e2e/labs.spec.ts`](../tests/e2e/labs.spec.ts)
+
 ## tests/e2e
 
 - [`fixtures.ts`](../tests/e2e/fixtures.ts): The shared e2e fixture (PLAN.md §8.8): every suite imports `test` and `expect` from here.
@@ -2115,17 +2184,23 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`cmu.ts`](../tools/anim/cmu.ts): The CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), fetched on demand into `.cache/anim/` (PLAN.md §5.3 and §10.3, WP 8.5): about 2,500 takes by 113 subjects, each subject a skeleton (`NN.asf`) and each take a motion (`NN_MM.amc`) at 120 frames a second (some at 60).
   - Exports: `ANIM_CACHE`, `ARCHIVE`, `asfOf`, `CMU_CACHE`, `cmuAll`, `cmuArchive`, `cmuGet`, `cmuIndex`, `IndexedTake`, `parseMotionList`, `SITE`
   - Tests: [`tools/anim/cmu.test.ts`](../tools/anim/cmu.test.ts)
+- [`contacts.ts`](../tools/anim/contacts.ts): Contacts and events, detected at import (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): when each foot and hand holds the ground or a surface (a clip's `contacts`), and the moments gameplay listens for (its `events`: `step`, `land`, `hit`), read from a capture's 36 body points.
+  - Exports: `AIRBORNE`, `CARRY`, `detectContacts`, `FOOT_CLEAR`, `HAND_FLOOR`, `HANG`, `HOLD`, `HOLD_REACH`, `STILL`, `treadmill`
+  - Tests: [`tools/anim/contacts.test.ts`](../tools/anim/contacts.test.ts)
 - [`cut.ts`](../tools/anim/cut.ts): A smaller set cut from bigger ones (PLAN.md §5.3, WP 8.5): the clips a game adopts, with the records of the libraries they came from (their rest bodies and origins) and the mannequin's look, read from and written as set directories, one file a clip (tools/anim/repack.ts).
   - Exports: `cutSet`
   - Tests: [`tools/anim/cut.test.ts`](../tools/anim/cut.test.ts)
 - [`cycle.ts`](../tools/anim/cycle.ts): The loop-cycle search (PLAN.md §5.3, WP 8.5): the best cycle in a stretch of a take, a stride or a hop, the span whose end matches its start in pose and in speed.
   - Exports: `bestCycle`
   - Tests: [`tools/anim/asf-amc.test.ts`](../tools/anim/asf-amc.test.ts)
+- [`fetch.ts`](../tools/anim/fetch.ts): The re-import's sources (PLAN.md §10, WP 8.8): where each set's originals come from, whether this repository can reach them, and the fetch of Mesh2Motion's three `.glb` files into `.cache/anim/mesh2motion/` (never committed), each at a pinned commit and checked against its sha256, through `curl` (tools/anim/zip.ts `fetchBytes`), which follows the environment's proxy.
+  - Exports: `fetchMesh2Motion`, `MESH2MOTION`, `MESH2MOTION_CACHE`, `SET_SOURCES`, `SetSource`
+  - Tests: [`tools/anim/upgrade.test.ts`](../tools/anim/upgrade.test.ts)
 - [`find.ts`](../tools/anim/find.ts): Searching the library (PLAN.md §10.3, WP 8.5): `x anim find <words>` looks through every set's generated `catalog.tsv` (data/anim/sets/<set>/, tools/anim/repack.ts), then the CMU ledger's takes not yet in a set (tools/anim/ledger.ts), so an agent picks a clip without opening the library.
   - Exports: `catalogRows`, `ClipHit`, `findClips`, `Found`, `TakeHit`
   - Tests: [`tools/anim/find.test.ts`](../tools/anim/find.test.ts)
-- [`glb-fixture.ts`](../tools/anim/glb-fixture.ts): Small `.glb` files built in memory for the importer's tests (WP 8.5; no binary fixture is committed): a `GlbBuilder` that packs typed arrays into accessors, and `riggedGlb`, a T-posed humanoid with the Unreal mannequin's bone names (tools/anim/rigs.ts) and the clips asked for, each a track list on named bones.
-  - Exports: `FixtureTrack`, `GlbBuilder`, `riggedGlb`, `turn`
+- [`glb-fixture.ts`](../tools/anim/glb-fixture.ts): Small `.glb` files built in memory for the importer's tests (WP 8.5; no binary fixture is committed): a `GlbBuilder` that packs typed arrays into accessors, and `riggedGlb`, a T-posed humanoid with the Unreal mannequin's bone names (tools/anim/rigs.ts), the clips asked for, each a track list on named bones, and, when asked, a skinned mesh (its vertices, their bones' weights and each bone's inverse bind matrix).
+  - Exports: `FixtureTrack`, `FixtureVertex`, `GlbBuilder`, `riggedGlb`, `turn`
   - Tests: [`tools/anim/glb-library.test.ts`](../tools/anim/glb-library.test.ts)
 - [`glb-library.ts`](../tools/anim/glb-library.ts): One animation library read from a `.glb` (PLAN.md §5.3, WP 8.5): its rig (tools/anim/rigs.ts), every clip sampled at a fixed rate and turned into the 36 body points the readable format measures (engine/anim/clip/encode.ts `Capture`), and, for a Rigify mesh, the look of its mannequin (`body`: height, segment radii, joint-ring bands).
   - Exports: `GlbCapture`, `GlbLibrary`, `listGlb`, `MannequinBody`, `readGlbLibrary`
@@ -2134,7 +2209,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `Glb`, `glbBytes`, `GltfAccessor`, `GltfAnimation`, `GltfJson`, `GltfNode`, `mat`, `mul`, `nodeTree`, `NodeTree`, `parseGlb`, `readAccessor`, `sampleTrack`, `slerp`, `Track`, `tracksOf`, `xf`
   - Tests: [`tools/anim/glb.test.ts`](../tools/anim/glb.test.ts)
 - [`import.ts`](../tools/anim/import.ts): The importer (PLAN.md §5.3 and §10, WP 8.5): skeletal animation libraries turned into a set of readable clips.
-  - Exports: `Catalog`, `ImportOptions`, `importSet`
+  - Exports: `Catalog`, `fitFormat2`, `ImportOptions`, `importSet`
   - Tests: [`tools/anim/import.test.ts`](../tools/anim/import.test.ts)
 - [`ledger.ts`](../tools/anim/ledger.ts): The CMU ledger, read and written (PLAN.md §10.3, WP 8.5): every take of the CMU database, one row each, split into `data/anim/cmu/<category>.tsv`, with `categories.tsv` (the categories, tried in order, with their patterns) and `subjects.tsv` (each subject's description once).
   - Exports: `Category`, `categoryOf`, `compareIds`, `Ledger`, `LEDGER_DIR`, `ledgerFiles`, `queryLedger`, `readLedger`, `Subject`, `Take`, `TAKE_COLUMNS`, `writeLedger`
@@ -2149,7 +2224,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `amcFrames`, `applyRates`, `c3dEvidence`, `c3dHeader`, `RateEvidence`, `twinCandidates`, `verifyRates`
   - Tests: [`tools/anim/rates.test.ts`](../tools/anim/rates.test.ts)
 - [`repack.ts`](../tools/anim/repack.ts): The repacker (PLAN.md §10.3 and §10.5 step 4, WP 8.3): a set of clips stored as a directory, `data/anim/sets/<set>/`, one file per clip, so an agent opens only the clips it uses.
-  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `CMU_CREDIT`, `joinSet`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `repackSets`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `withCmuTerms`, `writeSetDir`
+  - Exports: `ALT_TAG`, `CATALOG_COLUMNS`, `CATALOG_FILE`, `catalogTsv`, `clipSlug`, `CMU_CREDIT`, `joinSet`, `keepUpgrades`, `legacySetFiles`, `main`, `readPlainSet`, `readSet`, `readSetDir`, `repackSets`, `SET_FILE`, `setDirName`, `SetFiles`, `SETS_DIR`, `splitSet`, `tagAlternates`, `withCmuTerms`, `writeSetDir`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tools/anim/repack.test.ts`](../tools/anim/repack.test.ts)
 - [`rigs.ts`](../tools/anim/rigs.ts): The rig maps (PLAN.md §5.3, WP 8.5): which bone of a known humanoid rig gives each of the 36 body points the readable format measures (engine/anim/clip/readable.ts `POSE_POINTS`).
   - Exports: `bonesFor`, `BoneSpot`, `PointBone`, `recogniseRig`, `Rig`, `RIGS`, `Segment`
@@ -2157,9 +2232,12 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`shardfall.ts`](../tools/anim/shardfall.ts): Adopts the sets and catalogs shardfall converted (PLAN.md §5.8 and §10.5 step 5, WP 8.10): 100STYLE's 878 loops as seven sets, `style100` (forward walks) and `style100_back`, `_backrun`, `_idle`, `_run`, `_side` and `_siderun`, and version 2 of Quaternius' Universal Animation Library (102 clips) in place of v1's `quaternius`, with their eight catalogs.
   - Exports: `adoptSet`, `CATALOGS_DIR`, `main`, `markVia`, `readShardfallSet`, `readV1Set`, `SHARDFALL_CATALOGS`, `SHARDFALL_SETS`, `shardfallCatalogFiles`, `shardfallSet`, `shardfallSetFiles`, `V1_KEPT`, `V1_SETS`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tests/unit/data/anim/shardfall.test.ts`](../tests/unit/data/anim/shardfall.test.ts)
-- [`survey.ts`](../tools/anim/survey.ts): The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole takes, 30 frames a second, fitted within 30 mm) and measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate).
+- [`survey.ts`](../tools/anim/survey.ts): The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole takes, 30 frames a second, fitted within 30 mm, in format 2 unless `legacy`: tools/anim/import.ts `fitFormat2`) and measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate, and `f2` for a fit in format 2, which rows surveyed before WP 8.8 lack).
   - Exports: `CMU_CATALOG`, `flagsOf`, `LIBRARY_DIR`, `surveyCmu`, `SurveyOptions`, `usedBy`
   - Tests: [`tools/anim/survey.test.ts`](../tools/anim/survey.test.ts)
+- [`upgrade.ts`](../tools/anim/upgrade.ts): The re-import from the sources (PLAN.md §10.5 step 9, WP 8.8; ADR-0010 amendment 7): a set imported again from its originals in format 2 (hands, grips, foot roll, the spine override, contacts, events), then swapped in one clip at a time where the new clip keeps parity with the one it replaces, marked `via: "source"`; the others stay as they were, each with its reason, in `data/anim/upgrade.json`.
+  - Exports: `apartOf`, `judge`, `readUpgraded`, `reimport`, `UPGRADE_FILE`, `Upgraded`, `upgradedOf`, `upgradeSet`, `Verdict`, `writeUpgraded`
+  - Tests: [`tools/anim/upgrade.test.ts`](../tools/anim/upgrade.test.ts)
 - [`view.ts`](../tools/anim/view.ts): One clip of the library, looked at without a browser (PLAN.md §10.3 and §10.4, WP 8.5): `resolveClip` finds `<set>/<clip>` (or a clip name only one set has) in `data/anim/sets/` or another directory of sets (`x anim … --sets`, such as `.cache/anim/cmu-lib/`); `bakeReport` bakes it on its own source's rest body (engine/anim/clip/bake.ts) and measures FK parity against the format-1 decode at every frame and the midpoints between; `clipSheet` draws it as a contact sheet of stick figures in SVG (engine/anim/sheet.ts).
   - Exports: `bakedPoints`, `bakeReport`, `ClipRef`, `clipSheet`, `resolveClip`, `shownDir`
   - Tests: [`tools/anim/view.test.ts`](../tools/anim/view.test.ts)
@@ -2169,7 +2247,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/cmd
 
-- [`anim.ts`](../tools/cmd/anim.ts): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries and fetch CMU takes, all from the command line, with no browser.
+- [`anim.ts`](../tools/cmd/anim.ts): The animation library's tools (PLAN.md §10, WP 8.5): find a clip, show it, bake it, draw it, cut a smaller set, import libraries, fetch their sources and re-import them, all from the command line, with no browser.
   - Exports: `default`, `subcommandOf`, `targetOf`
   - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
 - [`audio.ts`](../tools/cmd/audio.ts): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
@@ -2220,6 +2298,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`inspect.ts`](../tools/cmd/inspect.ts): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
   - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`lab.ts`](../tools/cmd/lab.ts): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts, which this command loads by path where the checkout has it (a game made from the engine gets tools/, never the labs: tools/game/imports.test.ts).
+  - Exports: `createLabCommand`, `default`, `LAB_DAYS`, `LABS_FILE`, `LABS_MODEL`
+  - Tests: [`tools/cmd/lab.test.ts`](../tools/cmd/lab.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `nextIn`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)

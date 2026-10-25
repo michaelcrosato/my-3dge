@@ -1,14 +1,14 @@
-{"clip": "Idle Hurt", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["idle","hurt"], "desc": "stands hunched, holding the side, hurt", "keys": [
+{"clip": "Idle Hurt", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["idle","hurt"], "desc": "stands hunched, holding the side, hurt", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":1.667},{"part":"footR","from":0,"to":1.667}], "keys": [
   {"t":0,
    "hips":[-5,1,88], "body":[0,0,0], "chest":[0,10,0], "head":[0,23,0],
-   "shL":[0,0], "shR":[0,0], "armL":[53,-65,-55,116,-14], "armR":[36,11,-93,58,13],
-   "legL":[-7,13,-99,61,-8], "legR":[-22,17,-96,52,12], "footL":[0,10,0], "footR":[0,17,0]},
+   "shL":[0,0], "shR":[0,0], "armL":[68,-52,-52,105,-3], "armR":[34,14,-93,44,12], "handL":[27,8,-12], "handR":[-6,8,-38], "gripL":52, "gripR":71,
+   "legL":[-7,13,-99,60,-8], "legR":[-22,17,-96,51,12], "footL":[0,10,0], "footR":[0,17,0], "rollL":1, "rollR":-1},
   {"t":0.7,
    "hips":[-5,1,87], "body":[0,0,0], "chest":[0,14,0], "head":[0,23,0],
-   "shL":[0,0], "shR":[0,0], "armL":[52,-64,-56,113,-14], "armR":[38,12,-92,55,10],
-   "legL":[-8,13,-99,63,-8], "legR":[-22,17,-96,55,12], "footL":[0,10,0], "footR":[0,17,0]},
+   "shL":[0,0], "shR":[0,0], "armL":[68,-52,-52,106,-3], "armR":[34,14,-93,42,12], "handL":[25,6,-5], "handR":[-6,14,-39], "gripL":46, "gripR":60,
+   "legL":[-8,13,-99,63,-8], "legR":[-22,17,-96,55,12], "footL":[0,10,0], "footR":[0,17,0], "rollL":1, "rollR":-1},
   {"t":1.667,
    "hips":[-5,1,88], "body":[0,0,0], "chest":[0,10,0], "head":[0,23,0],
-   "shL":[0,0], "shR":[0,0], "armL":[53,-65,-55,116,-14], "armR":[36,11,-93,58,13],
-   "legL":[-7,13,-99,61,-8], "legR":[-22,17,-96,52,12], "footL":[0,10,0], "footR":[0,17,0]}
+   "shL":[0,0], "shR":[0,0], "armL":[68,-52,-52,105,-3], "armR":[34,14,-93,44,12], "handL":[27,8,-12], "handR":[-6,8,-38], "gripL":52, "gripR":71,
+   "legL":[-7,13,-99,60,-8], "legR":[-22,17,-96,51,12], "footL":[0,10,0], "footR":[0,17,0], "rollL":1, "rollR":-1}
 ]}

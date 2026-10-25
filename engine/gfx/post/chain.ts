@@ -68,6 +68,7 @@ import { clearMrt, createScenePass, FLAG_SLOTS, useSceneMrt, writeFlags } from '
 import { createParticleLayer } from './particles';
 import { definePostSettings } from './settings';
 import { createShading } from './shading';
+import { SHADOW_GRID } from '../shadows';
 import { frameGrid, inkWidth } from './grid';
 
 /** How `createPost` makes a chain. */
@@ -296,6 +297,7 @@ export function createPost(
     plain = isPlain(chain) && uniforms.frame.value.x === 0 && (!styles || !own || styles.style === own.style);
     const particles = layer?.prepare(renderer, warming) ?? false;
     if (plain || warming) {
+      SHADOW_GRID.value.set(0, 0, 1);
       clearMrt(renderer);
       straight();
       if (particles) layer!.straight(renderer);
@@ -313,6 +315,7 @@ export function createPost(
     uniforms.frame.value.z = grid.cells[0];
     uniforms.frame.value.w = grid.cells[1];
     styles?.toon.grid.value.set(grid.cells[0], grid.cells[1], grid.block);
+    SHADOW_GRID.value.set(grid.cells[0], grid.cells[1], Math.max(grid.snap, 1));
     gfx.resolution?.shift(grid.shift[0], grid.shift[1]);
     // After the snap: the shading reconstructs positions through the camera the scene pass draws with.
     shading.frame(camera, scenePass.scene, frames, size.y);
@@ -329,6 +332,7 @@ export function createPost(
     } finally {
       scenePass.scene = scene;
       grid.restore();
+      SHADOW_GRID.value.set(0, 0, 1); // renders outside the chain's frames see r182's noise
       warming = false;
       layer?.done();
     }

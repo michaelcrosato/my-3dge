@@ -1,10 +1,10 @@
-{"clip": "Idle_Rail", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Rail_Loop", "dur": 2.5, "loop": true, "tags": ["idle","lean","alt"], "desc": "leaning forward on the forearms, as over a railing", "keys": [
+{"clip": "Idle_Rail", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_Rail_Loop", "dur": 2.5, "loop": true, "tags": ["idle","lean","alt"], "desc": "leaning forward on the forearms, as over a railing", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.5},{"part":"footR","from":0,"to":2.5}], "keys": [
   {"t":0,
    "hips":[-53,-1,105], "body":[6,34,-2], "chest":[0,9,1], "head":[-14,-13,1],
-   "shL":[0,0], "shR":[0,0], "armL":[72,-65,-24,116,-26], "armR":[98,-20,7,91,-18],
-   "legL":[67,17,-73,21,4], "legR":[49,7,-87,25,-38], "footL":[-34,0,0], "footR":[-28,29,-2]},
+   "shL":[0,0], "shR":[0,0], "armL":[82,-55,-16,110,-16], "armR":[100,-9,4,79,-24], "handL":[3,22,22], "handR":[4,25,-2], "gripL":87, "gripR":88,
+   "legL":[67,17,-73,19,4], "legR":[49,7,-87,24,-38], "footL":[-34,0,0], "footR":[-28,29,0], "rollL":-2, "rollR":21},
   {"t":2.5,
    "hips":[-53,-1,105], "body":[6,34,-2], "chest":[0,9,1], "head":[-14,-13,1],
-   "shL":[0,0], "shR":[0,0], "armL":[72,-65,-24,116,-26], "armR":[98,-20,7,91,-18],
-   "legL":[67,17,-73,21,4], "legR":[49,7,-87,25,-38], "footL":[-34,0,0], "footR":[-28,29,-2]}
+   "shL":[0,0], "shR":[0,0], "armL":[82,-55,-16,110,-16], "armR":[100,-9,4,79,-24], "handL":[3,22,22], "handR":[4,25,-2], "gripL":87, "gripR":88,
+   "legL":[67,17,-73,19,4], "legR":[49,7,-87,24,-38], "footL":[-34,0,0], "footR":[-28,29,0], "rollL":-2, "rollR":21}
 ]}
