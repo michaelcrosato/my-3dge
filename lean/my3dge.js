@@ -9117,7 +9117,10 @@ function v6(e, t, n, s) {
   }
   return ys(n, i5(u, o));
 }
-const Hs = { L: -1, R: 1 }, x6 = (e, t, n, s, o) => Le(e, ys(t, [n[0] * o, n[1] * Hs[s] * o, n[2] * o])), k6 = [!1, !0, !0, !1];
+const Hs = { L: -1, R: 1 }, x6 = (e, t, n, s, o) => (
+  // Stryker disable next-line ArithmeticOperator: SG[s] is ±1, which multiplies and divides alike, to the bit
+  Le(e, ys(t, [n[0] * o, n[1] * Hs[s] * o, n[2] * o]))
+), k6 = [!1, !0, !0, !1];
 function _G(e, t) {
   const n = xe(t.hips, e.H0 / 100), s = Ld(t.body), o = Fy(s, Ld(t.chest)), r = Fy(o, Ld(t.head)), [i, a, c] = [Rd(e.Pr, s), Rd(e.Cr, o), Rd(e.Hr, r)], l = t.spine ? Rd(e.Pr, Fy(s, Ld(t.spine))) : null, u = [n];
   e.spineW.forEach((m, g) => u.push(Le(u[g], o5(l && k6[g] ? l : r5(i, a, m), e.spine[g]))));
@@ -15080,7 +15083,7 @@ const Bt = {
   turnRate: 8,
   // the share of the way the heading turns toward the travel each second (all of it at most, per step)
   turnMin: 0.25,
-  // m/s: slower, it keeps its heading
+  // m/s: at this speed or slower, it keeps its heading
   bankAccel: 15,
   // m/s² sideways that banks it 45°
   bankMax: 0.6,

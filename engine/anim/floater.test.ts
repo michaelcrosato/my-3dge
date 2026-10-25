@@ -63,6 +63,12 @@ describe('the heading and the bank', () => {
     expect(wisp.state.yaw).toBeCloseTo(3, 3);
   });
 
+  it('keeps its heading at turnMin itself, and turns only faster', () => {
+    const at = (speed: number) => run(new Floater(), { velocity: new Vector3(speed, 0, 0) }, 60).state.yaw;
+    expect(at(FLOATER.turnMin)).toBe(0);
+    expect(at(FLOATER.turnMin + 0.01)).toBeCloseTo(Math.PI / 2, 3);
+  });
+
   it('banks into a turn as an aircraft does: right side down turning right, by atan(a / 15 m/s²)', () => {
     const right = new Floater();
     const banks = circle(right, 5, -1.25, 3); // 5 m/s round a 4 m circle: 6.25 m/s² toward its right

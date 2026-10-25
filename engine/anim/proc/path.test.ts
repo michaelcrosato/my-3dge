@@ -1,8 +1,8 @@
 /**
  * @file Unit tests for the path chain (engine/anim/proc/path.ts, PLAN.md WP 10.1): segments a gap apart behind a head
  * going straight; a head going round a circle with its body on the circle behind it; a reset laying the body out
- * along its back, or down a hole, until the path is long enough; a history that never grows past what the body needs;
- * tangents toward the head.
+ * along its back, or down a hole, until the path is long enough; a history that never grows past what the body needs,
+ * and grows by a point for each half gap the head covers; tangents toward the head, a lone head's along its path.
  * @see engine/anim/proc/path.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -45,5 +45,20 @@ describe('the path chain', () => {
     expect(worm.history).toBe(Math.ceil((4 * 0.1) / 0.05) + 8); // the body's length in half gaps, and eight more
     const spread = worm.points[0].distanceTo(worm.points[4]);
     expect(spread).toBeCloseTo(0.4, 9); // straight behind: four gaps
+  });
+
+  it('leaves a point for every half gap its head covers, one for a head just half a gap on', () => {
+    const snake = new PathChain({ count: 3, gap: 0.5 }); // its path: five points a quarter apart, back to z = −1
+    const history = [snake.history];
+    for (const z of [0.1, 0.25, 0.75]) history.push(snake.step(new Vector3(0, 0, z)).history);
+    expect(history).toEqual([5, 5, 6, 8]);
+  });
+
+  it('faces a lone head the way its path ran', () => {
+    const head = new PathChain({ count: 1, gap: 0.2 }); // no body: its tangent is its path's oldest stretch's way
+    expect(head.step(new Vector3(0.05, 0, 0)).history).toBe(1); // under half a gap: no point yet
+    expect(head.tangents[0].distanceTo(new Vector3(0, 0, 1))).toBe(0); // still the way it was laid out
+    head.step(new Vector3(1, 0, 0));
+    expect(head.tangents[0].distanceTo(new Vector3(1, 0, 0))).toBeLessThan(1e-12);
   });
 });

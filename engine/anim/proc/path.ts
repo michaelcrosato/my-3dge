@@ -80,6 +80,7 @@ export class PathChain {
       left -= step;
     }
     const keep = Math.ceil(((this.count - 1) * this.gap) / step) + 8;
+    // Stryker disable next-line ConditionalExpression,EqualityOperator: splice(0, n) removes nothing for n ≤ 0, so the guard only spares the call
     if (path.length > keep) path.splice(0, path.length - keep);
     if (path.length > 1) this.#back.subVectors(path[0], path[1]).normalize(); // the way its oldest stretch ran
     return this.#sample(head);

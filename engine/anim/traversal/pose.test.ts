@@ -2,10 +2,10 @@
  * @file Unit tests for the view's traversal poses (engine/anim/traversal/pose.ts, PLAN.md WP 13.11): each way's weight
  * eases in and out (two cross-fading make one, the foot plant whole on the ground), a teleport lets go of everything,
  * a low ledge is vaulted only from a run, a slide-jump is told from a jump, a climb's holds stay put as the body climbs
- * and slide down the wall as a caught fall slows, a zipline's and a ladder's hands go where the drawn feet say, a limb
- * is on its contact only when one way lays it alone and fully, the
- * body's reach toward a lip follows what the hands need and eases back with bounded acceleration, and the pose keeps
- * its own copy of the sim's state.
+ * and slide down the wall as a caught fall slows, a zipline's and a ladder's hands go where the drawn feet say (on an
+ * adult's hull when given none), a limb is on its contact only when one way lays it alone and fully, the body's reach
+ * toward a lip follows what the hands need and eases back with bounded acceleration, and the pose keeps its own copy of
+ * the sim's state.
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
@@ -118,6 +118,16 @@ describe('the targets', () => {
     const on = run(new TraversalPose(), 20, { mode: 'ladder', rideSpeed: 1 }, new Vector3(0, 1, 0.5), still, ladder);
     for (const limb of on.targets(new Vector3(0, 1, 0.5), createLimbTargets()))
       if (limb.held) expect(Math.abs(((limb.point.y + 1e-6) % hull.rung) - 1e-6)).toBeLessThan(0.021); // on a rung (a foot 2 cm up)
+  });
+
+  it('poses a body given no hull on an adult’s, the hull it starts with', () => {
+    const ride = { ladder: { foot: [0, 0, 1], top: 4, normal: [0, -1], width: 0.6 } };
+    const limbs = (given: typeof hull | null) => {
+      const pose = new TraversalPose();
+      for (let k = 0; k < 20; k++) pose.update({ mode: 'ladder', rideSpeed: 1 }, ride, given, adult, new Vector3(0, 1, 0.5), still, DT); // prettier-ignore
+      return pose.targets(new Vector3(0, 1, 0.5), createLimbTargets()).map((limb) => limb.point.toArray());
+    };
+    expect(limbs(null)).toEqual(limbs(hull));
   });
 });
 
