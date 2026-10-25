@@ -2304,6 +2304,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`lab.ts`](../tools/cmd/lab.ts): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts.
   - Exports: `createLabCommand`, `default`, `LAB_DAYS`, `LABS_FILE`
   - Tests: [`tools/cmd/lab.test.ts`](../tools/cmd/lab.test.ts)
+- [`mcp.ts`](../tools/cmd/mcp.ts): Serves the engine to MCP clients (PLAN.md §8.11, WP 7.6): `node x mcp` speaks the Model Context Protocol on stdin and stdout, so an agent that cannot run `node x` drives the engine as `x inspect`, `x eval` and `x shot` do.
+  - Exports: `default`, `openArgs`
+  - Tests: [`tests/e2e/mcp.spec.ts`](../tests/e2e/mcp.spec.ts), [`tools/cmd/mcp.test.ts`](../tools/cmd/mcp.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `nextIn`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
@@ -2469,6 +2472,39 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
+
+## tools/mcp
+
+- [`backend.ts`](../tools/mcp/backend.ts): What the MCP bridge's tools run on (PLAN.md §8.11, WP 7.6): a `Backend`, the engine as one interface, whichever process holds it.
+  - Exports: `Backend`, `OpenArgs`, `Opened`, `openPath`, `Params`, `Progress`
+  - Tests: [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
+- [`docs.ts`](../tools/mcp/docs.ts): The MCP bridge's `docs_lookup` (PLAN.md §8.11, WP 7.6): the manual that `x docs` generates, for an agent that reads no files.
+  - Exports: `docsLookup`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`headless.ts`](../tools/mcp/headless.ts): The MCP bridge's headless backend (PLAN.md §8.11, WP 7.6): `createHeadless` in this process, with the scene's view (engine/app/headless.ts `view: true`, no GPU), so `scene.dump` and `camera` answer, and no renderer, so no shot (`renders: false`).
+  - Exports: `headlessBackend`, `invoke`, `sceneTarget`
+  - Tests: [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
+- [`link.ts`](../tools/mcp/link.ts): How the MCP server reaches its backend worker (PLAN.md §8.11, WP 7.6): requests and replies over a `WorkerLink`.
+  - Exports: `forkLink`, `localLink`, `WorkerHandler`, `WorkerLink`, `WorkerReply`, `WorkerRequest`
+  - Tests: [`tools/cmd/mcp.test.ts`](../tools/cmd/mcp.test.ts), [`tools/mcp/link.test.ts`](../tools/mcp/link.test.ts)
+- [`results.ts`](../tools/mcp/results.ts): What the MCP bridge's tools answer (PLAN.md §8.11, WP 7.6): MCP `CallToolResult`s made from what the members return.
+  - Exports: `cutText`, `errorLine`, `errorResult`, `GoldenVerdict`, `judgeGoldens`, `MAX_LISTED`, `MAX_TEXT`, `shotResult`, `shotSummary`, `valueResult`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`schema.ts`](../tools/mcp/schema.ts): The MCP bridge's input schemas (PLAN.md §8.11, WP 7.6): the schema language's fields (engine/core/schema.ts), which inspector members declare their arguments in (engine/dev/members.ts), projected onto JSON Schema, the form MCP's tool list carries.
+  - Exports: `argsSchema`, `fieldSchema`, `JsonSchema`, `McpSchemaError`, `ObjectSchema`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`server.ts`](../tools/mcp/server.ts): The MCP server `x mcp` runs (PLAN.md §8.11, WP 7.6), on the official SDK's `Server`: the low-level one, since its tools are generated at run time as JSON Schema from the inspector's member table, which the SDK's `McpServer` takes only as zod schemas (a dependency of ours, which the bridge does without).
+  - Exports: `Bridge`, `BridgeOptions`, `createBridge`, `WATCHED`
+  - Tests: [`tools/cmd/mcp.test.ts`](../tools/cmd/mcp.test.ts), [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
+- [`session.ts`](../tools/mcp/session.ts): The MCP bridge's page backend (PLAN.md §8.11, WP 7.6): a page open in the `x inspect` session (tools/cmd/inspect.ts), on WebGPU in the platform's Chromium, the backend `x mcp` serves by default.
+  - Exports: `memberExpression`, `pageBackend`, `PROGRESS_MS`
+  - Tests: [`tests/e2e/mcp.spec.ts`](../tests/e2e/mcp.spec.ts), [`tools/mcp/session.test.ts`](../tools/mcp/session.test.ts)
+- [`tools.ts`](../tools/mcp/tools.ts): The MCP bridge's tools (PLAN.md §8.11, WP 7.6): each calls an inspector member, and its input schema is that member's argument schema projected onto JSON Schema (tools/mcp/schema.ts), its description the member's help line, so `help()`, the inspector's argument checks and the tools come from one table (shardfall's tool table, PLAN.md §5.8).
+  - Exports: `positional`, `replayFile`, `runTool`, `ToolContext`, `toolList`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`worker.ts`](../tools/mcp/worker.ts): The MCP bridge's backend worker (PLAN.md §8.11, WP 7.6): the process that holds the engine's code and a backend, answering the server's requests (tools/mcp/link.ts).
+  - Exports: `createWorker`, `serveWorker`
+  - Tests: [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
 
 ## tools/qa
 
