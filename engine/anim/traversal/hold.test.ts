@@ -110,6 +110,18 @@ describe('holding and aiming', () => {
     expect(Math.max(...holstering.slice(1).map((s) => s.moved))).toBeLessThan(0.08);
   });
 
+  it('ends the post slot, whatever is added after it, and holds nothing before it has posed', () => {
+    const animator = new Animator({ build: 'build:adult', clock: 1 });
+    const hold = new HoldPlant().attach(animator);
+    expect(hold.holding).toBe(false);
+    const order: string[] = [];
+    const apply = hold.apply.bind(hold);
+    hold.apply = (a) => (order.push('hold'), apply(a));
+    animator.use('post', { name: 'later', weight: 1, apply: () => void order.push('later') });
+    animator.update({});
+    expect(order).toEqual(['later', 'hold']);
+  });
+
   it('leaves the body as it was without a look or a gun', () => {
     const plain = new Animator({ build: 'build:adult', clock: 1 });
     for (let k = 0; k < 30; k++) plain.update({ position: new Vector3(), velocity: new Vector3() });

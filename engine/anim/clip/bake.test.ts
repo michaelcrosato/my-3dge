@@ -2,7 +2,7 @@
  * @file Tests for the baker (WP 8.4): the frames on format 1's key grid, FK parity with the format-1 decode (exact on
  * a key, a mean of 1 mm or less over every set at 30 fps and the 60 Hz midpoints, and at each clip's own key times, the
  * worst cases in tests/baselines/anim-clips.json), format 2's keys (hands, spine, roll), the hand's roll, the singular poses (a deep fold bending forward
- * among them: WP 8.6), and the root's travel.
+ * among them: WP 8.6), the root's travel, and a sample writing its 23 rotations alone.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -180,6 +180,13 @@ describe('bakeClip', () => {
     pose.local.forEach((v, i) => expect(v).toBeCloseTo(frame[i], 6));
     expect(jointIndex('pelvis')).toBe(0);
   });
+
+  it('samples its 23 rotations alone, leaving the rest of a longer array as it was', () => {
+    const baked = bakeClip(clipOf([standing(0), standing(0.5)], { dur: 0.5 }), REST);
+    const rotations = new Float32Array(JOINT_COUNT * 4 + 4).fill(7);
+    sampleBaked(baked, 0.2, rotations, new Vector3());
+    expect([...rotations.subarray(JOINT_COUNT * 4)]).toEqual([7, 7, 7, 7]);
+  });
 });
 
 describe('FK parity with the format-1 decode, every set (Done when: a mean of 1 mm or less)', () => {
@@ -190,12 +197,12 @@ describe('FK parity with the format-1 decode, every set (Done when: a mean of 1 
     writeBaseline(
       'rest',
       measured,
-      'FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. The frames lie on format 1’s key grid, every 1/30 s from 0 and a last one at the clip’s end (bake.ts `bakeTimes`), the times v1 sampled its clips at, so at a 30 fps sample the two agree to 5 µm (the rotations are float32). The worst cases are midpoints where a limb’s pole swings fast between two frames (a sword arm’s twist, a fist pulled across the chest), and the slerp between the frames takes another way than the decode’s in-between of the key numbers. Re-recorded for WP 8.8: mesh2motion’s 175 and CMU’s 51 clips re-imported from their sources in format 2 (hands, the spine override, foot roll), each measured against the decode with its grips open, since the skeleton has no fingers.',
+      'FK of the baked tracks on each rest body’s own skeleton against the format-1 decode, over 34 points (index and pinky are roll hints, not rigid), at 30 fps and the 60 Hz midpoints. The frames lie on format 1’s key grid, every 1/30 s from 0 and a last one at the clip’s end (bake.ts `bakeTimes`), the times v1 sampled its clips at, so at a 30 fps sample the two agree to 5 µm (the rotations are float32). The worst cases are midpoints where a limb’s pole swings fast between two frames (a sword arm’s twist, a fist pulled across the chest), and the slerp between the frames takes another way than the decode’s in-between of the key numbers. Re-recorded for WP 8.8: mesh2motion’s 175 and CMU’s 51 clips re-imported from their sources in format 2 (hands, the spine override, foot roll), each measured against the decode with its grips open, since the skeleton has no fingers. Re-recorded when the hands’ rolls were unwrapped from key to key (a roll past ±180° had turned the long way between two keys: Backflip’s, Dance Charleston’s and Jump_2’s right fists 300 mm off at the midpoints), with Mesh2Motion’s 176 and CMU’s 52 clips.',
     );
     writeBaseline(
       'restKeys',
       atKeys,
-      'The same measure at each clip’s own key times (keys past a clip’s end, which neither reaches, left out). Format 1 writes a key’s time to the millisecond, so it lies up to a third of a millisecond from its frame (0.033 s for 1/30 s), 1% of a frame’s step. The worst cases are keys in the fastest swings, where that 1% is up to 35 mm: Victory’s right arm turns its twist by 175° toward the next key, so the decode itself moves 35 mm between 1.233 s and 1/30 s × 37; Sword_Regular_B’s sword arm swings into its last key, which the decode reaches at 0.533 s and the bake at its frame, 1/30 s × 16. At the frames the two agree to 5 µm. Re-recorded for WP 8.8 with the format-2 clips, as the rest section says.',
+      'The same measure at each clip’s own key times (keys past a clip’s end, which neither reaches, left out). Format 1 writes a key’s time to the millisecond, so it lies up to a third of a millisecond from its frame (0.033 s for 1/30 s), 1% of a frame’s step. The worst cases are keys in the fastest swings, where that 1% is up to 35 mm: Victory’s right arm turns its twist by 175° toward the next key, so the decode itself moves 35 mm between 1.233 s and 1/30 s × 37; Sword_Regular_B’s sword arm swings into its last key, which the decode reaches at 0.533 s and the bake at its frame, 1/30 s × 16. At the frames the two agree to 5 µm. Re-recorded for WP 8.8 with the format-2 clips, and again with their hands’ rolls unwrapped, as the rest section says.',
     );
   }
 

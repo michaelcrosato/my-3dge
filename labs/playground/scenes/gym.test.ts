@@ -2,7 +2,8 @@
  * @file Unit tests for the gym (labs/playground/levels/gym.ts and labs/playground/scenes/gym.ts): every feature's
  * number is the height, slope or gap the compiled level holds where its sign says; no two features overlap and each
  * stays inside the perimeter; the player stands at the spawn at the north end; and the settings change play: a faster
- * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default.
+ * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default; on the platformer
+ * profile (`playground.movement`, WP 13.25) the player runs as the Stress Box hero, untuned by the gym's settings.
  * @see labs/playground/scenes/gym.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -104,5 +105,14 @@ describe('the gym', () => {
     expect(jump.top).toBeCloseTo(APEX_JUMP, 1);
     const higher = await after(60, { jump: true }, { 'playground.gym.jump': 2 });
     expect(higher.top).toBeCloseTo(2, 1);
+  });
+
+  it('runs as the Stress Box hero on the platformer profile, the gym’s tuning unused (WP 13.25)', async () => {
+    const hero = playerCharacter({ movement: 'movement:platformer' });
+    expect(hero.movement).toBeUndefined(); // no shooter model: the box hero's controller, exactly
+    const settings = { 'playground.movement': 'movement:platformer', 'playground.gym.speed': 9 };
+    const run = await after(60, { move: [-1, 0] }, settings);
+    expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(hero.speed * 0.6);
+    expect(GYM_SPAWN[0] - run.x).toBeLessThan(hero.speed * 1.01);
   });
 });

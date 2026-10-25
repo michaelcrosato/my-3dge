@@ -1,0 +1,147 @@
+diff --git a/labs/playground/README.md b/labs/playground/README.md
+index 392c6ef..12b269c 100644
+--- a/labs/playground/README.md
++++ b/labs/playground/README.md
+@@ -142,6 +142,7 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
+ |---|---|
+ | `playground.gym.speed` | The player's run speed in the gym with a weapon out, m/s (4.41, Apex's; empty-handed, the player runs 1.15 times as fast), when the scene starts. Changes play: recorded in replays. |
+ | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
++| `playground.gym.gravity` | The gravity the player falls under in the gym, m/s² (19.05, Apex's), when the scene starts: under any gravity he jumps `playground.gym.jump` high, rising and falling slower under less. Changes play: recorded in replays. |
+ | `playground.hour` | The hour the block's scenes start at, 0 to 24 (12, noon; 18.5 dusk, when the street's lamps and the porch's come on; 22 night), when the scene starts: the sky, the sun or the moon and the fog follow it. Changes play: recorded in replays. |
+ | `playground.day` | How many minutes of play a day on the block takes (0, the default, holds the hour), when the scene starts. Changes play: recorded in replays. |
+ | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
+diff --git a/labs/playground/cast/player.ts b/labs/playground/cast/player.ts
+index 95b9f38..bdc5057 100644
+--- a/labs/playground/cast/player.ts
++++ b/labs/playground/cast/player.ts
+@@ -57,25 +57,31 @@ export const APEX_RUN = APEX.model!.gaits.run;
+ /** How the player is drawn: `body:player` on the adult build, empty-handed. */
+ export const PLAYER_LOOK = Object.freeze({ body: 'body:player', build: 'build:adult', weapon: 'none' });
+ 
+-/** What a scene may tune: the run with a weapon out (m/s) and the jump's height (m); and the profile, Apex's by default. */
++/**
++ * What a scene may tune: the run with a weapon out (m/s), the jump's height (m) and the gravity (m/s²); and the
++ * profile, Apex's by default.
++ */
+ export interface PlayerTuning {
+   readonly speed?: number;
+   readonly jump?: number;
++  readonly gravity?: number;
+   readonly movement?: (typeof PLAYER_MOVEMENTS)[number];
+ }
+ 
+ /**
+- * The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned; on
+- * another profile, that profile's own character, the tuning unused.
++ * The player's character: `movement:apex`, its run, its gravity and its jump's height (a take-off of √(2 g h), so he
++ * jumps as high under any gravity) as tuned; on another profile, that profile's own character, the tuning unused.
+  */
+ export function playerCharacter(tuning: PlayerTuning = {}): Character {
+   if (tuning.movement && tuning.movement !== 'movement:apex') return createCharacter({ movement: tuning.movement });
+   const run = tuning.speed ?? APEX_RUN;
+   const jump = tuning.jump ?? APEX_JUMP;
++  const gravity = tuning.gravity ?? APEX_GRAVITY;
+   return createCharacter({
+     movement: 'movement:apex',
+     speed: run,
+-    jumpSpeed: Math.sqrt(2 * APEX_GRAVITY * jump),
++    jumpSpeed: Math.sqrt(2 * gravity * jump),
++    ...(tuning.gravity === undefined ? {} : { characterGravity: gravity }),
+     model: { gaits: { run } },
+   });
+ }
+diff --git a/labs/playground/scenes/gym.test.ts b/labs/playground/scenes/gym.test.ts
+index d088d41..75bc943 100644
+--- a/labs/playground/scenes/gym.test.ts
++++ b/labs/playground/scenes/gym.test.ts
+@@ -2,14 +2,15 @@
+  * @file Unit tests for the gym (labs/playground/levels/gym.ts and labs/playground/scenes/gym.ts): every feature's
+  * number is the height, slope or gap the compiled level holds where its sign says; no two features overlap and each
+  * stays inside the perimeter; the player stands at the spawn at the north end; and the settings change play: a faster
+- * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default; on the platformer
+- * profile (`playground.movement`, WP 13.25) the player runs as the Stress Box hero, untuned by the gym's settings.
++ * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default, and under less gravity he
++ * jumps as high, longer in the air; on the platformer profile (`playground.movement`, WP 13.25) the player runs as the
++ * Stress Box hero, untuned by the gym's settings.
+  * @see labs/playground/scenes/gym.ts
+  */
+ import { describe, expect, it } from 'vitest';
+ import { createHeadless } from '../../../engine';
+ import { floorHeight, topHeight } from '../../../engine/sim-api';
+-import { APEX_JUMP, APEX_RUN, playerCharacter } from '../cast/player';
++import { APEX_GRAVITY, APEX_JUMP, APEX_RUN, playerCharacter } from '../cast/player';
+ import { GYM_FEATURES, GYM_SPAWN, GYM_TILE, type GymFeature, type GymRect } from '../levels/gym';
+ import { GYM, GYM_START, gym } from './gym';
+ 
+@@ -115,4 +116,22 @@ describe('the gym', () => {
+     expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(hero.speed * 0.6);
+     expect(GYM_SPAWN[0] - run.x).toBeLessThan(hero.speed * 1.01);
+   });
++
++  it('jumps as high under another gravity, rising and falling slower under less', async () => {
++    /** The steps from the take-off until the player stands on the floor again, and his highest point. */
++    const airtime = async (gravity: number) => {
++      const engine = await createHeadless({ scene: gym, settings: { 'playground.gym.gravity': gravity } });
++      let [top, steps] = [0, 0];
++      for (let k = 0; k < 180; k++) {
++        engine.step(1, { b: ['jump'], ...(k === 0 ? { p: ['jump'] } : {}) });
++        const [player] = engine.state('actor').entities as unknown as { actor: { y: number } }[];
++        top = Math.max(top, player.actor.y);
++        if (player.actor.y > 1e-3) steps = k + 1;
++      }
++      return { top, steps };
++    };
++    const [apex, moon] = [await airtime(APEX_GRAVITY), await airtime(9.81)];
++    expect(moon.top).toBeCloseTo(APEX_JUMP, 1);
++    expect(moon.steps / apex.steps).toBeCloseTo(Math.sqrt(APEX_GRAVITY / 9.81), 1);
++  });
+ });
+diff --git a/labs/playground/scenes/gym.ts b/labs/playground/scenes/gym.ts
+index 01442f7..f31654c 100644
+--- a/labs/playground/scenes/gym.ts
++++ b/labs/playground/scenes/gym.ts
+@@ -6,7 +6,7 @@
+  * `walk` walks and `crouch` crouch-walks.
+  *
+  * Settings (`playground.gym.*`, read when the scene starts, so they change play and go in replays): the player's run
+- * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw, speed, crouch }`)
++ * speed, jump height and gravity, Apex's by default (docs/PLAYGROUND.md §3.2); at any gravity he jumps as high. Its dev action `place` (`{ at, yaw, speed, crouch }`)
+  * puts the player somewhere, at rest or moving `speed` m/s where it faces: where a feel course
+  * (labs/playground/courses/) starts. The crawl's slab and bar stand on their walls and posts as fixed props. WP 13.7:
+  * the tower's ladder (its glyph), its zipline, the redeploy balloon, the jump pad and the trampoline (engine/sim/rides.ts).
+@@ -23,7 +23,7 @@
+  * @see labs/playground/scenes/gym.test.ts
+  */
+ import { addLauncher, addLevelBodies, addLevelLadders, addZipline, compileLevel, defineScene, defineSettings, physicsOf, placeActor, spawnProp, type ActorComponents } from '../../../engine/sim-api'; // prettier-ignore
+-import { APEX_JUMP, APEX_RUN, spawnPlayer } from '../cast/player';
++import { APEX_GRAVITY, APEX_JUMP, APEX_RUN, spawnPlayer } from '../cast/player';
+ import { GYM_BALLOON, GYM_LAUNCHERS, GYM_PROPS, GYM_TEXT, GYM_ZIPLINE } from '../levels/gym';
+ import { levelGround, playgroundSounds } from '../sounds/events';
+ 
+@@ -54,6 +54,16 @@ export const GYM_SETTINGS = defineSettings({
+     when: 'scene',
+     description: "How high the player jumps in the gym: Apex's 1.42 m by default.",
+   },
++  'playground.gym.gravity': {
++    type: 'number',
++    default: APEX_GRAVITY,
++    minimum: 1,
++    maximum: 50,
++    unit: 'm/s²',
++    when: 'scene',
++    description:
++      "The gravity the player falls under in the gym: Apex's 19.05 m/s² by default; he still jumps playground.gym.jump high.",
++  },
+ });
+ 
+ /** The gym: its features, and the player at its north end. */
+@@ -67,7 +77,8 @@ export const gym = defineScene('playground:gym', {
+     addLevelBodies(physicsOf(w), GYM);
+     const speed = w.settings.get<number>('playground.gym.speed');
+     const jump = w.settings.get<number>('playground.gym.jump');
+-    spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump }); // first: the player is entity 1
++    const gravity = w.settings.get<number>('playground.gym.gravity');
++    spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump, gravity }); // first: the player is entity 1
+     for (const { prop, at, yaw } of GYM_PROPS) spawnProp(w, { prop, at: [...at], yaw });
+     addLevelLadders(w, GYM);
+     addZipline(w, GYM_ZIPLINE);

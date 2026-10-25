@@ -214,7 +214,7 @@
     "Crawl RM": [9,55],
     "Dance Body Roll": [7,43],
     "Dance Charleston": [9,42],
-    "Dance Reach Hip": [11,60],
+    "Dance Reach Hip": [12,60],
     "Death_A": [8,75],
     "Death_B": [8,37],
     "Death_C": [8,48],
@@ -237,7 +237,7 @@
     "Idle Hurt": [7,29],
     "Idle Listening": [4,28],
     "Idle_Subtle": [6,34],
-    "Jump_2": [9,37],
+    "Jump_2": [9,50],
     "Jump_2_RM": [10,45],
     "Jumping Jacks": [8,51],
     "Kneeling Tired": [12,27],
@@ -282,13 +282,13 @@
     "Golf_Drive": [8,44],
     "Golf_idle": [12,65],
     "Help_One_Arm": [7,32],
-    "Help_Two_Arms": [8,51],
+    "Help_Two_Arms": [8,35],
     "Insult": [8,42],
-    "Kick_Breach": [9,56],
+    "Kick_Breach": [10,56],
     "Salute": [9,50],
-    "Turn_Left_180": [12,42],
+    "Turn_Left_180": [9,38],
     "Turn_Left_90": [10,39],
     "Turn_Right_180": [9,38],
-    "Turn_Right_90": [8,34]
+    "Turn_Right_90": [8,43]
   }
 }

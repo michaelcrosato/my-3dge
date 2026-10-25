@@ -20,15 +20,16 @@ function caps(features: string[], limits: Record<string, number> = {}): GfxCaps 
   };
 }
 
-/** Everything the built-in features need. */
-const FULL = ['float32-filterable', 'timestamp-query'];
+/** Everything the built-in features need, and GPU-driven crowds' first instances (WP 11.4). */
+const FULL = ['float32-filterable', 'indirect-first-instance', 'timestamp-query'];
 
-/** The techniques' features (WPs 11.3, 11.5), declared by their modules in engine/gfx/enhanced/: `caps` has their needs. */
+/** The techniques' features (WPs 11.3 to 11.5), declared by their modules in engine/gfx/enhanced/: `FULL` has their needs. */
 const TECHNIQUES = [
   'feature:air',
   'feature:ao',
   'feature:cascadedShadows',
   'feature:gi',
+  'feature:gpuCrowds',
   'feature:gpuParticles',
   'feature:ssr',
   'feature:tiledLighting',
@@ -88,7 +89,7 @@ describe('resolveFeatures', () => {
 
   it('turns off what the device lacks, each with its advice code and reason, printed once', () => {
     const { registry, settings, log, printed } = setup();
-    const small = caps(['float32-filterable'], { maxStorageBufferBindingSize: 134217728 });
+    const small = caps(['float32-filterable', 'indirect-first-instance'], { maxStorageBufferBindingSize: 134217728 });
     const report = resolveFeatures(small, { registry, settings, log });
     expect(report.on).toEqual(sorted(['feature:float32Filtering', ...ALWAYS, ...TECHNIQUES]));
     expect(report.off).toEqual([

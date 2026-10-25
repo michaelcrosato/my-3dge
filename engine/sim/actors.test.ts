@@ -284,6 +284,31 @@ describe('actors on the shooter model', () => {
     expect(stood).toBeGreaterThan(2); // past the slab's edge
   });
 
+  it('place an actor at once: its feet there, turned its way, holstered as it was; one on no movement model too', () => {
+    const { world } = startScene('roofed', { registry: roofed() });
+    world.step({});
+    const [player, ai] = actors(world);
+    player.motion.holstered = false; // armed
+    placeActor(world, player.id, [5.25, 0, 3.5], Math.PI / 2);
+    expect([player.actor.x, player.actor.z, player.actor.yaw, player.motion.holstered]).toEqual([expect.closeTo(5.25, 6), expect.closeTo(3.5, 6), Math.PI / 2, false]); // prettier-ignore
+    placeActor(world, ai.id, [6, 0, 6]);
+    expect([ai.actor.x, ai.actor.z, ai.actor.yaw]).toEqual([expect.closeTo(6, 6), expect.closeTo(6, 6), 0]);
+    expect(() => placeActor(world, player.id, [Number.NaN, 0, 0])).toThrow(/placeActor\(at\)/);
+    expect(() => placeActor(world, player.id, [0.123, 0.5, 0])).toThrow(
+      /placeActor\(at\) got \[0\.12, 0\.5, 0\], where a ceiling/,
+    );
+    expect(() => placeActor(world, ai.id, [0, 0, 0], 0, { crouch: true })).toThrow(/^\[SIM_BAD_ARGUMENT\] placeActor\(options\.crouch\) got true for actor \d+, on no movement model: pass no crouch: only an actor on a movement model \(its component motion\) crouches$/); // prettier-ignore
+  });
+
+  it('refuse to place what is no actor, a crouch the ceiling cuts and an actor on no movement model under it', () => {
+    const { world } = startScene('roofed', { registry: roofed() });
+    world.step({});
+    const [player, ai] = actors(world);
+    expect(() => placeActor(world, 999, [0, 0, 0])).toThrow(/^\[SIM_BAD_ARGUMENT\] placeActor\(w, id\) got 999: pass an actor’s id$/); // prettier-ignore
+    expect(() => placeActor(world, player.id, [0, 0.5, 0], 0, { crouch: true })).toThrow(/placeActor\(at\) got \[0, 0\.5, 0\], where a ceiling 0\.90 m over its feet cuts its crouched hull, 1\.19 m tall \(it would sink through the floor\): pass a place with headroom$/); // prettier-ignore
+    expect(() => placeActor(world, ai.id, [0, 0, 0])).toThrow(/cuts its standing hull, [\d.]+ m tall \(it would sink through the floor\): pass a place with headroom$/); // prettier-ignore
+  });
+
   it('are measured by __engine.feel() holstered or armed, as each is', async () => {
     const engine = (await createHeadless({ scene: 'track', registry: track() })) as unknown as { feel(id?: number): { topSpeed: number } }; // prettier-ignore
     expect(engine.feel().topSpeed).toBeCloseTo(4.4069 * 1.15, 2);

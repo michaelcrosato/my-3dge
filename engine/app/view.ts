@@ -28,9 +28,9 @@
  *
  * The level comes from the scene's `level` id (engine/world/level/level.ts), registered before the view starts
  * (`APP_NO_LEVEL`), the terrain from its `terrain` id (WP 10.5), the site from its `site` id (WP 13.15). Cameras are
- * view state: switching one (`setCamera(code)`, `__engine.camera.set`; with `{ blend: true }`, the page's live switch,
- * it blends) or moving it on by frames headless (`advance`) never reaches the sim. Invariants: presentation only: it
- * reads the run, never writes it (the `QueryView` has no way in); one stage per view, one camera per projection.
+ * view state: switching one (`setCamera(code)`, `__engine.camera.set`; `{ blend: true }` blends it in), moving it on
+ * headless (`advance`) or at a replay's step drawing no frame (`carry`) never reaches the sim. Invariants: presentation
+ * only: it reads the run, never writes it (its `QueryView` has no way in); one stage per view, a camera per projection.
  *
  * @example
  * // const view = createRunView({ run: () => session, registry, materials: createMaterialLibrary() });
@@ -147,6 +147,8 @@ export interface RunView {
   setCamera(code: string, options?: { blend?: boolean }): CameraInfo;
   /** Moves the camera on by `frames` frames of `ADVANCE_FRAME`, drawing nothing, as a page's frames move it; returns it. */
   advance(frames: number): CameraInfo;
+  /** Moves the camera on by one frame of `ADVANCE_FRAME`, as `advance(1)`, leaving the crowd to the next frame or dump. */
+  carry(): void;
   /** The stage as text (engine/gfx/sceneDump.ts). */
   dump(options?: DumpOptions): string;
   /** The sim's read-only queries, or undefined without physics: what the agent eye casts through (WP 12.3). */
@@ -342,6 +344,10 @@ export function createRunView(options: RunViewOptions): RunView {
       for (let i = 0; i < frames; i++) drawn = pair.place(move(undefined, ADVANCE_FRAME), aspect);
       drawCrowd();
       return info();
+    },
+    carry() {
+      drawn = pair.place(move(undefined, ADVANCE_FRAME), aspect);
+      crowdStale = true; // posed by the next frame or dump, as after a step
     },
     dump: (dumpOptions) => {
       if (crowdStale) drawCrowd();

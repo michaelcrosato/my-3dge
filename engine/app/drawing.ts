@@ -17,7 +17,7 @@
  *
  * @example
  * // engine/app/engine.ts
- * // const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, ready: false };
+ * // const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, governor: null, ready: false };
  * // const { drawing, frame, settle, warmBoth } = createPageDrawing(parts, { chrome, settings, onFrame });
  * @see tests/e2e/box.spec.ts
  */
@@ -33,7 +33,7 @@ import type { Chrome } from '../ui/chrome';
 import type { Overlay } from '../ui/overlay';
 import type { TouchLayer } from '../ui/touch';
 import { queryViewOf } from '../sim/queryView';
-import type { CameraPose } from '../gfx/cameras/pose';
+import type { CameraInput, CameraPose } from '../gfx/cameras/pose';
 import type { QueryView } from '../sim/queryView';
 import type { Scene } from '../sim/scene';
 import type { World, WorldEvents } from '../sim/world';
@@ -41,6 +41,7 @@ import type { DamageNumbers } from './damageNumbers';
 import type { AppRun, Drawing } from './headless';
 import type { PageLook } from './look';
 import { HEADLESS_ASPECT } from './view';
+import type { Governor } from '../dev/governor';
 
 /** GPU frames drawn while a replay plays before the queue is drained (`drain`); frames tried before a warm-up counts as stuck (`tries`). */
 export const DRAWING = { drain: 10, tries: 10 } as const;
@@ -55,6 +56,10 @@ export interface PageParts {
   layer: TouchLayer | null;
   ui: Overlay | null;
   numbers: DamageNumbers | null;
+  /** The performance governor (engine/dev/governor.ts): `auto`'s tier as the frame rate asks. */
+  governor: Governor | null;
+  /** The page's own camera input, laid over the devices' each drawn frame (`EngineOptions.cameraInput`). */
+  cameraInput?: () => CameraInput | undefined;
   /** Whether the first frame is drawn. */
   ready: boolean;
 }
@@ -126,7 +131,8 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
     const covered = on && chrome.topPanel() !== null;
     const { innerWidth: width, innerHeight: height } = window;
     parts.layer?.update({ on, stick: touch?.stickView() ?? null, down: touch?.down() ?? [], covered, width, height });
-    parts.gfx!.resolution.cap(qualityBudget(settings.get<QualitySetting>('quality'), on));
+    const quality = settings.get<QualitySetting>('quality');
+    parts.gfx!.resolution.cap(parts.governor ? parts.governor.budget(quality, on) : qualityBudget(quality, on));
   };
   /** `view` drawn through the post chain in the page's look (engine/app/look.ts), once there is one. */
   const through = (view: FrameView): FrameView =>
@@ -140,9 +146,10 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
   const frame = (alpha: number, dt: number): FrameReport =>
     parts.run!.meter.time('render', () => {
       const gfx = parts.gfx!;
+      parts.governor?.frame(dt * 1000);
       touchFrame();
       gfx.resolution.update();
-      const cameraInput = parts.input?.camera();
+      const cameraInput = { ...parts.input?.camera(), ...parts.cameraInput?.() };
       const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
       keepWidth(view.camera, aspect());
       const { shake } = viewNow().stage.fx.effects;

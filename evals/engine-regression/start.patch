@@ -1,0 +1,13 @@
+diff --git a/engine/world/level/openings.ts b/engine/world/level/openings.ts
+index 3b9bfbd..85d135a 100644
+--- a/engine/world/level/openings.ts
++++ b/engine/world/level/openings.ts
+@@ -107,7 +107,7 @@ export function sidesOf(
+   const [c0, r0, c1, r1] = opening.tiles;
+   if (opening.axis === 'x') {
+     const col = Math.floor((c0 + c1) / 2);
+-    return [r0 > 0 ? [col, r0 - 1] : null, r1 + 1 < rows ? [col, r1 + 1] : null];
++    return [r0 > 0 ? [col, r0 + 1] : null, r1 + 1 < rows ? [col, r1 + 1] : null];
+   }
+   const row = Math.floor((r0 + r1) / 2);
+   return [c0 > 0 ? [c0 - 1, row] : null, c1 + 1 < cols ? [c1 + 1, row] : null];

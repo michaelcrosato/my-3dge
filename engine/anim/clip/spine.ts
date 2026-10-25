@@ -46,8 +46,8 @@ import type { RestBody } from './validate';
  */
 export const SPINE_MISS = 15;
 
-/** The shortest turn taking direction `a` to direction `b`, a quaternion. */
-function qBetween(a: V, b: V): V {
+/** The shortest turn taking direction `a` to direction `b`, a quaternion; from a direction to its opposite, a half turn. */
+export function qBetween(a: V, b: V): V {
   const [u, v] = [norm(a), norm(b)];
   const c = dot(u, v);
   if (c < -1 + 1e-9) {

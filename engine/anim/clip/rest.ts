@@ -140,6 +140,7 @@ const [pt, at, rot] = [new Vector3(), new Vector3(), new Quaternion()];
  */
 export function restPoints<T extends { [i: number]: number }>(R: RestBody, world: WorldPose, out: T): T {
   let m = markers.get(R);
+  // Stryker disable next-line ConditionalExpression: a cache: the markers made again are the same markers
   if (!m) markers.set(R, (m = restMarkers(R)));
   for (let i = 0; i < POINT_COUNT; i++) {
     const j = m.joints[i];

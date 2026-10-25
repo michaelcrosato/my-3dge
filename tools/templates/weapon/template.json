@@ -1,0 +1,12 @@
+{
+  "describe": "A weapon: a firearm as data (its rate, damage, range, spread, recoil, magazine, reloads, sights, draw, muzzle and shot's sound) and the prop it is drawn as in the hand, with a unit test that its parts build clean with the muzzle at their front, and that a player draws it, fires its magazine at its rate down the sights into a target, its kick climbing as its recoil says, and reloads it from empty (PLAN.md WP 13.20).",
+  "id": "the module's path, labs/<lab>/weapons/<name> (its id is weapon:<name>, its prop prop:<name>; a player carries it with weaponsFor): labs/box/weapons/smg",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/weapons|tools/templates/weapon)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/weapon/sampleWeapon",
+  "files": {
+    "weapon.ts.tmpl": "{{id}}.ts",
+    "weapon.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "make it fire and look as its file comment says; give it to a player from the scene that arms him (spawnActor's components: { weapons: weaponsFor(['weapon:{{name}}']) }, then addWeapons(w) in its setup); node x gallery prop prop:{{name}} shows its prop once a scene imports {{id}}.ts (add --page <lab's page> for a page of its own); then node x docs --write"
+}

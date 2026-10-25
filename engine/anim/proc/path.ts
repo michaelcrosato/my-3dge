@@ -40,6 +40,7 @@ export class PathChain {
   /** Each segment's direction toward the head, unit. */
   readonly tangents: Vector3[];
   /** The path, oldest first. */
+  // Stryker disable next-line ArrayDeclaration: the constructor's reset empties it before anything reads it
   readonly #path: Vector3[] = [];
   /** Which way the body lies where the path runs out, unit. */
   readonly #back = new Vector3(0, 0, -1);
@@ -79,6 +80,7 @@ export class PathChain {
       left -= step;
     }
     const keep = Math.ceil(((this.count - 1) * this.gap) / step) + 8;
+    // Stryker disable next-line ConditionalExpression,EqualityOperator: splice(0, n) removes nothing for n ≤ 0, so the guard only spares the call
     if (path.length > keep) path.splice(0, path.length - keep);
     if (path.length > 1) this.#back.subVectors(path[0], path[1]).normalize(); // the way its oldest stretch ran
     return this.#sample(head);

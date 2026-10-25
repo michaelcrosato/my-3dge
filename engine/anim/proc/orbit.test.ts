@@ -36,6 +36,11 @@ describe('orbiters and detached parts', () => {
     for (const p of tilted.points) expect(p.x).toBeCloseTo(0, 12);
   });
 
+  it('starts a detached part at its spot, not springing in from the origin', () => {
+    const hand = new DetachedPart({ sway: 0 });
+    expect(hand.step(1 / 60, new Vector3(0.3, 1, 0.2)).distanceTo(new Vector3(0.3, 1, 0.2))).toBeLessThan(1e-12);
+  });
+
   it('trails a detached part behind its moving spot, catching up, drifting within its sway when still', () => {
     const hand = new DetachedPart({ frequency: 10, damping: 0.8, sway: 0.02 });
     const spot = new Vector3(0.3, 1, 0.2);

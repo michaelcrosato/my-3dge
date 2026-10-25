@@ -214,6 +214,7 @@ export function footPlant(
       point.sub(sole).applyQuaternion(onto).add(at);
       under = Math.max(under, depth.subVectors(base, point).dot(normal));
     }
+    // Stryker disable next-line ConditionalExpression,EqualityOperator: under is never below 0, and adding 0 moves nothing: the guard only spares the sums
     if (under > 0) plan.ankle.y += under / Math.max(normal.y, 0.5);
     plan.pitch = 0;
     if (rolls && plan.held === 1) {
@@ -222,6 +223,7 @@ export function footPlant(
       plan.flat.copy(plan.rotation);
       jointPosition(world, toe, plan.ball).sub(sole).applyQuaternion(onto).add(at);
       plan.heel.copy(heel); // the heel's place, as the check above turned it
+      // Stryker disable next-line ConditionalExpression,EqualityOperator: under is never below 0, and adding 0 moves nothing: the guard only spares the sums
       if (under > 0) [plan.ball.y, plan.heel.y] = [plan.ball.y + under / Math.max(normal.y, 0.5), plan.heel.y + under / Math.max(normal.y, 0.5)]; // prettier-ignore
       pitchHeel(plan, Math.asin(MathUtils.clamp(-animAhead.dot(normal), -1, 1))); // its toes' dip, or their rise
     }
@@ -235,6 +237,7 @@ export function footPlant(
     const astray = Math.max(0, across - Math.hypot(ankle.x - hip.x, ankle.z - hip.z)) * plan.held;
     const extent = Math.min(hip.distanceTo(ankle) + astray, reach);
     const below = hip.y - plan.ankle.y;
+    // Stryker disable next-line EqualityOperator: at across = extent the root is 0, so either side of the test drops by below
     drop = Math.max(drop, align * (across < extent ? below - Math.sqrt(extent * extent - across * across) : below));
   }
   pose.rootPos.y -= drop;

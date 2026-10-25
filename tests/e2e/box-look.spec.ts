@@ -29,6 +29,10 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test, type Harness } from './fixtures';
 
+// Each test sets its own timeout on its first line; its fixtures run before that, so they get the longest test's here
+// rather than the default 30 s (a cold context took longer on GitHub's runner in main's full run on 399be1c).
+test.describe.configure({ timeout: 480_000 });
+
 /** The knock replay (Box 3, the hall with its props): its first 180 steps play through the box's looks. */
 const KNOCK = readFileSync(join(import.meta.dirname, '../replays/box-3-knock.replay.json'), 'utf8');
 

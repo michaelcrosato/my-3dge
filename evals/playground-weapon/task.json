@@ -1,0 +1,10 @@
+{
+  "title": "Add a weapon to the playground: a submachine gun",
+  "area": "playground",
+  "minutes": 40,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "checks": ["types", "lint"]
+  }
+}

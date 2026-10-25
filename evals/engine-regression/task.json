@@ -1,0 +1,19 @@
+{
+  "title": "Fix a regression the suites caught: doors and windows lost the rooms either side of them",
+  "area": "engine",
+  "minutes": 30,
+  "start": "start.patch",
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["npx vitest run engine/world/level"],
+    "unchanged": [
+      "engine/world/level/openings.test.ts",
+      "engine/world/level/rooms.test.ts",
+      "engine/world/level/storeys.test.ts",
+      "fixtures/levels/",
+      "tests/replays/"
+    ],
+    "checks": ["types", "lint"]
+  }
+}

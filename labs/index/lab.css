@@ -94,7 +94,10 @@ canvas#view {
   display: none;
 }
 #overlay {
+  /* a canvas keeps its own 300 × 150 under inset alone: sized to the view it draws over */
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }

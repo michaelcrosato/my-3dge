@@ -58,7 +58,7 @@ so a level select reloads the page with another `?scene`.
 - **Events.** `w.emit('gem', payload)` delivers at the end of the step to `w.events.on('gem', …)` listeners. A page
   reads them from `frame.world.events.trace` (sounds, effects); emitters burst on them; tests count them.
 - **Time** is steps: `w.tick`, `w.dt` (1/60 s), `w.hz`. Count a duration in whole steps (30 s is 1,800), never by
-  adding up `w.dt`: floating-point sums drift (the starter's clock does it right). `w.timers` schedule in sim seconds.
+  adding up `w.dt`: floating-point sums drift. `w.timers` schedule in sim seconds.
 - **Randomness** comes from named streams seeded by the run: `w.rng('gems').int(0, 9)`, `.range(a, b)`, `.chance(p)`.
 - **Settings** are the game's tunable numbers: `defineSettings({ 'game.gems': { type, default, minimum, maximum,
   unit, when: 'scene', description } })`, read with `w.settings.get('game.gems')`. Each is reachable from the URL
@@ -88,7 +88,7 @@ Grow your game from it; keep its tests as they are, and change what they check a
 | labs/game/scenes/play.ts     | The rules: a level as text, settings, components (`gem`, `round`), systems, a random stream, events |
 | labs/game/cast/player.ts     | The player: a character on the controller (run, jump, dash) drawn as the humanoid          |
 | labs/game/bot.ts             | A bot that plays through intents, steering down a flow field to the nearest gem            |
-| labs/game/main.ts            | The page: `createEngine`, the HUD in `onFrame`, Enter to play again, the chase camera     |
+| labs/game/main.ts            | The page: `createEngine`, the HUD in `onFrame`, Enter to play again, Esc's pause menu, the chase camera     |
 | labs/game/scenes/play.test.ts | The tests: the golden replay, capture and restore, the bot wins on 10 seeds, the clock     |
 | labs/game/replays/bot.replay.json | The bot's play, recorded, with its golden hashes                                      |
 | labs/game/README.md          | The game's own page: what it is, how it plays, the calls made                              |
@@ -100,24 +100,26 @@ The box (labs/box/, its README says which scene shows what) has a working use of
 
 | You need                       | Reach for                                                                                 | See it in                          |
 | ------------------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------- |
-| A level                        | A text map in a scene module; `compileLevel`, glyphs (`#` wall, `.` floor, `@` spawn, `w` low wall, `P` pillar, `^` stairs, `=` gallery, `o` dais, `t` brazier), `defineGlyph` for your own; `addLevelBodies`; the page registers the text (`createEngine({ levels })`) | labs/game/scenes/play.ts, labs/box/levels/hall.txt |
-| A player or character          | `createCharacter` (speed, jump, dash, coyote time, buffer), `spawnActor`, `measureFeel`   | labs/game/cast/player.ts, labs/box/cast/hero.ts |
+| A level                        | A text map in a scene module; `compileLevel`, glyphs (`#` wall, `.` floor, `@` spawn, `w` low wall, `P` pillar, `^` stairs, `=` gallery, `o` dais, `t` brazier), `defineGlyph` for your own; `addLevelBodies`; the page registers the text (`createEngine({ levels })`); a building of storeys: `node x new level`; buildings on a terrain: `defineSite`, `addSiteBodies` | labs/game/scenes/play.ts, labs/box/levels/hall.txt, labs/playground/levels/site.ts |
+| A player or character          | `createCharacter` (speed, jump, dash, coyote time, buffer), `spawnActor`, `measureFeel`; Apex's movement, `{ movement: 'movement:apex' }`, or your own: `defineMovement` (`node x new movement`); `node x feel`, `createFeelPanel` | labs/game/cast/player.ts, labs/box/cast/hero.ts, labs/playground/cast/player.ts |
 | Physics                        | `physics: true` in the scene, `physicsOf(w)`: bodies, `raycast`, `overlap`, `probe`; `addBox`, `addSensor`, `knock`, movers | labs/box/scenes/hall.ts |
-| Props                          | `defineProp` (meshes, a body, hooks), `spawnProp`, `hitProp`; the engine's `prop:crate`, `prop:barrel`, `prop:brazier`, `prop:pillar` | labs/box/scenes/hall-props.ts |
+| Props                          | `defineProp` (meshes, a body, hooks), `spawnProp`, `hitProp`; the engine's `prop:crate`, `prop:barrel`, `prop:brazier`, `prop:pillar`; one a player uses or strikes: `defineUsable`, `defineStrikable`, `addInteraction` (`node x new interactable`) | labs/box/scenes/hall-props.ts |
+| Rides, doors and switches      | `addLevelLadders`, `addZipline`, `addLauncher`; `addLevelDoors`, `addLevelWindows`, `addSwitch`, `switchGroup`; `setDaytime`, `lightsAtDusk`; `placeActor` | labs/playground/scenes/site.ts |
 | Enemies and crowds             | Crowd bodies (`addAgent`, `updateCrowd`, `knockback`, `killAgent`), steering (`seek`, `followFlow`, `approachRing`), `NavGrid` and `FlowField`, attack tokens, `canSee` | labs/box/cast/walker.ts, labs/box/scenes/crowd-1000.ts |
 | Combat                         | Moves as data (`defineMove`, `Attack`, `Combo`), hit queries (`coneHits`, `sweepHits`), `damage` and `HEALTH`, projectiles, telegraphs, `reactTo`, `requestHitStop` | labs/box/scenes/fight.ts, labs/box/cast/hero.ts |
-| Melee, guns and targets        | `addMelee` (a punch with a lunge, kicks, the door kick), `defineWeapon`, `weaponsFor` and `addWeapons` (hip fire, the sights, a climbing recoil, reloads), `defineThing` and `spawnThing` (targets that fall at a hit and stand again; `node x new thing`) | labs/playground/weapons/, labs/playground/cast/dummies.ts |
+| Melee, guns and targets        | `addMelee` (punches, kicks, the door kick), `defineWeapon`, `weaponsFor` and `addWeapons` (hip fire, the sights, a climbing recoil, reloads; `node x new weapon`), `defineThing` and `spawnThing` (targets that fall at a hit and stand again; `node x new thing`) | labs/playground/weapons/, labs/playground/cast/dummies.ts |
 | Ragdolls and joints            | `addJoint` (fixed, ball, hinge, slider, rope, spring, as data), `addRagdolls` and `handOff` (a hard blow or a death gives a person's body to physics; it gets up the way it lies), `standUp` | labs/box/scenes/ragdoll.ts, labs/playground/cast/partners.ts |
 | Animation                      | Actors animate themselves (`spawnActor({ anim: { build } })`); builds, bodies, the animator's body states, actions (`defineAction`, played on an actor with `actOn`), clips from the library (`playClip`) | labs/box/scenes/clips.ts, `node x anim find` |
 | How it looks                   | Materials and textures as data (`defineMaterial`, `defineTexture`), looks (`?post.look=look:cartoon`; `defineLook`), skies, lights | labs/box/looks/torch-lit.ts, `node x describe look` |
 | Effects                        | Emitters as data, bursting on sim events (`defineEmitter`); telegraphs; screen shake      | labs/box/scenes/fight.ts           |
-| UI                             | `engine.ui`: `hud(id, text, { at })`, `label`, `damage`, `crosshair`; menus and screens as plain HTML/CSS in the page | labs/game/main.ts, labs/box/menu.ts |
+| UI                             | `engine.ui`: `hud(id, text, { at })`, `label`, `damage`, `crosshair`; screens and menus: `createMenu`, `createEngine({ store, modal })` (rebinds kept, a menu's keys out of play), `input.bindingsFor`, `rebind`, `listen` (a controls screen); the rest plain HTML/CSS | labs/game/main.ts (its pause), labs/playground/ui/, labs/box/menu.ts |
 | Sound                          | Effects and songs as data (`defineSfx`, `defineSong`), the page's `createAudio`; a scene's `sounds` maps events to sounds | labs/box/sounds/effects.ts, labs/box/sounds/page.ts |
-| Cameras                        | `?cam=iso` (`threequarter`, `topdown`, `brawler`, `side`), `?cam3=chase` (`orbit`, `fly`, `fixed`, `first`, `rail`); `__engine.camera.set(code)` | labs/game/main.ts |
+| Cameras                        | `?cam=iso` (`threequarter`, `topdown`, `overhead`, `brawler`, `side`), `?cam3=chase` (`orbit`, `fly`, `fixed`, `first`, `rail`, `shoulder`, `follow`); `__engine.camera.set(code, { blend: true })`; a map per mode: `createEngine({ actionMap: (code) => … })`; a mode of your own: `defineCamera` (`node x new camera`) | labs/game/main.ts, labs/playground/views.ts |
 | Touch controls                 | `defineTouchLayout`, `createEngine({ touchLayout })` (built, not yet tested on phones)   | labs/box/touch.ts                  |
-| A new entry of a kind          | `node x new <kind> labs/game/<dir>/<name>`: the module and its test from a template (`node x new` lists the kinds; a new scene starts as a copy of play.ts instead) | tools/templates/                    |
+| A new entry of a kind          | `node x new <kind> labs/game/<dir>/<name>`: the module and its test from a template (`node x new` lists the kinds, tools/templates/README.md says where each goes; a new scene starts as a copy of play.ts instead) | tools/templates/                    |
 
-Saves and high scores have no engine store yet: keep them in the page (`localStorage`), outside the sim.
+Saves, high scores and settings go in the page's store (`createStore`, never read by the sim), as labs/game/best.ts
+keeps the best round.
 
 ## 5. Rules that keep play reproducible
 
@@ -156,15 +158,15 @@ Every command prints its verdict first, about 20 lines at most, and writes `out/
 | `node x inspect --page labs/game`, then `node x eval "<js>"`, `node x dump`, `node x set <key> <value>` | A live headless page to question: the HUD through DOM queries, `__engine` |
 | `node x perf labs/game [--scene id]`                        | Performance as counters (ms per step and frame, draw calls), never frames per second |
 | `node x describe [kind [id]]`                               | The registries: every kind's fields and entries (materials, moves, looks, sounds…) |
-| `node x qa geo tex audio`                                   | Content QA by numbers: the engine's and the game's geometry, props, textures and sounds (the modules in a geometry, props, textures or sounds folder of labs/game/); a new or worse violation fails, and one the game accepts goes in its own `tests/baselines/qa-<family>-game.json` with the reason |
+| `node x qa geo tex audio`                                   | Content QA by numbers: the engine's and the game's geometry, props, textures and sounds (labs/game/'s geometry, props, textures and sounds folders); a new or worse violation fails, and one the game accepts goes in its own `tests/baselines/qa-<family>-game.json` with the reason |
 | `node x new <kind> <id>`                                    | A new entry from its template, with its test                                     |
 | `node x audio sfx:<id>` · `node x anim find <words>`        | A sound rendered in Node, as numbers · the clip library searched                 |
 | `node x engine`                                             | Which engine the game is on, and whether its files are as shipped                |
 
 In a page, `window.__engine` is the inspector, and a headless engine in tests (`createHeadless({ scene, seed,
 settings })`) has the same members but the rendering ones: `__engine.help()` lists them (`step`, `hash`,
-`capture`, `restore`, `replay`, `input.press`, `input.axis`, `input.record`, `set`, `state`, `get`, `entities`,
-`shot`, `stats`…).
+`capture`, `restore`, `replay`, `input.press`, `input.record`, `set`, `state`, `shot`,
+`stats`…).
 
 ## 7. Testing a game
 
@@ -178,9 +180,9 @@ settings })`) has the same members but the rendering ones: `__engine.help()` lis
   say why in the commit. When a hash changes by surprise, `node x replay <file> --browser sim --bisect` narrows it
   down: to the step, entity and field where two runs part (Node and Chromium, or Node and Node again), or, when every
   run agrees but they all left the goldens, to the checkpoints between which they did (then the code, data or a
-  dependency changed what the sim does). The usual causes of runs that part: a `Math` function held in a variable or
-  destructured, `**` (lint bans both sim-side), iteration over something whose order is not fixed, state kept in a
-  module between runs, view settings or presentation reaching the sim, and `async` code in a step.
+  dependency changed what the sim does). The usual causes: a `Math` function held in a variable, `**`, an iteration
+  whose order is not fixed, module state between runs, view settings or presentation reaching the sim, `async` code in
+  a step.
 
 ## 8. Looking things up
 
@@ -190,7 +192,6 @@ settings })`) has the same members but the rendering ones: `__engine.help()` lis
   what to do.
 - **The engine's file comments**: each module opens with what it is for, its rules and a runnable `@example`.
 - **`node x describe`** for data, **`node x help`** for commands, **`__engine.help()`** for the inspector.
-- **labs/box/** for a working example; **labs/box/README.md** says which scene shows what.
 - **The engine's repository** (https://github.com/michaelcrosato/my-3dge) for its plan, its decisions and its tests.
 
 ## 9. When the engine is in your way

@@ -1,0 +1,73 @@
+diff --git a/labs/box/looks/moor.test.ts b/labs/box/looks/moor.test.ts
+new file mode 100644
+index 0000000..aac2300
+--- /dev/null
++++ b/labs/box/looks/moor.test.ts
+@@ -0,0 +1,30 @@
++/**
++ * @file Unit tests for the look `look:moor` (labs/box/looks/moor.ts): its entry parses, it posterizes with 0 or 8 and
++ * more levels, and `node x set post.look look:moor` switches to it: the look the chain then draws is this one, not the
++ * fallback.
++ * @see labs/box/looks/moor.ts
++ */
++import { describe, expect, it } from 'vitest';
++import { registry } from '../../../engine/core/registry';
++import { checkSetting } from '../../../tools/cmd/set';
++import { look } from './moor';
++
++describe('look:moor', () => {
++  it('parses: its id, its description, and every filter with a scope', () => {
++    expect(look.id).toBe('look:moor');
++    expect(look.description).not.toBe('');
++    for (const [name, filter] of Object.entries(look.filters)) expect(typeof filter.scope, name).toBe('string');
++  });
++
++  it('posterizes with 0 or 8 and more levels, so dull colours keep their hue', () => {
++    for (const [name, filter] of Object.entries(look.filters)) {
++      if ('levels' in filter) expect(filter.levels === 0 || filter.levels >= 8, `filters.${name}.levels`).toBe(true);
++    }
++  });
++
++  it('switches with node x set post.look: the chain draws this look, not the fallback', () => {
++    const change = checkSetting('post.look', look.id);
++    expect(change.value).toBe(look.id);
++    expect(registry.get('look', String(change.value))).toBe(look);
++  });
++});
+diff --git a/labs/box/looks/moor.ts b/labs/box/looks/moor.ts
+new file mode 100644
+index 0000000..53afa1d
+--- /dev/null
++++ b/labs/box/looks/moor.ts
+@@ -0,0 +1,31 @@
++/**
++ * @file The look `look:moor`: the box on a grey, overcast moor, thick fog closing in past the hero and lying low on
++ * the floor. It is the sky `sky:moor`, defined here, over the scene's own style with no filter: a sunless sky the
++ * colour of wet slate, a soft ambient light from above, range fog from 4 m past the focus, whole at 40 m, and height
++ * fog densest on the floor, gone 2 m up.
++ *
++ * Invariants: data only, the kinds' fields (`node x describe look`, `node x describe sky`): the sky `sky:moor`
++ * (engine/gfx/sky.ts), which a page that starts the engine shows (engine/app/look.ts), the scene's own style, and
++ * every filter it leaves out off. A page draws it when its setting `post.look` names it; a look never changes play.
++ *
++ * @example
++ * look.id; // 'look:moor'
++ * look.sky; // 'sky:moor'
++ * @see labs/box/looks/moor.test.ts
++ */
++import { defineLook, defineSky } from '../../../engine';
++
++/** The sky `sky:moor`: overcast, no sun, thick range fog past the focus and height fog on the floor. */
++export const sky = defineSky('sky:moor', {
++  description: 'A grey, overcast moor: no sun, a soft light from above, thick fog from 4 m past the focus and low on the floor.', // prettier-ignore
++  background: '#8a929a',
++  pointLights: 1,
++  ambient: { sky: '#9aa4ae', ground: '#3a3f44', intensity: 1.4 },
++  fog: { color: '#a7afb7', start: 4, end: 40, amount: 0.9, floor: 0, ceiling: 2, height: 0.6 },
++});
++
++/** The look `look:moor`: the sky `sky:moor` over the scene's own style, no filter. */
++export const look = defineLook('look:moor', {
++  description: 'A grey, overcast moor: thick fog closing in past the hero and lying low on the floor; no filter.',
++  sky: 'sky:moor',
++});

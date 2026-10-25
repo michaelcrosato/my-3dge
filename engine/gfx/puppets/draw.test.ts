@@ -3,12 +3,13 @@
  * (`SkinnedMesh.getVertexPosition`, what the vertex shader computes): the rigid-skinned geometry (two groups, one bone
  * per vertex at weight 1, the slots' colours, the `geo` QA family's checks), the bones bound at rest, every socket
  * where FK puts it in posed, moved and scaled poses (the bones, and the skinned centres of the pieces on sockets),
- * the bounding sphere holding every posed vertex, the draw-call count, and the instanced crowd: its batches per shape,
+ * the bounding sphere holding every posed vertex, the draw-call count, and the instanced crowd (batches.ts): its batches per shape,
  * its instance matrices where FK puts the pieces (every limb of the humanoid and the fixture body: its frustum from
  * the wide end to the narrow one, flipped when the end is the wider, its taper in eighths and its batch, its two end
  * balls), its colours and draw calls, and the warm-up registration. The GPU half (pixels where FK says, draw calls
  * counted by the renderer) is tests/e2e/puppets.spec.ts.
  * @see engine/gfx/puppets/draw.ts
+ * @see engine/gfx/puppets/batches.ts
  */
 import { Matrix4, Quaternion, Vector3, type BufferAttribute, type SkinnedMesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
@@ -21,7 +22,8 @@ import { createRegistry } from '../../core/registry';
 import { inspectGeometry } from '../geometry/inspect';
 import { createMaterialLibrary } from '../materials/library';
 import { compileBody, type CompiledBody } from './compile';
-import { createPuppet, createPuppetBatches, puppetGeometry, unitGeometry, type PieceRange } from './draw';
+import { createPuppetBatches } from './batches';
+import { createPuppet, puppetGeometry, unitGeometry, type PieceRange } from './draw';
 
 const library = createMaterialLibrary();
 const humanoid = compileBody('body:humanoid', 'build:heroic');

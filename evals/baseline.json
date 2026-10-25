@@ -1,0 +1,10 @@
+{
+  "$about": "The baseline pass rate of x evals' tasks, each attempted by a fresh agent with only the repository's docs to go on (PLAN.md WP 12.2). node x evals --run --agent \"<command>\" --record writes it; it is deferred until the owner grants model access for live runs (PLAN.md §11.5), as its escalation asks.",
+  "status": "deferred",
+  "escalation": "ESC-0004",
+  "recorded": null,
+  "agent": null,
+  "passed": null,
+  "total": 14,
+  "tasks": {}
+}

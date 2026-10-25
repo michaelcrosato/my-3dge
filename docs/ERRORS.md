@@ -269,13 +269,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 96](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -287,7 +287,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -311,13 +311,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `views at step {step} sets {path}, which is not a view setting, so it would change play`
 - Fix: change only settings marked view during a replay (gfx.resolution, time.scale…); a setting that changes play belongs in the replay's own inputs
-- Registered in: [`engine/app/playback.ts` line 32](../engine/app/playback.ts)
+- Registered in: [`engine/app/playback.ts` line 35](../engine/app/playback.ts)
 
 ### APP_START
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
 
 ### APP_STORE_BLOCKED
 
@@ -763,6 +763,30 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 
 Raised by `levelFloorTexture` (engine/gfx/textures/contactShadow.ts) when a tile would not be a whole number of texels (texels would straddle tiles, and the contact shadows would not line up with the walls) or the floor would be more than 4096 texels on a side, the largest texture a bake makes.
 
+### GFX_GOVERNOR
+
+- Message: `the frame rate moved quality auto to {tier}: {reason}`
+- Fix: nothing to do for play; set quality to a tier (low, medium, high) to hold one, or gfx.governor to false
+- Registered in: [`engine/dev/governor.ts` line 44](../engine/dev/governor.ts)
+
+Advice from the performance governor (engine/dev/governor.ts) when it moves the `auto` quality a tier.
+
+### GFX_GPU_CROWD_BATCH
+
+- Message: `GPU crowd batch {name}: {problem}`
+- Fix: {fix}
+- Registered in: [`engine/gfx/enhanced/crowds.ts` line 53](../engine/gfx/enhanced/crowds.ts)
+
+Raised by a GPU crowd (engine/gfx/enhanced/crowds.ts) for a batch it cannot draw (per-instance attributes, an array of materials, a material three.js has no node material for, more batches than it holds) or a slot that is negative or fractional; advice, once, when a style set gives a batch a material it cannot draw, which keeps its own.
+
+### GFX_GPU_CROWD_FULL
+
+- Message: `a GPU crowd of {capacity} slots was given {wanted} instances; {dropped} were left out of a frame`
+- Fix: make the GPU crowd with a larger capacity (createGpuCrowd({ capacity })); the stage makes its own crowd larger by itself
+- Registered in: [`engine/gfx/enhanced/crowds.ts` line 48](../engine/gfx/enhanced/crowds.ts)
+
+Advice from a GPU crowd (engine/gfx/enhanced/crowds.ts), once: a frame drawn wrote more instances than its buffer holds, so the ones past it were not drawn.
+
 ### GFX_GPU_ERROR
 
 - Message: `WebGPU refused a call ({kind}): {message}`
@@ -839,7 +863,7 @@ Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; give data textures that must look smooth HalfFloatType, or use a GPU with float32-filterable, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 58](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 59](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `float32-filterable`: three.js r182 then samples 32-bit float textures unfiltered.
 
@@ -850,6 +874,14 @@ Advice from the feature registry (engine/gfx/features.ts) when the device has no
 - Registered in: [`engine/gfx/enhanced/gi.ts` line 32](../engine/gfx/enhanced/gi.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when bounce light is off: a look's `gi` section draws nothing.
+
+### GFX_NO_GPU_CROWDS
+
+- Message: `{feature} is off: {reason}; {downgrade}`
+- Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there, or use a GPU with indirect-first-instance
+- Registered in: [`engine/gfx/enhanced/crowds.ts` line 43](../engine/gfx/enhanced/crowds.ts)
+
+Advice from the feature registry (engine/gfx/features.ts) while GPU-driven crowds are off: crowds draw through the instancing service, a draw call per page of each batch.
 
 ### GFX_NO_GPU_PARTICLES
 
@@ -871,7 +903,7 @@ Raised by `defineMannequin` (engine/gfx/puppets/bodies/mannequin.ts) for a set w
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; take feature:shells out of gfx.featuresOff to see the looks' outline shells again
-- Registered in: [`engine/gfx/features.ts` line 68](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 69](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when `feature:shells` is off, which only `gfx.featuresOff` does: the stage makes no outline shell (engine/gfx/stageShells.ts), so a look's shells are left out and `x perf --feature feature:shells` prices them.
 
@@ -895,7 +927,7 @@ Advice from the feature registry (engine/gfx/features.ts) when tiled lighting is
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; for GPU timings use a browser and GPU with timestamp queries, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 53](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 54](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device has no `timestamp-query`: stats report no GPU time per frame.
 
@@ -991,7 +1023,7 @@ Advice from the chain's shading stage (engine/gfx/post/shading.ts): the quality 
 
 - Message: `rig body {body}, part {part}: {problem}`
 - Fix: {fix}
-- Registered in: [`engine/gfx/puppets/crowd.ts` line 58](../engine/gfx/puppets/crowd.ts)
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 63](../engine/gfx/puppets/crowd.ts)
 
 Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 
@@ -999,7 +1031,7 @@ Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part 
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; a GPU or browser with larger storage-buffer limits turns it on, and take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/features.ts` line 63](../engine/gfx/features.ts)
+- Registered in: [`engine/gfx/features.ts` line 64](../engine/gfx/features.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when the device cannot bind storage buffers of 256 MB: GPU techniques with large buffers run smaller or stay off.
 

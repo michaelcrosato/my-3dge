@@ -1,0 +1,65 @@
+diff --git a/labs/playground/scenes/gym.test.ts b/labs/playground/scenes/gym.test.ts
+index d088d41..9f94c94 100644
+--- a/labs/playground/scenes/gym.test.ts
++++ b/labs/playground/scenes/gym.test.ts
+@@ -9,7 +9,7 @@
+ import { describe, expect, it } from 'vitest';
+ import { createHeadless } from '../../../engine';
+ import { floorHeight, topHeight } from '../../../engine/sim-api';
+-import { APEX_JUMP, APEX_RUN, playerCharacter } from '../cast/player';
++import { APEX_GRAVITY, APEX_JUMP, APEX_RUN, playerCharacter } from '../cast/player';
+ import { GYM_FEATURES, GYM_SPAWN, GYM_TILE, type GymFeature, type GymRect } from '../levels/gym';
+ import { GYM, GYM_START, gym } from './gym';
+ 
+@@ -115,4 +115,21 @@ describe('the gym', () => {
+     expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(hero.speed * 0.6);
+     expect(GYM_SPAWN[0] - run.x).toBeLessThan(hero.speed * 1.01);
+   });
++
++  it('throws the player straight up with the dev action launch, 10 m/s by default', async () => {
++    /** The player's highest point after a launch with `args`, from the spawn. */
++    const rise = async (args?: { speed?: number }) => {
++      const engine = await createHeadless({ scene: gym });
++      engine.step(30);
++      (engine.actions as { run(name: string, args?: unknown): unknown }).run('launch', args);
++      let top = 0;
++      for (let k = 0; k < 150; k++) {
++        engine.step(1);
++        top = Math.max(top, (engine.state('actor').entities as unknown as { actor: { y: number } }[])[0].actor.y);
++      }
++      return top;
++    };
++    expect(await rise()).toBeCloseTo((10 * 10) / (2 * APEX_GRAVITY), 1);
++    expect(await rise({ speed: 5 })).toBeCloseTo((5 * 5) / (2 * APEX_GRAVITY), 1);
++  });
+ });
+diff --git a/labs/playground/scenes/gym.ts b/labs/playground/scenes/gym.ts
+index 01442f7..4987099 100644
+--- a/labs/playground/scenes/gym.ts
++++ b/labs/playground/scenes/gym.ts
+@@ -8,8 +8,10 @@
+  * Settings (`playground.gym.*`, read when the scene starts, so they change play and go in replays): the player's run
+  * speed and jump height, Apex's by default (docs/PLAYGROUND.md §3.2). Its dev action `place` (`{ at, yaw, speed, crouch }`)
+  * puts the player somewhere, at rest or moving `speed` m/s where it faces: where a feel course
+- * (labs/playground/courses/) starts. The crawl's slab and bar stand on their walls and posts as fixed props. WP 13.7:
+- * the tower's ladder (its glyph), its zipline, the redeploy balloon, the jump pad and the trampoline (engine/sim/rides.ts).
++ * (labs/playground/courses/) starts; `launch` (`{ speed }`) throws him straight up from where he is at `speed` m/s (10
++ * by default), for a fall from a height without a tower to climb. Both are recorded in replays, as every dev action.
++ * The crawl's slab and bar stand on their walls and posts as fixed props. WP 13.7: the tower's ladder (its glyph), its
++ * zipline, the redeploy balloon, the jump pad and the trampoline (engine/sim/rides.ts).
+  *
+  * The level's text is computed from the gym's features (labs/playground/levels/gym.ts), so sim-side code reads no
+  * file; the page registers the same text for the view (labs/playground/main.ts).
+@@ -86,6 +88,12 @@ export const gym = defineScene('playground:gym', {
+       placeActor(w, player.id, at, yaw, { crouch });
+       [player.actor.vx, player.actor.vz] = [speed * Math.sin(yaw), speed * Math.cos(yaw)];
+     },
++    /** Throws the player straight up from where he is at `speed` m/s (10 by default): a test of a fall from a height. */
++    launch(w, args) {
++      const { speed = 10 } = (args ?? {}) as { speed?: number };
++      const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
++      if (player) player.actor.vy = speed;
++    },
+   },
+ });
+ 

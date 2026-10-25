@@ -12,17 +12,19 @@
  * the aim the view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
  *
  * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, never after a startup
- * error; every failure is one record in `__engine.errors` (the log's), shown as page text by the error overlay
- * (engine/dev/overlay.ts), so a startup crash is one line, never a hang. Without WebGPU (`GFX_NO_WEBGPU`) the sim still
- * runs, and `__engine` still steps it; only `render` and `shot` throw. A frame that throws stops the loop and becomes
- * an error record too.
+ * error; every failure (a frame that throws stops the loop) is one record in `__engine.errors` (the log's), shown as
+ * page text by the error overlay (engine/dev/overlay.ts), so a startup crash is one line, never a hang. Without WebGPU
+ * (`GFX_NO_WEBGPU`) the sim still runs, and `__engine` still steps it; only `render` and `shot` throw.
  *
  * Every frame drawn is timed by the run's stats meter, which reads the renderer's counts (`__engine.stats()`,
- * engine/dev/stats.ts). The rendering members (engine/app/viewMembers.ts) draw through the page's drawing
- * (engine/app/drawing.ts: `render(n)`, `shot`, and `replay(text)` drawing a frame after every step, §6.7).
- * `?replay=<name>` plays one of `options.replays` in real time from step 0 (without `?scene`, in its own scene if the
- * page has it), then hands back to the devices. The overlay (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the
- * sim's hits as damage numbers (engine/app/damageNumbers.ts); `onFrame` runs a page's own presentation (`EngineFrame`).
+ * engine/dev/stats.ts), and feeds the performance governor (engine/dev/governor.ts: `auto`'s tier by frame rate). The
+ * rendering members (engine/app/viewMembers.ts) draw through the page's drawing (engine/app/drawing.ts: `render(n)`,
+ * `shot`, and `replay(text)` drawing a frame after every step, §6.7). `?replay=<name>` plays one of `options.replays`
+ * in real time from step 0 (without `?scene`, in its own scene if the page has it), then hands back to the devices.
+ * The overlay (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the sim's hits as damage numbers
+ * (engine/app/damageNumbers.ts); `onFrame` runs a page's own presentation (`EngineFrame`). A page's front end (WP
+ * 13.25): `store` keeps the bindings across sessions; while `modal()` holds the page (a menu, a photo mode) the devices
+ * still read the system layer, but no intent reaches the run; `cameraInput()` is laid over each frame's camera input.
  *
  * Touch (WP 3.12, ADR-0021: built, not tested): the app wires the touch device (engine/input/devices/touch.ts), the
  * page's chrome, the touch layer from `touchLayout` and swiping (engine/ui/), the quality budget's pixel caps
@@ -32,9 +34,7 @@
  * recorded settings; cameras and view settings never reach the hash; time comes from the frames, never a wall clock.
  *
  * @example
- * // labs/box/main.ts
- * // import { createEngine } from '../../engine';
- * // const engine = await createEngine({ canvas: document.querySelector('canvas')!, scenes: ['box:room'] });
+ * // const engine = await createEngine({ canvas, scenes: ['box:room'] }); // labs/box/main.ts
  * // engine.ready; // true once the first frame is drawn
  * @see tests/e2e/box.spec.ts
  */
@@ -54,10 +54,11 @@ import { createGalleryDriver, type GalleryDriver } from '../dev/galleryShoot';
 import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
 import { createStyleSet } from '../gfx/materials/styles';
-import { qualityBudget, type QualitySetting } from '../gfx/quality';
+import type { QualitySetting } from '../gfx/quality';
 import { createPost } from '../gfx/post/chain';
 import { definePostSettings } from '../gfx/post/settings';
 import { createRenderer } from '../gfx/renderer';
+import type { CameraInput } from '../gfx/cameras/pose';
 import { connectVirtualDevice } from '../input/devices/inspector';
 import { createInput, type CameraLike, type Input } from '../input/input';
 import { lookOptions } from '../input/look';
@@ -72,9 +73,11 @@ import { createPageDrawing, type EngineFrame, type PageParts } from './drawing';
 import { createPageLook } from './look';
 import { createAppHost, type AppRun } from './headless';
 import { createLoop, type Loop } from './loop';
+import { textStorage, type Store } from './store';
 import { createPlayback, type Playback } from './playback';
 import { defineLevel } from '../world/level/level';
 import { parseRoutes, type Routes } from './routes';
+import { createGovernor } from '../dev/governor';
 
 /** The codes this module raises, with their fixes. */
 export const ENGINE_CODES = defineCodes('app', {
@@ -132,6 +135,12 @@ export interface EngineOptions {
   onMenu?: () => void;
   /** The page's own presentation (its sound): called once per drawn frame, after the draw, with the run to read. */
   onFrame?: (frame: EngineFrame) => void;
+  /** Where the bindings are kept across sessions (`createStore`, engine/app/store.ts); in memory without it. */
+  store?: Store;
+  /** True while the page's front end holds the devices (a menu, a photo mode): no intent reaches the run. */
+  modal?: () => boolean;
+  /** Camera input laid over the devices' each drawn frame, field by field (a photo mode's fly keys and drag look). */
+  cameraInput?: () => CameraInput | undefined;
 }
 
 /** A started engine. */
@@ -208,7 +217,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   overlay.status('Loading…');
   let routes: Routes | null = null;
   let loop: Loop | null = null;
-  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, ready: false }; // prettier-ignore
+  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, governor: createGovernor({ log }), cameraInput: options.cameraInput, ready: false }; // prettier-ignore
   const fail = (error: unknown, code = 'APP_START'): ErrorRecord => {
     const record = log.error(...recordOf(error, code), error);
     overlay.error(record);
@@ -296,7 +305,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   };
   const declared = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
   const look = () => lookOptions((path) => (declared(path) ? settingsNow.get(path) : undefined));
-  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap, map: mapFor(), look, onView: options.onView })); // prettier-ignore
+  const input = (parts.input = createInput({ window, document, element: options.canvas, registry, log, touchMode, onTap, map: mapFor(), look, onView: options.onView, storage: options.store && textStorage(options.store) })); // prettier-ignore
   /** The camera the devices read: its heading, its look, and the aim from the view (engine/input/aim.ts). */
   const camera: CameraLike = {
     yaw: () => viewNow().camera.yaw(),
@@ -308,7 +317,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const id = mapFor();
     if (id !== input.bindings.map.id) input.use(id);
     if (input.mouse?.locked && (!input.bindings.map.lock || started.clock.paused)) input.mouse.unlock();
-    return input.sample(camera, now);
+    const intents = input.sample(camera, now);
+    return options.modal?.() ? {} : intents;
   };
   options.canvas.addEventListener('click', () => {
     if (input.bindings.map.lock && !started.clock.paused && !input.mouse?.locked) input.mouse?.lock();
@@ -328,7 +338,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     gfx.renderer.shadowMap.enabled = true;
     const styles = createStyleSet({ library: materials!, registry });
     const post = (parts.post = createPost(gfx, { settings: currentSettings(() => started), registry, log, styles }));
-    const budget = () => qualityBudget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false);
+    const budget = () => parts.governor!.budget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false); // prettier-ignore
     parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget });
     post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup, gfx.features);
@@ -352,6 +362,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     sample,
     step,
     draw: ({ alpha, dt }) => {
+      // frozen in a reproducible run: a replay playing, or the governor turned off (engine/dev/governor.ts)
+      parts.governor!.freeze((playback !== null && !playback.done) || !settingsNow.get<boolean>('gfx.governor'));
       if (warming) return;
       const report = frame(alpha, dt);
       if (!report.drawn && report.warming) warming = warmBoth().finally(() => (warming = null));

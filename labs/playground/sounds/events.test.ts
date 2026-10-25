@@ -162,7 +162,9 @@ const GROUNDS: Record<string, PlaygroundGround> = { 'playground:gym': levelGroun
 describe('the coverage (WP 13.22’s Done-when)', () => {
   it('every event every playground replay emits sounds, but a slide’s steps and a hit that downs its thing', () => {
     const [types, unheard, effects] = [new Set<string>(), [] as string[], new Set<string>()];
-    for (const file of readdirSync(join(ROOT, 'tests/replays')).filter((name) => name.startsWith('playground-'))) {
+    // the tour is the other replays played in turn (labs/playground/tour.ts): their events are its events
+    const replays = readdirSync(join(ROOT, 'tests/replays')).filter((name) => name.startsWith('playground-') && name !== 'playground-tour.replay.json'); // prettier-ignore
+    for (const file of replays) {
       const playback = createPlayback(JSON.parse(readFileSync(join(ROOT, 'tests/replays', file), 'utf8')));
       const { scene, seed, settings } = playback.replay;
       const session = createSession(scene, { seed, settings });

@@ -36,6 +36,17 @@ describe('sway and lag', () => {
     expect([Math.abs(beat.points[5].x - ROOT.x) < 1e-12, Math.abs(beat.points[5].y - ROOT.y) > 0.01]).toEqual([true, true]); // prettier-ignore
   });
 
+  it('springs a part at 9 rad/s and a damping of 0.55 unless told otherwise', () => {
+    const swing = (options: { frequency?: number; damping?: number }) => {
+      const part = new LagPart({ length: 0.3, rest: new Vector3(0, -0.5, -1), ...options });
+      return Array.from({ length: 30 }, (_, k) => part.step(1 / 60, new Vector3(0, 0.5, 0), yawed(k * 0.08)).toArray()).flat(); // prettier-ignore
+    };
+    const plain = swing({});
+    expect(plain).toEqual(swing({ frequency: 9, damping: 0.55 }));
+    expect(plain).not.toEqual(swing({ frequency: 5 }));
+    expect(plain).not.toEqual(swing({ damping: 1 }));
+  });
+
   it('swings a part behind its pivot as the body turns and moves, its length kept, within its limit', () => {
     const sack = new LagPart({ length: 0.3, rest: new Vector3(0, -0.5, -1), frequency: 9, damping: 0.55, limit: 0.5 });
     const pivot = new Vector3(0, 0.5, 0);

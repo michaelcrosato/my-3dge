@@ -4,7 +4,8 @@
  * across a loop's seam without a fade), the lift, the held blade kept above the floor,
  * the libraries' clips standing on the floor on builds whatever their hips' layout (CMU's, mesh2motion's,
  * Quaternius'), and three.js's `AnimationClip` played by an `AnimationMixer` matching the clip layer's pose within
- * 0.1 mm (Done when).
+ * 0.1 mm (Done when). WP 12.2's characterization pins every clip retargeted at five times on two builds, with contact
+ * IK and without (PRINT_RETARGET=1 prints the sums again).
  */
 import { AnimationClip, AnimationMixer, Bone, Object3D, Vector3 as ThreeVector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
@@ -181,6 +182,17 @@ describe('retargetPose', () => {
   });
 });
 
+/**
+ * Each set's joints summed (x + 2y + 3z) over its clips at five times on heroic and chibi, with contact IK and without,
+ * as measured on 2026-10-25 (WP 12.2; PRINT_RETARGET=1 prints them); CMU's and mesh2motion's again after b982886
+ * re-imported them, format 2's hand angles continuing from the key before.
+ */
+const RETARGET_SUMS: Record<string, number> = {
+  cmu: 53890.144429,
+  mesh2motion: 138281.95845,
+  quaternius: 73437.293322,
+};
+
 describe('the libraries’ clips on builds: the feet on the floor, whatever the source’s hips', () => {
   // CMU's hip joints sit 10 cm under its pelvis, Quaternius' and mesh2motion's 1.5 cm over it and 5 cm ahead; a build's
   // level with it. The hip joints go where the source's are, so the legs reach the floor the source stands on.
@@ -223,6 +235,35 @@ describe('the libraries’ clips on builds: the feet on the floor, whatever the 
     // the clips on hands or knees: a push-up, harvesting, kneeling, the get-ups, a breakdance (15 when written)
     expect(lifted.size).toBeGreaterThan(0);
     expect(lifted.size).toBeLessThanOrEqual(15);
+  });
+
+  it('retargets every clip as it was measured: its joints summed over five times, two laps on for a loop, on two builds', () => {
+    // characterization (WP 12.2): each set's sum, so that a change to contact IK, the lift or a loop's lap shows here; a
+    // change meant to pose otherwise measures them again (PRINT_RETARGET=1 prints them), its reason in its commit
+    const [pose, world] = [new Pose(), createWorldPose()];
+    const sums: Record<string, number> = {};
+    for (const dir of SETS) {
+      const set = setOf(dir);
+      let sum = 0;
+      for (const [name, clip] of Object.entries(set.clips)) {
+        const baked = bakeClip(clip, set.sources![clip.src!].rest, name);
+        const d = baked.duration;
+        const times = baked.loop
+          ? [-0.3, 0.1 * d, 0.5 * d, d + 0.2, 2 * d + 0.1]
+          : [0, 0.25 * d, 0.5 * d, 0.75 * d, d + 0.2];
+        for (const skeleton of Object.values(builds)) {
+          for (const t of times) {
+            for (const ik of [false, true]) {
+              retargetPose(baked, t, skeleton, pose, { world, ik }); // the lift on, with contact IK and without
+              for (let j = 0; j < JOINTS.length; j++) sum += world.positions[j * 3] + 2 * world.positions[j * 3 + 1] + 3 * world.positions[j * 3 + 2]; // prettier-ignore
+            }
+          }
+        }
+      }
+      sums[dir] = Math.round(sum * 1e6) / 1e6;
+    }
+    if (process.env.PRINT_RETARGET) console.log(JSON.stringify(sums));
+    expect(sums).toEqual(RETARGET_SUMS);
   });
 
   it('stands and walks them on the floor through the clip layer: CMU’s Shrug was 197 mm up on heroic', () => {

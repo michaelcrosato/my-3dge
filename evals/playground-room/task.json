@@ -1,0 +1,11 @@
+{
+  "title": "Add rooms to the playground: a two-room cabin level",
+  "area": "playground",
+  "minutes": 45,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["npx vitest run labs/playground/levels/cabin.test.ts"],
+    "checks": ["types", "lint"]
+  }
+}

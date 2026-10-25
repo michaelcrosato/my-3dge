@@ -75,9 +75,9 @@ const ENGINE_FILES = new Set([
 /** Engine files a game gets under another path: the engine's license travels with its code. */
 export const RENAMED = Object.freeze({ LICENSE: 'engine/LICENSE' });
 
-/** The engine's own: its plan, records, CI, deployment, test suites, fixtures, the playground and the lean package. */
+/** The engine's own: plan, records, CI, deployment, suites, fixtures, evals and mutation runs, playground and lean. */
 const ENGINE_ONLY =
-  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|vercel\.json|\.vercelignore|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|labs\/hello\/|labs\/playground\/|labs\/labs\.json|labs\/(anim|cameras|fx|index|library|materials|physics|props)\/|lean\/)/;
+  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|stryker\.config\.json|vercel\.json|\.vercelignore|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|evals\/|labs\/hello\/|labs\/playground\/|labs\/labs\.json|labs\/(anim|cameras|fx|index|library|materials|physics|props)\/|lean\/)/;
 
 /** Which source files a game gets, and as whose: the first rule whose `test` matches a path decides (`ownerOf`). */
 export const RULES = Object.freeze([

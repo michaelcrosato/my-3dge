@@ -1,0 +1,12 @@
+{
+  "title": "Add a dev action to the playground's gym: launch the player straight up",
+  "area": "playground",
+  "minutes": 30,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["node x replay tests/replays/playground-gym.replay.json --runs 1"],
+    "unchanged": ["tests/replays/"],
+    "checks": ["types", "lint"]
+  }
+}

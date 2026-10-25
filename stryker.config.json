@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "tools/stryker/vitest.config.ts",
+    "related": true
+  },
+  "coverageAnalysis": "perTest",
+  "concurrency": 2,
+  "mutate": ["engine/sim/**/*.ts", "engine/anim/**/*.ts", "!**/*.test.ts"],
+  "testFiles": ["engine/sim/**/*.test.ts", "engine/anim/**/*.test.ts", "engine/dev/actions.test.ts"],
+  "ignoreStatic": true,
+  "ignorers": ["sample"],
+  "appendPlugins": ["./tools/stryker/sample.ts"],
+  "ignorePatterns": ["/out", "/.cache", "/dist", "/test-results", "/.vercel"],
+  "tempDirName": ".cache/stryker-tmp",
+  "incremental": true,
+  "incrementalFile": "out/stryker/incremental.json",
+  "reporters": ["clear-text", "progress-append-only", "html", "json"],
+  "htmlReporter": {
+    "fileName": "out/stryker/mutation.html"
+  },
+  "jsonReporter": {
+    "fileName": "out/stryker/mutation.json"
+  },
+  "clearTextReporter": {
+    "allowColor": false,
+    "logTests": false,
+    "reportMutants": false,
+    "skipFull": true
+  },
+  "thresholds": {
+    "high": 95,
+    "low": 90,
+    "break": 90
+  },
+  "disableTypeChecks": false,
+  "dryRunTimeoutMinutes": 90,
+  "timeoutMS": 20000,
+  "allowConsoleColors": false
+}

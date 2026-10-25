@@ -1,0 +1,95 @@
+diff --git a/labs/box/sounds/effects.ts b/labs/box/sounds/effects.ts
+index 7f8185c..3738fa0 100644
+--- a/labs/box/sounds/effects.ts
++++ b/labs/box/sounds/effects.ts
+@@ -5,7 +5,8 @@
+  *
+  * - `sfx:boxStep`: a footstep on stone, a heel's low thump under a gritty scuff;
+  * - `sfx:boxStepIron`: a footstep on iron, a tick and a short metal ring;
+- * - `sfx:boxThud`: a body coming down (a landing, a slime's pounce), a falling sine with a dull burst;
++ * - `sfx:boxThud`: a body coming down (a landing), a falling sine with a dull burst;
++ * - `sfx:boxSquelch`: a slime's pounce coming down, a wet smack: a falling filtered burst over a low, wobbling sine;
+  * - `sfx:boxHit`: a blow landing, a bright crack over a low knock;
+  * - `sfx:boxLaunch`: a bolt leaving, a rising saw with a hiss;
+  * - `sfx:boxDeath`: a body falling for good, a sinking groan, then the thud;
+@@ -53,6 +54,16 @@ export const boxThud = defineSfx('sfx:boxThud', {
+   vary: 0.06,
+ });
+ 
++/** A slime's pounce coming down: a wet smack, a falling filtered burst over a low, wobbling sine. */
++export const boxSquelch = defineSfx('sfx:boxSquelch', {
++  voices: [
++    { wave: 'noise', freq: 1800, to: 300, dur: 0.14, vol: 0.3, filter: 'lowpass' },
++    { wave: 'sine', freq: 180, to: 60, dur: 0.22, vol: 0.4, vib: [12, 0.5] },
++  ],
++  variants: 3,
++  vary: 0.08,
++});
++
+ /** A blow landing: a bright crack over a low knock. */
+ export const boxHit = defineSfx('sfx:boxHit', {
+   voices: [
+diff --git a/labs/box/sounds/events.test.ts b/labs/box/sounds/events.test.ts
+index 9858b12..6de50fe 100644
+--- a/labs/box/sounds/events.test.ts
++++ b/labs/box/sounds/events.test.ts
+@@ -48,7 +48,7 @@ describe('the box’s sound events', () => {
+     });
+     expect(sound('hit', { position: at, size: 0.5 })?.vol).toBeCloseTo(0.3, 9); // a bolt on a wall, softer
+     expect(sound('shot', { position: at, size: 1 })).toMatchObject({ sfx: 'sfx:boxLaunch', vol: 0.8, position: at });
+-    expect(sound('slam', { position: at, size: 0.6 })).toMatchObject({ sfx: 'sfx:boxThud', position: at });
++    expect(sound('slam', { position: at, size: 0.6 })).toMatchObject({ sfx: 'sfx:boxSquelch', vol: 0.8, position: at }); // prettier-ignore
+     expect(sound('slain', { position: at, size: 1 })).toMatchObject({ sfx: 'sfx:boxDeath', vol: 1, duck: true });
+     expect(sound('land', { id: 1, speed: 4 })).toMatchObject({ sfx: 'sfx:boxThud', vol: 0.5, position: [2, 0, 3] });
+     expect(sound('jump', { id: 1 })).toMatchObject({ sfx: 'sfx:whoosh', position: [2, 0, 3] });
+@@ -69,7 +69,7 @@ describe('the box’s sound events', () => {
+   });
+ 
+   it('names only effects that exist', () => {
+-    const ids = [...Object.values(BOX_FOOTSTEPS), 'sfx:boxThud', 'sfx:whoosh', 'sfx:boxHit', 'sfx:boxLaunch'];
++    const ids = [...Object.values(BOX_FOOTSTEPS), 'sfx:boxThud', 'sfx:boxSquelch', 'sfx:whoosh', 'sfx:boxHit', 'sfx:boxLaunch']; // prettier-ignore
+     for (const id of [...ids, 'sfx:boxDeath', 'sfx:boxTorch']) expect(getSfx(id).id).toBe(id);
+   });
+ 
+diff --git a/labs/box/sounds/events.ts b/labs/box/sounds/events.ts
+index 008ae89..362bcc5 100644
+--- a/labs/box/sounds/events.ts
++++ b/labs/box/sounds/events.ts
+@@ -10,8 +10,8 @@
+  *   `sfx:whoosh` under it;
+  * - the fight's (labs/box/scenes/fight-rules.ts): `hit`, `sfx:boxHit`, louder the bigger the blow, at most 0.5 (after
+  *   G9: a sweep's four hits and a death at once, box-5-fight at 9.3 s, peaked at 1.54 in `x audio --replay`'s
+- *   unspatialized mix and now at 0.80, −2 dBFS); `shot`, a bolt launched, `sfx:boxLaunch`; `slam`, a pounce landing,
+- *   `sfx:boxThud`; `slain`, `sfx:boxDeath`, which ducks the music and ambience while it plays;
++ *   unspatialized mix and now at 0.80, −2 dBFS); `shot`, a bolt launched, `sfx:boxLaunch`; `slam`, a slime's pounce
++ *   landing, `sfx:boxSquelch`; `slain`, `sfx:boxDeath`, which ducks the music and ambience while it plays;
+  * - every other event (`damage`, `lap`…) plays nothing.
+  *
+  * `createSoundReader().read(world, level)` maps the events a world has delivered since the last read, in order, each
+@@ -106,7 +106,7 @@ const SOUNDS: Readonly<Record<string, (p: Payload, world: SoundWorld, level: Com
+   dash: (p, world) => sound('sfx:whoosh', 0.9, feetOf(world, p.id)),
+   hit: (p) => sound('sfx:boxHit', clamp(0.15 + 0.3 * (p.size ?? 1), 0.15, 0.5), p.position),
+   shot: (p) => sound('sfx:boxLaunch', clamp(0.8 * (p.size ?? 1), 0.3, 1), p.position),
+-  slam: (p) => sound('sfx:boxThud', 0.8, p.position),
++  slam: (p) => sound('sfx:boxSquelch', 0.8, p.position),
+   slain: (p) => sound('sfx:boxDeath', 1, p.position, true),
+ };
+ 
+diff --git a/tests/pages/boxAudioTimeline.ts b/tests/pages/boxAudioTimeline.ts
+index 98fe952..d962f7b 100644
+--- a/tests/pages/boxAudioTimeline.ts
++++ b/tests/pages/boxAudioTimeline.ts
+@@ -26,9 +26,11 @@ import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/
+  * (WP 7.8): the big ones knock walkers down for a while, so the run changes and gives 79 sounds where it gave 81.
+  * Again after G9 (WP 5.7, ADR-0020 amendment 9): the hero shoves the crowd aside instead of steering round it, so
+  * his path through the foes changes and the run gives 77 sounds; and once more for the hits' gain (at most 0.5, so
+- * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds.
++ * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds. And
++ * for the slimes' pounces, which land with their own squelch (`sfx:boxSquelch`) instead of the thud: the same 77
++ * sounds, the same run.
+  */
+-export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '288bca340783f86f' };
++export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '6ddb5f5eb68b2d17' };
+ 
+ /** A replay's sound timeline: its sounds, their hash, the world's hash at the end and the events missed (0). */
+ export interface Timeline {

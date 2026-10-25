@@ -150,6 +150,35 @@ describe('melee', () => {
     expect(of(session, 2).health.hitBy).toBe(1);
   });
 
+  it('lunges at a person as at a thing, and stops lunging on the step its hit lands', () => {
+    const ring = makeRing('lunge', (w) => void spawnActor(w, { at: [0, 0, 1.4], character: createCharacter(), player: false, components: { health: { hp: 100, hitAt: -1, hitBy: -1 } } })); // prettier-ignore
+    const session = settled(ring);
+    session.step({ b: ['melee'] });
+    const { lands } = of(session, 1).melee;
+    let most = 0;
+    while (session.world.tick < lands) {
+      session.step({});
+      most = Math.max(most, of(session, 1).actor.vz);
+    }
+    expect(most).toBeGreaterThan(0.5); // toward him, +Z
+    expect(of(session, 1).actor.vz).toBeCloseTo(0, 6); // the hit's own step: no more lunge
+    const aside = makeRing('lunge-aside', (w) => void spawnActor(w, { at: [0.7, 0, 1.3], character: createCharacter(), player: false, components: { health: { hp: 100, hitAt: -1, hitBy: -1 } } })); // prettier-ignore
+    const off = settled(aside);
+    off.step({ look: [Math.atan2(0.7, 1.3), 0], b: ['melee'] });
+    const swing = of(off, 1).melee;
+    expect(swing.target).toBe(2);
+    let toward = 0;
+    while (off.world.tick < swing.lands - 1) {
+      off.step({ look: [Math.atan2(0.7, 1.3), 0] });
+      const [me, him] = [of(off, 1).actor, of(off, 2).actor];
+      const [dx, dz] = [him.x + swing.aim[0] - me.x, him.z + swing.aim[2] - me.z];
+      const along = (me.vx * dx + me.vz * dz) / Math.hypot(dx, dz);
+      expect(Math.abs(me.vx * dz - me.vz * dx) / Math.hypot(dx, dz)).toBeLessThan(1e-6); // straight at his aim point
+      toward = Math.max(toward, along);
+    }
+    expect(toward).toBeGreaterThan(0.5);
+  });
+
   it('kicks from the air and uppercuts from a slide', () => {
     const session = settled(makeRing('air'));
     session.step({ b: ['jump'] });

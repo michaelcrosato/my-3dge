@@ -216,6 +216,10 @@ describe('Attack', () => {
     expect(trailAt('cross', false)).toBe('fistR');
     expect(trailAt('roundhouse', true)).toBe('kick');
     expect(new Attack('slash').trail(true)).toBeUndefined();
+    const kick = new Attack('kick', { trail: false }); // a foot trails whatever the move says of blades
+    kick.start();
+    while (kick.phase !== 'active') kick.update(SIM_DT);
+    expect(kick.trail(true)).toBe('kick');
   });
 
   it('refuses a new swing while busy, unless recovering and allowed to cancel', () => {

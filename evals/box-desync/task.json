@@ -1,0 +1,15 @@
+{
+  "title": "Fix a seeded desync: the box's crowd no longer plays the same run after run",
+  "area": "box",
+  "minutes": 45,
+  "start": "start.patch",
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": [
+      "node x replay tests/replays/box-4-hop.replay.json tests/replays/box-4-chase.replay.json tests/replays/box-5-fight.replay.json"
+    ],
+    "unchanged": ["tests/replays/"],
+    "checks": ["types", "lint"]
+  }
+}

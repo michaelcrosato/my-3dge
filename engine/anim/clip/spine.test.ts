@@ -9,7 +9,7 @@ import { busy, clipOf, REST } from '../../../tests/unit/anim/clip-fixtures';
 import { fitClip, type Capture } from './encode';
 import { add, fromEuler, len, qFromTo, qrot, sub, type V } from './frames';
 import { decodePose, POINT_INDEX, samplePose, type Clip, type ClipKey } from './readable';
-import { SPINE_MISS, spineMiss } from './spine';
+import { qBetween, SPINE_MISS, spineMiss } from './spine';
 
 const point = (X: ArrayLike<number>, name: string): V => [0, 1, 2].map((j) => X[POINT_INDEX[name] * 3 + j]);
 
@@ -22,6 +22,34 @@ function captureOf(clip: Clip): Capture {
 }
 
 describe('the spine override', () => {
+  it('turns a direction to another the short way, and to its opposite by a half turn about a square axis', () => {
+    const turned = (a: V, b: V) => qrot(qBetween(a, b), a);
+    for (const [a, b] of [
+      [
+        [0, 0, 2],
+        [0, 3, 0],
+      ],
+      [
+        [1, 0, 0],
+        [-1, 0, 0],
+      ],
+      [
+        [0, 0, 1],
+        [0, 0, -1],
+      ],
+      [
+        [0.6, 0.8, 0],
+        [-0.6, -0.8, 0],
+      ],
+    ] as V[][]) {
+      // prettier-ignore
+      const want = b.map((x) => x / Math.hypot(...b));
+      expect(turned(a, b).map((x, i) => x - want[i] * Math.hypot(...a)).every((x) => Math.abs(x) < 1e-9), `${a} to ${b}`).toBe(true); // prettier-ignore
+    }
+    expect(qBetween([1, 0, 0], [-1, 0, 0])).toEqual([0, 0, 1, 0]); // about z, square to x
+    expect(qBetween([0, 0, 1], [0, 0, -1])).toEqual([0, 1, 0, 0]); // about y, square to z
+  });
+
   it("lays the spine's middle bones on the body's frame when level, the others on their shares", () => {
     const k: ClipKey = { ...busy(0), spine: [0, 0, 0] };
     const X = decodePose(REST, k, new Float64Array(108));

@@ -1,0 +1,40 @@
+/**
+ * @file The movement profile `movement:{{name}}`: how it moves (replace this text; `x docs` puts the first sentence in
+ * INDEX). It starts as a heavy soldier on the shooter model: Apex's hull, steps, slopes and gravity, a run of 3.8 m/s
+ * and a sprint of 5.6 m/s with a weapon out (Apex's 4.41 and 6.60; holstered, each 1.15 times as fast), a jump 1.1 m
+ * high (Apex's 1.42), and every other number Apex's.
+ *
+ * Invariants: data only, the kind's fields (`node x describe movement`): `character` sets the character controller's
+ * settings (`CHARACTER_FIELDS`: its hull, steps, slopes, gravity, jump and the forgiving details), `model` the shooter
+ * model's numbers (`MODEL_FIELDS`: speeds, accelerations, air control, the jump's fatigue, the lurch, the fall stun),
+ * each left out Apex's; without `model` it is the platformer model of its `character` fields, as `movement:platformer`
+ * is. Metres, seconds, m/s. A character takes it with `createCharacter({ movement: 'movement:{{name}}' })`, a spec's
+ * own fields laid over it.
+ *
+ * @example
+ * {{name}}.model?.gaits.sprint; // 5.6
+ * @see {{id}}.test.ts
+ */
+import { defineMovement, getMovement } from '../../../engine/sim-api';
+
+/** The profile it starts from: Apex's (engine/physics/movement/profiles.ts). */
+const APEX = getMovement('movement:apex');
+
+/** Its gravity (m/s²): Apex's, 750 units/s². */
+const GRAVITY = APEX.character.characterGravity as number;
+
+/** Its run and sprint with a weapon out (m/s), and the height of its jump (m). */
+const RUN = 3.8;
+const SPRINT = 5.6;
+const JUMP = 1.1;
+
+/** The movement profile `movement:{{name}}`: replace this sentence with how it moves. */
+export const {{name}} = defineMovement('movement:{{name}}', {
+  description: `A heavy soldier: run ${RUN} m/s, sprint ${SPRINT}, a ${JUMP} m jump, Apex's hull (replace).`,
+  character: {
+    ...APEX.character,
+    speed: RUN, // the run, for what reads the platformer's fields
+    jumpSpeed: Math.sqrt(2 * GRAVITY * JUMP), // a take-off of √(2 g h)
+  },
+  model: { gaits: { run: RUN, sprint: SPRINT } },
+});

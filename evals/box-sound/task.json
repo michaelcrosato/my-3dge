@@ -1,0 +1,12 @@
+{
+  "title": "Add a sound effect: the slimes' pounce lands with its own squelch",
+  "area": "box",
+  "minutes": 35,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["node x qa audio --only sfx:boxSquelch", "npx vitest run labs/box/sounds/"],
+    "unchanged": ["tests/replays/"],
+    "checks": ["types", "lint"]
+  }
+}

@@ -36,7 +36,7 @@ export const FLOATER = {
   bobRate: 2, // …at this many radians per second
   climb: 6, // per second: its vertical speed is the gap to its height times this
   turnRate: 8, // the share of the way the heading turns toward the travel each second (all of it at most, per step)
-  turnMin: 0.25, // m/s: slower, it keeps its heading
+  turnMin: 0.25, // m/s: at this speed or slower, it keeps its heading
   bankAccel: 15, // m/s² sideways that banks it 45°
   bankMax: 0.6, // radians: the most it banks (34°)
   bankTime: 0.2, // seconds the bank's spring takes to settle

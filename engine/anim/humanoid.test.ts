@@ -13,6 +13,7 @@ import { animCheck } from './check';
 import { jointPosition, jointRotation, jointToWorld } from './fk';
 import { Humanoid, type HumanoidInput } from './humanoid';
 import { hashPose, type Pose } from './pose';
+import { jointIndex } from './skeleton';
 import { POSES, STANCES } from './poses';
 
 type V3 = [number, number, number];
@@ -245,6 +246,21 @@ describe('the seeded stream', () => {
       expect(open).toBeGreaterThanOrEqual(2 - SIM_DT);
       expect(open).toBeLessThanOrEqual(5);
     }
+  });
+});
+
+describe('the humanoid’s hands', () => {
+  it('lays both hands straight on their forearms empty-handed, and turns the right along the blade it holds', () => {
+    const local = (h: Humanoid, side: 'L' | 'R') => Array.from(h.pose.local.slice(jointIndex(`hand${side}`) * 4, jointIndex(`hand${side}`) * 4 + 4)); // prettier-ignore
+    const [bare, armed] = [new Humanoid({ build: 'build:heroic', weapon: 'none', clock: 0 }), new Humanoid({ build: 'build:heroic', weapon: 'sword', clock: 0 })]; // prettier-ignore
+    for (const h of [bare, armed])
+      for (let i = 0; i < 20; i++) h.update({ velocity: new Vector3(0, 0, 3), pose: 'cheer' });
+    expect([local(bare, 'L'), local(bare, 'R'), local(armed, 'L')]).toEqual([
+      [0, 0, 0, 1],
+      [0, 0, 0, 1],
+      [0, 0, 0, 1],
+    ]);
+    expect(Math.abs(local(armed, 'R')[3])).toBeLessThan(1 - 1e-6); // turned to hold the blade
   });
 });
 

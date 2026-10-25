@@ -1,0 +1,84 @@
+/**
+ * @file The camera mode `cam3={{name}}`: what it shows (replace this text; `x docs` puts the first sentence in INDEX).
+ * It starts as a side-scroller's dolly: it stands `distance` metres east of the player and `height` metres up, looks
+ * west and down at a point a metre over his feet, and follows him with a lag (a time constant of 0.15 real seconds),
+ * so a jump or a fall moves the picture smoothly and a stop settles it. Its code is
+ * `cam3={{name}}[,<distance>,<height>]` in metres, 8 and 2.5 when left out.
+ *
+ * Invariants: view state, never the sim's: pure steps over plain data, which `followCamera` wraps in a camera; a
+ * checked pose each frame (`makePose`: metres and radians, +Y up, its yaw the heading the intents' `cam` takes); `dt`
+ * is real seconds since the last frame, so it frames alike at any frame rate. `defineCamera` adds the mode when the
+ * page imports this module; from then `?cam3={{name}}`, `__engine.camera.set('cam3={{name}}', { blend: true })` and
+ * the camera rig's blends reach it, and its name is a word no engine camera has.
+ *
+ * @example
+ * import { createCamera } from '../../../engine';
+ * const camera = createCamera('cam3={{name}},6');
+ * camera.spec(); // { distance: 6, height: 2.5 }: 6 m east of the player, 2.5 m up
+ * @see {{id}}.test.ts
+ */
+import { defineCamera, followCamera, makePose, type CameraInput, type CameraPose } from '../../../engine';
+
+/** Where it stands when its code gives no numbers: metres east of the player, and up. */
+const DEFAULTS = Object.freeze({ distance: 8, height: 2.5 });
+
+/** The point it looks at, over the player's feet (m), its follow's time constant (real s) and its lens (°, vertical). */
+const AIM = 1;
+const LAG = 0.15;
+const FOV = 50;
+
+/** How its code is written: what a bad one is told. */
+const FORM = 'cam3={{name}},<distance>,<height> (m), the distance over 0';
+
+/** Its code's numbers: metres east of the player, and up. */
+interface Spec {
+  readonly distance: number;
+  readonly height: number;
+}
+
+/** Its state: its numbers, and the point it follows, eased (null until a frame gives one). */
+interface State extends Spec {
+  readonly at: readonly [number, number, number] | null;
+}
+
+/** The followed point eased toward the player's feet over `dt` real seconds; the whole way on the first frame. */
+function step(state: State, input: CameraInput, dt: number): State {
+  const to = input.follow;
+  if (!to) return state;
+  const from = state.at ?? to;
+  const k = 1 - Math.exp(-dt / LAG);
+  return { ...state, at: [0, 1, 2].map((i) => from[i] + (to[i] - from[i]) * k) as [number, number, number] };
+}
+
+/** East of the followed point and up, looking west and down at the point `AIM` over it. */
+function pose(state: State): CameraPose {
+  const [x, y, z] = state.at ?? [0, 0, 0];
+  const rise = state.height - AIM;
+  return makePose({
+    position: [x + state.distance, y + state.height, z],
+    yaw: -Math.PI / 2, // west: forward is (sin yaw, ·, cos yaw)
+    pitch: -Math.atan2(rise, state.distance),
+    fov: FOV,
+    distance: Math.hypot(state.distance, rise),
+  });
+}
+
+/** The camera `cam3={{name}}`, standing `spec`'s metres from the player (see the file comment). */
+export function {{name}}Camera(spec: Spec = DEFAULTS) {
+  return followCamera('{{name}}', { ...spec, at: null } as State, {
+    step,
+    pose,
+    spec: ({ distance, height }) => ({ distance, height }),
+    code: ({ distance, height }) => `cam3={{name}},${distance},${height}`,
+    describe: ({ distance, height }) => `{{name}}: ${distance} m east of the player, ${height} m up`,
+  });
+}
+
+defineCamera('{{name}}', {
+  description: "A side-scroller's dolly: east of the player, looking west, following him with a lag (replace).",
+  create(code) {
+    const [distance = DEFAULTS.distance, height = DEFAULTS.height] = code.split(',').slice(1).map(Number);
+    if (!(distance > 0) || !Number.isFinite(height)) throw new Error(`${code} is no {{name}} camera: write ${FORM}`);
+    return {{name}}Camera({ distance, height });
+  },
+});

@@ -324,6 +324,7 @@ export class Actions implements AnimLayer {
   /** Begins beat `index` of `action` (−1, or no action: rest), `late` seconds before the step's end. */
   #enter(action: Action | undefined, index: number, late: number): number {
     const st = this.state;
+    // Stryker disable next-line StringLiteral: with an action to end there is always a beat playing, so the default is never read
     const last = this.#beat()?.name ?? '';
     st.from = this.channels();
     st.from[CHANNELS.flip] = wrap(st.from[CHANNELS.flip]);
@@ -332,6 +333,7 @@ export class Actions implements AnimLayer {
     if (!beat) {
       if (action && last) this.events.push({ type: 'end', phase: last, late });
       this.#clip();
+      // Stryker disable next-line UnaryOperator: no caller reads what #enter returns
       return -1;
     }
     this.events.push({ type: beat.name, phase: beat.name, late });
@@ -359,6 +361,7 @@ export class Actions implements AnimLayer {
   #turn(animator: Animator): void {
     const ch = this.channels();
     const { pose, world, skeleton, build: b, position, yaw } = animator.body;
+    // Stryker disable next-line StringLiteral: every state the player writes names an axis of AXES, so the default is never read
     const [angle, axis] = [ch[CHANNELS.flip], FLIP_AXES[AXES[ch[CHANNELS.flip + 1]] ?? 'forward']];
     const scale = vs.fromArray(ch, CHANNELS.scale);
     const squashed = !scale.equals(vb.set(1, 1, 1));

@@ -933,7 +933,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   north, east, south, west, as a sconce in a wall); `roomReverb(room, height)` picks `small`, `room` or `hall` by volume
   (30 and 200 m³) for WP 13.22 to play; the playground's HUD names the room the player is in (`Room: kitchen`,
   `Indoors`, `Outdoors`).
-- **The lot** (labs/playground/levels/lot.ts, scenes/lot.ts): the fixture house and shed in the playground's room
+- **The lot** (levels/lot.ts, scenes/lot.ts, since gone): the fixture house and shed in the playground's room
   glyphs on a 32 × 32 m terrain, the house at (10, 0, 12), the shed turned a quarter at (24, 0, 6); the fixture site
   (fixtures/levels/storeys/site.ts) stands the same for the engine's tests. The house's ladder moved from its outer wall
   under a one-tile hatch, which the hull could not climb through, to the study's west wall under a 1.5 m hatch (the
@@ -953,7 +953,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   engine/world/level/{heights,compile,types,validate}.ts, engine/physics/{trimesh,world,bodies}.ts,
   engine/sim/{rides,siteApi}.ts, engine/gfx/{stageSite,storeyCut,stageGround,stage,terrain}.ts, engine/app/view.ts,
   engine/dev/{bot,botNav,actions}.ts, engine/audio/runtime/reverb.ts, engine/index.ts,
-  fixtures/levels/storeys/{site.ts,house.txt}, labs/playground/{levels/lot.ts,scenes/lot.ts,main.ts,README.md},
+  fixtures/levels/storeys/{site.ts,house.txt}, labs/playground/{main.ts,README.md} and the lot's two files,
   tests/e2e/playground-cameras.spec.ts, tools/eslint/layers.ts (the bot's rule holds its navigation beside it, sim-side
   too). engine/world/nav.ts and engine/gfx/cutaway.ts, which the WP extends, needed no change: the site's graph is
   NavGrids over NavSurfaces, and the cut by storey a module of its own.
@@ -1025,7 +1025,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `defineUsable` and `defineStrikable` write to the shared registry the system reads, and take no other.
   engine/gfx/props.ts, at its cap, gave its texture and materials to engine/gfx/propLooks.ts.
 - **The playground**: the library gains the chair (6 kg), what the owner's playtest throws; the cottage
-  (labs/playground/levels/cottage.ts, scenes/interact.ts) holds a door, two windows, the kitchen's lamp and switch and
+  (levels/cottage.ts, scenes/interact.ts, since gone) holds a door, two windows, the kitchen's lamp and switch and
   chairs to throw, and its replay (playground-interact, retired with the cottage at WP 13.18) opens the door, switches the light
   off and on, closes the door, bursts it open and breaks it, and throws a chair through a pane. The house's doors,
   windows, lamps by room (`room:<name>`, amendment 18's light groups), the garage and its door (whose storey must hold
@@ -1054,7 +1054,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **The house as built** against §2.1: a patio on the backyard side, not a deck, the crawlspace under it; the garage's
   door an up-and-over door on its switches (a tilt, e981a49), 2.3 m high under the ground storey's 2.7 m; a level door hangs
   only in an opening its leaf fits. The study's bookshelf stands off its door: with the leaf open the two sealed it.
-- **The lot and the cottage give way** (amendments 18 and 19): labs/playground/levels/{lot,cottage}.ts,
+- **The lot and the cottage give way** (amendments 18 and 19): the playground's levels/{lot,cottage}.ts,
   scenes/{lot,interact}.ts and the interact replay are gone (their inspector glyphs also clashed with the house's). The
   site's replay (tests/replays/playground-site.replay.json, 640 steps, 12 goldens; Node ×3, Chromium ×3 and the page ×3
   agreeing) opens the front door, turns the hall's light off and on, bursts the living room's door open and breaks it,
@@ -1937,3 +1937,325 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - Evidence: tests/e2e/labs.spec.ts (the index's links; each lab ready on WebGPU with its panel, no advice; the
   Animation Lab's phases and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search, mirror
   and apply), tools/cmd/lab.test.ts, labs/anim/scenes/lineup.test.ts, engine/anim/character.test.ts (`joints`).
+
+## Amendment 37 (2026-10-25, WP 7.5): the performance governor
+
+- **What it moves:** `quality` `auto` between WP 3.12's tiers (engine/dev/governor.ts; engine/gfx/quality.ts), which
+  hold the light and shadow budget, the GI, god rays, bloom and halos, and the drawn pixels; on a touch screen it also
+  scales the drawn pixels (shardfall's dynamic resolution). A tier set by hand is kept; `gfx.governor` (a view
+  setting) turns it off; it is frozen while a replay plays, and the tools' virtual clock gives it even frames, so no
+  spec sees it move. Each move is advice, `GFX_GOVERNOR`.
+- **Its numbers,** from the two carried mechanisms (`my-3d2dge:src/emberdeep/95-perf.js`,
+  `shardfall:crates/pav_app/src/quality.rs:89-113`): a second at a time; slower than 50 frames a second is bad, faster
+  than 57 good; three bad seconds demote a tier, ten good ones promote one (never above `auto`'s own); a demotion
+  within 25 s of a promotion doubles the ten, up to 80, so a machine on the edge settles (simulated: 11 moves in five
+  minutes, 46 without the doubling); on touch a bad second scales the pixels by 0.88 (to 0.6), four good ones by 1.06.
+- **Calls:** the governor moves the tiers only. Turning an optional GPU feature off mid-play would build pipelines in
+  a frame (engine/gfx/features.ts decides them at the renderer's start), and pose LOD and draw distance belong to no
+  tier yet: each joins a tier when a measured scene needs it. Its state is read through its advice and the settings
+  (`quality`, `gfx.governor`), not a member of its own.
+- Evidence: engine/dev/governor.test.ts (the demotions and promotions on simulated frame times, the edge machine,
+  the hand-set tier, the freeze, the touch scale, a headless run's hash unchanged with the governor moving between its
+  steps); engine/app/engine.ts and drawing.ts feed it the frames' real time and read its budget.
+
+## Amendment 38 (2026-10-25, WP 13.25): the front end
+
+- **The screens** (labs/playground/ui/, docs/PLAYGROUND.md §8.3): the title screen (Play, Spawn, Settings, Photo
+  mode; `playground.title`, `auto` hidden while a replay plays or automation drives the browser, as the menu for
+  humans), pause (Esc or the pad's Start; Resume, Spawn, Settings, Photo mode, Restart, Title screen), the spawn
+  picker (the block's 8 areas and the house's 17 rooms), settings (the camera, the field of view, the mouse and its
+  inversion, the movement profile, the look, the quality and the governor's switch, four volumes, every action's key
+  with rebinding) and photo mode (the fly camera from the view on screen, flown on the move keys, turned by a drag).
+  A screen pauses the run; the HUD of each camera mode is a table (labs/playground/ui/hud.ts) with a feel readout.
+- **The engine's part,** the smallest that serves a game's front end: `createEngine({ store })` keeps the bindings in
+  the game's store (`textStorage`, engine/app/store.ts: until now a page's rebinds were forgotten on reload);
+  `input.bindingsFor(map)` hands out another map's bindings without switching (each camera mode has its own map, WP
+  13.9, and a rebind must hold in all five); `createEngine({ modal })` keeps every intent out of the run while a
+  screen holds the page (the loop kept a press sampled under a pause for the next step, so Space picking Resume
+  jumped); `createEngine({ cameraInput })` lays a page's camera input over the devices' (photo mode's move keys and
+  drag: under a pause the engine lets go of the pointer lock, so the mouse cannot turn the view).
+- **Calls:** picks that change play are recorded operations: a spawn is the block's dev action `place` (from another
+  scene, the block's page opens with the view setting `playground.spawn`, run as its first operation); Restart is
+  `seed`; the movement profile is the sim setting `playground.movement` (Apex's, or the Stress Box hero's untuned),
+  set and the scene started again. A rebind is all or nothing over the five maps: a key another action holds in any
+  mode is refused before anything changes. A pointer lock let go while the run plays pauses it (a browser spends the
+  first Esc on the lock). Volumes go to the page's audio runtime and the store, not to settings (the runtime reads
+  none); the graphics row offers the quality tiers and the governor, not the GPU features one by one (a feature
+  turned off mid-play builds pipelines, amendment 37). The HUD stays under the menus and hides in photo mode. The
+  front end's T2 is a spec of its own, tests/e2e/playground-ui.spec.ts: playground.spec.ts, at 352 lines, would pass
+  the 400-line cap (PLAN.md's WP 13.25 names both).
+- Evidence: tests/e2e/playground-ui.spec.ts (every screen through DOM queries; settings and a rebind kept over a
+  reload; a menu key reaching no intent; the movement profile and both spawn picks recorded and replayed in Node to
+  their hashes; the crosshair and the readout by camera); labs/playground/ui/{prefs,spawns,hud}.test.ts,
+  labs/playground/scenes/gym.test.ts (the platformer profile), engine/app/store.test.ts (`textStorage`, bindings kept
+  and a demo store's dropped), engine/input/input.test.ts (`bindingsFor`).
+
+## Amendment 39 (2026-10-25, WP 7.6): the MCP bridge
+
+- **What it is:** `node x mcp` serves the inspector over MCP on `@modelcontextprotocol/sdk` 1.32.2 (decision 6), on
+  stdio, through the SDK's low-level `Server` (tools/mcp/server.ts). Its tools come from the inspector's member table:
+  each input schema is the member's argument schema as JSON Schema (tools/mcp/schema.ts: the schema language already
+  speaks JSON Schema's keywords; `unit` joins the description, `any` is the empty schema), each description the
+  member's help line and signature, so `help()`, the argument checks and the MCP schemas are one table, as WP 1.6
+  planned. A client connects with `{ "command": "node", "args": ["<repository>/x.js", "mcp", "--page",
+  "labs/playground", "--scene", "site"] }`; `x mcp` run from a terminal prints that and exits 2.
+- **Backends:** a page in the `x inspect` session (the default: started when none runs, stopped at the end when none
+  ran before, progress every 5 s while a page warms; it shares x inspect's out/inspect/session.json), or `--headless`
+  (`createHeadless` with the scene's view and the lab's bodies and looks; no `engine_shot`).
+- **Restarts:** the server loads no engine module (tools/cmd/mcp.test.ts checks its imports); the tools run in a worker
+  (`x mcp --worker`) it replaces before the next request after a change under engine/, labs/, tools/, fixtures/ or
+  data/ (`--watch` adds others): the next result says what restarted, the client hears the tool list changed when it
+  differs, a page reloads through Vite, and a crashed worker's call names its last error line. A change to the
+  server itself needs the client to reconnect.
+- **T1 and T2 share one client script:** docs/TESTING.md keeps browsers out of T1, yet the Done-when's shot with the ID
+  pass is a page's. The tools are written once against the backend: tools/mcp/server.test.ts (T1) makes the
+  Done-when's calls over the headless backend, its shot through a stand-in renderer (a fixed frame and ID pass), and
+  tests/e2e/mcp.spec.ts (T2) makes the same calls through `node x mcp` against a real page, its WebGPU ID pass
+  included. WP 7.6's Verify gains the spec, as WP 0.5's gained adviceTrap.spec.ts (ADR-0014 amendment 7); neither rule
+  is loosened.
+- **Calls:** the low-level `Server`, since `McpServer.registerTool` takes zod schemas only and zod would become our
+  dependency beyond decision 6; `engine_call(member, args)` beside §8.11's eleven tools, which reach about a dozen of
+  the 45 members, so a playtest has `camera.set`, `bot`, `feel` and `stats`; `engine_actions(name, args)` (§8.11
+  wrote `id`) lists the actions without a name; `engine_dump(depth, filter)` and `engine_shot`'s inputs (ShotOptions'
+  keys, `image`, `width`, `height`) are named in the tool table, since the `shot` and `scene.dump` members leave their
+  options' keys undeclared; headless is offered because the block opens in about 10 s there against minutes in a page;
+  a page not ready within its wait answers so with a note and the next call waits; captures do not cross MCP (a copied
+  capture is refused, as through `x eval`).
+- **Proposed core change (not made):** declare `properties` on the object arguments of `shot`, `scene.dump`,
+  `replay` and `camera.set` (engine/app/viewMembers.ts) and `bot` (engine/dev/actions.ts); `shot`'s help says "width
+  and height" where ShotOptions takes `size`.
+- Evidence: `npm test -- tools/mcp` (25 tests: the client test opens box:room, steps 60, injects
+  `30 move=0,1 tap=jump`, shoots through the stand-in, runs `freeze`, and replays box-1-room to its 11 goldens),
+  tools/cmd/mcp.test.ts (stdio, the forked worker, a watched restart), tests/e2e/mcp.spec.ts (the room's WebGPU ID
+  pass: floor, walls, pillar and movers; the replay drawn in the page, 11 goldens). The playground headless: the
+  block in 10 to 12 s, site-house's replay 14 of 14 goldens; in a page the block took 327 s at load 10, then a
+  484 × 274 shot with 749 objects. Not tried: a desktop MCP client app (only the SDK's own client, in memory and
+  on stdio).
+
+## Amendment 40 (2026-10-25, WP 12.1): scaffolds and skills, completed
+
+- **Five templates** (tools/templates/), each sample's `--test` run by `x new --test-all` (24 kinds pass): `level`,
+  §8.13's last missing kind (a cabin of storeys in a module, its own room markers, a door, windows, a flight, a railed
+  stairwell, a gable roof; its test compiles the storeys and rooms and runs every `x qa level` check through
+  `validateLevel`), and the four the playground fired the WP for: `movement` (a profile over Apex's; run, sprint and
+  jump measured on the feel course within 2%), `camera` (a game's own mode of pure steps; its code, its follow and the
+  rig's blend), `interactable` (a usable and strikable component on a prop, `<name>.add(w, spec)`; a player's prompt,
+  use and punch, headless) and `weapon` (a firearm and its prop with its `gallery` hook; its parts and muzzle, its rate,
+  recoil and reload in a range). Each is modelled on real entries of its kind and uses only the public API, so a game
+  can make one.
+- **Calls:** one `interactable` kind covers `usable` and `strikable`, as every real entry pairs a component with them;
+  its `add` is a method of the exported entry (the placeholders have no PascalCase for `addLocker`, and `x new` never
+  changes for a kind); folders `movement/`, `cameras/`, `interactables/`, `weapons/`, `levels/`; a level template's
+  entry is a module (`x qa level` reads only `.txt`), so its own test runs `validateLevel`; a camera's name, an
+  interactable's component and a level's room markers belong to one entry each (a clash raises the registry's
+  error). Not templated: glyphs (written with their levels), sites, action maps, touch layouts; terrain stands at
+  three entries written by hand (two of them one ground), so the next WP that writes one adds its template.
+- **One `add-entry` skill instead of an `add-<kind>` skill per kind** (PLAN.md §8.10 and §8.13 edited): with 24 kinds,
+  one skill each would put 24 near-identical descriptions in every session's list, each body only `node x new <kind>
+  <id>` and what `x new` already prints, and every new kind would need its own; the one skill names every kind in its
+  description (tests/unit/hooks/settings.test.ts fails one it leaves out) and carries what differs by family: who
+  imports an entry, how to see it, and the template due at the third entry written by hand.
+- **The skills §8.10 lists:** `animation-authoring`, `visual-qa`, `perf-budgets`, each citing only paths and commands
+  that exist (the settings test checks). No subagent: no measured need. tools/templates/README.md lists every kind;
+  tools/cmd/new.test.ts fails a kind it leaves out, a path its kind refuses, a cited path missing and a gallery kind's
+  template without its `gallery` hook.
+- Evidence: `node x new --test-all` (24 templates pass), tools/cmd/new.test.ts, tests/unit/hooks/settings.test.ts. Not
+  verified: `x new` inside a game made by tools/game/new-game.mjs (by reasoning: engine/ and tools/ are copied and no
+  template cites an engine-only path), the new entries on a page, how well the skills trigger.
+
+## Amendment 41 (2026-10-25, WP 13.26): the tour and the hand-over
+
+- **The tour is built, not recorded** (labs/playground/tour.ts, docs/PLAYGROUND.md §9.2): the playground's eight
+  replays played in turn on the block, 7,540 steps, as one replay (tests/replays/playground-tour.replay.json). Each
+  segment is its replay's inputs moved and shifted, never edited: it starts with the block's dev action `place` where
+  its replay starts, lets go of what the segment before still held, and a replay of the gym moves to where the gym
+  stands on the block. So a segment re-recorded makes the tour stale, and labs/playground/tour.test.ts says so until
+  `buildTour` makes it again; and the tour shows each segment's features on the block (35 kinds of event, from the
+  slide and the skydive to the dog's fetch, the door kick and a target standing again).
+- **Calls:** the tour opens on the street's own scene (`playground:site-street`), so the dog's game is its replay's,
+  played from step 0; the range starts on a whole number of its movers' rounds (`MOVER_ROUND`, 240 steps), so its
+  shots meet the targets where its replay met them. The gym's segments play on the block's gym, empty-handed, before
+  the house, the ring and the range, the guns last. Goldens at the first and the last step only: the segments' own
+  replays hold theirs, and the tour's last hash covers every step before it.
+- **Shots in a replay's view changes** (engine/app/playback.ts `ViewChange.shot`, the result's `shots`; the page's and
+  headless targets shoot through the drawing): a film of a run is the replay played with its cameras, its look and
+  the steps it shoots as view changes, so the goldens hold while it is filmed. tests/e2e/playground-tour.spec.ts plays
+  the tour in each look through the five cameras twice round, twelve shots on a contact sheet per look
+  (out/film/playground-tour-<look>/sheet.png and film.json); the sheets are written, never compared, and go out with
+  the stage's PR.
+- **The attract mode** (labs/playground/ui/attract.ts, the view setting `playground.attract`): the tour's page, a
+  banner over it, the camera stepping every 8 s (blended) and the look every 16 s; a key, a click, a pad's button or
+  the tour's end gives the playground back. The title screen offers it (Watch the tour) and opens it after a minute
+  with nothing pressed, unless automation drives the browser, as the menus do.
+- **Call: the page's goldens from the spec, not `x replay --browser page`.** That command draws a frame after every
+  step, 7,540 for the tour, hours on SwiftShader here; the spec plays the same replay in the page through every camera
+  in each look, a frame drawn every 60 steps and the film's twelve shot, and holds its goldens, so WP 13.26's Verify
+  runs `x replay --browser sim` (Node and Chromium, no renderer) and the spec for the page. Drawn every 6
+  steps, the spec's cel look passed the test's 40 minutes; a shot builds the look's passes into its own target the
+  first time (0 → 8 pipelines in the box's toon look, none on a second), so the spec shoots once before the tour and
+  holds what the tour adds at 0.
+- **The hand-over:** docs/GAME-GUIDE.md §4 names what the playground added to the public API (sites, Apex's movement
+  and the feel tools, rides, doors, windows and switches, the day's clock, the front end's menus, store and modal
+  input, the new cameras); lean/README.md's overview likewise; the starter game (labs/game/) pauses under a menu
+  (`createMenu`, `createEngine({ store, modal })`), as lean/game.html need not (it keeps no store).
+- **Found by the films' review: a sparse film's camera moves at every step.** The visual reviewer failed the first
+  films: after the first switch no camera framed Apex, first person showed his back mid-blend, and the two looks read
+  alike. Drawn every 60 steps, the replay moved the view one frame (1/60 s) a drawn frame, so the camera got a
+  sixtieth of the run's time: no blend (0.35 s) finished before the next switch, and every follow camera fell behind.
+  `playInto` now moves the view on by a frame at each step it draws none for (`PlayTarget.carry`, engine/app/view.ts
+  `RunView.carry`: the camera alone, as `advance(1)`, the crowd posed by the next frame), so a film's camera moves as
+  live play's does at 60 frames a second; at `draw` 0 the camera stays put, as before. The sheets keep the shots at
+  their size (halved by averaging, the pixel look's 1-pixel ink and dither went), and film.json gives each frame's
+  look metrics (colours, palette, dithering, edges), so the looks part as numbers.
+
+## Amendment 42 (2026-10-25, WP 11.4): GPU-driven crowds, stage 1
+
+- **Where it lives:** engine/gfx/enhanced/crowds.ts is the technique `feature:gpuCrowds` (the plan's Verify said
+  `gpu-crowds`; the registry's ids are `feature:` in camelCase, as `feature:gpuParticles`). It needs the adapter feature
+  `indirect-first-instance`; off, `GFX_NO_GPU_CROWDS` once and crowds draw through the instancing service.
+  engine/gfx/features.ts hands it out (`gpuCrowdsFor`), and the stage's crowd takes it when it registers with the
+  warm-up, so Node and a page with the feature off draw as before. Beyond the plan's Owns:
+  engine/gfx/enhanced/{crowdNodes,crowdRegions}.ts (the buffers, the passes, the material copies; the CPU's half of
+  the buffer), engine/gfx/puppets/crowd.ts `gpu` (its batch maker taken by the puppet and rig batches and the blob
+  shadows), engine/gfx/puppets/{batches,rigBody}.ts split from draw.ts and crowd.ts at their caps
+  (`createPuppetBatches` now exported from batches.ts), engine/gfx/{stageCrowd,stage,features}.ts.
+- **One buffer a crowd, a region and a draw a batch:** a slot is four vec4 (a 3 × 4 matrix's rows, then the colour);
+  each batch is a region of whole blocks of 64 slots and draws one mesh through r182's `BufferGeometry.setIndirect`, its
+  first instance the region's start. The CPU writes as the instancing service does: a value only when it changed, each
+  region's changed range uploaded alone, a still frame nothing. A region that fills doubles and moves those after it;
+  without room the regions are packed again; only then is an instance dropped, counted, with `GFX_GPU_CROWD_FULL` once.
+  The stage sizes the buffer at registration (48 slots a body, a power of two from 4,096) and doubles it when a frame
+  outgrows it, up to 4,194,240 slots; its size is in the warm-up's key, so the larger one warms up before it draws.
+- **The cull keeps the order:** two compute passes over the blocks in use, at most once a frame and only when the view,
+  the layout or an upload changed: `count` tests each instance's sphere against the six planes and counts each block's
+  kept instances; `scatter` writes each kept instance at its rank and the batch's last block the instance count into
+  the indirect arguments. No atomics: an atomic append would draw in an order that changes from frame to frame, and
+  blended halos, blob shadows and joint balls tied in depth would flicker.
+- **The look:** each batch's material is copied once to read position, normal and colour from the drawn buffer by
+  `instance_index`; a style set restyles it through the mesh's `restyle` hook (a material with no node form keeps the
+  batch its own, `GFX_GPU_CROWD_BATCH` once); three.js carries `positionNode` into the ID pass's and the shadow pass's
+  materials, so both draw the culled instances; the buffers are named, so every batch's shaders share programs and
+  growing builds no pipeline. Bodies are still seen, posed and written on the CPU, culled by body first (lod.ts `see`).
+- **Measured** (SwiftShader, box:crowd-5000 at 240 steps): the crowd's draw calls 34 → 16 (the frame's 198 → 180;
+  46 → 16 at 5,000 on tests/pages/gpu-crowds.html); compute calls 3 against 1, pipelines 66 against 64, 0 after the
+  warm-up; triangles, textures and the hash the same. CPU render on against off: 76.5/61.5 and 67.0/63.1 ms (`x perf
+  --feature`, on measured first), 67.7/67.0 in an interleaved A/B (0.99): unchanged. The frame's CPU is the crowd's
+  posing, its instance writes (about 103,000) and the collector (13.9 MB a frame, half of it the animator's
+  `Object.entries` in engine/anim/character.ts), not draw submission. Stage 2 not built: a cheap look in Node (FK and
+  the pieces on the GPU) saves about 25 ms of the crowd's 39–56 ms of drawing, about 1.5×, not 2×.
+- **Call (ESC-0005, decided in the owner's absence):** stage 1 is WP 11.4's result; its Done-when holds the crowd's draw calls to the 2× (34 →
+  16), the hash unchanged; CPU render, which the crowd's posing holds and GPU drawing cannot remove, is the owner's
+  open issue in docs/PROGRESS.md (the animator's garbage first: `for…in` instead of `Object.entries` halves it in a
+  Node probe, 13.9 → 6.9 MB a frame, its time effect unproven). PLAN.md's WP 11.4 edited to match (Owns, Done-when,
+  Verify). Verify as two commands: `x perf` refuses `--feature` with `--budget` (tools/cmd/perf.test.ts).
+- Evidence: engine/gfx/enhanced/crowds.test.ts, engine/gfx/stageCrowd.test.ts, engine/gfx/features.test.ts,
+  tests/e2e/gpu-crowds.spec.ts (pictures in four styles within 5 of 129,600 pixels; the cull read back matches the
+  CPU's sphere test in order), tests/e2e/box-crowd.spec.ts (both paths' batches; growth to 5,000 with 0 pipelines; the
+  chase replay's goldens in the page), the features matrix. Not verified: a real GPU (SwiftShader ranks no GPU time), an
+  adapter without `indirect-first-instance` (simulated through `gfx.featuresOff`), the playground street's crowd (only
+  the box measured), growth to the slot cap in play (unit tests only).
+
+## Amendment 43 (2026-10-25, WP 12.2): agent-usability evals and mutation testing
+
+- **The evals** (`node x evals`, tools/cmd/evals.ts and tools/lib/evals.ts; decision 5). There are fourteen tasks under
+  evals/<id>/: six in the box (a prop, a crowd-mix variant, a fog preset, a move, a seeded desync to fix, a sound),
+  seven in the playground (a movement profile, a camera mode, a two-room cabin, a radio, a weapon, a setting, a dev
+  action) and one in the engine (a regression to fix). Each has a prompt (`prompt.md`) and its `task.json` (title, area,
+  a live attempt's minutes). It starts from this tree, or from a patch on it (a bug to find). A hidden Vitest
+  acceptance (`accept.ts`) carries commands, paths that must stay unchanged, and the type and lint checks. A reference
+  solution is kept as a patch. `--dry-run` copies the repository into a fresh git repository per task (evals/ left out,
+  node_modules linked) and proves the acceptance real with no model call: it must fail on the start and pass once the
+  solution is applied. `--run --agent "<command>"` hands the prompt to an agent's command on its standard input in such
+  a copy, for at most the task's minutes, and `--record` writes the pass rate to evals/baseline.json. That baseline is
+  deferred, since model access is the owner's (ESC-0004, decided in absence: no live runs). `x check` checks every
+  task's files. A T1 test (tools/cmd/evals.test.ts) checks that every task's patches still apply to the tree, so a
+  change under a task names the task to make again.
+- **Calls (the evals):**
+  - The library is tools/lib/evals.ts, beside the command the WP owns, so each file stays under its cap.
+  - An acceptance is `accept.ts`, copied in as `accept.test.ts`, so `npm test` never runs it on the untouched tree.
+  - Lint runs as ESLint's own command line in a child process. typescript-eslint keeps one config root per process,
+    and it refused a second copy's (measured).
+  - The harness's own files (`vite.config.ts`, tests/setup/, package.json and its lock) stay as the start has them in
+    every task.
+  - The tasks name their files and ids, so a hidden test can find the work. They measure whether an agent can do the
+    work from the docs, not whether it guesses names.
+  - There is no `x new` template for a task. What makes one is its acceptance and its solution, which no template
+    writes, and `x check` and the T1 test catch a malformed one.
+- **Mutation testing** (`npx stryker run`, stryker.config.json; StrykerJS 9.6.1 and its Vitest runner). Every file of
+  engine/sim and engine/anim is mutated (114 files, 21,764 mutants), and a run tests a sample of them.
+  - **What a run tests:** the mutants of a fixed 10% of the files' outermost functions, plus every class's field
+    initializers, which run as an instance is made. The initializers are kept whole as a stratum of their own (61
+    mutants). tools/stryker/sample.ts is an ignore plugin that keeps whole functions, chosen by a seeded FNV-1a hash of
+    the file, the name and its place, so the same set comes back on every run while the functions keep their names.
+    The tests are the suites beside the code: engine/sim/**, engine/anim/** and engine/dev/actions.test.ts, the
+    actions' own suite (902 tests).
+  - **Settings:**
+    - `coverageAnalysis: perTest`: a mutant runs only the tests that reach it.
+    - `concurrency: 2`: the other lanes keep their cores.
+    - `ignoreStatic`: a mutant that runs only as its module loads would need every test again on a fresh module graph,
+      per mutant.
+    - `incremental`: out/stryker/incremental.json, so a later run tests again only what a change reaches.
+    - `timeoutMS: 20000`, on top of Stryker's own factor.
+    - The Vitest runner uses tools/stryker/vitest.config.ts: the repository's config with 180 s test and hook timeouts,
+      since a suite runs about 30 times slower instrumented and under load.
+    - `thresholds.break: 90`: a run fails under 90% caught.
+    - Reports: out/stryker/mutation.{json,html}.
+- **Why a sample** (measured on this machine, four cores shared with three lanes):
+  - Every mutant against the sim and anim suites would take 10 to 12 hours a run, at about 2 s of wall time a mutant
+    with two runners.
+  - The sample takes 68 minutes from cold, forced (`--force`), and less incrementally.
+  - Against all of T1 (the labs' scenes, replays and fixtures too), a surviving mutant reruns every scene test that
+    reaches it. The first minute of 4 files projected 9.5 hours for their 411 mutants.
+  - The sim and anim suites' score is a lower bound for T1's, since the labs' tests can only catch more.
+- **Out of scope: forward kinematics** (`engine/anim/fk.ts`'s `forwardKinematics`; `OUT_OF_SCOPE` in
+  tools/stryker/sample.ts, with its reason in every report). Every pose runs it. It is a loop over 23 joints whose body
+  holds nearly all of its mutants, and instrumenting puts a call before and after each mutable expression.
+  - Drawn into the sample, it made engine/anim/humanoid.test.ts take 280 s instead of 2.2 s, and the first pass failed
+    (the humanoid suite's hook passed 180 s).
+  - Its mutants, each rerunning every anim test that poses a body, would take about a day.
+  - Its own tests still run against every other mutant: fk.test.ts holds it to three.js's bones, and humanoid.test.ts
+    holds every joint to my-3d2dge's within 1 cm.
+- **The score:**
+  - The first run caught 74.15% of the sample's 1,714 mutants. As a cluster estimate, that is 74.6% ± 4.2 points (one
+    standard error) for every function of sim and anim before this WP.
+  - This WP's tests and marks raised the sample to 94.40%: 1,584 of 1,678 caught (1,571 killed, 13 timed out), 92
+    survived, 2 with no coverage. That is the last run, incremental: 51 min 52 s, 787 mutants retested and 891 reused.
+    The forced full run before this WP's last three commits scored 90.62% (1,545 of 1,705) in 67 min 40 s.
+  - The 90% holds on the functions a run tests, not on sim and anim whole. The tests were written against the sample's
+    survivors, so its score no longer estimates the other 90% of the functions. A fresh draw measured them (seed
+    `wp-12.2-fresh`, 5% of the functions, 938 mutants, 18 min at the integrator): 81.24% caught (762), 92.0% of the
+    338 mutants it shares with the sample and 74.3% of the 580 it does not, where the whole stood before this WP.
+  - **Call (ESC-0006, decided in the owner's absence):** WP 12.2's 90% is read on the fixed sample the run tests (the
+    run fails under 90%), and PLAN.md's Done-when says so. The rest of sim and anim, about 74%, is the owner's open
+    issue: rotate `SAMPLE.seed` a stage at a time, so each stage works a new tenth's survivors, and report a fresh
+    draw at each gate.
+- **How the survivors were killed:**
+  - Each behaviour a survivor showed untested got a test beside its module: 54 new tests across 40 test files, and
+    others extended. footPlant's locks and options got a file of their own, engine/anim/footPlant-locks.test.ts,
+    since footPlant.test.ts is at its 400-line cap.
+  - Where no property says what a number must be (a gait's sums, a retarget's joints, the traversal matrix's hashes, a
+    foot plant's heights), a characterization test pins the numbers as measured. A `PRINT_*` switch prints them again
+    for a change meant to move them, under the baselines rule: a reason in the commit.
+  - No test was loosened, skipped or removed.
+- **Equivalent mutants** are marked where they are, `// Stryker disable next-line <mutator>: <reason>`, each with the
+  reason it cannot change behaviour: 22 marks in 12 files.
+  - The reasons: a default every first use overwrites, a guard whose call does nothing without it, a check another one
+    implies, a cache, a multiplication by ±1, a band's edge where both forms agree to rounding.
+  - A mark ignores every mutant of its mutator on the line, killed ones too. It is used only where the line's live
+    mutants of that kind are equivalent or few beside them.
+  - Boundary mutants at a threshold no input meets exactly (`ik.ts`'s 1e-4, `chain.ts`'s 1e-9) are left surviving,
+    and counted, as are equivalent mutants whose line also holds killed ones of the same kind.
+- **Incremental's rule (measured):** the Vitest runner reports no test locations, so Stryker takes each test to span
+  its whole file. A change anywhere in a test file counts as a change to every test in it, and the next run retests
+  every mutant those tests cover: 787 mutants after this WP's last 15 test files changed. A change to an engine file
+  retests the mutants in the changed code.
+- **The sample's caveat:** a function with no name of its own (a callback, a private method's) is keyed by its place
+  among the file's unnamed ones, so adding one before it can move it into or out of the sample.
+- **Files outside Owns:**
+  - tools/lib/evals.ts: the evals' library.
+  - tools/stryker/: the sample plugin, its test and the Vitest config.
+  - docs/TESTING.md: the bullets for the two runs.
+  - The engine's tests beside their modules, and the marks.
+  - `qBetween`, exported from engine/anim/clip/spine.ts for its test.
+- **Evidence:** tools/cmd/evals.test.ts, tools/stryker/sample.test.ts, `node x evals --dry-run` (14 of 14 real),
+  `npx stryker run` (out/stryker/mutation.json).

@@ -1,6 +1,6 @@
 {
   "cmu": {
-    "swapped": 51,
+    "swapped": 52,
     "of": 60,
     "kept": {
       "Jumping_Jacks_Loop": "it fits its capture worse in format 2: 16/92 → 16/102 mm (mean/worst)",
@@ -10,16 +10,14 @@
       "Search_Ground": "it fits its capture worse in format 2: 21/101 → 23/101 mm (mean/worst)",
       "Walk_Backwards_Loop": "it fits its capture worse in format 2: 13/91 → 12/97 mm (mean/worst)",
       "Hop_One_Foot_Loop": "it fits its capture worse in format 2: 19/100 → 20/70 mm (mean/worst)",
-      "Get_Up_From_Back": "it fits its capture worse in format 2: 16/73 → 17/74 mm (mean/worst)",
       "Duck_Thrown_Object": "it fits its capture worse in format 2: 19/90 → 21/87 mm (mean/worst)"
     }
   },
   "mesh2motion": {
-    "swapped": 175,
+    "swapped": 176,
     "of": 177,
     "kept": {
-      "Sword_Regular_A": "it fits its capture worse in format 2: 21/230 → 19/242 mm (mean/worst)",
-      "Turn_Left_180": "it fits its capture worse in format 2: 12/42 → 9/56 mm (mean/worst)"
+      "Sword_Regular_A": "it fits its capture worse in format 2: 21/230 → 19/242 mm (mean/worst)"
     }
   }
 }

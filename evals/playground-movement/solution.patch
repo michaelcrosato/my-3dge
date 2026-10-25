@@ -1,0 +1,246 @@
+diff --git a/labs/playground/README.md b/labs/playground/README.md
+index 392c6ef..46e6df6 100644
+--- a/labs/playground/README.md
++++ b/labs/playground/README.md
+@@ -56,6 +56,7 @@ test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playgr
+ | Scene | What it proves | The command that shows it |
+ |---|---|---|
+ | `labs/playground/scenes/gym.ts` | The gym (`playground:gym`): every feature at the height, slope or gap its sign shows, the player moving by Apex's model (`node x sim labs/playground/scenes/gym --feel` prints its numbers), its golden replays the same in Node and in the page while it renders, in either look, with no pipeline built after the warm-up: the gym's run over its features, its moves (`tests/replays/playground-moves.replay.json`: the sprint held and kept by a press, a tired hop, the walk, the crouch-walk, a lurch, an air strafe, the bunny hop's cost, a slide and a slide-jump), its climbs (`tests/replays/playground-climb.replay.json`) and its rides (`tests/replays/playground-rides.replay.json`: up the tower's ladder and over its top, down its zipline, the jump pad, the balloon's line up 90 m, the glide, the dive and the landing). | `node x replay tests/replays/playground-gym.replay.json tests/replays/playground-moves.replay.json tests/replays/playground-rides.replay.json --browser page` |
++| `labs/playground/scenes/gym-heavy.ts` | The gym with a heavy soldier (`playground:gym-heavy`): the gym as built, its player moving on `movement:heavy` (`labs/playground/cast/heavy.ts`), Apex's hull and gravity but a run of 3.6 m/s and a sprint of 5.4 with a weapon out, 1.15 times faster empty-handed, and a 1.0 m jump. | `node x sim labs/playground/scenes/gym-heavy --steps 600 --feel` |
+ | `labs/playground/scenes/hill.ts` | The hill (`playground:hill`): the block's ground as terrain (`terrain:block`, 96 × 96 m, rolling 0.6 m), the hill rising to 10 m in its east quarter in slopes up to 29°, turf over rock where it is steepest (`labs/playground/ground.ts`); the player runs, slides and falls on its slopes with his feet planted (`labs/playground/courses/hill.ts`), and its replay (`tests/replays/terrain-hill.replay.json`: up the flank, across it, down it in a slide gaining speed, back up) gives its goldens in Node and in the page while it renders. | `node x replay tests/replays/terrain-hill.replay.json --browser page` |
+ | `labs/playground/scenes/site.ts` | The block (`playground:site`, the player in the front yard, and a scene per area: `playground:site-house`, `playground:site-backyard`, `playground:site-street`, `playground:site-gym`, `playground:site-hill`, `playground:site-range` and `playground:site-ring`; `docs/PLAYGROUND.md` §2): one site (`site:block`, `labs/playground/levels/site.ts`), 96 × 113 m of terrain rising to the hill on its east edge, and on it the house of four storeys (`labs/playground/levels/house.ts`: a basement with its crawlspace, a ground floor with the garage and its deck, an upper floor, an attic under a gable up a ladder through a hatch), the yards with the shed and the tree house, the street, the gym as built, the lookout on the hill, the range and the ring, furnished and lit (`labs/playground/furnish.ts`). The bot reaches every room and area from the front yard and back, and over its tour of the house no camera stands in a wall; isometric and top-down hide what stands above the player's storey and the roof indoors, and the HUD names the room; its replay (`tests/replays/playground-site.replay.json`: the front door used, a light turned off and on, a chair thrown through a window, the garage door on its switch, a door kicked open and off its hinges) gives its goldens in Node and in the page while it renders. At the ring, melee (WP 13.19): its three sparring dummies (`labs/playground/cast/dummies.ts`) rock away from each blow and spring back, its two sparring partners (`labs/playground/cast/partners.ts`, WP 10.2) flinch at a punch and fall as ragdolls at a kick or the uppercut, getting up the way they lie, and its replay (`tests/replays/playground-melee.replay.json`: the shed's door kicked open and off its hinges, the dummies punched, kicked from a jump and uppercut from a slide) gives its goldens too. At the range, firearms (WP 13.20): the player draws the pistol and the rifle (`labs/playground/weapons/guns.ts`), its pop-up and moving targets (`labs/playground/weapons/range.ts`) fall at a hit and stand again, the HUD counts the hits and the accuracy, and its replay (`tests/replays/playground-range.replay.json`: each lane's targets shot down the sights and from the hip, a burst climbing, a reload) gives its goldens while the page renders it in every camera; the range's course (`node x feel labs/playground --course range`) keeps the muzzle within 2° of the aim. | `node x replay tests/replays/playground-site.replay.json --browser page`, `node x replay tests/replays/playground-melee.replay.json --browser page`, `node x replay tests/replays/playground-range.replay.json --browser page` and `npm run e2e -- tests/e2e/playground-cameras.spec.ts` |
+ 
+diff --git a/labs/playground/cast/heavy.ts b/labs/playground/cast/heavy.ts
+new file mode 100644
+index 0000000..62d2bc8
+--- /dev/null
++++ b/labs/playground/cast/heavy.ts
+@@ -0,0 +1,33 @@
++/**
++ * @file The heavy soldier's movement (docs/PLAYGROUND.md §3.2): the profile `movement:heavy`, a character in armour
++ * on the shooter model. He has `movement:apex`'s hull, steps, slopes, gravity and forgiving details, but runs at
++ * 3.6 m/s and sprints at 5.4 m/s with a weapon out (empty-handed, 1.15 times faster, as Apex's) and jumps 1.0 m; every
++ * other number of the model is Apex's. The playground's gym shows him as `playground:gym-heavy`
++ * (labs/playground/scenes/gym-heavy.ts).
++ *
++ * Game code, sim-side: it imports only engine/sim-api.ts.
++ *
++ * @example
++ * HEAVY.model?.gaits.run; // 3.6: m/s with a weapon out
++ * HEAVY_JUMP; // 1: m
++ * @see labs/playground/scenes/gym-heavy.test.ts
++ */
++import { defineMovement, getMovement } from '../../../engine/sim-api';
++
++/** Apex's profile, whose hull, steps, slopes and gravity the heavy soldier keeps. */
++const APEX = getMovement('movement:apex');
++
++/** How high the heavy soldier jumps (m). */
++export const HEAVY_JUMP = 1;
++
++/** The heavy soldier's profile (see the file comment). */
++export const HEAVY = defineMovement('movement:heavy', {
++  description:
++    'A heavy soldier: Apex’s hull and gravity, but a run of 3.6 m/s, a sprint of 5.4 (×1.15 holstered) and a 1.0 m jump.',
++  character: {
++    ...APEX.character,
++    speed: 3.6,
++    jumpSpeed: Math.sqrt(2 * (APEX.character.characterGravity as number) * HEAVY_JUMP),
++  },
++  model: { gaits: { run: 3.6, sprint: 5.4 } },
++});
+diff --git a/labs/playground/cast/player.ts b/labs/playground/cast/player.ts
+index 95b9f38..3b7c5b3 100644
+--- a/labs/playground/cast/player.ts
++++ b/labs/playground/cast/player.ts
+@@ -7,7 +7,8 @@
+  * carry (`weapons`, WP 13.20: the site's the pistol and the rifle, labs/playground/weapons/guns.ts), holstered until
+  * drawn. It is drawn as `body:player` (labs/playground/bodies/player.ts, which the page registers) on `build:adult`,
+  * 1.80 m standing. The setting `playground.movement` (the settings screen's movement profile, WP 13.25) moves it as the
+- * Stress Box hero instead (`movement:platformer`, its feel exactly, untuned); it is read when the scene starts.
++ * Stress Box hero instead (`movement:platformer`, its feel exactly, untuned); it is read when the scene starts. A
++ * scene may stand it on another profile (`PlayerTuning.movement`: the heavy soldier's, labs/playground/cast/heavy.ts).
+  *
+  * Game code, sim-side: it imports only engine/sim-api.ts.
+  *
+@@ -57,11 +58,11 @@ export const APEX_RUN = APEX.model!.gaits.run;
+ /** How the player is drawn: `body:player` on the adult build, empty-handed. */
+ export const PLAYER_LOOK = Object.freeze({ body: 'body:player', build: 'build:adult', weapon: 'none' });
+ 
+-/** What a scene may tune: the run with a weapon out (m/s) and the jump's height (m); and the profile, Apex's by default. */
++/** What a scene may tune: the run with a weapon out (m/s), the jump's height (m), and the profile (Apex's by default). */
+ export interface PlayerTuning {
+   readonly speed?: number;
+   readonly jump?: number;
+-  readonly movement?: (typeof PLAYER_MOVEMENTS)[number];
++  readonly movement?: string;
+ }
+ 
+ /**
+diff --git a/labs/playground/scenes/gym-heavy.test.ts b/labs/playground/scenes/gym-heavy.test.ts
+new file mode 100644
+index 0000000..025b4a6
+--- /dev/null
++++ b/labs/playground/scenes/gym-heavy.test.ts
+@@ -0,0 +1,40 @@
++/**
++ * @file Unit tests for the gym with a heavy soldier (labs/playground/scenes/gym-heavy.ts, labs/playground/cast/
++ * heavy.ts): the player stands at the gym's spawn on `movement:heavy`, runs and sprints at its speeds, empty-handed,
++ * and jumps its 1.0 m; Apex's player in the gym keeps his.
++ * @see labs/playground/scenes/gym-heavy.ts
++ */
++import { describe, expect, it } from 'vitest';
++import { createHeadless } from '../../../engine';
++import { HEAVY, HEAVY_JUMP } from '../cast/heavy';
++import { gymHeavy } from './gym-heavy';
++
++/** The player's steady speed on the open floor, holding `move` west (and sprint when asked), and his highest jump. */
++async function measure(sprint: boolean) {
++  const engine = await createHeadless({ scene: gymHeavy });
++  const feet = () => (engine.state('actor').entities as unknown as { actor: { x: number } }[])[0].actor.x;
++  const b = sprint ? ['sprint'] : [];
++  engine.step(1, { move: [-1, 0], b, p: b });
++  engine.step(59, { move: [-1, 0], b });
++  const from = feet();
++  engine.step(60, { move: [-1, 0], b });
++  return from - feet();
++}
++
++describe('the gym with a heavy soldier', () => {
++  it('runs and sprints at movement:heavy’s speeds, 1.15 times faster empty-handed', async () => {
++    const { run, sprint, holstered } = HEAVY.model!.gaits;
++    expect(await measure(false)).toBeCloseTo(run * holstered, 1);
++    expect(await measure(true)).toBeCloseTo(sprint * holstered, 1);
++  });
++
++  it('jumps 1.0 m', async () => {
++    const engine = await createHeadless({ scene: gymHeavy });
++    let top = 0;
++    for (let k = 0; k < 60; k++) {
++      engine.step(1, { b: ['jump'], ...(k === 0 ? { p: ['jump'] } : {}) });
++      top = Math.max(top, (engine.state('actor').entities as unknown as { actor: { y: number } }[])[0].actor.y);
++    }
++    expect(top).toBeCloseTo(HEAVY_JUMP, 1);
++  });
++});
+diff --git a/labs/playground/scenes/gym-heavy.ts b/labs/playground/scenes/gym-heavy.ts
+new file mode 100644
+index 0000000..e5b7080
+--- /dev/null
++++ b/labs/playground/scenes/gym-heavy.ts
+@@ -0,0 +1,32 @@
++/**
++ * @file The gym with a heavy soldier, `playground:gym-heavy` (docs/PLAYGROUND.md §2.3, §3.2): the gym of
++ * labs/playground/scenes/gym.ts, its features, rides and dev action `place` the same, its player moving on the
++ * profile `movement:heavy` (labs/playground/cast/heavy.ts) instead of Apex's: a run of 3.6 m/s and a sprint of 5.4
++ * with a weapon out, 1.15 times faster empty-handed, and a 1.0 m jump. The gym's settings (`playground.gym.*`) are
++ * Apex's tuning, so this scene reads none of them.
++ *
++ * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
++ *
++ * @example
++ * // node x sim labs/playground/scenes/gym-heavy --steps 600 --feel
++ * gymHeavy.id; // 'playground:gym-heavy'
++ * @see labs/playground/scenes/gym-heavy.test.ts
++ */
++import { defineScene } from '../../../engine/sim-api';
++import '../cast/heavy';
++import { levelGround, playgroundSounds } from '../sounds/events';
++import { GYM, GYM_ACTIONS, setupGym } from './gym';
++
++/** The gym, its player the heavy soldier. */
++export const gymHeavy = defineScene('playground:gym-heavy', {
++  description: 'The gym with a heavy soldier: the player moves on movement:heavy, slower than Apex, jumping 1.0 m.',
++  level: 'level:gym',
++  physics: true,
++  sounds: playgroundSounds(levelGround(GYM)),
++  setup(w) {
++    setupGym(w, { movement: 'movement:heavy' });
++  },
++  actions: GYM_ACTIONS,
++});
++
++export default gymHeavy;
+diff --git a/labs/playground/scenes/gym.ts b/labs/playground/scenes/gym.ts
+index 01442f7..00f1506 100644
+--- a/labs/playground/scenes/gym.ts
++++ b/labs/playground/scenes/gym.ts
+@@ -22,8 +22,8 @@
+  * GYM_START; // [20.25, 0, 3.25]: the spawn, at the gym's north end
+  * @see labs/playground/scenes/gym.test.ts
+  */
+-import { addLauncher, addLevelBodies, addLevelLadders, addZipline, compileLevel, defineScene, defineSettings, physicsOf, placeActor, spawnProp, type ActorComponents } from '../../../engine/sim-api'; // prettier-ignore
+-import { APEX_JUMP, APEX_RUN, spawnPlayer } from '../cast/player';
++import { addLauncher, addLevelBodies, addLevelLadders, addZipline, compileLevel, defineScene, defineSettings, physicsOf, placeActor, spawnProp, type ActorComponents, type SceneSpec, type World } from '../../../engine/sim-api'; // prettier-ignore
++import { APEX_JUMP, APEX_RUN, spawnPlayer, type PlayerTuning } from '../cast/player';
+ import { GYM_BALLOON, GYM_LAUNCHERS, GYM_PROPS, GYM_TEXT, GYM_ZIPLINE } from '../levels/gym';
+ import { levelGround, playgroundSounds } from '../sounds/events';
+ 
+@@ -56,6 +56,35 @@ export const GYM_SETTINGS = defineSettings({
+   },
+ });
+ 
++/**
++ * The gym's setup, which its scenes share: its level's bodies, the player at the spawn as `tuning` sets him (first:
++ * the player is entity 1), its fixed props, its ladder, its rides and its launchers.
++ */
++export function setupGym<C extends object>(w: World<C>, tuning: PlayerTuning): void {
++  addLevelBodies(physicsOf(w), GYM);
++  spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, tuning);
++  for (const { prop, at, yaw } of GYM_PROPS) spawnProp(w, { prop, at: [...at], yaw });
++  addLevelLadders(w, GYM);
++  addZipline(w, GYM_ZIPLINE);
++  addZipline(w, GYM_BALLOON);
++  for (const { height: _height, ...launcher } of GYM_LAUNCHERS) addLauncher(w, launcher);
++}
++
++/** The gym's dev actions, which its scenes share. */
++export const GYM_ACTIONS: NonNullable<SceneSpec['actions']> = {
++  /**
++   * Puts the player at `at`, facing `yaw`, at rest or moving `speed` m/s that way: a feel course's start; with
++   * `crouch`, ducked, his hull crouched from the next step on, for a place no standing hull fits (the crawlspace).
++   */
++  place(w, args) {
++    const { at, yaw = 0, speed = 0, crouch = false } = (args ?? {}) as { at?: [number, number, number]; yaw?: number; speed?: number; crouch?: boolean }; // prettier-ignore
++    const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
++    if (!player || !at) return;
++    placeActor(w, player.id, at, yaw, { crouch });
++    [player.actor.vx, player.actor.vz] = [speed * Math.sin(yaw), speed * Math.cos(yaw)];
++  },
++};
++
+ /** The gym: its features, and the player at its north end. */
+ export const gym = defineScene('playground:gym', {
+   description:
+@@ -64,29 +93,11 @@ export const gym = defineScene('playground:gym', {
+   physics: true,
+   sounds: playgroundSounds(levelGround(GYM)), // its events' sounds, for x audio --replay (WP 13.22)
+   setup(w) {
+-    addLevelBodies(physicsOf(w), GYM);
+     const speed = w.settings.get<number>('playground.gym.speed');
+     const jump = w.settings.get<number>('playground.gym.jump');
+-    spawnPlayer(w, [GYM_START[0], GYM_START[1], GYM_START[2]], 0, { speed, jump }); // first: the player is entity 1
+-    for (const { prop, at, yaw } of GYM_PROPS) spawnProp(w, { prop, at: [...at], yaw });
+-    addLevelLadders(w, GYM);
+-    addZipline(w, GYM_ZIPLINE);
+-    addZipline(w, GYM_BALLOON);
+-    for (const { height: _height, ...launcher } of GYM_LAUNCHERS) addLauncher(w, launcher);
+-  },
+-  actions: {
+-    /**
+-     * Puts the player at `at`, facing `yaw`, at rest or moving `speed` m/s that way: a feel course's start; with
+-     * `crouch`, ducked, his hull crouched from the next step on, for a place no standing hull fits (the crawlspace).
+-     */
+-    place(w, args) {
+-      const { at, yaw = 0, speed = 0, crouch = false } = (args ?? {}) as { at?: [number, number, number]; yaw?: number; speed?: number; crouch?: boolean }; // prettier-ignore
+-      const player = (w.query('actor') as unknown as (ActorComponents & { id: number })[]).find((e) => e.actor.player);
+-      if (!player || !at) return;
+-      placeActor(w, player.id, at, yaw, { crouch });
+-      [player.actor.vx, player.actor.vz] = [speed * Math.sin(yaw), speed * Math.cos(yaw)];
+-    },
++    setupGym(w, { speed, jump });
+   },
++  actions: GYM_ACTIONS,
+ });
+ 
+ export default gym;

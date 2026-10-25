@@ -281,7 +281,7 @@ export function encodePose(
       const { wr, fd, hint } = armOf(R, tq, k as KeyPose, s);
       const points = { knuck: p(`knuck${s}`), fist: p(`fist${s}`), index: p(`index${s}`), pinky: p(`pinky${s}`) };
       const { hand, grip } = encodeHand(R, wr, fd, hint, s, points);
-      k[`hand${s}`] = hand;
+      k[`hand${s}`] = uw(hand, pr[`hand${s}`]); // continuing from the key before: a roll past ±180° turns the short way
       (k as Record<string, unknown>)[`grip${s}`] = grip;
     }
   }

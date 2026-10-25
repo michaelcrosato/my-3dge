@@ -1,0 +1,74 @@
+/**
+ * @file The interactable `{{name}}`: what a player uses and strikes (replace this text; `x docs` puts the first
+ * sentence in INDEX). It starts as a chest that opens: using it (the button `interact`, in reach and in view) opens it
+ * and shuts it again, its prompt `Open` or `Close`; a locked one says `Locked` and stays shut; a strike (a punch, a
+ * kick, a shot) bursts its lock, and it opens. Each change is the event `{{name}}` `{ id, open, locked }`, for the
+ * view and the sound map. It stands as the engine's chest (`prop:chest`), fixed, holding the component `{{name}}`:
+ * `{{name}}.add(w, { at, yaw, locked })` stands one from a scene's setup.
+ *
+ * Invariants: everything it is lives in its component (`node x describe component {{name}}`), so the hash, captures
+ * and replays cover it; its use and its strike are its component's entries of the kinds `usable` and `strikable`, which
+ * the engine asks of every entity holding it (its doors and switches work the same way); the scene's setup adds the use
+ * (`addInteraction(w)`) and what strikes (`addMelee(w)`, `addWeapons(w)`).
+ *
+ * Game code, sim-side: it imports only engine/sim-api.ts.
+ *
+ * @example
+ * // in a scene's setup, with physics: true:
+ * // {{name}}.add(w, { at: [0, 0, 2], yaw: Math.PI }); addInteraction(w);
+ * {{name}}.component; // '{{name}}'
+ * @see {{id}}.test.ts
+ */
+import { defineComponent, defineStrikable, defineUsable, spawnProp, type World } from '../../../engine/sim-api';
+
+/** Its component: open or shut, locked or not. */
+interface State {
+  open: boolean;
+  locked: boolean;
+}
+
+defineComponent('{{name}}', {
+  description: 'A chest that opens (replace): open or shut, locked or not.',
+  fields: {
+    open: { type: 'boolean', default: false, description: 'Whether it stands open.' },
+    locked: { type: 'boolean', default: false, description: 'Whether it is locked: shut until a strike bursts it.' },
+  },
+});
+
+/** Its component, on entity `id`. */
+const stateOf = (w: World, id: number) => (w.get(id) as unknown as { {{name}}: State }).{{name}};
+
+/** Opens or shuts it, locked or not, and tells the world (the event `{{name}}`). */
+function set(w: World, id: number, open: boolean, locked: boolean): void {
+  Object.assign(stateOf(w, id), { open, locked });
+  w.emit('{{name}}', { id, open, locked });
+}
+
+defineUsable('{{name}}', {
+  prompt: (w, id) => {
+    const { open, locked } = stateOf(w, id);
+    return locked ? 'Locked' : open ? 'Close' : 'Open';
+  },
+  use: (w, id) => {
+    const { open, locked } = stateOf(w, id);
+    if (!locked) set(w, id, !open, false);
+  },
+});
+defineStrikable('{{name}}', (w, id) => {
+  const { open, locked } = stateOf(w, id);
+  if (locked || !open) set(w, id, true, false); // burst open, its lock broken
+});
+
+/** The interactable `{{name}}`: its component's name, and `add`, which stands one in a scene. */
+export const {{name}} = Object.freeze({
+  component: '{{name}}',
+  /**
+   * Stands one, shut, from a scene's setup (a world with physics): its base at `at` (m), turned `yaw` about +Y (rad;
+   * its lock faces +Z turned by it), locked or not; returns its entity.
+   */
+  add<C extends object>(world: World<C>, spec: { at: readonly [number, number, number]; yaw?: number; locked?: boolean }) {
+    const state: State = { open: false, locked: spec.locked ?? false };
+    const placement = { prop: 'prop:chest', at: spec.at, yaw: spec.yaw ?? 0 };
+    return spawnProp(world, placement, { as: 'fixed', components: { {{name}}: state } });
+  },
+});

@@ -1,0 +1,74 @@
+/**
+ * @file The weapon `weapon:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX). It
+ * starts as a compact submachine gun, 60 cm long: automatic at 15 shots a second, 12 points a shot out to 60 m, 25
+ * rounds, 1.6 s to reload and 2 s from empty, a wide cone from the hip and a tight one down its sights, and a burst
+ * that climbs and drifts right, then left. It is drawn as `prop:{{name}}`, boxes and a barrel in its frame: the grip
+ * at the origin, +Z along the barrel, +Y up, no body.
+ *
+ * Invariants: data only, the kinds' fields (`node x describe weapon`, `node x describe prop`): angles in degrees as the
+ * fields say, seconds and metres; its muzzle, where its shots leave it, at the front of its barrel; its sound an `sfx`
+ * entry a game's sound map plays for its `gunshot` (the engine's `sfx:pistolShot` and `sfx:rifleShot`). A player
+ * carries it with `weaponsFor(['weapon:{{name}}'])` in his components, and a scene's `addWeapons(w)` fires it.
+ *
+ * @example
+ * {{name}}.magazine; // 25
+ * {{name}}Prop.parts.length; // 6
+ * @see {{id}}.test.ts
+ */
+import { defineProp, defineWeapon } from '../../../engine/sim-api';
+
+/** Its parts' materials, and the tint of its painted frame. */
+const [IRON, PAINT, DARK] = ['material:iron', 'material:paint', '#2b2c2e'];
+
+/** A box part `name`, `size` [width, height, depth] (m), its base's middle at `at`, turned `turn` about +X (rad). */
+const box = (name: string, [width, height, depth]: readonly number[], at: readonly number[], turn = 0) => ({
+  name,
+  geometry: 'geometry:box',
+  params: { width, height, depth },
+  material: PAINT,
+  tint: DARK,
+  position: [...at],
+  rotation: [turn, 0, 0],
+});
+
+/** The prop `prop:{{name}}`: the gun in its frame (see the file comment). */
+export const {{name}}Prop = defineProp('prop:{{name}}', {
+  description: 'A compact submachine gun, 60 cm long, its grip under the origin, its barrel along +Z (replace).',
+  parts: [
+    box('grip', [0.03, 0.1, 0.04], [0, -0.09, -0.01], 0.2), // raked back below the hand
+    box('receiver', [0.045, 0.065, 0.28], [0, -0.005, 0.08]),
+    box('stock', [0.03, 0.05, 0.2], [0, -0.02, -0.16]),
+    box('magazine', [0.025, 0.14, 0.035], [0, -0.145, 0.1], -0.1), // its foot forward
+    box('sight', [0.02, 0.02, 0.06], [0, 0.06, 0.02]),
+    {
+      name: 'barrel',
+      geometry: 'geometry:frustum',
+      params: { radiusBottom: 0.01, radiusTop: 0.01, height: 0.12, radialSegments: 10, smooth: true },
+      material: IRON,
+      position: [0, 0.03, 0.22], // an upright frustum turned onto +Z: from the receiver's front to the muzzle
+      rotation: [Math.PI / 2, 0, 0],
+    },
+  ],
+  body: { type: 'none' },
+  gallery: { camera: 'turntable', duration: 0, states: [] }, // node x gallery: four views round it
+});
+
+/** The weapon `weapon:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineWeapon('weapon:{{name}}', {
+  rate: 15,
+  auto: true,
+  damage: 12,
+  range: 60,
+  spread: { hip: 2.2, move: 1.2, ads: 0.25 },
+  recoil: [[0.4, 0.05], [0.35, 0.1], [0.3, 0.1], [0.3, 0], [0.25, -0.1], [0.25, -0.05]], // prettier-ignore
+  settle: 0.25,
+  recover: 0.15,
+  magazine: 25,
+  reload: { tactical: 1.6, empty: 2 },
+  zoom: 60,
+  sights: 0.18,
+  draw: 0.3,
+  muzzle: [0, 0.03, 0.34],
+  prop: {{name}}Prop.id,
+  sound: 'sfx:pistolShot',
+});

@@ -1,5 +1,19 @@
 {
   "scene": "box:crowd-5000",
+  "page": {
+    "steps": 240,
+    "budgets": {
+      "simMs": 200,
+      "renderMs": 250,
+      "drawCalls": 180,
+      "triangles": 24294461,
+      "computeCalls": 3,
+      "textures": 44,
+      "geometries": 131,
+      "pipelines": 66,
+      "pipelinesAfterWarmUp": 0
+    }
+  },
   "ladder": {
     "setting": "box.crowd.count",
     "steps": 300,
@@ -9,5 +23,5 @@
       "5000": { "stepMs": 160, "hashMs": 650, "captureMs": 125 }
     }
   },
-  "reason": "WP 7.8, the benchmark report: measured with node x perf labs/box --scene crowd-5000 --ladder --agents box.crowd.count on the development platform (Node 24, 20 cores at a load average of 15 to 19 from up to 6 lanes, Rapier 0.21 SIMD): the hall with its hero and a mixed crowd entering 25 a step and chasing him (crowd-5000 is crowd-1000's preset for 5,000, so its rungs measure the same scene as box-crowd-1000.json's), 300 steps from the start with no intents, medians of 5 runs. Sim step: 0.94 ms at 100, 9.95 ms at 1,000 and 50.5 ms at 5,000; hash: 3.4, 54.6 and 294 ms; capture: 0.36, 4.8 and 42 ms. The budgets are box-crowd-1000.json's (measured at a load near 38, about 2x its medians), which these medians are well within; a rung's budget holds for this scene, its settings and 300 steps."
+  "reason": "WP 7.8, the benchmark report: measured with node x perf labs/box --scene crowd-5000 --ladder --agents box.crowd.count on the development platform (Node 24, 20 cores at a load average of 15 to 19 from up to 6 lanes, Rapier 0.21 SIMD): the hall with its hero and a mixed crowd entering 25 a step and chasing him (crowd-5000 is crowd-1000's preset for 5,000, so its rungs measure the same scene as box-crowd-1000.json's), 300 steps from the start with no intents, medians of 5 runs. Sim step: 0.94 ms at 100, 9.95 ms at 1,000 and 50.5 ms at 5,000; hash: 3.4, 54.6 and 294 ms; capture: 0.36, 4.8 and 42 ms. The budgets are box-crowd-1000.json's (measured at a load near 38, about 2x its medians), which these medians are well within; a rung's budget holds for this scene, its settings and 300 steps. The page section, WP 11.4: measured with node x perf labs/box --scene crowd-5000 --steps 240 --feature feature:gpuCrowds on the development platform (Chromium 153 on SwiftShader at 960 x 540, 20 cores at a load average of 7 to 20 from up to 6 lanes), twice, once more as an interleaved A/B (two tabs of one browser, the feature on in one and off in the other, a frame each in turn), then held with --budget: 240 steps, so all 5,000 have entered (25 a step), then 60 frames drawn, the sim paused. The counts were the same in every run; those with feature:gpuCrowds on, as this platform draws (its adapter has indirect-first-instance), are the budgets: 180 draw calls (the hall's 164 and the crowd's 16, a draw call a batch with instances and again in the sun's shadow map for the casting ones; through the instancing service, the feature off, 198), 24,294,461 triangles (every instance the CPU wrote: three.js does not see what the cull keeps), 3 compute calls (the hall's one and the cull's two), 44 textures, 131 geometries (each of the GPU crowd's 10 batches carries a geometry of its own for its indirect draw; 128 off), 66 pipelines (the cull's two compute pipelines over the 64 off), 0 after the warm-up. The means of the last 60 steps and frames were 61.6 to 87.5 ms a step and 61.5 to 81.7 ms of CPU a frame on either path (101.4 ms in the first run, before WP 11.4's code, through the instancing service: the same path as off, the difference the machine's); their budgets, 200 and 250 ms, leave 2.3x and 3x over the highest, so only a real regression warns."
 }

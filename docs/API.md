@@ -309,7 +309,7 @@ game agent's manual.
 - `createPost` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Makes the chain on `gfx.renderer` (see the file comment).
 - `createPropMeshes` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Makes the prop meshes; see the file comment.
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
-- `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
+- `createPuppetBatches` (function from [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
 - `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
@@ -880,7 +880,7 @@ game agent's manual.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
 - `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
 - `Puppet` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): One character drawn as a rigid-skinned mesh (see the file comment).
-- `PuppetBatches` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Instanced parts for crowds (see the file comment).
+- `PuppetBatches` (interface from [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)): Instanced parts for crowds (see the file comment).
 - `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `PuppetMaterials` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Where materials come from: the page's material library.
 - `Quadruped` (class from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped: its state, its pose.
@@ -957,17 +957,17 @@ game agent's manual.
 - `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
 - `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
-- `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
+- `RigBody` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig body (see the file comment): its slots and parts, and the materials and shadow it is drawn with.
 - `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
 - `rigClosed` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): How many of `rig`'s first points come back at rest after `state` (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `RigInput` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
-- `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigJoints` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
 - `rigOptions` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options from the view settings `cam.*`, read by `get` (a settings store's).
 - `RigOptions` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options (see the file comment).
-- `RigPart` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigPart` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
 - `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
-- `RigShape` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A unit shape a rig part draws: any but the limb.
+- `RigShape` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A unit shape a rig part draws: any but the limb.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
@@ -2767,6 +2767,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/clip/spine.ts`](../engine/anim/clip/spine.ts)
 
+- `qBetween` (function): The shortest turn taking direction `a` to direction `b`, a quaternion; from a direction to its opposite, a half turn.
 - `SPINE_MISS` (const): How far (mm) the spine's shares may miss a capture's neck before format 2 writes the `spine` override: half the importer's 30 mm tolerance, past which the shares alone spend most of a key's error.
 - `spineMiss` (function): The worst miss (mm) over a capture's frames between its neck and the neck the spine's shares rebuild from its pelvis point and its pelvis and chest frames: past `SPINE_MISS`, the importer writes format 2's `spine` override.
 - `spineOf` (function): Format 2's `spine` for key `k` (its hips, body and chest written) on the body points `p` reads: the turn of the spine's middle bones, relative to the body, that takes the decoded `spine1` toward the captured chest, its twist about the spine the shares' own (two bones lying almost in line say little about it).
@@ -3456,6 +3457,7 @@ For the agents who maintain the engine.
 - `StoreBackend` (interface): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
 - `StoreMode` (type): One of `STORE_MODES`: whose play a store keeps.
 - `StoreOptions` (interface): How a store is made (see the file comment).
+- `textStorage` (function): The store as the two string calls of `localStorage` (`getItem`, `setItem`), for a module that saves text of its own: the bindings (engine/input/bindings.ts), which the engine saves through the page's store (`createEngine({ store })`).
 
 ### [`engine/app/view.ts`](../engine/app/view.ts)
 
@@ -4160,6 +4162,15 @@ For the agents who maintain the engine.
 - `GalleryView` (interface): The view a gallery films through: the run's stage and its camera (engine/app/view.ts).
 - `subjectBounds` (function): The bounds of what the stage draws for the subject: its props, puppets and stand-ins (the ground left out).
 
+### [`engine/dev/governor.ts`](../engine/dev/governor.ts)
+
+- `createGovernor` (function): Makes a governor; `log` takes its advice (the shared log by default).
+- `Governor` (interface): The governor (see the file comment).
+- `GOVERNOR` (const): The governor's numbers (see the file comment): seconds, milliseconds a frame, and the scale's steps.
+- `GOVERNOR_CODES` (const): Its advice code.
+- `GOVERNOR_SETTINGS` (const): Its view setting: whether it may move `auto`'s tier at all (a page that compares frames turns it off).
+- `GovernorState` (interface): What the governor holds now.
+
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
 - `CORE_MEMBERS` (const): The core members (PLAN.md §8.3, WP 1.6), registered on the shared registry when this module loads.
@@ -4648,6 +4659,37 @@ For the agents who maintain the engine.
 - `createOcclusion` (function): Makes the occlusion pass over `depth` and the view normals `normal`, seen by `camera` (see the file comment).
 - `Occlusion` (interface): The occlusion pass (see the file comment).
 
+### [`engine/gfx/enhanced/crowdNodes.ts`](../engine/gfx/enhanced/crowdNodes.ts)
+
+- `arrayOf` (function): The array a storage node holds.
+- `createCrowdBuffers` (function): Makes a GPU crowd's buffers for `capacity` slots (a whole number of blocks) and `batches` batches.
+- `createCrowdCull` (function): Makes the cull's passes over `b` (see the file comment).
+- `createCrowdLook` (function): Makes a GPU crowd's materials over `b` (see the file comment).
+- `CROWD_ARGS` (const): Words of indirect arguments a batch: drawIndexedIndirect's five (drawIndirect's four, then one unused).
+- `CROWD_BLOCK` (const): Slots a block holds: one workgroup of the cull.
+- `CrowdBuffers` (interface): A GPU crowd's buffers (see the file comment): their nodes, and the CPU's arrays of those it writes.
+- `CrowdCull` (interface): The cull's two passes (see the file comment), each dispatched a workgroup a block.
+- `CrowdLook` (interface): A GPU crowd's materials (see the file comment).
+- `upload` (function): Marks `count` items of a storage node's array from `start` (in array elements) for the next upload.
+
+### [`engine/gfx/enhanced/crowdRegions.ts`](../engine/gfx/enhanced/crowdRegions.ts)
+
+- `createCrowdRegions` (function): Makes a GPU crowd's regions over `buffers` (see the file comment).
+- `CrowdRegion` (interface): One batch's part of the buffer: where it lies, its instances now and at the last `end`, its changed range.
+- `CrowdRegions` (interface): A GPU crowd's regions (see the file comment).
+- `SLOT_FLOATS` (const): Floats a slot takes: four vec4.
+
+### [`engine/gfx/enhanced/crowds.ts`](../engine/gfx/enhanced/crowds.ts)
+
+- `createGpuCrowd` (function): Makes a crowd's half on the GPU, `capacity` slots rounded up to whole blocks (see the file comment).
+- `CrowdCompute` (interface): What runs the cull: the renderer, as far as the crowd uses it.
+- `GPU_CROWD` (const): Its numbers: the batches a crowd holds, the slots a body is given at first, and the smallest and largest buffers (the cull dispatches a workgroup a block along one dimension, of which WebGPU allows 65,535).
+- `GPU_CROWDS_CODES` (const): Its codes: the advice the feature registry raises while it is off, a full buffer's, and a batch it cannot draw.
+- `GPU_CROWDS_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+- `GpuCrowd` (interface): A crowd's half on the GPU (see the file comment).
+- `gpuCrowdCapacity` (function): The slots a GPU crowd for `bodies` bodies starts with: `GPU_CROWD.perBody` each, a power of two, at least the minimum.
+- `GpuCrowdStats` (interface): What a GPU crowd holds and did: its batches, instances and slots, the cull's blocks, culls run, the last frame's.
+
 ### [`engine/gfx/enhanced/csm.ts`](../engine/gfx/enhanced/csm.ts)
 
 - `CascadedSun` (interface): A sun casting through cascades (see the file comment).
@@ -4712,6 +4754,8 @@ For the agents who maintain the engine.
 - `FeatureOff` (interface): One feature that is off: its id, the advice raised and why.
 - `FeatureReport` (interface): What `resolveFeatures` found: the features on, those off and why, and the downgrades as advice codes.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
+- `GpuCrowd` (interface from [`engine/gfx/enhanced/crowds.ts`](../engine/gfx/enhanced/crowds.ts)): A crowd's half on the GPU (see the file comment).
+- `gpuCrowdsFor` (function): A GPU crowd's maker (engine/gfx/enhanced/crowds.ts, WP 11.4), with the capacity it starts with for a number of bodies, when `feature:gpuCrowds` is on in `report`; else null (and with no report): crowds draw through the instancing service.
 - `GpuParticles` (interface from [`engine/gfx/enhanced/particles.ts`](../engine/gfx/enhanced/particles.ts)): GPU particles (see the file comment).
 - `gpuParticlesFor` (function): The GPU's particle ring's maker (engine/gfx/enhanced/particles.ts, WP 11.3) when `feature:gpuParticles` is on in `report`, else null (and with no report): the CPU pool takes every emitter's particles.
 - `GpuTiming` (interface from [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)): A renderer's GPU timing (see the file comment).
@@ -5345,6 +5389,11 @@ For the agents who maintain the engine.
 - `createActorPuppets` (function): Draws actors as puppets (see the file comment); `registry` holds the bodies and gets the puppets' materials.
 - `PlayerView` (interface): The player actor as the last draw put it.
 
+### [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)
+
+- `createPuppetBatches` (function): Makes instanced puppet batches (see the file comment).
+- `PuppetBatches` (interface): Instanced parts for crowds (see the file comment).
+
 ### [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)
 
 - `BLOB_SHADOW` (const): The shadow rule's numbers: the lift above the floor, the height where it stops shrinking, its smallest scale.
@@ -5408,22 +5457,21 @@ For the agents who maintain the engine.
 - `CROWD_CODES` (const): The codes crowd drawing raises, with their fixes.
 - `CROWD_PAGE_SLOTS` (const): Instances per page of the crowd's batches.
 - `CrowdDraw` (interface): How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow.
+- `CrowdGpu` (interface): The half on the GPU a crowd may draw through (engine/gfx/enhanced/crowds.ts `GpuCrowd`, while `feature:gpuCrowds` is on): it makes the batches, hears of each frame's start and end (after the batches'), and shows its meshes to the warm-up.
 - `CrowdRigDraw` (interface): How a rig is drawn: also its flags (`when`, `unless`) and its scale against its body.
 - `CrowdStats` (interface): A frame's counts: the bands and culling (lod.ts), bodies drawn, and each batch's instances and shown pages.
 - `HUMANOID_SHADOW` (const): A humanoid's blob shadow, metres at size 1 (the source's 5 units).
-- `RigBody` (interface): A rig body (see the file comment).
-- `RigJoints` (type): A rig's pose: each joint a world matrix, a point, or a list of points.
-- `RigPart` (interface): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
-- `RigShape` (type): A unit shape a rig part draws: any but the limb.
+- `RigBody` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig body (see the file comment): its slots and parts, and the materials and shadow it is drawn with.
+- `RigJoints` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigPart` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigShape` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A unit shape a rig part draws: any but the limb.
 
 ### [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)
 
 - `createPuppet` (function): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
-- `createPuppetBatches` (function): Makes instanced puppet batches (see the file comment).
 - `PieceRange` (interface): Where one piece's vertices lie in a puppet's geometry (`geometry.userData.pieces`, in drawing order).
 - `Puppet` (interface): One character drawn as a rigid-skinned mesh (see the file comment).
 - `PUPPET_MATERIALS` (const): The materials puppets draw with by default.
-- `PuppetBatches` (interface): Instanced parts for crowds (see the file comment).
 - `puppetGeometry` (function): The rigid-skinned geometry of `compiled`: lit pieces (group 0), then glow pieces (group 1), see the file comment; `userData.pieces` lists each piece's vertices (`PieceRange`).
 - `puppetMaterials` (function): Defines `PUPPET_MATERIALS` on `registry` (the shared one by default), those it lacks.
 - `PuppetMaterials` (interface): Where materials come from: the page's material library.
@@ -5459,6 +5507,13 @@ For the agents who maintain the engine.
 - `CrowdLod` (interface): A crowd's level of detail (see the file comment).
 - `CrowdLodCounts` (interface): A frame's counts so far: bodies drawn in each band, and those culled by the view, the distance and `near`.
 - `CrowdLodOptions` (interface): How a crowd's level of detail is made.
+
+### [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)
+
+- `RigBody` (interface): A rig body (see the file comment): its slots and parts, and the materials and shadow it is drawn with.
+- `RigJoints` (type): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigPart` (interface): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigShape` (type): A unit shape a rig part draws: any but the limb.
 
 ### [`engine/gfx/quality.ts`](../engine/gfx/quality.ts)
 
@@ -8201,8 +8256,10 @@ For the agents who maintain the engine.
 - `APEX_JUMP` (const): Apex's jump (m): 56 units.
 - `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s; holstered, the player runs 1.15 times as fast.
 - `PLAYER_LOOK` (const): How the player is drawn: `body:player` on the adult build, empty-handed.
-- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned.
-- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m).
+- `PLAYER_MOVEMENTS` (const): The profiles the player may move by: Apex's, the default, and the Stress Box hero's.
+- `PLAYER_SETTINGS` (const): The player's setting (see the file comment).
+- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned; on another profile, that profile's own character, the tuning unused.
+- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m); and the profile, Apex's by default.
 - `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move, carrying `weapons` (ids, in slot order; none by default), holstered.
 
 ### [`labs/playground/cast/ways.ts`](../labs/playground/cast/ways.ts)
@@ -8531,6 +8588,80 @@ For the agents who maintain the engine.
 - `SoundFrame` (interface): What `frame` reads each drawn frame (the engine's `onFrame` gives it): never a way to change play.
 - `WIND` (const): The wind past his ears: none below `from` m/s, full (`vol`) at `full`, in twentieths, eased over `ease` s.
 - `ZIP` (const): The zipline's hum while he rides, its level.
+
+### [`labs/playground/tour.ts`](../labs/playground/tour.ts)
+
+- `buildTour` (function): The tour (see the file comment) from `replays`, by name, over `segments` (the whole tour by default).
+- `MOVER_ROUND` (const): The range's movers' round, steps: there and back along the track at its speed, at 60 Hz.
+- `TOUR` (const): The tour's segments, in order: the street's on its own scene, the gym's, empty-handed, then the block's, the guns last.
+- `TourReplay` (interface): A replay as the tour reads and writes it (engine/sim/replay.ts's format, goldens aside).
+- `TourSegment` (interface): A segment: the replay it plays, and where its player starts when the replay does not `place` him at step 0.
+
+### [`labs/playground/ui/attract.ts`](../labs/playground/ui/attract.ts)
+
+- `Attract` (interface): The attract mode on a page (see the file comment).
+- `ATTRACT` (const): The attract mode's numbers: seconds on an idle title screen before it starts, and seconds a view shows.
+- `ATTRACT_SETTINGS` (const): The attract mode's view setting (see the file comment).
+- `attractPage` (function): The tour's page at `path` (the playground's): its replay, the attract mode on, no title screen over it.
+- `createAttract` (function): Starts the attract mode in a page whose engine plays the tour: the banner in `root`, the view cycling from the look `look`, until a key, a click, a pad button or the tour's `steps` call `leave` (the playground again, by default).
+- `TOUR_REPLAY` (const): The tour's replay, as the page offers it (`?replay=<name>`).
+
+### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
+
+- `createFrontEnd` (function): Makes the front end, nothing open (see the file comment).
+- `FRONT_END_SETTINGS` (const): The title screen's view setting (see the file comment).
+- `FrontEnd` (interface): The front end (see the file comment).
+- `FrontEndOptions` (interface): What the front end needs of the page.
+- `ScreenName` (type): The screens.
+- `spawnOnOpen` (function): Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran.
+- `titleOnOpen` (function): Whether the title screen opens with the page (see the file comment).
+
+### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
+
+- `feelLine` (function): The feel readout's line: speed over the ground, m/s, and the mode (or, on the ground, the gait).
+- `HUD_MODES` (const): Each camera mode's HUD, by the mode's name (labs/playground/views.ts).
+- `HUD_SETTINGS` (const): The readout's view setting (see the file comment).
+- `HudFrame` (interface): What one frame's HUD shows: the mode's name, the look, the room line, the player, and the readout setting.
+- `HudMode` (interface): What a camera mode's HUD shows (see the file comment).
+- `HudPlayer` (type): The player as the HUD reads him: where he is and how fast, how he moves, what he would use, his weapons.
+- `showHud` (function): Shows `frame`'s HUD on `ui`, the prompts read from `input` (see the file comment); `hidden` clears it.
+
+### [`labs/playground/ui/photo.ts`](../labs/playground/ui/photo.ts)
+
+- `createPhoto` (function): Makes photo mode, closed: its hint in `parent`, its drag over `canvas`.
+- `Photo` (interface): Photo mode (see the file comment).
+- `PHOTO` (const): How the drag turns the camera: radians a CSS pixel.
+- `PhotoCamera` (interface): The camera member, as photo mode uses it.
+
+### [`labs/playground/ui/prefs.ts`](../labs/playground/ui/prefs.ts)
+
+- `NO_PREFS` (const): No preferences: a first visit.
+- `PREF_BUSES` (const): The audio buses the settings screen sets, master first (engine/audio/runtime/mixer.ts's).
+- `PREF_SETTINGS` (const): The settings the settings screen offers and the store keeps, by path.
+- `Prefs` (interface): What is kept (see the file comment).
+- `PREFS_KEY` (const): The key the preferences are kept under.
+- `PREFS_PREFIX` (const): The store's prefix: the playground's own, so other pages on the origin keep apart.
+- `PrefSetting` (type): One of `PREF_SETTINGS`.
+- `prefsQuery` (function): Writes `prefs` into `search` (see the file comment) and returns the keys it wrote: the camera's (`cam` or `cam3`) when the query names no camera, then each kept setting the query lacks and the routes accept on `scenes`.
+- `readPrefs` (function): The preferences `store` keeps, or none; whatever is not of their shape is dropped.
+- `savePrefs` (function): Keeps `prefs` in `store`; false when the store refused it.
+
+### [`labs/playground/ui/settings.ts`](../labs/playground/ui/settings.ts)
+
+- `CONTROL_ACTIONS` (const): The actions the controls list, with their names: the four moves, then those the player answers (controls.ts).
+- `createSettings` (function): Makes the settings screen in `parent` (see the file comment).
+- `RowSchema` (interface): A setting's schema as the screen reads it: its type, range and choices.
+- `SETTING_ROWS` (const): The rows, in the screen's order (see the file comment).
+- `SettingRow` (interface): What a row sets: a setting by path, the camera mode, or a bus's level.
+- `SettingsOptions` (interface): How the screen is made.
+- `SettingsScreen` (interface): The settings screen.
+
+### [`labs/playground/ui/spawns.ts`](../labs/playground/ui/spawns.ts)
+
+- `SPAWN_SETTINGS` (const): The spawn picker's view setting (see the file comment): a place's id, or none.
+- `spawnPlace` (function): The place `id` names, or undefined.
+- `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
+- `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
@@ -9280,6 +9411,12 @@ For the agents who maintain the engine.
 
 - `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
 
+### [`tools/cmd/evals.ts`](../tools/cmd/evals.ts)
+
+- `check` (const): `x check`'s evals plugin: every task under evals/ is well-formed (cheap: no copy, no run).
+- `default` (default): Agent-usability evals (PLAN.md WP 12.2, ADR-0025 decision 5): small tasks a fresh agent does in a copy of this repository with only its docs to go on, each judged by an acceptance check that runs headless.
+- `noAgent` (function): The usage error a live run without an agent gets: model access is the owner's, through its escalation.
+
 ### [`tools/cmd/eye.ts`](../tools/cmd/eye.ts)
 
 - `default` (default): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
@@ -9352,6 +9489,11 @@ For the agents who maintain the engine.
 - `LAB_DAYS` (const): How long a temporary lab lasts by default, in days.
 - `LABS_FILE` (const): The index's file, from the repository root.
 - `LABS_MODEL` (const): The index's model, beside the index in the engine's checkout.
+
+### [`tools/cmd/mcp.ts`](../tools/cmd/mcp.ts)
+
+- `default` (default): Serves the engine to MCP clients (PLAN.md §8.11, WP 7.6): `node x mcp` speaks the Model Context Protocol on stdin and stdout, so an agent that cannot run `node x` drives the engine as `x inspect`, `x eval` and `x shot` do.
+- `openArgs` (function): What the flags name to open first, or undefined when they name nothing.
 
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 
@@ -9809,6 +9951,30 @@ For the agents who maintain the engine.
 - `writeIndex` (function): Rewrites the README when it differs from the records; returns whether it wrote.
 - `writeRecord` (function): Writes a record to `docs/escalations/<file>` under `root`.
 
+### [`tools/lib/evals.ts`](../tools/lib/evals.ts)
+
+- `ACCEPT_CHECKS` (const): The checks `accept.checks` may name.
+- `Acceptance` (interface): A task's acceptance, filled.
+- `AREAS` (const): What a task works on.
+- `attemptTask` (function): One live attempt (see the file comment): the verdict and how long the attempt and its judgement took.
+- `Baseline` (interface): The baseline file's contents: deferred until the owner grants model access, or a recorded live run.
+- `BASELINE_FILE` (const): The baseline's file: the live pass rate, or why there is none yet.
+- `changedFiles` (function): The files an attempt changed in `copy` since the commit `since`: changed, added, removed or new.
+- `dryRunTask` (function): One task's dry run: its acceptance fails on the start and passes with the reference solution (see the file comment).
+- `EVALS_DIR` (const): Where the tasks live, from the repository root.
+- `EvalTask` (interface): One task, read from `evals/<id>/`.
+- `git` (function): Runs git in `cwd` with a fixed author, no hooks and no signing; returns its output and throws on a failure.
+- `GUARDED` (const): What every attempt leaves as the start has it: the acceptance's own harness.
+- `judge` (function): Judges the tree in `copy` against `task`'s acceptance, the start being the commit `since`: what it must leave as it was, then the hidden test, the commands and the checks, stopping at the first that fails.
+- `makeCopy` (function): Copies `root`'s files (those git tracks or would track, evals/ and node_modules aside) to `dest`, links node_modules, applies the patch `start` (an absolute path) and commits the result in a fresh repository; returns that commit.
+- `patchedFiles` (function): The files a patch's text changes (both sides of each `diff --git` line).
+- `PREAMBLE` (const): What a live attempt's agent is told before the task's own prompt.
+- `readBaseline` (function): Reads evals/baseline.json, or undefined when there is none.
+- `readTasks` (function): Every task under evals/, by id, and the problems with any (`EVALS_BAD_TASK`, naming the file and the fix).
+- `STEP_TIMEOUT_MS` (const): How long one acceptance step may run before it is stopped, in ms: it bounds a hang, never a slow machine.
+- `stopGroup` (function): Kills the process group `pid` leads (an attempt's shell, started `detached`, and all it started) and waits, up to `ms`, until none of it is left: `spawnSync`'s timeout kills the shell alone, and its children would go on writing.
+- `Verdict` (interface): A judgement of one attempt: whether it passes, why not (the first step that failed), and the steps it ran.
+
 ### [`tools/lib/filmCompare.ts`](../tools/lib/filmCompare.ts)
 
 - `checkFilmThumbs` (function): Records the film's thumbnails as `tests/baselines/thumbs/<name>.json` with `update`, else compares them with it.
@@ -9985,6 +10151,81 @@ For the agents who maintain the engine.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
 
+### [`tools/mcp/backend.ts`](../tools/mcp/backend.ts)
+
+- `Backend` (interface): The engine the tools drive (see the file comment).
+- `OpenArgs` (interface): What `x mcp`'s flags (or the last `engine_open`) asked to open.
+- `Opened` (interface): A page or scene opened: what it is, whether it signalled ready, its error records and `info()`.
+- `openPath` (function): The page path `page` opens with `params` as URL parameters (objects and lists as JSON), as `x inspect` writes it.
+- `Params` (type): URL parameters for a page: routes (`scene`, `seed`, `cam`, `cam3`, `replay`) and settings by path.
+- `Progress` (type): Receives a line while a call waits (a page warming its pipelines): MCP progress for the client.
+
+### [`tools/mcp/docs.ts`](../tools/mcp/docs.ts)
+
+- `docsLookup` (function): What the docs say about `symbol` (see the file comment).
+
+### [`tools/mcp/headless.ts`](../tools/mcp/headless.ts)
+
+- `headlessBackend` (function): The headless backend over the repository at `root` (see the file comment).
+- `invoke` (function): Calls (or reads) member `name` on `engine` with `args`, its value copied through JSON.
+- `sceneTarget` (function): The scene module and id a page names (see the file comment).
+
+### [`tools/mcp/link.ts`](../tools/mcp/link.ts)
+
+- `forkLink` (function): Starts `node x mcp --worker <args…>` under `root` and links to it over IPC; its output goes to `output`.
+- `localLink` (function): A worker in this process.
+- `WorkerHandler` (type): A worker answers requests (tools/mcp/worker.ts `createWorker`).
+- `WorkerLink` (interface): The server's side of a worker.
+- `WorkerReply` (type): What a worker answers: a value, an error's first line, or (before either) a progress line.
+- `WorkerRequest` (type): What the server asks its worker (see the file comment).
+
+### [`tools/mcp/results.ts`](../tools/mcp/results.ts)
+
+- `cutText` (function): `text` as a result's text, cut past `MAX_TEXT` with a line saying where the whole of it is (under `root`).
+- `errorLine` (function): The first line of an error's message, without the wrappers a page or Playwright put round it.
+- `errorResult` (function): A failed call as a result: its text names what went wrong and the fix.
+- `GoldenVerdict` (interface): How a replay's hashes stand against its goldens for this platform.
+- `judgeGoldens` (function): Judges `hashes` (by step) against `goldens`, at the steps both hold.
+- `MAX_LISTED` (const): The most visible objects a shot's JSON lists one by one, largest first; the rest are counted.
+- `MAX_TEXT` (const): The longest text a result carries, in characters: about 15,000 tokens, under what clients keep of a result.
+- `shotResult` (function): A shot as a result: the frame as a PNG (the marked copy when marks were drawn) and its numbers as JSON.
+- `shotSummary` (function): A shot's numbers for the client: the look, the ID pass and the thumbnail's map, without pixels.
+- `valueResult` (function): A result holding `value`: a string as it is, anything else as compact JSON.
+
+### [`tools/mcp/schema.ts`](../tools/mcp/schema.ts)
+
+- `argsSchema` (function): A schema's fields as one JSON Schema object, in their order; `open` lets keys it does not name through.
+- `fieldSchema` (function): One field as JSON Schema (see the file comment).
+- `JsonSchema` (type): A JSON Schema, as MCP carries it.
+- `McpSchemaError` (class): Thrown for a field MCP cannot carry: a `function` (a hook).
+- `ObjectSchema` (interface): A tool's `inputSchema`: a JSON Schema object.
+
+### [`tools/mcp/server.ts`](../tools/mcp/server.ts)
+
+- `Bridge` (interface): A running bridge.
+- `BridgeOptions` (interface): How `createBridge` is set up.
+- `createBridge` (function): Makes the bridge (see the file comment).
+- `WATCHED` (const): The directories whose changes restart the worker: what it loads.
+
+### [`tools/mcp/session.ts`](../tools/mcp/session.ts)
+
+- `memberExpression` (function): The JavaScript that calls (or reads) member `name` with `args` in a page: an absent argument stays absent.
+- `pageBackend` (function): The page backend over the repository at `root` (see the file comment).
+- `PROGRESS_MS` (const): How often a wait for the page sends progress, ms.
+
+### [`tools/mcp/tools.ts`](../tools/mcp/tools.ts)
+
+- `positional` (function): `args` in `member`'s call order: a list as it is, an object by its argument names, one value as the first.
+- `replayFile` (function): A replay file under `root`: its path from there, its text, its scene and its goldens for this platform.
+- `runTool` (function): Runs tool `name` with `input` in `context`; every failure is an `isError` result.
+- `ToolContext` (interface): What a tool runs with: the repository root, the backend, where the members are registered, where progress goes.
+- `toolList` (function): The tools the server lists, generated from the members registered on `registry` (see the file comment).
+
+### [`tools/mcp/worker.ts`](../tools/mcp/worker.ts)
+
+- `createWorker` (function): A worker over `backend`, for the repository at `root`: the handler a link calls.
+- `serveWorker` (function): Answers the server that forked this process (tools/mcp/link.ts `forkLink`) until it disconnects.
+
 ### [`tools/qa/anim.ts`](../tools/qa/anim.ts)
 
 - `actionStates` (function): Each action of data/anim/actions/ (WP 8.7) played by its own check, by QA id (its id, `action:<name>`).
@@ -10077,6 +10318,22 @@ For the agents who maintain the engine.
 - `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
 - `textureModules` (function): A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order.
 - `textureSheet` (function): The contact sheet of `bakes`: per texture its colour, normal and emissive maps (black when nothing glows), each tiled 2 × 2 and scaled by nearest texels to fit a 128 px panel, keeping its shape (row 0 of a map at the bottom, as it is drawn), and a label.
+
+### [`tools/stryker/sample.ts`](../tools/stryker/sample.ts)
+
+- `functionKey` (function): The function's key: its file, its name and its place among that file's functions of that name (`#0`, `#1`…).
+- `functionName` (function): The name a function goes by: its own, its method's or property's key, or the variable it is assigned to.
+- `OUT_OF_SCOPE` (const): The functions no run mutates, by `functionKey`, each with its reason (measured; see the file comment).
+- `resetPlaces` (function): Forgets the places counted so far: Stryker instruments each file once a run, from its start.
+- `sample` (const): The ignorer: an outermost function out of scope or outside the sample is ignored, with the reason Stryker reports.
+- `SAMPLE` (const): The sample: the share of functions kept, and the seed that draws them.
+- `SamplePath` (interface): The parts of a Babel path this plugin reads (Stryker hands it Babel's NodePath, its hub the file's).
+- `share` (function): FNV-1a (32 bits) of `text`, as a share of 2³²: a number in [0, 1), spread evenly.
+- `strykerPlugins` (const): The plugins StrykerJS loads from this module (stryker.config.json's `appendPlugins`).
+
+### [`tools/stryker/vitest.config.ts`](../tools/stryker/vitest.config.ts)
+
+- `default` (default): Vitest's settings for StrykerJS's runs (stryker.config.json's `vitest.configFile`; PLAN.md WP 12.2): the repository's own (vite.config.ts), with longer timeouts and no report file.
 
 ### [`tools/x.ts`](../tools/x.ts)
 

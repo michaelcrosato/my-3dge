@@ -2,8 +2,9 @@
  * @file T2 for the lab pages (PLAN.md WP 10.8; `my-3d2dge:tools/labs-test.mjs`, ported): the labs index lists every
  * link of labs/labs.json; every lab's first link opens ready on WebGPU with its panel (its title, the `x` command that
  * does the same job without the page, entries to open) and no advice; and each lab's own controls do their job:
- * the Animation Lab's timeline and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search,
- * Mirror and Apply. Each lab's other links are the index's (tests/unit and `x lab list` check them as data).
+ * the Animation Lab's timeline and bones (drawn over the whole view), the Cameras Lab's blend, the Physics Lab's step,
+ * the Library Lab's search, Mirror and Apply. Each lab's other links are the index's (tests/unit and `x lab list`
+ * check them as data).
  *
  * Invariants: DOM queries and `__engine` only, never pixels but the bone overlay's own canvas; frames drawn by
  * calling the page.
@@ -64,6 +65,8 @@ test("the Animation Lab scrubs a move's phases and draws the row's bones", async
   expect(await page.locator('#lab [data-phase]').count(), 'wind-up, strike, recovery').toBe(3);
   await page.locator('#bones').check();
   await page.evaluate(() => __engine.render(2));
+  const box = await page.locator('#overlay').evaluate((canvas: HTMLCanvasElement) => [canvas.clientWidth, canvas.clientHeight, innerWidth, innerHeight]); // prettier-ignore
+  expect(box.slice(0, 2), 'the overlay over the whole view, as the figures are drawn').toEqual(box.slice(2));
   const drawn = await page.locator('#overlay').evaluate((canvas: HTMLCanvasElement) => {
     const g = canvas.getContext('2d')!;
     const { data } = g.getImageData(0, 0, canvas.width, canvas.height);

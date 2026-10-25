@@ -5,7 +5,8 @@
  * feet stand on raised ground and grip a wall where one stands between the hip and the spot; in the air every foot
  * tucks (at once, a gait that never stood), and lands where it is, on the floor after a drop at either rate; 60 and
  * 120 steps a second step alike through a hop and a walk eased in and out; uneven feet tilt the body; a gait saved
- * mid-step as plain data and loaded into another steps on alike.
+ * mid-step as plain data and loaded into another steps on alike. WP 12.2's characterization pins nine walks' feet
+ * (PRINT_GAIT=1 prints them again).
  * @see engine/anim/proc/gait.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -65,7 +66,53 @@ function walk(
   return body;
 }
 
+/**
+ * The gait's sums on its characterization test's walks, as measured on 2026-10-25 (WP 12.2; PRINT_GAIT=1 prints them):
+ * each walk's feet summed (x + 2y + 3z, and their t) over its steps.
+ */
+const GAIT_SUMS: Record<string, number> = { dog: 1245.188238306, fast: 2495.600003291, turning: 1009.804570654, stopping: 602.568135503, creeping: -718.2, bug: 622.28112887, block: 2041.09847407, lunge: 1149.533115114, spin: -105.476545335 }; // prettier-ignore
+
 describe('the planted gait', () => {
+  it('steps as it was measured: each walk’s feet summed over its steps', () => {
+    // characterization (WP 12.2): a change to when or where a foot steps shows here; a change meant to step otherwise
+    // measures them again (PRINT_GAIT=1 prints them), its reason in its commit
+    /** A body the walk moves as it likes. */
+    type Moving = { position: Vector3; yaw: number; velocity: Vector3 };
+    const run = (
+      legs: GaitLeg[],
+      steps: number,
+      dt: number,
+      move: (i: number, body: Moving) => void,
+      probe?: GaitProbe,
+    ) => {
+      // prettier-ignore
+      const gait = new LegGait({ legs });
+      const body = { position: new Vector3(), yaw: 0, velocity: new Vector3() };
+      let sum = 0;
+      for (let i = 0; i < steps; i++) {
+        move(i, body);
+        body.position.addScaledVector(body.velocity, dt);
+        gait.step(dt, body, probe);
+        for (const foot of gait.feet) sum += foot.position.x + 2 * foot.position.y + 3 * foot.position.z + foot.t;
+      }
+      return Math.round(sum * 1e9) / 1e9;
+    };
+    const ahead = (speed: number) => (_i: number, b: Moving) => void b.velocity.set(0, 0, speed);
+    const sums = {
+      dog: run(QUAD, 120, 1 / 60, ahead(1)),
+      fast: run(QUAD, 90, 1 / 60, ahead(3)),
+      turning: run(QUAD, 60, 1 / 20, (i, b) => { b.yaw = 0.05 * i; b.velocity.set(Math.sin(b.yaw), 0, Math.cos(b.yaw)).multiplyScalar(1.5); }), // prettier-ignore
+      stopping: run(QUAD, 120, 1 / 60, (i, b) => void b.velocity.set(0, 0, i < 60 ? 2 * (i / 60) : 0)),
+      creeping: run(HEX, 120, 1 / 60, ahead(0.05)),
+      bug: run(HEX, 120, 1 / 60, ahead(0.5), world(-0.25)),
+      block: run(QUAD, 150, 1 / 60, ahead(1), world()),
+      lunge: run(QUAD, 60, 1 / 60, (i, b) => void b.velocity.set(0, 0, i < 30 ? 1 : 8)), // feet left too far behind
+      spin: run(QUAD, 90, 1 / 60, (_i, b) => void (b.yaw += 0.08)), // turning where it stands: mirror-image feet tie
+    };
+    if (process.env.PRINT_GAIT) console.log(JSON.stringify(sums));
+    expect(sums).toEqual(GAIT_SUMS);
+  });
+
   it('walks four legs on alternating diagonals, its planted feet still', () => {
     const dog = new LegGait({ legs: QUAD });
     const was = dog.feet.map((foot) => ({ at: foot.position.clone(), planted: false })); // not yet stood

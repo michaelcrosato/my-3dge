@@ -1,0 +1,15 @@
+{
+  "title": "Add a box variant with a different crowd mix: the hunters",
+  "area": "box",
+  "minutes": 40,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": [
+      "npx vitest run tests/unit/box-readme.test.ts",
+      "node x replay tests/replays/box-4-chase.replay.json tests/replays/box-4-hop.replay.json --runs 1"
+    ],
+    "unchanged": ["tests/replays/"],
+    "checks": ["types", "lint"]
+  }
+}

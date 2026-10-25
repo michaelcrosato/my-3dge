@@ -125,7 +125,7 @@ defineMember('replay', {
       type: 'object',
       default: {},
       description:
-        "{ every, until, draw, views }: hash every step; stop after until steps (with the state and trace); draw every n-th step (0: never); [[step, { cam, blend, set }]] view changes (blend: as the page's live switch).",
+        "{ every, until, draw, views }: hash every step; stop after until steps (with the state and trace); draw every n-th step (0: never); [[step, { cam, blend, set, shot }]] view changes (blend: as the page's live switch; shot: shoot there, the result's shots).",
     },
   },
   impl: (h, text: string, options: PlayIntoOptions) => app(h).replay(text, options),

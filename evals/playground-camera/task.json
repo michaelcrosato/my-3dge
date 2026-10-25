@@ -1,0 +1,13 @@
+{
+  "title": "Add a camera mode to the playground: a crane shot",
+  "area": "playground",
+  "minutes": 40,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": [
+      "npx vitest run labs/playground/cameras/crane.test.ts labs/playground/views.test.ts labs/playground/controls.test.ts"
+    ],
+    "checks": ["types", "lint"]
+  }
+}

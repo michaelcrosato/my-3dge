@@ -41,17 +41,20 @@ export interface SpringOptions {
 
 /**
  * One exact step of the oscillator y″ = −ω²y − 2ζωy′ from offset `y` and velocity `v` over `dt` seconds, with ω
- * `omega` and ζ `zeta`: the offset and the velocity after it.
+ * `omega` and ζ `zeta`: the offset and the velocity after it. No time (`dt` ≤ 0) or no stiffness (`omega` ≤ 0) leaves
+ * them as they are; a ratio within 1e-9 of 1 steps as a critical one.
  */
 export function oscillate(y: number, v: number, omega: number, zeta: number, dt: number): [number, number] {
   if (dt <= 0 || omega <= 0) return [y, v];
   const a = zeta * omega;
   const decay = Math.exp(-a * dt);
+  // Stryker disable next-line EqualityOperator: at 1 − 1e-9 itself both forms are one motion to rounding (the band's edge is no behaviour)
   if (zeta < 1 - 1e-9) {
     const wd = omega * Math.sqrt(1 - zeta * zeta);
     const [c, s] = [Math.cos(wd * dt), Math.sin(wd * dt)];
     return [decay * (y * c + ((v + a * y) / wd) * s), decay * (v * c - ((a * v + omega * omega * y) / wd) * s)];
   }
+  // Stryker disable next-line EqualityOperator: at 1 + 1e-9 itself both forms are one motion to rounding (the band's edge is no behaviour)
   if (zeta <= 1 + 1e-9) {
     const k = v + omega * y;
     return [decay * (y + k * dt), decay * (v - omega * k * dt)];

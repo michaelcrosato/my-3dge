@@ -78,12 +78,15 @@ export function createBlobShadows(options: {
   materials: { get(id: string): Material };
   name?: string;
   pageSlots?: number;
+  /** What makes the batch: the instancing service's `createInstancedBatch` by default, a GPU crowd's `batch`. */
+  batches?: typeof createInstancedBatch;
 }): BlobShadows {
   const geometry = new CircleGeometry(1, 14).rotateX(-Math.PI / 2);
   geometry.deleteAttribute('uv');
   const material = options.materials.get('material:blobShadow');
   const name = options.name ?? 'blobShadows';
-  const batch = createInstancedBatch({ name, geometry, material, pageSlots: options.pageSlots, renderOrder: 1 });
+  const make = options.batches ?? createInstancedBatch;
+  const batch = make({ name, geometry, material, pageSlots: options.pageSlots, renderOrder: 1 });
   const matrix = new Float64Array(16);
   return {
     batch,
