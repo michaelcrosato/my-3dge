@@ -4,7 +4,8 @@
  * and knees hinged about the IK's hinges (turned as the parent bone is now), each resting at the T-pose; the layer lays
  * a body's own parts back on a body posed otherwise, every part's bone turned as its part and the pelvis where its part
  * is, the spine and neck shared out and the hands as their animation had them, faded by its weight; and a body lying
- * on its back or its face, whichever way it faces, rests lying so, facing so, its feet where it lies (to its sway).
+ * on its back or its face, whichever way it faces, rests lying so, facing so, its feet where it lies (to its sway),
+ * and where, as measured (WP 12.2).
  * @see engine/anim/ragdoll.ts
  */
 import { describe, expect, it } from 'vitest';

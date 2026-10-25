@@ -5,7 +5,8 @@
  * feet stand on raised ground and grip a wall where one stands between the hip and the spot; in the air every foot
  * tucks (at once, a gait that never stood), and lands where it is, on the floor after a drop at either rate; 60 and
  * 120 steps a second step alike through a hop and a walk eased in and out; uneven feet tilt the body; a gait saved
- * mid-step as plain data and loaded into another steps on alike.
+ * mid-step as plain data and loaded into another steps on alike. WP 12.2's characterization pins nine walks' feet
+ * (PRINT_GAIT=1 prints them again).
  * @see engine/anim/proc/gait.ts
  */
 import { describe, expect, it } from 'vitest';

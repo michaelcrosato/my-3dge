@@ -26198,6 +26198,7 @@ function a$(e) {
 }
 class gP {
   /** Each way's weight now, 0 to 1. */
+  // Stryker disable next-line ObjectLiteral: its feet start out of reach (#feet at infinity), so the first update sets every weight
   weights = { mantle: 0, climb: 0, ladder: 0, zipline: 0, skydive: 0, slideJump: 0 };
   // prettier-ignore
   /** The last state, ride and hull it followed. */
@@ -26210,6 +26211,7 @@ class gP {
   width = 0.4;
   toes = 0.18;
   /** The mantle playing is a low ledge vaulted, one hand on its top. */
+  // Stryker disable next-line BooleanLiteral: each mantle sets it as it begins, and only a mantle reads it
   vault = !1;
   /** A skydive's dive (0 its glide, 1 its dive) and its landing pose, 0 to 1. */
   dive = 0;
@@ -26217,6 +26219,7 @@ class gP {
   /** A zipline's legs, swung back as the ride speeds up (rad). */
   swing = 0;
   /** The wall a climb is on, across the ground, out toward the body, and a point on its face where it last climbed. */
+  // Stryker disable next-line ArrayDeclaration: a climb sets it before its own reads, and the walled check needs a climb first
   wall = [0, 1];
   wallAt = new T();
   #e = !1;
@@ -26233,6 +26236,7 @@ class gP {
   #o = 0;
   #r = !1;
   /** A climb rising (else it slides down the wall, slowing a fall it caught). */
+  // Stryker disable next-line BooleanLiteral: the slide check reads it only after a climb's step, which set it
   #i = !0;
   #a = 0;
   /** How far the body hangs under its hands (a mantle hang), 0 to 1. */

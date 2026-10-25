@@ -4,7 +4,8 @@
  * across a loop's seam without a fade), the lift, the held blade kept above the floor,
  * the libraries' clips standing on the floor on builds whatever their hips' layout (CMU's, mesh2motion's,
  * Quaternius'), and three.js's `AnimationClip` played by an `AnimationMixer` matching the clip layer's pose within
- * 0.1 mm (Done when).
+ * 0.1 mm (Done when). WP 12.2's characterization pins every clip retargeted at five times on two builds, with contact
+ * IK and without (PRINT_RETARGET=1 prints the sums again).
  */
 import { AnimationClip, AnimationMixer, Bone, Object3D, Vector3 as ThreeVector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';

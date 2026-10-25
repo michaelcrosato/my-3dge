@@ -6,7 +6,8 @@
  * (engine/anim/authoring.test.ts's known sinks), toes and heels included, without sinking a walk, and stays last in the
  * slot, keeping nothing between ticks; WP 13.10: through the query view's ground (`queryGround`) it stands the soles on
  * a ramp, and on the body's floor past the slope band; a sole in stance stays put, on the floor below as the body steps
- * up onto a box, and rides a treadmill.
+ * up onto a box, and rides a treadmill. WP 12.2's characterization pins the plant's numbers on ten walks and footPlant's
+ * own over four sets of options (PRINT_PLANT=1 prints them again, for a change meant to move them).
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../core/math';
@@ -186,19 +187,13 @@ describe('footPlant on a given floor, and the FootPlant layer (after G9)', () =>
   });
 });
 
+/** footPlant's option test's sums, as measured on 2026-10-25 (WP 12.2; PRINT_PLANT=1 prints them). */
+const PLANT_OPTION_SUMS: Record<string, number> = { plain: 14407.814715, striding: 14426.342167, stepping: 14419.998092, flat: 13560.510594 }; // prettier-ignore
 /**
  * The plant's sums on the ten walks of its characterization test, as measured on 2026-10-25 (WP 12.2; PRINT_PLANT=1
  * prints them): each walk's left and right soles' heights, both soles' z, the ball's and the heel's heights, both
  * lowest points, and the pelvis's height at the end.
  */
-/** footPlant's option test's sums, as measured on 2026-10-25 (WP 12.2; PRINT_PLANT=1 prints them). */
-const PLANT_OPTION_SUMS: Record<string, number> = {
-  plain: 14407.814715,
-  striding: 14426.342167,
-  stepping: 14419.998092,
-  flat: 13560.510594,
-};
-
 const PLANT_SUMS: Record<string, number[]> = {
   flat: [3.80936946, 3.616701961, 347.623806394, 4.799871867, 4.792664644, 3.759189966, -0.048312906],
   ramp: [41.676861745, 40.87443351, 211.146871005, 43.097186423, 42.262543479, 80.451336153, 0.648744003],
@@ -306,6 +301,13 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
     expect(hit.point.toArray()).toEqual([1, 0.4, 2]);
     expect(probe(new Vector3(1, 0.3, 2), 1, hit)).toBe(false); // the ray starts inside it
     expect(probe(new Vector3(1, 2, 2), 1, hit)).toBe(false); // out of reach
+  });
+
+  it('queryGround takes no ground the query view gives at or above the ray’s start, nor none at all', () => {
+    const lax = (y: number | null) => queryGround({ probe: () => (y === null ? null : { y, normal: new Vector3(0, 1, 0) }) }); // prettier-ignore
+    const hit = { point: new Vector3(), normal: new Vector3() };
+    expect([lax(0.5), lax(0.3), lax(null)].map((probe) => probe(new Vector3(1, 0.3, 2), 1, hit))).toEqual([false, false, false]); // prettier-ignore
+    expect(lax(0.1)(new Vector3(1, 0.3, 2), 1, hit)).toBe(true);
   });
 
   it('stands the soles on a ramp the body walks up, and on its floor where the ground falls away past the slope band', () => {
