@@ -4,7 +4,8 @@
  * and each look is prepared once; every body the camera sees is posed and drawn, at its band, and one behind the
  * camera is not; drawing never writes the components; the warm-up sees the crowd's batches made after it was
  * registered, and the shader key names the looks; the stage draws a `crowdBody` entity through the crowd, never as a
- * stand-in, and forgets one that leaves.
+ * stand-in, and forgets one that leaves; given features with `feature:gpuCrowds` on, the crowd is made again through a
+ * GPU crowd sized for its bodies, and once a frame outgrows it, again twice as large before that frame draws.
  * @see engine/gfx/stageCrowd.ts
  */
 import { PerspectiveCamera, Scene, type Object3D } from 'three/webgpu';
@@ -120,6 +121,26 @@ describe('crowd bodies on the stage', () => {
     expect(warmup.parts.get('stage:crowd')!()).toBe('blob:;humanoid:build:heroic');
     registration.dispose();
     expect([warmup.entries.size, warmup.parts.size]).toEqual([0, 0]);
+  });
+
+  it('draws through a GPU crowd while feature:gpuCrowds is on, made twice as large when a frame outgrows it', () => {
+    const crowd = createStageCrowd({ scene: new Scene(), materials: createMaterialLibrary() });
+    crowd.capture(bodies(ROW), 1 / 60);
+    expect(crowd.crowd!.gpu).toBeNull(); // the instancing service, until the renderer's features say otherwise
+    const warmup = fakeWarmup();
+    crowd.register(warmup, { on: ['feature:gpuCrowds'], off: [], downgrades: [] });
+    expect(crowd.crowd!.gpu).not.toBeNull();
+    expect(warmup.parts.get('stage:crowd')!()).toMatch(/\|gpu:4096$/); // 4 bodies: the smallest buffer
+    expect([crowd.draw(1, camera()), crowd.crowd!.rigs.size > 0]).toEqual([4, true]);
+    const many = bodies(Array.from({ length: 100 }, () => ({ rig: 'humanoid' as const })));
+    crowd.capture(many, 1 / 60);
+    const far = new PerspectiveCamera(60, 16 / 9, 0.1, 400);
+    far.position.set(75, 60, 90);
+    far.lookAt(75, 0, 0);
+    far.updateMatrixWorld(true);
+    expect(crowd.draw(1, far)).toBe(100); // over 4,096 instances: made at 8,192 and drawn again
+    expect(warmup.parts.get('stage:crowd')!()).toMatch(/\|gpu:8192$/);
+    expect(warmup.entries.has('stage:crowd')).toBe(true);
   });
 
   it('is how the stage draws a crowdBody entity, never as a stand-in, and forgets one that leaves', () => {

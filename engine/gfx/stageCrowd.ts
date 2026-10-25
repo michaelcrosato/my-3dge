@@ -19,6 +19,10 @@
  * wearing it arrives; `register` registers the crowd's batches, present and future, with the warm-up and adds the
  * prepared looks to the shader key, so the frame after a new look arrives warms up first instead of stalling, and a
  * crowd growing in a look it has already built builds no pipeline (its new pages share their batch's shader).
+ * Given the renderer's features with `feature:gpuCrowds` on (engine/gfx/features.ts `gpuCrowdsFor`, WP 11.4),
+ * `register` makes the crowd again, drawn through a GPU crowd (engine/gfx/enhanced/crowds.ts) sized for the bodies held
+ * then; a frame that outgrows it makes it again twice as large and draws again, its size in the shader key, so the
+ * renderer warms up before the larger one draws. Headless, or with the feature off, the instancing service draws.
  *
  * Invariants: presentation only (doctrine: WebGPU only): it reads the components and writes nothing back; its rigs
  * are its own, loaded from the component at every pose, so drawing, LOD, culling or not drawing never changes the
@@ -45,6 +49,7 @@ import { BLOB_BODY, blobBody, type BlobFeatures } from './puppets/bodies/blob';
 import { FLOATER_BODY } from './puppets/bodies/floater';
 import { QUADRUPED_BODY } from './puppets/bodies/quadruped';
 import { compileBody, type CompiledBody } from './puppets/compile';
+import { gpuCrowdsFor, type FeatureReport, type GpuCrowd } from './features';
 import { createCrowd, type Crowd, type RigBody, type RigJoints } from './puppets/crowd';
 import type { Warmup } from './warmup';
 
@@ -64,8 +69,11 @@ export interface StageCrowd {
   capture(entities: Iterable<EntityData>, dt?: number): Set<number>;
   /** Poses and draws every body `camera` sees, `alpha` (0 to 1) of the way between its last two places; how many. */
   draw(alpha: number, camera: Camera): number;
-  /** Registers the crowd's batches and its looks with `warmup`; `dispose()` undoes it. */
-  register(warmup: Pick<Warmup, 'register' | 'keyPart'>): { dispose(): void };
+  /**
+   * Registers the crowd's batches and its looks with `warmup`; `dispose()` undoes it. With `features` where
+   * `feature:gpuCrowds` is on, the crowd draws through the GPU from then on (see the file comment).
+   */
+  register(warmup: Pick<Warmup, 'register' | 'keyPart'>, features?: FeatureReport): { dispose(): void };
   /** Frees the crowd. */
   dispose(): void;
 }
@@ -117,14 +125,28 @@ export function createStageCrowd(options: StageCrowdOptions): StageCrowd {
   const [ground, at] = [new Vector3(), new Vector3()];
   let crowd: Crowd | null = null;
   let dt = 1 / 60;
+  /** The GPU crowd's maker while `feature:gpuCrowds` is on, the size it makes, and the one drawing now. */
+  let gpu: ReturnType<typeof gpuCrowdsFor> = null;
+  let capacity = 0;
+  let half: GpuCrowd | null = null;
 
   /** The crowd, made now if it is not yet, and registered with every warm-up so far. */
   function made(): Crowd {
     if (crowd) return crowd;
-    crowd = createCrowd({ materials: options.materials, name: 'crowd' });
+    half = gpu ? gpu.make({ capacity }) : null;
+    crowd = createCrowd({ materials: options.materials, name: 'crowd', ...(half ? { gpu: half } : {}) });
     options.scene.add(crowd.root);
     for (const warmup of warmups) registrations.set(warmup, crowd.register(warmup, 'stage:crowd'));
     return crowd;
+  }
+  /** Makes the crowd again, as `made` makes it now, with every look prepared again. */
+  function remake(): void {
+    if (!crowd) return;
+    for (const registration of registrations.values()) registration.dispose();
+    registrations.clear();
+    crowd.dispose();
+    crowd = null;
+    made().prepare(...humanoids.values(), ...blobLooks.values());
   }
   /** Prepares the look `key` once, with the body `make` builds. */
   function prepare<T extends CompiledBody | RigBody>(key: string, cache: Map<string, T>, make: () => T): T {
@@ -206,12 +228,23 @@ export function createStageCrowd(options: StageCrowdOptions): StageCrowd {
         drawn++;
       }
       crowd.end();
+      if (half?.outgrown) {
+        const before = half.capacity;
+        capacity = before * 2;
+        remake();
+        if (half.capacity > before) return stageCrowd.draw(alpha, camera);
+      }
       return drawn;
     },
-    register(warmup) {
+    register(warmup, features) {
+      const maker = gpuCrowdsFor(features);
+      if (maker && !gpu) {
+        [gpu, capacity] = [maker, maker.capacity(held.size)];
+        remake();
+      }
       warmups.add(warmup);
       if (crowd) registrations.set(warmup, crowd.register(warmup, 'stage:crowd'));
-      const key = warmup.keyPart('stage:crowd', () => [...looks].sort().join(';'));
+      const key = warmup.keyPart('stage:crowd', () => [...looks].sort().join(';') + (half ? `|gpu:${half.capacity}` : '')); // prettier-ignore
       return {
         dispose() {
           warmups.delete(warmup);

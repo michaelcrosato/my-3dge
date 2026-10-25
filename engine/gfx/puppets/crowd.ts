@@ -19,7 +19,8 @@
  * The cost: a draw call per shown page of each batch (a shape and a material: the puppets' `crowd/puppets/<shape>`,
  * the rigs' `crowd/rigs/<shape>`, and `crowd/shadows`), again per shadow map for lit ones. Pages hold
  * `CROWD_PAGE_SLOTS` (8,192) instances, so 5,000 bodies fit in a few pages a batch; pages added as the crowd grows
- * share their batch's shader and build no pipeline (tests/e2e/crowd-render.spec.ts).
+ * share their batch's shader and build no pipeline (tests/e2e/crowd-render.spec.ts). With `gpu` (`CrowdGpu`) every
+ * batch is made through a GPU crowd instead: a draw call a batch, culled on the GPU (tests/e2e/gpu-crowds.spec.ts).
  *
  * Invariants: presentation only: nothing here reaches the sim, and a band changes only what is drawn; `prepare`
  * bodies before the warm-up so every batch's first page is compiled then. A rig body's problems throw
@@ -37,7 +38,7 @@
  * @see engine/gfx/puppets/crowd.test.ts
  * @see tests/e2e/crowd-render.spec.ts
  */
-import { Group, Matrix4, Quaternion, Vector3, type Camera } from 'three/webgpu';
+import { Group, Matrix4, Quaternion, Vector3, type Camera, type Object3D } from 'three/webgpu';
 import type { Blob } from '../../anim/blob';
 import type { Floater } from '../../anim/floater';
 import type { Pose } from '../../anim/pose';
@@ -93,10 +94,25 @@ export interface CrowdStats {
   pages: Record<string, number>;
 }
 
+/**
+ * The half on the GPU a crowd may draw through (engine/gfx/enhanced/crowds.ts `GpuCrowd`, while `feature:gpuCrowds`
+ * is on): it makes the batches, hears of each frame's start and end (after the batches'), and shows its meshes to the
+ * warm-up.
+ */
+export interface CrowdGpu {
+  batch: typeof createInstancedBatch;
+  begin(camera: Camera): void;
+  end(): void;
+  objects(): readonly Object3D[];
+  dispose(): void;
+}
+
 /** A crowd's batches and level of detail (see the file comment). */
 export interface Crowd {
   readonly root: Group;
   readonly lod: CrowdLod;
+  /** The GPU half its batches draw through, or null: the instancing service's pages. */
+  readonly gpu: CrowdGpu | null;
   readonly puppets: PuppetBatches;
   /** The rigs' batches, by shape (with `~<material>` for a part's own material). */
   readonly rigs: ReadonlyMap<string, InstancedBatch>;
@@ -150,20 +166,24 @@ export function createCrowd(options: {
   lod?: CrowdLodOptions;
   /** Whether bodies given a floor get blob shadows (true). */
   shadows?: boolean;
+  /** The GPU half to draw through (see the file comment); the instancing service's pages without it. */
+  gpu?: CrowdGpu;
 }): Crowd {
   const name = options.name ?? 'crowd';
   const pageSlots = options.pageSlots ?? CROWD_PAGE_SLOTS;
+  const gpu = options.gpu ?? null;
+  const batches = gpu ? gpu.batch : createInstancedBatch;
   const root = new Group();
   root.name = name;
   const lod = createCrowdLod(options.lod);
-  const puppets = createPuppetBatches({ materials: options.materials, name: `${name}/puppets`, pageSlots });
+  const puppets = createPuppetBatches({ materials: options.materials, name: `${name}/puppets`, pageSlots, batches });
   /** The bodies' part for post-processing: characters, one outline group, so no line falls between a body's batches. */
   const character = (object: Group) => setPart(object, 'character', { group: root.id });
   character(puppets.root);
   const shadows =
     options.shadows === false
       ? null
-      : createBlobShadows({ materials: options.materials, name: `${name}/shadows`, pageSlots });
+      : createBlobShadows({ materials: options.materials, name: `${name}/shadows`, pageSlots, batches });
   root.add(puppets.root, ...(shadows ? [shadows.root] : []));
   const rigs = new Map<string, InstancedBatch>();
   const compiledRigs = new WeakMap<RigBody, readonly RigPiece[]>();
@@ -177,7 +197,7 @@ export function createCrowd(options: {
     if (!batch) {
       const material = options.materials.get(id);
       const geometry = unitGeometry(shape);
-      batch = createInstancedBatch({
+      batch = batches({
         name: `${name}/rigs/${key}`,
         geometry,
         material,
@@ -243,6 +263,7 @@ export function createCrowd(options: {
   const crowd: Crowd = {
     root,
     lod,
+    gpu,
     puppets,
     rigs,
     shadows,
@@ -259,6 +280,7 @@ export function createCrowd(options: {
       puppets.begin();
       for (const batch of rigs.values()) batch.begin();
       shadows?.begin();
+      gpu?.begin(camera);
     },
     see: (x, y, z, radius) => lod.see(x, y, z, radius),
     humanoid(compiled, pose, draw = {}) {
@@ -321,6 +343,7 @@ export function createCrowd(options: {
       puppets.end();
       for (const batch of rigs.values()) batch.end();
       shadows?.end();
+      gpu?.end();
     },
     drawCalls: (shadowMaps = 0) => all().reduce((sum, batch) => sum + batch.drawCalls(shadowMaps), 0),
     stats() {
@@ -333,12 +356,13 @@ export function createCrowd(options: {
       return { lod: lod.counts(), bodies, instances, pages };
     },
     register(warmup, id = name) {
-      return warmup.register(id, { objects: () => all().flatMap((batch) => batch.pages) });
+      return warmup.register(id, { objects: () => [...all().flatMap((batch) => batch.pages), ...(gpu?.objects() ?? [])] }); // prettier-ignore
     },
     dispose() {
       puppets.dispose();
       for (const batch of rigs.values()) batch.dispose();
       shadows?.dispose();
+      gpu?.dispose();
       root.removeFromParent();
     },
   };

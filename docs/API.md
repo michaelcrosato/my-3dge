@@ -4657,6 +4657,37 @@ For the agents who maintain the engine.
 - `createOcclusion` (function): Makes the occlusion pass over `depth` and the view normals `normal`, seen by `camera` (see the file comment).
 - `Occlusion` (interface): The occlusion pass (see the file comment).
 
+### [`engine/gfx/enhanced/crowdNodes.ts`](../engine/gfx/enhanced/crowdNodes.ts)
+
+- `arrayOf` (function): The array a storage node holds.
+- `createCrowdBuffers` (function): Makes a GPU crowd's buffers for `capacity` slots (a whole number of blocks) and `batches` batches.
+- `createCrowdCull` (function): Makes the cull's passes over `b` (see the file comment).
+- `createCrowdLook` (function): Makes a GPU crowd's materials over `b` (see the file comment).
+- `CROWD_ARGS` (const): Words of indirect arguments a batch: drawIndexedIndirect's five (drawIndirect's four, then one unused).
+- `CROWD_BLOCK` (const): Slots a block holds: one workgroup of the cull.
+- `CrowdBuffers` (interface): A GPU crowd's buffers (see the file comment): their nodes, and the CPU's arrays of those it writes.
+- `CrowdCull` (interface): The cull's two passes (see the file comment), each dispatched a workgroup a block.
+- `CrowdLook` (interface): A GPU crowd's materials (see the file comment).
+- `upload` (function): Marks `count` items of a storage node's array from `start` (in array elements) for the next upload.
+
+### [`engine/gfx/enhanced/crowdRegions.ts`](../engine/gfx/enhanced/crowdRegions.ts)
+
+- `createCrowdRegions` (function): Makes a GPU crowd's regions over `buffers` (see the file comment).
+- `CrowdRegion` (interface): One batch's part of the buffer: where it lies, its instances now and at the last `end`, its changed range.
+- `CrowdRegions` (interface): A GPU crowd's regions (see the file comment).
+- `SLOT_FLOATS` (const): Floats a slot takes: four vec4.
+
+### [`engine/gfx/enhanced/crowds.ts`](../engine/gfx/enhanced/crowds.ts)
+
+- `createGpuCrowd` (function): Makes a crowd's half on the GPU, `capacity` slots rounded up to whole blocks (see the file comment).
+- `CrowdCompute` (interface): What runs the cull: the renderer, as far as the crowd uses it.
+- `GPU_CROWD` (const): Its numbers: the batches a crowd holds, the slots a body is given at first, and the smallest and largest buffers (the cull dispatches a workgroup a block along one dimension, of which WebGPU allows 65,535).
+- `GPU_CROWDS_CODES` (const): Its codes: the advice the feature registry raises while it is off, a full buffer's, and a batch it cannot draw.
+- `GPU_CROWDS_FEATURE` (const): Its feature entry (engine/gfx/features.ts registers it).
+- `GpuCrowd` (interface): A crowd's half on the GPU (see the file comment).
+- `gpuCrowdCapacity` (function): The slots a GPU crowd for `bodies` bodies starts with: `GPU_CROWD.perBody` each, a power of two, at least the minimum.
+- `GpuCrowdStats` (interface): What a GPU crowd holds and did: its batches, instances and slots, the cull's blocks, culls run, the last frame's.
+
 ### [`engine/gfx/enhanced/csm.ts`](../engine/gfx/enhanced/csm.ts)
 
 - `CascadedSun` (interface): A sun casting through cascades (see the file comment).
@@ -4721,6 +4752,8 @@ For the agents who maintain the engine.
 - `FeatureOff` (interface): One feature that is off: its id, the advice raised and why.
 - `FeatureReport` (interface): What `resolveFeatures` found: the features on, those off and why, and the downgrades as advice codes.
 - `FEATURES_CODES` (const): The advice codes of the built-in features, with their fixes.
+- `GpuCrowd` (interface from [`engine/gfx/enhanced/crowds.ts`](../engine/gfx/enhanced/crowds.ts)): A crowd's half on the GPU (see the file comment).
+- `gpuCrowdsFor` (function): A GPU crowd's maker (engine/gfx/enhanced/crowds.ts, WP 11.4), with the capacity it starts with for a number of bodies, when `feature:gpuCrowds` is on in `report`; else null (and with no report): crowds draw through the instancing service.
 - `GpuParticles` (interface from [`engine/gfx/enhanced/particles.ts`](../engine/gfx/enhanced/particles.ts)): GPU particles (see the file comment).
 - `gpuParticlesFor` (function): The GPU's particle ring's maker (engine/gfx/enhanced/particles.ts, WP 11.3) when `feature:gpuParticles` is on in `report`, else null (and with no report): the CPU pool takes every emitter's particles.
 - `GpuTiming` (interface from [`engine/gfx/enhanced/timing.ts`](../engine/gfx/enhanced/timing.ts)): A renderer's GPU timing (see the file comment).
@@ -5422,6 +5455,7 @@ For the agents who maintain the engine.
 - `CROWD_CODES` (const): The codes crowd drawing raises, with their fixes.
 - `CROWD_PAGE_SLOTS` (const): Instances per page of the crowd's batches.
 - `CrowdDraw` (interface): How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow.
+- `CrowdGpu` (interface): The half on the GPU a crowd may draw through (engine/gfx/enhanced/crowds.ts `GpuCrowd`, while `feature:gpuCrowds` is on): it makes the batches, hears of each frame's start and end (after the batches'), and shows its meshes to the warm-up.
 - `CrowdRigDraw` (interface): How a rig is drawn: also its flags (`when`, `unless`) and its scale against its body.
 - `CrowdStats` (interface): A frame's counts: the bands and culling (lod.ts), bodies drawn, and each batch's instances and shown pages.
 - `HUMANOID_SHADOW` (const): A humanoid's blob shadow, metres at size 1 (the source's 5 units).

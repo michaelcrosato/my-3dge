@@ -3,8 +3,8 @@
  * bodies (compile.ts) as instanced parts per shape over the instancing service (engine/gfx/instancing.ts), from the
  * same pieces a puppet (draw.ts) is made of. `draw(compiled, pose)` runs FK and writes each piece's world matrix and
  * slot colour into its shape's batch; a limb draws as a frustum whose taper is rounded to eighths (one batch per
- * eighth) with a ball at each end, so a crowd costs a draw call per shape, whatever its size. Split from draw.ts at
- * its size cap (WP 11.4).
+ * eighth) with a ball at each end, so a crowd costs a draw call per shape, whatever its size. `batches` makes the
+ * batches another way (a GPU crowd's, engine/gfx/enhanced/crowds.ts). Split from draw.ts at its size cap (WP 11.4).
  *
  * Invariants: every lit shape draws with the body's `material`, every glow piece with its `glowMaterial`, a body's
  * own material in a batch of its own (`<shape>~<material>`); lit batches cast and receive shadows, glow ones neither;
@@ -67,6 +67,8 @@ export function createPuppetBatches(options: {
   materials: PuppetMaterials;
   name?: string;
   pageSlots?: number;
+  /** What makes each batch: the instancing service's `createInstancedBatch` by default, a GPU crowd's `batch`. */
+  batches?: typeof createInstancedBatch;
 }): PuppetBatches {
   const name = options.name ?? 'puppets';
   const root = new Group();
@@ -84,7 +86,7 @@ export function createPuppetBatches(options: {
       const geometry = unitGeometry(shape as Parameters<typeof unitGeometry>[0]);
       const material = options.materials.get(id);
       const [castShadow, receiveShadow, { pageSlots }] = [!glow, !glow, options];
-      batch = createInstancedBatch({
+      batch = (options.batches ?? createInstancedBatch)({
         name: `${name}/${key}`,
         geometry,
         material,
