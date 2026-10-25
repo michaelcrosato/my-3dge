@@ -23,6 +23,7 @@ import type { World } from '../sim/world';
 import { Animator, ANIMATOR_FIELDS, AnimatorPool, FOOTSTEP, TRAIL, type AnimatorData } from './character';
 import { jointPosition, socketPosition } from './fk';
 import { Humanoid } from './humanoid';
+import { blendPoses, Pose } from './pose';
 import { JOINTS } from './skeleton';
 import { SAMPLE_STATES, type AnimatorInput, type SampleState } from './states';
 import type { AnimLayer, LayerSlot } from './weights';
@@ -68,6 +69,16 @@ describe('inspect()', () => {
 });
 
 describe('step', () => {
+  it('refuses a vector body state that is not a finite Vector3', () => {
+    for (const velocity of [new Vector3(Number.NaN, 0, 0), { x: 1, y: 0, z: 0 }]) {
+      const printed: string[] = [];
+      const animator = hero({ log: createLog({ console: { warn: (line) => printed.push(line), error: () => {} } }) });
+      animator.update({ velocity } as unknown as AnimatorInput);
+      expect(printed).toEqual([expect.stringMatching(/^\[ANIM_BAD_STATE\] body state velocity/)]);
+      expect(animator.inspect().ignored).toEqual(['velocity']);
+    }
+  });
+
   it('lists a footstep as the gait puts each foot down, left then right', () => {
     const animator = hero();
     const sides: string[] = [];
@@ -146,6 +157,35 @@ describe('pose', () => {
     expect(() => animator.use('solve' as LayerSlot, { ...nod, name: 'x' })).toThrow(/ANIM_BAD_LAYER.*takes no layers/);
     expect(() => animator.use('clips', nod)).toThrow(/ANIM_BAD_LAYER.*the name is in use/);
     expect(animator.drop('nod').layer('nod')).toBeUndefined();
+  });
+
+  it('re-solves when its clock goes back (an earlier state loaded), as when it runs ahead', () => {
+    const counter = { name: 'count', weight: 1, applied: 0, apply: () => counter.applied++ };
+    const animator = hero().use('clips', counter);
+    const data = parse(ANIMATOR_FIELDS, { weapon: 'sword' }) as unknown as AnimatorData;
+    animator.update(walk()).save(data);
+    for (let t = 0; t < 3; t++) animator.update(walk());
+    counter.applied = 0;
+    animator.load(data).pose();
+    expect(counter.applied).toBe(1);
+  });
+
+  it('fades a layer by its weight from the pose before it', () => {
+    const nod = (weight: number) => ({ name: 'nod', weight, apply: (a: Animator) => void a.body.pose.local.set([0.3, 0.2, 0, Math.sqrt(0.87)], 24) }); // prettier-ignore
+    const posed = (weight: number) => {
+      const animator = hero().use('additive', nod(weight));
+      for (let t = 0; t < 5; t++) animator.update(walk());
+      return animator.body.pose;
+    };
+    const half = posed(0.5).clone();
+    const want = blendPoses(posed(0), posed(1).clone(), 0.5, new Pose());
+    expect(Array.from(half.local).every((x, i) => Math.abs(x - want.local[i]) < 1e-12)).toBe(true);
+    expect(Array.from(half.local).some((x, i) => Math.abs(x - posed(0).local[i]) > 1e-3)).toBe(true);
+  });
+
+  it('takes a detail level whole, within LOD’s range', () => {
+    const animator = hero();
+    expect([9, -2, 2.7].map((lod) => animator.update(walk(), { lod }).inspect().lod)).toEqual([3, 0, 2]);
   });
 
   it('re-solves once a tick at full detail, less often at lower ones, and moves the last pose between ticks', () => {

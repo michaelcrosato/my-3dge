@@ -12,7 +12,7 @@ import { registry } from '../core/registry';
 import { physicsOf } from '../physics/binding';
 import type { CompiledLevel } from '../world/level/types';
 import { Vector3 } from '../core/math';
-import { addDoor, addLevelDoors, DOOR_SWING, DOOR_TILT, strikeDoor, useDoor, type DoorComponent, type DoorSpec } from './doors'; // prettier-ignore
+import { addDoor, addLevelDoors, breakDoor, DOOR_SWING, DOOR_TILT, strikeDoor, useDoor, type DoorComponent, type DoorSpec } from './doors'; // prettier-ignore
 import type { UsableSpec } from './interact';
 import { removeProp, spawnProp, type ScenePropComponents } from './props';
 import { defineScene } from './scene';
@@ -92,6 +92,24 @@ describe('doors', () => {
     const shot = doorScene('shot');
     strikeDoor(shot.world, 1, [0.45, 1, -5], true, 'shot');
     expect(shot.door().door.broken).toBe(true);
+    const plain = doorScene('no-shards', { prop: 'prop:garageDoor' }); // a leaf whose prop names no shards
+    strikeDoor(plain.world, 1, [0.45, 1, -5], true, 'shot');
+    expect(plain.world.events.trace().at(-1)).toMatchObject({ type: 'shatter', payload: { id: 1, prop: 'prop:garageDoor' } }); // prettier-ignore
+  });
+
+  it('breaks once: the slab falls from where its leaf stood, knocked away from the blow, and says where', () => {
+    const { world, door } = doorScene('once');
+    const physics = physicsOf(world);
+    const stood = physics.readBody(door().sceneProp.body).position.clone();
+    breakDoor(world, 1, [stood.x, 1, stood.z - 4]); // from 4 m on its −Z side
+    const slab = physics.readBody(door().sceneProp.body);
+    expect(slab.position.distanceTo(stood)).toBeLessThan(1e-6);
+    expect([slab.velocity.x, slab.velocity.y, slab.velocity.z]).toEqual([expect.closeTo(0, 6), expect.closeTo(1.5, 6), expect.closeTo(3, 6)]); // prettier-ignore
+    const broken = world.events.trace().filter((r) => r.type === 'splinters');
+    expect(broken).toHaveLength(1);
+    expect((broken[0].payload as { position: number[] }).position.map((v, i) => Math.abs(v - stood.toArray()[i]) < 1e-6)).toEqual([true, true, true]); // prettier-ignore
+    breakDoor(world, 1, [0, 1, -4]); // again: it is broken already
+    expect(world.events.trace().filter((r) => r.type === 'splinters')).toHaveLength(1);
   });
 
   it('slides a garage door up its way and down, never struck open', () => {

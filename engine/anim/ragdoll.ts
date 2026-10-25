@@ -188,6 +188,7 @@ export class RagdollLayer implements AnimLayer {
   /** 0–1: how much of the ragdoll shows; the owner eases it. */
   weight = 0;
   /** The parts' poses now, `PART_NUMBERS` a part in `RAGDOLL_PARTS` order; fewer: nothing to lay. */
+  // Stryker disable next-line ArrayDeclaration: any array shorter than a ragdoll's parts lays nothing, as an empty one
   poses: number[] = [];
   readonly #world = JOINTS.map(() => new Quaternion());
   readonly #shares = new Map<number, Quaternion>();

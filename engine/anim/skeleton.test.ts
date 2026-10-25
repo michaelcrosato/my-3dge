@@ -80,6 +80,9 @@ describe('the joint set', () => {
   it('names the closest joint for a typo', () => {
     expect(() => jointIndex('forarmL' as never)).toThrow(/ANIM_UNKNOWN_JOINT.*"forarmL".*did you mean "forearmL"/);
     expect(() => jointIndex(23)).toThrow(/ANIM_UNKNOWN_JOINT.*0–22/);
+    expect(() => jointIndex('forarmL' as never)).toThrow(
+      /use one of: pelvis, spine0, spine1, spine2, chest, neck, head, /,
+    );
     expect(() => jointIndex(1.5)).toThrow(/ANIM_UNKNOWN_JOINT/);
     expect(() => socketIndex('weapon' as never)).toThrow(/ANIM_UNKNOWN_JOINT.*socket/);
   });

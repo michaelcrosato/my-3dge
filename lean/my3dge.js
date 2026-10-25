@@ -17863,6 +17863,7 @@ class PX {
   /** 0–1: how much of the ragdoll shows; the owner eases it. */
   weight = 0;
   /** The parts' poses now, `PART_NUMBERS` a part in `RAGDOLL_PARTS` order; fewer: nothing to lay. */
+  // Stryker disable next-line ArrayDeclaration: any array shorter than a ragdoll's parts lays nothing, as an empty one
   poses = [];
   #e = ie.map(() => new J());
   #t = /* @__PURE__ */ new Map();
@@ -19288,6 +19289,7 @@ class Nme {
   /** Each segment's direction toward the head, unit. */
   tangents;
   /** The path, oldest first. */
+  // Stryker disable next-line ArrayDeclaration: the constructor's reset empties it before anything reads it
   #e = [];
   /** Which way the body lies where the path runs out, unit. */
   #t = new T(0, 0, -1);

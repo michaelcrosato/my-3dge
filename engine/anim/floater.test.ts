@@ -53,6 +53,8 @@ describe('the hover (my-3d2dge’s wisp)', () => {
 
 describe('the heading and the bank', () => {
   it('turns to the direction of travel, or to a given yaw, and keeps it when slow', () => {
+    const turning = run(new Floater(), { velocity: new Vector3(-3, 0, 0) }, 1); // one step in: on its way, not there
+    expect([turning.state.yaw < -0.01, turning.state.yaw > -Math.PI / 2 + 0.01]).toEqual([true, true]);
     const wisp = run(new Floater(), { velocity: new Vector3(-3, 0, 0) }, 60);
     expect(wisp.state.yaw).toBeCloseTo(-Math.PI / 2, 3);
     run(wisp, { velocity: new Vector3(0.1, 0, 0.1) }, 30);

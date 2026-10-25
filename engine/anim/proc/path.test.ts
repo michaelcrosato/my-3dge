@@ -10,6 +10,15 @@ import { Vector3 } from '../../core/math';
 import { PathChain } from './path';
 
 describe('the path chain', () => {
+  it('starts with its head at the origin and its body along −Z', () => {
+    const snake = new PathChain({ count: 3, gap: 0.5 });
+    expect(snake.points.map((p) => p.toArray())).toEqual([
+      [0, 0, 0],
+      [0, 0, -0.5],
+      [0, 0, -1],
+    ]);
+  });
+
   it('stands its segments a gap apart behind a head going straight, tangents toward it', () => {
     const snake = new PathChain({ count: 6, gap: 0.25 }).reset(new Vector3(0, 0.1, 0), new Vector3(0, 0, -1));
     for (let i = 1; i <= 90; i++) snake.step(new Vector3(0, 0.1, i * 0.03));

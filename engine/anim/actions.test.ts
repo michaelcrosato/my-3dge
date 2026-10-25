@@ -12,11 +12,13 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { readSet } from '../../tools/anim/repack';
+import { Quaternion, Vector3 } from '../core/math';
 import { createRegistry } from '../core/registry';
 import { SIM_DT } from '../core/time';
 import { Actions, CHANNELS } from './actions';
 import { actionCheck } from './actions-check';
 import { ACTION, EFFECTORS, defineAction, getAction, loadActions, type ActionSpec } from './actions-data';
+import { defineBuild } from './builds';
 import { Animator } from './character';
 import { animCheckBody } from './check';
 import { STATE_MATRIX } from './stateMatrix';
@@ -175,6 +177,16 @@ describe('the player', () => {
     expect(acts.stop().state.playing).toBe('');
   });
 
+  it('fires a beat’s events at its start as it begins, nothing as it stops, and rests at beat −1', () => {
+    const acts = new Actions({ registry: only([{ name: 'a', seconds: 0.1, events: [{ type: 'go', at: 0 }, { type: 'half', at: 0.5 }] }]) }); // prettier-ignore
+    expect(acts.play('test').events.map((e) => e.type)).toEqual(['a', 'go']);
+    expect(run(acts, 6)).toEqual(['a', 'go', 'half', 'end']);
+    expect(acts.save()).toMatchObject({ playing: '', beat: -1 });
+    run(acts.play('test'), 2);
+    expect(acts.stop().events).toEqual([]); // at once, firing nothing
+    expect(acts.save()).toMatchObject({ playing: '', beat: -1 });
+  });
+
   it('opens its cancel window from its share on, for what it names', () => {
     const acts = new Actions({ registry: only(beats, held) }).play('test');
     expect(acts.cancels('walk')).toBe(false);
@@ -261,6 +273,74 @@ describe('the player', () => {
         else expect(animator.body.pose.rootPos.y).toBeLessThan(2); // not lifted off: a backflip turns about its pivot
       }
     }
+  });
+
+  it('turns each flip about its own axis: a backflip head over heels backward, a spin upright', () => {
+    for (const [id, upright] of [
+      ['backflip', (up: Vector3) => up.z < -0.5],
+      ['deathSpin', (up: Vector3) => up.y > 0.9],
+    ] as const) {
+      // prettier-ignore
+      const animator = hero();
+      const acts = new Actions().attach(animator).play(id);
+      let quarters = 0;
+      for (let i = 0; i < 80; i++) {
+        acts.step();
+        animator.update(acts.body);
+        const angle = acts.channels()[CHANNELS.flip] % (2 * Math.PI);
+        if (Math.abs(angle - Math.PI / 2) > 0.3) continue; // about a quarter turn in
+        expect(upright(new Vector3(0, 1, 0).applyQuaternion(animator.body.pose.rootRot)), id).toBe(true);
+        quarters++;
+      }
+      expect(quarters, id).toBeGreaterThan(0);
+    }
+  });
+
+  it('turns an air flip about its pivot, ACTION.pivot hip heights over its ground point, and leaves its height alone', () => {
+    defineBuild('build:flip-giant', { size: 1.5 }); // hip heights scale with the build's size
+    const giant = () => new Animator({ build: 'build:flip-giant', clock: 1 });
+    const [flipped, plain] = [giant(), giant()];
+    const [a, b] = [new Actions().attach(flipped).play('backflip'), new Actions().play('backflip')];
+    plain.use('post', b); // the same, unturned
+    let turned = 0;
+    for (let i = 0; i < 40; i++) {
+      a.step();
+      b.step();
+      flipped.update(a.body);
+      plain.update(b.body);
+      const angle = a.channels()[CHANNELS.flip];
+      if (Math.abs(angle) < 0.5) continue;
+      const { build, position } = flipped.body;
+      const pivot = new Vector3(position.x, position.y + ACTION.pivot * build.hipHeight * build.size, position.z);
+      const turn = new Quaternion().setFromAxisAngle(new Vector3(-1, 0, 0), angle); // `back`, facing +Z
+      const expected = plain.body.pose.rootPos.clone().sub(pivot).applyQuaternion(turn).add(pivot);
+      expect(flipped.body.pose.rootPos.distanceTo(expected)).toBeLessThan(1e-9);
+      turned++;
+    }
+    expect(turned).toBeGreaterThan(5);
+  });
+
+  it('fades only the clip its beats started, and that only while it is on top and not fading already', () => {
+    const registry = only([{ name: 'sway', seconds: 1, clip: { name: 'MESH2MOTION/Dizzy', loop: true } }]);
+    const layer = () => new ClipLayer({ library: LIBRARIES, build: 'build:heroic' });
+    const over = layer();
+    const acts = new Actions({ clips: over, registry }).play('test');
+    over.play('MESH2MOTION/Death_A'); // another's clip on top of it
+    acts.stop();
+    expect([over.current?.clip, over.current?.stopping, acts.state.clip]).toEqual(['MESH2MOTION/Death_A', 0, '']);
+    const under = layer().play('MESH2MOTION/Death_A'); // what plays under the action's clip
+    const fading = new Actions({ clips: under, registry }).play('test');
+    under.stop(); // the action's clip fades on its own
+    fading.stop();
+    expect(under.state.slots.map((s) => [s.clip, s.stopping > 0])).toEqual([['MESH2MOTION/Death_A', false], ['MESH2MOTION/Dizzy', true]]); // prettier-ignore
+    const gone = layer();
+    const ended = new Actions({ clips: gone, registry }).play('test');
+    gone.stop(0.05);
+    for (let i = 0; i < 10; i++) gone.step();
+    expect(gone.current).toBeNull(); // faded out and gone before the action stops
+    expect(ended.stop().state.clip).toBe('');
+    const saved = new Actions({ clips: layer(), registry }).play('test').save();
+    expect(() => new Actions({ registry }).load(saved).stop()).not.toThrow(); // its state, on a player with no clips
   });
 
   it('plays its clip beats on the clip layer, keeps a clip across beats that name it, and fades it after', () => {

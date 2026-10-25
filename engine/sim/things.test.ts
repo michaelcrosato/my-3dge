@@ -74,6 +74,18 @@ describe('things in a scene', () => {
       .map((e) => e.type)
       .filter((type) => type.startsWith('thing'));
     expect(events).toEqual(['thingHit', 'thingHit', 'thingDown', 'thingUp']);
+    const told2 = world.events.trace().filter((e) => e.type === 'thingHit' || e.type === 'thingDown').map((e) => e.payload); // prettier-ignore
+    expect(told2.slice(0, 3)).toEqual([
+      { id: 1, thing: mover().thing.thing, outcome: 'hit', hp: 1, from: [0, 1, 0] },
+      { id: 1, thing: mover().thing.thing, outcome: 'down', hp: 0, from: [0, 1, 0] },
+      { id: 1, thing: mover().thing.thing, outcome: 'down' },
+    ]);
+    expect(
+      world.systems
+        .list()
+        .filter((s) => s.name === 'things')
+        .map((s) => s.phase),
+    ).toEqual(['anim']); // one, however many things
   });
 
   it('takes all it has from a blast', () => {

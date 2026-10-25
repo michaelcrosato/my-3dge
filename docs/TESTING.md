@@ -17,6 +17,11 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
   While working, run only the specs for what only T2 checks that you touched, or a failure you are finding and
   fixing (`npm run e2e -- <spec>`), never the whole set: that is the full run's (ADR-0023).
 - **Long runs**: long replays, the kernel's perf budget, the crowd ladder, flake hunting; at each gate.
+- **Mutation testing**, `npx stryker run`: stryker.config.json says what it mutates and which suites must catch it,
+  and tools/stryker/sample.ts which functions' mutants a run tests; it fails under 90% caught, its reports and its
+  incremental results in out/stryker/. A background task, two runners at most.
+- **Usability evals**, `node x evals --dry-run`: every task under evals/ well-formed and its acceptance real
+  (tools/lib/evals.ts); a live run is the owner's (`node x evals --run`).
 
 Each tier's command, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib/tiers.ts. Two runs use them
 (tools/cmd/ci.ts):

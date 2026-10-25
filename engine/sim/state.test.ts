@@ -188,6 +188,8 @@ describe('the hash', () => {
     expect(codeOf(() => w.hash())).toBe('SIM_NOT_DATA');
     entity.body.dir = [0, new Float32Array(1)];
     expect(() => w.hash()).toThrow(/entity 1's body\.dir\[1\] is a Float32Array; component fields hold plain data/);
+    entity.body.dir = Object.create(Object.create(null) as object) as object; // no constructor anywhere up its chain
+    expect(() => w.hash()).toThrow(/entity 1's body\.dir is a object without a prototype/);
     entity.body.dir = [0, 1, 0];
     w.hash();
     entity.armor = { plates: 2 };
@@ -265,6 +267,23 @@ describe('trace and diff', () => {
     b.despawn(3);
     expect(diffStates(a.state(), b.state()).map((d) => d.path)).toEqual(['entities.2.body.speed', 'entities.3']);
     expect(traceState(a.state(), 0, componentTable(registry)).hash).toBe(a.hash());
+    const [c, d] = [makeWorld(registry).w, makeWorld(registry).w];
+    for (let i = 1; i <= 12; i++) c.spawn({ team: { side: i }, body: {} });
+    c.despawn(3); // 3 on the right only, 4–12 on the left only
+    for (let i = 1; i <= 3; i++) d.spawn({ team: { side: i }, body: {} });
+    const ids = (x: typeof c, y: typeof c) => diffStates(x.state(), y.state(), 20).map((e) => e.path).filter((path) => /^entities\.\d+$/.test(path)); // prettier-ignore
+    expect(ids(c, d)).toEqual([
+      'entities.3',
+      'entities.4',
+      'entities.5',
+      'entities.6',
+      'entities.7',
+      'entities.8',
+      'entities.9',
+      'entities.10',
+      'entities.11',
+      'entities.12',
+    ]); // by id, whichever side holds it // prettier-ignore
   });
 
   it('diffs settings keys, timers and lists by path', () => {

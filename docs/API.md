@@ -2767,6 +2767,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/clip/spine.ts`](../engine/anim/clip/spine.ts)
 
+- `qBetween` (function): The shortest turn taking direction `a` to direction `b`, a quaternion; from a direction to its opposite, a half turn.
 - `SPINE_MISS` (const): How far (mm) the spine's shares may miss a capture's neck before format 2 writes the `spine` override: half the importer's 30 mm tolerance, past which the shares alone spend most of a key's error.
 - `spineMiss` (function): The worst miss (mm) over a capture's frames between its neck and the neck the spine's shares rebuild from its pelvis point and its pelvis and chest frames: past `SPINE_MISS`, the importer writes format 2's `spine` override.
 - `spineOf` (function): Format 2's `spine` for key `k` (its hips, body and chest written) on the body points `p` reads: the turn of the spine's middle bones, relative to the body, that takes the decoded `spine1` toward the captured chest, its twist about the spine the shares' own (two bones lying almost in line say little about it).
@@ -10112,6 +10113,22 @@ For the agents who maintain the engine.
 - `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
 - `textureModules` (function): A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order.
 - `textureSheet` (function): The contact sheet of `bakes`: per texture its colour, normal and emissive maps (black when nothing glows), each tiled 2 × 2 and scaled by nearest texels to fit a 128 px panel, keeping its shape (row 0 of a map at the bottom, as it is drawn), and a label.
+
+### [`tools/stryker/sample.ts`](../tools/stryker/sample.ts)
+
+- `functionKey` (function): The function's key: its file, its name and its place among that file's functions of that name (`#0`, `#1`…).
+- `functionName` (function): The name a function goes by: its own, its method's or property's key, or the variable it is assigned to.
+- `OUT_OF_SCOPE` (const): The functions no run mutates, by `functionKey`, each with its reason (measured; see the file comment).
+- `resetPlaces` (function): Forgets the places counted so far: Stryker instruments each file once a run, from its start.
+- `sample` (const): The ignorer: an outermost function out of scope or outside the sample is ignored, with the reason Stryker reports.
+- `SAMPLE` (const): The sample: the share of functions kept, and the seed that draws them.
+- `SamplePath` (interface): The parts of a Babel path this plugin reads (Stryker hands it Babel's NodePath, its hub the file's).
+- `share` (function): FNV-1a (32 bits) of `text`, as a share of 2³²: a number in [0, 1), spread evenly.
+- `strykerPlugins` (const): The plugins StrykerJS loads from this module (stryker.config.json's `appendPlugins`).
+
+### [`tools/stryker/vitest.config.ts`](../tools/stryker/vitest.config.ts)
+
+- `default` (default): Vitest's settings for StrykerJS's runs (stryker.config.json's `vitest.configFile`; PLAN.md WP 12.2): the repository's own (vite.config.ts), with longer timeouts and no report file.
 
 ### [`tools/x.ts`](../tools/x.ts)
 

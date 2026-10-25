@@ -13,7 +13,7 @@ import { Vector3 } from '../core/math';
 import { TRAIL } from './character';
 import { animCheck } from './check';
 import { jointPosition, jointRotation, jointToWorld } from './fk';
-import { ENGINE_MOVES, getMove, MOVE_PHASES, resolveMove, type MovePhase } from './moves-data';
+import { ENGINE_MOVES, getMove, MOVE_PHASES, resolveMove, rootTravel, type MovePhase } from './moves-data';
 import { inArc, inHitShape, knockbackVelocity, measureMove, moveAt, strikePart, strikeSegment } from './moves';
 import { Animator } from './character';
 import { Humanoid } from './humanoid';
@@ -87,6 +87,17 @@ function differential(): Map<string, number[]> {
  * path, the spine and the limbs land on the old points (the twisted shoulders within a few millimetres).
  */
 const EXCEPTIONS: Readonly<Record<string, string>> = {};
+
+describe('rootTravel', () => {
+  it('travels only an applied move, from its strike on: none before it starts and through its wind', () => {
+    const [applied, visual] = [resolveMove('move:thrust', { rootMotion: 'apply' }), resolveMove('move:thrust')];
+    const lunge = applied.body.lunge;
+    expect([undefined, 'wind'].map((phase) => rootTravel(applied, phase as MovePhase | undefined, 0.5))).toEqual([0, 0]); // prettier-ignore
+    expect(rootTravel(applied, 'active', 0.5)).toBeCloseTo(lunge * (1 - 0.5 ** 3), 12);
+    expect([rootTravel(applied, 'recover', 0.2), rootTravel(visual, 'active', 0.5), rootTravel(visual, 'recover', 1)]).toEqual([lunge, 0, 0]); // prettier-ignore
+    expect(lunge).toBeGreaterThan(0);
+  });
+});
 
 describe('the differential tests against my-3d2dge (WP 6.1 Done when)', () => {
   let errors: Map<string, number[]>;

@@ -40,6 +40,7 @@ export class PathChain {
   /** Each segment's direction toward the head, unit. */
   readonly tangents: Vector3[];
   /** The path, oldest first. */
+  // Stryker disable next-line ArrayDeclaration: the constructor's reset empties it before anything reads it
   readonly #path: Vector3[] = [];
   /** Which way the body lies where the path runs out, unit. */
   readonly #back = new Vector3(0, 0, -1);

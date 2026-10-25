@@ -48,7 +48,9 @@ describe('reactions and secondary motion as components', () => {
     expect(w.get(id)!.reactions).toBe(state);
     expect(state.flinch[2]).toBeLessThan(0); // a blow travelling +X leans a body facing +Z to its left
     expect(state.playing).toBe('');
-    expect(() => reactTo(w, 99, () => {})).toThrow(/SIM_BAD_ARGUMENT|a live id/);
+    expect(() => reactTo(w, 99, () => {})).toThrow(
+      /^\[SIM_BAD_ARGUMENT\] reactTo\(w, id, act\) got 99: pass a live id$/,
+    );
   });
 
   it('steps a knockdown through its fall and lie to the get-up its lying chooses, and leaves a body at rest alone', () => {

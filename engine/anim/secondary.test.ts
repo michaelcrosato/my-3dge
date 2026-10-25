@@ -176,6 +176,54 @@ describe('Chain: collides with bone capsules and the floor', () => {
   });
 });
 
+describe('Secondary: inspect', () => {
+  it('shows the squash and each chain’s tip to 0.1 mm, and no cape where it has none', () => {
+    const layer = new Secondary({ hair: 'long', cape: false, tail: true });
+    const animator = new Animator({ build: 'build:heroic', clock: 0 }).use('secondary', layer);
+    for (let k = 0; k < 12; k++) animator.update({ velocity: new Vector3(0, 0, 3) });
+    const { tips } = layer.inspect() as { tips: Record<string, number[]> };
+    expect(Object.keys(tips)).toEqual(['hair', 'tail']);
+    for (const tip of Object.values(tips)) {
+      expect(tip.some((x) => Math.abs(x) > 0.01)).toBe(true);
+      expect(tip.every((x) => Math.abs(x * 1e4 - Math.round(x * 1e4)) < 1e-6)).toBe(true); // to 0.1 mm
+    }
+    const tip = layer.hair!.points[layer.hair!.n - 1].toArray();
+    expect(tips.hair.every((x, i) => Math.abs(x - tip[i]) <= 5e-5)).toBe(true); // the tip's own place, rounded
+  });
+});
+
+describe('Chain: one step as its parts', () => {
+  it('steps as begin, its inner steps and as many constraint passes as its tuning says', () => {
+    const [whole, parts] = [new Chain(HAIR), new Chain(HAIR)];
+    for (let k = 0; k <= 30; k++) {
+      const [dt, anchor] = [k ? 1 / 60 : 0, circle(k / 60)];
+      whole.step(dt, anchor);
+      const count = parts.begin(dt, anchor);
+      for (let i = 1; i <= count; i++) {
+        parts.integrate(dt / count, i / count, anchor, new Quaternion());
+        for (let it = 0; it < parts.tuning.iterations; it++) parts.relax();
+      }
+    }
+    expect(parts.points.map((p) => p.toArray())).toEqual(whole.points.map((p) => p.toArray()));
+  });
+
+  it('pushes a point that lies on a capsule’s axis straight up, out of it', () => {
+    const chain = new Chain({ ...HAIR, gravity: 0 });
+    chain.step(0, new Vector3(0, 2, 0)); // hanging straight down, at rest
+    const on = chain.points[4].clone();
+    const bar: BoneCapsule = {
+      a: new Vector3(on.x - 1, on.y, on.z),
+      b: new Vector3(on.x + 1, on.y, on.z),
+      radius: 0.05,
+    };
+    chain.colliders = [bar];
+    chain.step(1 / 60, new Vector3(0, 2, 0));
+    expect(chain.points.every((p) => [p.x, p.y, p.z].every(Number.isFinite))).toBe(true);
+    expect(chain.points[4].y).toBeGreaterThan(on.y); // up, not down through it
+    expect(depth(chain.points[4], bar)).toBeLessThan(1e-9);
+  });
+});
+
 describe('Cape', () => {
   const [left, right] = [new Vector3(0.15, 1.5, 0), new Vector3(-0.15, 1.5, 0)];
 
@@ -198,6 +246,16 @@ describe('Cape', () => {
     }
     const swing = (i: number) => Math.max(...ys.map((y) => y[i])) - Math.min(...ys.map((y) => y[i]));
     expect(swing(5)).toBeGreaterThan(swing(1));
+  });
+
+  it('flutters its two edges out of step', () => {
+    const cape = new Cape(CAPE);
+    let most = 0;
+    for (let k = 0; k <= 120; k++) {
+      cape.step(k ? 1 / 60 : 0, left, right);
+      most = Math.max(most, Math.abs(cape.left.points[5].y - cape.right.points[5].y));
+    }
+    expect(most).toBeGreaterThan(1e-4); // its mirror image would match it to rounding
   });
 });
 
