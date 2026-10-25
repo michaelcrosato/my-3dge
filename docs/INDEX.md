@@ -1001,6 +1001,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`actors.ts`](../engine/gfx/puppets/actors.ts): Actors on the stage (PLAN.md WP 3.10, §6.4's view; I-21): every actor with an animator (engine/sim/actors.ts: an entity with the components `actor` and `animator`) drawn as a puppet (engine/gfx/puppets/draw.ts) of the neutral humanoid (`ACTOR_BODY`) or the body its component `puppet` names (`body:mannequin`, WP 8.9), in its animator's build, posed every frame by its animator's presentation half (engine/anim/character.ts `pose`) at the frame's alpha; an actor with clips (`clips`, engine/sim/actorClips.ts) has its clip layer laid over the body, loaded from the same data (a `ClipLayerPool` of the view's own, engine/anim/clip/clipsets.ts).
   - Exports: `ACTOR_BODY`, `ActorPuppets`, `createActorPuppets`, `PlayerView`
   - Tests: [`engine/gfx/puppets/actors.test.ts`](../engine/gfx/puppets/actors.test.ts)
+- [`batches.ts`](../engine/gfx/puppets/batches.ts): Instanced puppet parts for crowds (PLAN.md WP 3.8, I-21): `createPuppetBatches({ materials })` draws compiled bodies (compile.ts) as instanced parts per shape over the instancing service (engine/gfx/instancing.ts), from the same pieces a puppet (draw.ts) is made of.
+  - Exports: `createPuppetBatches`, `PuppetBatches`
+  - Tests: [`engine/gfx/puppets/draw.test.ts`](../engine/gfx/puppets/draw.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
 - [`blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts): Blob shadows (PLAN.md WP 3.8): a soft dark disc on the floor under each body, all of them in one instanced batch (engine/gfx/instancing.ts), so a crowd's shadows cost one draw call.
   - Exports: `BLOB_SHADOW`, `BLOB_SHADOW_MATERIAL`, `blobScale`, `blobShadowMaterial`, `BlobShadows`, `createBlobShadows`
   - Tests: [`engine/gfx/puppets/blobShadow.test.ts`](../engine/gfx/puppets/blobShadow.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
@@ -1014,7 +1017,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createCrowd`, `Crowd`, `CROWD_CODES`, `CROWD_PAGE_SLOTS`, `CrowdDraw`, `CrowdRigDraw`, `CrowdStats`, `HUMANOID_SHADOW`, `RigBody`, `RigJoints`, `RigPart`, `RigShape`
   - Tests: [`engine/gfx/puppets/crowd.test.ts`](../engine/gfx/puppets/crowd.test.ts), [`tests/e2e/crowd-render.spec.ts`](../tests/e2e/crowd-render.spec.ts)
 - [`draw.ts`](../engine/gfx/puppets/draw.ts): Drawing puppets (PLAN.md WP 3.8, I-21): a compiled body (compile.ts) drawn two ways from the same pieces.
-  - Exports: `createPuppet`, `createPuppetBatches`, `PieceRange`, `Puppet`, `PUPPET_MATERIALS`, `PuppetBatches`, `puppetGeometry`, `puppetMaterials`, `PuppetMaterials`, `unitGeometry`
+  - Exports: `createPuppet`, `PieceRange`, `Puppet`, `PUPPET_MATERIALS`, `puppetGeometry`, `puppetMaterials`, `PuppetMaterials`, `unitGeometry`
   - Tests: [`engine/gfx/puppets/draw.test.ts`](../engine/gfx/puppets/draw.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
 - [`grammar.ts`](../engine/gfx/puppets/grammar.ts): The body grammar, v2 (PLAN.md WP 3.8, §5.1; I-21): a puppet's body as data, the registry kind `body`.
   - Exports: `Body`, `BODY_FIELDS`, `bodyKind`, `BodyLength`, `BodyPart`, `BodyPoint`, `bodyProblems`, `BodySpec`, `defineBody`, `getBody`, `mirrorName`, `mirrorPart`, `mirrorPoint`, `PART_TYPES`, `PartOptions`, `PartType`, `pointProblem`
@@ -1022,6 +1025,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`lod.ts`](../engine/gfx/puppets/lod.ts): The crowd's level of detail (PLAN.md WP 5.4, I-21): which bodies a frame draws, and in how much detail, from the camera alone.
   - Exports: `createCrowdLod`, `CROWD_LOD`, `CROWD_LOD_CODES`, `CrowdBand`, `CrowdBandSpec`, `CrowdLod`, `CrowdLodCounts`, `CrowdLodOptions`
   - Tests: [`engine/gfx/puppets/lod.test.ts`](../engine/gfx/puppets/lod.test.ts), [`tests/e2e/crowd-render.spec.ts`](../tests/e2e/crowd-render.spec.ts)
+- [`rigBody.ts`](../engine/gfx/puppets/rigBody.ts): Rig bodies (PLAN.md WP 5.4, I-21): the data form in which a rig (a blob, a floater, a quadruped: engine/anim/) wears its body, as `createCrowd` draws it (engine/gfx/puppets/crowd.ts `rig`).
+  - Exports: `RigBody`, `RigJoints`, `RigPart`, `RigShape`
+  - Tests: [`engine/gfx/puppets/crowd.test.ts`](../engine/gfx/puppets/crowd.test.ts)
 
 ## engine/gfx/puppets/bodies
 

@@ -999,7 +999,7 @@ Advice from the chain's shading stage (engine/gfx/post/shading.ts): the quality 
 
 - Message: `rig body {body}, part {part}: {problem}`
 - Fix: {fix}
-- Registered in: [`engine/gfx/puppets/crowd.ts` line 58](../engine/gfx/puppets/crowd.ts)
+- Registered in: [`engine/gfx/puppets/crowd.ts` line 62](../engine/gfx/puppets/crowd.ts)
 
 Raised by `createCrowd` (engine/gfx/puppets/crowd.ts) for a rig body whose part has an unknown shape, a slot the body lacks, a size that is not positive, or a joint the rig’s pose lacks.
 

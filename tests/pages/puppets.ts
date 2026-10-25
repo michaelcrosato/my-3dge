@@ -41,7 +41,8 @@ import type { IdEntry } from '../../engine/gfx/idpass';
 import { createMaterialLibrary } from '../../engine/gfx/materials/library';
 import { createBlobShadows } from '../../engine/gfx/puppets/blobShadow';
 import { compileBody } from '../../engine/gfx/puppets/compile';
-import { createPuppet, createPuppetBatches } from '../../engine/gfx/puppets/draw';
+import { createPuppetBatches } from '../../engine/gfx/puppets/batches';
+import { createPuppet } from '../../engine/gfx/puppets/draw';
 import { createRenderer, type FrameReport, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
 import { shot } from '../../engine/gfx/shot';
 

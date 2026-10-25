@@ -309,7 +309,7 @@ game agent's manual.
 - `createPost` (function from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): Makes the chain on `gfx.renderer` (see the file comment).
 - `createPropMeshes` (function from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): Makes the prop meshes; see the file comment.
 - `createPuppet` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
-- `createPuppetBatches` (function from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Makes instanced puppet batches (see the file comment).
+- `createPuppetBatches` (function from [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
 - `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
@@ -880,7 +880,7 @@ game agent's manual.
 - `PropSpec` (interface from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): A prop as `addProp` takes it: a body's pose, velocities and options, and its material.
 - `PropTouch` (interface from [`engine/world/props/prop.ts`](../engine/world/props/prop.ts)): What a hook is given: the prop, its body, where the touch comes from, and the means to answer it.
 - `Puppet` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): One character drawn as a rigid-skinned mesh (see the file comment).
-- `PuppetBatches` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Instanced parts for crowds (see the file comment).
+- `PuppetBatches` (interface from [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)): Instanced parts for crowds (see the file comment).
 - `PuppetComponent` (interface from [`engine/sim/actors.ts`](../engine/sim/actors.ts)): The component `puppet`: the body an actor is drawn as (engine/gfx/puppets/actors.ts), when not the humanoid.
 - `PuppetMaterials` (interface from [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)): Where materials come from: the page's material library.
 - `Quadruped` (class from [`engine/anim/quadruped.ts`](../engine/anim/quadruped.ts)): A quadruped: its state, its pose.
@@ -957,17 +957,17 @@ game agent's manual.
 - `RideLauncher` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): A launcher: the volume the feet set it off in, its top, the velocity it gives, its bounce and whether it keeps the speed across.
 - `Rides` (interface from [`engine/physics/movement/ride.ts`](../engine/physics/movement/ride.ts)): The world's rides, as the sim gives them to a tick (engine/sim/rides.ts).
 - `ridesOf` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): What `w` holds to ride (see the file comment); `undefined` when it holds none, so a tick asks nothing.
-- `RigBody` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig body (see the file comment).
+- `RigBody` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig body (see the file comment): its slots and parts, and the materials and shadow it is drawn with.
 - `rigCheck` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): Checks every state of `rig` at both facings (see the file comment).
 - `rigClosed` (function from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): How many of `rig`'s first points come back at rest after `state` (see the file comment).
 - `RigidPair` (type from [`engine/anim/check.ts`](../engine/anim/check.ts)): Two points whose distance must not change: from the first frame, or the distance given third (metres).
 - `RigInput` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): What the rig's cameras take each frame: the devices', the hero (his eye, his look, his state) and the walls.
-- `RigJoints` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigJoints` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
 - `rigOptions` (function from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options from the view settings `cam.*`, read by `get` (a settings store's).
 - `RigOptions` (interface from [`engine/gfx/cameras/rig.ts`](../engine/gfx/cameras/rig.ts)): The rig's options (see the file comment).
-- `RigPart` (interface from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigPart` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
 - `RigRun` (interface from [`engine/anim/proc/rig.ts`](../engine/anim/proc/rig.ts)): One run of a rig: its root and its points each step, and the steps the state held.
-- `RigShape` (type from [`engine/gfx/puppets/crowd.ts`](../engine/gfx/puppets/crowd.ts)): A unit shape a rig part draws: any but the limb.
+- `RigShape` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A unit shape a rig part draws: any but the limb.
 - `ringGeometry` (function from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring lying on the ground (see the file comment).
 - `RingOptions` (interface from [`engine/gfx/geometry/ring.ts`](../engine/gfx/geometry/ring.ts)): A ring's radii and height in metres, and its tessellation.
 - `Rng` (class from [`engine/core/rng.ts`](../engine/core/rng.ts)): One Mulberry32 stream: `next()` and the usual helpers, all drawn from `next()` in order.
@@ -5354,6 +5354,11 @@ For the agents who maintain the engine.
 - `createActorPuppets` (function): Draws actors as puppets (see the file comment); `registry` holds the bodies and gets the puppets' materials.
 - `PlayerView` (interface): The player actor as the last draw put it.
 
+### [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)
+
+- `createPuppetBatches` (function): Makes instanced puppet batches (see the file comment).
+- `PuppetBatches` (interface): Instanced parts for crowds (see the file comment).
+
 ### [`engine/gfx/puppets/blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts)
 
 - `BLOB_SHADOW` (const): The shadow rule's numbers: the lift above the floor, the height where it stops shrinking, its smallest scale.
@@ -5420,19 +5425,17 @@ For the agents who maintain the engine.
 - `CrowdRigDraw` (interface): How a rig is drawn: also its flags (`when`, `unless`) and its scale against its body.
 - `CrowdStats` (interface): A frame's counts: the bands and culling (lod.ts), bodies drawn, and each batch's instances and shown pages.
 - `HUMANOID_SHADOW` (const): A humanoid's blob shadow, metres at size 1 (the source's 5 units).
-- `RigBody` (interface): A rig body (see the file comment).
-- `RigJoints` (type): A rig's pose: each joint a world matrix, a point, or a list of points.
-- `RigPart` (interface): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
-- `RigShape` (type): A unit shape a rig part draws: any but the limb.
+- `RigBody` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig body (see the file comment): its slots and parts, and the materials and shadow it is drawn with.
+- `RigJoints` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigPart` (interface from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigShape` (type from [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)): A unit shape a rig part draws: any but the limb.
 
 ### [`engine/gfx/puppets/draw.ts`](../engine/gfx/puppets/draw.ts)
 
 - `createPuppet` (function): Draws `compiled` as one rigid-skinned mesh (see the file comment), at rest until `setPose`.
-- `createPuppetBatches` (function): Makes instanced puppet batches (see the file comment).
 - `PieceRange` (interface): Where one piece's vertices lie in a puppet's geometry (`geometry.userData.pieces`, in drawing order).
 - `Puppet` (interface): One character drawn as a rigid-skinned mesh (see the file comment).
 - `PUPPET_MATERIALS` (const): The materials puppets draw with by default.
-- `PuppetBatches` (interface): Instanced parts for crowds (see the file comment).
 - `puppetGeometry` (function): The rigid-skinned geometry of `compiled`: lit pieces (group 0), then glow pieces (group 1), see the file comment; `userData.pieces` lists each piece's vertices (`PieceRange`).
 - `puppetMaterials` (function): Defines `PUPPET_MATERIALS` on `registry` (the shared one by default), those it lacks.
 - `PuppetMaterials` (interface): Where materials come from: the page's material library.
@@ -5468,6 +5471,13 @@ For the agents who maintain the engine.
 - `CrowdLod` (interface): A crowd's level of detail (see the file comment).
 - `CrowdLodCounts` (interface): A frame's counts so far: bodies drawn in each band, and those culled by the view, the distance and `near`.
 - `CrowdLodOptions` (interface): How a crowd's level of detail is made.
+
+### [`engine/gfx/puppets/rigBody.ts`](../engine/gfx/puppets/rigBody.ts)
+
+- `RigBody` (interface): A rig body (see the file comment): its slots and parts, and the materials and shadow it is drawn with.
+- `RigJoints` (type): A rig's pose: each joint a world matrix, a point, or a list of points.
+- `RigPart` (interface): One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point or a list of points (one part on each).
+- `RigShape` (type): A unit shape a rig part draws: any but the limb.
 
 ### [`engine/gfx/quality.ts`](../engine/gfx/quality.ts)
 
