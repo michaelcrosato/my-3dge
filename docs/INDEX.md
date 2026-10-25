@@ -547,6 +547,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`galleryShoot.ts`](../engine/dev/galleryShoot.ts): Filming the gallery (PLAN.md WP 7.7): the inspector members `gallery.list(kind?)`, `gallery.frames(kind, id)` and `gallery.shoot(kind, id, size?)` (registered here, so `__engine.gallery` and `help()` list them), and the live driver a deep link's page runs (`createGalleryDriver`).
   - Exports: `BURST_REACH`, `createGalleryDriver`, `GALLERY_SHOOT_CODES`, `GalleryDriver`, `GalleryRun`, `GalleryShot`, `GalleryView`, `subjectBounds`
   - Tests: [`tests/e2e/gallery.spec.ts`](../tests/e2e/gallery.spec.ts)
+- [`governor.ts`](../engine/dev/governor.ts): The performance governor (PLAN.md WP 7.5; the mechanism of `my-3d2dge:src/emberdeep/95-perf.js`, and `shardfall:crates/pav_app/src/quality.rs:89-113`'s dynamic scale): while the view setting `quality` is `auto`, it moves the page between the quality tiers (engine/gfx/quality.ts) as the frame rate asks, with hysteresis, and on a touch screen scales the resolution as well.
+  - Exports: `createGovernor`, `Governor`, `GOVERNOR`, `GOVERNOR_CODES`, `GOVERNOR_SETTINGS`, `GovernorState`
+  - Tests: [`engine/dev/governor.test.ts`](../engine/dev/governor.test.ts)
 - [`inspector.ts`](../engine/dev/inspector.ts): The inspector (PLAN.md §8.3, WP 1.6; doctrines: Agent-operable, Verifiable): `window.__engine` in a page and the object `createHeadless` returns in Node are one API, which `createInspector` assembles from the entries of the registry kind `inspectorMember` (engine/dev/members.ts).
   - Exports: `CORE_MEMBERS`, `CoreMembers`, `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)

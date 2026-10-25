@@ -4160,6 +4160,15 @@ For the agents who maintain the engine.
 - `GalleryView` (interface): The view a gallery films through: the run's stage and its camera (engine/app/view.ts).
 - `subjectBounds` (function): The bounds of what the stage draws for the subject: its props, puppets and stand-ins (the ground left out).
 
+### [`engine/dev/governor.ts`](../engine/dev/governor.ts)
+
+- `createGovernor` (function): Makes a governor; `log` takes its advice (the shared log by default).
+- `Governor` (interface): The governor (see the file comment).
+- `GOVERNOR` (const): The governor's numbers (see the file comment): seconds, milliseconds a frame, and the scale's steps.
+- `GOVERNOR_CODES` (const): Its advice code.
+- `GOVERNOR_SETTINGS` (const): Its view setting: whether it may move `auto`'s tier at all (a page that compares frames turns it off).
+- `GovernorState` (interface): What the governor holds now.
+
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
 - `CORE_MEMBERS` (const): The core members (PLAN.md §8.3, WP 1.6), registered on the shared registry when this module loads.

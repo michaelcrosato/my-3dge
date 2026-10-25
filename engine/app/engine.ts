@@ -18,7 +18,7 @@
  * an error record too.
  *
  * Every frame drawn is timed by the run's stats meter, which reads the renderer's counts (`__engine.stats()`,
- * engine/dev/stats.ts). The rendering members (engine/app/viewMembers.ts) draw through the page's drawing
+ * engine/dev/stats.ts), and feeds the performance governor (engine/dev/governor.ts: `auto`'s tier by frame rate). The rendering members (engine/app/viewMembers.ts) draw through the page's drawing
  * (engine/app/drawing.ts: `render(n)`, `shot`, and `replay(text)` drawing a frame after every step, §6.7).
  * `?replay=<name>` plays one of `options.replays` in real time from step 0 (without `?scene`, in its own scene if the
  * page has it), then hands back to the devices. The overlay (engine/ui/overlay.ts, `engine.ui`, WP 6.7) shows the
@@ -54,7 +54,7 @@ import { createGalleryDriver, type GalleryDriver } from '../dev/galleryShoot';
 import { createOverlay } from '../dev/overlay';
 import { createMaterialLibrary } from '../gfx/materials/library';
 import { createStyleSet } from '../gfx/materials/styles';
-import { qualityBudget, type QualitySetting } from '../gfx/quality';
+import type { QualitySetting } from '../gfx/quality';
 import { createPost } from '../gfx/post/chain';
 import { definePostSettings } from '../gfx/post/settings';
 import { createRenderer } from '../gfx/renderer';
@@ -75,6 +75,7 @@ import { createLoop, type Loop } from './loop';
 import { createPlayback, type Playback } from './playback';
 import { defineLevel } from '../world/level/level';
 import { parseRoutes, type Routes } from './routes';
+import { createGovernor } from '../dev/governor';
 
 /** The codes this module raises, with their fixes. */
 export const ENGINE_CODES = defineCodes('app', {
@@ -208,7 +209,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   overlay.status('Loading…');
   let routes: Routes | null = null;
   let loop: Loop | null = null;
-  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, ready: false }; // prettier-ignore
+  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, governor: createGovernor({ log }), ready: false }; // prettier-ignore
   const fail = (error: unknown, code = 'APP_START'): ErrorRecord => {
     const record = log.error(...recordOf(error, code), error);
     overlay.error(record);
@@ -328,7 +329,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     gfx.renderer.shadowMap.enabled = true;
     const styles = createStyleSet({ library: materials!, registry });
     const post = (parts.post = createPost(gfx, { settings: currentSettings(() => started), registry, log, styles }));
-    const budget = () => qualityBudget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false);
+    const budget = () => parts.governor!.budget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false); // prettier-ignore
     parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget });
     post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup, gfx.features);
@@ -352,6 +353,8 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     sample,
     step,
     draw: ({ alpha, dt }) => {
+      // frozen in a reproducible run: a replay playing, or the governor turned off (engine/dev/governor.ts)
+      parts.governor!.freeze((playback !== null && !playback.done) || !settingsNow.get<boolean>('gfx.governor'));
       if (warming) return;
       const report = frame(alpha, dt);
       if (!report.drawn && report.warming) warming = warmBoth().finally(() => (warming = null));

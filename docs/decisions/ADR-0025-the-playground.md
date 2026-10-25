@@ -1928,3 +1928,23 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - Evidence: tests/e2e/labs.spec.ts (the index's links; each lab ready on WebGPU with its panel, no advice; the
   Animation Lab's phases and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search, mirror
   and apply), tools/cmd/lab.test.ts, labs/anim/scenes/lineup.test.ts, engine/anim/character.test.ts (`joints`).
+
+## Amendment 37 (2026-10-25, WP 7.5): the performance governor
+
+- **What it moves:** `quality` `auto` between WP 3.12's tiers (engine/dev/governor.ts; engine/gfx/quality.ts), which
+  hold the light and shadow budget, the GI, god rays, bloom and halos, and the drawn pixels; on a touch screen it also
+  scales the drawn pixels (shardfall's dynamic resolution). A tier set by hand is kept; `gfx.governor` (a view
+  setting) turns it off; it is frozen while a replay plays, and the tools' virtual clock gives it even frames, so no
+  spec sees it move. Each move is advice, `GFX_GOVERNOR`.
+- **Its numbers,** from the two carried mechanisms (`my-3d2dge:src/emberdeep/95-perf.js`,
+  `shardfall:crates/pav_app/src/quality.rs:89-113`): a second at a time; slower than 50 frames a second is bad, faster
+  than 57 good; three bad seconds demote a tier, ten good ones promote one (never above `auto`'s own); a demotion
+  within 25 s of a promotion doubles the ten, up to 80, so a machine on the edge settles (simulated: 11 moves in five
+  minutes, 46 without the doubling); on touch a bad second scales the pixels by 0.88 (to 0.6), four good ones by 1.06.
+- **Calls:** the governor moves the tiers only. Turning an optional GPU feature off mid-play would build pipelines in
+  a frame (engine/gfx/features.ts decides them at the renderer's start), and pose LOD and draw distance belong to no
+  tier yet: each joins a tier when a measured scene needs it. Its state is read through its advice and the settings
+  (`quality`, `gfx.governor`), not a member of its own.
+- Evidence: engine/dev/governor.test.ts (the demotions and promotions on simulated frame times, the edge machine,
+  the hand-set tier, the freeze, the touch scale, a headless run's hash unchanged with the governor moving between its
+  steps); engine/app/engine.ts and drawing.ts feed it the frames' real time and read its budget.
