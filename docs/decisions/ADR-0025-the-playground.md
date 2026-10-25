@@ -2154,3 +2154,108 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   chase replay's goldens in the page), the features matrix. Not verified: a real GPU (SwiftShader ranks no GPU time), an
   adapter without `indirect-first-instance` (simulated through `gfx.featuresOff`), the playground street's crowd (only
   the box measured), growth to the slot cap in play (unit tests only).
+
+## Amendment 43 (2026-10-25, WP 12.2): agent-usability evals and mutation testing
+
+- **The evals** (`node x evals`, tools/cmd/evals.ts and tools/lib/evals.ts; decision 5). There are fourteen tasks under
+  evals/<id>/: six in the box (a prop, a crowd-mix variant, a fog preset, a move, a seeded desync to fix, a sound),
+  seven in the playground (a movement profile, a camera mode, a two-room cabin, a radio, a weapon, a setting, a dev
+  action) and one in the engine (a regression to fix). Each has a prompt (`prompt.md`) and its `task.json` (title, area,
+  a live attempt's minutes). It starts from this tree, or from a patch on it (a bug to find). A hidden Vitest
+  acceptance (`accept.ts`) carries commands, paths that must stay unchanged, and the type and lint checks. A reference
+  solution is kept as a patch. `--dry-run` copies the repository into a fresh git repository per task (evals/ left out,
+  node_modules linked) and proves the acceptance real with no model call: it must fail on the start and pass once the
+  solution is applied. `--run --agent "<command>"` hands the prompt to an agent's command on its standard input in such
+  a copy, for at most the task's minutes, and `--record` writes the pass rate to evals/baseline.json. That baseline is
+  deferred, since model access is the owner's (ESC-0004, decided in absence: no live runs). `x check` checks every
+  task's files. A T1 test (tools/cmd/evals.test.ts) checks that every task's patches still apply to the tree, so a
+  change under a task names the task to make again.
+- **Calls (the evals):**
+  - The library is tools/lib/evals.ts, beside the command the WP owns, so each file stays under its cap.
+  - An acceptance is `accept.ts`, copied in as `accept.test.ts`, so `npm test` never runs it on the untouched tree.
+  - Lint runs as ESLint's own command line in a child process. typescript-eslint keeps one config root per process,
+    and it refused a second copy's (measured).
+  - The harness's own files (`vite.config.ts`, tests/setup/, package.json and its lock) stay as the start has them in
+    every task.
+  - The tasks name their files and ids, so a hidden test can find the work. They measure whether an agent can do the
+    work from the docs, not whether it guesses names.
+  - There is no `x new` template for a task. What makes one is its acceptance and its solution, which no template
+    writes, and `x check` and the T1 test catch a malformed one.
+- **Mutation testing** (`npx stryker run`, stryker.config.json; StrykerJS 9.6.1 and its Vitest runner). Every file of
+  engine/sim and engine/anim is mutated (114 files, 21,764 mutants), and a run tests a sample of them.
+  - **What a run tests:** the mutants of a fixed 10% of the files' outermost functions, plus every class's field
+    initializers, which run as an instance is made. The initializers are kept whole as a stratum of their own (61
+    mutants). tools/stryker/sample.ts is an ignore plugin that keeps whole functions, chosen by a seeded FNV-1a hash of
+    the file, the name and its place, so the same set comes back on every run while the functions keep their names.
+    The tests are the suites beside the code: engine/sim/**, engine/anim/** and engine/dev/actions.test.ts, the
+    actions' own suite (902 tests).
+  - **Settings:**
+    - `coverageAnalysis: perTest`: a mutant runs only the tests that reach it.
+    - `concurrency: 2`: the other lanes keep their cores.
+    - `ignoreStatic`: a mutant that runs only as its module loads would need every test again on a fresh module graph,
+      per mutant.
+    - `incremental`: out/stryker/incremental.json, so a later run tests again only what a change reaches.
+    - `timeoutMS: 20000`, on top of Stryker's own factor.
+    - The Vitest runner uses tools/stryker/vitest.config.ts: the repository's config with 180 s test and hook timeouts,
+      since a suite runs about 30 times slower instrumented and under load.
+    - `thresholds.break: 90`: a run fails under 90% caught.
+    - Reports: out/stryker/mutation.{json,html}.
+- **Why a sample** (measured on this machine, four cores shared with three lanes):
+  - Every mutant against the sim and anim suites would take 10 to 12 hours a run, at about 2 s of wall time a mutant
+    with two runners.
+  - The sample takes 68 minutes from cold, forced (`--force`), and less incrementally.
+  - Against all of T1 (the labs' scenes, replays and fixtures too), a surviving mutant reruns every scene test that
+    reaches it. The first minute of 4 files projected 9.5 hours for their 411 mutants.
+  - The sim and anim suites' score is a lower bound for T1's, since the labs' tests can only catch more.
+- **Out of scope: forward kinematics** (`engine/anim/fk.ts`'s `forwardKinematics`; `OUT_OF_SCOPE` in
+  tools/stryker/sample.ts, with its reason in every report). Every pose runs it. It is a loop over 23 joints whose body
+  holds nearly all of its mutants, and instrumenting puts a call before and after each mutable expression.
+  - Drawn into the sample, it made engine/anim/humanoid.test.ts take 280 s instead of 2.2 s, and the first pass failed
+    (the humanoid suite's hook passed 180 s).
+  - Its mutants, each rerunning every anim test that poses a body, would take about a day.
+  - Its own tests still run against every other mutant: fk.test.ts holds it to three.js's bones, and humanoid.test.ts
+    holds every joint to my-3d2dge's within 1 cm.
+- **The score:**
+  - The first run caught 74.15% of the sample's 1,714 mutants. As a cluster estimate, that is 74.6% ± 4.2 points (one
+    standard error) for every function of sim and anim before this WP.
+  - This WP's tests and marks raised the sample to 94.40%: 1,584 of 1,678 caught (1,571 killed, 13 timed out), 92
+    survived, 2 with no coverage. That is the last run, incremental: 51 min 52 s, 787 mutants retested and 891 reused.
+    The forced full run before this WP's last three commits scored 90.62% (1,545 of 1,705) in 67 min 40 s.
+  - The 90% holds on the functions a run tests, not on sim and anim whole. The tests were written against the sample's
+    survivors, so its score no longer estimates the other 90% of the functions. A fresh draw measured them (seed
+    `wp-12.2-fresh`, 5% of the functions, 938 mutants, 18 min at the integrator): 81.24% caught (762), 92.0% of the
+    338 mutants it shares with the sample and 74.3% of the 580 it does not, where the whole stood before this WP.
+  - **Call (ESC-0006, decided in the owner's absence):** WP 12.2's 90% is read on the fixed sample the run tests (the
+    run fails under 90%), and PLAN.md's Done-when says so. The rest of sim and anim, about 74%, is the owner's open
+    issue: rotate `SAMPLE.seed` a stage at a time, so each stage works a new tenth's survivors, and report a fresh
+    draw at each gate.
+- **How the survivors were killed:**
+  - Each behaviour a survivor showed untested got a test beside its module: 54 new tests across 40 test files, and
+    others extended. footPlant's locks and options got a file of their own, engine/anim/footPlant-locks.test.ts,
+    since footPlant.test.ts is at its 400-line cap.
+  - Where no property says what a number must be (a gait's sums, a retarget's joints, the traversal matrix's hashes, a
+    foot plant's heights), a characterization test pins the numbers as measured. A `PRINT_*` switch prints them again
+    for a change meant to move them, under the baselines rule: a reason in the commit.
+  - No test was loosened, skipped or removed.
+- **Equivalent mutants** are marked where they are, `// Stryker disable next-line <mutator>: <reason>`, each with the
+  reason it cannot change behaviour: 22 marks in 12 files.
+  - The reasons: a default every first use overwrites, a guard whose call does nothing without it, a check another one
+    implies, a cache, a multiplication by ±1, a band's edge where both forms agree to rounding.
+  - A mark ignores every mutant of its mutator on the line, killed ones too. It is used only where the line's live
+    mutants of that kind are equivalent or few beside them.
+  - Boundary mutants at a threshold no input meets exactly (`ik.ts`'s 1e-4, `chain.ts`'s 1e-9) are left surviving,
+    and counted, as are equivalent mutants whose line also holds killed ones of the same kind.
+- **Incremental's rule (measured):** the Vitest runner reports no test locations, so Stryker takes each test to span
+  its whole file. A change anywhere in a test file counts as a change to every test in it, and the next run retests
+  every mutant those tests cover: 787 mutants after this WP's last 15 test files changed. A change to an engine file
+  retests the mutants in the changed code.
+- **The sample's caveat:** a function with no name of its own (a callback, a private method's) is keyed by its place
+  among the file's unnamed ones, so adding one before it can move it into or out of the sample.
+- **Files outside Owns:**
+  - tools/lib/evals.ts: the evals' library.
+  - tools/stryker/: the sample plugin, its test and the Vitest config.
+  - docs/TESTING.md: the bullets for the two runs.
+  - The engine's tests beside their modules, and the marks.
+  - `qBetween`, exported from engine/anim/clip/spine.ts for its test.
+- **Evidence:** tools/cmd/evals.test.ts, tools/stryker/sample.test.ts, `node x evals --dry-run` (14 of 14 real),
+  `npx stryker run` (out/stryker/mutation.json).
