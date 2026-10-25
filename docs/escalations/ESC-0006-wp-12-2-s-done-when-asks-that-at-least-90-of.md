@@ -1,7 +1,7 @@
 ---
 id: ESC-0006
 title: "WP 12.2's Done-when asks that at least 90% of mutants injected into engine/sim and engine/anim be caught. A full Stryker run over their 21,764 mutants takes 10 to 12 hours here, so the run tests a fixed 10% sample of their functions; the WP's 54 new tests, written against that sample's survivors, raised it from 74.15% to 94.40% (1,584 of 1,678). A fresh draw of another 5% (seed wp-12.2-fresh, 938 mutants) catches 81.24% in all: 92.0% of the 338 mutants it shares with the sample and 74.3% of the 580 it does not, as the whole stood (74.6% ± 4.2) before the WP. How should WP 12.2's 90% be read?"
-status: open
+status: decided-in-absence
 principle: "Quality under the hood"
 raised: 2026-10-25T08:19:11Z
 deadline: 2026-10-25T08:34:11Z
@@ -12,8 +12,8 @@ options:
   - "Amend the Done-when to a sampled reading for the future: 90% on the run's fixed sample, with a fresh draw reported every stage and its score rising; WP 12.2 done now on that reading."
 recommendation: 1
 answer: null
-call: null
-commit: null
+call: "No answer by the deadline (posted in the session's chat at 08:19 UTC, deadline 08:34): option 1. WP 12.2's 90% is read on the fixed 10% sample of sim's and anim's functions the Stryker run tests (94.40%, the run failing under 90%); a fresh 5% draw of the rest catches 81.24% (74.3% outside the sample), recorded in ADR-0025 amendment 43 and WP 12.2's ledger row, its Done-when amended in PLAN.md. The rest of sim and anim, about 74%, is the owner's open issue in docs/PROGRESS.md: rotate the sample's seed a stage at a time and report a fresh draw at each gate. The owner's answer, when it comes, decides whether more rounds follow."
+commit: 59b7344
 followUp: null
 ---
 
@@ -30,3 +30,4 @@ The 90% over every mutant is out of reach this stage: about 3,000 survivors to k
 ## Log
 
 - 2026-10-25T08:19:11Z: opened, waiting until 2026-10-25T08:34:11Z (run cse_0195aNNV9M5vZfaBJKsynNUv).
+- 2026-10-25T08:35:33Z: decided in the owner's absence at 59b7344: No answer by the deadline (posted in the session's chat at 08:19 UTC, deadline 08:34): option 1. WP 12.2's 90% is read on the fixed 10% sample of sim's and anim's functions the Stryker run tests (94.40%, the run failing under 90%); a fresh 5% draw of the rest catches 81.24% (74.3% outside the sample), recorded in ADR-0025 amendment 43 and WP 12.2's ledger row, its Done-when amended in PLAN.md. The rest of sim and anim, about 74%, is the owner's open issue in docs/PROGRESS.md: rotate the sample's seed a stage at a time and report a fresh draw at each gate. The owner's answer, when it comes, decides whether more rounds follow.
