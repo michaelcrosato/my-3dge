@@ -40,6 +40,7 @@ import type { QualityBudget } from './quality';
 import type { FeatureReport } from './features';
 import { daylightAt, defineDaylight } from './daylight';
 import type { PoolLamp } from './lights';
+import { snapShadow } from './shadows';
 import { createSky, type Sky, type SkyReport } from './sky';
 import type { Warmup } from './warmup';
 
@@ -104,6 +105,7 @@ function ownLights(scene: Scene, level: CompiledLevel | null, area?: StageSkyOpt
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.bias = -0.0005;
+  snapShadow(sun.shadow);
   sun.target.name = 'light:sun/target';
   scene.add(ambient, sun, sun.target);
   const [w, d] = level ? [level.cols * level.tile, level.rows * level.tile] : (area?.size ?? [16, 16]);

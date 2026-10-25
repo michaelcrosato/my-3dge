@@ -831,7 +831,7 @@ Advice from the feature registry (engine/gfx/features.ts) when ambient occlusion
 
 - Message: `{feature} is off: {reason}; {downgrade}`
 - Fix: nothing to do for play; take the feature out of gfx.featuresOff if it is listed there
-- Registered in: [`engine/gfx/enhanced/csm.ts` line 32](../engine/gfx/enhanced/csm.ts)
+- Registered in: [`engine/gfx/enhanced/csm.ts` line 37](../engine/gfx/enhanced/csm.ts)
 
 Advice from the feature registry (engine/gfx/features.ts) when cascaded shadows are off: the sky's sun casts one shadow map over the whole level.
 
