@@ -3830,7 +3830,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Size:** M
 - **Build:** the tour (a replay through every feature, in every camera and both looks: the attract mode, a film per look, a T2 check); the owner's playtest checklist (docs/PLAYGROUND.md §9.3); the guide, lean/ and the starter game brought up to the new public API (movement profiles, camera modes, storeys and sites, interaction, weapons).
 - **Done when:** the tour's replay gives its goldens in Node and in the page; `node x docs --check` and `node x engine --test` pass; the films go out with the stage's PR.
-- **Verify:** `node x replay tests/replays/playground-tour.replay.json --browser page && node x docs --check && node x engine --test && npm run e2e -- tests/e2e/playground-tour.spec.ts tests/e2e/game.spec.ts`
+- **Verify:** `node x replay tests/replays/playground-tour.replay.json --browser sim && node x docs --check && node x engine --test && npm run e2e -- tests/e2e/playground-tour.spec.ts tests/e2e/game.spec.ts` (the spec plays the tour in the page as it renders, in both looks; ADR-0025 amendment 41)
 
 **Gate G13, The tech demo:** every row of Phase 13 and every WP it fired is done or blocked only on the owner (named in docs/PROGRESS.md); the tour plays through; the quick gate and main's full run are green; the owner's checklist goes out.
 

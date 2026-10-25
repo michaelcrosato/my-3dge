@@ -2087,6 +2087,13 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   banner over it, the camera stepping every 8 s (blended) and the look every 16 s; a key, a click, a pad's button or
   the tour's end gives the playground back. The title screen offers it (Watch the tour) and opens it after a minute
   with nothing pressed, unless automation drives the browser, as the menus do.
+- **Call: the page's goldens from the spec, not `x replay --browser page`.** That command draws a frame after every
+  step, 7,540 for the tour, hours on SwiftShader here; the spec plays the same replay in the page through every camera
+  in each look, a frame drawn every 60 steps and the film's twelve shot, and holds its goldens, so WP 13.26's Verify
+  runs `x replay --browser sim` (Node and Chromium, no renderer) and the spec for the page. Drawn every 6
+  steps, the spec's cel look passed the test's 40 minutes; a shot builds the look's passes into its own target the
+  first time (0 → 8 pipelines in the box's toon look, none on a second), so the spec shoots once before the tour and
+  holds what the tour adds at 0.
 - **The hand-over:** docs/GAME-GUIDE.md §4 names what the playground added to the public API (sites, Apex's movement
   and the feel tools, rides, doors, windows and switches, the day's clock, the front end's menus, store and modal
   input, the new cameras); lean/README.md's overview likewise; the starter game (labs/game/) pauses under a menu
