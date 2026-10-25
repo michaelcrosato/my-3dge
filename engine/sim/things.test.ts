@@ -88,6 +88,24 @@ describe('things in a scene', () => {
     ).toEqual(['anim']); // one, however many things
   });
 
+  it('steps all its things in one system, added once in the anim phase, however many it has', () => {
+    const scene = defineScene('things-test:two', {
+      physics: true,
+      setup(w) {
+        physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [20, 1, 20] }, position: [0, -0.5, 0] }] }); // prettier-ignore
+        spawnThing(w, 'thing:test-mover', [0, 0, 2]);
+        spawnThing(w, 'thing:test-mover', [0, 0, -2]);
+      },
+    });
+    const { world } = createSession(scene, { seed: 1 });
+    expect(
+      world.systems
+        .list()
+        .filter((s) => s.name === 'things')
+        .map((s) => s.phase),
+    ).toEqual(['anim']);
+  });
+
   it('takes all it has from a blast', () => {
     const { world, mover } = moverScene('blast');
     strikeEntity(world, 1, [0, 1, 0], true, 'blast');
