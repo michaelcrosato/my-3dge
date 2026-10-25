@@ -121,6 +121,31 @@ export function memoryBackend(): StoreBackend {
   };
 }
 
+/**
+ * The store as the two string calls of `localStorage` (`getItem`, `setItem`), for a module that saves text of its own:
+ * the bindings (engine/input/bindings.ts), which the engine saves through the page's store (`createEngine({ store })`).
+ * Each text is kept as its JSON value in the store's envelope, so the store's prefix and mode hold for it; text that is
+ * not JSON is not kept, as a refused write.
+ */
+export function textStorage(store: Store): {
+  getItem(key: string): string | null;
+  setItem(key: string, text: string): void;
+} {
+  return {
+    getItem: (key) => {
+      const value = store.get<unknown>(key, null);
+      return value === null ? null : JSON.stringify(value);
+    },
+    setItem: (key, text) => {
+      try {
+        store.set(key, JSON.parse(text));
+      } catch {
+        // not JSON: not kept
+      }
+    },
+  };
+}
+
 /** The page's `localStorage`, or why it cannot be had. */
 function pageStorage(): StoreBackend | string {
   try {

@@ -299,6 +299,7 @@ export function createAppHost<C extends object = AnyComponents, E extends EventM
             draw: drawing && (() => drawing.draw()),
             camera: view ? (code, blend) => void view.setCamera(code, { blend }) : undefined,
             setView: (path, value) => (drawing ? drawing.setView(path, value) : run.session.set(path, value)),
+            shoot: drawing && ((shotOptions) => drawing.shot(shotOptions)),
           },
           text,
           playOptions,

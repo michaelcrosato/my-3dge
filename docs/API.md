@@ -3456,6 +3456,7 @@ For the agents who maintain the engine.
 - `StoreBackend` (interface): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
 - `StoreMode` (type): One of `STORE_MODES`: whose play a store keeps.
 - `StoreOptions` (interface): How a store is made (see the file comment).
+- `textStorage` (function): The store as the two string calls of `localStorage` (`getItem`, `setItem`), for a module that saves text of its own: the bindings (engine/input/bindings.ts), which the engine saves through the page's store (`createEngine({ store })`).
 
 ### [`engine/app/view.ts`](../engine/app/view.ts)
 
@@ -4159,6 +4160,15 @@ For the agents who maintain the engine.
 - `GalleryShot` (interface): One filmed frame: its label, the tick, the camera, the shot's size, its pixels (base64) and what the ID pass saw.
 - `GalleryView` (interface): The view a gallery films through: the run's stage and its camera (engine/app/view.ts).
 - `subjectBounds` (function): The bounds of what the stage draws for the subject: its props, puppets and stand-ins (the ground left out).
+
+### [`engine/dev/governor.ts`](../engine/dev/governor.ts)
+
+- `createGovernor` (function): Makes a governor; `log` takes its advice (the shared log by default).
+- `Governor` (interface): The governor (see the file comment).
+- `GOVERNOR` (const): The governor's numbers (see the file comment): seconds, milliseconds a frame, and the scale's steps.
+- `GOVERNOR_CODES` (const): Its advice code.
+- `GOVERNOR_SETTINGS` (const): Its view setting: whether it may move `auto`'s tier at all (a page that compares frames turns it off).
+- `GovernorState` (interface): What the governor holds now.
 
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
 
@@ -8201,8 +8211,10 @@ For the agents who maintain the engine.
 - `APEX_JUMP` (const): Apex's jump (m): 56 units.
 - `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s; holstered, the player runs 1.15 times as fast.
 - `PLAYER_LOOK` (const): How the player is drawn: `body:player` on the adult build, empty-handed.
-- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned.
-- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m).
+- `PLAYER_MOVEMENTS` (const): The profiles the player may move by: Apex's, the default, and the Stress Box hero's.
+- `PLAYER_SETTINGS` (const): The player's setting (see the file comment).
+- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned; on another profile, that profile's own character, the tuning unused.
+- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m); and the profile, Apex's by default.
 - `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move, carrying `weapons` (ids, in slot order; none by default), holstered.
 
 ### [`labs/playground/cast/ways.ts`](../labs/playground/cast/ways.ts)
@@ -8531,6 +8543,80 @@ For the agents who maintain the engine.
 - `SoundFrame` (interface): What `frame` reads each drawn frame (the engine's `onFrame` gives it): never a way to change play.
 - `WIND` (const): The wind past his ears: none below `from` m/s, full (`vol`) at `full`, in twentieths, eased over `ease` s.
 - `ZIP` (const): The zipline's hum while he rides, its level.
+
+### [`labs/playground/tour.ts`](../labs/playground/tour.ts)
+
+- `buildTour` (function): The tour (see the file comment) from `replays`, by name, over `segments` (the whole tour by default).
+- `MOVER_ROUND` (const): The range's movers' round, steps: there and back along the track at its speed, at 60 Hz.
+- `TOUR` (const): The tour's segments, in order: the street's on its own scene, the gym's, empty-handed, then the block's, the guns last.
+- `TourReplay` (interface): A replay as the tour reads and writes it (engine/sim/replay.ts's format, goldens aside).
+- `TourSegment` (interface): A segment: the replay it plays, and where its player starts when the replay does not `place` him at step 0.
+
+### [`labs/playground/ui/attract.ts`](../labs/playground/ui/attract.ts)
+
+- `Attract` (interface): The attract mode on a page (see the file comment).
+- `ATTRACT` (const): The attract mode's numbers: seconds on an idle title screen before it starts, and seconds a view shows.
+- `ATTRACT_SETTINGS` (const): The attract mode's view setting (see the file comment).
+- `attractPage` (function): The tour's page at `path` (the playground's): its replay, the attract mode on, no title screen over it.
+- `createAttract` (function): Starts the attract mode in a page whose engine plays the tour: the banner in `root`, the view cycling from the look `look`, until a key, a click, a pad button or the tour's `steps` call `leave` (the playground again, by default).
+- `TOUR_REPLAY` (const): The tour's replay, as the page offers it (`?replay=<name>`).
+
+### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
+
+- `createFrontEnd` (function): Makes the front end, nothing open (see the file comment).
+- `FRONT_END_SETTINGS` (const): The title screen's view setting (see the file comment).
+- `FrontEnd` (interface): The front end (see the file comment).
+- `FrontEndOptions` (interface): What the front end needs of the page.
+- `ScreenName` (type): The screens.
+- `spawnOnOpen` (function): Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran.
+- `titleOnOpen` (function): Whether the title screen opens with the page (see the file comment).
+
+### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
+
+- `feelLine` (function): The feel readout's line: speed over the ground, m/s, and the mode (or, on the ground, the gait).
+- `HUD_MODES` (const): Each camera mode's HUD, by the mode's name (labs/playground/views.ts).
+- `HUD_SETTINGS` (const): The readout's view setting (see the file comment).
+- `HudFrame` (interface): What one frame's HUD shows: the mode's name, the look, the room line, the player, and the readout setting.
+- `HudMode` (interface): What a camera mode's HUD shows (see the file comment).
+- `HudPlayer` (type): The player as the HUD reads him: where he is and how fast, how he moves, what he would use, his weapons.
+- `showHud` (function): Shows `frame`'s HUD on `ui`, the prompts read from `input` (see the file comment); `hidden` clears it.
+
+### [`labs/playground/ui/photo.ts`](../labs/playground/ui/photo.ts)
+
+- `createPhoto` (function): Makes photo mode, closed: its hint in `parent`, its drag over `canvas`.
+- `Photo` (interface): Photo mode (see the file comment).
+- `PHOTO` (const): How the drag turns the camera: radians a CSS pixel.
+- `PhotoCamera` (interface): The camera member, as photo mode uses it.
+
+### [`labs/playground/ui/prefs.ts`](../labs/playground/ui/prefs.ts)
+
+- `NO_PREFS` (const): No preferences: a first visit.
+- `PREF_BUSES` (const): The audio buses the settings screen sets, master first (engine/audio/runtime/mixer.ts's).
+- `PREF_SETTINGS` (const): The settings the settings screen offers and the store keeps, by path.
+- `Prefs` (interface): What is kept (see the file comment).
+- `PREFS_KEY` (const): The key the preferences are kept under.
+- `PREFS_PREFIX` (const): The store's prefix: the playground's own, so other pages on the origin keep apart.
+- `PrefSetting` (type): One of `PREF_SETTINGS`.
+- `prefsQuery` (function): Writes `prefs` into `search` (see the file comment) and returns the keys it wrote: the camera's (`cam` or `cam3`) when the query names no camera, then each kept setting the query lacks and the routes accept on `scenes`.
+- `readPrefs` (function): The preferences `store` keeps, or none; whatever is not of their shape is dropped.
+- `savePrefs` (function): Keeps `prefs` in `store`; false when the store refused it.
+
+### [`labs/playground/ui/settings.ts`](../labs/playground/ui/settings.ts)
+
+- `CONTROL_ACTIONS` (const): The actions the controls list, with their names: the four moves, then those the player answers (controls.ts).
+- `createSettings` (function): Makes the settings screen in `parent` (see the file comment).
+- `RowSchema` (interface): A setting's schema as the screen reads it: its type, range and choices.
+- `SETTING_ROWS` (const): The rows, in the screen's order (see the file comment).
+- `SettingRow` (interface): What a row sets: a setting by path, the camera mode, or a bus's level.
+- `SettingsOptions` (interface): How the screen is made.
+- `SettingsScreen` (interface): The settings screen.
+
+### [`labs/playground/ui/spawns.ts`](../labs/playground/ui/spawns.ts)
+
+- `SPAWN_SETTINGS` (const): The spawn picker's view setting (see the file comment): a place's id, or none.
+- `spawnPlace` (function): The place `id` names, or undefined.
+- `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
+- `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
@@ -9353,6 +9439,11 @@ For the agents who maintain the engine.
 - `LABS_FILE` (const): The index's file, from the repository root.
 - `LABS_MODEL` (const): The index's model, beside the index in the engine's checkout.
 
+### [`tools/cmd/mcp.ts`](../tools/cmd/mcp.ts)
+
+- `default` (default): Serves the engine to MCP clients (PLAN.md §8.11, WP 7.6): `node x mcp` speaks the Model Context Protocol on stdin and stdout, so an agent that cannot run `node x` drives the engine as `x inspect`, `x eval` and `x shot` do.
+- `openArgs` (function): What the flags name to open first, or undefined when they name nothing.
+
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 
 - `CheckName` (type): One check's name.
@@ -9984,6 +10075,81 @@ For the agents who maintain the engine.
 - `DevServer` (interface): A running dev server.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
+
+### [`tools/mcp/backend.ts`](../tools/mcp/backend.ts)
+
+- `Backend` (interface): The engine the tools drive (see the file comment).
+- `OpenArgs` (interface): What `x mcp`'s flags (or the last `engine_open`) asked to open.
+- `Opened` (interface): A page or scene opened: what it is, whether it signalled ready, its error records and `info()`.
+- `openPath` (function): The page path `page` opens with `params` as URL parameters (objects and lists as JSON), as `x inspect` writes it.
+- `Params` (type): URL parameters for a page: routes (`scene`, `seed`, `cam`, `cam3`, `replay`) and settings by path.
+- `Progress` (type): Receives a line while a call waits (a page warming its pipelines): MCP progress for the client.
+
+### [`tools/mcp/docs.ts`](../tools/mcp/docs.ts)
+
+- `docsLookup` (function): What the docs say about `symbol` (see the file comment).
+
+### [`tools/mcp/headless.ts`](../tools/mcp/headless.ts)
+
+- `headlessBackend` (function): The headless backend over the repository at `root` (see the file comment).
+- `invoke` (function): Calls (or reads) member `name` on `engine` with `args`, its value copied through JSON.
+- `sceneTarget` (function): The scene module and id a page names (see the file comment).
+
+### [`tools/mcp/link.ts`](../tools/mcp/link.ts)
+
+- `forkLink` (function): Starts `node x mcp --worker <args…>` under `root` and links to it over IPC; its output goes to `output`.
+- `localLink` (function): A worker in this process.
+- `WorkerHandler` (type): A worker answers requests (tools/mcp/worker.ts `createWorker`).
+- `WorkerLink` (interface): The server's side of a worker.
+- `WorkerReply` (type): What a worker answers: a value, an error's first line, or (before either) a progress line.
+- `WorkerRequest` (type): What the server asks its worker (see the file comment).
+
+### [`tools/mcp/results.ts`](../tools/mcp/results.ts)
+
+- `cutText` (function): `text` as a result's text, cut past `MAX_TEXT` with a line saying where the whole of it is (under `root`).
+- `errorLine` (function): The first line of an error's message, without the wrappers a page or Playwright put round it.
+- `errorResult` (function): A failed call as a result: its text names what went wrong and the fix.
+- `GoldenVerdict` (interface): How a replay's hashes stand against its goldens for this platform.
+- `judgeGoldens` (function): Judges `hashes` (by step) against `goldens`, at the steps both hold.
+- `MAX_LISTED` (const): The most visible objects a shot's JSON lists one by one, largest first; the rest are counted.
+- `MAX_TEXT` (const): The longest text a result carries, in characters: about 15,000 tokens, under what clients keep of a result.
+- `shotResult` (function): A shot as a result: the frame as a PNG (the marked copy when marks were drawn) and its numbers as JSON.
+- `shotSummary` (function): A shot's numbers for the client: the look, the ID pass and the thumbnail's map, without pixels.
+- `valueResult` (function): A result holding `value`: a string as it is, anything else as compact JSON.
+
+### [`tools/mcp/schema.ts`](../tools/mcp/schema.ts)
+
+- `argsSchema` (function): A schema's fields as one JSON Schema object, in their order; `open` lets keys it does not name through.
+- `fieldSchema` (function): One field as JSON Schema (see the file comment).
+- `JsonSchema` (type): A JSON Schema, as MCP carries it.
+- `McpSchemaError` (class): Thrown for a field MCP cannot carry: a `function` (a hook).
+- `ObjectSchema` (interface): A tool's `inputSchema`: a JSON Schema object.
+
+### [`tools/mcp/server.ts`](../tools/mcp/server.ts)
+
+- `Bridge` (interface): A running bridge.
+- `BridgeOptions` (interface): How `createBridge` is set up.
+- `createBridge` (function): Makes the bridge (see the file comment).
+- `WATCHED` (const): The directories whose changes restart the worker: what it loads.
+
+### [`tools/mcp/session.ts`](../tools/mcp/session.ts)
+
+- `memberExpression` (function): The JavaScript that calls (or reads) member `name` with `args` in a page: an absent argument stays absent.
+- `pageBackend` (function): The page backend over the repository at `root` (see the file comment).
+- `PROGRESS_MS` (const): How often a wait for the page sends progress, ms.
+
+### [`tools/mcp/tools.ts`](../tools/mcp/tools.ts)
+
+- `positional` (function): `args` in `member`'s call order: a list as it is, an object by its argument names, one value as the first.
+- `replayFile` (function): A replay file under `root`: its path from there, its text, its scene and its goldens for this platform.
+- `runTool` (function): Runs tool `name` with `input` in `context`; every failure is an `isError` result.
+- `ToolContext` (interface): What a tool runs with: the repository root, the backend, where the members are registered, where progress goes.
+- `toolList` (function): The tools the server lists, generated from the members registered on `registry` (see the file comment).
+
+### [`tools/mcp/worker.ts`](../tools/mcp/worker.ts)
+
+- `createWorker` (function): A worker over `backend`, for the repository at `root`: the handler a link calls.
+- `serveWorker` (function): Answers the server that forked this process (tools/mcp/link.ts `forkLink`) until it disconnects.
 
 ### [`tools/qa/anim.ts`](../tools/qa/anim.ts)
 

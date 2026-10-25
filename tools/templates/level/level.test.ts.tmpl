@@ -1,0 +1,31 @@
+/**
+ * @file Unit tests for the level `level:{{name}}` ({{id}}.ts): it compiles to its storeys, bottom first, and to one room
+ * for each marker, each marker inside its room and each room with its floor; the player's spawn stands in it; and it
+ * passes every check `node x qa level` runs (engine/world/level/validate.ts): every spawn and room reached from the main
+ * floor and back, doors wider than a body, headroom for a crouched one, flights of stairs no steeper than a body walks.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { getLevel, validateLevel } from '../../../engine/sim-api';
+import { {{name}}, {{NAME}}_ROOMS } from './{{name}}';
+
+describe('level:{{name}}', () => {
+  it('compiles to its storeys and a room for each marker, the marker inside it and its floor given', () => {
+    const level = getLevel({{name}}.id);
+    const rooms = Object.values({{NAME}}_ROOMS).sort();
+    const bases = (level.storeys ?? []).map((storey) => storey.base);
+    expect([bases.length > 1, bases]).toEqual([true, [...bases].sort((a, b) => a - b)]); // storeys, bottom first
+    expect(level.rooms?.map((room) => room.name).sort()).toEqual(rooms);
+    expect(Object.keys({{name}}.rooms).sort()).toEqual(rooms); // each room's floor given
+    for (const room of level.rooms ?? []) {
+      const [col, row] = room.marker;
+      const [c0, r0, c1, r1] = room.rect;
+      expect(col >= c0 && col <= c1 && row >= r0 && row <= r1, room.name).toBe(true);
+    }
+    expect(level.spawns.map((spawn) => spawn.id)).toContain('spawn:hero');
+  });
+
+  it('passes every check node x qa level runs', () => {
+    expect(validateLevel({{name}}.text, { file: {{name}}.file }).map((problem) => problem.message)).toEqual([]);
+  });
+});

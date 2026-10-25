@@ -18,13 +18,17 @@ it.
 - [`lean/`](../lean/): the default handoff, the engine as a library (ADR-0024 amendment 1); docs/GAME-GUIDE.md and labs/game/, the full workspace's guide and starter. Keep lean/README.md, lean/game.html, the guide and the starter true when a public API changes (`x docs --write` rebuilds lean/my3dge.js and writes the generated blocks). tools/game/new-game.mjs makes a game; `node x engine --test` proves one passes its own gate.
 - [`labs/box/README.md`](../labs/box/README.md): the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new scene file or a settings preset, never a change of meaning in a passing scene).
 - [`tests/replays/README.md`](../tests/replays/README.md): the replay format; checking, recording and making replays.
-- [`tools/templates/`](../tools/templates/): `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it (`node x new` lists the kinds).
-- [`.claude/skills/`](../.claude/skills/): the skills, each loaded when its description says (x-loop after any change, stress-box for the box, determinism-debugging when hashes part, rapier, three-webgpu, escalation).
+- [`tools/templates/README.md`](../tools/templates/README.md): the kinds `node x new <kind> <id>` writes from a template and checks (a module, scene, prop, weapon, level…), where each goes, what shows it, and how to add a kind (`node x new` lists them).
+- [`.claude/skills/`](../.claude/skills/): the skills, each loaded when its description says (x-loop after any change, add-entry for a new entry of a kind, stress-box for the box, determinism-debugging when hashes part, animation-authoring, visual-qa, perf-budgets, rapier, three-webgpu, escalation).
+  - [`.claude/skills/add-entry/SKILL.md`](../.claude/skills/add-entry/SKILL.md): Adding an entry of a kind through node x new and its template in tools/templates/. Use whenever you add a new entry of any kind, or catch yourself writing the third entry of a kind that has no template.
+  - [`.claude/skills/animation-authoring/SKILL.md`](../.claude/skills/animation-authoring/SKILL.md): Authoring animation in my-3dge. Use when you add or change a build, body, move, action, clip, pose, rig or reaction, touch engine/anim, or an anim QA metric fails.
   - [`.claude/skills/determinism-debugging/SKILL.md`](../.claude/skills/determinism-debugging/SKILL.md): How to find and fix a determinism bug in my-3dge. Use whenever x replay, a replay test or a hash comparison fails.
   - [`.claude/skills/escalation/SKILL.md`](../.claude/skills/escalation/SKILL.md): When and how to escalate to the owner in my-3dge. Use before any such action, and when the SessionStart hook or the Stop hook names an open escalation.
+  - [`.claude/skills/perf-budgets/SKILL.md`](../.claude/skills/perf-budgets/SKILL.md): Performance in my-3dge as counters against budgets, never frames per second. Use when you add or change something drawn or simulated at scale, when node x perf --budget or a QA budget fails, or before recording a budget.
   - [`.claude/skills/rapier/SKILL.md`](../.claude/skills/rapier/SKILL.md): Rapier physics in my-3dge under the reproducibility contract. Use when adding bodies, colliders or queries, touching engine/physics, or debugging a physics hash or capture.
   - [`.claude/skills/stress-box/SKILL.md`](../.claude/skills/stress-box/SKILL.md): The Stress Box (labs/box), the engine's integration target. Use when you work on the box, add or tune a box scene, or need to show an engine capability in the box.
   - [`.claude/skills/three-webgpu/SKILL.md`](../.claude/skills/three-webgpu/SKILL.md): Writing three.js code in my-3dge. Use before writing, reviewing or debugging code that imports three.js.
+  - [`.claude/skills/visual-qa/SKILL.md`](../.claude/skills/visual-qa/SKILL.md): Checking what my-3dge draws without looking. Use when you change rendering, a look, a camera, a material or a scene's view, when a look note or a thumbnail check fails, or when a question is whether something shows.
   - [`.claude/skills/x-loop/SKILL.md`](../.claude/skills/x-loop/SKILL.md): The my-3dge work loop, edit → check → test → report. Use whenever you change code in this repository, or are unsure what to run next.
 
 ## Kinds
@@ -359,7 +363,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `parseRoutes`, `ROUTE_CODES`, `ROUTE_KEYS`, `RouteOptions`, `routeQuery`, `Routes`
   - Tests: [`engine/app/routes.test.ts`](../engine/app/routes.test.ts)
 - [`store.ts`](../engine/app/store.ts): The store (PLAN.md WP 10.9, §9.1, ADR-0024): what a game keeps across sessions, outside the sim (high scores, progress, its settings).
-  - Exports: `createStore`, `memoryBackend`, `Store`, `STORE_CODES`, `STORE_FORMAT`, `STORE_MODES`, `StoreBackend`, `StoreMode`, `StoreOptions`
+  - Exports: `createStore`, `memoryBackend`, `Store`, `STORE_CODES`, `STORE_FORMAT`, `STORE_MODES`, `StoreBackend`, `StoreMode`, `StoreOptions`, `textStorage`
   - Tests: [`engine/app/store.test.ts`](../engine/app/store.test.ts)
 - [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
   - Exports: `ADVANCE_FRAME`, `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
@@ -547,6 +551,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`galleryShoot.ts`](../engine/dev/galleryShoot.ts): Filming the gallery (PLAN.md WP 7.7): the inspector members `gallery.list(kind?)`, `gallery.frames(kind, id)` and `gallery.shoot(kind, id, size?)` (registered here, so `__engine.gallery` and `help()` list them), and the live driver a deep link's page runs (`createGalleryDriver`).
   - Exports: `BURST_REACH`, `createGalleryDriver`, `GALLERY_SHOOT_CODES`, `GalleryDriver`, `GalleryRun`, `GalleryShot`, `GalleryView`, `subjectBounds`
   - Tests: [`tests/e2e/gallery.spec.ts`](../tests/e2e/gallery.spec.ts)
+- [`governor.ts`](../engine/dev/governor.ts): The performance governor (PLAN.md WP 7.5; the mechanism of `my-3d2dge:src/emberdeep/95-perf.js`, and `shardfall:crates/pav_app/src/quality.rs:89-113`'s dynamic scale): while the view setting `quality` is `auto`, it moves the page between the quality tiers (engine/gfx/quality.ts) as the frame rate asks, with hysteresis, and on a touch screen scales the resolution as well.
+  - Exports: `createGovernor`, `Governor`, `GOVERNOR`, `GOVERNOR_CODES`, `GOVERNOR_SETTINGS`, `GovernorState`
+  - Tests: [`engine/dev/governor.test.ts`](../engine/dev/governor.test.ts)
 - [`inspector.ts`](../engine/dev/inspector.ts): The inspector (PLAN.md §8.3, WP 1.6; doctrines: Agent-operable, Verifiable): `window.__engine` in a page and the object `createHeadless` returns in Node are one API, which `createInspector` assembles from the entries of the registry kind `inspectorMember` (engine/dev/members.ts).
   - Exports: `CORE_MEMBERS`, `CoreMembers`, `createInspector`, `EngineInfo`, `EntitySummary`, `Inspector`, `INSPECTOR_CODES`
   - Tests: [`engine/dev/inspector.test.ts`](../engine/dev/inspector.test.ts)
@@ -1812,6 +1819,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`main.ts`](../labs/playground/main.ts): The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): it imports every module under `labs/playground/scenes/`, `looks/` and `bodies/`, so a scene added there opens at `?scene=<name>`, a look at `?post.look=<id>` and a body draws, with no change here, registers the playground's levels as text, and starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the shooter camera and the cel look unless the query names others, with the playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
 - [`menu.ts`](../labs/playground/menu.ts): The playground page's menu for humans (labs/playground/index.html): what the playground offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
   - Exports: `controlRows`, `createPlaygroundMenu`, `linkQuery`, `MENU_KEY`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `PLAYGROUND_MENU_SETTINGS`, `PlaygroundMenuOptions`
+- [`tour.ts`](../labs/playground/tour.ts): The playground's tour (docs/PLAYGROUND.md §9.2, PLAN.md WP 13.26): one replay through every feature on the block, made of the playground's own replays played in turn (`TOUR`): the street's neighbours and dog first, on the street's own scene (`playground:site-street`, so the dog's story is its replay's), then the gym's run, its moves, its mantles and climbs, its rides, the house's doors, lights, windows and garage, the ring's melee and the range's guns.
+  - Exports: `buildTour`, `MOVER_ROUND`, `TOUR`, `TourReplay`, `TourSegment`
+  - Tests: [`labs/playground/tour.test.ts`](../labs/playground/tour.test.ts)
 - [`views.ts`](../labs/playground/views.ts): The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its two looks, in the order the keys step through them: the maps' view actions (labs/playground/controls.ts, WP 13.9) cycle the cameras (T, `nextCamera`), swap the shooter's shoulder (X, `swapShoulder`) and turn isometric by 90° (Q and E, `turnView`), and P (`LOOK_KEY`) switches the looks, live, on the page (labs/playground/main.ts), each camera switch blended; the menu (labs/playground/menu.ts) links each.
   - Exports: `cameraMode`, `CameraMode`, `LOOK_KEY`, `nextCamera`, `nextLook`, `PLAYGROUND_CAMERAS`, `PLAYGROUND_LOOKS`, `swapShoulder`, `turnView`
   - Tests: [`labs/playground/views.test.ts`](../labs/playground/views.test.ts)
@@ -1846,7 +1856,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `PARTNER_BLOWS`, `RING_PARTNERS`, `standPartners`
   - Tests: [`labs/playground/cast/partners.test.ts`](../labs/playground/cast/partners.test.ts)
 - [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1–13.3): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
-  - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
+  - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `PLAYER_MOVEMENTS`, `PLAYER_SETTINGS`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
 - [`ways.ts`](../labs/playground/cast/ways.ts): The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the goal lies on another node.
   - Exports: `plainWays`, `replanWays`, `waysOf`, `wayTo`
@@ -1999,6 +2009,30 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`page.ts`](../labs/playground/sounds/page.ts): The playground's sound in its page (docs/PLAYGROUND.md §8.1, PLAN.md WP 13.22): `createPlaygroundSound()` makes the page's audio runtime (engine/audio/runtime/audio.ts: locked, silent, until the first key, click or end of a touch) and returns `frame`, which the page runs once per drawn frame (labs/playground/main.ts's `onFrame`).
   - Exports: `BEDS`, `createPlaygroundSound`, `EARS`, `groundOf`, `LOG_SIZE`, `PlaygroundSound`, `PlaygroundSoundInfo`, `SoundFrame`, `WIND`, `ZIP`
   - Tests: [`labs/playground/sounds/page.test.ts`](../labs/playground/sounds/page.test.ts)
+
+## labs/playground/ui
+
+- [`attract.ts`](../labs/playground/ui/attract.ts): The playground's attract mode (docs/PLAYGROUND.md §9.2, PLAN.md WP 13.26): the tour (labs/playground/tour.ts, tests/replays/playground-tour.replay.json) playing in the page as `?replay=playground-tour` plays it, in real time from step 0, the view stepping through the five cameras every `ATTRACT.cycle` seconds (blended, as T does) and switching the look every second step, a banner (`[data-ui=attract]`) saying any key plays.
+  - Exports: `Attract`, `ATTRACT`, `ATTRACT_SETTINGS`, `attractPage`, `createAttract`, `TOUR_REPLAY`
+  - Tests: [`tests/e2e/playground-tour.spec.ts`](../tests/e2e/playground-tour.spec.ts)
+- [`frontEnd.ts`](../labs/playground/ui/frontEnd.ts): The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): its screens over the game, the engine's menus (engine/ui/menu.ts) and the playground's panels, on a stack (closing one shows the one under it again): - the title screen (`title`: Play, Spawn, Settings, Photo mode, Watch the tour), shown as the page opens while the view setting `playground.title` says so (`auto`: unless a replay plays or automation drives the browser, as the menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle` seconds, it opens the attract mode (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no automation drives the browser; - pause (`pause`: Resume, Spawn, Settings, Photo mode, Restart, Title screen), opened by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a browser spends the first Escape on the lock); - the spawn picker (`spawns`, labs/playground/ui/spawns.ts), settings (`settings`, labs/playground/ui/settings.ts) and photo mode (`photo`, labs/playground/ui/photo.ts).
+  - Exports: `createFrontEnd`, `FRONT_END_SETTINGS`, `FrontEnd`, `FrontEndOptions`, `ScreenName`, `spawnOnOpen`, `titleOnOpen`
+  - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
+- [`hud.ts`](../labs/playground/ui/hud.ts): The playground's HUD by camera mode (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what each of the five modes shows over the game (`HUD_MODES`), and `showHud`, which the page (labs/playground/main.ts) runs each drawn frame: - the camera and the look in use, top right, and the room the player is in on a scene's site, top left; - the crosshair where the screen's centre aims a gun (first person and the shooter: `showsCrosshair`, labs/playground/weapons/hud.ts), never in the views that aim with the pointer; - the prompts: what using the thing in reach does, with the key that uses it on the device used last (WP 13.16); - the ammo: the weapon out and its rounds, the range's count (`weaponLine`, WP 13.20); - the keys of the map in use, as its prompts give them (`keysLine`, labs/playground/controls.ts); - the feel readout (`feelLine`): the player's speed over the ground and how he moves (the movement model's mode or gait), which the platformer, isometric and top-down show (where the view gives speed away least), and every mode with the view setting `playground.readout` at `on` (`off` hides it everywhere).
+  - Exports: `feelLine`, `HUD_MODES`, `HUD_SETTINGS`, `HudFrame`, `HudMode`, `HudPlayer`, `showHud`
+  - Tests: [`labs/playground/ui/hud.test.ts`](../labs/playground/ui/hud.test.ts)
+- [`photo.ts`](../labs/playground/ui/photo.ts): The playground's photo mode (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): the run paused, the free camera (the engine's fly camera, a bare `cam3=fly`, which starts from the camera on screen: engine/gfx/cameras/fly.ts) flown with the map's move keys, the jump key climbing and the crouch key sinking, the sprint key fast; turned by dragging the mouse over the game (`PHOTO.drag` rad a pixel); its lens narrowed and widened with the wheel, as ever; the HUD hidden; the looks switched with P, as ever.
+  - Exports: `createPhoto`, `Photo`, `PHOTO`, `PhotoCamera`
+  - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
+- [`prefs.ts`](../labs/playground/ui/prefs.ts): The playground's preferences (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what its settings screen changes and the page's store keeps across sessions (`createStore`, engine/app/store.ts, under `PREFS_PREFIX`): the camera mode the page opens in, the settings of `PREF_SETTINGS` by path (the field of view, the mouse, the look, the quality, the movement profile) and the audio buses' levels.
+  - Exports: `NO_PREFS`, `PREF_BUSES`, `PREF_SETTINGS`, `Prefs`, `PREFS_KEY`, `PREFS_PREFIX`, `PrefSetting`, `prefsQuery`, `readPrefs`, `savePrefs`
+  - Tests: [`labs/playground/ui/prefs.test.ts`](../labs/playground/ui/prefs.test.ts)
+- [`settings.ts`](../labs/playground/ui/settings.ts): The playground's settings screen (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): a panel over the game, in the look of the engine's menus (engine/ui/widgets.ts's box), with a row for each thing the player sets (`SETTING_ROWS`): the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the look, the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio levels; then the controls: each action the player answers with its key, a button to rebind it, and one to reset them all.
+  - Exports: `CONTROL_ACTIONS`, `createSettings`, `RowSchema`, `SETTING_ROWS`, `SettingRow`, `SettingsOptions`, `SettingsScreen`
+  - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
+- [`spawns.ts`](../labs/playground/ui/spawns.ts): The spawn picker's places (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): each area of the block (`SITE_AREAS`: its spawn, facing as it faces) and each room of its structures (`roomPlace`, labs/playground/scenes/site.ts: at the room's marker, ducked under a low ceiling), each as the arguments of the block's dev action `place`, so a pick is a recorded operation of the run and its replay holds it.
+  - Exports: `SPAWN_SETTINGS`, `spawnPlace`, `SpawnPlace`, `spawnPlaces`
+  - Tests: [`labs/playground/ui/spawns.test.ts`](../labs/playground/ui/spawns.test.ts)
 
 ## labs/playground/weapons
 
@@ -2301,6 +2335,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`lab.ts`](../tools/cmd/lab.ts): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts, which this command loads by path where the checkout has it (a game made from the engine gets tools/, never the labs: tools/game/imports.test.ts).
   - Exports: `createLabCommand`, `default`, `LAB_DAYS`, `LABS_FILE`, `LABS_MODEL`
   - Tests: [`tools/cmd/lab.test.ts`](../tools/cmd/lab.test.ts)
+- [`mcp.ts`](../tools/cmd/mcp.ts): Serves the engine to MCP clients (PLAN.md §8.11, WP 7.6): `node x mcp` speaks the Model Context Protocol on stdin and stdout, so an agent that cannot run `node x` drives the engine as `x inspect`, `x eval` and `x shot` do.
+  - Exports: `default`, `openArgs`
+  - Tests: [`tests/e2e/mcp.spec.ts`](../tests/e2e/mcp.spec.ts), [`tools/cmd/mcp.test.ts`](../tools/cmd/mcp.test.ts)
 - [`new.ts`](../tools/cmd/new.ts): Scaffolds a new entry of a kind from its template (PLAN.md §8.13): `x new <kind> <id>` writes the files of `tools/templates/<kind>/`, filled in for the id, then runs the kind's checks and prints the summary.
   - Exports: `CheckName`, `CHECKS`, `default`, `fill`, `Kind`, `listKinds`, `NEXT`, `nextIn`, `render`, `runCheck`, `runChecks`, `testKind`, `writeFiles`
   - Tests: [`tools/cmd/new.test.ts`](../tools/cmd/new.test.ts)
@@ -2466,6 +2503,39 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`vite.ts`](../tools/lib/vite.ts): A Vite dev server through Vite's JavaScript API, for the `x` commands that open pages (PLAN.md §8.1).
   - Exports: `DevServer`, `freePort`, `startVite`
   - Tests: [`tools/lib/vite.test.ts`](../tools/lib/vite.test.ts)
+
+## tools/mcp
+
+- [`backend.ts`](../tools/mcp/backend.ts): What the MCP bridge's tools run on (PLAN.md §8.11, WP 7.6): a `Backend`, the engine as one interface, whichever process holds it.
+  - Exports: `Backend`, `OpenArgs`, `Opened`, `openPath`, `Params`, `Progress`
+  - Tests: [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
+- [`docs.ts`](../tools/mcp/docs.ts): The MCP bridge's `docs_lookup` (PLAN.md §8.11, WP 7.6): the manual that `x docs` generates, for an agent that reads no files.
+  - Exports: `docsLookup`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`headless.ts`](../tools/mcp/headless.ts): The MCP bridge's headless backend (PLAN.md §8.11, WP 7.6): `createHeadless` in this process, with the scene's view (engine/app/headless.ts `view: true`, no GPU), so `scene.dump` and `camera` answer, and no renderer, so no shot (`renders: false`).
+  - Exports: `headlessBackend`, `invoke`, `sceneTarget`
+  - Tests: [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
+- [`link.ts`](../tools/mcp/link.ts): How the MCP server reaches its backend worker (PLAN.md §8.11, WP 7.6): requests and replies over a `WorkerLink`.
+  - Exports: `forkLink`, `localLink`, `WorkerHandler`, `WorkerLink`, `WorkerReply`, `WorkerRequest`
+  - Tests: [`tools/cmd/mcp.test.ts`](../tools/cmd/mcp.test.ts), [`tools/mcp/link.test.ts`](../tools/mcp/link.test.ts)
+- [`results.ts`](../tools/mcp/results.ts): What the MCP bridge's tools answer (PLAN.md §8.11, WP 7.6): MCP `CallToolResult`s made from what the members return.
+  - Exports: `cutText`, `errorLine`, `errorResult`, `GoldenVerdict`, `judgeGoldens`, `MAX_LISTED`, `MAX_TEXT`, `shotResult`, `shotSummary`, `valueResult`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`schema.ts`](../tools/mcp/schema.ts): The MCP bridge's input schemas (PLAN.md §8.11, WP 7.6): the schema language's fields (engine/core/schema.ts), which inspector members declare their arguments in (engine/dev/members.ts), projected onto JSON Schema, the form MCP's tool list carries.
+  - Exports: `argsSchema`, `fieldSchema`, `JsonSchema`, `McpSchemaError`, `ObjectSchema`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`server.ts`](../tools/mcp/server.ts): The MCP server `x mcp` runs (PLAN.md §8.11, WP 7.6), on the official SDK's `Server`: the low-level one, since its tools are generated at run time as JSON Schema from the inspector's member table, which the SDK's `McpServer` takes only as zod schemas (a dependency of ours, which the bridge does without).
+  - Exports: `Bridge`, `BridgeOptions`, `createBridge`, `WATCHED`
+  - Tests: [`tools/cmd/mcp.test.ts`](../tools/cmd/mcp.test.ts), [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
+- [`session.ts`](../tools/mcp/session.ts): The MCP bridge's page backend (PLAN.md §8.11, WP 7.6): a page open in the `x inspect` session (tools/cmd/inspect.ts), on WebGPU in the platform's Chromium, the backend `x mcp` serves by default.
+  - Exports: `memberExpression`, `pageBackend`, `PROGRESS_MS`
+  - Tests: [`tests/e2e/mcp.spec.ts`](../tests/e2e/mcp.spec.ts), [`tools/mcp/session.test.ts`](../tools/mcp/session.test.ts)
+- [`tools.ts`](../tools/mcp/tools.ts): The MCP bridge's tools (PLAN.md §8.11, WP 7.6): each calls an inspector member, and its input schema is that member's argument schema projected onto JSON Schema (tools/mcp/schema.ts), its description the member's help line, so `help()`, the inspector's argument checks and the tools come from one table (shardfall's tool table, PLAN.md §5.8).
+  - Exports: `positional`, `replayFile`, `runTool`, `ToolContext`, `toolList`
+  - Tests: [`tools/mcp/tools.test.ts`](../tools/mcp/tools.test.ts)
+- [`worker.ts`](../tools/mcp/worker.ts): The MCP bridge's backend worker (PLAN.md §8.11, WP 7.6): the process that holds the engine's code and a backend, answering the server's requests (tools/mcp/link.ts).
+  - Exports: `createWorker`, `serveWorker`
+  - Tests: [`tools/mcp/server.test.ts`](../tools/mcp/server.test.ts)
 
 ## tools/qa
 

@@ -1937,3 +1937,157 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - Evidence: tests/e2e/labs.spec.ts (the index's links; each lab ready on WebGPU with its panel, no advice; the
   Animation Lab's phases and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search, mirror
   and apply), tools/cmd/lab.test.ts, labs/anim/scenes/lineup.test.ts, engine/anim/character.test.ts (`joints`).
+
+## Amendment 37 (2026-10-25, WP 7.5): the performance governor
+
+- **What it moves:** `quality` `auto` between WP 3.12's tiers (engine/dev/governor.ts; engine/gfx/quality.ts), which
+  hold the light and shadow budget, the GI, god rays, bloom and halos, and the drawn pixels; on a touch screen it also
+  scales the drawn pixels (shardfall's dynamic resolution). A tier set by hand is kept; `gfx.governor` (a view
+  setting) turns it off; it is frozen while a replay plays, and the tools' virtual clock gives it even frames, so no
+  spec sees it move. Each move is advice, `GFX_GOVERNOR`.
+- **Its numbers,** from the two carried mechanisms (`my-3d2dge:src/emberdeep/95-perf.js`,
+  `shardfall:crates/pav_app/src/quality.rs:89-113`): a second at a time; slower than 50 frames a second is bad, faster
+  than 57 good; three bad seconds demote a tier, ten good ones promote one (never above `auto`'s own); a demotion
+  within 25 s of a promotion doubles the ten, up to 80, so a machine on the edge settles (simulated: 11 moves in five
+  minutes, 46 without the doubling); on touch a bad second scales the pixels by 0.88 (to 0.6), four good ones by 1.06.
+- **Calls:** the governor moves the tiers only. Turning an optional GPU feature off mid-play would build pipelines in
+  a frame (engine/gfx/features.ts decides them at the renderer's start), and pose LOD and draw distance belong to no
+  tier yet: each joins a tier when a measured scene needs it. Its state is read through its advice and the settings
+  (`quality`, `gfx.governor`), not a member of its own.
+- Evidence: engine/dev/governor.test.ts (the demotions and promotions on simulated frame times, the edge machine,
+  the hand-set tier, the freeze, the touch scale, a headless run's hash unchanged with the governor moving between its
+  steps); engine/app/engine.ts and drawing.ts feed it the frames' real time and read its budget.
+
+## Amendment 38 (2026-10-25, WP 13.25): the front end
+
+- **The screens** (labs/playground/ui/, docs/PLAYGROUND.md §8.3): the title screen (Play, Spawn, Settings, Photo
+  mode; `playground.title`, `auto` hidden while a replay plays or automation drives the browser, as the menu for
+  humans), pause (Esc or the pad's Start; Resume, Spawn, Settings, Photo mode, Restart, Title screen), the spawn
+  picker (the block's 8 areas and the house's 17 rooms), settings (the camera, the field of view, the mouse and its
+  inversion, the movement profile, the look, the quality and the governor's switch, four volumes, every action's key
+  with rebinding) and photo mode (the fly camera from the view on screen, flown on the move keys, turned by a drag).
+  A screen pauses the run; the HUD of each camera mode is a table (labs/playground/ui/hud.ts) with a feel readout.
+- **The engine's part,** the smallest that serves a game's front end: `createEngine({ store })` keeps the bindings in
+  the game's store (`textStorage`, engine/app/store.ts: until now a page's rebinds were forgotten on reload);
+  `input.bindingsFor(map)` hands out another map's bindings without switching (each camera mode has its own map, WP
+  13.9, and a rebind must hold in all five); `createEngine({ modal })` keeps every intent out of the run while a
+  screen holds the page (the loop kept a press sampled under a pause for the next step, so Space picking Resume
+  jumped); `createEngine({ cameraInput })` lays a page's camera input over the devices' (photo mode's move keys and
+  drag: under a pause the engine lets go of the pointer lock, so the mouse cannot turn the view).
+- **Calls:** picks that change play are recorded operations: a spawn is the block's dev action `place` (from another
+  scene, the block's page opens with the view setting `playground.spawn`, run as its first operation); Restart is
+  `seed`; the movement profile is the sim setting `playground.movement` (Apex's, or the Stress Box hero's untuned),
+  set and the scene started again. A rebind is all or nothing over the five maps: a key another action holds in any
+  mode is refused before anything changes. A pointer lock let go while the run plays pauses it (a browser spends the
+  first Esc on the lock). Volumes go to the page's audio runtime and the store, not to settings (the runtime reads
+  none); the graphics row offers the quality tiers and the governor, not the GPU features one by one (a feature
+  turned off mid-play builds pipelines, amendment 37). The HUD stays under the menus and hides in photo mode. The
+  front end's T2 is a spec of its own, tests/e2e/playground-ui.spec.ts: playground.spec.ts, at 352 lines, would pass
+  the 400-line cap (PLAN.md's WP 13.25 names both).
+- Evidence: tests/e2e/playground-ui.spec.ts (every screen through DOM queries; settings and a rebind kept over a
+  reload; a menu key reaching no intent; the movement profile and both spawn picks recorded and replayed in Node to
+  their hashes; the crosshair and the readout by camera); labs/playground/ui/{prefs,spawns,hud}.test.ts,
+  labs/playground/scenes/gym.test.ts (the platformer profile), engine/app/store.test.ts (`textStorage`, bindings kept
+  and a demo store's dropped), engine/input/input.test.ts (`bindingsFor`).
+
+## Amendment 39 (2026-10-25, WP 7.6): the MCP bridge
+
+- **What it is:** `node x mcp` serves the inspector over MCP on `@modelcontextprotocol/sdk` 1.32.2 (decision 6), on
+  stdio, through the SDK's low-level `Server` (tools/mcp/server.ts). Its tools come from the inspector's member table:
+  each input schema is the member's argument schema as JSON Schema (tools/mcp/schema.ts: the schema language already
+  speaks JSON Schema's keywords; `unit` joins the description, `any` is the empty schema), each description the
+  member's help line and signature, so `help()`, the argument checks and the MCP schemas are one table, as WP 1.6
+  planned. A client connects with `{ "command": "node", "args": ["<repository>/x.js", "mcp", "--page",
+  "labs/playground", "--scene", "site"] }`; `x mcp` run from a terminal prints that and exits 2.
+- **Backends:** a page in the `x inspect` session (the default: started when none runs, stopped at the end when none
+  ran before, progress every 5 s while a page warms; it shares x inspect's out/inspect/session.json), or `--headless`
+  (`createHeadless` with the scene's view and the lab's bodies and looks; no `engine_shot`).
+- **Restarts:** the server loads no engine module (tools/cmd/mcp.test.ts checks its imports); the tools run in a worker
+  (`x mcp --worker`) it replaces before the next request after a change under engine/, labs/, tools/, fixtures/ or
+  data/ (`--watch` adds others): the next result says what restarted, the client hears the tool list changed when it
+  differs, a page reloads through Vite, and a crashed worker's call names its last error line. A change to the
+  server itself needs the client to reconnect.
+- **T1 and T2 share one client script:** docs/TESTING.md keeps browsers out of T1, yet the Done-when's shot with the ID
+  pass is a page's. The tools are written once against the backend: tools/mcp/server.test.ts (T1) makes the
+  Done-when's calls over the headless backend, its shot through a stand-in renderer (a fixed frame and ID pass), and
+  tests/e2e/mcp.spec.ts (T2) makes the same calls through `node x mcp` against a real page, its WebGPU ID pass
+  included. WP 7.6's Verify gains the spec, as WP 0.5's gained adviceTrap.spec.ts (ADR-0014 amendment 7); neither rule
+  is loosened.
+- **Calls:** the low-level `Server`, since `McpServer.registerTool` takes zod schemas only and zod would become our
+  dependency beyond decision 6; `engine_call(member, args)` beside §8.11's eleven tools, which reach about a dozen of
+  the 45 members, so a playtest has `camera.set`, `bot`, `feel` and `stats`; `engine_actions(name, args)` (§8.11
+  wrote `id`) lists the actions without a name; `engine_dump(depth, filter)` and `engine_shot`'s inputs (ShotOptions'
+  keys, `image`, `width`, `height`) are named in the tool table, since the `shot` and `scene.dump` members leave their
+  options' keys undeclared; headless is offered because the block opens in about 10 s there against minutes in a page;
+  a page not ready within its wait answers so with a note and the next call waits; captures do not cross MCP (a copied
+  capture is refused, as through `x eval`).
+- **Proposed core change (not made):** declare `properties` on the object arguments of `shot`, `scene.dump`,
+  `replay` and `camera.set` (engine/app/viewMembers.ts) and `bot` (engine/dev/actions.ts); `shot`'s help says "width
+  and height" where ShotOptions takes `size`.
+- Evidence: `npm test -- tools/mcp` (25 tests: the client test opens box:room, steps 60, injects
+  `30 move=0,1 tap=jump`, shoots through the stand-in, runs `freeze`, and replays box-1-room to its 11 goldens),
+  tools/cmd/mcp.test.ts (stdio, the forked worker, a watched restart), tests/e2e/mcp.spec.ts (the room's WebGPU ID
+  pass: floor, walls, pillar and movers; the replay drawn in the page, 11 goldens). The playground headless: the
+  block in 10 to 12 s, site-house's replay 14 of 14 goldens; in a page the block took 327 s at load 10, then a
+  484 × 274 shot with 749 objects. Not tried: a desktop MCP client app (only the SDK's own client, in memory and
+  on stdio).
+
+## Amendment 40 (2026-10-25, WP 12.1): scaffolds and skills, completed
+
+- **Five templates** (tools/templates/), each sample's `--test` run by `x new --test-all` (24 kinds pass): `level`,
+  §8.13's last missing kind (a cabin of storeys in a module, its own room markers, a door, windows, a flight, a railed
+  stairwell, a gable roof; its test compiles the storeys and rooms and runs every `x qa level` check through
+  `validateLevel`), and the four the playground fired the WP for: `movement` (a profile over Apex's; run, sprint and
+  jump measured on the feel course within 2%), `camera` (a game's own mode of pure steps; its code, its follow and the
+  rig's blend), `interactable` (a usable and strikable component on a prop, `<name>.add(w, spec)`; a player's prompt,
+  use and punch, headless) and `weapon` (a firearm and its prop with its `gallery` hook; its parts and muzzle, its rate,
+  recoil and reload in a range). Each is modelled on real entries of its kind and uses only the public API, so a game
+  can make one.
+- **Calls:** one `interactable` kind covers `usable` and `strikable`, as every real entry pairs a component with them;
+  its `add` is a method of the exported entry (the placeholders have no PascalCase for `addLocker`, and `x new` never
+  changes for a kind); folders `movement/`, `cameras/`, `interactables/`, `weapons/`, `levels/`; a level template's
+  entry is a module (`x qa level` reads only `.txt`), so its own test runs `validateLevel`; a camera's name, an
+  interactable's component and a level's room markers belong to one entry each (a clash raises the registry's
+  error). Not templated: glyphs (written with their levels), sites, action maps, touch layouts; terrain stands at
+  three entries written by hand (two of them one ground), so the next WP that writes one adds its template.
+- **One `add-entry` skill instead of an `add-<kind>` skill per kind** (PLAN.md §8.10 and §8.13 edited): with 24 kinds,
+  one skill each would put 24 near-identical descriptions in every session's list, each body only `node x new <kind>
+  <id>` and what `x new` already prints, and every new kind would need its own; the one skill names every kind in its
+  description (tests/unit/hooks/settings.test.ts fails one it leaves out) and carries what differs by family: who
+  imports an entry, how to see it, and the template due at the third entry written by hand.
+- **The skills §8.10 lists:** `animation-authoring`, `visual-qa`, `perf-budgets`, each citing only paths and commands
+  that exist (the settings test checks). No subagent: no measured need. tools/templates/README.md lists every kind;
+  tools/cmd/new.test.ts fails a kind it leaves out, a path its kind refuses, a cited path missing and a gallery kind's
+  template without its `gallery` hook.
+- Evidence: `node x new --test-all` (24 templates pass), tools/cmd/new.test.ts, tests/unit/hooks/settings.test.ts. Not
+  verified: `x new` inside a game made by tools/game/new-game.mjs (by reasoning: engine/ and tools/ are copied and no
+  template cites an engine-only path), the new entries on a page, how well the skills trigger.
+
+## Amendment 41 (2026-10-25, WP 13.26): the tour and the hand-over
+
+- **The tour is built, not recorded** (labs/playground/tour.ts, docs/PLAYGROUND.md §9.2): the playground's eight
+  replays played in turn on the block, 7,540 steps, as one replay (tests/replays/playground-tour.replay.json). Each
+  segment is its replay's inputs moved and shifted, never edited: it starts with the block's dev action `place` where
+  its replay starts, lets go of what the segment before still held, and a replay of the gym moves to where the gym
+  stands on the block. So a segment re-recorded makes the tour stale, and labs/playground/tour.test.ts says so until
+  `buildTour` makes it again; and the tour shows each segment's features on the block (35 kinds of event, from the
+  slide and the skydive to the dog's fetch, the door kick and a target standing again).
+- **Calls:** the tour opens on the street's own scene (`playground:site-street`), so the dog's game is its replay's,
+  played from step 0; the range starts on a whole number of its movers' rounds (`MOVER_ROUND`, 240 steps), so its
+  shots meet the targets where its replay met them. The gym's segments play on the block's gym, empty-handed, before
+  the house, the ring and the range, the guns last. Goldens at the first and the last step only: the segments' own
+  replays hold theirs, and the tour's last hash covers every step before it.
+- **Shots in a replay's view changes** (engine/app/playback.ts `ViewChange.shot`, the result's `shots`; the page's and
+  headless targets shoot through the drawing): a film of a run is the replay played with its cameras, its look and
+  the steps it shoots as view changes, so the goldens hold while it is filmed. tests/e2e/playground-tour.spec.ts plays
+  the tour in each look through the five cameras twice round, twelve shots on a contact sheet per look
+  (out/film/playground-tour-<look>/sheet.png and film.json); the sheets are written, never compared, and go out with
+  the stage's PR.
+- **The attract mode** (labs/playground/ui/attract.ts, the view setting `playground.attract`): the tour's page, a
+  banner over it, the camera stepping every 8 s (blended) and the look every 16 s; a key, a click, a pad's button or
+  the tour's end gives the playground back. The title screen offers it (Watch the tour) and opens it after a minute
+  with nothing pressed, unless automation drives the browser, as the menus do.
+- **The hand-over:** docs/GAME-GUIDE.md §4 names what the playground added to the public API (sites, Apex's movement
+  and the feel tools, rides, doors, windows and switches, the day's clock, the front end's menus, store and modal
+  input, the new cameras); lean/README.md's overview likewise; the starter game (labs/game/) pauses under a menu
+  (`createMenu`, `createEngine({ store, modal })`), as lean/game.html need not (it keeps no store).

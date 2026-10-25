@@ -3,12 +3,14 @@
  * as copies in their envelope under the prefix; another version falls back with advice once, or migrates and is
  * written back; unreadable values fall back; a refused write returns false and refused storage reads as memory with
  * advice; the isolated modes keep nothing past the page; only the prefix's keys are listed and cleared; bad options,
- * keys and values are coded errors.
+ * keys and values are coded errors; `textStorage` keeps a module's text as its value, in the store's envelope and mode,
+ * so bindings saved through it come back on the next page (WP 13.25).
  * @see engine/app/store.ts
  */
 import { describe, expect, it } from 'vitest';
 import { createLog } from '../core/log';
-import { createStore, memoryBackend, STORE_FORMAT, type StoreBackend } from './store';
+import { createBindings } from '../input/bindings';
+import { createStore, memoryBackend, STORE_FORMAT, textStorage, type StoreBackend } from './store';
 
 /** A log that keeps its records, printing nothing. */
 const quiet = () => createLog({ console: { warn: () => {}, error: () => {} } });
@@ -87,5 +89,20 @@ describe('the store', () => {
     expect(() => createStore({ mode: 'replay' as never })).toThrow(/play, demo, sandbox, gallery/);
     expect(() => store.get('', 0)).toThrow(/key/);
     expect(() => store.set('f', () => 1)).toThrow(/not plain data/);
+  });
+
+  it('keeps text through textStorage as its value, in the envelope and the mode, so bindings come back', () => {
+    const backend = memoryBackend();
+    const store = createStore({ prefix: 'game:', backend });
+    const text = textStorage(store);
+    text.setItem('k', '{"a":1}');
+    text.setItem('bad', 'not json');
+    expect([text.getItem('k'), text.getItem('bad'), JSON.parse(backend.getItem('game:k')!).data]).toEqual(['{"a":1}', null, { a: 1 }]); // prettier-ignore
+    createBindings('actionMap:thirdPerson', { storage: text }).rebind('jump', 'KeyG');
+    const again = createBindings('actionMap:thirdPerson', { storage: textStorage(createStore({ prefix: 'game:', backend })) }); // prettier-ignore
+    expect(again.codes('jump')).toContain('KeyG');
+    const demo = textStorage(createStore({ prefix: 'game:', backend, mode: 'demo' }));
+    createBindings('actionMap:thirdPerson', { storage: demo }).rebind('jump', 'KeyH');
+    expect(createBindings('actionMap:thirdPerson', { storage: text }).codes('jump')).toContain('KeyG'); // a replay's play is never kept
   });
 });

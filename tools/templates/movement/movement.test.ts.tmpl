@@ -1,0 +1,40 @@
+/**
+ * @file Unit tests for the movement profile `movement:{{name}}` ({{id}}.ts): a character made of it is valid and
+ * carries its numbers, and the feel course (`measureFeel`, as `node x sim <scene> --feel` measures a player) finds its
+ * run and sprint within 2% of them, with a weapon out and holstered, and its jump within 2 cm of the height its take-off
+ * gives.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createCharacter, measureFeel } from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+/** Expects `value` within `share` of `reference`. */
+const within = (value: number, reference: number, share: number, what: string) =>
+  expect(Math.abs(value - reference) / reference, `${what}: ${value} against ${reference}`).toBeLessThanOrEqual(share);
+
+describe('movement:{{name}}', () => {
+  it('makes a valid character that carries its numbers', () => {
+    const character = createCharacter({ movement: {{name}}.id });
+    // its model's gaits, filled from Apex's; neither on the platformer model
+    expect(character.movement?.gaits).toEqual({{name}}.model?.gaits);
+    expect(character.jumpSpeed).toBe({{name}}.character.jumpSpeed ?? createCharacter().jumpSpeed);
+  });
+
+  it('runs, sprints and jumps on the feel course as its numbers say', () => {
+    const character = createCharacter({ movement: {{name}}.id });
+    const feel = measureFeel(character);
+    const gravity = character.characterGravity ?? 32; // without its own, the setting physics.characterGravity's
+    const jump = Math.pow(character.jumpSpeed, 2) / (2 * gravity);
+    expect(Math.abs(feel.apex - jump), `the jump: ${feel.apex} m against ${jump}`).toBeLessThanOrEqual(0.02);
+    if (!character.movement) {
+      within(feel.topSpeed, character.speed, 0.02, 'the run'); // the platformer model: its top speed
+      return;
+    }
+    const { run, sprint, holstered } = character.movement.gaits;
+    within(feel.motion!.run, run, 0.02, 'the run');
+    within(feel.motion!.sprint, sprint, 0.02, 'the sprint');
+    within(feel.motion!.runHolstered, run * holstered, 0.02, 'the run, holstered');
+    within(feel.motion!.sprintHolstered, sprint * holstered, 0.02, 'the sprint, holstered');
+  });
+});

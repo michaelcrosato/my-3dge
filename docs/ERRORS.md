@@ -269,13 +269,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `a frame threw, so the loop stopped: {message}`
 - Fix: the console names the cause; reload the page to start again, or read __engine.state() to see where the run stands
-- Registered in: [`engine/app/engine.ts` line 85](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 88](../engine/app/engine.ts)
 
 ### APP_NO_FRAME
 
 - Message: `no frame was drawn in {tries} tries: the warm-up never finished`
 - Fix: read __engine.errors for GFX_WARMUP_FAILED; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 93](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 96](../engine/app/engine.ts)
 
 ### APP_NO_LEVEL
 
@@ -287,7 +287,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the page has no replay {name}`
 - Fix: use one of: {names}
-- Registered in: [`engine/app/engine.ts` line 89](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 92](../engine/app/engine.ts)
 
 ### APP_NO_VIEW
 
@@ -311,13 +311,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `views at step {step} sets {path}, which is not a view setting, so it would change play`
 - Fix: change only settings marked view during a replay (gfx.resolution, time.scale…); a setting that changes play belongs in the replay's own inputs
-- Registered in: [`engine/app/playback.ts` line 32](../engine/app/playback.ts)
+- Registered in: [`engine/app/playback.ts` line 33](../engine/app/playback.ts)
 
 ### APP_START
 
 - Message: `the page failed to start: {message}`
 - Fix: the console names the cause; node x shot <page> reports it headless
-- Registered in: [`engine/app/engine.ts` line 81](../engine/app/engine.ts)
+- Registered in: [`engine/app/engine.ts` line 84](../engine/app/engine.ts)
 
 ### APP_STORE_BLOCKED
 
@@ -762,6 +762,14 @@ Advice from `requestDevice` (engine/gfx/caps.ts): the device is made with every 
 - Registered in: [`engine/gfx/textures/contactShadow.ts` line 53](../engine/gfx/textures/contactShadow.ts)
 
 Raised by `levelFloorTexture` (engine/gfx/textures/contactShadow.ts) when a tile would not be a whole number of texels (texels would straddle tiles, and the contact shadows would not line up with the walls) or the floor would be more than 4096 texels on a side, the largest texture a bake makes.
+
+### GFX_GOVERNOR
+
+- Message: `the frame rate moved quality auto to {tier}: {reason}`
+- Fix: nothing to do for play; set quality to a tier (low, medium, high) to hold one, or gfx.governor to false
+- Registered in: [`engine/dev/governor.ts` line 44](../engine/dev/governor.ts)
+
+Advice from the performance governor (engine/dev/governor.ts) when it moves the `auto` quality a tier.
 
 ### GFX_GPU_ERROR
 
