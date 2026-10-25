@@ -1625,7 +1625,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## labs/box
 
 - [`library.ts`](../labs/box/library.ts): The animation library on the box page (PLAN.md §10, WP 8.9): `loadLibrary(files)` registers every set of `data/anim/sets/` the page loaded as text (labs/box/main.ts, through `import.meta.glob`, never a fetch), each as a `clipset` entry (engine/anim/clip/clipsets.ts: its `_set.json` and its clip files joined, `clipSetFromFiles`), then the mannequin, its build and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts): what clip mode (labs/box/scenes/clips.ts) plays and draws.
-  - Exports: `loadLibrary`
+  - Exports: `loadLibrary`, `loadMannequin`, `registerEdit`
 - [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for every scene.
 - [`menu.ts`](../labs/box/menu.ts): The box page's menu for humans (labs/box/index.html): what the box offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
   - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `ControlRow`, `controlRows`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
@@ -2332,8 +2332,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`inspect.ts`](../tools/cmd/inspect.ts): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
   - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
-- [`lab.ts`](../tools/cmd/lab.ts): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts.
-  - Exports: `createLabCommand`, `default`, `LAB_DAYS`, `LABS_FILE`
+- [`lab.ts`](../tools/cmd/lab.ts): `node x lab` (PLAN.md WP 10.8): keeps the labs index, labs/labs.json, which the index page (labs/index/) and the labs suite (tests/e2e/labs.spec.ts) read through labs/index/labs.ts, which this command loads by path where the checkout has it (a game made from the engine gets tools/, never the labs: tools/game/imports.test.ts).
+  - Exports: `createLabCommand`, `default`, `LAB_DAYS`, `LABS_FILE`, `LABS_MODEL`
   - Tests: [`tools/cmd/lab.test.ts`](../tools/cmd/lab.test.ts)
 - [`mcp.ts`](../tools/cmd/mcp.ts): Serves the engine to MCP clients (PLAN.md §8.11, WP 7.6): `node x mcp` speaks the Model Context Protocol on stdin and stdout, so an agent that cannot run `node x` drives the engine as `x inspect`, `x eval` and `x shot` do.
   - Exports: `default`, `openArgs`

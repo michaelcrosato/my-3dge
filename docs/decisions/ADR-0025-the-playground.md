@@ -1893,9 +1893,13 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Measured** (tests/e2e/playground-looks.spec.ts, the street, the sim paused): isometric panned 6 mm a frame for
   fifteen frames moves its picture by two whole pixels once and changes no other pixel, its glide wrapping from −0.85
   to +0.99 of a drawn pixel; the cel look's same pans change 6.6 to 7.6% of its pixels a frame; the noon thumbnails
-  hold. Top-down keeps its sub-pixel pans (2 mm a frame, eight frames: nothing moves, nothing glides): panned across a
-  whole pixel, it changed 7 to 10 pixels in one soft shadow band, the red channel one palette step (0 with no shadow
-  casters, the `low` tier; as many with the cascades off); the cause is not found and docs/PROGRESS.md lists it.
+  hold. Top-down (its target snaps to its 1/24 m grid), panned across a whole pixel, changed 7 to 10 pixels in one
+  soft shadow band, the red channel one palette step (0 with no shadow casters, the `low` tier; as many with the
+  cascades off); the cause is not found after cheap tests (ADR-0022) and docs/PROGRESS.md lists it for the owner. At
+  the gate's review its pan, 2 mm a frame, was found never to move the camera at all: it now pans 20 mm a frame for
+  eight frames, across three whole pixels (moved by whole quads, its glide wrapping, as isometric's), and the spec
+  bounds what changes beyond each move at 10 pixels a frame (`OVERHEAD_RESIDUAL`; 7 measured); WP 13.24's Done-when
+  says isometric 0, top-down that bound.
 - Files: engine/gfx/{shadows,sky,stageSky}.ts, engine/gfx/enhanced/csm.ts, engine/gfx/post/{chain,grid,filters}.ts
   and their tests, tests/e2e/playground-looks.spec.ts. `--my3dge-pixel` is the CSS variable the page's margin uses
   (the pixel filter's `smooth` said `--my3dge-block`).
@@ -1925,6 +1929,11 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   are the builds in its row, its frozen key poses the scrubbed timeline, its dummy the mannequin; the Mocap Lab's
   retarget preview across the builds is that row playing a library clip (`lab.anim.play=clip:<set>/<clip>`, the
   Library Lab's link `On every build`).
+- **At the gate's review:** no page entry calls a `define…` itself, so `x describe` loads every module that registers
+  content in Node: the mannequin and an edited clip register through labs/box/library.ts (`loadMannequin`,
+  `registerEdit`). `x lab` loads labs/index/labs.ts by path from the checkout (a game made from the engine gets tools/,
+  never the labs: tools/game/imports.test.ts), and the lab pages and labs/labs.json stay in the engine's repository
+  (tools/game/files.mjs).
 - Evidence: tests/e2e/labs.spec.ts (the index's links; each lab ready on WebGPU with its panel, no advice; the
   Animation Lab's phases and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search, mirror
   and apply), tools/cmd/lab.test.ts, labs/anim/scenes/lineup.test.ts, engine/anim/character.test.ts (`joints`).

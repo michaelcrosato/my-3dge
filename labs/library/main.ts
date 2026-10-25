@@ -18,9 +18,9 @@
  * @see tests/e2e/labs.spec.ts
  */
 /// <reference types="vite/client" />
-import { clipSetIds, clipText, createEngine, defineClipSet, getClipSet, mirrorClip, parseClip } from '../../engine';
+import { clipSetIds, clipText, createEngine, getClipSet, mirrorClip, parseClip } from '../../engine';
 import roomLevel from '../box/levels/room.txt?raw';
-import { loadLibrary } from '../box/library';
+import { loadLibrary, registerEdit } from '../box/library';
 import { clips } from '../box/scenes/clips';
 import { button, el, entryList, labPanel } from '../index/lab';
 
@@ -90,12 +90,10 @@ if (inspector) {
   let applied = 0;
   button(text, 'Apply', () => {
     try {
-      const name = `${askedClip}`;
-      const set = `LAB${++applied}`;
-      defineClipSet({ set, sources: getClipSet(`clipset:${askedSet}`).sources, clips: { [name]: parseClip(area.value, name) } }); // prettier-ignore
-      live.set('box.clips.clip', `${set.toLowerCase()}/${name}`);
+      const played = registerEdit(`LAB${++applied}`, `clipset:${askedSet}`, askedClip, area.value);
+      live.set('box.clips.clip', played);
       live.seed(live.seed()); // the scene again, its sets read anew
-      panel.status(`playing your edit, ${set.toLowerCase()}/${name}`);
+      panel.status(`playing your edit, ${played}`);
     } catch (error) {
       panel.status(String((error as Error).message));
     }

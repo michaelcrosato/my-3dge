@@ -14,12 +14,13 @@
  * // await galleryLab(document, window, { title: 'Props Lab', what: '…', command: 'node x gallery prop', kinds: ['prop'] });
  * @see tests/e2e/labs.spec.ts
  */
-import { createEngine, defineMannequin } from '../../engine';
+import { createEngine } from '../../engine';
+import { loadMannequin } from '../box/library';
 import quaternius from '../../data/anim/sets/quaternius/_set.json?raw';
 import { el, entryList, labPanel, reloadOnHash, type LabSpec } from './lab';
 
 import.meta.glob(['../*/{scenes,looks,bodies}/*.ts', '!../**/*.test.ts'], { eager: true });
-defineMannequin(JSON.parse(quaternius) as Parameters<typeof defineMannequin>[0]);
+loadMannequin(quaternius);
 
 /** What a lab reads through the engine's inspector (`__engine`): the gallery's lists and `describe`. */
 export interface GalleryInspector {
