@@ -1980,3 +1980,76 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   their hashes; the crosshair and the readout by camera); labs/playground/ui/{prefs,spawns,hud}.test.ts,
   labs/playground/scenes/gym.test.ts (the platformer profile), engine/app/store.test.ts (`textStorage`, bindings kept
   and a demo store's dropped), engine/input/input.test.ts (`bindingsFor`).
+
+## Amendment 39 (2026-10-25, WP 7.6): the MCP bridge
+
+- **What it is:** `node x mcp` serves the inspector over MCP on `@modelcontextprotocol/sdk` 1.32.2 (decision 6), on
+  stdio, through the SDK's low-level `Server` (tools/mcp/server.ts). Its tools come from the inspector's member table:
+  each input schema is the member's argument schema as JSON Schema (tools/mcp/schema.ts: the schema language already
+  speaks JSON Schema's keywords; `unit` joins the description, `any` is the empty schema), each description the
+  member's help line and signature, so `help()`, the argument checks and the MCP schemas are one table, as WP 1.6
+  planned. A client connects with `{ "command": "node", "args": ["<repository>/x.js", "mcp", "--page",
+  "labs/playground", "--scene", "site"] }`; `x mcp` run from a terminal prints that and exits 2.
+- **Backends:** a page in the `x inspect` session (the default: started when none runs, stopped at the end when none
+  ran before, progress every 5 s while a page warms; it shares x inspect's out/inspect/session.json), or `--headless`
+  (`createHeadless` with the scene's view and the lab's bodies and looks; no `engine_shot`).
+- **Restarts:** the server loads no engine module (tools/cmd/mcp.test.ts checks its imports); the tools run in a worker
+  (`x mcp --worker`) it replaces before the next request after a change under engine/, labs/, tools/, fixtures/ or
+  data/ (`--watch` adds others): the next result says what restarted, the client hears the tool list changed when it
+  differs, a page reloads through Vite, and a crashed worker's call names its last error line. A change to the
+  server itself needs the client to reconnect.
+- **T1 and T2 share one client script:** docs/TESTING.md keeps browsers out of T1, yet the Done-when's shot with the ID
+  pass is a page's. The tools are written once against the backend: tools/mcp/server.test.ts (T1) makes the
+  Done-when's calls over the headless backend, its shot through a stand-in renderer (a fixed frame and ID pass), and
+  tests/e2e/mcp.spec.ts (T2) makes the same calls through `node x mcp` against a real page, its WebGPU ID pass
+  included. WP 7.6's Verify gains the spec, as WP 0.5's gained adviceTrap.spec.ts (ADR-0014 amendment 7); neither rule
+  is loosened.
+- **Calls:** the low-level `Server`, since `McpServer.registerTool` takes zod schemas only and zod would become our
+  dependency beyond decision 6; `engine_call(member, args)` beside §8.11's eleven tools, which reach about a dozen of
+  the 45 members, so a playtest has `camera.set`, `bot`, `feel` and `stats`; `engine_actions(name, args)` (§8.11
+  wrote `id`) lists the actions without a name; `engine_dump(depth, filter)` and `engine_shot`'s inputs (ShotOptions'
+  keys, `image`, `width`, `height`) are named in the tool table, since the `shot` and `scene.dump` members leave their
+  options' keys undeclared; headless is offered because the block opens in about 10 s there against minutes in a page;
+  a page not ready within its wait answers so with a note and the next call waits; captures do not cross MCP (a copied
+  capture is refused, as through `x eval`).
+- **Proposed core change (not made):** declare `properties` on the object arguments of `shot`, `scene.dump`,
+  `replay` and `camera.set` (engine/app/viewMembers.ts) and `bot` (engine/dev/actions.ts); `shot`'s help says "width
+  and height" where ShotOptions takes `size`.
+- Evidence: `npm test -- tools/mcp` (25 tests: the client test opens box:room, steps 60, injects
+  `30 move=0,1 tap=jump`, shoots through the stand-in, runs `freeze`, and replays box-1-room to its 11 goldens),
+  tools/cmd/mcp.test.ts (stdio, the forked worker, a watched restart), tests/e2e/mcp.spec.ts (the room's WebGPU ID
+  pass: floor, walls, pillar and movers; the replay drawn in the page, 11 goldens). The playground headless: the
+  block in 10 to 12 s, site-house's replay 14 of 14 goldens; in a page the block took 327 s at load 10, then a
+  484 × 274 shot with 749 objects. Not tried: a desktop MCP client app (only the SDK's own client, in memory and
+  on stdio).
+
+## Amendment 40 (2026-10-25, WP 12.1): scaffolds and skills, completed
+
+- **Five templates** (tools/templates/), each sample's `--test` run by `x new --test-all` (24 kinds pass): `level`,
+  §8.13's last missing kind (a cabin of storeys in a module, its own room markers, a door, windows, a flight, a railed
+  stairwell, a gable roof; its test compiles the storeys and rooms and runs every `x qa level` check through
+  `validateLevel`), and the four the playground fired the WP for: `movement` (a profile over Apex's; run, sprint and
+  jump measured on the feel course within 2%), `camera` (a game's own mode of pure steps; its code, its follow and the
+  rig's blend), `interactable` (a usable and strikable component on a prop, `<name>.add(w, spec)`; a player's prompt,
+  use and punch, headless) and `weapon` (a firearm and its prop with its `gallery` hook; its parts and muzzle, its rate,
+  recoil and reload in a range). Each is modelled on real entries of its kind and uses only the public API, so a game
+  can make one.
+- **Calls:** one `interactable` kind covers `usable` and `strikable`, as every real entry pairs a component with them;
+  its `add` is a method of the exported entry (the placeholders have no PascalCase for `addLocker`, and `x new` never
+  changes for a kind); folders `movement/`, `cameras/`, `interactables/`, `weapons/`, `levels/`; a level template's
+  entry is a module (`x qa level` reads only `.txt`), so its own test runs `validateLevel`; a camera's name, an
+  interactable's component and a level's room markers belong to one entry each (a clash raises the registry's
+  error). Not templated: glyphs (written with their levels), sites, action maps, touch layouts; terrain stands at
+  three entries written by hand (two of them one ground), so the next WP that writes one adds its template.
+- **One `add-entry` skill instead of an `add-<kind>` skill per kind** (PLAN.md §8.10 and §8.13 edited): with 24 kinds,
+  one skill each would put 24 near-identical descriptions in every session's list, each body only `node x new <kind>
+  <id>` and what `x new` already prints, and every new kind would need its own; the one skill names every kind in its
+  description (tests/unit/hooks/settings.test.ts fails one it leaves out) and carries what differs by family: who
+  imports an entry, how to see it, and the template due at the third entry written by hand.
+- **The skills §8.10 lists:** `animation-authoring`, `visual-qa`, `perf-budgets`, each citing only paths and commands
+  that exist (the settings test checks). No subagent: no measured need. tools/templates/README.md lists every kind;
+  tools/cmd/new.test.ts fails a kind it leaves out, a path its kind refuses, a cited path missing and a gallery kind's
+  template without its `gallery` hook.
+- Evidence: `node x new --test-all` (24 templates pass), tools/cmd/new.test.ts, tests/unit/hooks/settings.test.ts. Not
+  verified: `x new` inside a game made by tools/game/new-game.mjs (by reasoning: engine/ and tools/ are copied and no
+  template cites an engine-only path), the new entries on a page, how well the skills trigger.

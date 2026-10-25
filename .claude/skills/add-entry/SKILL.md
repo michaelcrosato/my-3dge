@@ -8,7 +8,7 @@ description: Adding an entry of a kind through node x new and its template in to
 PLAN.md §8.13 is the rule; tools/templates/README.md lists every kind, where its entries go and the command that
 shows one; tools/cmd/new.ts's file comment is the manual. One skill for every kind, since `x new` itself carries what
 differs between them (each kind's sample, test and next step); PLAN.md §8.10 planned one `add-<kind>` skill a kind
-(ADR-0025's WP 12.1 amendment says why one serves them all).
+(ADR-0025 amendment 40 says why one serves them all).
 
 ## 1. Pick the kind
 
