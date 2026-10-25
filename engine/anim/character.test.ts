@@ -23,6 +23,7 @@ import type { World } from '../sim/world';
 import { Animator, ANIMATOR_FIELDS, AnimatorPool, FOOTSTEP, TRAIL, type AnimatorData } from './character';
 import { jointPosition, socketPosition } from './fk';
 import { Humanoid } from './humanoid';
+import { JOINTS } from './skeleton';
 import { SAMPLE_STATES, type AnimatorInput, type SampleState } from './states';
 import type { AnimLayer, LayerSlot } from './weights';
 
@@ -43,6 +44,12 @@ describe('inspect()', () => {
     expect(JSON.parse(JSON.stringify(report))).toEqual(report);
     const grip = animator.socket('weaponR').toArray();
     report.sockets.weaponR.forEach((x, i) => expect(x).toBeCloseTo(grip[i], 4));
+    // every joint where FK put it, as the labs' bone overlay draws them (labs/anim, WP 10.8)
+    expect(Object.keys(report.joints)).toEqual([...JOINTS]);
+    for (const j of JOINTS) {
+      const at = jointPosition(animator.body.world, j).toArray();
+      report.joints[j].forEach((x, i) => expect(x).toBeCloseTo(at[i], 4));
+    }
     expect(report).toMatchSnapshot();
   });
 

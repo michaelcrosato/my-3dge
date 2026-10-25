@@ -1899,3 +1899,32 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - Files: engine/gfx/{shadows,sky,stageSky}.ts, engine/gfx/enhanced/csm.ts, engine/gfx/post/{chain,grid,filters}.ts
   and their tests, tests/e2e/playground-looks.spec.ts. `--my3dge-pixel` is the CSS variable the page's margin uses
   (the pixel filter's `smooth` said `--my3dge-block`).
+
+## Amendment 36 (2026-10-25, WP 10.8): the lab pages
+
+- **Seven labs and an index** (labs/index/): each lab a page under labs/ with a panel beside its canvas (labs/index/
+  lab.ts: its title, what it is for, the `x` command that does the same job without the page, entries that are links,
+  so the address is what shows), each a view over the inspector (`__engine`) and the registries: the Animation Lab
+  (the scene `lab:lineup`, labs/anim/scenes/lineup.ts: every humanoid build and the mannequin in a row, told one
+  state, pose, stance or move from one clock; a move's phases on a timeline that scrubs it, `lab.anim.time`; the bones
+  drawn over the figures from `__engine.anim(id).joints`, labs/anim/overlay.ts), the Materials, Props and Effects labs
+  (the gallery's kinds, labs/index/gallery.ts), the Cameras Lab (one set seen through every camera code, each a link,
+  and a blend to each), the Physics Lab (the box's ragdolls and the hall's props, their settings as links, gravity,
+  the sim's speed, pause and step) and the Library Lab (the box's clip mode with the catalog searched, the clip's
+  text applied, reset, mirrored and copied, its frames stepped). labs/labs.json lists them, with the engine's own pages
+  (the box, the playground, the starter game); a temporary lab carries its question, its answer once settled and the
+  date it expires (labs/index/labs.ts `checkLabs`, `expiredLabs`), and `node x lab list|add|answer|rm` keeps the file,
+  `list` failing on a lab past its date (tools/cmd/lab.ts; `my-3d2dge:tools/labs-test.mjs`, ported).
+- **Beyond Owns, a core change:** the animator's inspect report (engine/anim/character.ts, what `__engine.anim(id)`
+  returns) gains `joints`, each joint's world position at the frame, so a page can draw bones without importing the
+  engine's FK; its snapshot test grows with it. The lineup scene lives in the lab (labs/anim/scenes/), as each lab's
+  content does (PLAN.md §5.7).
+- **Calls:** the Library Lab's Apply plays the edited text as a set of its own (`lab<n>`, registered by the page) and
+  starts the scene again with its seed (`__engine.seed(n)`): a set registered while a scene runs reaches it only at its
+  next start. The Animation Lab shows the moves and states the engine's registries hold; the my-3d2dge animlab's skins
+  are the builds in its row, its frozen key poses the scrubbed timeline, its dummy the mannequin; the Mocap Lab's
+  retarget preview across the builds is that row playing a library clip (`lab.anim.play=clip:<set>/<clip>`, the
+  Library Lab's link `On every build`).
+- Evidence: tests/e2e/labs.spec.ts (the index's links; each lab ready on WebGPU with its panel, no advice; the
+  Animation Lab's phases and bones, the Cameras Lab's blend, the Physics Lab's step, the Library Lab's search, mirror
+  and apply), tools/cmd/lab.test.ts, labs/anim/scenes/lineup.test.ts, engine/anim/character.test.ts (`joints`).

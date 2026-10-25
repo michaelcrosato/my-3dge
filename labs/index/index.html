@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>Labs: my-3dge</title>
+    <!--
+      The labs index (PLAN.md WP 10.8): every page and lab under labs/, built from labs/labs.json by labs/index/main.ts.
+      node x lab list prints the same list; node x lab add and rm keep the file.
+    -->
+    <style>
+      body {
+        margin: 0 auto;
+        max-width: 860px;
+        padding: 16px 20px 48px;
+        background: #15171c;
+        color: #c9ccd4;
+        font:
+          15px/1.45 system-ui,
+          sans-serif;
+      }
+      a {
+        color: #8fb8ff;
+      }
+      h2 {
+        margin-top: 28px;
+        border-bottom: 1px solid #2c3038;
+      }
+      code {
+        color: #b9e3a8;
+      }
+      .lab {
+        margin: 14px 0;
+      }
+      .lab h3 {
+        margin: 0;
+      }
+      .lab p {
+        margin: 2px 0;
+      }
+      .expired {
+        color: #ff9a8a;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Labs</h1>
+    <p>
+      Views for people watching. Each does what an <code>x</code> command does without a page, named beside it; the
+      engine's own interface is <code>node x</code> and <code>__engine</code>.
+    </p>
+    <div id="list"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
