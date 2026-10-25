@@ -777,7 +777,7 @@ Advice from the performance governor (engine/dev/governor.ts) when it moves the 
 - Fix: {fix}
 - Registered in: [`engine/gfx/enhanced/crowds.ts` line 53](../engine/gfx/enhanced/crowds.ts)
 
-Raised by a GPU crowd (engine/gfx/enhanced/crowds.ts) for a batch it cannot draw (per-instance attributes, an array of materials, a material three.js has no node material for, more batches than it holds) or a slot that is negative or fractional.
+Raised by a GPU crowd (engine/gfx/enhanced/crowds.ts) for a batch it cannot draw (per-instance attributes, an array of materials, a material three.js has no node material for, more batches than it holds) or a slot that is negative or fractional; advice, once, when a style set gives a batch a material it cannot draw, which keeps its own.
 
 ### GFX_GPU_CROWD_FULL
 

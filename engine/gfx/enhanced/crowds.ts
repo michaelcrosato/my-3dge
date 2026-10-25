@@ -21,8 +21,8 @@
  *   counts the triangles of every instance written (the cull's survivors are never read back).
  *
  * Invariants: presentation only, never in the hash, nothing read back; the buffers are made once at `capacity`; a
- * batch's instances keep the order they were written in, culled or not; nothing but engine/gfx/features.ts imports
- * this module.
+ * batch's instances keep the order they were written in, culled or not; a style's material a batch cannot draw
+ * leaves it its own, with advice `GFX_GPU_CROWD_BATCH` once; nothing but engine/gfx/features.ts imports this module.
  *
  * @example
  * GPU_CROWDS_FEATURE.needs; // ['indirect-first-instance']
@@ -53,7 +53,7 @@ export const GPU_CROWDS_CODES = defineCodes('gfx', {
   GFX_GPU_CROWD_BATCH: {
     template: 'GPU crowd batch {name}: {problem}',
     fix: '{fix}',
-    doc: 'Raised by a GPU crowd (engine/gfx/enhanced/crowds.ts) for a batch it cannot draw (per-instance attributes, an array of materials, a material three.js has no node material for, more batches than it holds) or a slot that is negative or fractional.',
+    doc: 'Raised by a GPU crowd (engine/gfx/enhanced/crowds.ts) for a batch it cannot draw (per-instance attributes, an array of materials, a material three.js has no node material for, more batches than it holds) or a slot that is negative or fractional; advice, once, when a style set gives a batch a material it cannot draw, which keeps its own.',
   },
 });
 
@@ -173,7 +173,12 @@ export function createGpuCrowd(options: { capacity?: number; log?: Log } = {}): 
     const mesh = new Mesh(own, drawn);
     const { castShadow = false, receiveShadow = false, renderOrder = 0 } = batchOptions;
     Object.assign(mesh, { name: `${name}/gpu`, count: 1, visible: false, frustumCulled: false, castShadow, receiveShadow, renderOrder }); // prettier-ignore
-    mesh.userData = { batch: name, restyle: (worn: Material) => look.wrap(worn) ?? mesh.material };
+    /** A style's material it cannot draw: the batch keeps its own and says so, once a material type. */
+    const keep = (worn: Material) => {
+      log.warnOnce('GFX_GPU_CROWD_BATCH', { name, problem: `three.js has no node material for a ${worn.type}, so it keeps its own`, fix: 'give the style set a mesh material three.js turns into a node material (Lambert, Phong, standard, toon, basic or a node material)' }, `${name}:${worn.type}`); // prettier-ignore
+      return mesh.material;
+    };
+    mesh.userData = { batch: name, restyle: (worn: Material) => look.wrap(worn) ?? keep(worn) };
     mesh.onBeforeRender = (renderer) => crowd.cull(renderer as unknown as CrowdCompute);
     meshes.push(mesh);
     const root = new Group();

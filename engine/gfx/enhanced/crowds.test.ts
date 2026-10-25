@@ -10,7 +10,7 @@
  * The cull itself runs on the GPU: tests/e2e/gpu-crowds.spec.ts reads it back.
  * @see engine/gfx/enhanced/crowds.ts
  */
-import { BoxGeometry, Matrix4, MeshLambertMaterial, SphereGeometry, type BufferGeometry } from 'three/webgpu';
+import { BoxGeometry, Matrix4, MeshLambertMaterial, MeshNormalMaterial, SphereGeometry, type BufferGeometry } from 'three/webgpu'; // prettier-ignore
 import { describe, expect, it } from 'vitest';
 import { createLog } from '../../core/log';
 import { createRegistry } from '../../core/registry';
@@ -205,7 +205,8 @@ describe('a GPU crowd', () => {
   });
 
   it('draws with one copy of each material, which reads the instance, the source left as it was', () => {
-    const crowd = createGpuCrowd();
+    const quiet = quietLog();
+    const crowd = createGpuCrowd({ log: quiet.log });
     const library = createMaterialLibrary();
     const lit = library.get('material:puppet');
     const [ball, box] = shapes();
@@ -217,6 +218,9 @@ describe('a GPU crowd', () => {
     expect([a.material.positionNode !== null, (lit as unknown as { positionNode?: unknown }).positionNode ?? null]).toEqual([true, null]); // prettier-ignore
     expect(a.material.userData.material).toBe('material:puppet'); // the style set re-points it by its entry
     expect([a.userData.restyle(lit), a.userData.restyle(a.material)]).toEqual([a.material, a.material]);
+    const normals = new MeshNormalMaterial(); // three.js has no node material for it: kept, and said once
+    expect([a.userData.restyle(normals), a.userData.restyle(normals)]).toEqual([a.material, a.material]);
+    expect(quiet.printed.filter((line) => line.includes('GFX_GPU_CROWD_BATCH'))).toHaveLength(1);
   });
 
   it('is what a crowd made with it draws through: every batch, the warm-up and the frame', async () => {
