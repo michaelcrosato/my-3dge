@@ -26,7 +26,7 @@ import { HUMANOID_BODY } from './bodies/humanoid';
 import { BLOB_SHADOW, blobScale } from './blobShadow';
 import { compileBody } from './compile';
 import { createCrowd, HUMANOID_SHADOW, type Crowd, type RigBody, type RigJoints } from './crowd';
-import { createPuppetBatches } from './draw';
+import { createPuppetBatches } from './batches';
 import { defineBody } from './grammar';
 
 const library = createMaterialLibrary();

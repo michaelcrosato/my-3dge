@@ -40,6 +40,7 @@ import type { GfxCaps } from './caps';
 import { createTemporalAa, TRAA_FEATURE } from './enhanced/aa';
 import { AIR_FEATURE, createAirLights, shadeAir } from './enhanced/air';
 import { AO_FEATURE, createOcclusion } from './enhanced/ao';
+import { createGpuCrowd, GPU_CROWDS_FEATURE, gpuCrowdCapacity } from './enhanced/crowds';
 import { cascadeSun, CSM_FEATURE, type CascadedSun } from './enhanced/csm';
 import { GI_FEATURE, giScale, shadeGi } from './enhanced/gi';
 import { PoolTiledLighting, TILED, TILED_FEATURE } from './enhanced/lighting';
@@ -137,7 +138,7 @@ export interface FeatureReport {
 }
 
 /** The techniques' entries (WP 11.5), each declared by its module in engine/gfx/enhanced/. */
-const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE, AO_FEATURE, GI_FEATURE, AIR_FEATURE, SSR_FEATURE, TRAA_FEATURE, PARTICLES_FEATURE]; // prettier-ignore
+const TECHNIQUES = [TILED_FEATURE, CSM_FEATURE, AO_FEATURE, GI_FEATURE, AIR_FEATURE, SSR_FEATURE, TRAA_FEATURE, PARTICLES_FEATURE, GPU_CROWDS_FEATURE]; // prettier-ignore
 
 /** Declares the kind `feature`, the built-in features and `gfx.featuresOff` on `registry`, unless it has them. */
 export function defineFeatures(registry: Registry = sharedRegistry): void {
@@ -299,6 +300,17 @@ export function gpuParticlesFor(report?: FeatureReport): typeof createGpuParticl
   return report?.on.includes(PARTICLES_FEATURE.id) ? createGpuParticles : null;
 }
 
+/**
+ * A GPU crowd's maker (engine/gfx/enhanced/crowds.ts, WP 11.4), with the capacity it starts with for a number of
+ * bodies, when `feature:gpuCrowds` is on in `report`; else null (and with no report): crowds draw through the
+ * instancing service.
+ */
+export function gpuCrowdsFor(
+  report?: FeatureReport,
+): { make: typeof createGpuCrowd; capacity: typeof gpuCrowdCapacity } | null {
+  return report?.on.includes(GPU_CROWDS_FEATURE.id) ? { make: createGpuCrowd, capacity: gpuCrowdCapacity } : null;
+}
+
 /** Whether the stage makes outline shells (engine/gfx/stageShells.ts): `feature:shells` on in `report`, or no report. */
 export function shellsOn(report?: FeatureReport): boolean {
   return report === undefined || report.on.includes('feature:shells');
@@ -319,6 +331,7 @@ export type { TemporalAa } from './enhanced/aa';
 export type { AirLights } from './enhanced/air';
 export type { Occlusion } from './enhanced/ao';
 export type { CascadedSun } from './enhanced/csm';
+export type { GpuCrowd } from './enhanced/crowds';
 export type { Reflections } from './enhanced/ssr';
 export type { GpuParticles } from './enhanced/particles';
 export type { GpuTiming } from './enhanced/timing';

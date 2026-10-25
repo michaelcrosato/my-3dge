@@ -1,8 +1,9 @@
 /**
  * @file T2 for the Stress Box, stage 4 (PLAN.md §9.0, WP 5.7): the crowd (labs/box/?scene=crowd-100, crowd-5000) on
  * WebGPU. The chase replay, played in the page, gives its goldens and ends with walkers on the west gallery, 1 m up
- * (Done-when 1); the crowd draws through its batches (the ID pass sees the humanoids', the blobs' and the floaters'
- * parts and their shadows, and the dump no stand-in for a member); and the crowd at 5,000 grows, 25 entering a step,
+ * (Done-when 1); the crowd draws through its batches, a GPU crowd's meshes (`feature:gpuCrowds`, WP 11.4) or with the
+ * feature off the instancing service's pages (the ID pass sees the humanoids', the blobs' and the floaters' parts and
+ * their shadows, and the dump no stand-in for a member); and the crowd at 5,000 grows, 25 entering a step,
  * with frames drawn at 25, 1,000, 2,500 and 5,000 members, building 0 pipelines after the warm-up (Done-when 3). The
  * CPU-only contract for the crowd (Done-when 4) is tests/e2e/parity.spec.ts: there the chase gives the same goldens
  * drawing a frame after every step through the crowd's level of detail, so the gallery's end state holds while it
@@ -93,33 +94,38 @@ test.describe('the box, stage 4: the crowd', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('the crowd draws through its batches: humanoids, blobs and floaters with their shadows, no stand-in', async ({
-    page,
-    harness,
-  }) => {
-    await open(page, harness, 'crowd-100', '&cam=iso');
-    await call(page, 'step', 240);
-    await call(page, 'render', 5);
-    const shot = await call<{ ids: { visible: Seen[] } }>(page, 'shot', {
-      ids: true,
-      metrics: false,
-      thumbnail: false,
+  for (const [path, query, drawn] of [
+    ['a GPU crowd', '', /crowd\/rigs\/ball\/gpu Mesh/],
+    ['the instancing service', `&gfx.featuresOff=${encodeURIComponent('["feature:gpuCrowds"]')}`, /crowd\/rigs\/ball\/page0 InstancedMesh/], // prettier-ignore
+  ] as const) {
+    test(`through ${path}, the crowd draws in its batches: humanoids, blobs and floaters with their shadows, no stand-in`, async ({
+      page,
+      harness,
+    }) => {
+      await open(page, harness, 'crowd-100', `&cam=iso${query}`);
+      await call(page, 'step', 240);
+      await call(page, 'render', 5);
+      const shot = await call<{ ids: { visible: Seen[] } }>(page, 'shot', {
+        ids: true,
+        metrics: false,
+        thumbnail: false,
+      });
+      const px = (prefix: string) =>
+        shot.ids.visible.filter((object) => object.name.startsWith(prefix)).reduce((sum, object) => sum + object.px, 0);
+      for (const batch of [
+        'crowd/puppets/',
+        'crowd/rigs/ball/',
+        'crowd/rigs/ball~material:puppetHalo/',
+        'crowd/shadows/',
+      ]) {
+        expect(px(batch), batch).toBeGreaterThan(20);
+      }
+      const dump = await call<string>(page, 'scene.dump', {});
+      expect(dump).not.toMatch(/crowdMember#/);
+      expect(dump).toMatch(drawn);
+      expect(harness.advice().map((advice) => advice.code)).toEqual(query ? ['GFX_NO_GPU_CROWDS'] : []);
     });
-    const px = (prefix: string) =>
-      shot.ids.visible.filter((object) => object.name.startsWith(prefix)).reduce((sum, object) => sum + object.px, 0);
-    for (const batch of [
-      'crowd/puppets/',
-      'crowd/rigs/ball/',
-      'crowd/rigs/ball~material:puppetHalo/',
-      'crowd/shadows/',
-    ]) {
-      expect(px(batch), batch).toBeGreaterThan(20);
-    }
-    const dump = await call<string>(page, 'scene.dump', {});
-    expect(dump).not.toMatch(/crowdMember#/);
-    expect(dump).toMatch(/crowd\/rigs\/ball\/page0 InstancedMesh/);
-    expect(harness.advice()).toEqual([]);
-  });
+  }
 
   test('the crowd grows to 5,000, 25 entering a step, and builds 0 pipelines after the warm-up', async ({
     page,

@@ -4,7 +4,7 @@
  * (engine/gfx/puppets/lod.ts); each frame, for each body, `see` first, and pose and draw only what it returns a band
  * for:
  * - `humanoid(compiled, pose, { band })`: a compiled body (compile.ts) in a pose from its animator, posed at the
- *   band's level (`animator.pose({ lod: band.pose })`), drawn as instanced parts (draw.ts `createPuppetBatches`),
+ *   band's level (`animator.pose({ lod: band.pose })`), drawn as instanced parts (batches.ts `createPuppetBatches`),
  *   its capes left out in bands without capes;
  * - `blob(blob, { band })` and `floater(floater, { band })`: a blob or floater rig (engine/anim/blob.ts, floater.ts)
  *   posed from its state alone and drawn in its body (bodies/blob.ts, bodies/floater.ts; `BLOB_BODY` and
@@ -12,14 +12,15 @@
  *   rig body on any joints;
  * - with `floor` (the floor's height under it, which the caller knows), a blob shadow (blobShadow.ts).
  *
- * A rig body (`RigBody`) is data: its slots, and its parts, each a unit shape on one joint of the rig's pose
- * (`RigPart` says how it is placed and sized). Post-processing sees the bodies' batches as characters, in one
+ * A rig body (`RigBody`, rigBody.ts) is data: its slots, and its parts, each a unit shape on one joint of the rig's
+ * pose (`RigPart` says how it is placed and sized). Post-processing sees the bodies' batches as characters, in one
  * outline group (`setPart`, engine/gfx/post/mrt.ts), and the blob shadows as the environment.
  *
  * The cost: a draw call per shown page of each batch (a shape and a material: the puppets' `crowd/puppets/<shape>`,
  * the rigs' `crowd/rigs/<shape>`, and `crowd/shadows`), again per shadow map for lit ones. Pages hold
  * `CROWD_PAGE_SLOTS` (8,192) instances, so 5,000 bodies fit in a few pages a batch; pages added as the crowd grows
- * share their batch's shader and build no pipeline (tests/e2e/crowd-render.spec.ts).
+ * share their batch's shader and build no pipeline (tests/e2e/crowd-render.spec.ts). With `gpu` (`CrowdGpu`) every
+ * batch is made through a GPU crowd instead: a draw call a batch, culled on the GPU (tests/e2e/gpu-crowds.spec.ts).
  *
  * Invariants: presentation only: nothing here reaches the sim, and a band changes only what is drawn; `prepare`
  * bodies before the warm-up so every batch's first page is compiled then. A rig body's problems throw
@@ -37,7 +38,7 @@
  * @see engine/gfx/puppets/crowd.test.ts
  * @see tests/e2e/crowd-render.spec.ts
  */
-import { Group, Matrix4, Quaternion, Vector3, type Camera } from 'three/webgpu';
+import { Group, Matrix4, Quaternion, Vector3, type Camera, type Object3D } from 'three/webgpu';
 import type { Blob } from '../../anim/blob';
 import type { Floater } from '../../anim/floater';
 import type { Pose } from '../../anim/pose';
@@ -49,9 +50,13 @@ import type { Warmup } from '../warmup';
 import { BLOB_BODY, BLOB_BODY_RADIUS } from './bodies/blob';
 import { FLOATER_BODY } from './bodies/floater';
 import { createBlobShadows, type BlobShadows } from './blobShadow';
-import type { CompiledBody, PieceShape } from './compile';
-import { createPuppetBatches, unitGeometry, type PuppetBatches, type PuppetMaterials } from './draw';
+import type { CompiledBody } from './compile';
+import { createPuppetBatches, type PuppetBatches } from './batches';
+import { unitGeometry, type PuppetMaterials } from './draw';
 import { createCrowdLod, type CrowdBand, type CrowdLod, type CrowdLodCounts, type CrowdLodOptions } from './lod';
+import type { RigBody, RigJoints, RigPart, RigShape } from './rigBody';
+
+export type { RigBody, RigJoints, RigPart, RigShape } from './rigBody';
 
 /** The codes crowd drawing raises, with their fixes. */
 export const CROWD_CODES = defineCodes('gfx', {
@@ -67,59 +72,6 @@ export const CROWD_PAGE_SLOTS = 8192;
 
 /** A humanoid's blob shadow, metres at size 1 (the source's 5 units). */
 export const HUMANOID_SHADOW = 5 / 16;
-
-/** A unit shape a rig part draws: any but the limb. */
-export type RigShape = Exclude<PieceShape, 'limb'>;
-
-type Vec3 = readonly [number, number, number];
-
-/**
- * One part of a rig body: a unit shape (compile.ts's file comment) on one joint of the rig's pose, a matrix, a point
- * or a list of points (one part on each). It sits at `at` in the joint's frame, through the joint's whole matrix,
- * points `toward` a direction and has a `size` in metres: it turns with the joint but keeps its size, scaled only by
- * the rig's `scale` (a blob's radius over its body's), unless it `stretch`es through the joint's scale too (a
- * squashing body), when its size is in the joint's units. `eye` parts are unlit (the body's glow material); a part
- * with a `material` of its own draws in a batch of its own; `when` and `unless` name the rig's flags (`squint`).
- */
-export interface RigPart {
-  /** Its unit shape; `eye` is drawn unlit. */
-  readonly shape: RigShape;
-  /** The joint it rides: a key of the rig's pose. */
-  readonly on: string;
-  /** Its origin in the joint's frame, through the joint's whole matrix (the joint's origin by default). */
-  readonly at?: Vec3;
-  /** Its size along x, y and z (one number for all three): metres, or with `stretch` the joint's units. */
-  readonly size: number | Vec3;
-  /** Where its +Y points, in the joint's frame (+Y by default). */
-  readonly toward?: Vec3;
-  /** Sized by the joint's scale too. */
-  readonly stretch?: boolean;
-  readonly slot: string;
-  /** A material id of its own: drawn in a batch of its own, casting no shadow. */
-  readonly material?: string;
-  /** Drawn only while this flag of the rig is on. */
-  readonly when?: string;
-  /** Drawn only while this flag of the rig is off. */
-  readonly unless?: string;
-}
-
-/** A rig body (see the file comment). */
-export interface RigBody {
-  /** Its name, for messages. */
-  readonly name: string;
-  readonly description: string;
-  /** Material slots: each name with its hex colour. */
-  readonly slots: Readonly<Record<string, string>>;
-  readonly parts: readonly RigPart[];
-  /** The lit parts' material (`material:puppet`) and the eyes' (`material:puppetGlow`). */
-  readonly material?: string;
-  readonly glowMaterial?: string;
-  /** A blob shadow under joint `on`, `radius` metres before the rig's scale, when a floor is given. */
-  readonly shadow?: Readonly<{ on: string; radius: number }>;
-}
-
-/** A rig's pose: each joint a world matrix, a point, or a list of points. */
-export type RigJoints = Readonly<Record<string, Matrix4 | Vector3 | readonly Vector3[]>>;
 
 /** How a body is drawn: its band (full detail when absent) and the floor under it, for a blob shadow. */
 export interface CrowdDraw {
@@ -142,10 +94,25 @@ export interface CrowdStats {
   pages: Record<string, number>;
 }
 
+/**
+ * The half on the GPU a crowd may draw through (engine/gfx/enhanced/crowds.ts `GpuCrowd`, while `feature:gpuCrowds`
+ * is on): it makes the batches, hears of each frame's start and end (after the batches'), and shows its meshes to the
+ * warm-up.
+ */
+export interface CrowdGpu {
+  batch: typeof createInstancedBatch;
+  begin(camera: Camera): void;
+  end(): void;
+  objects(): readonly Object3D[];
+  dispose(): void;
+}
+
 /** A crowd's batches and level of detail (see the file comment). */
 export interface Crowd {
   readonly root: Group;
   readonly lod: CrowdLod;
+  /** The GPU half its batches draw through, or null: the instancing service's pages. */
+  readonly gpu: CrowdGpu | null;
   readonly puppets: PuppetBatches;
   /** The rigs' batches, by shape (with `~<material>` for a part's own material). */
   readonly rigs: ReadonlyMap<string, InstancedBatch>;
@@ -199,20 +166,24 @@ export function createCrowd(options: {
   lod?: CrowdLodOptions;
   /** Whether bodies given a floor get blob shadows (true). */
   shadows?: boolean;
+  /** The GPU half to draw through (see the file comment); the instancing service's pages without it. */
+  gpu?: CrowdGpu;
 }): Crowd {
   const name = options.name ?? 'crowd';
   const pageSlots = options.pageSlots ?? CROWD_PAGE_SLOTS;
+  const gpu = options.gpu ?? null;
+  const batches = gpu ? gpu.batch : createInstancedBatch;
   const root = new Group();
   root.name = name;
   const lod = createCrowdLod(options.lod);
-  const puppets = createPuppetBatches({ materials: options.materials, name: `${name}/puppets`, pageSlots });
+  const puppets = createPuppetBatches({ materials: options.materials, name: `${name}/puppets`, pageSlots, batches });
   /** The bodies' part for post-processing: characters, one outline group, so no line falls between a body's batches. */
   const character = (object: Group) => setPart(object, 'character', { group: root.id });
   character(puppets.root);
   const shadows =
     options.shadows === false
       ? null
-      : createBlobShadows({ materials: options.materials, name: `${name}/shadows`, pageSlots });
+      : createBlobShadows({ materials: options.materials, name: `${name}/shadows`, pageSlots, batches });
   root.add(puppets.root, ...(shadows ? [shadows.root] : []));
   const rigs = new Map<string, InstancedBatch>();
   const compiledRigs = new WeakMap<RigBody, readonly RigPiece[]>();
@@ -226,7 +197,7 @@ export function createCrowd(options: {
     if (!batch) {
       const material = options.materials.get(id);
       const geometry = unitGeometry(shape);
-      batch = createInstancedBatch({
+      batch = batches({
         name: `${name}/rigs/${key}`,
         geometry,
         material,
@@ -292,6 +263,7 @@ export function createCrowd(options: {
   const crowd: Crowd = {
     root,
     lod,
+    gpu,
     puppets,
     rigs,
     shadows,
@@ -308,6 +280,7 @@ export function createCrowd(options: {
       puppets.begin();
       for (const batch of rigs.values()) batch.begin();
       shadows?.begin();
+      gpu?.begin(camera);
     },
     see: (x, y, z, radius) => lod.see(x, y, z, radius),
     humanoid(compiled, pose, draw = {}) {
@@ -370,6 +343,7 @@ export function createCrowd(options: {
       puppets.end();
       for (const batch of rigs.values()) batch.end();
       shadows?.end();
+      gpu?.end();
     },
     drawCalls: (shadowMaps = 0) => all().reduce((sum, batch) => sum + batch.drawCalls(shadowMaps), 0),
     stats() {
@@ -382,12 +356,13 @@ export function createCrowd(options: {
       return { lod: lod.counts(), bodies, instances, pages };
     },
     register(warmup, id = name) {
-      return warmup.register(id, { objects: () => all().flatMap((batch) => batch.pages) });
+      return warmup.register(id, { objects: () => [...all().flatMap((batch) => batch.pages), ...(gpu?.objects() ?? [])] }); // prettier-ignore
     },
     dispose() {
       puppets.dispose();
       for (const batch of rigs.values()) batch.dispose();
       shadows?.dispose();
+      gpu?.dispose();
       root.removeFromParent();
     },
   };

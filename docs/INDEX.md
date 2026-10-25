@@ -606,7 +606,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `DAYLIGHT`, `daylightAt`, `defineDaylight`, `lightAt`, `SUN`
   - Tests: [`engine/gfx/daylight.test.ts`](../engine/gfx/daylight.test.ts), [`tests/e2e/lights.spec.ts`](../tests/e2e/lights.spec.ts)
 - [`features.ts`](../engine/gfx/features.ts): The feature registry (PLAN.md §6.7, I-16; doctrine: WebGPU only): optional adapter features and GPU techniques as entries of the registry kind `feature`, each saying what it needs (adapter features, least device limits), what is lost without it and which advice code says so.
-  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuParticles`, `gpuParticlesFor`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `shellsOn`, `TemporalAa`, `temporalAaFor`
+  - Exports: `AirLights`, `CascadedSun`, `cascadeSunFor`, `defineFeatures`, `FEATURE_FIELDS`, `FEATURE_SETTINGS`, `FeatureEntry`, `FeatureOff`, `FeatureReport`, `FEATURES_CODES`, `GpuCrowd`, `gpuCrowdsFor`, `GpuParticles`, `gpuParticlesFor`, `GpuTiming`, `gpuTimingFor`, `lightingFor`, `lightPoolOf`, `LightPoolSize`, `Occlusion`, `Reflections`, `resolveFeatures`, `sceneTargetsFor`, `shadingFor`, `ShadingTechniques`, `shellsOn`, `TemporalAa`, `temporalAaFor`
   - Tests: [`engine/gfx/features.test.ts`](../engine/gfx/features.test.ts)
 - [`idmarks.ts`](../engine/gfx/idmarks.ts): The ID pass's marks (PLAN.md §8.5, I-28; split from engine/gfx/idpass.ts after G9, ADR-0014 amendment 17): `marksOf` numbers what the pass sees, largest first, and `drawMarks` draws the numbers onto a frame, for `x shot --marks` (shardfall's `see`, `shardfall:crates/pav_tools/src/agent_tools.rs:26-224`, marking only what is seen).
   - Exports: `drawMarks`, `Mark`, `marksOf`
@@ -768,6 +768,15 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`ao.ts`](../engine/gfx/enhanced/ao.ts): Ambient occlusion (PLAN.md WP 11.5): r182's `GTAONode` addon (ground-truth ambient occlusion) over the post chain's scene pass, its depth and its view normals (engine/gfx/post/mrt.ts), for the look's `ao` section (engine/gfx/post/shading.ts lays it on the scene's light): creases, corners and the ground under things darken, indoors most of all.
   - Exports: `AO`, `AO_CODES`, `AO_FEATURE`, `createOcclusion`, `Occlusion`
   - Tests: [`engine/gfx/enhanced/ao.test.ts`](../engine/gfx/enhanced/ao.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
+- [`crowdNodes.ts`](../engine/gfx/enhanced/crowdNodes.ts): GPU-driven crowds' programs (PLAN.md WP 11.4): the buffers a GPU crowd (engine/gfx/enhanced/crowds.ts) keeps, the cull's two compute passes over them, and the material copies its meshes draw with.
+  - Exports: `arrayOf`, `createCrowdBuffers`, `createCrowdCull`, `createCrowdLook`, `CROWD_ARGS`, `CROWD_BLOCK`, `CrowdBuffers`, `CrowdCull`, `CrowdLook`, `upload`
+  - Tests: [`engine/gfx/enhanced/crowds.test.ts`](../engine/gfx/enhanced/crowds.test.ts), [`tests/e2e/gpu-crowds.spec.ts`](../tests/e2e/gpu-crowds.spec.ts)
+- [`crowdRegions.ts`](../engine/gfx/enhanced/crowdRegions.ts): A GPU crowd's regions (PLAN.md WP 11.4): the CPU's half of its instance buffer (engine/gfx/enhanced/ crowdNodes.ts `crowdSource`), shared by its batches (engine/gfx/enhanced/crowds.ts).
+  - Exports: `createCrowdRegions`, `CrowdRegion`, `CrowdRegions`, `SLOT_FLOATS`
+  - Tests: [`engine/gfx/enhanced/crowds.test.ts`](../engine/gfx/enhanced/crowds.test.ts)
+- [`crowds.ts`](../engine/gfx/enhanced/crowds.ts): GPU-driven crowds (PLAN.md WP 11.4, stage 1): the technique `feature:gpuCrowds`, a crowd's batches (engine/gfx/puppets/crowd.ts) each drawn in one indirect draw whose instances a compute pass chose, testing every instance against the frame's view; the instancing service (engine/gfx/instancing.ts), a draw a page, stays the fallback.
+  - Exports: `createGpuCrowd`, `CrowdCompute`, `GPU_CROWD`, `GPU_CROWDS_CODES`, `GPU_CROWDS_FEATURE`, `GpuCrowd`, `gpuCrowdCapacity`, `GpuCrowdStats`
+  - Tests: [`engine/gfx/enhanced/crowds.test.ts`](../engine/gfx/enhanced/crowds.test.ts), [`tests/e2e/gpu-crowds.spec.ts`](../tests/e2e/gpu-crowds.spec.ts)
 - [`csm.ts`](../engine/gfx/enhanced/csm.ts): Cascaded shadows (PLAN.md WP 11.5): the sky's sun casts through r182's `CSMShadowNode` addon, over `CASCADES.count` cascades that split the view's first `CASCADES.far` m, each its own `CASCADES.map`² shadow map.
   - Exports: `CascadedSun`, `CASCADES`, `cascadeSun`, `CSM_CODES`, `CSM_FEATURE`
   - Tests: [`engine/gfx/enhanced/csm.test.ts`](../engine/gfx/enhanced/csm.test.ts), [`tests/e2e/enhanced.spec.ts`](../tests/e2e/enhanced.spec.ts)
@@ -1005,6 +1014,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`actors.ts`](../engine/gfx/puppets/actors.ts): Actors on the stage (PLAN.md WP 3.10, §6.4's view; I-21): every actor with an animator (engine/sim/actors.ts: an entity with the components `actor` and `animator`) drawn as a puppet (engine/gfx/puppets/draw.ts) of the neutral humanoid (`ACTOR_BODY`) or the body its component `puppet` names (`body:mannequin`, WP 8.9), in its animator's build, posed every frame by its animator's presentation half (engine/anim/character.ts `pose`) at the frame's alpha; an actor with clips (`clips`, engine/sim/actorClips.ts) has its clip layer laid over the body, loaded from the same data (a `ClipLayerPool` of the view's own, engine/anim/clip/clipsets.ts).
   - Exports: `ACTOR_BODY`, `ActorPuppets`, `createActorPuppets`, `PlayerView`
   - Tests: [`engine/gfx/puppets/actors.test.ts`](../engine/gfx/puppets/actors.test.ts)
+- [`batches.ts`](../engine/gfx/puppets/batches.ts): Instanced puppet parts for crowds (PLAN.md WP 3.8, I-21): `createPuppetBatches({ materials })` draws compiled bodies (compile.ts) as instanced parts per shape over the instancing service (engine/gfx/instancing.ts), from the same pieces a puppet (draw.ts) is made of.
+  - Exports: `createPuppetBatches`, `PuppetBatches`
+  - Tests: [`engine/gfx/puppets/draw.test.ts`](../engine/gfx/puppets/draw.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
 - [`blobShadow.ts`](../engine/gfx/puppets/blobShadow.ts): Blob shadows (PLAN.md WP 3.8): a soft dark disc on the floor under each body, all of them in one instanced batch (engine/gfx/instancing.ts), so a crowd's shadows cost one draw call.
   - Exports: `BLOB_SHADOW`, `BLOB_SHADOW_MATERIAL`, `blobScale`, `blobShadowMaterial`, `BlobShadows`, `createBlobShadows`
   - Tests: [`engine/gfx/puppets/blobShadow.test.ts`](../engine/gfx/puppets/blobShadow.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
@@ -1015,10 +1027,10 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `BodyPiece`, `CAPE_THICKNESS`, `COMPILE_CODES`, `compileBody`, `CompiledBody`, `PieceShape`, `recolor`, `restPositions`
   - Tests: [`engine/gfx/puppets/compile.test.ts`](../engine/gfx/puppets/compile.test.ts)
 - [`crowd.ts`](../engine/gfx/puppets/crowd.ts): Crowd drawing (PLAN.md WP 5.4, I-21): thousands of bodies in a few dozen draw calls, over the instancing service (engine/gfx/instancing.ts).
-  - Exports: `createCrowd`, `Crowd`, `CROWD_CODES`, `CROWD_PAGE_SLOTS`, `CrowdDraw`, `CrowdRigDraw`, `CrowdStats`, `HUMANOID_SHADOW`, `RigBody`, `RigJoints`, `RigPart`, `RigShape`
+  - Exports: `createCrowd`, `Crowd`, `CROWD_CODES`, `CROWD_PAGE_SLOTS`, `CrowdDraw`, `CrowdGpu`, `CrowdRigDraw`, `CrowdStats`, `HUMANOID_SHADOW`, `RigBody`, `RigJoints`, `RigPart`, `RigShape`
   - Tests: [`engine/gfx/puppets/crowd.test.ts`](../engine/gfx/puppets/crowd.test.ts), [`tests/e2e/crowd-render.spec.ts`](../tests/e2e/crowd-render.spec.ts)
 - [`draw.ts`](../engine/gfx/puppets/draw.ts): Drawing puppets (PLAN.md WP 3.8, I-21): a compiled body (compile.ts) drawn two ways from the same pieces.
-  - Exports: `createPuppet`, `createPuppetBatches`, `PieceRange`, `Puppet`, `PUPPET_MATERIALS`, `PuppetBatches`, `puppetGeometry`, `puppetMaterials`, `PuppetMaterials`, `unitGeometry`
+  - Exports: `createPuppet`, `PieceRange`, `Puppet`, `PUPPET_MATERIALS`, `puppetGeometry`, `puppetMaterials`, `PuppetMaterials`, `unitGeometry`
   - Tests: [`engine/gfx/puppets/draw.test.ts`](../engine/gfx/puppets/draw.test.ts), [`tests/e2e/puppets.spec.ts`](../tests/e2e/puppets.spec.ts)
 - [`grammar.ts`](../engine/gfx/puppets/grammar.ts): The body grammar, v2 (PLAN.md WP 3.8, §5.1; I-21): a puppet's body as data, the registry kind `body`.
   - Exports: `Body`, `BODY_FIELDS`, `bodyKind`, `BodyLength`, `BodyPart`, `BodyPoint`, `bodyProblems`, `BodySpec`, `defineBody`, `getBody`, `mirrorName`, `mirrorPart`, `mirrorPoint`, `PART_TYPES`, `PartOptions`, `PartType`, `pointProblem`
@@ -1026,6 +1038,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`lod.ts`](../engine/gfx/puppets/lod.ts): The crowd's level of detail (PLAN.md WP 5.4, I-21): which bodies a frame draws, and in how much detail, from the camera alone.
   - Exports: `createCrowdLod`, `CROWD_LOD`, `CROWD_LOD_CODES`, `CrowdBand`, `CrowdBandSpec`, `CrowdLod`, `CrowdLodCounts`, `CrowdLodOptions`
   - Tests: [`engine/gfx/puppets/lod.test.ts`](../engine/gfx/puppets/lod.test.ts), [`tests/e2e/crowd-render.spec.ts`](../tests/e2e/crowd-render.spec.ts)
+- [`rigBody.ts`](../engine/gfx/puppets/rigBody.ts): Rig bodies (PLAN.md WP 5.4, I-21): the data form in which a rig (a blob, a floater, a quadruped: engine/anim/) wears its body, as `createCrowd` draws it (engine/gfx/puppets/crowd.ts `rig`).
+  - Exports: `RigBody`, `RigJoints`, `RigPart`, `RigShape`
+  - Tests: [`engine/gfx/puppets/crowd.test.ts`](../engine/gfx/puppets/crowd.test.ts)
 
 ## engine/gfx/puppets/bodies
 
@@ -2092,6 +2107,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`tests/e2e/fx.spec.ts`](../tests/e2e/fx.spec.ts)
 - [`gallery.ts`](../tests/pages/gallery.ts): The gallery's page (tests/pages/gallery.html; PLAN.md WP 7.7): every entry the repository registers, so `x gallery` films them all by default.
   - Tests: [`tests/e2e/gallery.spec.ts`](../tests/e2e/gallery.spec.ts)
+- [`gpu-crowds.ts`](../tests/pages/gpu-crowds.ts): The gpu-crowds page's module (tests/pages/gpu-crowds.html, PLAN.md WP 11.4): the crowd-render page's scene (tests/pages/crowdRenderScene.ts: the lit floor, one shadow-casting sun, the wanderers) drawn by two crowds of the same bodies, `cpu` through the instancing service and `gpu` through a GPU crowd (engine/gfx/enhanced/crowds.ts, from the renderer's features: `gpuCrowdsFor`), one shown at a time, both prepared and registered with the warm-up before the first frame.
+  - Tests: [`tests/e2e/gpu-crowds.spec.ts`](../tests/e2e/gpu-crowds.spec.ts)
 - [`hall.ts`](../tests/pages/hall.ts): The hall page's module (tests/pages/hall.html, PLAN.md WP 4.4): the engine's renderer (engine/gfx/renderer.ts) with a lit, shadowed scene, and `window.__hallPage.show(text, file)`, which compiles a level's text (engine/world/level/compile.ts), draws it with the level meshes (engine/gfx/level/meshes.ts) and the material library, gives it a cutaway (engine/gfx/cutaway.ts), registers both with the warm-up, warms up through both cameras (r182 builds a pipeline per projection; the app does the same, engine/app/engine.ts) and draws.
   - Exports: `Looked`, `Overview`, `Shown`
   - Tests: [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts)
