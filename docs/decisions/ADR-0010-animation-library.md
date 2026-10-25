@@ -161,15 +161,15 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   time. Known limits: a hand still while the body is still too, below the head and off the floor (an idle's, a held
   wall), reads as no contact; a hand the body moves past at the turn of its swing can read as one (a walk's: four
   Mesh2Motion walks), as can a hand held still while the body sways (`Fighting Idle`, `Throw Object`).
-- **Call: parity is two decodes of one capture, and no worse** (tools/anim/upgrade.ts; PLAN.md §10.5 step 9 and WP
-  8.8 edited to match). The plan asked each re-imported clip's decode to lie within the old clip's fit of the old
-  decode. That rule sits on its own boundary: a format-2 clip that holds its capture closely lies from the format-1
-  decode by just the format-1 clip's error against that capture, which is its fit, so the upgrades that mend most
-  fail it by a millimetre or two (67 of Mesh2Motion's 177 and 13 of CMU's 60 fail it: it would swap in 62% and 78%,
-  short of the 80% the WP asks; 107 of 177 pass its strict reading). The rule kept: the two decodes lie within
-  the sum of their fits of each other, mean and worst (two decodes each within its fit of one capture can lie no
-  farther apart: the same motion; every clip of both sets passes), and the new clip fits its capture no worse, mean
-  and worst. Mesh2Motion: 175 of 177 swapped in; CMU: 51 of 60. The others stay as they were, each with its reason in
+- **Call: parity is two decodes of one capture, and no worse** (tools/anim/upgrade.ts; PLAN.md §10.5 step 9 and WP 8.8
+  edited to match). The plan asked each re-imported clip's decode to lie within the old clip's fit of the old decode.
+  That rule sits on its own boundary: a format-2 clip that holds its capture closely lies from the format-1 decode by
+  just the format-1 clip's error against that capture, which is its fit, so the upgrades that mend most fail it by a
+  millimetre or two (67 of Mesh2Motion's 177 and 13 of CMU's 60 fail it: it would swap in 62% and 78%, short of the 80%
+  the WP asks; 107 of 177 pass its strict reading). The rule kept: the two decodes lie within the sum of their fits of
+  each other, mean and worst (two decodes each within its fit of one capture can lie no farther apart: the same motion;
+  every clip of both sets passes), and the new clip fits its capture no worse, mean and worst. Mesh2Motion: 176 of 177
+  swapped in; CMU: 52 of 60 (after the fix below). The others stay as they were, each with its reason in
   data/anim/upgrade.json (a worse worst frame, or a worse mean by a millimetre or two: CMU's format 2 in-betweens its
   takes' frames where format 1 took the nearest, so each is fitted to a slightly different capture).
 - **Sources:** Mesh2Motion's three `.glb` files at mesh2motion-app@653a969, each checked by its sha256 (`x anim
@@ -203,13 +203,22 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   the other 9 byte for byte; `x anim upgrade` names the closest set for one it lacks; the CMU survey flags a format-2
   fit `f2`, so a re-surveyed take ranks against the old rows knowingly (§10.5 step 10 edited); ESC-0003's second
   option counted 100STYLE among the sets to upgrade, which the call above leaves out.
+- **Found after the merge (Codex's review of PR #33): the hands turned the long way.** `encodeHand` gives principal
+  angles and the encoder stored them as they came, while every other angle continues from the key before; so a roll
+  past ±180° between two keys in-betweened the long way round (19 clips; Help_Two_Arms' right hand turned 306° in 67
+  ms, and the bake's parity found Backflip's, Dance Charleston's and Jump_2's fists 300 mm off at the midpoints). The
+  hand's angles now continue from the key before (encode.ts, `uw`), and both sets were re-imported again from their
+  format-1 clips, so parity is still judged against format 1: Mesh2Motion 176 of 177 (Turn_Left_180 swapped in now),
+  CMU 52 of 60 (Get_Up_From_Back too); no hand angle moves more than 180° between keys, and the bake's, the
+  mannequin's and the two `action:dizzy` baselines were re-recorded with that reason.
 - Evidence: engine/anim/clip/hands.test.ts (random turns and grips back to the degree and the whole, either side; the
-  mirror image; a capture with turning, closing hands fitted within 30 mm and its hands within 15 mm, more than three
-  times closer than format 1), engine/anim/clip/feet.test.ts, engine/anim/clip/spine.test.ts,
-  engine/anim/clip/mirror.test.ts (a mirrored format-2 clip decodes to the reflected body, every hand, spine and toe
-  point with it), engine/anim/clip/bake.test.ts (FK of a format-2 key rebuilds every rigid point; a flipped roll sign
-  misses by 57 mm), tools/anim/contacts.test.ts, tools/anim/upgrade.test.ts, tools/anim/glb-library.test.ts (a skinned
-  mesh read through its inverse bind matrices, the WP's prerequisite), tests/unit/data/anim/upgrade.test.ts (the 80%
-  per set, the kept clips listed, every swapped clip's format-2 fields in full), engine/anim/clip/retarget.test.ts
-  (`handWeight`'s fade and seam), tests/unit/data/anim/hand-contacts.test.ts (no jump at an edge, on every humanoid;
-  it fails on five builds of five with the fade taken out), tools/cmd/anim.test.ts (`fetch`, `upgrade`'s refusals).
+  mirror image; a roll past ±180° kept turning the short way; a capture with turning, closing hands fitted within 30 mm
+  and its hands within 15 mm, more than three times closer than format 1), engine/anim/clip/feet.test.ts,
+  engine/anim/clip/spine.test.ts, engine/anim/clip/mirror.test.ts (a mirrored format-2 clip decodes to the reflected
+  body, every hand, spine and toe point with it), engine/anim/clip/bake.test.ts (FK of a format-2 key rebuilds every
+  rigid point; a flipped roll sign misses by 57 mm), tools/anim/contacts.test.ts, tools/anim/upgrade.test.ts,
+  tools/anim/glb-library.test.ts (a skinned mesh read through its inverse bind matrices, the WP's prerequisite),
+  tests/unit/data/anim/upgrade.test.ts (the 80% per set, the kept clips listed, every swapped clip's format-2 fields in
+  full), engine/anim/clip/retarget.test.ts (`handWeight`'s fade and seam), tests/unit/data/anim/hand-contacts.test.ts
+  (no jump at an edge, on every humanoid; it fails on five builds of five with the fade taken out),
+  tools/cmd/anim.test.ts (`fetch`, `upgrade`'s refusals).

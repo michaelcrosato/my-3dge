@@ -62,8 +62,8 @@
   {
     "id": "action:dizzy",
     "metric": "footSlide",
-    "value": 0.1762,
-    "reason": "Mesh2Motion's Dizzy, re-imported in format 2 by WP 8.8 with its foot contacts (both feet held through the whole clip), plays on the clip layer (WP 8.4), where nothing plants a foot by its contacts yet: engine/anim/clip/retarget.ts reads only the hands' and aims each ankle where the source's is, so the feet slide as captured and as the clip fades in over the body and out (a foot lock by contacts would go in retarget.ts's `plantFeet`, PLAN.md §10.4); tightened after G9: the retargeter moves it a little; tightened after WP 8.8 re-imported it (its feet rolled and legs bent as captured): 0.2003 → 0.1762"
+    "value": 0.1759,
+    "reason": "Mesh2Motion's Dizzy, re-imported in format 2 by WP 8.8 with its foot contacts (both feet held through the whole clip), plays on the clip layer (WP 8.4), where nothing plants a foot by its contacts yet: engine/anim/clip/retarget.ts reads only the hands' and aims each ankle where the source's is, so the feet slide as captured and as the clip fades in over the body and out (a foot lock by contacts would go in retarget.ts's `plantFeet`, PLAN.md §10.4); tightened after G9: the retargeter moves it a little; tightened after WP 8.8 re-imported it (its feet rolled and legs bent as captured): 0.2003 → 0.1762; tightened when its hands' rolls were unwrapped from key to key (a roll past ±180° no longer turns the long way): 0.1762 → 0.1759"
   },
   {
     "id": "action:getUp",

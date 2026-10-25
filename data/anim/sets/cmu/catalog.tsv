@@ -38,7 +38,7 @@ Roundhouse_Kick	6	false		attack kick	A karate roundhouse kick (mawashi-geri): th
 Side_Kick	6	false		attack kick	A karate side kick (yoko-geri): the body turned side on, the heel driven out sideways	CMU_135		135_11 0.90-6.90	12/62
 Stepping_Punch	6	false		attack unarmed walk	Karate stepping punches (oi-zuki): a long stride forward with a straight punch on each step	CMU_135		135_09 1.80-7.80	12/55
 Get_Up_Face_Down	6.1	false		getup	Getting up from lying face down: push up on the arms, a knee under, stand	CMU_140		140_01 0.80-6.90	14/65
-Get_Up_From_Back	7.067	false		getup	Getting up from lying on the back: sit up, roll to a knee, stand	CMU_140		140_08 0.40-7.47	16/73
+Get_Up_From_Back	7.067	false		getup	Getting up from lying on the back: sit up, roll to a knee, stand	CMU_140		140_08 0.40-7.47	11/67
 Get_Up_From_Side	8.5	false		getup	Getting up from lying on the side	CMU_140		140_03 0.00-8.50	17/78
 Duck_Thrown_Object	5.5	false		dodge crouch	Ducking from something thrown: dropping into a tight crouch with the head covered, staying down, then rising	CMU_77		77_09 2.50-8.00	19/90
 Chop_Wood	6	false		work	Chopping wood: an axe raised overhead in both hands and brought down hard, again and again (no axe is drawn)	CMU_79		79_01 0.00-6.00	19/78

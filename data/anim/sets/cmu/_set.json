@@ -919,7 +919,7 @@
     "Side_Kick": [12,62],
     "Stepping_Punch": [12,55],
     "Get_Up_Face_Down": [14,65],
-    "Get_Up_From_Back": [16,73],
+    "Get_Up_From_Back": [11,67],
     "Get_Up_From_Side": [17,78],
     "Duck_Thrown_Object": [19,90],
     "Chop_Wood": [19,78],

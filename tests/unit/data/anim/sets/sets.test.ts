@@ -67,14 +67,14 @@ const SOURCE_SETS: Record<string, SourceSet> = {
     from: 'src/mocap/sets/mesh2motion.js',
     clips: 177,
     sha256: '93997b1ee3de44e7be628af3f78452e89431f42736112ed79f974f22744a0598',
-    kept: '18a47a289c30f1e5278d8c62f29d627ddf34e523c8f71d7e122d2be517da7f4f',
+    kept: 'bc9d8dcb040d9a4e28b0f5689a4d37b28016389cf1e61b7a7cf9a288e8cee58a',
   },
   cmu: {
     source: 'my-3d2dge',
     from: 'src/mocap/sets/cmu.js',
     clips: 60,
     sha256: '042068d134e719cfc0213c8e2259af5159ecdb118ac2e12ef6621b843dd33727',
-    kept: '8fb4f049be898338fc366b0e87c4e451550893bef58a1550d93cfe663edbe678',
+    kept: 'eba9525afdea2494af583b65f15c30baf58ff3c24c609c054f0ebb0681b8cc1c',
   },
   quaternius: {
     source: 'shardfall',

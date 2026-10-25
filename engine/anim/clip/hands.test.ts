@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { busy, clipOf, REST } from '../../../tests/unit/anim/clip-fixtures';
-import { fitClip, type Capture } from './encode';
+import { encodePose, fitClip, type Capture } from './encode';
 import { len, norm, sub, type V } from './frames';
 import { encodeHand, HALF_SPAN, handFrame, placeHand, type HandPose } from './hands';
 import { POINT_INDEX, samplePose, type Clip, type ClipKey } from './readable';
@@ -99,6 +99,16 @@ describe('a capture with turning, closing hands', () => {
     for (let f = 0; f < n; f++) data.set(samplePose(REST, clip, f / 30), f * 108);
     return { clip, cap: { name: 'Hands', n, dur: 1, loop: false, fps: 30, data, move: null } };
   }
+
+  it('keeps a hand turning past ±180° turning the short way, each key continuing from the one before', () => {
+    const keys: ClipKey[] = [0, 1].map((t, i) => ({ ...busy(t), handR: [10, 5, 170 + 20 * i] as ClipKey['handR'] }));
+    const clip = clipOf(keys, { dur: 1 });
+    const first = encodePose(REST, samplePose(REST, clip, 0), null, { hands: true });
+    const second = encodePose(REST, samplePose(REST, clip, 1), first, { hands: true });
+    const [a, b] = [first.handR![2], second.handR![2]];
+    expect(Math.abs(a - 170)).toBeLessThanOrEqual(2); // to the format's rounding through the rest of the arm
+    expect(b - a).toBe(20); // on past 180°, not back to −170: an in-between through 0° would spin the hand round
+  });
 
   it('is fitted with its hands and decodes within its tolerance; without them its hands miss', () => {
     const { cap } = capture();

@@ -103,7 +103,7 @@ Crawl	1.708	true		crawl stealth	crawls on the belly, reaching ahead with alterna
 Crawl RM	1.708	true		crawl stealth root-motion	crawls on the belly, reaching ahead with alternate arms (travels)	M2M_ANIMATED			9/55
 Dance Body Roll	6.5	false		emote dance	a long dance: body rolls, arm waves and a dip, 6.5 seconds	M2M_ANIMATED			7/43
 Dance Charleston	2.333	true		emote dance	the Charleston: the knees swing in and out, the hands cross over them	M2M_ANIMATED			9/42
-Dance Reach Hip	2.542	false		emote dance	a dance: hip pops, then one arm reaching high and pointing out	M2M_ANIMATED			11/60
+Dance Reach Hip	2.542	false		emote dance	a dance: hip pops, then one arm reaching high and pointing out	M2M_ANIMATED			12/60
 Death_A	4.5	false		death	clutches the chest, staggers and sinks down onto the side, and lies still	M2M_ANIMATED			8/75
 Death_B	1.875	false		death	thrown back off the feet into the air and lands flat on the ground	M2M_ANIMATED			8/37
 Death_C	2.208	false		death	falls straight back, rolls over and lies spread out	M2M_ANIMATED			8/48
@@ -126,7 +126,7 @@ Head Nod	0.875	false		emote gesture	nods the head yes, standing	M2M_ANIMATED			5
 Idle Hurt	1.667	true		idle hurt	stands hunched, holding the side, hurt	M2M_ANIMATED			7/29
 Idle Listening	1.708	true		idle talk	weight on one leg, a hand on the hip, head cocked: listening	M2M_ANIMATED			4/28
 Idle_Subtle	2.583	true		idle	standing still, breathing gently	M2M_ANIMATED			6/34
-Jump_2	1.625	false		jump	crouches and jumps with the arms flung forward, then lands, in place	M2M_ANIMATED			9/37
+Jump_2	1.625	false		jump	crouches and jumps with the arms flung forward, then lands, in place	M2M_ANIMATED			9/50
 Jump_2_RM	1.625	false		jump root-motion	crouches and jumps up and forward with the arms flung forward, then lands (travels)	M2M_ANIMATED			10/45
 Jumping Jacks	1.25	true		emote exercise	jumping jacks: the arms and legs scissor out and in	M2M_ANIMATED			8/51
 Kneeling Tired	0.833	true		rest hurt	down on one knee, leaning on it, worn out	M2M_ANIMATED			12/27
@@ -171,11 +171,11 @@ Fishing_Reel	1.45	true		fish work prop	holds the rod out and turns the reel	M2M_
 Golf_Drive	3.1	false		sport prop	addresses the ball and swings a golf club through	M2M_MOCOPI			8/44
 Golf_idle	1.833	true		sport prop idle	stands over a golf ball, the club held low, shifting weight	M2M_MOCOPI			12/65
 Help_One_Arm	2.667	false		emote gesture	waves one arm overhead for attention: help	M2M_MOCOPI			7/32
-Help_Two_Arms	1.583	false		emote gesture	waves both arms overhead for attention	M2M_MOCOPI			8/51
+Help_Two_Arms	1.583	false		emote gesture	waves both arms overhead for attention	M2M_MOCOPI			8/35
 Insult	2.783	false		emote gesture	an insulting gesture, jabbing an arm forward at someone	M2M_MOCOPI			8/42
-Kick_Breach	1.833	false		attack unarmed kick interact	kicks a door in with a front kick, then steps back	M2M_MOCOPI			9/56
+Kick_Breach	1.833	false		attack unarmed kick interact	kicks a door in with a front kick, then steps back	M2M_MOCOPI			10/56
 Salute	4.383	false		emote gesture	stands at attention, salutes and lowers the hand	M2M_MOCOPI			9/50
-Turn_Left_180	2.117	false		walk turn	turns around to the left on the spot, stepping	M2M_MOCOPI			12/42
+Turn_Left_180	2.117	false		walk turn	turns around to the left on the spot, stepping	M2M_MOCOPI			9/38
 Turn_Left_90	2	false		walk turn	turns a quarter to the left on the spot	M2M_MOCOPI			10/39
 Turn_Right_180	1.483	false		walk turn	turns around to the right on the spot, stepping	M2M_MOCOPI			9/38
-Turn_Right_90	2	false		walk turn	turns a quarter to the right on the spot	M2M_MOCOPI			8/34
+Turn_Right_90	2	false		walk turn	turns a quarter to the right on the spot	M2M_MOCOPI			8/43
