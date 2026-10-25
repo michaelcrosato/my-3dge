@@ -9419,6 +9419,11 @@ For the agents who maintain the engine.
 - `LAB_DAYS` (const): How long a temporary lab lasts by default, in days.
 - `LABS_FILE` (const): The index's file, from the repository root.
 
+### [`tools/cmd/mcp.ts`](../tools/cmd/mcp.ts)
+
+- `default` (default): Serves the engine to MCP clients (PLAN.md §8.11, WP 7.6): `node x mcp` speaks the Model Context Protocol on stdin and stdout, so an agent that cannot run `node x` drives the engine as `x inspect`, `x eval` and `x shot` do.
+- `openArgs` (function): What the flags name to open first, or undefined when they name nothing.
+
 ### [`tools/cmd/new.ts`](../tools/cmd/new.ts)
 
 - `CheckName` (type): One check's name.
@@ -10050,6 +10055,81 @@ For the agents who maintain the engine.
 - `DevServer` (interface): A running dev server.
 - `freePort` (function): Asks the system for a free TCP port on 127.0.0.1.
 - `startVite` (function): Starts Vite on the repository at `root` (default: this repository), on `port` (default: any free port).
+
+### [`tools/mcp/backend.ts`](../tools/mcp/backend.ts)
+
+- `Backend` (interface): The engine the tools drive (see the file comment).
+- `OpenArgs` (interface): What `x mcp`'s flags (or the last `engine_open`) asked to open.
+- `Opened` (interface): A page or scene opened: what it is, whether it signalled ready, its error records and `info()`.
+- `openPath` (function): The page path `page` opens with `params` as URL parameters (objects and lists as JSON), as `x inspect` writes it.
+- `Params` (type): URL parameters for a page: routes (`scene`, `seed`, `cam`, `cam3`, `replay`) and settings by path.
+- `Progress` (type): Receives a line while a call waits (a page warming its pipelines): MCP progress for the client.
+
+### [`tools/mcp/docs.ts`](../tools/mcp/docs.ts)
+
+- `docsLookup` (function): What the docs say about `symbol` (see the file comment).
+
+### [`tools/mcp/headless.ts`](../tools/mcp/headless.ts)
+
+- `headlessBackend` (function): The headless backend over the repository at `root` (see the file comment).
+- `invoke` (function): Calls (or reads) member `name` on `engine` with `args`, its value copied through JSON.
+- `sceneTarget` (function): The scene module and id a page names (see the file comment).
+
+### [`tools/mcp/link.ts`](../tools/mcp/link.ts)
+
+- `forkLink` (function): Starts `node x mcp --worker <args…>` under `root` and links to it over IPC; its output goes to `output`.
+- `localLink` (function): A worker in this process.
+- `WorkerHandler` (type): A worker answers requests (tools/mcp/worker.ts `createWorker`).
+- `WorkerLink` (interface): The server's side of a worker.
+- `WorkerReply` (type): What a worker answers: a value, an error's first line, or (before either) a progress line.
+- `WorkerRequest` (type): What the server asks its worker (see the file comment).
+
+### [`tools/mcp/results.ts`](../tools/mcp/results.ts)
+
+- `cutText` (function): `text` as a result's text, cut past `MAX_TEXT` with a line saying where the whole of it is (under `root`).
+- `errorLine` (function): The first line of an error's message, without the wrappers a page or Playwright put round it.
+- `errorResult` (function): A failed call as a result: its text names what went wrong and the fix.
+- `GoldenVerdict` (interface): How a replay's hashes stand against its goldens for this platform.
+- `judgeGoldens` (function): Judges `hashes` (by step) against `goldens`, at the steps both hold.
+- `MAX_LISTED` (const): The most visible objects a shot's JSON lists one by one, largest first; the rest are counted.
+- `MAX_TEXT` (const): The longest text a result carries, in characters: about 15,000 tokens, under what clients keep of a result.
+- `shotResult` (function): A shot as a result: the frame as a PNG (the marked copy when marks were drawn) and its numbers as JSON.
+- `shotSummary` (function): A shot's numbers for the client: the look, the ID pass and the thumbnail's map, without pixels.
+- `valueResult` (function): A result holding `value`: a string as it is, anything else as compact JSON.
+
+### [`tools/mcp/schema.ts`](../tools/mcp/schema.ts)
+
+- `argsSchema` (function): A schema's fields as one JSON Schema object, in their order; `open` lets keys it does not name through.
+- `fieldSchema` (function): One field as JSON Schema (see the file comment).
+- `JsonSchema` (type): A JSON Schema, as MCP carries it.
+- `McpSchemaError` (class): Thrown for a field MCP cannot carry: a `function` (a hook).
+- `ObjectSchema` (interface): A tool's `inputSchema`: a JSON Schema object.
+
+### [`tools/mcp/server.ts`](../tools/mcp/server.ts)
+
+- `Bridge` (interface): A running bridge.
+- `BridgeOptions` (interface): How `createBridge` is set up.
+- `createBridge` (function): Makes the bridge (see the file comment).
+- `WATCHED` (const): The directories whose changes restart the worker: what it loads.
+
+### [`tools/mcp/session.ts`](../tools/mcp/session.ts)
+
+- `memberExpression` (function): The JavaScript that calls (or reads) member `name` with `args` in a page: an absent argument stays absent.
+- `pageBackend` (function): The page backend over the repository at `root` (see the file comment).
+- `PROGRESS_MS` (const): How often a wait for the page sends progress, ms.
+
+### [`tools/mcp/tools.ts`](../tools/mcp/tools.ts)
+
+- `positional` (function): `args` in `member`'s call order: a list as it is, an object by its argument names, one value as the first.
+- `replayFile` (function): A replay file under `root`: its path from there, its text, its scene and its goldens for this platform.
+- `runTool` (function): Runs tool `name` with `input` in `context`; every failure is an `isError` result.
+- `ToolContext` (interface): What a tool runs with: the repository root, the backend, where the members are registered, where progress goes.
+- `toolList` (function): The tools the server lists, generated from the members registered on `registry` (see the file comment).
+
+### [`tools/mcp/worker.ts`](../tools/mcp/worker.ts)
+
+- `createWorker` (function): A worker over `backend`, for the repository at `root`: the handler a link calls.
+- `serveWorker` (function): Answers the server that forked this process (tools/mcp/link.ts `forkLink`) until it disconnects.
 
 ### [`tools/qa/anim.ts`](../tools/qa/anim.ts)
 
