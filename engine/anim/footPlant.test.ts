@@ -191,6 +191,14 @@ describe('footPlant on a given floor, and the FootPlant layer (after G9)', () =>
  * prints them): each walk's left and right soles' heights, both soles' z, the ball's and the heel's heights, both
  * lowest points, and the pelvis's height at the end.
  */
+/** footPlant's option test's sums, as measured on 2026-10-25 (WP 12.2; PRINT_PLANT=1 prints them). */
+const PLANT_OPTION_SUMS: Record<string, number> = {
+  plain: 14407.814715,
+  striding: 14426.342167,
+  stepping: 14419.998092,
+  flat: 13560.510594,
+};
+
 const PLANT_SUMS: Record<string, number[]> = {
   flat: [3.80936946, 3.616701961, 347.623806394, 4.799871867, 4.792664644, 3.759189966, -0.048312906],
   ramp: [41.676861745, 40.87443351, 211.146871005, 43.097186423, 42.262543479, 80.451336153, 0.648744003],
@@ -203,6 +211,51 @@ const PLANT_SUMS: Record<string, number[]> = {
   climb: [29.673151866, 29.835924246, 126.029200302, 30.629211137, 30.049922005, 57.719369323, 0.94999553],
   crouch: [0.418552774, 0.490578795, 113.798977436, 2.238334171, 0.620945908, 0.902360759, -0.347795468],
 };
+
+describe('footPlant’s options, called as the layer calls it', () => {
+  it('plants as it was measured over its options: locks, rolls, steps, stride, levels, a squash, missing ground', () => {
+    // characterization (WP 12.2): footPlant called straight on a walk that spins, for each set of options, its plants
+    // summed; a change meant to plant otherwise measures them again (PRINT_PLANT=1 prints them), its reason in its commit
+    let t = 0;
+    const ground: GroundProbe = (origin, distance, hit) => {
+      const [x, z] = [origin.x, origin.z];
+      if (x > 1.2 && z > 0.6) return false; // a hole: no ground under it
+      const y = x < -0.3 ? -0.2 : 0.004 * t + 0.08 * Math.max(0, z - 0.5); // a step down, a rising ramp
+      hit.point.set(x, y, z);
+      hit.normal.set(0, 1, -0.08).normalize();
+      return y <= origin.y && origin.y - y <= distance;
+    };
+    const sets: Record<string, Record<string, unknown>> = {
+      plain: {},
+      striding: { rolls: true, stride: 0.6, levels: true },
+      stepping: { rolls: true, steps: true, stride: 0 },
+      flat: { rolls: false, release: 0 },
+    };
+    const states = Object.fromEntries(Object.keys(sets).map((name) => [name, createFootPlantState()]));
+    const sums: Record<string, number> = Object.fromEntries(Object.keys(sets).map((name) => [name, 0]));
+    const animator = new Animator({ build: 'build:adult', clock: 1 });
+    const position = new Vector3();
+    for (let i = 0; i < 120; i++, t++) {
+      const yaw = 0.09 * i; // spinning: a held foot's heading wraps past π
+      const velocity = new Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(i < 90 ? 1.4 : 0);
+      position.addScaledVector(velocity, 1 / 60);
+      animator.update({ position: position.clone(), velocity, yaw, body: { crouch: i > 60 && i < 80 ? 0.8 : 0 } });
+      const { skeleton, pose } = animator.body;
+      const stance = animator.body.stance() ?? [false, false];
+      for (const [name, options] of Object.entries(sets)) {
+        const [p, w] = [pose.clone(), createWorldPose()];
+        if (name === 'flat') p.rootScale.set(1, 0.92, 1); // squashed
+        forwardKinematics(skeleton, p, w);
+        const state = name === 'plain' ? undefined : states[name];
+        const drop = footPlant(skeleton, p, w, ground, { floor: position.y, ...(state ? { state, stance } : {}), ...options }); // prettier-ignore
+        sums[name] += drop + w.positions.reduce((a, v, k) => a + v * ((k % 7) + 1), 0);
+      }
+    }
+    const rounded = Object.fromEntries(Object.entries(sums).map(([name, v]) => [name, Math.round(v * 1e6) / 1e6]));
+    if (process.env.PRINT_PLANT) console.log(JSON.stringify(rounded));
+    expect(rounded).toEqual(PLANT_OPTION_SUMS);
+  });
+});
 
 describe('the FootPlant layer on the physics ground, with the stance locks (WP 13.10)', () => {
   /** A ground of `height(x, z)`, as the sim's query view would probe it: none for a ray starting inside it. */
