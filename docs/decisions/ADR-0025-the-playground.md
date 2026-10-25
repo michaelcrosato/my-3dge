@@ -2091,3 +2091,50 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   and the feel tools, rides, doors, windows and switches, the day's clock, the front end's menus, store and modal
   input, the new cameras); lean/README.md's overview likewise; the starter game (labs/game/) pauses under a menu
   (`createMenu`, `createEngine({ store, modal })`), as lean/game.html need not (it keeps no store).
+
+## Amendment 42 (2026-10-25, WP 11.4): GPU-driven crowds, stage 1
+
+- **Where it lives:** engine/gfx/enhanced/crowds.ts is the technique `feature:gpuCrowds` (the plan's Verify said
+  `gpu-crowds`; the registry's ids are `feature:` in camelCase, as `feature:gpuParticles`). It needs the adapter feature
+  `indirect-first-instance`; off, `GFX_NO_GPU_CROWDS` once and crowds draw through the instancing service.
+  engine/gfx/features.ts hands it out (`gpuCrowdsFor`), and the stage's crowd takes it when it registers with the
+  warm-up, so Node and a page with the feature off draw as before. Beyond the plan's Owns:
+  engine/gfx/enhanced/{crowdNodes,crowdRegions}.ts (the buffers, the passes, the material copies; the CPU's half of
+  the buffer), engine/gfx/puppets/crowd.ts `gpu` (its batch maker taken by the puppet and rig batches and the blob
+  shadows), engine/gfx/puppets/{batches,rigBody}.ts split from draw.ts and crowd.ts at their caps
+  (`createPuppetBatches` now exported from batches.ts), engine/gfx/{stageCrowd,stage,features}.ts.
+- **One buffer a crowd, a region and a draw a batch:** a slot is four vec4 (a 3 × 4 matrix's rows, then the colour);
+  each batch is a region of whole blocks of 64 slots and draws one mesh through r182's `BufferGeometry.setIndirect`, its
+  first instance the region's start. The CPU writes as the instancing service does: a value only when it changed, each
+  region's changed range uploaded alone, a still frame nothing. A region that fills doubles and moves those after it;
+  without room the regions are packed again; only then is an instance dropped, counted, with `GFX_GPU_CROWD_FULL` once.
+  The stage sizes the buffer at registration (48 slots a body, a power of two from 4,096) and doubles it when a frame
+  outgrows it, up to 4,194,240 slots; its size is in the warm-up's key, so the larger one warms up before it draws.
+- **The cull keeps the order:** two compute passes over the blocks in use, at most once a frame and only when the view,
+  the layout or an upload changed: `count` tests each instance's sphere against the six planes and counts each block's
+  kept instances; `scatter` writes each kept instance at its rank and the batch's last block the instance count into
+  the indirect arguments. No atomics: an atomic append would draw in an order that changes from frame to frame, and
+  blended halos, blob shadows and joint balls tied in depth would flicker.
+- **The look:** each batch's material is copied once to read position, normal and colour from the drawn buffer by
+  `instance_index`; a style set restyles it through the mesh's `restyle` hook (a material with no node form keeps the
+  batch its own, `GFX_GPU_CROWD_BATCH` once); three.js carries `positionNode` into the ID pass's and the shadow pass's
+  materials, so both draw the culled instances; the buffers are named, so every batch's shaders share programs and
+  growing builds no pipeline. Bodies are still seen, posed and written on the CPU, culled by body first (lod.ts `see`).
+- **Measured** (SwiftShader, box:crowd-5000 at 240 steps): the crowd's draw calls 34 → 16 (the frame's 198 → 180;
+  46 → 16 at 5,000 on tests/pages/gpu-crowds.html); compute calls 3 against 1, pipelines 66 against 64, 0 after the
+  warm-up; triangles, textures and the hash the same. CPU render on against off: 76.5/61.5 and 67.0/63.1 ms (`x perf
+  --feature`, on measured first), 67.7/67.0 in an interleaved A/B (0.99): unchanged. The frame's CPU is the crowd's
+  posing, its instance writes (about 103,000) and the collector (13.9 MB a frame, half of it the animator's
+  `Object.entries` in engine/anim/character.ts), not draw submission. Stage 2 not built: a cheap look in Node (FK and
+  the pieces on the GPU) saves about 25 ms of the crowd's 39–56 ms of drawing, about 1.5×, not 2×.
+- **Call (ESC-0005, decided in the owner's absence):** stage 1 is WP 11.4's result; its Done-when holds the crowd's draw calls to the 2× (34 →
+  16), the hash unchanged; CPU render, which the crowd's posing holds and GPU drawing cannot remove, is the owner's
+  open issue in docs/PROGRESS.md (the animator's garbage first: `for…in` instead of `Object.entries` halves it in a
+  Node probe, 13.9 → 6.9 MB a frame, its time effect unproven). PLAN.md's WP 11.4 edited to match (Owns, Done-when,
+  Verify). Verify as two commands: `x perf` refuses `--feature` with `--budget` (tools/cmd/perf.test.ts).
+- Evidence: engine/gfx/enhanced/crowds.test.ts, engine/gfx/stageCrowd.test.ts, engine/gfx/features.test.ts,
+  tests/e2e/gpu-crowds.spec.ts (pictures in four styles within 5 of 129,600 pixels; the cull read back matches the
+  CPU's sphere test in order), tests/e2e/box-crowd.spec.ts (both paths' batches; growth to 5,000 with 0 pipelines; the
+  chase replay's goldens in the page), the features matrix. Not verified: a real GPU (SwiftShader ranks no GPU time), an
+  adapter without `indirect-first-instance` (simulated through `gfx.featuresOff`), the playground street's crowd (only
+  the box measured), growth to the slot cap in play (unit tests only).
