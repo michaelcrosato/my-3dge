@@ -34,7 +34,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - At their size cap (395–400 lines), split on the next change: engine/world/siteNav.ts, gfx/{sky,stage,instancing}.ts,
   anim/{poses,humanoid,locomotion,clip/layer,traversal/{plant,pose}}.ts, sim/actors.ts, labs/box/menu.ts,
   tools/{cmd/audio,cmd/anim,lib/browser}.ts. The feel kit poses apart from the page: share one.
-- The quick gate is over its 5 min (CI_BUDGET: 11 min 53 s at G12); under load `npm test` can fail on RPC timeouts.
+- The quick gate is over its 5 min (CI_BUDGET: 8 min 2 s at G13); under load `npm test` can fail on RPC timeouts.
 - The box room's page budget is over (35 pipelines, 43 textures, a compute call: WP 11.5's row). `x shot` and `x film`
   never ready the playground's page (they freeze its clock); the tour's page goldens come from its spec (amendment 41).
   Random play lost the shooter's chest in 4–5% of frames (before WP 13.27). Untested: shafts in cascades.
