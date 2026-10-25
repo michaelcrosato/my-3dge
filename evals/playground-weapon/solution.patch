@@ -1,0 +1,112 @@
+diff --git a/labs/playground/weapons/guns.test.ts b/labs/playground/weapons/guns.test.ts
+new file mode 100644
+index 0000000..11971c7
+--- /dev/null
++++ b/labs/playground/weapons/guns.test.ts
+@@ -0,0 +1,46 @@
++/**
++ * @file Unit tests for the playground's guns (labs/playground/weapons/guns.ts) beyond the range's
++ * (labs/playground/weapons/range.test.ts): the submachine gun's prop builds clean in the weapon's frame, and in a
++ * player's hands in a yard it empties its 18 rounds in a second of the trigger held, its last bringing the reload on,
++ * 2.45 s from empty, then fires on.
++ * @see labs/playground/weapons/guns.ts
++ */
++import { describe, expect, it } from 'vitest';
++import { buildPropPart, inspectGeometry, partMatrix } from '../../../engine';
++import { addWeapons, createCharacter, defineScene, getProp, physicsOf, spawnActor, weaponsFor, type WeaponsState } from '../../../engine/sim-api'; // prettier-ignore
++import { createSession } from '../../../engine/sim/session';
++import { PLAYGROUND_WEAPONS, SMG } from './guns';
++
++/** A yard: a floor, and a player holding the submachine gun drawn. */
++const yard = defineScene('guns-test:smg', {
++  physics: true,
++  setup(w) {
++    physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] }] }); // prettier-ignore
++    spawnActor(w, { at: [0, 0, 0], character: createCharacter({ movement: 'movement:apex' }), player: true, components: { weapons: weaponsFor([SMG.id], 0) } }); // prettier-ignore
++    addWeapons(w);
++  },
++});
++
++describe('the submachine gun', () => {
++  it('is drawn as clean parts in the weapon’s frame, its grip under the origin, its barrel along +Z', () => {
++    const prop = getProp(SMG.prop);
++    let [front, low] = [0, 0];
++    for (const part of prop.parts) {
++      const report = inspectGeometry(buildPropPart(part).applyMatrix4(partMatrix(part)));
++      expect([report.missing, report.degenerate, report.flipped, report.badNormals], part.name).toEqual([[], 0, 0, 0]);
++      [front, low] = [Math.max(front, report.max[2]), Math.min(low, report.min[1])];
++    }
++    expect([prop.body.type, front > 0.25, low < -0.1]).toEqual(['none', true, true]);
++    expect(PLAYGROUND_WEAPONS).not.toContain(SMG.id); // nobody carries it yet
++  });
++
++  it('empties its 18 rounds in a second of the trigger held, reloads 2.45 s from empty, then fires on', () => {
++    const session = createSession(yard, { seed: 1 });
++    const weapons = () => (session.world.get(1) as unknown as { weapons: WeaponsState }).weapons;
++    for (let k = 0; k < 66; k++) session.step({ b: ['fire'], ...(k === 0 ? { p: ['fire'] } : {}) });
++    expect([weapons().shots, weapons().mags[0], weapons().reload >= 0]).toEqual([18, 0, true]);
++    for (let k = 0; k < 150; k++) session.step({ b: ['fire'] });
++    expect(weapons().shots).toBeGreaterThan(18);
++    expect(weapons().shots).toBeLessThan(24);
++  });
++});
+diff --git a/labs/playground/weapons/guns.ts b/labs/playground/weapons/guns.ts
+index 8e9fc99..ad465aa 100644
+--- a/labs/playground/weapons/guns.ts
++++ b/labs/playground/weapons/guns.ts
+@@ -8,7 +8,10 @@
+  *   10 rounds, a 1.25 s reload either way, a tight cone from the hip, a little kick a shot, quick to draw;
+  * - **The rifle** (`weapon:playground-rifle`, the R-301's): automatic at 13.5 shots a second, 14 points a shot, 18
+  *   rounds, 2.4 s to reload, 3.2 s from empty, a wider cone from the hip, a burst climbing up and to the right, then
+- *   left, its sights 55° at Apex's 70° lens (WP 13.8's rifles').
++ *   left, its sights 55° at Apex's 70° lens (WP 13.8's rifles');
++ * - **The submachine gun** (`weapon:playground-smg`, the R-99's): automatic at 18 shots a second, 11 points a shot, 18
++ *   rounds, 1.8 s to reload, 2.45 s from empty, a cone between the pistol's and the rifle's, a light kick a shot that
++ *   climbs a little right, then left, quick to its sights and to draw. Nobody carries it yet.
+  * Each names its shot's sound (`sfx:pistolShot`, `sfx:rifleShot`: engine/audio/data/foley.ts), which the playground's
+  * sound map plays for its `gunshot` (labs/playground/sounds/events.ts, WP 13.22). The player carries both, holstered (`PLAYGROUND_WEAPONS`, labs/playground/cast/player.ts): 1 and 2 draw them, 3 or
+  * Y held holsters (labs/playground/controls.ts).
+@@ -46,6 +49,18 @@ export const GUN_PROPS: Readonly<Record<string, PropDefinition>> = {
+     ],
+     body: { type: 'none' },
+   },
++  'prop:playground-smg': {
++    description: 'A submachine gun, 62 cm long: its grip under the origin, its stub stock behind, its barrel ahead. No body.', // prettier-ignore
++    parts: [
++      box('grip', [0.03, 0.095, 0.04], PAINT, [0, -0.085, -0.012], '#262626', [0.22, 0, 0]),
++      box('receiver', [0.044, 0.065, 0.26], PAINT, [0, -0.005, 0.06], '#34363a'),
++      box('stock', [0.032, 0.06, 0.16], PAINT, [0, -0.025, -0.15], '#262626'),
++      barrel('barrel', 0.012, 0.13, [0, 0.025, 0.19]),
++      box('magazine', [0.028, 0.15, 0.05], IRON, [0, -0.15, 0.1]),
++      box('sight', [0.02, 0.02, 0.05], IRON, [0, 0.06, 0.02]),
++    ],
++    body: { type: 'none' },
++  },
+   'prop:playground-rifle': {
+     description: 'A rifle, 98 cm long: its grip under the origin, its stock behind, its handguard and barrel ahead. No body.', // prettier-ignore
+     parts: [
+@@ -100,5 +115,24 @@ export const RIFLE = defineWeapon('weapon:playground-rifle', {
+   sound: 'sfx:rifleShot',
+ });
+ 
++/** The submachine gun (see the file comment). */
++export const SMG = defineWeapon('weapon:playground-smg', {
++  rate: 18,
++  auto: true,
++  damage: 11,
++  range: 60,
++  spread: { hip: 1.6, move: 0.6, ads: 0.15 },
++  recoil: [[0.35, 0.05], [0.35, 0.1], [0.3, 0.05], [0.3, -0.05], [0.25, -0.1]], // prettier-ignore
++  settle: 0.25,
++  magazine: 18,
++  reload: { tactical: 1.8, empty: 2.45 },
++  zoom: 63,
++  sights: 0.18,
++  draw: 0.25,
++  muzzle: [0, 0.025, 0.32],
++  prop: 'prop:playground-smg',
++  sound: 'sfx:rifleShot',
++});
++
+ /** What the player carries, by slot: the pistol, then the rifle. */
+ export const PLAYGROUND_WEAPONS: readonly string[] = [PISTOL.id, RIFLE.id];

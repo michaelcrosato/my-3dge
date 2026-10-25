@@ -1,0 +1,61 @@
+diff --git a/labs/box/moves/whirl.test.ts b/labs/box/moves/whirl.test.ts
+new file mode 100644
+index 0000000..9ddf1a1
+--- /dev/null
++++ b/labs/box/moves/whirl.test.ts
+@@ -0,0 +1,24 @@
++/**
++ * @file Unit tests for the move `move:whirl` (labs/box/moves/whirl.ts): it is defined, plays from its wind to its end
++ * in its own time with its hit window inside the strike, and its strike reaches out from a humanoid holding a sword.
++ * @see labs/box/moves/whirl.ts
++ */
++import { describe, expect, it } from 'vitest';
++import { Attack, measureMove } from '../../../engine/sim-api';
++import { whirl } from './whirl';
++
++describe('move:whirl', () => {
++  it('is defined, and plays from its wind to its end with its hit window in the strike', () => {
++    expect(whirl.id).toBe('move:whirl');
++    const attack = new Attack(whirl);
++    const seen: string[] = attack.start() ? attack.events.map((e) => e.type) : [];
++    for (let tick = 0; tick < 600 && attack.busy; tick++) seen.push(...attack.update(1 / 60).map((e) => e.type));
++    expect(seen).toEqual(['wind', 'active', 'hitOpen', 'hitClose', 'recover', 'end']);
++  });
++
++  it('reaches out from a humanoid holding a sword', () => {
++    const shape = measureMove(whirl, { build: 'build:heroic', weapon: 'sword' });
++    expect(shape.range).toBeGreaterThan(0.2);
++    expect(shape.yMin).toBeLessThanOrEqual(shape.yMax);
++  });
++});
+diff --git a/labs/box/moves/whirl.ts b/labs/box/moves/whirl.ts
+new file mode 100644
+index 0000000..5cad2e5
+--- /dev/null
++++ b/labs/box/moves/whirl.ts
+@@ -0,0 +1,25 @@
++/**
++ * @file The move `move:whirl`: a low spinning sweep of the sword round the hero's feet. The body turns once to the left
++ * while the blade sweeps from his right to his left on the ground plane, a metre below the shoulder centre, after a
++ * deep crouch; the blade leaves its trail.
++ *
++ * Invariants: angles in radians, + toward the right hand (up on the vertical plane); heights and reaches in metres
++ * from the shoulder centre, reaches at the reference arm; times in seconds; a field left out keeps a plain strike's
++ * value (node x describe move lists the fields with their defaults; getMove('move:slash') is a worked one).
++ *
++ * @example
++ * whirl.spin; // 1: one whole turn to the left during the strike
++ * @see labs/box/moves/whirl.test.ts
++ */
++import { defineMove } from '../../../engine/sim-api';
++
++/** The move `move:whirl`: a low spinning sweep of the sword round the hero's feet. */
++export const whirl = defineMove('move:whirl', {
++  arc: [1.2, -1.2],
++  height: [-1, -1],
++  reach: [0.55, 0.55],
++  spin: 1,
++  body: { lean: 0.2, lunge: 0, crouch: 0.6 },
++  time: { wind: 0.15, active: 0.3, recover: 0.3, hold: 0.25 },
++  gallery: { camera: 'front', duration: 0, states: [] }, // node x gallery: four moments of its swing
++});

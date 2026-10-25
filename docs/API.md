@@ -9287,6 +9287,12 @@ For the agents who maintain the engine.
 
 - `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
 
+### [`tools/cmd/evals.ts`](../tools/cmd/evals.ts)
+
+- `check` (const): `x check`'s evals plugin: every task under evals/ is well-formed (cheap: no copy, no run).
+- `default` (default): Agent-usability evals (PLAN.md WP 12.2, ADR-0025 decision 5): small tasks a fresh agent does in a copy of this repository with only its docs to go on, each judged by an acceptance check that runs headless.
+- `noAgent` (function): The usage error a live run without an agent gets: model access is the owner's, through its escalation.
+
 ### [`tools/cmd/eye.ts`](../tools/cmd/eye.ts)
 
 - `default` (default): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
@@ -9814,6 +9820,29 @@ For the agents who maintain the engine.
 - `wellFormed` (function): The records that are well-formed, as front matter, in id order.
 - `writeIndex` (function): Rewrites the README when it differs from the records; returns whether it wrote.
 - `writeRecord` (function): Writes a record to `docs/escalations/<file>` under `root`.
+
+### [`tools/lib/evals.ts`](../tools/lib/evals.ts)
+
+- `ACCEPT_CHECKS` (const): The checks `accept.checks` may name.
+- `Acceptance` (interface): A task's acceptance, filled.
+- `AREAS` (const): What a task works on.
+- `attemptTask` (function): One live attempt (see the file comment): the verdict and how long the attempt and its judgement took.
+- `Baseline` (interface): The baseline file's contents: deferred until the owner grants model access, or a recorded live run.
+- `BASELINE_FILE` (const): The baseline's file: the live pass rate, or why there is none yet.
+- `changedFiles` (function): The files an attempt changed in `copy` since the commit `since`: changed, added, removed or new.
+- `dryRunTask` (function): One task's dry run: its acceptance fails on the start and passes with the reference solution (see the file comment).
+- `EVALS_DIR` (const): Where the tasks live, from the repository root.
+- `EvalTask` (interface): One task, read from `evals/<id>/`.
+- `git` (function): Runs git in `cwd` with a fixed author, no hooks and no signing; returns its output and throws on a failure.
+- `GUARDED` (const): What every attempt leaves as the start has it: the acceptance's own harness.
+- `judge` (function): Judges the tree in `copy` against `task`'s acceptance, the start being the commit `since`: what it must leave as it was, then the hidden test, the commands and the checks, stopping at the first that fails.
+- `makeCopy` (function): Copies `root`'s files (those git tracks or would track, evals/ and node_modules aside) to `dest`, links node_modules, applies the patch `start` (an absolute path) and commits the result in a fresh repository; returns that commit.
+- `patchedFiles` (function): The files a patch's text changes (both sides of each `diff --git` line).
+- `PREAMBLE` (const): What a live attempt's agent is told before the task's own prompt.
+- `readBaseline` (function): Reads evals/baseline.json, or undefined when there is none.
+- `readTasks` (function): Every task under evals/, by id, and the problems with any (`EVALS_BAD_TASK`, naming the file and the fix).
+- `STEP_TIMEOUT_MS` (const): How long one acceptance step may run before it is stopped, in ms: it bounds a hang, never a slow machine.
+- `Verdict` (interface): A judgement of one attempt: whether it passes, why not (the first step that failed), and the steps it ran.
 
 ### [`tools/lib/filmCompare.ts`](../tools/lib/filmCompare.ts)
 

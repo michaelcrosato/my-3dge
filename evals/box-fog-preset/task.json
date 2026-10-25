@@ -1,0 +1,11 @@
+{
+  "title": "Add a fog preset: a foggy moor's sky and the box look that shows it",
+  "area": "box",
+  "minutes": 30,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["npx vitest run labs/box/looks/moor.test.ts"],
+    "checks": ["types", "lint"]
+  }
+}

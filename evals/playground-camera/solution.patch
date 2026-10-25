@@ -1,0 +1,91 @@
+diff --git a/labs/playground/cameras/crane.test.ts b/labs/playground/cameras/crane.test.ts
+new file mode 100644
+index 0000000..21b58d5
+--- /dev/null
++++ b/labs/playground/cameras/crane.test.ts
+@@ -0,0 +1,37 @@
++/**
++ * @file Unit tests for the playground's crane shot (labs/playground/cameras/crane.ts): `cam3=crane` is a camera code,
++ * its rig settles 10 m from the player looking down 35°, a code's heading turns it, and the page imports it.
++ * @see labs/playground/cameras/crane.ts
++ */
++import { readFileSync } from 'node:fs';
++import { describe, expect, it } from 'vitest';
++import { createCameraRig, readCameraCode } from '../../../engine';
++import { CRANE, craneYaw } from './crane';
++
++/** The rig of `code` after `seconds` following the player standing at the origin. */
++function settled(code: string, seconds = 3) {
++  const rig = createCameraRig(code);
++  for (let k = 0; k < seconds * 60; k++) rig.update({ follow: [0, 0, 0] }, 1 / 60);
++  return rig.pose();
++}
++
++describe('the crane shot', () => {
++  it('is a camera code of the playground’s own', () => {
++    expect(readCameraCode('cam3=crane')).toMatchObject({ type: 'game', name: 'crane' });
++  });
++
++  it('settles 10 m from the player, looking down 35°', () => {
++    const pose = settled('cam3=crane');
++    expect(pose.distance).toBeCloseTo(CRANE.distance, 2);
++    expect(pose.pitch).toBeCloseTo(CRANE.pitch, 3);
++  });
++
++  it('turns to the heading its code gives, in degrees', () => {
++    expect(craneYaw('cam3=crane')).toBeUndefined();
++    expect(settled('cam3=crane,90', 1).yaw).toBeCloseTo(Math.PI / 2, 3);
++  });
++
++  it('is imported by the playground’s page', () => {
++    expect(readFileSync('labs/playground/main.ts', 'utf8')).toContain("import './cameras/crane';");
++  });
++});
+diff --git a/labs/playground/cameras/crane.ts b/labs/playground/cameras/crane.ts
+new file mode 100644
+index 0000000..574dadb
+--- /dev/null
++++ b/labs/playground/cameras/crane.ts
+@@ -0,0 +1,30 @@
++/**
++ * @file The playground's crane shot, `cam3=crane` (docs/PLAYGROUND.md §4): a camera mode of the playground's own, for
++ * watching the player run the gym. It is the platformer's orbit-and-follow camera (engine/gfx/cameras/follow.ts: its
++ * recentring, look-ahead and vertical dead zone) with its arm 10 m long, looking down 35°. `cam3=crane,<yaw>` starts
++ * it turned to that heading (degrees); a bare `cam3=crane` keeps the heading of the camera before it. It is not one of
++ * the five modes T steps through (labs/playground/views.ts): `__engine.camera.set('cam3=crane')` or `?cam3=crane`
++ * opens it, the page importing this module.
++ *
++ * Game code, a page's: it imports only the engine's public API (engine/index.ts).
++ *
++ * @example
++ * CRANE.distance; // 10: m, the arm
++ * craneYaw('cam3=crane,90'); // π/2: turned to the east
++ * @see labs/playground/cameras/crane.test.ts
++ */
++import { createFollowCamera, defineCamera } from '../../../engine';
++
++/** The crane's arm (m) and how far it looks down (rad). */
++export const CRANE = Object.freeze({ distance: 10, pitch: (-35 * Math.PI) / 180 });
++
++/** The heading (rad) a code `cam3=crane,<yaw>` gives in degrees; undefined when it gives none. */
++export function craneYaw(code: string): number | undefined {
++  const yaw = code.split(',')[1]?.trim();
++  return yaw ? (Number(yaw) * Math.PI) / 180 : undefined;
++}
++
++defineCamera('crane', {
++  description: 'A crane shot: the platformer camera with a 10 m arm, looking down 35°.',
++  create: (code, { from }) => createFollowCamera({ ...CRANE, yaw: craneYaw(code), from }),
++});
+diff --git a/labs/playground/main.ts b/labs/playground/main.ts
+index 3d26b43..ba0f1d3 100644
+--- a/labs/playground/main.ts
++++ b/labs/playground/main.ts
+@@ -39,6 +39,7 @@
+ /// <reference types="vite/client" />
+ import { createEngine, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
+ import { keysLine, playgroundMap } from './controls';
++import './cameras/crane'; // cam3=crane, the crane shot (not one of the five T steps through)
+ import { mountFeelPanel } from './feel';
+ import './ground';
+ import { GYM_FEATURES, GYM_TEXT } from './levels/gym';

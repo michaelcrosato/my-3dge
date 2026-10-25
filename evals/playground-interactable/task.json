@@ -1,0 +1,11 @@
+{
+  "title": "Add an interactable to the playground: a radio to turn on and off",
+  "area": "playground",
+  "minutes": 40,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["npx vitest run labs/playground/cast/radio.test.ts"],
+    "checks": ["types", "lint"]
+  }
+}

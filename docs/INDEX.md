@@ -2283,6 +2283,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`eval.ts`](../tools/cmd/eval.ts): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
   - Exports: `default`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`evals.ts`](../tools/cmd/evals.ts): Agent-usability evals (PLAN.md WP 12.2, ADR-0025 decision 5): small tasks a fresh agent does in a copy of this repository with only its docs to go on, each judged by an acceptance check that runs headless.
+  - Exports: `check`, `default`, `noAgent`
+  - Tests: [`tools/cmd/evals.test.ts`](../tools/cmd/evals.test.ts)
 - [`eye.ts`](../tools/cmd/eye.ts): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
   - Exports: `default`, `EYE_FRAMES`, `EYE_PRINT`, `printOf`, `seenText`, `SUMMARY_THINGS`, `thingText`
   - Tests: [`tools/cmd/eye.test.ts`](../tools/cmd/eye.test.ts)
@@ -2424,6 +2427,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`escalations.ts`](../tools/lib/escalations.ts): Escalation records (DOCTRINE.md, Escalation; PLAN.md §8.14, ADR-0017): `docs/escalations/ESC-NNNN-<slug>.md`, front matter then a short body.
   - Exports: `canonicalPrinciple`, `deadlineFor`, `DIR`, `Escalation`, `FIELDS`, `generateIndex`, `INDEX`, `indexMarkdown`, `isoSeconds`, `isOverdue`, `nextId`, `parseRecord`, `PRINCIPLES`, `readRecords`, `RecordFile`, `serializeRecord`, `slugOf`, `Status`, `STATUSES`, `validateFields`, `WAIT_MINUTES`, `wellFormed`, `writeIndex`, `writeRecord`
   - Tests: [`tools/cmd/esc.test.ts`](../tools/cmd/esc.test.ts)
+- [`evals.ts`](../tools/lib/evals.ts): The agent-usability evals' tasks and runs (PLAN.md WP 12.2, ADR-0025 decision 5), which `node x evals` (tools/cmd/evals.ts) drives: how a task is written, the copy of this repository an attempt works in, and how an attempt is judged.
+  - Exports: `ACCEPT_CHECKS`, `Acceptance`, `AREAS`, `attemptTask`, `Baseline`, `BASELINE_FILE`, `changedFiles`, `dryRunTask`, `EVALS_DIR`, `EvalTask`, `git`, `GUARDED`, `judge`, `makeCopy`, `patchedFiles`, `PREAMBLE`, `readBaseline`, `readTasks`, `STEP_TIMEOUT_MS`, `Verdict`
+  - Tests: [`tools/cmd/evals.test.ts`](../tools/cmd/evals.test.ts)
 - [`filmCompare.ts`](../tools/lib/filmCompare.ts): The frame comparison of `x film` (tools/cmd/film.ts, PLAN.md WP 3.11): `compareFrames` compares a filmed frame with the base's pixel by pixel and gives each differing pixel to an object through the ID pass, `judgeCompare` turns a film's differences into its verdict and findings, and `checkFilmThumbs` holds each frame's thumbnail to `tests/baselines/thumbs/<case>.json`.
   - Exports: `checkFilmThumbs`, `compareFilmThumbs`, `compareFrames`, `EMPTY`, `FilmFrame`, `FilmObject`, `FilmVerdict`, `FrameDiff`, `judgeCompare`, `samePixel`
   - Tests: [`tools/cmd/film.test.ts`](../tools/cmd/film.test.ts)

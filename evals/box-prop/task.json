@@ -1,0 +1,11 @@
+{
+  "title": "Add a prop to the box: a waystone with a steady light",
+  "area": "box",
+  "minutes": 30,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["npx vitest run labs/box/props/waystone.test.ts", "node x qa geo tex --only prop:waystone"],
+    "checks": ["types", "lint"]
+  }
+}
