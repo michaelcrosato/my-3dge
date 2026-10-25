@@ -46,6 +46,14 @@ The engine's integration target is the *Stress test: 3D world* of
 to a hall with a crowd of 5,000 (`PLAN.md` §9.0). Each stage adds engine systems, not game content, and ends with a box
 that runs, is measured and is proved. The game that will run on the engine lives elsewhere and comes later.
 
+## The Playground
+
+The tech demo (Phase 13, [`docs/PLAYGROUND.md`](docs/PLAYGROUND.md)): a house on a block where the player moves as in
+Apex Legends, in five cameras and two looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Run
+`npm run dev` and open http://127.0.0.1:5173/labs/playground/; `?replay=playground-tour&playground.attract=on` plays
+the tour through every feature. [`labs/playground/README.md`](labs/playground/README.md) says how it plays and what
+each scene shows.
+
 ## How to start
 
 ```sh
