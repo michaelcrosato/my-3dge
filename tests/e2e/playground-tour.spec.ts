@@ -7,7 +7,8 @@
  *    film: a contact sheet, out/film/playground-tour-<look>/sheet.png, with film.json (each frame's step and camera).
  * 2. The attract mode (`?replay=playground-tour&playground.attract=on`, labs/playground/ui/attract.ts): its banner
  *    shows over the tour, the view steps to the next camera after `ATTRACT.cycle` seconds and the look after two, and a
- *    key gives the page back (the playground, without the replay).
+ *    key gives the page back (the playground, without the replay). Its page draws at the `low` tier: the cycle is real
+ *    time, so it runs a frame for every sixtieth of a second, about a thousand.
  *
  * Invariants: the page is read through `__engine` and `[data-ui]` elements only; the films are written under out/,
  * never compared (the goldens are the check; a human or the visual reviewer reads the sheets).
@@ -30,8 +31,9 @@ const TOUR = readFileSync(join(ROOT, 'tests/replays/playground-tour.replay.json'
 const { steps: STEPS, hashes } = JSON.parse(TOUR) as { steps: number; hashes: Record<string, Record<string, string>> };
 /** How long the street's page may take to warm up (ms): the site's, playground.spec.ts's. */
 const SITE_READY = 420_000;
-/** A frame drawn every this many steps while the tour plays. */
-const DRAW = 6;
+/** A frame drawn every this many steps while the tour plays: a second of play, about a dozen frames in each camera
+ * twice round (a frame every 6 steps, 1,257 a look, passed the 40 minutes the test allows on this platform). */
+const DRAW = 60;
 /** The frames each look's film shoots, evenly over the tour. */
 const SHOTS = 12;
 
@@ -48,6 +50,20 @@ function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promis
 
 /** A shot as the film reads it. */
 type Shot = { width: number; height: number; pixels: string };
+
+/** `rgba` (`width` × `height`) at half its size, each pixel the mean of four: the sheet's frames (a shot of another size
+ * would draw the frame again at that size, engine/gfx/shot.ts). */
+function half(rgba: Uint8Array, width: number, height: number): { width: number; height: number; rgba: Uint8Array } {
+  const [w, h] = [Math.floor(width / 2), Math.floor(height / 2)];
+  const out = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++)
+      for (let c = 0; c < 4; c++) {
+        const at = (dx: number, dy: number) => rgba[((2 * y + dy) * width + 2 * x + dx) * 4 + c];
+        out[(y * w + x) * 4 + c] = Math.round((at(0, 0) + at(1, 0) + at(0, 1) + at(1, 1)) / 4);
+      }
+  return { width: w, height: h, rgba: out };
+}
 
 test.describe('the playground’s tour', () => {
   test.setTimeout(2_400_000);
@@ -73,7 +89,7 @@ test.describe('the playground’s tour', () => {
       expect(harness.advice()).toEqual([]);
       // the look's film: the shots on a contact sheet, labelled with their step and camera
       const camera = (step: number) => views.filter(([at, v]) => at <= step && v.cam).at(-1)?.[1].cam as string;
-      const frames = run.shots.map(({ step, shot }, n) => ({ n, tick: step, label: `${step} ${camera(step).split(',')[0]}`, width: shot.width, height: shot.height, rgba: new Uint8Array(Buffer.from(shot.pixels, 'base64')), visible: [] })); // prettier-ignore
+      const frames = run.shots.map(({ step, shot }, n) => ({ n, tick: step, label: `${step} ${camera(step).split(',')[0]}`, ...half(new Uint8Array(Buffer.from(shot.pixels, 'base64')), shot.width, shot.height), visible: [] })); // prettier-ignore
       expect(frames).toHaveLength(SHOTS);
       const sheet = contactSheet(frames, { cols: 4 });
       const out = join(ROOT, 'out/film', `playground-tour-${name}`);
@@ -87,7 +103,7 @@ test.describe('the playground’s tour', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?replay=playground-tour&playground.attract=on&playground.title=off');
+    await page.goto('labs/playground/?replay=playground-tour&playground.attract=on&playground.title=off&quality=low');
     await harness.ready({ timeout: SITE_READY });
     await expect(page.locator('[data-ui=attract]')).toBeVisible();
     const code = async () => (await call<{ code: string }>(page, 'camera.get')).code.split(',')[0];
