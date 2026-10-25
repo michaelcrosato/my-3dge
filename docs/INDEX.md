@@ -637,7 +637,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `DumpOptions`, `dumpScene`
   - Tests: [`engine/gfx/sceneDump.test.ts`](../engine/gfx/sceneDump.test.ts)
 - [`shadows.ts`](../engine/gfx/shadows.ts): The shadow budget (PLAN.md WP 7.1, I-17): how many lights cast shadows, and how a caster is set up.
-  - Exports: `Casters`, `configurePointCaster`, `enableShadows`, `MAX_SHADOW_CASTERS`, `POINT_SHADOW`, `SHADOW_MAP_TYPE`, `shadowCasters`, `splitCasters`
+  - Exports: `Casters`, `configurePointCaster`, `enableShadows`, `MAX_SHADOW_CASTERS`, `POINT_SHADOW`, `SHADOW_GRID`, `SHADOW_MAP_TYPE`, `shadowCasters`, `SNAPPED_PCF`, `SNAPPED_POINT`, `snapShadow`, `splitCasters`
   - Tests: [`engine/gfx/shadows.test.ts`](../engine/gfx/shadows.test.ts)
 - [`shot.ts`](../engine/gfx/shot.ts): Shots (PLAN.md §8.5, §8.3's `shot`): what the frame draws, read back from the GPU as numbers and text, never as a committed image.
   - Exports: `Readback`, `readPixels`, `rowBytes`, `shot`, `SHOT_CODES`, `shotForJson`, `ShotGfx`, `ShotJson`, `ShotOptions`, `ShotResult`, `stripRowPadding`, `toBase64`
@@ -954,7 +954,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `chainOf`, `colorProblem`, `createFilterUniforms`, `FILTER_FIELDS`, `FILTER_NAMES`, `FilterChain`, `FilterName`, `FilterSpec`, `FilterUniforms`, `fixColor`, `fixLevels`, `isPlain`, `layerChain`, `levelsProblem`, `PALETTES`, `partialSchema`, `Scope`, `scopeMask`, `SCOPES`, `SCREEN_SCOPES`, `STYLIZE_KINDS`, `writeFilters`
   - Tests: [`engine/gfx/post/filters.test.ts`](../engine/gfx/post/filters.test.ts), [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`grid.ts`](../engine/gfx/post/grid.ts): The pixel grid a frame draws on (PLAN.md WP 7.4, WP 13.24; docs/PLAYGROUND.md §5.2): what the post chain (engine/gfx/post/chain.ts) works out each frame from its filter chain and the drawing buffer's lines.
-  - Exports: `ART_LINES`, `artBlock`, `frameGrid`, `FrameGrid`, `inkWidth`, `pixelBlock`, `snapBlock`
+  - Exports: `ART_LINES`, `artBlock`, `frameGrid`, `FrameGrid`, `inkWidth`, `pixelBlock`, `QUAD`, `snapBlock`
   - Tests: [`engine/gfx/post/grid.test.ts`](../engine/gfx/post/grid.test.ts), [`tests/e2e/playground-looks.spec.ts`](../tests/e2e/playground-looks.spec.ts)
 - [`looks.ts`](../engine/gfx/post/looks.ts): Looks (PLAN.md WP 7.4, §6.6 kind `look`): a material style (WP 7.2, engine/gfx/materials/styles.ts) plus a filter chain (engine/gfx/post/filters.ts), as data, and the sky that lights the scene (WP 7.8, a `sky` id, engine/gfx/sky.ts).
   - Exports: `defineLook`, `defineLooks`, `LOOK_FIELDS`, `LOOK_GROUPS`, `LookEntry`, `LOOKS`, `LookSpec`

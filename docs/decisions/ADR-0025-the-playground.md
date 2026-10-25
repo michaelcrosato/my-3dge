@@ -1868,3 +1868,34 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   look, 60 frames; ADR-0022: its times are noise to compare runs, not proof): the shells cost 177 draw calls (3,509
   against 3,332), 72,060 triangles (834,653 against 762,593), 10 pipelines and 26.7 ms of the GPU's 816.8 a frame, 0
   pipelines after the warm-up either way.
+
+## Amendment 35 (2026-10-25, WP 13.24): the pixel look's pans cross whole pixels
+
+- **Found at review:** amendment 33's shimmer metric panned isometric 2 mm along each axis it uses (about a twentieth
+  of a pixel) for seven steps, a third of a pixel in all, so its picture never moved a whole pixel; the amendment
+  said 1.4 mm. Panned 6 mm a frame for fifteen frames, two whole pixels, the pixel look changed pixels each time the
+  snap moved the picture, in two ways, both mended:
+  - **The shadows' noise.** r182's PCF filters turn each pixel's five samples by a noise read where the pixel lies on
+    the screen (`interleavedGradientNoise(screenCoordinate)`), fixed to the screen while the snapped picture moves by
+    whole pixels, so a shadow's edge changed at every snap. Every caster now filters through copies of r182's filters
+    (engine/gfx/shadows.ts `SNAPPED_PCF`, `SNAPPED_POINT`, set by `snapShadow` as the light's `filterNode`, which
+    r182's shadow node reads before the renderer's map type) whose noise is read where the pixel lies on the frame's
+    grid, `screen + cells × block` (`SHADOW_GRID`, set by the post chain each frame and put back after, so outside its
+    frames, and on every unsnapped frame, the filters give r182's values exactly). A cascade's shadow is a clone of
+    the sun's, which `LightShadow.copy` makes without the filter: the sun's shadow makes clones that take it again
+    (engine/gfx/enhanced/csm.ts).
+  - **The shading's derivatives.** The GPU takes a shader's screen derivatives (`fwidth`, which the toon ramp's dither
+    gate and rim read) over 2 × 2 pixels fixed to the screen; a picture moved by one pixel paired each pixel with other
+    neighbours, and 11 of the street's 130,000 pixels changed band at each crossing, back again at the next. A gliding
+    snap of one drawn pixel now moves the camera by two (engine/gfx/post/grid.ts `QUAD`), the glide carrying up to a
+    drawn pixel each way (the page's margin is two), so every pixel keeps its neighbours. A block of 3 or more keeps
+    its own snap (twice it would pass the margin); its pixels may still pair anew as it crosses.
+- **Measured** (tests/e2e/playground-looks.spec.ts, the street, the sim paused): isometric panned 6 mm a frame for
+  fifteen frames moves its picture by two whole pixels once and changes no other pixel, its glide wrapping from −0.85
+  to +0.99 of a drawn pixel; the cel look's same pans change 6.6 to 7.6% of its pixels a frame; the noon thumbnails
+  hold. Top-down keeps its sub-pixel pans (2 mm a frame, eight frames: nothing moves, nothing glides): panned across a
+  whole pixel, it changed 7 to 10 pixels in one soft shadow band, the red channel one palette step (0 with no shadow
+  casters, the `low` tier; as many with the cascades off); the cause is not found and docs/PROGRESS.md lists it.
+- Files: engine/gfx/{shadows,sky,stageSky}.ts, engine/gfx/enhanced/csm.ts, engine/gfx/post/{chain,grid,filters}.ts
+  and their tests, tests/e2e/playground-looks.spec.ts. `--my3dge-pixel` is the CSS variable the page's margin uses
+  (the pixel filter's `smooth` said `--my3dge-block`).

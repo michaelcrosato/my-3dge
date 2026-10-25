@@ -13,6 +13,10 @@
  * cascades' placeholder lights join the sun's parent on the first frame (r182); they are no lights to the warm-up's
  * key.
  *
+ * Each cascade's shadow is a clone of the sun's (`CSMShadowNode.js:172`), and `LightShadow.copy` leaves the shadow's
+ * filter behind, so the sun's shadow makes clones that take the engine's filter again (engine/gfx/shadows.ts
+ * `snapShadow`: its noise follows the frame's pixel grid, WP 13.24) until `dispose`.
+ *
  * Invariants: presentation only, never in the hash; the sun keeps its `castShadow`, which the shadow budget sets
  * (engine/gfx/shadows.ts); `dispose` gives the sun back its own shadow.
  *
@@ -26,6 +30,7 @@
 import type { Camera, DirectionalLight } from 'three/webgpu';
 import { CSMShadowNode } from 'three/addons/csm/CSMShadowNode.js';
 import { defineCodes } from '../../core/log';
+import { snapShadow } from '../shadows';
 
 /** Its advice code, raised by the feature registry when it is off. */
 export const CSM_CODES = defineCodes('gfx', {
@@ -60,6 +65,12 @@ export interface CascadedSun {
 /** Makes `sun` cast through cascades (see the file comment). */
 export function cascadeSun(sun: DirectionalLight): CascadedSun {
   sun.shadow.mapSize.set(CASCADES.map, CASCADES.map);
+  const clone = sun.shadow.clone;
+  sun.shadow.clone = function cascade(this: typeof sun.shadow) {
+    const made = clone.call(this);
+    snapShadow(made);
+    return made;
+  };
   const node = new CSMShadowNode(sun, {
     cascades: CASCADES.count,
     maxFar: CASCADES.far,
@@ -79,6 +90,7 @@ export function cascadeSun(sun: DirectionalLight): CascadedSun {
     },
     dispose() {
       sun.shadow.shadowNode = undefined;
+      sun.shadow.clone = clone;
       node.dispose();
     },
   };

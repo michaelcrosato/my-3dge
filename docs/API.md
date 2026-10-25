@@ -5211,6 +5211,7 @@ For the agents who maintain the engine.
 - `FrameGrid` (interface): A frame's grid: its pixel art's block, the snap's cells and the picture's glide, and how to put the camera back.
 - `inkWidth` (function): The outline's width in pixels on a picture `lines` high: `width`, scaled when `lines` is set (see the file comment).
 - `pixelBlock` (function): The pixel filter's block for a picture `lines` high: its `size`, or the art block for `size` 0.
+- `QUAD` (const): How many drawn pixels a gliding snap of one drawn pixel moves the camera by: the GPU's derivative quads (above).
 - `snapBlock` (function): The block grid the camera snaps to for `chain` on a picture `lines` high: pixel art's when it covers the environment and snaps (characters and objects in pixel art move on their own, and a snapping camera would make a sharp world jump), one drawn pixel included; else the whole screen's low resolution of 2 px or more; 0 for none.
 
 ### [`engine/gfx/post/looks.ts`](../engine/gfx/post/looks.ts)
@@ -5513,8 +5514,12 @@ For the agents who maintain the engine.
 - `enableShadows` (function): Turns the renderer's shadow map on, with the engine's one shadow map type.
 - `MAX_SHADOW_CASTERS` (const): The most lights that cast shadows at once: the budget at the `high` tier.
 - `POINT_SHADOW` (const): A point caster's shadow settings, carried from the prototype's shadow lights.
+- `SHADOW_GRID` (const): The frame's pixel grid as the filters' noise reads it: (whole blocks across, whole blocks down, the block in pixels), the post chain's each frame (engine/gfx/post/grid.ts `frameGrid`), (0, 0, 1) outside its frames.
 - `SHADOW_MAP_TYPE` (const): The shadow map type every caster uses (r182's `PCFShadowMap`; see the file comment).
 - `shadowCasters` (function): How many lights may cast shadows under `budget` (a quality tier's, engine/gfx/quality.ts).
+- `SNAPPED_PCF` (const): r182's `PCFShadowFilter` (ShadowFilterNode.js), its noise on the frame's grid: the sun's and its cascades'.
+- `SNAPPED_POINT` (const): r182's `PointShadowFilter` (PointShadowNode.js), its noise on the frame's grid: the light pool's casters'.
+- `snapShadow` (function): Gives `shadow` the engine's filter for its kind (see the file comment): a point light's for a cube map.
 - `splitCasters` (function): Who casts under a budget of `casters`: the sun first when it shines, then the point lights when they shine.
 
 ### [`engine/gfx/shot.ts`](../engine/gfx/shot.ts)
