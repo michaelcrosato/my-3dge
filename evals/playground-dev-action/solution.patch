@@ -1,8 +1,8 @@
 diff --git a/labs/playground/scenes/gym.test.ts b/labs/playground/scenes/gym.test.ts
-index ce7d0a0..0ef2071 100644
+index d088d41..9f94c94 100644
 --- a/labs/playground/scenes/gym.test.ts
 +++ b/labs/playground/scenes/gym.test.ts
-@@ -8,7 +8,7 @@
+@@ -9,7 +9,7 @@
  import { describe, expect, it } from 'vitest';
  import { createHeadless } from '../../../engine';
  import { floorHeight, topHeight } from '../../../engine/sim-api';
@@ -11,9 +11,9 @@ index ce7d0a0..0ef2071 100644
  import { GYM_FEATURES, GYM_SPAWN, GYM_TILE, type GymFeature, type GymRect } from '../levels/gym';
  import { GYM, GYM_START, gym } from './gym';
  
-@@ -105,4 +105,21 @@ describe('the gym', () => {
-     const higher = await after(60, { jump: true }, { 'playground.gym.jump': 2 });
-     expect(higher.top).toBeCloseTo(2, 1);
+@@ -115,4 +115,21 @@ describe('the gym', () => {
+     expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(hero.speed * 0.6);
+     expect(GYM_SPAWN[0] - run.x).toBeLessThan(hero.speed * 1.01);
    });
 +
 +  it('throws the player straight up with the dev action launch, 10 m/s by default', async () => {

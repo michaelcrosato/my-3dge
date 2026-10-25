@@ -78,13 +78,13 @@ index 0000000..574dadb
 +  create: (code, { from }) => createFollowCamera({ ...CRANE, yaw: craneYaw(code), from }),
 +});
 diff --git a/labs/playground/main.ts b/labs/playground/main.ts
-index 3d26b43..ba0f1d3 100644
+index 875b37b..463048b 100644
 --- a/labs/playground/main.ts
 +++ b/labs/playground/main.ts
-@@ -39,6 +39,7 @@
+@@ -37,6 +37,7 @@
  /// <reference types="vite/client" />
- import { createEngine, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
- import { keysLine, playgroundMap } from './controls';
+ import { createEngine, createStore, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
+ import { playgroundMap } from './controls';
 +import './cameras/crane'; // cam3=crane, the crane shot (not one of the five T steps through)
  import { mountFeelPanel } from './feel';
  import './ground';

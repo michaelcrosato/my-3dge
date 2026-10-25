@@ -1,8 +1,8 @@
 diff --git a/labs/playground/README.md b/labs/playground/README.md
-index b3aa9af..5e20736 100644
+index 392c6ef..12b269c 100644
 --- a/labs/playground/README.md
 +++ b/labs/playground/README.md
-@@ -133,6 +133,7 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
+@@ -142,6 +142,7 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
  |---|---|
  | `playground.gym.speed` | The player's run speed in the gym with a weapon out, m/s (4.41, Apex's; empty-handed, the player runs 1.15 times as fast), when the scene starts. Changes play: recorded in replays. |
  | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
@@ -11,27 +11,33 @@ index b3aa9af..5e20736 100644
  | `playground.day` | How many minutes of play a day on the block takes (0, the default, holds the hour), when the scene starts. Changes play: recorded in replays. |
  | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 diff --git a/labs/playground/cast/player.ts b/labs/playground/cast/player.ts
-index 57f9890..6d3c441 100644
+index 95b9f38..bdc5057 100644
 --- a/labs/playground/cast/player.ts
 +++ b/labs/playground/cast/player.ts
-@@ -40,20 +40,26 @@ export const APEX_RUN = APEX.model!.gaits.run;
+@@ -57,25 +57,31 @@ export const APEX_RUN = APEX.model!.gaits.run;
  /** How the player is drawn: `body:player` on the adult build, empty-handed. */
  export const PLAYER_LOOK = Object.freeze({ body: 'body:player', build: 'build:adult', weapon: 'none' });
  
--/** What a scene may tune: the run with a weapon out (m/s) and the jump's height (m). */
-+/** What a scene may tune: the run with a weapon out (m/s), the jump's height (m) and the gravity (m/s²). */
+-/** What a scene may tune: the run with a weapon out (m/s) and the jump's height (m); and the profile, Apex's by default. */
++/**
++ * What a scene may tune: the run with a weapon out (m/s), the jump's height (m) and the gravity (m/s²); and the
++ * profile, Apex's by default.
++ */
  export interface PlayerTuning {
    readonly speed?: number;
    readonly jump?: number;
 +  readonly gravity?: number;
+   readonly movement?: (typeof PLAYER_MOVEMENTS)[number];
  }
  
--/** The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned. */
-+/**
+ /**
+- * The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned; on
+- * another profile, that profile's own character, the tuning unused.
 + * The player's character: `movement:apex`, its run, its gravity and its jump's height (a take-off of √(2 g h), so he
-+ * jumps as high under any gravity) as tuned.
-+ */
++ * jumps as high under any gravity) as tuned; on another profile, that profile's own character, the tuning unused.
+  */
  export function playerCharacter(tuning: PlayerTuning = {}): Character {
+   if (tuning.movement && tuning.movement !== 'movement:apex') return createCharacter({ movement: tuning.movement });
    const run = tuning.speed ?? APEX_RUN;
    const jump = tuning.jump ?? APEX_JUMP;
 +  const gravity = tuning.gravity ?? APEX_GRAVITY;
@@ -45,16 +51,18 @@ index 57f9890..6d3c441 100644
    });
  }
 diff --git a/labs/playground/scenes/gym.test.ts b/labs/playground/scenes/gym.test.ts
-index ce7d0a0..5ced19f 100644
+index d088d41..75bc943 100644
 --- a/labs/playground/scenes/gym.test.ts
 +++ b/labs/playground/scenes/gym.test.ts
-@@ -2,13 +2,14 @@
+@@ -2,14 +2,15 @@
   * @file Unit tests for the gym (labs/playground/levels/gym.ts and labs/playground/scenes/gym.ts): every feature's
   * number is the height, slope or gap the compiled level holds where its sign says; no two features overlap and each
   * stays inside the perimeter; the player stands at the spawn at the north end; and the settings change play: a faster
-- * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default.
+- * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default; on the platformer
+- * profile (`playground.movement`, WP 13.25) the player runs as the Stress Box hero, untuned by the gym's settings.
 + * run covers more ground, a higher jump rises higher, as Apex's numbers set them by default, and under less gravity he
-+ * jumps as high, longer in the air.
++ * jumps as high, longer in the air; on the platformer profile (`playground.movement`, WP 13.25) the player runs as the
++ * Stress Box hero, untuned by the gym's settings.
   * @see labs/playground/scenes/gym.ts
   */
  import { describe, expect, it } from 'vitest';
@@ -65,9 +73,9 @@ index ce7d0a0..5ced19f 100644
  import { GYM_FEATURES, GYM_SPAWN, GYM_TILE, type GymFeature, type GymRect } from '../levels/gym';
  import { GYM, GYM_START, gym } from './gym';
  
-@@ -105,4 +106,22 @@ describe('the gym', () => {
-     const higher = await after(60, { jump: true }, { 'playground.gym.jump': 2 });
-     expect(higher.top).toBeCloseTo(2, 1);
+@@ -115,4 +116,22 @@ describe('the gym', () => {
+     expect(GYM_SPAWN[0] - run.x).toBeGreaterThan(hero.speed * 0.6);
+     expect(GYM_SPAWN[0] - run.x).toBeLessThan(hero.speed * 1.01);
    });
 +
 +  it('jumps as high under another gravity, rising and falling slower under less', async () => {

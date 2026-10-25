@@ -184,11 +184,12 @@ describe('retargetPose', () => {
 
 /**
  * Each set's joints summed (x + 2y + 3z) over its clips at five times on heroic and chibi, with contact IK and without,
- * as measured on 2026-10-25 (WP 12.2; PRINT_RETARGET=1 prints them).
+ * as measured on 2026-10-25 (WP 12.2; PRINT_RETARGET=1 prints them); CMU's and mesh2motion's again after b982886
+ * re-imported them, format 2's hand angles continuing from the key before.
  */
 const RETARGET_SUMS: Record<string, number> = {
-  cmu: 53902.712651,
-  mesh2motion: 138284.270772,
+  cmu: 53890.144429,
+  mesh2motion: 138281.95845,
   quaternius: 73437.293322,
 };
 

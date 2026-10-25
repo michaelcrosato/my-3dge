@@ -1,11 +1,11 @@
 diff --git a/labs/box/README.md b/labs/box/README.md
-index 339514a..fbb35e2 100644
+index cd3c2e1..6f0e5a7 100644
 --- a/labs/box/README.md
 +++ b/labs/box/README.md
 @@ -34,6 +34,7 @@ setting from the settings below.
  | `labs/box/scenes/crowd-100.ts` | Box 4: a crowd chasing the hero by flow field up the stairs, drawn through its level of detail; its goldens hold in the page. | `node x replay tests/replays/box-4-chase.replay.json --browser page` |
  | `labs/box/scenes/crowd-1000.ts` | Box 4: the crowd's cost at 100, 1,000 and 5,000 agents, within budget. | `node x perf labs/box --scene crowd-1000 --ladder --budget` |
- | `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget. | `node x perf labs/box --scene crowd-5000 --ladder --budget` |
+ | `labs/box/scenes/crowd-5000.ts` | Box 4: 5,000 bodies entering with no pipeline built; Box 6: the benchmark's crowd, within budget; its page within budget, drawn through a GPU crowd (WP 11.4), and against the instancing service. | `node x perf labs/box --scene crowd-5000 --ladder --budget`, `node x perf labs/box --scene crowd-5000 --budget`, `node x perf labs/box --scene crowd-5000 --feature feature:gpuCrowds` |
 +| `labs/box/scenes/crowd-hunters.ts` | Box 4, a variant: 200 hunters (`box.crowd.mix` `hunters`: six in ten walkers, four in ten wisps, no slimes) chase the hero on foot and from the air. | `node x sim labs/box/scenes/crowd-hunters --steps 600` |
  | `labs/box/scenes/fight.ts` | Box 5: combat, its deaths, launches, telegraphs, effects and damage numbers drawn from the sim, its goldens the same with effects on and off; Box 6: its blows through the bodies' reactions (flinch, knockdown, get-up, death) and the hero's cape, which the ID pass sees. | `node x replay tests/replays/box-5-fight.replay.json --browser page` |
  | `labs/box/scenes/fight-1000.ts` | Box 6: the benchmark, the fight at 100, 1,000 and 5,000, within budget. | `node x perf labs/box --scene fight-1000 --ladder --budget` |
