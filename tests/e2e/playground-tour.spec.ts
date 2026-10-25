@@ -2,10 +2,11 @@
  * @file T2 for the playground's tour and its attract mode (PLAN.md WP 13.26, docs/PLAYGROUND.md §9.2), by
  * `window.__engine` and DOM queries:
  * 1. In each look, the tour (tests/replays/playground-tour.replay.json, labs/playground/tour.ts) plays in the page
- *    through the five cameras, twice round (`__engine.replay`, a frame drawn every `DRAW` steps), its goldens holding,
- *    no pipeline built over it (a shot's own passes built first, by one shot) and no advice; the frames it shoots on
- *    the way (`SHOTS`) are the look's film: a contact sheet, out/film/playground-tour-<look>/sheet.png, with film.json
- *    (each frame's step and camera).
+ *    through the five cameras, twice round (`__engine.replay`, a frame drawn every `DRAW` steps, the camera moved on at
+ *    every step between as live play moves it), its goldens holding, no pipeline built over it (a shot's own passes
+ *    built first, by one shot) and no advice; the frames it shoots on the way (`SHOTS`) are the look's film: a contact
+ *    sheet of the shots at their size, out/film/playground-tour-<look>/sheet.png, with film.json (each frame's step,
+ *    camera and look metrics: the colours, the palette, the dithering, the edges).
  * 2. The attract mode (`?replay=playground-tour&playground.attract=on`, labs/playground/ui/attract.ts): its banner
  *    shows over the tour, the view steps to the next camera after `ATTRACT.cycle` seconds and the look after two, and a
  *    key gives the page back (the playground, without the replay). Its page draws at the `low` tier: the cycle is real
@@ -35,8 +36,10 @@ const SITE_READY = 420_000;
 /** A frame drawn every this many steps while the tour plays: a second of play, about a dozen frames in each camera
  * twice round (a frame every 6 steps, 1,257 a look, passed the 40 minutes the test allows on this platform). */
 const DRAW = 60;
-/** The frames each look's film shoots, evenly over the tour, and how (the pixels alone). */
-const [SHOTS, SHOT] = [12, { pixels: true, ids: false, metrics: false, thumbnail: false }];
+/** The frames each look's film shoots, evenly over the tour, and how (the pixels and the look metrics, no ID pass). */
+const [SHOTS, SHOT] = [12, { pixels: true, ids: false, metrics: true, thumbnail: false }];
+/** The look metrics film.json keeps of each frame: what sets the two looks apart (engine/gfx/lookMetrics.ts). */
+const KEPT = ['colors', 'palette', 'checker', 'edges', 'flat', 'spread', 'lumaMean', 'dark', 'blown'] as const;
 
 /** Calls the `__engine` member at `path` with `args`. */
 function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promise<T> {
@@ -50,21 +53,7 @@ function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promis
 }
 
 /** A shot as the film reads it. */
-type Shot = { width: number; height: number; pixels: string };
-
-/** `rgba` (`width` × `height`) at half its size, each pixel the mean of four: the sheet's frames (a shot of another size
- * would draw the frame again at that size, engine/gfx/shot.ts). */
-function half(rgba: Uint8Array, width: number, height: number): { width: number; height: number; rgba: Uint8Array } {
-  const [w, h] = [Math.floor(width / 2), Math.floor(height / 2)];
-  const out = new Uint8Array(w * h * 4);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++)
-      for (let c = 0; c < 4; c++) {
-        const at = (dx: number, dy: number) => rgba[((2 * y + dy) * width + 2 * x + dx) * 4 + c];
-        out[(y * w + x) * 4 + c] = Math.round((at(0, 0) + at(1, 0) + at(0, 1) + at(1, 1)) / 4);
-      }
-  return { width: w, height: h, rgba: out };
-}
+type Shot = { width: number; height: number; pixels: string; metrics: Record<(typeof KEPT)[number], number> };
 
 test.describe('the playground’s tour', () => {
   test.setTimeout(2_400_000);
@@ -93,15 +82,16 @@ test.describe('the playground’s tour', () => {
       expect(run.hashes).toEqual(hashes['linux-x64']);
       expect((await cold()) - shot, 'pipelines built over the tour').toBe(0);
       expect(harness.advice()).toEqual([]);
-      // the look's film: the shots on a contact sheet, labelled with their step and camera
+      // the look's film: the shots at their size on a contact sheet, labelled with their step and camera; halved, the
+      // pixel look's 1-pixel ink and dither would average away, and the two looks read alike
       const camera = (step: number) => views.filter(([at, v]) => at <= step && v.cam).at(-1)?.[1].cam as string;
-      const frames = run.shots.map(({ step, shot }, n) => ({ n, tick: step, label: `${step} ${camera(step).split(',')[0]}`, ...half(new Uint8Array(Buffer.from(shot.pixels, 'base64')), shot.width, shot.height), visible: [] })); // prettier-ignore
+      const frames = run.shots.map(({ step, shot }, n) => ({ n, tick: step, label: `${step} ${camera(step).split(',')[0]}`, width: shot.width, height: shot.height, rgba: new Uint8Array(Buffer.from(shot.pixels, 'base64')), visible: [], metrics: Object.fromEntries(KEPT.map((key) => [key, shot.metrics[key]])) })); // prettier-ignore
       expect(frames).toHaveLength(SHOTS);
-      const sheet = contactSheet(frames, { cols: 4 });
+      const sheet = contactSheet(frames, { cols: 3 });
       const out = join(ROOT, 'out/film', `playground-tour-${name}`);
       mkdirSync(out, { recursive: true });
       writeFileSync(join(out, 'sheet.png'), encodePng(sheet.width, sheet.height, sheet.rgba));
-      writeFileSync(join(out, 'film.json'), `${JSON.stringify({ replay: 'tests/replays/playground-tour.replay.json', look, frames: frames.map(({ tick, label }) => ({ step: tick, label })) }, null, 2)}\n`); // prettier-ignore
+      writeFileSync(join(out, 'film.json'), `${JSON.stringify({ replay: 'tests/replays/playground-tour.replay.json', look, frames: frames.map(({ tick, label, metrics }) => ({ step: tick, label, metrics })) }, null, 2)}\n`); // prettier-ignore
     });
   }
 

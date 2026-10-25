@@ -11,7 +11,7 @@
  * plays the box's replays to their goldens headless. WP 3.10: in the room with a hero, the hero is a puppet, the
  * cameras follow him, the chase camera stays inside the room, first person hides his body but the hands, and the
  * cutaway cuts the wall before a side view; `camera.advance` moves a camera on by frames that draw nothing, so it
- * catches up with a hero a dev action moved (WP 12.3). WP 7.8: a level entry's material swaps reach the stage's level meshes, and
+ * catches up with a hero a dev action moved (WP 12.3), and `carry` as it does, a frame at a time (WP 13.26). WP 7.8: a level entry's material swaps reach the stage's level meshes, and
  * the stage's sky, once shown, follows the frames: its pool's lights picked near the focus, flickering as they go.
  * WP 13.8: on the playground's shooter model first person stands at its eye height, a live switch blends (its first
  * frame the old camera's, halfway far from both) and a plain one cuts; the gym's rides are drawn (WP 13.7). WP 13.9:
@@ -289,6 +289,21 @@ describe('createHeadless({ view: true })', () => {
     const hash = engine.hash();
     const followed = cameras.advance(60); // a second of a page's frames
     expect([followed.code, off(followed.pose) < 0.02, engine.hash()]).toEqual(['cam=iso', true, hash]);
+  });
+
+  it('carries the camera a frame at a time as advance does: the steps a film draws no frame for (WP 13.26)', async () => {
+    const moved = async () => {
+      const engine = await createHeadless({ scene: 'box:room-hero', view: true });
+      engine.step(1);
+      (engine.actions as { run(name: string, args: object): unknown }).run('travel', { at: [12.5, 0, 9.5] });
+      engine.step(2);
+      return { engine, view: (headlessHost(engine) as AppHost).view! };
+    };
+    const [carried, advanced] = [await moved(), await moved()];
+    const hash = carried.engine.hash();
+    for (let k = 0; k < 30; k++) carried.view.carry();
+    expect(carried.view.cameraInfo().pose).toEqual(advanced.view.advance(30).pose);
+    expect(carried.engine.hash()).toBe(hash);
   });
 
   it('draws the hero as a puppet and follows him: chase inside the room, first person without his body', async () => {

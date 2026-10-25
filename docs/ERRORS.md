@@ -311,7 +311,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `views at step {step} sets {path}, which is not a view setting, so it would change play`
 - Fix: change only settings marked view during a replay (gfx.resolution, time.scale…); a setting that changes play belongs in the replay's own inputs
-- Registered in: [`engine/app/playback.ts` line 33](../engine/app/playback.ts)
+- Registered in: [`engine/app/playback.ts` line 35](../engine/app/playback.ts)
 
 ### APP_START
 

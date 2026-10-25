@@ -7,7 +7,9 @@
  *
  * `playInto(target, text, options)` plays a replay's text from step 0 in a running engine: it starts the replay's run
  * (`target.begin`), steps it, and after each step lets the target draw (`target.draw`, a page's frame; nothing
- * headless). It returns the hashes at the replay's checkpoints (every step with `every: true`), as `playReplay` does,
+ * headless); drawing every n-th step (`draw` above 1), it moves the view on by a frame at each step between
+ * (`target.carry`), so the camera follows, blends and shoots as live play's would. It returns the hashes at the
+ * replay's checkpoints (every step with `every: true`), as `playReplay` does,
  * and with `until` stops there with the state and trace. `views` switches the camera or changes view settings at
  * the steps it names, which never changes play (a non-view setting there is `APP_PLAY_SETTING`), and shoots the view
  * there when one says `shot` (the result's `shots`: a replay's film, WP 13.26).
@@ -94,7 +96,7 @@ export interface PlayIntoOptions {
   every?: boolean;
   /** Stop after this many steps (the replay's `steps` by default), returning the state and trace there. */
   until?: number;
-  /** Draw a frame after every n-th step (1: every step; 0: never). */
+  /** Draw a frame after every n-th step (1: every step; 0: never, the camera left where it is). */
   draw?: number;
   /** View changes, `[step, change]`: applied after that many steps, before the next. */
   views?: readonly (readonly [number, ViewChange])[];
@@ -126,6 +128,8 @@ export interface PlayTarget {
   stepped(): void;
   /** Draws a frame of the run now (a page); absent headless. */
   draw?(): Promise<void>;
+  /** Moves the view on by a frame without drawing one: a step `draw` passes over (a page's view; absent headless). */
+  carry?(): void;
   /** Switches the camera to `code` (a view change), blending with `blend`. */
   camera?(code: string, blend?: boolean): void;
   /** Sets a view setting. */
@@ -173,7 +177,7 @@ export async function playInto(target: PlayTarget, text: string, options: PlayIn
     if (target.draw && draw > 0 && (k + 1) % draw === 0) {
       await target.draw();
       frames++;
-    }
+    } else if (draw > 1) target.carry?.();
   }
   const result: PlayResult = { scene: replay.scene, steps: until, hashes, hash: session.world.hash(), frames };
   if (shots.length) result.shots = shots;

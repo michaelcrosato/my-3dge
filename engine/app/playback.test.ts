@@ -2,8 +2,8 @@
  * @file Unit tests for engine/app/playback.ts (T1, PLAN.md §6.5 item 9, WP 2.7): a replay played one step at a time
  * gives `playReplay`'s hashes at every step (the kernel's replays, with intents, settings and dev actions, and the
  * box's), and its goldens; it records itself again point for point; `playInto` hashes the checkpoints or every step,
- * stops at `until` with the state and trace, draws after every n-th step, applies view changes and shoots where one
- * asks, and refuses a view change that would change play (`APP_PLAY_SETTING`) or a replay holding a view setting
+ * stops at `until` with the state and trace, draws after every n-th step (moving the view on by a frame at each step
+ * between), applies view changes and shoots where one asks, and refuses a view change that would change play (`APP_PLAY_SETTING`) or a replay holding a view setting
  * (`SIM_BAD_REPLAY`).
  * @see engine/app/playback.ts
  */
@@ -81,6 +81,21 @@ describe('playInto', () => {
         .record()
         .inputs.some(([, change]) => change.set),
     ).toBe(false);
+  });
+
+  it('moves the view on by a frame at each step it draws none for, drawing every n-th; at 0 or 1, never (WP 13.26)', async () => {
+    const { played, log } = target();
+    const carried: PlayTarget = { ...played, carry: () => void log.push('carry') };
+    await playInto(carried, text('kernel-movers'), { until: 6, draw: 3 });
+    expect(log).toEqual(['step 1', 'carry', 'step 2', 'carry', 'step 3', 'draw', 'step 4', 'carry', 'step 5', 'carry', 'step 6', 'draw']); // prettier-ignore
+    for (const draw of [0, 1]) {
+      log.length = 0;
+      await playInto(carried, text('kernel-movers'), { until: 3, draw });
+      expect(
+        log.filter((line) => line === 'carry'),
+        `draw ${draw}`,
+      ).toEqual([]);
+    }
   });
 
   it('shoots the view where a view change asks, each shot at its step, a film of the replay (WP 13.26)', async () => {
