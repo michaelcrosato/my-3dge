@@ -16,8 +16,14 @@ declare const __engine: {
   seed(n?: number): number;
   info(): { tick: number };
   get(id: number): { actor: { y: number } } | null;
+  entities(query: string): { id: number }[];
   camera: { get(): { code: string } };
 };
+
+/** The player's height, m: the run's one actor's (entity 1 is the round). */
+function height(page: Page): Promise<number> {
+  return page.evaluate(() => __engine.get(__engine.entities('actor')[0].id)!.actor.y);
+}
 
 /** The HUD's lines, by id. */
 function hud(page: Page): Promise<Record<string, string>> {
@@ -66,14 +72,14 @@ test('Escape pauses the round under a menu that keeps its keys out of play, and 
   const tick = await page.evaluate(() => __engine.info().tick);
   await harness.tick(30);
   expect(await page.evaluate(() => __engine.info().tick)).toBe(tick); // paused under the menu
-  const ground = (await page.evaluate(() => __engine.get(1)))?.actor.y ?? 0;
+  const ground = await height(page);
   await page.keyboard.press('Space'); // the menu's accept picks Resume: never the player's jump, though it is his key
   await harness.tick(2);
   await expect(menu).toHaveCount(0);
   let top = ground;
   for (let k = 0; k < 10; k++) {
     await harness.tick(2);
-    top = Math.max(top, (await page.evaluate(() => __engine.get(1)))?.actor.y ?? 0);
+    top = Math.max(top, await height(page));
   }
   expect(top - ground).toBeLessThan(0.05);
   expect(await page.evaluate(() => __engine.info().tick)).toBeGreaterThan(tick); // playing again
