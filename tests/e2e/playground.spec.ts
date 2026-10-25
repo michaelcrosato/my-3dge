@@ -196,6 +196,7 @@ test.describe('the playground', () => {
     page,
     harness,
   }) => {
+    test.setTimeout(900_000); // a frame drawn every step: 4.7 of the describe's 5 minutes on GitHub's runner at 399be1c
     await open(page, harness);
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [i * 100, { cam: mode.code }]),
