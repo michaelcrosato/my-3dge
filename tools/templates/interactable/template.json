@@ -1,0 +1,12 @@
+{
+  "describe": "An interactable: what a player uses and strikes, as a component on a prop (the kinds usable and strikable: its prompt, what using it does, what a strike does) with its event and `add`, which stands one in a scene, with a unit test that a player before it sees its prompt and opens and shuts it with interact, and that a locked one stays shut until his punch bursts it open (PLAN.md WP 13.16).",
+  "id": "the module's path, labs/<lab>/interactables/<name> (its component and its event are <name>, a word no other component has; a scene's setup stands one with <name>.add(w, { at })): labs/box/interactables/locker",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/interactables|tools/templates/interactable)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/interactable/sampleInteractable",
+  "files": {
+    "interactable.ts.tmpl": "{{id}}.ts",
+    "interactable.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "make it do what its file comment says; stand one from a scene's setup ({{name}}.add(w, { at, yaw }), with physics: true, then addInteraction(w), and addMelee(w) or addWeapons(w) for its strikes); a page's HUD shows the player's interactor.prompt; then node x docs --write"
+}

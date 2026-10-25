@@ -1,0 +1,54 @@
+/**
+ * @file Unit tests for the camera mode `cam3={{name}}` ({{id}}.ts): its code makes it and it gives the code back with
+ * its numbers, a bad one refused naming the form; it follows the player as he runs, never moving faster than he does,
+ * and a second after he stops it stands at its place beside him, looking at him; the camera rig blends into it from
+ * another camera and ends on its picture.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createCamera, createCameraRig, poseTarget, readCameraCode } from '../../../engine';
+import { {{name}}Camera } from './{{name}}';
+
+/** Where it stands when its code gives no numbers. */
+const { distance, height } = {{name}}Camera().spec();
+
+/** `point` rounded to the centimetre. */
+const cm = (point: readonly number[]) => point.map((v) => Math.round(v * 100) / 100 + 0);
+
+describe('cam3={{name}}', () => {
+  it('is made from its code and gives the code back with its numbers', () => {
+    expect(readCameraCode('cam3={{name}},6')).toMatchObject({ type: 'game', name: '{{name}}' });
+    const camera = createCamera('cam3={{name}},6');
+    expect([camera.type, camera.code()]).toEqual(['{{name}}', `cam3={{name}},6,${height}`]);
+    expect(() => createCamera('cam3={{name}},0')).toThrow(/cam3={{name}},<distance>,<height>/);
+  });
+
+  it('follows the player smoothly as he runs, and a second after he stops stands beside him, looking at him', () => {
+    const camera = createCamera('cam3={{name}}');
+    let last = camera.update({ follow: [0, 0, 0] }, 1 / 60).position; // the first frame finds him
+    let fastest = 0;
+    for (let k = 1; k <= 120; k++) {
+      const at = camera.update({ follow: [0, 0, (5 * k) / 60] }, 1 / 60).position; // south at 5 m/s for 2 s
+      fastest = Math.max(fastest, Math.hypot(...at.map((v, i) => v - last[i])));
+      last = at;
+    }
+    expect(fastest).toBeLessThanOrEqual(5 / 60 + 1e-9); // never faster than he ran: no jump in the picture
+    for (let k = 0; k < 60; k++) camera.update({ follow: [0, 0, 10] }, 1 / 60);
+    const pose = camera.pose();
+    expect(cm(pose.position)).toEqual([distance, height, 10]);
+    expect(cm(poseTarget(pose))).toEqual([0, 1, 10]); // a metre over his feet
+  });
+
+  it('is blended into by the camera rig from another camera, and ends on its own picture', () => {
+    const own = createCamera('cam3={{name}}').update({ follow: [0, 0, 0] }, 1 / 60).position;
+    const away = (at: readonly number[]) => Math.hypot(...at.map((v, i) => v - own[i]));
+    const rig = createCameraRig('cam=iso');
+    rig.update({ follow: [0, 0, 0] }, 1 / 60);
+    rig.set('cam3={{name}}', { blend: true });
+    rig.update({ follow: [0, 0, 0] }, 0.1);
+    expect(away(rig.pose().position)).toBeGreaterThan(0.5); // a tenth of a second in: between the two pictures
+    for (let k = 0; k < 60; k++) rig.update({ follow: [0, 0, 0] }, 1 / 60);
+    expect(away(rig.pose().position)).toBeLessThan(0.01);
+    expect(rig.pose().projection).toBe('perspective');
+  });
+});

@@ -1,7 +1,9 @@
 /**
  * @file Tests `x new` (WP 0.6): kinds are discovered and their manifests validated, templates fill, never overwrite
  * and keep every line within 120 columns, the module template passes its own checks (`x new module --test`), and a
- * broken template fails them.
+ * broken template fails them. The templates as a set (WP 12.1): tools/templates/README.md lists every kind, each with
+ * a path its kind takes and whether a game makes one, and cites only paths that exist; every template that defines an
+ * entry of a kind the gallery films writes its `gallery` hook.
  * Fixture templates live in temporary directories; `--test` writes its sample into this repository and removes it.
  * @see tools/cmd/new.ts
  */
@@ -9,6 +11,9 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync,
 import { tmpdir } from 'node:os';
 import { dirname, join, posix } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
+import { GALLERY_STAGING } from '../../engine/dev/gallery';
+import type { ModuleDoc } from '../lib/docs';
+import { checkPaths } from '../lib/docsPaths';
 import { CHILD_TIMEOUT_MS, ROOT, UsageError } from '../x';
 import command, { CHECKS, fill, listKinds, NEXT, nextIn, render, testKind, type Kind } from './new';
 
@@ -252,5 +257,54 @@ describe('testing templates (x new … --test)', () => {
     expect(result.lines).toEqual(['docs: 1 problem']);
     expect(result.failures[0].message).toMatch(/tools\/templates\/module\/citesSample does not exist.*DOCS_PATH/);
     expect(existsSync(join(ROOT, 'tools/templates/module/citesSample.ts'))).toBe(false);
+  });
+});
+
+describe('the templates as a set (WP 12.1)', () => {
+  const README = 'tools/templates/README.md';
+
+  /** The README's table: each row's kind, path (its placeholders as written) and whether a game makes one. */
+  function rows(): { kind: string; path: string; game: string }[] {
+    const lines = readFileSync(join(ROOT, README), 'utf8').split('\n');
+    return lines
+      .filter((line) => line.startsWith('| `'))
+      .map((line) => line.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/^`|`$/g, '').replaceAll('\\|', '|')))
+      .map((cells) => ({ kind: cells[1], path: cells[3], game: cells[5] }));
+  }
+
+  it('lists every kind in tools/templates/README.md, each with a path its kind takes and whether a game makes one', () => {
+    const kinds = listKinds(ROOT);
+    expect(rows().map((row) => row.kind)).toEqual(kinds.map((kind) => kind.kind));
+    for (const row of rows()) {
+      const kind = kinds.find((candidate) => candidate.kind === row.kind)!;
+      const id = row.path
+        .replace('<lab>', 'box')
+        .replace('<dir>', 'core')
+        .replace('<name>', 'sample')
+        .replace(/<([^|>]+)\|[^>]*>/, '$1');
+      expect(new RegExp(kind.pattern).test(id), `${row.kind}: ${row.path}`).toBe(true);
+      expect(row.game, row.kind).toBe(kind.games ? 'no' : 'yes');
+    }
+  });
+
+  it('cites only paths and commands that exist in tools/templates/README.md', () => {
+    const raw = readFileSync(join(ROOT, README), 'utf8');
+    const fileComment = { description: '', tags: [], line: 1, lines: raw.split('\n').length, raw };
+    const module: ModuleDoc = { path: README, fileComment, purpose: '', exports: [], examples: [], tests: [], codes: [], kinds: [], imports: [] }; // prettier-ignore
+    expect(checkPaths(ROOT, [module], { sources: {} }).failures).toEqual([]);
+  });
+
+  it('writes the gallery hook in every entry of a kind the gallery films', () => {
+    // A kind's entries are made by its define function, defineProp for prop: the convention every kind keeps.
+    const calls = Object.keys(GALLERY_STAGING).map((kind) => `define${kind[0].toUpperCase()}${kind.slice(1)}(`);
+    const missing: string[] = [];
+    for (const kind of listKinds(ROOT)) {
+      for (const from of Object.keys(kind.files).filter((file) => !file.includes('.test.'))) {
+        const text = readFileSync(join(ROOT, kind.dir, from), 'utf8');
+        const defined = calls.reduce((n, call) => n + text.split(call).length - 1, 0);
+        if (defined > text.split('gallery: {').length - 1) missing.push(`${kind.dir}/${from}`);
+      }
+    }
+    expect(missing).toEqual([]);
   });
 });

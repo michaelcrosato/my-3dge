@@ -1,0 +1,12 @@
+{
+  "describe": "A level written as storeys (level format 2): its text in a module, with its rooms' markers and floors, a door, windows, a flight of stairs to the floor above, a railed stairwell and a gable roof, with a unit test that it compiles to its storeys and rooms, each room's marker inside it, and passes every check node x qa level runs: every spawn and room reached, doors wider than a body, headroom, flights walkable (PLAN.md WP 13.13).",
+  "id": "the module's path, labs/<lab>/levels/<name> (its id is level:<name>; a scene names it, level: 'level:<name>'): labs/box/levels/cabin",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/levels|tools/templates/level)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/level/sampleLevel",
+  "files": {
+    "level.ts.tmpl": "{{id}}.ts",
+    "level.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "draw its storeys as its file comment says, its room markers' characters no other glyph's; import {{id}}.ts from the scene that plays it (level: 'level:{{name}}', and in its setup addLevelBodies(physicsOf(w), getLevel('level:{{name}}')) for its bodies); see it with node x eye <scene> (no GPU) or node x shot <page> --scene <scene>; then node x docs --write"
+}

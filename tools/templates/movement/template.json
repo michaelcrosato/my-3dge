@@ -1,0 +1,12 @@
+{
+  "describe": "A movement profile: how a character moves, as data (the character controller's settings it sets and the shooter model's numbers it changes, every other one Apex's), with a unit test that makes a character of it and measures its run, sprint and jump on the feel course against its own numbers (PLAN.md WP 13.3).",
+  "id": "the module's path, labs/<lab>/movement/<name> (its id is movement:<name>; a character takes it with createCharacter({ movement: id })): labs/box/movement/heavy",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/movement|tools/templates/movement)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/movement/sampleMovement",
+  "files": {
+    "movement.ts.tmpl": "{{id}}.ts",
+    "movement.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "make it move as its file comment says (a page's feel panel tunes it live, and its Copy as profile is the defineMovement call to paste); import {{id}}.ts where the character is made, createCharacter({ movement: 'movement:{{name}}' }); node x sim <scene> --feel prints what its player measures; then node x docs --write"
+}
