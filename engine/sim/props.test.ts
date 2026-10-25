@@ -7,7 +7,7 @@
  * game's own hook; a capture taken while the crate flies restores and continues to the same hashes; `removeProp`
  * removes body and entity; an id that is no prop is refused, naming the call. WP 13.16's options: a body of another
  * type, a switchable prop's light, components from the start; a prop with health holds its hit points, the others
- * nothing more; a body names its prop.
+ * nothing more; a body names its prop, the world's first (body 0) too.
  * @see engine/sim/props.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -164,6 +164,16 @@ describe('props in a scene', () => {
     expect([crate.propsTestTag, crate.propLight, crate.propHealth]).toEqual([{ name: 'held' }, undefined, undefined]);
     expect([lamp.propLight, pane.propHealth]).toEqual([{ on: false, group: 'room:hall' }, { hp: 1 }]);
     expect([propOfBody(world, pane.sceneProp.body), propOfBody(world, -1), propOfBody(world, 999)]).toEqual([3, -1, -1]); // prettier-ignore
+  });
+
+  it('names the prop of a world’s first body, body 0', () => {
+    const scene = defineScene('propsFirstBody', {
+      physics: true,
+      setup: (w) => void spawnProp(w, { prop: 'prop:crate', at: [0, 0, 0], yaw: 0 }),
+    });
+    const { world } = startScene(scene);
+    const [crate] = props(world);
+    expect([crate.sceneProp.body, propOfBody(world, 0)]).toEqual([0, crate.id]);
   });
 
   it('removeProp removes body and entity; an id that is no prop is refused', () => {

@@ -4,7 +4,7 @@
  * ground, its stifles forward, its tail along the ground and its paws where they stood, and stands again; it stands
  * from its first step even told it is aloft, then tucks its feet; its head turns toward what it looks at within its
  * bounds and looks about only while it stands; its tail wags only when told, its links keeping their length; and its
- * state, as plain data through JSON, poses and steps on alike.
+ * state, as plain data through JSON, poses and steps on alike; WP 12.2 pins its eased walk, run and wag over a trot.
  * @see engine/anim/quadruped.ts
  */
 import { describe, expect, it } from 'vitest';

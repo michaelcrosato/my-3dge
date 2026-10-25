@@ -1,8 +1,8 @@
 /**
  * @file Unit tests for the body-state vocabulary (engine/anim/states.ts), PLAN.md WP 3.7's Done when: unknown body
- * states warn with a suggestion. Also: wrong kinds of value warn and are dropped, each word warns once, valid input
- * passes through untouched, the vocabulary is the humanoid's words plus `trail`, and every sample state shows itself
- * on a humanoid.
+ * states warn with a suggestion. Also: wrong kinds of value warn and are dropped (a trail only by its name, a string),
+ * each word warns once, valid input passes through untouched, the vocabulary is the humanoid's words plus `trail`, and
+ * every sample state shows itself on a humanoid.
  */
 import { describe, expect, it } from 'vitest';
 import { createLog, type Log } from '../core/log';
@@ -69,6 +69,13 @@ describe('the body-state vocabulary', () => {
       expect.stringContaining('body is "lunge", not an object'),
       expect.stringContaining('pose is 3, not a name'),
     ]);
+  });
+
+  it('takes a trail by its name alone: a list holding the name is the wrong kind (ANIM_BAD_STATE)', () => {
+    const { log, printed } = quietLog();
+    expect(checkBodyStates({ trail: ['kick'], air: true } as unknown as AnimatorInput, log)).toEqual({ air: true });
+    const trails = 'one of blade, fistR, fistL, kick';
+    expect(printed).toEqual([`[ANIM_BAD_STATE] body state trail is ["kick"], not ${trails}; it is ignored: give trail ${trails}`]); // prettier-ignore
   });
 
   it('names states a humanoid shows: each sample state, held for its time, raises its weight', () => {

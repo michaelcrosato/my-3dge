@@ -102,6 +102,7 @@ const EXPECTED: Readonly<Record<StateKind, string>> = {
 function fits(kind: StateKind, value: unknown): boolean {
   switch (kind) {
     case 'number':
+      // Stryker disable next-line ConditionalExpression: Number.isFinite is false for anything but a finite number, so the typeof test only says so
       return typeof value === 'number' && Number.isFinite(value);
     case 'boolean':
       return typeof value === 'boolean';

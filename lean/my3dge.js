@@ -9117,7 +9117,10 @@ function LI(e, t, n, s) {
   }
   return bs(n, g5(u, o));
 }
-const Ws = { L: -1, R: 1 }, PI = (e, t, n, s, o) => je(e, bs(t, [n[0] * o, n[1] * Ws[s] * o, n[2] * o])), NI = [!1, !0, !0, !1];
+const Ws = { L: -1, R: 1 }, PI = (e, t, n, s, o) => (
+  // Stryker disable next-line ArithmeticOperator: SG[s] is ±1, which multiplies and divides alike, to the bit
+  je(e, bs(t, [n[0] * o, n[1] * Ws[s] * o, n[2] * o]))
+), NI = [!1, !0, !0, !1];
 function UG(e, t) {
   const n = xe(t.hips, e.H0 / 100), s = qd(t.body), o = Yy(s, qd(t.chest)), r = Yy(o, qd(t.head)), [i, a, c] = [Fd(e.Pr, s), Fd(e.Cr, o), Fd(e.Hr, r)], l = t.spine ? Fd(e.Pr, Yy(s, qd(t.spine))) : null, u = [n];
   e.spineW.forEach((m, g) => u.push(je(u[g], p5(l && NI[g] ? l : m5(i, a, m), e.spine[g]))));
@@ -15080,7 +15083,7 @@ const Gt = {
   turnRate: 8,
   // the share of the way the heading turns toward the travel each second (all of it at most, per step)
   turnMin: 0.25,
-  // m/s: slower, it keeps its heading
+  // m/s: at this speed or slower, it keeps its heading
   bankAccel: 15,
   // m/s² sideways that banks it 45°
   bankMax: 0.6,

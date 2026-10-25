@@ -2,7 +2,7 @@
  * @file Tests for the baker (WP 8.4): the frames on format 1's key grid, FK parity with the format-1 decode (exact on
  * a key, a mean of 1 mm or less over every set at 30 fps and the 60 Hz midpoints, and at each clip's own key times, the
  * worst cases in tests/baselines/anim-clips.json), format 2's keys (hands, spine, roll), the hand's roll, the singular poses (a deep fold bending forward
- * among them: WP 8.6), and the root's travel.
+ * among them: WP 8.6), the root's travel, and a sample writing its 23 rotations alone.
  */
 import { describe, expect, it } from 'vitest';
 import { Quaternion, Vector3 } from '../../core/math';
@@ -179,6 +179,13 @@ describe('bakeClip', () => {
     const frame = baked.rotations.subarray(3 * JOINT_COUNT * 4, 4 * JOINT_COUNT * 4);
     pose.local.forEach((v, i) => expect(v).toBeCloseTo(frame[i], 6));
     expect(jointIndex('pelvis')).toBe(0);
+  });
+
+  it('samples its 23 rotations alone, leaving the rest of a longer array as it was', () => {
+    const baked = bakeClip(clipOf([standing(0), standing(0.5)], { dur: 0.5 }), REST);
+    const rotations = new Float32Array(JOINT_COUNT * 4 + 4).fill(7);
+    sampleBaked(baked, 0.2, rotations, new Vector3());
+    expect([...rotations.subarray(JOINT_COUNT * 4)]).toEqual([7, 7, 7, 7]);
   });
 });
 

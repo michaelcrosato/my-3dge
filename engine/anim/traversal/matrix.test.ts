@@ -2,7 +2,8 @@
  * @file Unit tests for the traversal and holding states of the state matrix (engine/anim/traversal/matrix.ts, PLAN.md
  * WP 13.11): every state runs on the adult at both facings, its hands held on their contacts within §5.1's 3 cm
  * whenever they hold one (each state that holds something holds it), the aimed gun's muzzle within §5.1's 2° of the
- * aim, the slide-jump flown, and the same run twice gives the same poses.
+ * aim, the slide-jump flown, and the same run twice gives the same poses; WP 12.2 pins every run's poses' hash
+ * (PRINT_TRAVERSAL=1 prints them again).
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';

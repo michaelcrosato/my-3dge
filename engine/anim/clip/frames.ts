@@ -156,6 +156,7 @@ export function hintFor(limb: Limb, s: number, M: Frame, dLocal: V): V {
 export const SG = { L: -1, R: 1 } as const;
 /** Where a limb from `root` ends: direction `v` in frame `M` (mirrored for side `s`) at distance `l`. */
 export const limbEnd = (root: V, M: Frame, v: V, s: 'L' | 'R', l: number) =>
+  // Stryker disable next-line ArithmeticOperator: SG[s] is ±1, which multiplies and divides alike, to the bit
   add(root, wld(M, [v[0] * l, v[1] * SG[s] * l, v[2] * l]));
 
 /** The spine bones format 2's `spine` override turns: the two between `spine1` and the chest. */
