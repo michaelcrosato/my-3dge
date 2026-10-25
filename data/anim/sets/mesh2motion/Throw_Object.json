@@ -1,4 +1,4 @@
-{"clip": "Throw Object", "src": "M2M_ANIMATED", "dur": 1.875, "loop": false, "tags": ["throw","attack"], "desc": "winds up and hurls an object, dropping into a deep lunge", "fps": 24, "via": "source", "events": [{"t":0.713,"name":"hit","side":"R"},{"t":0.867,"name":"step","side":"R"}], "contacts": [{"part":"footL","from":0,"to":1.867},{"part":"footR","from":0,"to":0.467},{"part":"footR","from":0.867,"to":1.867},{"part":"handR","from":1.233,"to":1.867}], "keys": [
+{"clip": "Throw Object", "src": "M2M_ANIMATED", "dur": 1.875, "loop": false, "tags": ["throw","attack"], "desc": "winds up and hurls an object, dropping into a deep lunge", "fps": 24, "via": "source", "events": [{"t":0.713,"name":"hit","side":"R"}], "contacts": [{"part":"footL","from":0,"to":1.867},{"part":"footR","from":0,"to":0.467},{"part":"handR","from":1.233,"to":1.867}], "keys": [
   {"t":0,
    "hips":[-10,1,93], "body":[41,0,0], "chest":[-21,-13,0], "head":[-20,15,6],
    "shL":[0,0], "shR":[0,0], "armL":[69,25,-68,89,0], "armR":[-10,33,-94,79,-12], "handL":[-15,45,52], "handR":[4,51,-21], "gripL":0, "gripR":55,

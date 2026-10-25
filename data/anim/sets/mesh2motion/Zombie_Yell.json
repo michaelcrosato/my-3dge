@@ -1,4 +1,4 @@
-{"clip": "Zombie Yell", "src": "M2M_ANIMATED", "dur": 3.708, "loop": false, "tags": ["zombie","emote"], "desc": "hunched, rears up and roars with the arms raised, then slumps", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.7},{"part":"footR","from":0,"to":3.7},{"part":"handL","from":0,"to":0.867},{"part":"handR","from":1.333,"to":2.167},{"part":"handL","from":1.367,"to":2.333},{"part":"handR","from":2.833,"to":3.133},{"part":"handL","from":3.333,"to":3.7}], "keys": [
+{"clip": "Zombie Yell", "src": "M2M_ANIMATED", "dur": 3.708, "loop": false, "tags": ["zombie","emote"], "desc": "hunched, rears up and roars with the arms raised, then slumps", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.7},{"part":"footR","from":0,"to":3.7},{"part":"handR","from":2.833,"to":3.133},{"part":"handL","from":3.333,"to":3.7}], "keys": [
   {"t":0,
    "hips":[-18,0,89], "body":[-8,-8,16], "chest":[-1,52,2], "head":[4,-10,-18], "spine":[0,33,0],
    "shL":[18,-7], "shR":[18,-6], "armL":[72,-22,-66,60,-26], "armR":[50,35,-79,15,23], "handL":[13,30,-30], "handR":[20,55,-70], "gripL":64, "gripR":57,

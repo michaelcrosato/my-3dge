@@ -232,7 +232,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `restBuild`, `restPoints`, `restSkeleton`
   - Tests: [`engine/anim/clip/bake.test.ts`](../engine/anim/clip/bake.test.ts)
 - [`retarget.ts`](../engine/anim/clip/retarget.ts): Retargeting (PLAN.md §10.4, WP 8.4): a baked clip (bake.ts) played on a skeleton.
-  - Exports: `AnimationClipJSON`, `clipJSON`, `hipRatio`, `RETARGET`, `RetargetOptions`, `retargetPose`, `standingHipHeight`
+  - Exports: `AnimationClipJSON`, `clipJSON`, `handWeight`, `hipRatio`, `RETARGET`, `RetargetOptions`, `retargetPose`, `standingHipHeight`
   - Tests: [`engine/anim/clip/retarget.test.ts`](../engine/anim/clip/retarget.test.ts)
 - [`spine.ts`](../engine/anim/clip/spine.ts): Format 2's spine override, encoded (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): `spine [turn, lean, tilt]` turns the spine's two middle bones together, relative to the body, in place of the library's shares, which turn each bone a measured fraction of the way from the pelvis to the chest (validate.ts `RestBody.spineW`).
   - Exports: `SPINE_MISS`, `spineMiss`, `spineOf`
@@ -2128,7 +2128,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `ANIM_CACHE`, `ARCHIVE`, `asfOf`, `CMU_CACHE`, `cmuAll`, `cmuArchive`, `cmuGet`, `cmuIndex`, `IndexedTake`, `parseMotionList`, `SITE`
   - Tests: [`tools/anim/cmu.test.ts`](../tools/anim/cmu.test.ts)
 - [`contacts.ts`](../tools/anim/contacts.ts): Contacts and events, detected at import (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): when each foot and hand holds the ground or a surface (a clip's `contacts`), and the moments gameplay listens for (its `events`: `step`, `land`, `hit`), read from a capture's 36 body points.
-  - Exports: `AIRBORNE`, `CARRY`, `detectContacts`, `FOOT_CLEAR`, `HAND_FLOOR`, `HOLD`, `STILL`, `treadmill`
+  - Exports: `AIRBORNE`, `CARRY`, `detectContacts`, `FOOT_CLEAR`, `HAND_FLOOR`, `HANG`, `HOLD`, `HOLD_REACH`, `STILL`, `treadmill`
   - Tests: [`tools/anim/contacts.test.ts`](../tools/anim/contacts.test.ts)
 - [`cut.ts`](../tools/anim/cut.ts): A smaller set cut from bigger ones (PLAN.md §5.3, WP 8.5): the clips a game adopts, with the records of the libraries they came from (their rest bodies and origins) and the mannequin's look, read from and written as set directories, one file a clip (tools/anim/repack.ts).
   - Exports: `cutSet`
@@ -2175,7 +2175,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`shardfall.ts`](../tools/anim/shardfall.ts): Adopts the sets and catalogs shardfall converted (PLAN.md §5.8 and §10.5 step 5, WP 8.10): 100STYLE's 878 loops as seven sets, `style100` (forward walks) and `style100_back`, `_backrun`, `_idle`, `_run`, `_side` and `_siderun`, and version 2 of Quaternius' Universal Animation Library (102 clips) in place of v1's `quaternius`, with their eight catalogs.
   - Exports: `adoptSet`, `CATALOGS_DIR`, `main`, `markVia`, `readShardfallSet`, `readV1Set`, `SHARDFALL_CATALOGS`, `SHARDFALL_SETS`, `shardfallCatalogFiles`, `shardfallSet`, `shardfallSetFiles`, `V1_KEPT`, `V1_SETS`
   - Tests: [`tests/unit/data/anim/sets/sets.test.ts`](../tests/unit/data/anim/sets/sets.test.ts), [`tests/unit/data/anim/shardfall.test.ts`](../tests/unit/data/anim/shardfall.test.ts)
-- [`survey.ts`](../tools/anim/survey.ts): The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole takes, 30 frames a second, fitted within 30 mm, in format 2 unless `legacy`: tools/anim/import.ts `fitFormat2`) and measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate).
+- [`survey.ts`](../tools/anim/survey.ts): The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole takes, 30 frames a second, fitted within 30 mm, in format 2 unless `legacy`: tools/anim/import.ts `fitFormat2`) and measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate, and `f2` for a fit in format 2, which rows surveyed before WP 8.8 lack).
   - Exports: `CMU_CATALOG`, `flagsOf`, `LIBRARY_DIR`, `surveyCmu`, `SurveyOptions`, `usedBy`
   - Tests: [`tools/anim/survey.test.ts`](../tools/anim/survey.test.ts)
 - [`upgrade.ts`](../tools/anim/upgrade.ts): The re-import from the sources (PLAN.md §10.5 step 9, WP 8.8; ADR-0010 amendment 7): a set imported again from its originals in format 2 (hands, grips, foot roll, the spine override, contacts, events), then swapped in one clip at a time where the new clip keeps parity with the one it replaces, marked `via: "source"`; the others stay as they were, each with its reason, in `data/anim/upgrade.json`.

@@ -1,4 +1,4 @@
-{"clip": "Golf_Drive", "src": "M2M_MOCOPI", "dur": 3.1, "loop": false, "tags": ["sport","prop"], "desc": "addresses the ball and swings a golf club through", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.1},{"part":"footR","from":0,"to":3.1},{"part":"handR","from":2.1,"to":3.1},{"part":"handL","from":2.2,"to":2.867}], "keys": [
+{"clip": "Golf_Drive", "src": "M2M_MOCOPI", "dur": 3.1, "loop": false, "tags": ["sport","prop"], "desc": "addresses the ball and swings a golf club through", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.1},{"part":"footR","from":0,"to":3.1},{"part":"handR","from":2.1,"to":3.1}], "keys": [
   {"t":0,
    "hips":[-22,-3,103], "body":[2,23,6], "chest":[1,-1,-2], "head":[0,23,-6],
    "shL":[1,4], "shR":[21,-8], "armL":[41,-19,-89,0,22], "armR":[40,-26,-88,0,-45], "handL":[9,-58,-24], "handR":[-16,-34,3], "gripL":76, "gripR":70,

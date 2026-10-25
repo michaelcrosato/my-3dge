@@ -129,7 +129,7 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   in line and say little about it. The importer writes it on every key of a clip whose shares miss the capture's neck
   by more than `SPINE_MISS` (15 mm, half the importer's tolerance), on none of the others, since `keyAt` holds a field
   the next key lacks. Measured on Mesh2Motion: the shares miss by more than 15 mm in 72 of 178 clips, up to 129 mm
-  (`Bow`); fitted with hands and the override, `Bow`'s worst frame falls from 184 to 34 mm, `Angry`'s from 170 to 35.
+  (`Bow`); fitted with hands and the override, `Bow`'s worst frame falls from 184 to 34 mm, `Angry`'s from 170 to 26.
 - **Foot roll: `rollL`/`rollR`** (engine/anim/clip/feet.ts) turn the toes' plane about the decoded ankle-to-ball line,
   + turning the sole inward, and the toes bend in the rolled plane. The ankle, ball and toe are not in line (the toes
   lie about 30° off the ankle-to-ball line at rest), so the 36 body points show the roll and the importer reads it
@@ -152,17 +152,21 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   0.05), so on some frames a chest put right bares the neck's own miss at the head (`Drink_Water`: 61 → 92 mm).
 - **Contacts and events, detected at import** (tools/anim/contacts.ts), watched in the ground's frame: the root's
   travel added, an in-place loop's treadmill taken away (the planted balls' median velocity along the floor, or the
-  velocity most hand and foot frames share: an in-place ladder's rungs sinking at 0.6 m/s). A foot holds where its
-  sole is within 30 mm of the floor, or where its ball holds still while the pelvis moves 5 cm past it; a hand where
-  its knuckle holds still for 0.15 s while the pelvis moves 5 cm past it, or lies still on the floor or above the
-  head. `step` where a foot's contact begins, `land` where one begins after a quarter second with nothing held, `hit`
-  in an `attack` or `kick` clip at the runtime's own strike time. Known limit: a hand still while the body is still
-  too, below the head and off the floor (an idle's, a held wall), reads as no contact.
+  velocity most hand and foot frames share: an in-place ladder's rungs sinking at 0.6 m/s). A point holds where it
+  moves slower than 200 mm/s for 0.15 s and never strays 50 mm from where it began. A foot holds where its sole is
+  within 30 mm of the floor, or where its ball holds while the pelvis moves 5 cm past it; a hand where its knuckle
+  holds while the pelvis moves 5 cm past it, or holds on the floor, or above the head while the body hangs from it
+  (the pelvis 0.5 m or more below it, neither foot on the floor). `step` where a foot's contact begins, `land` where
+  one begins after a quarter second with nothing held, `hit` in an `attack` or `kick` clip at the runtime's own strike
+  time. Known limits: a hand still while the body is still too, below the head and off the floor (an idle's, a held
+  wall), reads as no contact; a hand the body moves past at the turn of its swing can read as one (a walk's: four
+  Mesh2Motion walks), as can a hand held still while the body sways (`Fighting Idle`, `Throw Object`).
 - **Call: parity is two decodes of one capture, and no worse** (tools/anim/upgrade.ts; PLAN.md §10.5 step 9 and WP
   8.8 edited to match). The plan asked each re-imported clip's decode to lie within the old clip's fit of the old
   decode. That rule sits on its own boundary: a format-2 clip that holds its capture closely lies from the format-1
   decode by just the format-1 clip's error against that capture, which is its fit, so the upgrades that mend most
-  fail it by a millimetre or two (104 of Mesh2Motion's 177, 47 of CMU's 60). The rule kept: the two decodes lie within
+  fail it by a millimetre or two (67 of Mesh2Motion's 177 and 13 of CMU's 60 fail it: it would swap in 62% and 78%,
+  short of the 80% the WP asks; 107 of 177 pass its strict reading). The rule kept: the two decodes lie within
   the sum of their fits of each other, mean and worst (two decodes each within its fit of one capture can lie no
   farther apart: the same motion; every clip of both sets passes), and the new clip fits its capture no worse, mean
   and worst. Mesh2Motion: 175 of 177 swapped in; CMU: 51 of 60. The others stay as they were, each with its reason in
@@ -177,6 +181,28 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   60 clips are fitted in format 2 by the upgrade. Re-fitting the ledger's other takes now would need CMU's whole 1.08
   GB archive and hours of fits for numbers that only rank takes for browsing; they are re-surveyed subject by subject
   as games pick their rows (`x anim cmu survey --subjects …`), the notes kept, as step 10 already says of the picks.
+- **Found at review: the hands popped.** Writing hand contacts turned on retarget.ts's hand IK (WP 8.4's), which
+  switched on and off with no fade: on a build whose copied hand stands elsewhere than the source's, the hand jumped
+  there in one 60 Hz step at every contact's edge (`build:adult` more than 50 mm on 51 of the 74 clips with hand
+  contacts, the other builds more than 100 mm on 49 to 54, worst 410 mm on `build:bulky`; Mesh2Motion's `Climb
+  Ladder` 85 to 252 mm at every grab), and many of the 74 were hands touching
+  nothing. Both mended: a hand's IK now fades in over the 0.2 s before its contact and out over the 0.2 s after it
+  (`handWeight`, smoothstepped, a loop's seam wrapped so a hold across it never fades), its goal moved from the copy's
+  hand toward the source's by that weight; and a hold may not stray 50 mm, and a hand above the head holds only while
+  the body hangs from it (above). 46 clips keep hand contacts (Mesh2Motion's climbs, crawls, push-ups, falls and
+  get-ups among them); at every edge of a hand's IK, on every build the anim QA drives, a hand now moves at most 15 mm
+  more in a step than the copy does (tests/unit/data/anim/hand-contacts.test.ts holds it to 20 mm). A hand on the
+  floor may slide as it pushes (a get-up's), so the 50 mm holds only off the floor. Within a fade the
+  hand still travels the offset, up to about 60 mm a step on `build:bulky`, and the lift (a pose kept above the floor)
+  can follow whichever hand sinks lowest. The anim QA's `action:landHeavy` foot slide moves from 0.4366 to 0.5846 m
+  with it (its baseline's reason says why); its two other reasons, and tools/qa/anim/clips.ts, now say what keeps the
+  feet sliding: nothing plants a foot by its contacts yet (retarget.ts reads the hands' only).
+- **Found at review, also mended:** `x anim import --cmu --legacy --check` (WP 8.5's Verify, gate G8's) failed on the
+  51 upgraded clips and, without `--check`, would have undone them: an import into the committed set now keeps the
+  clips re-imported from their source as committed (repack.ts `keepUpgrades`, as `x anim repack` does), so it checks
+  the other 9 byte for byte; `x anim upgrade` names the closest set for one it lacks; the CMU survey flags a format-2
+  fit `f2`, so a re-surveyed take ranks against the old rows knowingly (§10.5 step 10 edited); ESC-0003's second
+  option counted 100STYLE among the sets to upgrade, which the call above leaves out.
 - Evidence: engine/anim/clip/hands.test.ts (random turns and grips back to the degree and the whole, either side; the
   mirror image; a capture with turning, closing hands fitted within 30 mm and its hands within 15 mm, more than three
   times closer than format 1), engine/anim/clip/feet.test.ts, engine/anim/clip/spine.test.ts,
@@ -184,4 +210,6 @@ The library's tests and QA (WP 8.6); the asset scan in `x check`.
   point with it), engine/anim/clip/bake.test.ts (FK of a format-2 key rebuilds every rigid point; a flipped roll sign
   misses by 57 mm), tools/anim/contacts.test.ts, tools/anim/upgrade.test.ts, tools/anim/glb-library.test.ts (a skinned
   mesh read through its inverse bind matrices, the WP's prerequisite), tests/unit/data/anim/upgrade.test.ts (the 80%
-  per set, the kept clips listed, every swapped clip's format-2 fields in full).
+  per set, the kept clips listed, every swapped clip's format-2 fields in full), engine/anim/clip/retarget.test.ts
+  (`handWeight`'s fade and seam), tests/unit/data/anim/hand-contacts.test.ts (no jump at an edge, on every humanoid;
+  it fails on five builds of five with the fade taken out), tools/cmd/anim.test.ts (`fetch`, `upgrade`'s refusals).

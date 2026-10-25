@@ -2,14 +2,16 @@
  * @file Tests `x anim` (tools/cmd/anim.ts, WP 8.5) through the dispatcher, offline: `find punch` in 20 lines or fewer
  * (Done when), `show`, `bake` with its three.js JSON, `sheet`'s SVG, `cut` and `import` writing and checking set
  * directories, each reading another directory of sets (`--sets`, an `import --out`'s), `cmu ledger`, and the usage
- * errors that name the closest choice. The `cmu` subcommands that fetch
+ * errors that name the closest choice; `fetch` where Mesh2Motion's files are cached, and `upgrade`'s refusals. The `cmu`
+ * subcommands that fetch
  * (`get`, `all`, `rates`) and `import --cmu` need the network: tools/anim/*.test.ts cover them offline.
  */
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AnimationClip } from 'three';
 import { describe, expect, it } from 'vitest';
+import { MESH2MOTION, MESH2MOTION_CACHE } from '../anim/fetch';
 import { riggedGlb } from '../anim/glb-fixture';
 import { requireSource } from '../lib/source';
 import { dispatch, MAX_LINES, ROOT } from '../x';
@@ -124,6 +126,21 @@ describe('x anim', () => {
     const [code, lines] = await anim('repack', '--check');
     expect(code).toBe(0);
     expect(lines.slice(1, 3)).toEqual(['mesh2motion: ok', 'cmu: ok']);
+  });
+
+  it('refuses a set it cannot upgrade, saying why, and names the closest for one it lacks', async () => {
+    expect((await anim('upgrade'))[0]).toBe(2);
+    const [unknown, said] = await anim('upgrade', 'mesh2moton');
+    expect([unknown, said.join('\n')]).toEqual([2, expect.stringMatching(/did you mean mesh2motion\?/)]);
+    const [blocked, why] = await anim('upgrade', 'quaternius');
+    expect([blocked, why.join('\n')]).toEqual([1, expect.stringMatching(/ESC-0003/)]);
+  });
+
+  it("fetches Mesh2Motion's files only where they are missing (needs them in .cache, or the network)", async (context) => {
+    if (!Object.keys(MESH2MOTION.files).every((file) => existsSync(join(ROOT, MESH2MOTION_CACHE, file))))
+      context.skip();
+    const [code, lines] = await anim('fetch'); // each file there already, its sha256 matched: no download
+    expect([code, lines[0]]).toEqual([0, expect.stringMatching(/mesh2motion: 3 files at 653a969/)]);
   });
 
   it('exits 2 for an unknown subcommand or a flag it does not take, naming the closest', async () => {

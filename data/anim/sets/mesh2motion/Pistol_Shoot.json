@@ -1,4 +1,4 @@
-{"clip": "Pistol_Shoot", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Pistol_Shoot", "dur": 0.792, "loop": false, "tags": ["gun","attack","alt"], "desc": "one pistol shot with recoil", "fps": 24, "via": "source", "events": [{"t":0,"name":"hit","side":"R"}], "contacts": [{"part":"footL","from":0,"to":0.792},{"part":"footR","from":0,"to":0.792},{"part":"handL","from":0.067,"to":0.792},{"part":"handR","from":0.1,"to":0.792}], "keys": [
+{"clip": "Pistol_Shoot", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Pistol_Shoot", "dur": 0.792, "loop": false, "tags": ["gun","attack","alt"], "desc": "one pistol shot with recoil", "fps": 24, "via": "source", "events": [{"t":0,"name":"hit","side":"R"}], "contacts": [{"part":"footL","from":0,"to":0.792},{"part":"footR","from":0,"to":0.792}], "keys": [
   {"t":0,
    "hips":[-10,0,100], "body":[13,-6,0], "chest":[25,6,-5], "head":[-13,16,7],
    "shL":[-29,7], "shR":[33,-6], "armL":[100,1,-10,48,2], "armR":[75,-66,10,14,3], "handL":[-25,29,-84], "handR":[-5,16,-36], "gripL":0, "gripR":83,

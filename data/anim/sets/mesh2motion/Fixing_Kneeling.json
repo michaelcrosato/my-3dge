@@ -1,4 +1,4 @@
-{"clip": "Fixing_Kneeling", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Fixing_Kneeling", "dur": 6.5, "loop": false, "tags": ["work","interact","alt"], "desc": "kneels on one knee and works with both hands near the ground", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":6.5},{"part":"footR","from":0,"to":6.5},{"part":"handR","from":2.2,"to":2.867}], "keys": [
+{"clip": "Fixing_Kneeling", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Fixing_Kneeling", "dur": 6.5, "loop": false, "tags": ["work","interact","alt"], "desc": "kneels on one knee and works with both hands near the ground", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":6.5},{"part":"footR","from":0,"to":6.5}], "keys": [
   {"t":0,
    "hips":[-10,-1,100], "body":[13,-5,0], "chest":[0,11,0], "head":[0,2,0],
    "shL":[0,0], "shR":[0,0], "armL":[11,28,-95,22,3], "armR":[9,26,-96,32,-9], "handL":[-2,29,-6], "handR":[5,30,1], "gripL":87, "gripR":88,

@@ -1,4 +1,4 @@
-{"clip": "Spell_Simple_Idle", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Spell_Simple_Idle_Loop", "dur": 2.667, "loop": true, "tags": ["magic","idle","alt"], "desc": "holds a spell ready", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.667},{"part":"footR","from":0,"to":2.667},{"part":"handR","from":0,"to":2.667}], "keys": [
+{"clip": "Spell_Simple_Idle", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Spell_Simple_Idle_Loop", "dur": 2.667, "loop": true, "tags": ["magic","idle","alt"], "desc": "holds a spell ready", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.667},{"part":"footR","from":0,"to":2.667}], "keys": [
   {"t":0,
    "hips":[-10,-3,100], "body":[41,-5,-1], "chest":[16,7,-3], "head":[-7,4,4],
    "shL":[1,7], "shR":[5,-6], "armL":[50,85,15,7,9], "armR":[7,40,-91,28,-11], "handL":[-24,24,4], "handR":[-4,28,22], "gripL":0, "gripR":15,

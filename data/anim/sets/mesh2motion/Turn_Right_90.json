@@ -1,4 +1,4 @@
-{"clip": "Turn_Right_90", "src": "M2M_MOCOPI", "dur": 2, "loop": false, "tags": ["walk","turn"], "desc": "turns a quarter to the right on the spot", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":2},{"part":"footR","from":0,"to":2},{"part":"handL","from":0,"to":0.867},{"part":"handR","from":0,"to":1}], "keys": [
+{"clip": "Turn_Right_90", "src": "M2M_MOCOPI", "dur": 2, "loop": false, "tags": ["walk","turn"], "desc": "turns a quarter to the right on the spot", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":2},{"part":"footR","from":0,"to":2},{"part":"handL","from":0,"to":0.867}], "keys": [
   {"t":0,
    "hips":[-7,-7,103], "body":[3,-6,1], "chest":[1,-1,-7], "head":[1,16,0],
    "shL":[1,4], "shR":[-1,-4], "armL":[-4,20,-98,0,-201], "armR":[-4,11,-99,0,-262], "handL":[2,14,146], "handR":[6,18,-120], "gripL":0, "gripR":0,

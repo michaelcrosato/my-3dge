@@ -52,6 +52,7 @@ import { listGlb } from '../anim/glb-library';
 import { fetchMesh2Motion, MESH2MOTION, SET_SOURCES } from '../anim/fetch';
 import { importSet, type Catalog } from '../anim/import';
 import {
+  keepUpgrades,
   readSet,
   readSetDir,
   repackSets,
@@ -183,8 +184,10 @@ function runImport(files: string[], values: Values, root: string): CommandResult
     ...{ tol: number(values, 'tol', 30), fps: number(values, 'fps', 30), legacy: values.legacy === true },
     ...(blade ? { blade: new RegExp(blade) } : {}),
   });
-  const out = resolve(root, text(values, 'out') ?? join(SETS_DIR, setDirName(set.set)));
-  const result = writeOrCheck(out, splitSet(set), values.check === true, root);
+  const committed = join(SETS_DIR, setDirName(set.set));
+  const out = resolve(root, text(values, 'out') ?? committed);
+  // into the committed set, its clips re-imported from their source (WP 8.8) stay as committed: never undone
+  const result = writeOrCheck(out, splitSet(out === committed ? keepUpgrades(set) : set), values.check === true, root);
   const count = `${Object.keys(set.clips).length} clips, format ${set.format}`;
   return { ...result, summary: `${set.set}: ${count}; ${result.summary}`, lines: [...(result.lines ?? []), ...notes] };
 }
@@ -317,8 +320,12 @@ function run(sub: Sub, positionals: string[], values: Values, root: string): Com
       };
     }
     case 'upgrade': {
-      if (args.length !== 1) throw new UsageError(`upgrade takes one set: ${Object.keys(SET_SOURCES).join(', ')}`);
-      const { set, verdicts } = upgradeSet(readSet(args[0]), reimport(args[0], root));
+      const sets = Object.keys(SET_SOURCES);
+      if (args.length !== 1) throw new UsageError(`upgrade takes one set: ${sets.join(', ')}`);
+      if (!SET_SOURCES[args[0]])
+        throw new UsageError(`no set ${args[0]} to upgrade: did you mean ${closest(args[0], sets) ?? sets[0]}?`);
+      const fresh = reimport(args[0], root); // says first why a set's sources are out of reach
+      const { set, verdicts } = upgradeSet(readSet(args[0]), fresh);
       const line = upgradedOf(verdicts);
       const check = values.check === true;
       const result = writeOrCheck(join(SETS_DIR, setDirName(set.set)), splitSet(set), check, root);

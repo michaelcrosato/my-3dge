@@ -19,8 +19,9 @@
  * body's frame, so a turn changes no number): a one-shot to its end, holding it; a loop a quarter second past its seam.
  * Then `animCheckBody`'s checks (`nan`, `stretch`, `underFloor`, `reach`; on the first build, the run again
  * (`unstableHash`) and at half the step (`rateDrift`)), and `pop`, `jointLimit` and `twistJump` as the family
- * measures every body. Foot slide waits for format 2's `contacts` (WP 8.8): an in-place loop's feet slide over the
- * floor by design, and nothing else says when a foot should hold.
+ * measures every body. Foot slide is not measured here: format 2's `contacts` (WP 8.8) say when a foot holds, but no
+ * foot lock reads them yet (engine/anim/clip/retarget.ts aims each ankle where the source's is), and an in-place
+ * loop's feet slide over the floor by design.
  *
  * Invariants: sets in directory order, clips in set order, builds in `clipBuilds` order, so the same tree gives the
  * same violations; `play` picks the clips to play (all that `keep` keeps by default; T1 plays a sample).

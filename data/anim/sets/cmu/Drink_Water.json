@@ -1,4 +1,4 @@
-{"clip": "Drink_Water", "src": "CMU_79", "take": "79_38 0.00-7.00", "dur": 7, "loop": false, "tags": ["eat"], "desc": "Drinking a glass of water", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":7},{"part":"handL","from":0,"to":6.233},{"part":"handR","from":3.1,"to":4.4},{"part":"handR","from":4.5,"to":4.8},{"part":"handR","from":5.3,"to":6}], "keys": [
+{"clip": "Drink_Water", "src": "CMU_79", "take": "79_38 0.00-7.00", "dur": 7, "loop": false, "tags": ["eat"], "desc": "Drinking a glass of water", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":7},{"part":"handR","from":4.5,"to":4.8}], "keys": [
   {"t":0,
    "hips":[0,0,105], "body":[5,0,-4], "chest":[-8,0,1], "head":[2,14,6], "root":[0,0],
    "shL":[0,1], "shR":[0,0], "armL":[20,0,-98,37,27], "armR":[17,3,-99,45,-28], "handL":[-2,5,40], "handR":[0,-7,48], "gripL":0, "gripR":8,

@@ -2,8 +2,9 @@
  * @file The CMU survey (PLAN.md §5.3, WP 8.5): every downloaded take converted the way the importer would (whole
  * takes, 30 frames a second, fitted within 30 mm, in format 2 unless `legacy`: tools/anim/import.ts `fitFormat2`) and
  * measured into its ledger row (tools/anim/ledger.ts): its fit, the stretch where it moves, how far it travels, how
- * high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate). With `library`, every take also becomes a set, one directory a subject,
- * in `.cache/anim/cmu-lib/` (fitted looser, within 50 mm, for browsing). Ported from `my-3d2dge:tools/cmu.mjs:147-232`
+ * high and low the hips go, and its flags (upside down, feet off the floor, loose, short, an assumed rate, and `f2`
+ * for a fit in format 2, which rows surveyed before WP 8.8 lack). With `library`, every take also becomes a set, one
+ * directory a subject, in `.cache/anim/cmu-lib/` (fitted looser, within 50 mm, for browsing). Ported from `my-3d2dge:tools/cmu.mjs:147-232`
  * with its measurements kept (`legacy` reads the takes as the source does; tools/anim/cmu-capture.ts).
  *
  * What it keeps: each row's `note` (people's), and a verified rate: a take missing from the site's motion list
@@ -143,6 +144,7 @@ export function surveyCmu(options: SurveyOptions = {}): { done: number; secs: nu
       const all = [
         ...flags,
         ...flagsOf({ ...m, n: cap.n, dur: cap.dur, mean: options.ledger !== false ? mean : undefined }),
+        ...(options.ledger !== false && !legacy ? ['f2'] : []), // the fit is format 2's (WP 8.8)
       ];
       rows.set(id, {
         ...row,

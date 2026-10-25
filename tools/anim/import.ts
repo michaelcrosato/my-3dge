@@ -17,7 +17,9 @@
  *   frame closer (engine/anim/clip/hands.ts, feet.ts, spine.ts), and each clip's contacts and events, detected
  *   (tools/anim/contacts.ts);
  * - **`legacy`**: nearest-frame sampling and format 1, exactly as the source's importer, so `x anim import --cmu
- *   --legacy` writes the CMU set byte for byte.
+ *   --legacy` writes the CMU set byte for byte; into the committed set, the clips WP 8.8 re-imported from their source
+ *   stay as committed (tools/anim/repack.ts `keepUpgrades`, from tools/cmd/anim.ts), so `--check` compares the rest
+ *   byte for byte and a write never undoes the upgrade.
  *
  * The catalog: `{ clip: [tags, what the body does, orig?] }`; the tags `loop` and `once` set whether a clip loops (for
  * libraries whose names do not say: `_Loop`, `Idle`); `"$sources": { ID: { label, origin, license, url } }` records

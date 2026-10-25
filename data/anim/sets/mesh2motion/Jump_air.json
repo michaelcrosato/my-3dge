@@ -1,4 +1,4 @@
-{"clip": "Jump_air", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Jump_Loop", "dur": 3.125, "loop": true, "tags": ["jump","air","alt"], "desc": "airborne pose held while rising or falling", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.125},{"part":"handL","from":0,"to":3.125},{"part":"handR","from":0,"to":3.125}], "keys": [
+{"clip": "Jump_air", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Jump_Loop", "dur": 3.125, "loop": true, "tags": ["jump","air","alt"], "desc": "airborne pose held while rising or falling", "fps": 24, "via": "source", "keys": [
   {"t":0,
    "hips":[-10,3,99], "body":[11,-15,-5], "chest":[6,32,1], "head":[-3,5,2],
    "shL":[-14,5], "shR":[6,1], "armL":[11,95,-29,28,-6], "armR":[1,97,-22,28,11], "handL":[9,16,-25], "handR":[6,21,-7], "gripL":25, "gripR":16,

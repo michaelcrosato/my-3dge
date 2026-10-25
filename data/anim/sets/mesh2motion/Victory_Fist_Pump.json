@@ -1,4 +1,4 @@
-{"clip": "Victory Fist Pump", "src": "M2M_ANIMATED", "dur": 2.25, "loop": false, "tags": ["emote","cheer","gesture"], "desc": "pumps a fist down at the side in triumph", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.25},{"part":"footR","from":0,"to":2.25},{"part":"handR","from":0,"to":0.6}], "keys": [
+{"clip": "Victory Fist Pump", "src": "M2M_ANIMATED", "dur": 2.25, "loop": false, "tags": ["emote","cheer","gesture"], "desc": "pumps a fist down at the side in triumph", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.25},{"part":"footR","from":0,"to":2.25}], "keys": [
   {"t":0,
    "hips":[7,0,97], "body":[0,0,0], "chest":[0,-13,0], "head":[0,18,0], "spine":[0,-1,0],
    "shL":[0,0], "shR":[0,0], "armL":[-16,22,-96,47,2], "armR":[0,39,-92,56,-7], "handL":[10,-2,-3], "handR":[-17,13,9], "gripL":65, "gripR":26,

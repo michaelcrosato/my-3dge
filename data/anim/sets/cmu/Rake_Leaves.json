@@ -1,4 +1,4 @@
-{"clip": "Rake_Leaves", "src": "CMU_80", "take": "80_34 2.00-8.00", "dur": 6, "loop": false, "tags": ["work","farm"], "desc": "Raking leaves with long pulls toward the feet (no rake is drawn)", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":6},{"part":"footR","from":0,"to":6}], "keys": [
+{"clip": "Rake_Leaves", "src": "CMU_80", "take": "80_34 2.00-8.00", "dur": 6, "loop": false, "tags": ["work","farm"], "desc": "Raking leaves with long pulls toward the feet (no rake is drawn)", "fps": 60, "via": "source", "events": [{"t":0.467,"name":"step","side":"R"}], "contacts": [{"part":"footL","from":0,"to":6},{"part":"footR","from":0.467,"to":6}], "keys": [
   {"t":0,
    "hips":[0,0,104], "body":[5,10,-8], "chest":[-7,-10,7], "head":[18,7,7], "root":[0,0], "spine":[0,-15,10],
    "shL":[0,0], "shR":[0,0], "armL":[18,-1,-98,24,42], "armR":[21,12,-97,29,-50], "handL":[-4,4,51], "handR":[2,-11,64], "gripL":0, "gripR":15,

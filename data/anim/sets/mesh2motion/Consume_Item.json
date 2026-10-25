@@ -1,4 +1,4 @@
-{"clip": "Consume Item", "src": "M2M_ANIMATED", "dur": 4.167, "loop": false, "tags": ["item","eat"], "desc": "brings an item up to the mouth with both hands and eats, then lowers it", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":4.167},{"part":"footR","from":0,"to":4.167},{"part":"handL","from":1.4,"to":2.733},{"part":"handR","from":1.4,"to":2.8},{"part":"handL","from":3.533,"to":4.167}], "keys": [
+{"clip": "Consume Item", "src": "M2M_ANIMATED", "dur": 4.167, "loop": false, "tags": ["item","eat"], "desc": "brings an item up to the mouth with both hands and eats, then lowers it", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":4.167},{"part":"footR","from":0,"to":4.167}], "keys": [
   {"t":0,
    "hips":[-5,-2,91], "body":[20,0,0], "chest":[0,-13,0], "head":[0,18,0], "spine":[0,0,0],
    "shL":[1,0], "shR":[0,0], "armL":[-15,20,-97,31,-12], "armR":[-7,20,-98,23,10], "handL":[-4,9,-27], "handR":[-2,37,-32], "gripL":86, "gripR":33,

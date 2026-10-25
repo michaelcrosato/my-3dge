@@ -1,4 +1,4 @@
-{"clip": "Levitate Idle", "src": "M2M_ANIMATED", "dur": 2, "loop": true, "tags": ["magic","air","idle"], "desc": "floats in the air, knees drawn up, bobbing gently", "fps": 24, "via": "source", "contacts": [{"part":"footR","from":0,"to":2},{"part":"handL","from":0,"to":2}], "keys": [
+{"clip": "Levitate Idle", "src": "M2M_ANIMATED", "dur": 2, "loop": true, "tags": ["magic","air","idle"], "desc": "floats in the air, knees drawn up, bobbing gently", "fps": 24, "via": "source", "keys": [
   {"t":0,
    "hips":[-5,0,134], "body":[10,0,0], "chest":[-2,-2,-1], "head":[0,17,0],
    "shL":[0,0], "shR":[0,0], "armL":[4,14,-99,48,-20], "armR":[4,8,-100,31,35], "handL":[-19,-1,-44], "handR":[-6,17,-44], "gripL":90, "gripR":89,

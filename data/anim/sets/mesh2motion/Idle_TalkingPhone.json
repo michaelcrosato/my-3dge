@@ -1,4 +1,4 @@
-{"clip": "Idle_TalkingPhone", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_TalkingPhone_Loop", "dur": 2.917, "loop": true, "tags": ["idle","talk","prop","alt"], "desc": "on the phone: right hand at the ear, left arm across the body", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.917},{"part":"footR","from":0,"to":2.917},{"part":"handR","from":0,"to":2.917}], "keys": [
+{"clip": "Idle_TalkingPhone", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Idle_TalkingPhone_Loop", "dur": 2.917, "loop": true, "tags": ["idle","talk","prop","alt"], "desc": "on the phone: right hand at the ear, left arm across the body", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.917},{"part":"footR","from":0,"to":2.917}], "keys": [
   {"t":0,
    "hips":[-10,0,100], "body":[13,-5,0], "chest":[0,11,0], "head":[-11,8,3],
    "shL":[0,0], "shR":[0,0], "armL":[83,-21,-51,86,-3], "armR":[59,-18,79,134,-22], "handL":[8,27,-43], "handR":[-20,13,-38], "gripL":15, "gripR":0,

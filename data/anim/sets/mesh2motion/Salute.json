@@ -1,4 +1,4 @@
-{"clip": "Salute", "src": "M2M_MOCOPI", "dur": 4.383, "loop": false, "tags": ["emote","gesture"], "desc": "stands at attention, salutes and lowers the hand", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":4.367},{"part":"footR","from":0,"to":4.367},{"part":"handR","from":1.033,"to":1.7},{"part":"handR","from":2.367,"to":2.833}], "keys": [
+{"clip": "Salute", "src": "M2M_MOCOPI", "dur": 4.383, "loop": false, "tags": ["emote","gesture"], "desc": "stands at attention, salutes and lowers the hand", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":4.367},{"part":"footR","from":0,"to":4.367}], "keys": [
   {"t":0,
    "hips":[0,-12,102], "body":[-1,-6,7], "chest":[-10,0,-5], "head":[-3,6,1],
    "shL":[1,4], "shR":[-1,-4], "armL":[-2,19,-98,0,247], "armR":[-17,7,-98,0,-31], "handL":[12,14,-118], "handR":[1,17,1], "gripL":78, "gripR":0,

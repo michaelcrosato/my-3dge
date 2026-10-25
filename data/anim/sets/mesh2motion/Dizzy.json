@@ -1,4 +1,4 @@
-{"clip": "Dizzy", "src": "M2M_ANIMATED", "dur": 2.417, "loop": true, "tags": ["hurt","idle"], "desc": "sways in place, unsteady, the head lolling", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.417},{"part":"footR","from":0,"to":2.417},{"part":"handR","from":0,"to":0.333},{"part":"handR","from":0.667,"to":2.417},{"part":"handL","from":0.867,"to":1.167}], "keys": [
+{"clip": "Dizzy", "src": "M2M_ANIMATED", "dur": 2.417, "loop": true, "tags": ["hurt","idle"], "desc": "sways in place, unsteady, the head lolling", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.417},{"part":"footR","from":0,"to":2.417},{"part":"handR","from":0,"to":0.333},{"part":"handL","from":0.867,"to":1.167}], "keys": [
   {"t":0,
    "hips":[1,5,89], "body":[-13,18,-11], "chest":[6,5,18], "head":[2,-6,12], "spine":[3,1,11],
    "shL":[0,1], "shR":[1,0], "armL":[54,-2,-84,0,15], "armR":[39,21,-90,0,-146], "handL":[12,29,16], "handR":[-6,14,117], "gripL":21, "gripR":24,

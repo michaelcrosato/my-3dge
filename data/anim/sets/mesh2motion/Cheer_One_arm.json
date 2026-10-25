@@ -1,4 +1,4 @@
-{"clip": "Cheer_One_arm", "src": "M2M_MOCOPI", "dur": 2.167, "loop": false, "tags": ["emote","cheer"], "desc": "cheers with one fist raised high", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.167},{"part":"footR","from":0,"to":2.167},{"part":"handR","from":1.567,"to":1.767}], "keys": [
+{"clip": "Cheer_One_arm", "src": "M2M_MOCOPI", "dur": 2.167, "loop": false, "tags": ["emote","cheer"], "desc": "cheers with one fist raised high", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.167},{"part":"footR","from":0,"to":2.167}], "keys": [
   {"t":0,
    "hips":[-7,-4,100], "body":[5,-13,9], "chest":[-12,-10,-8], "head":[-4,16,-7],
    "shL":[0,0], "shR":[0,0], "armL":[-21,25,-95,54,-17], "armR":[82,3,57,24,9], "handL":[-8,-4,-32], "handR":[5,-2,-39], "gripL":74, "gripR":78,

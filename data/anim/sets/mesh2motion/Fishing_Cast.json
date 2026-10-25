@@ -1,4 +1,4 @@
-{"clip": "Fishing_Cast", "src": "M2M_MOCOPI", "dur": 2.95, "loop": false, "tags": ["fish","work","prop"], "desc": "swings a fishing rod back over the shoulder and casts it forward", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.95},{"part":"footR","from":0,"to":2.95},{"part":"handR","from":2.1,"to":2.95}], "keys": [
+{"clip": "Fishing_Cast", "src": "M2M_MOCOPI", "dur": 2.95, "loop": false, "tags": ["fish","work","prop"], "desc": "swings a fishing rod back over the shoulder and casts it forward", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":2.95},{"part":"footR","from":0,"to":2.95}], "keys": [
   {"t":0,
    "hips":[-12,1,103], "body":[21,-4,7], "chest":[0,-19,2], "head":[-22,28,3],
    "shL":[21,-3], "shR":[0,-4], "armL":[27,-39,-88,0,3], "armR":[52,-19,-83,39,21], "handL":[-8,41,-1], "handR":[3,27,-54], "gripL":83, "gripR":78,

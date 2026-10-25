@@ -2,14 +2,15 @@
  * @file Tests for contact and event detection (tools/anim/contacts.ts, WP 8.8) on captures made from the rest body's
  * standing pose, frame by frame: feet on the floor and lifted, a step and a landing; the treadmill under an in-place
  * walk and an in-place ladder; a hand on a rung while the body climbs past it, an idle's still hands (no contact), a
- * hand flat on the floor, a hand held overhead; and a strike's `hit`, timed by the runtime's own rule.
+ * hand flat on the floor, a hand the body hangs from overhead, but not one raised overhead with the feet on the floor
+ * nor one drifting slowly past `HOLD_REACH`; and a strike's `hit`, timed by the runtime's own rule.
  */
 import { describe, expect, it } from 'vitest';
 import { busy, clipOf, REST, standing } from '../../tests/unit/anim/clip-fixtures';
 import type { Capture } from '../../engine/anim/clip/encode';
 import { strikeTime } from '../../engine/anim/clip/library';
 import { POINT_INDEX, samplePose } from '../../engine/anim/clip/readable';
-import { AIRBORNE, detectContacts, treadmill } from './contacts';
+import { AIRBORNE, detectContacts, HOLD_REACH, STILL, treadmill } from './contacts';
 
 const FPS = 30;
 const STAND = samplePose(REST, clipOf([standing(0)]), 0);
@@ -103,13 +104,32 @@ describe('the hands', () => {
     expect(detect(capture(31, () => ({}))).contacts.filter((c) => c.part.startsWith('hand'))).toEqual([]);
   });
 
-  it('hold the floor they lie still on, and a hold above the head (a hang)', () => {
+  it('hold the floor they lie still on, and a hold above the head the body hangs from (a hang)', () => {
     const down = STAND[POINT_INDEX.knuckR * 3 + 2] - 30;
     const flat = capture(31, () => all(HAND('R'), [0, 0, -down]));
     expect(detect(flat).contacts.filter((c) => c.part === 'handR')).toEqual([{ part: 'handR', from: 0, to: 1 }]);
     const up = STAND[POINT_INDEX.headTop * 3 + 2] - STAND[POINT_INDEX.knuckL * 3 + 2] + 200;
-    const hang = capture(31, () => all(HAND('L'), [0, 0, up]));
+    const body = Object.keys(POINT_INDEX);
+    // the whole body 300 mm up, its feet off the floor, the left hand above the head: it hangs from that hand
+    const hang = capture(31, () => ({ ...all(body, [0, 0, 300]), ...all(HAND('L'), [0, 0, up + 300]) }));
     expect(detect(hang).contacts.filter((c) => c.part === 'handL')).toEqual([{ part: 'handL', from: 0, to: 1 }]);
+    // the same hand raised with the feet on the floor holds nothing: an aim, a wave
+    const raised = capture(31, () => all(HAND('L'), [0, 0, up]));
+    expect(detect(raised).contacts.filter((c) => c.part === 'handL')).toEqual([]);
+  });
+
+  it('hold nothing off the floor where the hand drifts on slowly, past HOLD_REACH; on the floor it may slide', () => {
+    const drift = STILL / 2; // mm/s: slow enough for a hold, every frame
+    expect(drift * 1).toBeGreaterThan(HOLD_REACH); // over the second
+    const up = STAND[POINT_INDEX.headTop * 3 + 2] - STAND[POINT_INDEX.knuckL * 3 + 2] + 200;
+    const body = Object.keys(POINT_INDEX);
+    // the body hanging from its left hand, as in the hang above, the hand drifting along at `speed`
+    const hang = (speed: number) => capture(31, (f) => ({ ...all(body, [0, 0, 300]), ...all(HAND('L'), [(speed * f) / FPS, 0, up + 300]) })); // prettier-ignore
+    expect(detect(hang(drift)).contacts.filter((c) => c.part === 'handL')).toEqual([]);
+    expect(detect(hang(HOLD_REACH / 2)).contacts.filter((c) => c.part === 'handL')).toEqual([{ part: 'handL', from: 0, to: 1 }]); // prettier-ignore
+    const down = STAND[POINT_INDEX.knuckR * 3 + 2] - 30;
+    const pushing = capture(31, (f) => all(HAND('R'), [(drift * f) / FPS, 0, -down])); // a hand pushing on the floor
+    expect(detect(pushing).contacts.filter((c) => c.part === 'handR')).toEqual([{ part: 'handR', from: 0, to: 1 }]);
   });
 });
 

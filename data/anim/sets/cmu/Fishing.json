@@ -1,4 +1,4 @@
-{"clip": "Fishing", "src": "CMU_79", "take": "79_34 1.30-9.30", "dur": 8, "loop": false, "tags": ["fish"], "desc": "Fishing: a cast with a rod, waiting, then reeling in (no rod is drawn)", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":8},{"part":"footR","from":0,"to":8},{"part":"handL","from":2.933,"to":4.4},{"part":"handR","from":3.033,"to":4.367},{"part":"handL","from":5.133,"to":7.633}], "keys": [
+{"clip": "Fishing", "src": "CMU_79", "take": "79_34 1.30-9.30", "dur": 8, "loop": false, "tags": ["fish"], "desc": "Fishing: a cast with a rod, waiting, then reeling in (no rod is drawn)", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":8},{"part":"footR","from":0,"to":8}], "keys": [
   {"t":0,
    "hips":[0,0,105], "body":[5,1,-1], "chest":[-9,-1,-2], "head":[5,12,6], "root":[0,0],
    "shL":[0,1], "shR":[0,0], "armL":[21,0,-98,37,23], "armR":[17,3,-98,46,-32], "handL":[-1,8,44], "handR":[-1,-5,51], "gripL":3, "gripR":6,

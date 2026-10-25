@@ -1,4 +1,4 @@
-{"clip": "Strafe_left", "src": "M2M_ANIMATED", "dur": 1, "loop": true, "tags": ["walk","strafe"], "desc": "sidesteps to the left while facing forward, in place", "fps": 24, "via": "source", "events": [{"t":0.3,"name":"step","side":"R"},{"t":0.867,"name":"step","side":"L"}], "contacts": [{"part":"footL","from":0,"to":0.6},{"part":"footR","from":0,"to":0.1},{"part":"handL","from":0,"to":1},{"part":"footR","from":0.3,"to":1},{"part":"footL","from":0.867,"to":1}], "keys": [
+{"clip": "Strafe_left", "src": "M2M_ANIMATED", "dur": 1, "loop": true, "tags": ["walk","strafe"], "desc": "sidesteps to the left while facing forward, in place", "fps": 24, "via": "source", "events": [{"t":0.3,"name":"step","side":"R"},{"t":0.867,"name":"step","side":"L"}], "contacts": [{"part":"footL","from":0,"to":0.6},{"part":"footR","from":0,"to":0.1},{"part":"footR","from":0.3,"to":1},{"part":"footL","from":0.867,"to":1}], "keys": [
   {"t":0,
    "hips":[-11,0,94], "body":[13,0,0], "chest":[16,-5,-2], "head":[1,13,1],
    "shL":[0,-8], "shR":[-1,-7], "armL":[-41,12,-90,37,7], "armR":[5,25,-97,47,12], "handL":[5,27,-33], "handR":[17,24,-5], "gripL":40, "gripR":40,

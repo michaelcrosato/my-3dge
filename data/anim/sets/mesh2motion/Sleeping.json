@@ -1,4 +1,4 @@
-{"clip": "Sleeping", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["rest","lie","idle"], "desc": "lies on the back asleep, the chest rising and falling", "fps": 24, "via": "source", "contacts": [{"part":"handL","from":0,"to":1.667}], "keys": [
+{"clip": "Sleeping", "src": "M2M_ANIMATED", "dur": 1.667, "loop": true, "tags": ["rest","lie","idle"], "desc": "lies on the back asleep, the chest rising and falling", "fps": 24, "via": "source", "keys": [
   {"t":0,
    "hips":[0,0,7], "body":[174,-90,174], "chest":[0,0,0], "head":[15,-12,18], "spine":[0,4,0],
    "shL":[0,0], "shR":[0,0], "armL":[82,-33,-46,136,-14], "armR":[-2,99,-11,31,-54], "handL":[34,-3,-36], "handR":[29,4,53], "gripL":9, "gripR":33,

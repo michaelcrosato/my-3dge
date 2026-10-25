@@ -1,4 +1,4 @@
-{"clip": "Carry_Heavy_Box", "src": "CMU_79", "take": "79_25 1.60-9.90", "dur": 8.3, "loop": false, "tags": ["carry"], "desc": "Moving a heavy box: squat, lift with effort, carry a few steps, set it down (no box is drawn)", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":8.3},{"part":"footR","from":0,"to":8.3},{"part":"handR","from":1.267,"to":2.7},{"part":"handL","from":1.3,"to":2.5},{"part":"handL","from":2.933,"to":3.633},{"part":"handR","from":3.267,"to":3.7},{"part":"handL","from":5.867,"to":6.633}], "keys": [
+{"clip": "Carry_Heavy_Box", "src": "CMU_79", "take": "79_25 1.60-9.90", "dur": 8.3, "loop": false, "tags": ["carry"], "desc": "Moving a heavy box: squat, lift with effort, carry a few steps, set it down (no box is drawn)", "fps": 60, "via": "source", "contacts": [{"part":"footL","from":0,"to":8.3},{"part":"footR","from":0,"to":8.3}], "keys": [
   {"t":0,
    "hips":[0,0,104], "body":[5,-2,-2], "chest":[-6,2,0], "head":[4,17,4], "root":[0,0],
    "shL":[0,0], "shR":[0,0], "armL":[24,1,-97,38,30], "armR":[20,6,-98,47,-45], "handL":[-2,7,34], "handR":[0,-6,51], "gripL":0, "gripR":8,

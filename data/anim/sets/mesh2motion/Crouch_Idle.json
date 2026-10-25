@@ -1,4 +1,4 @@
-{"clip": "Crouch_Idle", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Crouch_Idle_Loop", "dur": 3.667, "loop": true, "tags": ["crouch","idle","stealth","alt"], "desc": "crouched low and still, looking about", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.667},{"part":"footR","from":0,"to":3.667},{"part":"handL","from":0,"to":3.667},{"part":"handR","from":0,"to":3.667}], "keys": [
+{"clip": "Crouch_Idle", "src": "M2M_QUATERNIUS", "orig": "QUATERNIUS/Crouch_Idle_Loop", "dur": 3.667, "loop": true, "tags": ["crouch","idle","stealth","alt"], "desc": "crouched low and still, looking about", "fps": 24, "via": "source", "contacts": [{"part":"footL","from":0,"to":3.667},{"part":"footR","from":0,"to":3.667}], "keys": [
   {"t":0,
    "hips":[-32,-4,53], "body":[8,18,-14], "chest":[-20,47,16], "head":[4,3,1], "spine":[-2,11,8],
    "shL":[7,1], "shR":[6,1], "armL":[72,32,-61,47,21], "armR":[80,46,-38,75,-27], "handL":[9,16,-23], "handR":[7,19,0], "gripL":15, "gripR":10,

@@ -6,13 +6,18 @@
  *
  * The points are watched in the ground's frame: the capture's own, plus the root's travel, less the treadmill an
  * in-place loop runs on (the velocity most of its hands' and feet's frames share: the rungs of an in-place ladder
- * sinking at 0.4 m/s, the floor of an in-place walk sliding back). Then:
+ * sinking at 0.6 m/s, the floor of an in-place walk sliding back). Then:
+ * - **a hold**: a point moving slower than `STILL` for `HOLD` or longer; off the floor, never `HOLD_REACH` from where
+ *   it began too (a hand drifting slowly with the body, an idle's or a flight's, holds nothing; one pushing on the
+ *   floor may slide);
  * - **a foot** holds when its sole (the lowest of its heel, ball and toe, each over its rest height) is within
- *   `FOOT_CLEAR` of the floor, above or below, or when its ball holds still (`STILL`, for `HOLD`) while the pelvis
- *   moves `CARRY` past it: a rung, a ledge;
- * - **a hand** holds when its knuckle holds still while the pelvis moves `CARRY` past it (a rung, a ledge, a wall), or
- *   holds still within `HAND_FLOOR` of the floor (a crawl, a push-up, a three-point landing) or above the head (a
- *   hang). Any other hand still while the body is still too (an idle's) reads as no contact;
+ *   `FOOT_CLEAR` of the floor, above or below, or when its ball holds while the pelvis moves `CARRY` past it: a rung,
+ *   a ledge;
+ * - **a hand** holds when its knuckle holds while the pelvis moves `CARRY` past it (a rung, a ledge, a wall), or holds
+ *   within `HAND_FLOOR` of the floor (a crawl, a push-up, a three-point landing), or above the head while the body
+ *   hangs from it (the pelvis `HANG` or more below it, neither foot on the floor: a ledge, a ladder; not an aim, a
+ *   flight or a sleeper's raised hand). Any other hand still while the body is still too (an idle's) reads as no
+ *   contact;
  * - **events**: `step` where a foot's contact begins after the clip's first frame; `land` where one begins after
  *   `AIRBORNE` with nothing held (a jump's flight, not a run's); `hit`, in a clip tagged `attack` or `kick`, where the
  *   strike lands
@@ -54,6 +59,10 @@ export const STILL = 200;
 export const HOLD = 0.15;
 /** How far (mm) the pelvis must move past a held hand or raised foot over its hold. */
 export const CARRY = 50;
+/** How far (mm) a held point may stray from where its hold began. */
+export const HOLD_REACH = 50;
+/** How far (mm) under a hand held above the head the pelvis hangs when the body hangs from it. */
+export const HANG = 500;
 /** How close (mm/s) a frame's velocity must come to the treadmill's to count toward it. */
 const MATCH = 120;
 /** A treadmill slower than this (mm/s) is no treadmill. */
@@ -128,15 +137,23 @@ function runs(on: boolean[]): [number, number][] {
   return out;
 }
 
-/** Where `point` holds still in the ground's frame (under `STILL`) for at least `HOLD`: `[first, last]` frames. */
-function holds(cap: Capture, at: (f: number, name: string) => V, point: string): [number, number][] {
+/**
+ * Where `point` holds in the ground's frame (under `STILL` for at least `HOLD`; `anchored`, never `HOLD_REACH` from
+ * where it began): `[first, last]` frames.
+ */
+function holds(cap: Capture, at: (f: number, name: string) => V, point: string, anchored = true): [number, number][] {
   const n = cap.n;
   const speed = Array.from({ length: n }, (_, f) => {
     const [f0, f1] = [Math.max(0, f - 1), Math.min(n - 1, f + 1)];
     const [a, b] = [at(f0, point), at(f1, point)];
     return (Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) * cap.fps) / (f1 - f0);
   });
-  return runs(speed.map((v) => v < STILL)).filter(([a, b]) => (b - a) / cap.fps >= HOLD);
+  const strays = ([a, b]: [number, number]) => {
+    const p = at(a, point);
+    for (let f = a + 1; f <= b; f++) if (Math.hypot(...at(f, point).map((v, j) => v - p[j])) > HOLD_REACH) return true;
+    return false;
+  };
+  return runs(speed.map((v) => v < STILL)).filter((run) => (run[1] - run[0]) / cap.fps >= HOLD && !(anchored && strays(run))); // prettier-ignore
 }
 
 /** The frames of `point`'s holds that the pelvis moves `CARRY` past (a rung climbed, a ledge pulled up to). */
@@ -152,10 +169,10 @@ function carried(cap: Capture, at: (f: number, name: string) => V, point: string
   return out;
 }
 
-/** The frames of all `point`'s holds. */
-function still(cap: Capture, at: (f: number, name: string) => V, point: string): boolean[] {
+/** The frames of all `point`'s holds (`anchored` as `holds` reads it). */
+function still(cap: Capture, at: (f: number, name: string) => V, point: string, anchored = true): boolean[] {
   const out = new Array<boolean>(cap.n).fill(false);
-  for (const [a, b] of holds(cap, at, point)) out.fill(true, a, b + 1);
+  for (const [a, b] of holds(cap, at, point, anchored)) out.fill(true, a, b + 1);
   return out;
 }
 
@@ -182,10 +199,14 @@ export function detectContacts(
     held[`foot${s}`] = frames.map((f) => {
       return onFloor(cap, R, f, s) || raised[f];
     });
-    const [gripped, resting] = [carried(cap, at, `knuck${s}`), still(cap, at, `knuck${s}`)];
+    const [gripped, resting, pressing] = [carried(cap, at, `knuck${s}`), still(cap, at, `knuck${s}`), still(cap, at, `knuck${s}`, false)]; // prettier-ignore
     const low = (f: number) => Math.min(travelled(cap, f, `knuck${s}`)[2], travelled(cap, f, `fist${s}`)[2]);
-    const overhead = (f: number) => travelled(cap, f, `knuck${s}`)[2] > travelled(cap, f, 'headTop')[2];
-    held[`hand${s}`] = frames.map((f) => gripped[f] || (resting[f] && (low(f) < HAND_FLOOR || overhead(f))));
+    const hung = (f: number) => {
+      const knuckle = travelled(cap, f, `knuck${s}`)[2];
+      const off = !onFloor(cap, R, f, 'L') && !onFloor(cap, R, f, 'R');
+      return off && knuckle > travelled(cap, f, 'headTop')[2] && knuckle - travelled(cap, f, 'pelvis')[2] >= HANG;
+    };
+    held[`hand${s}`] = frames.map((f) => gripped[f] || (pressing[f] && low(f) < HAND_FLOOR) || (resting[f] && hung(f)));
   }
   const contacts: ClipContact[] = [];
   const events: ClipEvent[] = [];

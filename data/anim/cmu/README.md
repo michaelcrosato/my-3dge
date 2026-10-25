@@ -29,7 +29,7 @@ trims trailing tabs): read missing fields as empty.
 | `fit` | the readable format's average and worst body-point error against the capture, in mm |
 | `travel` | metres the hips cover |
 | `hips` | lowest and highest hip height, in percent of standing: under 60 is crouching or lying, over 115 in the air or up on something |
-| `flags` | `inverted` (upside down at some point), `floats` (feet off the floor most of the time: stairs, a ladder, a bench), `loose` (fit over 30 mm), `short` (under a second); for a take the site's list leaves out, how its frame rate is known: `fps:c3d`, `twin:<id>` (below), or `fps?` (not known: 120 assumed) |
+| `flags` | `inverted` (upside down at some point), `floats` (feet off the floor most of the time: stairs, a ladder, a bench), `loose` (fit over 30 mm), `short` (under a second), `f2` (its `fit` is format 2's, surveyed since WP 8.8: a few mm closer than format 1's for the same take, so compare like with like); for a take the site's list leaves out, how its frame rate is known: `fps:c3d`, `twin:<id>` (below), or `fps?` (not known: 120 assumed) |
 | `used` | the CMU set's clips cut from it (`data/anim/catalogs/cmu.json`) |
 | `note` | the only column edited by hand: `pick: Name (why)` (next to import) or `skip: why` |
 | `desc` | the take's description on the site's motion list |
