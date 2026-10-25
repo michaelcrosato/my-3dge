@@ -1,6 +1,6 @@
 {
   "$comment": "The dependency pins and why each is here (PLAN.md §6.10). Every field and rule: tools/cmd/deps.ts's file comment. Dates are npm's and nodejs.org's, UTC. Change pins through node x deps --update, or an upgrade WP.",
-  "measured": "2026-10-22",
+  "measured": "2026-10-25",
   "dependencies": {
     "three": {
       "qualifying": {
@@ -95,6 +95,23 @@
     }
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": {
+      "qualifying": {
+        "version": "1.20.2",
+        "date": "2025-10-24"
+      },
+      "pin": {
+        "version": "1.32.2",
+        "date": "2026-10-23"
+      },
+      "newest": {
+        "version": "1.32.2",
+        "date": "2026-10-23"
+      },
+      "rule": "compatible",
+      "next": null,
+      "reason": "The MCP bridge (WP 7.6, PLAN.md §8.11): `x mcp` serves the inspector's members as MCP tools over `x inspect`, on the protocol's official SDK (the owner permitted it, ADR-0025 §6)."
+    },
     "@playwright/test": {
       "qualifying": {
         "version": "1.56.1",
@@ -111,6 +128,48 @@
       "rule": "compatible",
       "next": null,
       "reason": "Browser tests (T2): Playwright Test drives the container's Chromium (153 since WP U-8) on WebGPU through executablePath (Verifiable)."
+    },
+    "@stryker-mutator/core": {
+      "qualifying": {
+        "version": "9.2.0",
+        "date": "2025-10-04"
+      },
+      "pin": {
+        "version": "9.6.1",
+        "date": "2026-04-10"
+      },
+      "newest": {
+        "version": "9.6.1",
+        "date": "2026-04-10"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "10.0.0",
+        "date": "2026-08-14",
+        "qualifies": "2027-08-14"
+      },
+      "reason": "Mutation testing (WP 12.2): StrykerJS injects mutants into sim and anim, which the suites must catch (the owner permitted it, ADR-0025 §6)."
+    },
+    "@stryker-mutator/vitest-runner": {
+      "qualifying": {
+        "version": "9.2.0",
+        "date": "2025-10-04"
+      },
+      "pin": {
+        "version": "9.6.1",
+        "date": "2026-04-10"
+      },
+      "newest": {
+        "version": "9.6.1",
+        "date": "2026-04-10"
+      },
+      "rule": "compatible",
+      "next": {
+        "version": "10.0.0",
+        "date": "2026-08-14",
+        "qualifies": "2027-08-14"
+      },
+      "reason": "StrykerJS's runner for Vitest (WP 12.2): it runs T1's tests against each mutant (the owner permitted it, ADR-0025 §6)."
     },
     "@types/node": {
       "qualifying": {
@@ -180,8 +239,8 @@
     },
     "eslint-plugin-jsdoc": {
       "qualifying": {
-        "version": "61.1.5",
-        "date": "2025-10-20"
+        "version": "61.1.8",
+        "date": "2025-10-24"
       },
       "pin": {
         "version": "61.7.1",
@@ -294,8 +353,8 @@
     },
     "vite": {
       "qualifying": {
-        "version": "7.1.11",
-        "date": "2025-10-20"
+        "version": "7.1.12",
+        "date": "2025-10-23"
       },
       "pin": {
         "version": "7.3.7",
@@ -315,8 +374,8 @@
     },
     "vitest": {
       "qualifying": {
-        "version": "4.0.0",
-        "date": "2025-10-22"
+        "version": "4.0.3",
+        "date": "2025-10-24"
       },
       "pin": {
         "version": "4.1.12",
