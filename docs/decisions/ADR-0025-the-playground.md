@@ -933,7 +933,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   north, east, south, west, as a sconce in a wall); `roomReverb(room, height)` picks `small`, `room` or `hall` by volume
   (30 and 200 m³) for WP 13.22 to play; the playground's HUD names the room the player is in (`Room: kitchen`,
   `Indoors`, `Outdoors`).
-- **The lot** (labs/playground/levels/lot.ts, scenes/lot.ts): the fixture house and shed in the playground's room
+- **The lot** (levels/lot.ts, scenes/lot.ts, since gone): the fixture house and shed in the playground's room
   glyphs on a 32 × 32 m terrain, the house at (10, 0, 12), the shed turned a quarter at (24, 0, 6); the fixture site
   (fixtures/levels/storeys/site.ts) stands the same for the engine's tests. The house's ladder moved from its outer wall
   under a one-tile hatch, which the hull could not climb through, to the study's west wall under a 1.5 m hatch (the
@@ -953,7 +953,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   engine/world/level/{heights,compile,types,validate}.ts, engine/physics/{trimesh,world,bodies}.ts,
   engine/sim/{rides,siteApi}.ts, engine/gfx/{stageSite,storeyCut,stageGround,stage,terrain}.ts, engine/app/view.ts,
   engine/dev/{bot,botNav,actions}.ts, engine/audio/runtime/reverb.ts, engine/index.ts,
-  fixtures/levels/storeys/{site.ts,house.txt}, labs/playground/{levels/lot.ts,scenes/lot.ts,main.ts,README.md},
+  fixtures/levels/storeys/{site.ts,house.txt}, labs/playground/{main.ts,README.md} and the lot's two files,
   tests/e2e/playground-cameras.spec.ts, tools/eslint/layers.ts (the bot's rule holds its navigation beside it, sim-side
   too). engine/world/nav.ts and engine/gfx/cutaway.ts, which the WP extends, needed no change: the site's graph is
   NavGrids over NavSurfaces, and the cut by storey a module of its own.
@@ -1025,7 +1025,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   `defineUsable` and `defineStrikable` write to the shared registry the system reads, and take no other.
   engine/gfx/props.ts, at its cap, gave its texture and materials to engine/gfx/propLooks.ts.
 - **The playground**: the library gains the chair (6 kg), what the owner's playtest throws; the cottage
-  (labs/playground/levels/cottage.ts, scenes/interact.ts) holds a door, two windows, the kitchen's lamp and switch and
+  (levels/cottage.ts, scenes/interact.ts, since gone) holds a door, two windows, the kitchen's lamp and switch and
   chairs to throw, and its replay (playground-interact, retired with the cottage at WP 13.18) opens the door, switches the light
   off and on, closes the door, bursts it open and breaks it, and throws a chair through a pane. The house's doors,
   windows, lamps by room (`room:<name>`, amendment 18's light groups), the garage and its door (whose storey must hold
@@ -1054,7 +1054,7 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **The house as built** against §2.1: a patio on the backyard side, not a deck, the crawlspace under it; the garage's
   door an up-and-over door on its switches (a tilt, e981a49), 2.3 m high under the ground storey's 2.7 m; a level door hangs
   only in an opening its leaf fits. The study's bookshelf stands off its door: with the leaf open the two sealed it.
-- **The lot and the cottage give way** (amendments 18 and 19): labs/playground/levels/{lot,cottage}.ts,
+- **The lot and the cottage give way** (amendments 18 and 19): the playground's levels/{lot,cottage}.ts,
   scenes/{lot,interact}.ts and the interact replay are gone (their inspector glyphs also clashed with the house's). The
   site's replay (tests/replays/playground-site.replay.json, 640 steps, 12 goldens; Node ×3, Chromium ×3 and the page ×3
   agreeing) opens the front door, turns the hall's light off and on, bursts the living room's door open and breaks it,
@@ -2098,6 +2098,15 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   and the feel tools, rides, doors, windows and switches, the day's clock, the front end's menus, store and modal
   input, the new cameras); lean/README.md's overview likewise; the starter game (labs/game/) pauses under a menu
   (`createMenu`, `createEngine({ store, modal })`), as lean/game.html need not (it keeps no store).
+- **Found by the films' review: a sparse film's camera moves at every step.** The visual reviewer failed the first
+  films: after the first switch no camera framed Apex, first person showed his back mid-blend, and the two looks read
+  alike. Drawn every 60 steps, the replay moved the view one frame (1/60 s) a drawn frame, so the camera got a
+  sixtieth of the run's time: no blend (0.35 s) finished before the next switch, and every follow camera fell behind.
+  `playInto` now moves the view on by a frame at each step it draws none for (`PlayTarget.carry`, engine/app/view.ts
+  `RunView.carry`: the camera alone, as `advance(1)`, the crowd posed by the next frame), so a film's camera moves as
+  live play's does at 60 frames a second; at `draw` 0 the camera stays put, as before. The sheets keep the shots at
+  their size (halved by averaging, the pixel look's 1-pixel ink and dither went), and film.json gives each frame's
+  look metrics (colours, palette, dithering, edges), so the looks part as numbers.
 
 ## Amendment 42 (2026-10-25, WP 11.4): GPU-driven crowds, stage 1
 
