@@ -21,9 +21,9 @@ the quick gate's five minutes (tools/lib/tierBudgets.ts) warn, never fail.
   - `tolerance`: 0.15 lets a value run 15% over. `reason`: how and where it was measured (the command, the load
     average, the runs) and why each number is what it is. The work package that records a budget owns it; a new
     number needs its reason, never only a bump.
-- **The content's**, in the data and checked by tests and QA: a geometry's vertex `budget` (`defineGeometry`; `node x
-  qa geo` fails a part over it); the effects' pools, `FX_BUDGET` in engine/gfx/fx/effects.ts (4,096 particles, 1,024
-  glows, 1,024 decals, 32 ribbons: a burst past them is dropped and counted); the GPU particles' 1 ms
+- **The content's**, in the data and checked by tests and QA: a geometry's vertex `budget` (`defineGeometry`;
+  `node x qa geo` fails a part over it); the effects' pools, `FX_BUDGET` in engine/gfx/fx/effects.ts (4,096
+  particles, 1,024 glows, 1,024 decals, 32 ribbons: a burst past them is dropped and counted); the GPU particles' 1 ms
   (`GPU_RING.budgetMs`, engine/gfx/enhanced/particles.ts); the light pool's 8 to 16 point lights, 12 by default, 64
   with tiled lighting (`POOL_SIZES`, engine/gfx/lights.ts); a body's 10 draw calls (the `body` template's test); a
   level file's 32 drawn vertices a tile and 20 draw calls a storey (`node x qa geo`).
@@ -54,8 +54,8 @@ the quick gate's five minutes (tools/lib/tierBudgets.ts) warn, never fail.
 - **Lights.** A level's light spots feed the pool, which hands its fixed lights to the sources that matter near the
   focus: never add a `PointLight`, which rebuilds every lit pipeline.
 - **Optional GPU work** sits behind a feature (engine/gfx/features.ts, with its advice code) and the quality tiers
-  (engine/gfx/quality.ts: `quality` `low`, `medium`, `high` or `auto`); with `auto` the governor (engine/dev/governor.ts)
-  moves between tiers as the frame rate asks, each move the advice `GFX_GOVERNOR`.
+  (engine/gfx/quality.ts: `quality` `low`, `medium`, `high` or `auto`); with `auto` the governor
+  (engine/dev/governor.ts) moves between tiers as the frame rate asks, each move the advice `GFX_GOVERNOR`.
 - **The sim.** `hashMs` and `captureMs` grow with what the state holds: the hash reads every component's declared
   fields, and strings, booleans and nested data take its general path (the crowd ladder's budgets name what costs
   most: tests/baselines/perf/box-crowd-1000.json). Keep per-agent state small and numeric; crowds of thousands are

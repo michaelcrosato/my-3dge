@@ -45,16 +45,18 @@ engine/anim/states.ts. A game's stay in its lab (PLAN.md §5.7).
 - An action: `actOn(w, id, (a) => a.play('bow'))` (engine/sim/actorActions.ts); `a.next()`, `a.finish()`,
   `a.cancel(...)`; its events go out as `action` `{ id, type, phase, late }`.
 - A clip: give the actor `clips: { sets: ['clipset:<set>'] }`, then `playClip(w, id, '<SET>/<Clip>')`
-  (engine/sim/actorClips.ts); `locomoteClips` plays an idle, a walk or a run by its ground speed. The sets are data/anim/sets/<set>/, one file
-  a clip, registered as `clipset:<set>` (`defineClipSet`; a page loads them, as labs/box/library.ts does).
+  (engine/sim/actorClips.ts); `locomoteClips` plays an idle, a walk or a run by its ground speed. The sets are
+  data/anim/sets/<set>/, one file a clip, registered as `clipset:<set>` (`defineClipSet`; a page loads them, as
+  labs/box/library.ts does).
 - Reactions and secondary motion: `reactTo(w, id, act)` runs a flinch, a knockdown, a death or the get-up on the
   component `reactions`; `secondary` holds hair, tails and a cape; both given at spawn (engine/sim/reactions.ts).
 
 ## The clip library, from the command line
 
-`node x anim find <words> [--cat tag]` searches every set's catalog and the CMU ledger; `node x anim show
-<set>/<clip>` prints the clip as text and what the validator warns of; `node x anim sheet <set>/<clip>` draws its
-contact sheet; `node x anim bake <set>/<clip>` bakes it and checks FK parity. A clip is readable key poses
+`node x anim find <words> [--cat tag]` searches every set's catalog and the CMU ledger;
+`node x anim show <set>/<clip>` prints the clip as text and what the validator warns of;
+`node x anim sheet <set>/<clip>` draws its contact sheet; `node x anim bake <set>/<clip>` bakes it and checks FK
+parity. A clip is readable key poses
 (engine/anim/clip/readable.ts: hips, the body's turns, each limb a direction and a bend), so it fits any build and
 mirrors by swapping L and R. Importing and cutting sets are `x anim import`, `cut`, `cmu`: `node x help anim`.
 
@@ -65,10 +67,10 @@ mirrors by swapping L and R. Importing and cutting sets are `x anim import`, `cu
   measures `pop`, `footSlide`, `loopClosure`, `jointLimit`, `twistJump`, `stretch`, `underFloor`, `reach`,
   `unstableHash` and `rateDrift` against tests/baselines/qa-anim*.json (an accepted exception carries its reason).
   It reads the engine's content; a lab's entry is checked by its own test.
-- `node x sheet <subject> [--build id] [--cams body|move|turntable]` (`move:slash`, `pose:kneel`, `state:`, `humanoid`)
-  draws the humanoid's states as a contact sheet beside their QA violations; `node x gallery body` and `node x
-  gallery move` film the bodies and moves the gallery's page registers; the Animation Lab (labs/anim/, `npm run dev`) lines every build up
-  under one clock, its timeline scrubbing a move (`lab.anim.time`).
+- `node x sheet <subject> [--build id] [--cams body|move|turntable]` (`move:slash`, `pose:kneel`, `state:`,
+  `humanoid`) draws the humanoid's states as a contact sheet beside their QA violations; `node x gallery body` and
+  `node x gallery move` film the bodies and moves the gallery's page registers; the Animation Lab (labs/anim/,
+  `npm run dev`) lines every build up under one clock, its timeline scrubbing a move (`lab.anim.time`).
 - docs/PLAYGROUND.md §5.1's bounds hold on every feel course: a planted foot drifts at most 5 cm a contact, a hand
   stays within 3 cm of its contact, no point pops, the muzzle within 2° of the aim.
 - Pictures only when a number points at one: the `visual-qa` skill, and the `visual-reviewer` subagent for the sheet.

@@ -29,8 +29,8 @@ WebGPU in the platform's Chromium with the virtual clock and seed 1, and reports
 - `--marks` numbers what the ID pass sees on `marks.png` (the legend as `mark.<n>`), `--png` writes `frame.png`: for
   the reviewer, on demand.
 
-`--ids` or `--metrics` alone is cheaper. While `node x inspect` runs, the shot is taken in its page, so what `node x
-set` changed shows.
+`--ids` or `--metrics` alone is cheaper. While `node x inspect` runs, the shot is taken in its page, so what
+`node x set` changed shows.
 
 ## Baselines
 
