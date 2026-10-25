@@ -10,6 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../core/math';
+import { defineBuild, getBuild } from './builds';
 import { animCheck } from './check';
 import { Animator } from './character';
 import { createWorldPose, forwardKinematics, jointPosition, jointToWorld, socketPosition, tipPosition } from './fk';
@@ -185,6 +186,77 @@ describe('footPlant on a given floor, and the FootPlant layer (after G9)', () =>
   });
 });
 
+/**
+ * The plant's sums on the ten walks of its characterization test, as measured on 2026-10-25 (WP 12.2; PRINT_PLANT=1
+ * prints them): each walk's left and right soles' heights, both soles' z, the ball's and the heel's heights, both
+ * lowest points, and the pelvis's height at the end.
+ */
+/** footPlant's option test's sums, as measured on 2026-10-25 (WP 12.2; PRINT_PLANT=1 prints them). */
+const PLANT_OPTION_SUMS: Record<string, number> = {
+  plain: 14407.814715,
+  striding: 14426.342167,
+  stepping: 14419.998092,
+  flat: 13560.510594,
+};
+
+const PLANT_SUMS: Record<string, number[]> = {
+  flat: [3.80936946, 3.616701961, 347.623806394, 4.799871867, 4.792664644, 3.759189966, -0.048312906],
+  ramp: [41.676861745, 40.87443351, 211.146871005, 43.097186423, 42.262543479, 80.451336153, 0.648744003],
+  box: [16.632032117, 17.416140798, 481.840584841, 16.06682718, 18.724460796, 27.659300258, 0.28],
+  ledge: [0.506651744, 1.307125564, 29.116419709, 1.39883723, 0.514233566, 0.84119302, -0.040248386],
+  dip: [2.924102703, -1.048904252, 278.486518178, 3.841903545, 3.973076335, -1.043221019, -0.041518286],
+  pit: [3.376371699, -12.588366897, 278.902781165, 3.988820192, 4.625339453, -12.435767034, -0.041518286],
+  tall: [4.629956356, 2.431358538, 77.998009589, 5.573690099, 5.414068336, 5.908020675, -0.060643791],
+  lift: [14.374891207, 13.947815652, 141.517351191, 15.694127429, 15.0581449, 26.374159173, 0.207663767],
+  climb: [29.673151866, 29.835924246, 126.029200302, 30.629211137, 30.049922005, 57.719369323, 0.94999553],
+  crouch: [0.418552774, 0.490578795, 113.798977436, 2.238334171, 0.620945908, 0.902360759, -0.347795468],
+};
+
+describe('footPlant’s options, called as the layer calls it', () => {
+  it('plants as it was measured over its options: locks, rolls, steps, stride, levels, a squash, missing ground', () => {
+    // characterization (WP 12.2): footPlant called straight on a walk that spins, for each set of options, its plants
+    // summed; a change meant to plant otherwise measures them again (PRINT_PLANT=1 prints them), its reason in its commit
+    let t = 0;
+    const ground: GroundProbe = (origin, distance, hit) => {
+      const [x, z] = [origin.x, origin.z];
+      if (x > 1.2 && z > 0.6) return false; // a hole: no ground under it
+      const y = x < -0.3 ? -0.2 : 0.004 * t + 0.08 * Math.max(0, z - 0.5); // a step down, a rising ramp
+      hit.point.set(x, y, z);
+      hit.normal.set(0, 1, -0.08).normalize();
+      return y <= origin.y && origin.y - y <= distance;
+    };
+    const sets: Record<string, Record<string, unknown>> = {
+      plain: {},
+      striding: { rolls: true, stride: 0.6, levels: true },
+      stepping: { rolls: true, steps: true, stride: 0 },
+      flat: { rolls: false, release: 0 },
+    };
+    const states = Object.fromEntries(Object.keys(sets).map((name) => [name, createFootPlantState()]));
+    const sums: Record<string, number> = Object.fromEntries(Object.keys(sets).map((name) => [name, 0]));
+    const animator = new Animator({ build: 'build:adult', clock: 1 });
+    const position = new Vector3();
+    for (let i = 0; i < 120; i++, t++) {
+      const yaw = 0.09 * i; // spinning: a held foot's heading wraps past π
+      const velocity = new Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(i < 90 ? 1.4 : 0);
+      position.addScaledVector(velocity, 1 / 60);
+      animator.update({ position: position.clone(), velocity, yaw, body: { crouch: i > 60 && i < 80 ? 0.8 : 0 } });
+      const { skeleton, pose } = animator.body;
+      const stance = animator.body.stance() ?? [false, false];
+      for (const [name, options] of Object.entries(sets)) {
+        const [p, w] = [pose.clone(), createWorldPose()];
+        if (name === 'flat') p.rootScale.set(1, 0.92, 1); // squashed
+        forwardKinematics(skeleton, p, w);
+        const state = name === 'plain' ? undefined : states[name];
+        const drop = footPlant(skeleton, p, w, ground, { floor: position.y, ...(state ? { state, stance } : {}), ...options }); // prettier-ignore
+        sums[name] += drop + w.positions.reduce((a, v, k) => a + v * ((k % 7) + 1), 0);
+      }
+    }
+    const rounded = Object.fromEntries(Object.entries(sums).map(([name, v]) => [name, Math.round(v * 1e6) / 1e6]));
+    if (process.env.PRINT_PLANT) console.log(JSON.stringify(rounded));
+    expect(rounded).toEqual(PLANT_OPTION_SUMS);
+  });
+});
+
 describe('the FootPlant layer on the physics ground, with the stance locks (WP 13.10)', () => {
   /** A ground of `height(x, z)`, as the sim's query view would probe it: none for a ray starting inside it. */
   const queries = (height: (x: number, z: number) => number, normal = new Vector3(0, 1, 0)) => ({
@@ -197,8 +269,15 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
    * The adult planted on `ground`, walked `ticks` steps at `velocity` from `start`, its body's floor at `floor(z)`: each
    * tick's soles, and the left foot's ball and heel (it rolls on its heel as it lands, on its ball as it pushes off).
    */
-  const walk = (ground: GroundProbe | null, ticks: number, velocity: Vector3, floor = (_z: number) => 0) => {
-    const animator = new Animator({ build: 'build:adult', clock: 1 });
+  const walk = (
+    ground: GroundProbe | null,
+    ticks: number,
+    velocity: Vector3,
+    floor = (_z: number) => 0,
+    build = 'build:adult',
+    input: AnimatorInput = {},
+  ) => {
+    const animator = new Animator({ build, clock: 1 });
     const plant = new FootPlant().attach(animator);
     plant.ground = ground;
     const position = new Vector3();
@@ -206,7 +285,7 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
     const b = animator.body.build;
     for (let i = 0; i < ticks; i++) {
       position.addScaledVector(velocity, 1 / 60).setY(floor(position.z));
-      animator.update({ position: position.clone(), velocity });
+      animator.update({ ...input, position: position.clone(), velocity });
       const { world, skeleton } = animator.body;
       const [L, R, ball] = [animator.socket('contactL'), animator.socket('contactR'), jointPosition(world, 'toeL')]; // prettier-ignore
       const heel = jointToWorld(world, 'footL', new Vector3(0, -b.ankleHeight * b.size, -PROPORTIONS.heel * b.footLength * b.size)); // prettier-ignore
@@ -269,6 +348,36 @@ describe('the FootPlant layer on the physics ground, with the stance locks (WP 1
     }
     expect(held).toBeGreaterThan(30);
     expect(soles.at(-1)!.L.z - soles[30].L.z).toBeGreaterThan(2); // and steps on with the body
+  });
+
+  it('plants as it was measured: each walk’s soles, ball, heel and lowest points, summed over its ticks', () => {
+    // characterization (WP 12.2): the plant's numbers on ten walks, so that a change to how it plants shows here; a
+    // change meant to plant otherwise measures them again (PRINT_PLANT=1 prints them), its reason in its commit
+    const { id: _id, kind: _kind, ...adult } = getBuild('build:adult') as unknown as Record<string, unknown>;
+    defineBuild('build:plant-tall', { ...adult, size: 1.3 } as never);
+    const slope = Math.tan((20 * Math.PI) / 180);
+    let t = 0;
+    const walks = {
+      flat: walk(null, 90, new Vector3(0, 0, 2.5)),
+      ramp: walk(queryGround(queries((_x, z) => z * slope)), 90, new Vector3(0, 0, 1.5), (z) => z * slope),
+      box: walk(queryGround(queries((_x, z) => (z >= 4.3 ? 0.4 : 0))), 75, new Vector3(0, 0, 5), (z) => (z >= 4.05 ? 0.4 : 0)), // prettier-ignore
+      ledge: walk(queryGround(queries(() => -1)), 40, new Vector3(0, 0, 1)),
+      dip: walk(queryGround(queries((_x, z) => (z > 1 && z < 1.6 ? -0.12 : 0))), 90, new Vector3(0, 0, 2)),
+      pit: walk(queryGround(queries((_x, z) => (z > 1 && z < 1.8 ? -0.55 : 0))), 90, new Vector3(0, 0, 2)), // just in a lifted foot's reach
+      tall: walk(queryGround(queries((x) => 0.05 * x)), 60, new Vector3(1.2, 0, 1.2), undefined, 'build:plant-tall'),
+      lift: walk(queryGround(queries(() => 0.003 * t)), 90, new Vector3(0, 0, 1), () => 0.003 * ++t), // the ground rising
+      climb: walk(queryGround(queries((_x, z) => (z >= 1.2 ? 1 : 0))), 60, new Vector3(0, 0, 2), (z) => (z >= 1.1 ? 1 : 0)), // prettier-ignore
+      crouch: walk(queryGround(queries(() => 0)), 90, new Vector3(0, 0, 0.8), undefined, undefined, { body: { crouch: 1 } }), // prettier-ignore
+    };
+    const sums = Object.fromEntries(
+      Object.entries(walks).map(([name, { soles, animator }]) => {
+        const sum = (f: (s: (typeof soles)[number]) => number) => Math.round(soles.reduce((a, s) => a + f(s), 0) * 1e9) / 1e9; // prettier-ignore
+        return [name, [sum((s) => s.L.y), sum((s) => s.R.y), sum((s) => s.L.z + s.R.z), sum((s) => s.ball.y), sum((s) => s.heel.y), sum((s) => s.low + s.lowR), Math.round(animator.body.pose.rootPos.y * 1e9) / 1e9]]; // prettier-ignore
+      }),
+    );
+    if (process.env.PRINT_PLANT) console.log(JSON.stringify(sums));
+    expect(sums).toEqual(PLANT_SUMS);
+    expect(Object.keys(sums)).toHaveLength(10);
   });
 
   it('rides a treadmill: a body told to run in place carries its stance sole back at the belt’s speed', () => {

@@ -153,6 +153,9 @@ describe('damage', () => {
       stop: 0.05,
     });
     expect(w.get(1)!.vitals!).toEqual({ hp: 8, hitAt: 30, hitBy: 9 });
+    const slime = yard([[3, 4]], 10, { shape: 'ball', radius: 0.375 });
+    const ball = damage(slime, target(slime, 1), { amount: 1, from: [0, 1, 0] })!;
+    expect(ball.at[1] - slime.get(1)!.foe!.y).toBeCloseTo(0.375, 9); // a ball's middle: its radius over its feet
     const ghost = damage(w, { id: 5 }, { amount: 1, from: [0, 0, 0], at: [0, 1, -2] })!;
     expect([ghost.hp, ghost.killed, ghost.at, ghost.dir]).toEqual([null, false, [0, 1, -2], [0, 0, -1]]);
   });

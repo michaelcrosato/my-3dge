@@ -1,0 +1,79 @@
+diff --git a/labs/playground/levels/cabin.test.ts b/labs/playground/levels/cabin.test.ts
+new file mode 100644
+index 0000000..fe3b880
+--- /dev/null
++++ b/labs/playground/levels/cabin.test.ts
+@@ -0,0 +1,25 @@
++/**
++ * @file Unit tests for the cabin (labs/playground/levels/cabin.ts): it compiles to one storey 2.6 m clear with its
++ * two rooms, each marker inside its own room, a door between them, a door in and a window, and validates clean: every
++ * room reachable, its doors wide enough.
++ * @see labs/playground/levels/cabin.ts
++ */
++import { describe, expect, it } from 'vitest';
++import { getLevel, roomAt, validateLevel } from '../../../engine/sim-api';
++import { CABIN_TEXT } from './cabin';
++
++describe('the cabin', () => {
++  it('compiles to one storey 2.6 m clear and two rooms, the main room and the bunks', () => {
++    const cabin = getLevel('level:cabin');
++    expect(cabin.storeys!.map((storey) => [storey.name, storey.height])).toEqual([['ground', 2.6]]);
++    expect(cabin.rooms!.map((room) => [room.id, room.area]).sort()).toEqual([['room:bunks', 4.5], ['room:cabin', 12]]); // prettier-ignore
++    expect(roomAt(cabin, 2.5, 0, 2)?.id).toBe('room:cabin');
++    expect(roomAt(cabin, 5.75, 0, 2)?.id).toBe('room:bunks');
++  });
++
++  it('has a door between the rooms, a door in and a window, and validates clean', () => {
++    const cabin = getLevel('level:cabin');
++    expect(cabin.openings!.map((opening) => opening.kind).sort()).toEqual(['door', 'door', 'window']);
++    expect(validateLevel(CABIN_TEXT, { file: 'labs/playground/levels/cabin.ts' })).toEqual([]);
++  });
++});
+diff --git a/labs/playground/levels/cabin.ts b/labs/playground/levels/cabin.ts
+new file mode 100644
+index 0000000..c881d54
+--- /dev/null
++++ b/labs/playground/levels/cabin.ts
+@@ -0,0 +1,42 @@
++/**
++ * @file The cabin (docs/PLAYGROUND.md §6.1, §6.2): `level:cabin`, a log cabin of two rooms written as a storey on 0.5 m
++ * tiles (labs/playground/levels/plan.ts), 7 × 4 m outside and 2.6 m high under a flat roof bodies stand on. Its main
++ * room (`room:cabin`, 4 × 3 m inside its walls) has the door in from the outside in its south wall and a window in
++ * its west wall; the bunk room (`room:bunks`, 1.5 × 3 m) lies east of it, through a door in the wall between them.
++ * It stands on no site yet: a level of its own, which `getLevel('level:cabin')` compiles.
++ *
++ * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
++ *
++ * @example
++ * CABIN_TILE; // 0.5: m
++ * @see labs/playground/levels/cabin.test.ts
++ */
++import { defineGlyph, defineLevel } from '../../../engine/sim-api';
++import { levelText, Plan } from './plan';
++
++/** The cabin's tile (m). */
++export const CABIN_TILE = 0.5;
++
++/** The characters marking its rooms (the legend's letters are all taken). */
++export const CABIN_MARKERS = Object.freeze({ cabin: '*', bunks: ';' });
++
++defineGlyph('glyph:playground-cabinRoom', { char: CABIN_MARKERS.cabin, description: "Floor marking the cabin's main room.", mesh: 'floor', room: 'cabin' }); // prettier-ignore
++defineGlyph('glyph:playground-bunks', { char: CABIN_MARKERS.bunks, description: "Floor marking the cabin's bunk room.", mesh: 'floor', room: 'bunks' }); // prettier-ignore
++
++/** The cabin's plan, as a builder works: its walls, the wall between the rooms, the doors, the window, the markers. */
++export const CABIN_PLAN = new Plan(7, 4, CABIN_TILE)
++  .box([0, 0, 7, 4], '#', '.')
++  .line([4.5, 0.5, 5, 3.5], '#') // the wall between the main room and the bunks
++  .line([4.5, 1.5, 5, 2.5], '+') // the door between them, 1 m
++  .line([2, 3.5, 3, 4], '+') // the door in, in the south wall
++  .line([0, 1.5, 0.5, 2.5], ':') // the window, in the west wall
++  .fill([2, 1.5, 2.5, 2], CABIN_MARKERS.cabin)
++  .fill([5.5, 1.5, 6, 2], CABIN_MARKERS.bunks);
++
++/** The cabin's text: one storey, 2.6 m clear, under a flat roof. */
++export const CABIN_TEXT = levelText(
++  { description: 'A log cabin of two rooms on 0.5 m tiles, 7 × 4 m and 2.6 m high under a flat roof.', tile: CABIN_TILE }, // prettier-ignore
++  [{ keys: { storey: 'ground', base: 0, height: 2.6, roof: 'flat' }, plan: CABIN_PLAN }],
++);
++
++defineLevel('level:cabin', { text: CABIN_TEXT, file: 'labs/playground/levels/cabin.ts' });

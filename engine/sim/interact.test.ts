@@ -15,7 +15,7 @@ import { createCharacter } from '../physics/character';
 import { spawnActor, type ActorComponents } from './actors';
 import { addBreakables } from './breakables';
 import { addDoor, DOOR_SWING, type DoorComponent } from './doors';
-import { addInteraction, takesStrike, THROW_SPEED, type InteractorComponent } from './interact';
+import { addInteraction, strikeEntity, takesStrike, THROW_SPEED, type InteractorComponent } from './interact';
 import { spawnProp, type ScenePropComponents } from './props';
 import { defineScene } from './scene';
 import { addLadder } from './rides';
@@ -46,6 +46,18 @@ const yard = makeYard('yard');
 const ofType = (session: ReturnType<typeof createSession>, id: number) => session.world.get(id) as unknown as Yard;
 /** The intents of a step looking along `yaw`, `pitch` and aiming at `aim`, pressing `p`. */
 const looking = (yaw: number, pitch = 0, aim?: [number, number, number], p: string[] = []): Intents => ({ look: [yaw, pitch], ...(aim ? { aim } : {}), ...(p.length ? { b: p } : {}) }); // prettier-ignore
+
+describe('strikeEntity', () => {
+  it('strikes as a blow from a striker facing its target unless told otherwise, and strikes nothing that is no prop', () => {
+    const session = createSession(yard, { seed: 1 });
+    session.step({});
+    const world = session.world;
+    strikeEntity(world, 2, [0, 1, 0]); // the door, from the player's side: faced, a melee blow
+    expect([ofType(session, 2).door.struck, ofType(session, 2).door.broken]).toEqual([1, false]);
+    expect(() => [strikeEntity(world, 1, [0, 1, 2]), strikeEntity(world, 99, [0, 1, 2])]).not.toThrow(); // an actor; no one
+    expect(ofType(session, 1).actor.vx).toBe(0);
+  });
+});
 
 describe('use', () => {
   it('targets the thing in reach and in view with its prompt: along the crosshair, else the nearest in front', () => {

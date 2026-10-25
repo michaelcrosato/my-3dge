@@ -1,0 +1,11 @@
+{
+  "title": "Add a move: a low spinning sweep of the sword",
+  "area": "box",
+  "minutes": 30,
+  "solution": "solution.patch",
+  "accept": {
+    "test": "accept.ts",
+    "commands": ["npx vitest run labs/box/moves/whirl.test.ts"],
+    "checks": ["types", "lint"]
+  }
+}

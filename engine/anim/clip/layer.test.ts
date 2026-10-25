@@ -78,6 +78,7 @@ function turns(hero: Animator, layer: ClipLayer, n: number, input: (i: number) =
 describe('play, stop and the crossfade', () => {
   it('fades a clip in over its fade, then poses the body as retargetPose does, where it stands', () => {
     const layer = layerOf();
+    expect([layer.save(), layer.events, layer.current]).toEqual([{ slots: [], moving: null, running: false, ground: 0, root: [0, 0] }, [], null]); // prettier-ignore
     const hero = new Animator({ build: 'build:heroic', clock: 0 }).use('clips', layer);
     layer.play('Wave', { fade: 0.1 });
     run(layer, 3);

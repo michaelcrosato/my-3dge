@@ -1,0 +1,48 @@
+diff --git a/labs/box/cast/slime.ts b/labs/box/cast/slime.ts
+index 653be02..34ab65c 100644
+--- a/labs/box/cast/slime.ts
++++ b/labs/box/cast/slime.ts
+@@ -9,7 +9,7 @@
+  * under its own gravity, onto a stair as well as across the floor; level with the hero it keeps to a ring round him
+  * instead, leaping in from beyond it by what it lacks and out from inside it. A hop too short to bother with, or one
+  * out of reach, waits a moment. After landing it rests for `SLIME.rest` plus up to `SLIME.restSpread`, drawn from the
+- * crowd's stream.
++ * crowd's stream, and a little longer for every leap the slimes have made (`SLIME.tire`): a long chase tires them.
+  *
+  * Its pounce (Box 5, WP 6.7): `SLIME_ATTACK`. Resting on its ring round the hero, cooled down and granted one of his
+  * attack tokens, it squats for `wind` s, its line telegraph (`telegraph:boxPounce`) filling toward him, then leaps at
+@@ -68,6 +68,8 @@ export const SLIME = Object.freeze({
+   restSpread: 0.6,
+   /** In the air at least this long (s) before it can land. */
+   airborne: 0.1,
++  /** Seconds more a slime rests for each leap the slimes have made: a long chase tires them. */
++  tire: 0.0005,
+   /** How hard it brakes on the floor (m/s²). */
+   brake: 400 / UNITS,
+   /** The ring it keeps round the hero (m), and its band either side (m). */
+@@ -113,6 +115,8 @@ export function makeSlime(rng: Pick<Rng, 'next'>): SlimeData {
+ 
+ const [way, to] = [new Vector3(), new Vector3()];
+ const STILL = [0, 0, 0] as const;
++/** The leaps the slimes have made: each tires them a little (`SLIME.tire`). */
++let leaps = 0;
+ 
+ /** The way a slime leaps, into `way`, and how far (m); 0 when it stays. */
+ function aim(agent: CrowdAgent, chase: Chase): number {
+@@ -140,7 +144,7 @@ export function steerSlime(physics: Physics, agent: CrowdAgent, slime: SlimeData
+   if (slime.hop === 'air') {
+     slime.timer += dt;
+     if (slime.timer < SLIME.airborne || !agent.grounded) return;
+-    [slime.hop, slime.timer] = ['rest', SLIME.rest + chase.rng.next() * SLIME.restSpread];
++    [slime.hop, slime.timer] = ['rest', SLIME.rest + chase.rng.next() * SLIME.restSpread + leaps * SLIME.tire];
+   }
+   setVelocity(physics, agent, STILL, { dt, acceleration: SLIME.brake });
+   slime.timer -= dt;
+@@ -162,6 +166,7 @@ export function steerSlime(physics: Physics, agent: CrowdAgent, slime: SlimeData
+   }
+   knockback(physics, agent, [leap.x - agent.vx, 0, leap.z - agent.vz]);
+   launch(physics, agent, leap.y);
++  leaps++;
+   [slime.hop, slime.timer] = ['air', 0];
+ }
+ 

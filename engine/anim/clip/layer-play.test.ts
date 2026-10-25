@@ -6,11 +6,12 @@
  * the floor, as retargetPose keeps it).
  */
 import { describe, expect, it } from 'vitest';
-import { Vector3 } from '../../core/math';
+import { MathUtils, Vector3 } from '../../core/math';
 import { Animator } from '../character';
 import { jointRotation, socketPosition } from '../fk';
 import { createSkeleton } from '../skeleton';
 import { REST, standing } from '../../../tests/unit/anim/clip-fixtures';
+import { legsHeld } from './clipsets';
 import { ClipLayer, type ClipLayerEvent } from './layer';
 import { loadClipLibrary } from './library';
 import type { ClipKey } from './readable';
@@ -40,6 +41,18 @@ function run(layer: ClipLayer, n: number): ClipLayerEvent[] {
 const step: ClipLayerEvent = { type: 'event', clip: 'TEST/Swing', name: 'step', side: 'L' };
 
 describe('the play options', () => {
+  it('holds the legs as a full clip’s fade shows, a masked one by its thighs, an added one not at all', () => {
+    const held = (play: Record<string, unknown>, ticks = 30) => {
+      const layer = layerOf().play('TEST/Sway', play);
+      run(layer, ticks);
+      return [legsHeld(layer), layer.current!.w];
+    };
+    expect(legsHeld(layerOf())).toBe(0); // idle
+    const [half, w] = held({ fade: 0.2 }, 6);
+    expect([half, w > 0.2 && w < 0.8]).toEqual([MathUtils.smoothstep(w, 0, 1), true]);
+    expect([held({ mask: 'legL' })[0], held({ mask: 'arms' })[0], held({ additive: true })[0]]).toEqual([1, 0, 0]);
+  });
+
   it('plays at `speed`: its time runs that much faster, its event and its end come at half the ticks', () => {
     const fast = layerOf().play('Swing', { fade: 0, speed: 2 });
     run(fast, 9);

@@ -18,7 +18,7 @@ import { defineLevel } from '../world/level/level';
 import { defineSite, getSite } from '../world/site';
 import { defineActorKinds, spawnActor, type ActorComponents } from './actors';
 import type { WorldCapture } from './capture';
-import { addLauncher, addLevelLadders, addSiteLadders, addZipline, ridesOf } from './rides';
+import { addLadder, addLauncher, addLevelLadders, addSiteLadders, addZipline, ridesOf } from './rides';
 import { defineScene, startScene } from './scene';
 
 /** A level with a ladder up its north wall. */
@@ -55,6 +55,7 @@ describe('rides', () => {
   it('none in a scene without them', () => {
     const { world } = startScene('yard', { registry: yard(false) });
     expect(ridesOf(world)).toBeUndefined();
+    expect(() => addLadder(world, { top: 'high' })).toThrow(/CORE_BAD_SPEC.*addLadder\(spec\)/); // named in its refusal
   });
 
   it('stand their poles, solid launchers and level ladders, and give them in id order', () => {

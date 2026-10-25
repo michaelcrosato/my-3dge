@@ -1,0 +1,140 @@
+diff --git a/labs/playground/cast/radio.test.ts b/labs/playground/cast/radio.test.ts
+new file mode 100644
+index 0000000..0e64924
+--- /dev/null
++++ b/labs/playground/cast/radio.test.ts
+@@ -0,0 +1,67 @@
++/**
++ * @file Unit tests for the playground's radio (labs/playground/cast/radio.ts): before a player in a yard, it is what
++ * his use would use, the HUD saying it turns the radio on; a use turns it on (its event `radio` says so) and the next
++ * turns it off; its parts build clean; and the yard plays the same twice.
++ * @see labs/playground/cast/radio.ts
++ */
++import { describe, expect, it } from 'vitest';
++import { buildPropPart, inspectGeometry, partMatrix } from '../../../engine';
++import { addInteraction, createCharacter, defineScene, physicsOf, spawnActor } from '../../../engine/sim-api';
++import { createSession } from '../../../engine/sim/session';
++import { addRadio, RADIO, RADIO_PROMPTS, type RadioComponent } from './radio';
++
++/** A yard: a floor, a player at the origin facing +Z, and a radio 1 m before him. */
++const yard = defineScene('radio-test:yard', {
++  physics: true,
++  setup(w) {
++    physicsOf(w).addBody({ type: 'fixed', colliders: [{ shape: { type: 'box', size: [20, 1, 20] }, position: [0, -0.5, 0] }] }); // prettier-ignore
++    spawnActor(w, { at: [0, 0, 0], character: createCharacter({ movement: 'movement:apex' }), player: true }); // 1
++    addRadio(w, { at: [0, 0, 1] }); // 2
++    addInteraction(w);
++  },
++});
++
++type Entity = { interactor: { target: number; prompt: string }; radio: RadioComponent };
++
++describe('the radio', () => {
++  it('is what the player uses before it: a use turns it on, the next off, each with its event', () => {
++    const session = createSession(yard, { seed: 1 });
++    const get = (id: number) => session.world.get(id) as unknown as Entity;
++    session.step({});
++    session.step({});
++    expect([get(1).interactor.target, get(1).interactor.prompt, get(2).radio.on]).toEqual([2, RADIO_PROMPTS.off, false]); // prettier-ignore
++    session.step({ b: ['interact'] });
++    session.step({});
++    expect([get(2).radio.on, get(1).interactor.prompt]).toEqual([true, RADIO_PROMPTS.on]);
++    session.step({ b: ['interact'] });
++    session.step({});
++    const said = session.world.events
++      .trace()
++      .filter((e) => e.type === 'radio')
++      .map((e) => e.payload);
++    expect([get(2).radio.on, said]).toEqual([
++      false,
++      [
++        { id: 2, on: true },
++        { id: 2, on: false },
++      ],
++    ]);
++  });
++
++  it('builds clean parts on its base', () => {
++    for (const part of RADIO.parts) {
++      const report = inspectGeometry(buildPropPart(part).applyMatrix4(partMatrix(part)));
++      expect([report.missing, report.degenerate, report.flipped, report.badNormals], part.name).toEqual([[], 0, 0, 0]);
++      expect(report.min[1], part.name).toBeGreaterThanOrEqual(-1e-6);
++    }
++  });
++
++  it('plays the same twice', () => {
++    const run = () => {
++      const session = createSession(yard, { seed: 1 });
++      for (let k = 0; k < 30; k++) session.step(k === 3 ? { b: ['interact'] } : {});
++      return session.world.hash();
++    };
++    expect(run()).toBe(run());
++  });
++});
+diff --git a/labs/playground/cast/radio.ts b/labs/playground/cast/radio.ts
+new file mode 100644
+index 0000000..145511a
+--- /dev/null
++++ b/labs/playground/cast/radio.ts
+@@ -0,0 +1,61 @@
++/**
++ * @file The playground's radio (docs/PLAYGROUND.md §7.1): a thing to use, as the doors and the switches are. A small
++ * wooden radio, `prop:playground-radio`, with the component `radio` (whether it plays); `addRadio(w, spec)` stands one,
++ * and using it (the `interact` action, engine/sim/interact.ts) turns it on or off, the HUD saying which. It plays no
++ * sound in the sim: its event `radio` `{ id, on }` is what a page's sound map answers.
++ *
++ * Its state is a component, so the hash, captures and replays hold it. No scene stands one yet.
++ *
++ * Game code, sim-side: it imports only engine/sim-api.ts.
++ *
++ * @example
++ * RADIO_PROMPTS.off; // 'Turn the radio on'
++ * @see labs/playground/cast/radio.test.ts
++ */
++import { defineComponent, defineProp, defineUsable, spawnProp, type World } from '../../../engine/sim-api';
++
++/** The radio's component: whether it plays. */
++export interface RadioComponent {
++  on: boolean;
++}
++
++/** What the HUD says using a radio does, by whether it plays now. */
++export const RADIO_PROMPTS = Object.freeze({ off: 'Turn the radio on', on: 'Turn the radio off' });
++
++defineComponent('radio', {
++  description: 'The playground’s radio: whether it plays (labs/playground/cast/radio.ts).',
++  fields: { on: { type: 'boolean', default: false, description: 'Whether it plays.' } },
++});
++
++/** The radio: a wooden box 0.3 m wide with a glowing dial and a knob, 2 kg. */
++export const RADIO = defineProp('prop:playground-radio', {
++  description: 'A small wooden radio, 0.3 m wide and 0.2 m high: a glowing dial and a knob on its face. 2 kg.',
++  parts: [
++    { name: 'case', geometry: 'geometry:box', params: { width: 0.3, height: 0.2, depth: 0.15 }, material: 'material:wood' }, // prettier-ignore
++    { name: 'dial', geometry: 'geometry:box', params: { width: 0.12, height: 0.06, depth: 0.01 }, material: 'material:glow', tint: '#ffd9a0', position: [-0.05, 0.1, 0.075], shadow: false }, // prettier-ignore
++    { name: 'knob', geometry: 'geometry:box', params: { width: 0.04, height: 0.04, depth: 0.02 }, material: 'material:iron', position: [0.09, 0.08, 0.075] }, // prettier-ignore
++  ],
++  body: { type: 'dynamic', shape: 'box', size: [0.3, 0.2, 0.15], density: 300 },
++});
++
++/** Where a radio stands, its foot at `at` (m) facing `yaw` (rad), and whether it plays at first (no). */
++export interface RadioSpec {
++  at: readonly [number, number, number];
++  yaw?: number;
++  on?: boolean;
++}
++
++/** Stands a radio in `w` (see the file comment); returns its entity. */
++export function addRadio<C extends object>(w: World<C>, spec: RadioSpec): number {
++  const radio: RadioComponent = { on: spec.on ?? false };
++  return spawnProp(w, { prop: RADIO.id, at: [...spec.at], yaw: spec.yaw ?? 0 }, { components: { radio } });
++}
++
++defineUsable('radio', {
++  prompt: (w, id) => ((w.get(id) as unknown as { radio: RadioComponent }).radio.on ? RADIO_PROMPTS.on : RADIO_PROMPTS.off), // prettier-ignore
++  use: (w, id) => {
++    const { radio } = w.get(id) as unknown as { radio: RadioComponent };
++    radio.on = !radio.on;
++    w.emit('radio', { id, on: radio.on });
++  },
++});

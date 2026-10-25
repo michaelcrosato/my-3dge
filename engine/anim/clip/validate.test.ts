@@ -84,6 +84,7 @@ describe('parseClip', () => {
       /^\[ANIM_CLIP_NO_KEYS\] clip "Empty" has no key poses: give it/,
     );
     expect(thrown('{"dur": 1, "keys": [}')).toMatch(/^\[ANIM_CLIP_NOT_JSON\] the clip is not JSON: /);
+    expect(thrown('42', 'Number')).toMatch(/^\[ANIM_CLIP_NO_KEYS\] clip "Number" has no key poses: give it/); // JSON, but no object
     expect(thrown(clipOf([standing(0)], { loop: 'yes' as unknown as boolean }))).toBe(
       '[ANIM_CLIP_BAD_HEADER] clip "Test": "loop" is "yes": make "loop" true or false',
     );
@@ -93,6 +94,11 @@ describe('parseClip', () => {
     const bad = (header: object) => thrown({ ...clipOf([standing(0)]), ...header });
     expect(bad({ events: [{ t: 0.1 }] })).toMatch(/"events" is \[\{"t":0.1\}\]: make "events" a list of/);
     expect(bad({ contacts: [{ part: 'footL', from: 0.5, to: 0.2 }] })).toMatch(/"contacts" is/);
+    expect(bad({ contacts: [{ part: 'footL', from: 0.2, to: 0.5, extra: 1 }] })).toMatch(/"contacts" is/); // a field it has no check for
+    expect(bad({ contacts: [{ part: 'elbowL', from: 0.2, to: 0.5 }] })).toMatch(/"contacts" is/); // one field of three wrong
+    expect(thrown('{"clip": "Wave", "dur": 1, "keys": []}')).toMatch(
+      /^\[ANIM_CLIP_NO_KEYS\] clip "Wave" has no key poses/,
+    ); // named by its own clip
     expect(bad({ props: ['sword'] })).toMatch(/"props" is \["sword"\]: make "props" a list of "<prop>:<hands>"/);
     expect(bad({ via: 'v3' })).toMatch(/"via" is "v3"/);
   });

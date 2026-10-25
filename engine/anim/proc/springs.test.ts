@@ -1,6 +1,7 @@
 /**
  * @file Unit tests for the springs (engine/anim/proc/springs.ts, PLAN.md WP 10.1): the oscillator's exact step against
- * its closed forms, so 60 and 120 steps a second agree; a critical spring settling without overshoot and an
+ * its closed forms, so 60 and 120 steps a second agree, and against its equation and its start in every regime; no
+ * step without time or stiffness; a critical spring settling without overshoot and an
  * underdamped one bouncing, a kick jolting it and a limit bounding it; a vector spring axis by axis; a turn's spring
  * the short way round, kicked about an axis, its value a unit quaternion.
  * @see engine/anim/proc/springs.ts
@@ -23,6 +24,27 @@ describe('the springs', () => {
       expect([a - c, b - d].map((x) => Math.abs(x) < 1e-12)).toEqual([true, true]); // 120 steps, or one
     }
     expect(oscillate(0.5, 1, 30, 1, 0)).toEqual([0.5, 1]); // no time, no change
+  });
+
+  it('solve the oscillator’s equation in every regime, from where it started', () => {
+    for (const zeta of [0.3, 1, 2.5]) {
+      const at = (t: number) => oscillate(0.4, -2, 12, zeta, t);
+      const h = 1e-4;
+      for (const t of [0.05, 0.2]) {
+        const [[y, v], [y0, v0], [y1, v1]] = [at(t), at(t - h), at(t + h)];
+        expect((y1 - y0) / (2 * h)).toBeCloseTo(v, 5); // the velocity is the offset's rate
+        expect((v1 - v0) / (2 * h)).toBeCloseTo(-144 * y - 24 * zeta * v, 3); // y″ = −ω²y − 2ζωy′
+      }
+      const [y, v] = at(1e-8);
+      expect([y - 0.4, v + 2].map((x) => Math.abs(x) < 1e-6)).toEqual([true, true]);
+    }
+  });
+
+  it('leave the state as it is with no time, time run backwards or no stiffness', () => {
+    expect(oscillate(-1, 0, 30, 3, 0)).toEqual([-1, 0]); // overdamped too, where its closed form would round
+    expect(oscillate(0.5, 1, 30, 1, -0.1)).toEqual([0.5, 1]);
+    expect(oscillate(0.5, 1, 0, 1, 0.1)).toEqual([0.5, 1]);
+    expect(oscillate(0.5, 1, -4, 0.3, 0.1)).toEqual([0.5, 1]);
   });
 
   it('settle a critical spring without overshoot, bounce an underdamped one, kick it and bound it', () => {

@@ -9,7 +9,7 @@ import { getBuild } from './builds';
 import { Humanoid } from './humanoid';
 import { restContext } from './locomotion';
 import { moveAt } from './moves';
-import type { MoveInput } from './moves-data';
+import { defineMove, getMove, type MoveInput } from './moves-data';
 import { createEffectors } from './poses';
 import { armBlade, createArmState, layArm, stepArm } from './strike';
 import { hashValue, type Canonical } from '../core/hash';
@@ -52,6 +52,27 @@ describe('the arm path', () => {
     stepArm(arm, undefined, ARMED, () => E, 1);
     stepArm(arm, moveAt('overhead', 0, 'wind'), ARMED, () => E, 1);
     expect(arm.theta0).toBe(-0.9); // the vertical plane's rest
+  });
+
+  it('winds a chained swing from the arm’s height only when it strikes with the same limb, else from its own', () => {
+    const chained = (first: string, then: string, body = ARMED) => {
+      const arm = createArmState();
+      for (let i = 0; i < 21; i++) stepArm(arm, moveAt(first, 0.5, 'active'), body, () => effectorsAt(0.2), 1 / 60);
+      stepArm(arm, moveAt(first, 0.2, 'recover'), body, () => effectorsAt(0.2), 1 / 60);
+      const before = arm.height;
+      stepArm(arm, moveAt(then, 0, 'wind'), body, () => effectorsAt(0.2), 1 / 60);
+      return [arm.height0, before];
+    };
+    const [same, held] = chained('jab', 'cross'); // a hand after a hand: from where the arm is
+    expect(same).toBe(held);
+    const [kick, raised] = chained('jab', 'kick'); // a foot after a hand: from its own start
+    expect([kick, raised === kick]).toEqual([0.1, false]); // ARM.restHeight.kick, armed
+    expect(chained('jab', 'kick', { armed: false, armLength: 0.575 })[0]).toBe(0.35); // unarmed: move:kick's first kickHeight
+    const { id: _id, kind: _kind, ...slash } = getMove('move:slash') as unknown as Record<string, unknown>;
+    defineMove('move:strike-test-left', { ...slash, hand: 'L', trail: true } as never);
+    const left = createArmState();
+    stepArm(left, moveAt('move:strike-test-left', 0, 'wind'), ARMED, () => effectorsAt(0.2), 1 / 60);
+    expect(left.height0).toBe(getMove('move:slash').height[0]); // a left hand winds a fist's way, armed or not
   });
 
   it('starts a swing again when the move changes during the wind (a feint), as my-3d2dge did', () => {

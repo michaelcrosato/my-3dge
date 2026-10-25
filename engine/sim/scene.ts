@@ -228,7 +228,9 @@ export function startScene<C extends object = AnyComponents, E extends EventMap 
   const entry = (typeof scene === 'string' ? getScene(scene, registry) : scene) as Scene<C, E>;
   const physics = options.physics ? undefined : scenePhysics(entry.physics, registry);
   const settings = createSettings({ registry });
+  // Stryker disable next-line StringLiteral: nothing reads these labels (startScene keeps neither handle)
   settings.override(entry.settings, `scene ${entry.id}`);
+  // Stryker disable next-line StringLiteral: nothing reads these labels (startScene keeps neither handle)
   if (options.settings && Object.keys(options.settings).length) settings.override(options.settings, 'run');
   const world = createWorld<C, E>({
     seed: options.seed ?? 1,

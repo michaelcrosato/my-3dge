@@ -2767,6 +2767,7 @@ For the agents who maintain the engine.
 
 ### [`engine/anim/clip/spine.ts`](../engine/anim/clip/spine.ts)
 
+- `qBetween` (function): The shortest turn taking direction `a` to direction `b`, a quaternion; from a direction to its opposite, a half turn.
 - `SPINE_MISS` (const): How far (mm) the spine's shares may miss a capture's neck before format 2 writes the `spine` override: half the importer's 30 mm tolerance, past which the shares alone spend most of a key's error.
 - `spineMiss` (function): The worst miss (mm) over a capture's frames between its neck and the neck the spine's shares rebuild from its pelvis point and its pelvis and chest frames: past `SPINE_MISS`, the importer writes format 2's `spine` override.
 - `spineOf` (function): Format 2's `spine` for key `k` (its hips, body and chest written) on the body points `p` reads: the turn of the spine's middle bones, relative to the body, that takes the decoded `spine1` toward the captured chest, its twist about the spine the shares' own (two bones lying almost in line say little about it).
@@ -9410,6 +9411,12 @@ For the agents who maintain the engine.
 
 - `default` (default): Evaluates JavaScript in the page `x inspect` keeps open, and prints its value as JSON (PLAN.md §8.1, WP 2.7): `node x eval "__engine.hash()"`.
 
+### [`tools/cmd/evals.ts`](../tools/cmd/evals.ts)
+
+- `check` (const): `x check`'s evals plugin: every task under evals/ is well-formed (cheap: no copy, no run).
+- `default` (default): Agent-usability evals (PLAN.md WP 12.2, ADR-0025 decision 5): small tasks a fresh agent does in a copy of this repository with only its docs to go on, each judged by an acceptance check that runs headless.
+- `noAgent` (function): The usage error a live run without an agent gets: model access is the owner's, through its escalation.
+
 ### [`tools/cmd/eye.ts`](../tools/cmd/eye.ts)
 
 - `default` (default): `node x eye <scene>` (PLAN.md WP 12.3, §5.8): the agent eye in Node, no GPU.
@@ -9944,6 +9951,29 @@ For the agents who maintain the engine.
 - `writeIndex` (function): Rewrites the README when it differs from the records; returns whether it wrote.
 - `writeRecord` (function): Writes a record to `docs/escalations/<file>` under `root`.
 
+### [`tools/lib/evals.ts`](../tools/lib/evals.ts)
+
+- `ACCEPT_CHECKS` (const): The checks `accept.checks` may name.
+- `Acceptance` (interface): A task's acceptance, filled.
+- `AREAS` (const): What a task works on.
+- `attemptTask` (function): One live attempt (see the file comment): the verdict and how long the attempt and its judgement took.
+- `Baseline` (interface): The baseline file's contents: deferred until the owner grants model access, or a recorded live run.
+- `BASELINE_FILE` (const): The baseline's file: the live pass rate, or why there is none yet.
+- `changedFiles` (function): The files an attempt changed in `copy` since the commit `since`: changed, added, removed or new.
+- `dryRunTask` (function): One task's dry run: its acceptance fails on the start and passes with the reference solution (see the file comment).
+- `EVALS_DIR` (const): Where the tasks live, from the repository root.
+- `EvalTask` (interface): One task, read from `evals/<id>/`.
+- `git` (function): Runs git in `cwd` with a fixed author, no hooks and no signing; returns its output and throws on a failure.
+- `GUARDED` (const): What every attempt leaves as the start has it: the acceptance's own harness.
+- `judge` (function): Judges the tree in `copy` against `task`'s acceptance, the start being the commit `since`: what it must leave as it was, then the hidden test, the commands and the checks, stopping at the first that fails.
+- `makeCopy` (function): Copies `root`'s files (those git tracks or would track, evals/ and node_modules aside) to `dest`, links node_modules, applies the patch `start` (an absolute path) and commits the result in a fresh repository; returns that commit.
+- `patchedFiles` (function): The files a patch's text changes (both sides of each `diff --git` line).
+- `PREAMBLE` (const): What a live attempt's agent is told before the task's own prompt.
+- `readBaseline` (function): Reads evals/baseline.json, or undefined when there is none.
+- `readTasks` (function): Every task under evals/, by id, and the problems with any (`EVALS_BAD_TASK`, naming the file and the fix).
+- `STEP_TIMEOUT_MS` (const): How long one acceptance step may run before it is stopped, in ms: it bounds a hang, never a slow machine.
+- `Verdict` (interface): A judgement of one attempt: whether it passes, why not (the first step that failed), and the steps it ran.
+
 ### [`tools/lib/filmCompare.ts`](../tools/lib/filmCompare.ts)
 
 - `checkFilmThumbs` (function): Records the film's thumbnails as `tests/baselines/thumbs/<name>.json` with `update`, else compares them with it.
@@ -10287,6 +10317,22 @@ For the agents who maintain the engine.
 - `default` (default): The `tex` QA family (PLAN.md §8.6, WP 2.3, WP 7.3, I-20): `node x qa tex` bakes every texture generator the shared registry has, the engine's (engine/gfx/textures/v1.ts, v2.ts) and a game's (each `*.ts` module under `labs/<name>/textures/` imported first), at its default size and at twice it, with seeds 1 and 2, and checks every bake; then, under each `prop` entry's id (WP 4.5; a game's props under `labs/<name>/props/` imported first), the textures its parts' materials name, baked as each material bakes them (its parameters and size), and a `reference` violation for a part naming a material no entry defines.
 - `textureModules` (function): A game's texture modules, `labs/<name>/textures/*.ts` (tests excluded), labs and files in name order.
 - `textureSheet` (function): The contact sheet of `bakes`: per texture its colour, normal and emissive maps (black when nothing glows), each tiled 2 × 2 and scaled by nearest texels to fit a 128 px panel, keeping its shape (row 0 of a map at the bottom, as it is drawn), and a label.
+
+### [`tools/stryker/sample.ts`](../tools/stryker/sample.ts)
+
+- `functionKey` (function): The function's key: its file, its name and its place among that file's functions of that name (`#0`, `#1`…).
+- `functionName` (function): The name a function goes by: its own, its method's or property's key, or the variable it is assigned to.
+- `OUT_OF_SCOPE` (const): The functions no run mutates, by `functionKey`, each with its reason (measured; see the file comment).
+- `resetPlaces` (function): Forgets the places counted so far: Stryker instruments each file once a run, from its start.
+- `sample` (const): The ignorer: an outermost function out of scope or outside the sample is ignored, with the reason Stryker reports.
+- `SAMPLE` (const): The sample: the share of functions kept, and the seed that draws them.
+- `SamplePath` (interface): The parts of a Babel path this plugin reads (Stryker hands it Babel's NodePath, its hub the file's).
+- `share` (function): FNV-1a (32 bits) of `text`, as a share of 2³²: a number in [0, 1), spread evenly.
+- `strykerPlugins` (const): The plugins StrykerJS loads from this module (stryker.config.json's `appendPlugins`).
+
+### [`tools/stryker/vitest.config.ts`](../tools/stryker/vitest.config.ts)
+
+- `default` (default): Vitest's settings for StrykerJS's runs (stryker.config.json's `vitest.configFile`; PLAN.md WP 12.2): the repository's own (vite.config.ts), with longer timeouts and no report file.
 
 ### [`tools/x.ts`](../tools/x.ts)
 

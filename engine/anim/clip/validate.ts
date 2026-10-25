@@ -315,6 +315,7 @@ export function parseClipSet(input: string | object): ClipSet {
 
 /** A warning about key `index` (from 1) of `where`. */
 function warning(code: ClipCode, values: CodeValues & { key: number; t: number; field: string }): ClipWarning {
+  // Stryker disable next-line LogicalOperator: codeInfo knows every clip code by the text CLIP_CODES gives it, so either reads the same
   const text = codeInfo(code) ?? CLIP_CODES[code];
   const message = `[${code}] ${fill(text.template, values)}: ${fill(text.fix, values)}`;
   return { code, key: values.key, t: values.t, field: values.field, message };

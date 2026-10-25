@@ -28,6 +28,8 @@ const posesOf = (world: WorldPose) =>
   RAGDOLL_PARTS.flatMap(({ joint }) => [...jointPosition(world, joint).toArray(), ...jointRotation(world, joint).toArray()]); // prettier-ignore
 
 const apart = (a: Vector3, b: Vector3) => a.distanceTo(b);
+/** Where `ragdollRest` stood the adult lying on its back at (3, 0.5, −1) turned 1 rad, as measured on 2026-10-25 (WP 12.2). */
+const RAGDOLL_AT: number[] = [3.004764518, 0.499346802, -0.988204613];
 const turned = (a: Quaternion, b: Quaternion) => a.clone().normalize().angleTo(b.clone().normalize());
 
 describe('the humanoid’s ragdoll', () => {
@@ -90,6 +92,17 @@ describe('the humanoid’s ragdoll', () => {
         expect(turned(rest.chest, jointRotation(animator.body.world, 'chest'))).toBeLessThan(1e-6);
       }
     }
+  });
+
+  it('rests where it was measured: the lying humanoid’s pelvis, the mean of its 4 s of breath and sway', () => {
+    // characterization (WP 12.2): where `ragdollRest` stands a lying body, so that a change to how the lying pelvis is
+    // measured shows here; a change meant to measure it otherwise measures these again, its reason in its commit
+    const animator = new Animator({ build: 'build:adult', rng: new Rng(1) });
+    new Reactions().attach(animator).lying = 'up';
+    for (let k = 0; k < 90; k++) animator.update({ down: 1 }, { at: new Vector3(3, 0.5, -1), yaw: 1 });
+    const rest = ragdollRest(animator.body.build, posesOf(animator.body.world));
+    if (process.env.PRINT_RAGDOLL) console.log(JSON.stringify(rest.at.toArray()));
+    expect(rest.at.toArray().map((x) => Math.round(x * 1e9) / 1e9)).toEqual(RAGDOLL_AT);
   });
 
   it('reads 7 numbers a part', () => {

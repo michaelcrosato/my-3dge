@@ -32,6 +32,8 @@ function trot(
   }
 }
 const lengthOf = (bone: Matrix4) => new Vector3().setFromMatrixColumn(bone, 1).length();
+/** The sum its easing test measured on 2026-10-25 (WP 12.2). */
+const QUADRUPED_EASED = 388.357873405;
 const heightOf = (bone: Matrix4, end: number) => new Vector3(0, end, 0).applyMatrix4(bone).y;
 const footOf = (dog: Quadruped, i: number) => new Vector3().fromArray(dog.state.gait.feet, i * GAIT_FOOT);
 const tOf = (dog: Quadruped, i: number) => dog.state.gait.feet[i * GAIT_FOOT + 12];
@@ -116,6 +118,15 @@ describe('the quadruped', () => {
     expect(about.size).toBeGreaterThan(20); // looking about
     trot(dog, 2, 60);
     expect(Math.abs(dog.state.headYaw)).toBeLessThan(0.02); // a walk looks ahead
+  });
+
+  it('eases its walk, run and wag toward what it is told, as measured', () => {
+    // characterization (WP 12.2): the eased blends summed over a trot that speeds up and wags; a change meant to ease
+    // otherwise measures the sum again, its reason in its commit
+    const dog = new Quadruped();
+    let sum = 0;
+    trot(dog, 6, 90, { wag: 1 }, () => (sum += dog.state.walk + 2 * dog.state.run + 3 * dog.state.wag), 4);
+    expect(Math.round(sum * 1e9) / 1e9).toBe(QUADRUPED_EASED);
   });
 
   it('wags its tail only when told, its links keeping their length', () => {
