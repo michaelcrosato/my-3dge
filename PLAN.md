@@ -1425,7 +1425,7 @@ ESLint checks code. `x qa` checks content: motion, meshes, textures, sounds and 
   | `animation-authoring` | Effector-space authoring, moves, clips, actions, content QA |
   | `visual-qa` | The metrics, the ID pass, thumbnails |
   | `perf-budgets` | Budgets and how to meet them |
-  | `add-<kind>` | Mirrors `x new`, one per kind with a template (§8.13) |
+  | `add-entry` | Mirrors `x new`: one skill for every kind with a template (§8.13), each kind named in its description, so an agent asking for one finds it; one skill a kind would repeat what `x new` prints (WP 12.1, ADR-0025) |
 
 - **Subagents** (`.claude/agents/`):
 
@@ -1477,7 +1477,7 @@ The engine's own version lives in `package.json` only, and prose never repeats i
 **Templates arrive with use** (doctrine: North Star):
 - `module` (WP 0.6) and `scene` (a box scene or variant, WP 2.7) come first, because agents create them constantly.
 - Any other kind gets its template when an agent writes the third entry of that kind by hand; the WP that writes it adds the template. The likely ones are `material`, `prop`, `body`, `move` and `level`; Phases 8–9 bring `action` (WP 8.7), `sfx` and `song` (WP 9.2), and on-demand WPs bring `rig --block legGait` (WP 10.1). A game itself is no `x new` kind: it comes from `node tools/game/new-game.mjs`, which runs before anything is installed (WP 10.7, ADR-0024).
-- WP 12.1 (on demand) completes the set and the `add-<kind>` skills. Once the gallery exists (WP 7.7), templates also write a `gallery` hook.
+- WP 12.1 (on demand) completes the set (`level`, and the playground's `movement`, `camera`, `interactable` and `weapon`) and the `add-entry` skill; `tools/templates/README.md` lists every kind. Once the gallery exists (WP 7.7), templates also write a `gallery` hook.
 
 ### 8.14 Escalations (doctrine: Escalation)
 

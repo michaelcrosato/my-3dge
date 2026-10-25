@@ -1,0 +1,87 @@
+/**
+ * @file The level `level:{{name}}`: what it is (replace this text; `x docs` puts the first sentence in INDEX). It
+ * starts as a cabin of two storeys on 0.5 m tiles, 8 × 6 m: the ground floor, the hall (2.7 m clear), with a door
+ * in its south wall, a window in its east wall and a flight of stairs along its west wall, rising north to the loft
+ * (3 m up, 2.4 m clear), whose stairwell is railed on its east and south sides, a window in its east gable end and a
+ * gable roof over it (30°, the ridge east to west, 0.3 m of eaves). The player starts in the hall.
+ *
+ * The text is level format 2 (engine/world/level/parse.ts): front matter, then a block (`storey`, `base`, `height`
+ * and the top storey's roof) and a map per storey, bottom first, every map the same size; row 1 is the north edge,
+ * column 1 the west. The engine's glyphs: `#` wall, `.` floor, `@` the player's spawn, `+` door (1 m: two tiles), `:`
+ * window, `<` the flight (the loft's floor meets the void `~` over it on one side only: it rises toward that side),
+ * `!` railing. Its room markers are its own glyphs (`{{NAME}}_ROOMS`): a character writes one glyph in a legend, so a level
+ * made from this template gives its markers characters no other glyph has (`defineGlyph` names a clash).
+ *
+ * Invariants: the text compiles when it is defined (`CORE_BAD_SPEC` names each structural problem at its line and
+ * column); its `rooms` (each room's floor) and `recipes` (the roof's look) are presentation only, never the sim's or
+ * the hash's. Game code, sim-side: it imports only engine/sim-api.ts.
+ *
+ * @example
+ * import { getLevel } from '../../../engine/sim-api';
+ * getLevel('level:{{name}}').storeys?.map((s) => s.name); // ['ground', 'loft']
+ * @see {{id}}.test.ts
+ */
+import { defineGlyph, defineLevel } from '../../../engine/sim-api';
+
+/** Its room markers: each one's character and the room it names. */
+export const {{NAME}}_ROOMS = { g: 'hall', u: 'loft' } as const;
+
+for (const [char, room] of Object.entries({{NAME}}_ROOMS)) {
+  defineGlyph(`glyph:{{name}}-${room}`, { char, description: `Floor marking the ${room}.`, mesh: 'floor', room });
+}
+
+/** Its text: two storeys, bottom first (see the file comment). */
+const TEXT = `---
+description: A cabin on 0.5 m tiles, 8 × 6 m, the hall and the loft above it under a gable roof (replace).
+tile: 0.5
+---
+---
+storey: ground
+base: 0
+height: 2.7
+---
+################
+#..............#
+#<<...........g#
+#<<............#
+#<<............:
+#<<............:
+#<<............#
+#<<.....@......#
+#<<............#
+#<<............#
+#..............#
+#######++#######
+---
+storey: loft
+base: 3
+height: 2.4
+roof: gable
+pitch: 30
+ridge: x
+eaves: 0.3
+---
+################
+#..............#
+#~~!..........u#
+#~~!...........#
+#~~!...........:
+#~~!...........:
+#~~!...........#
+#~~!...........#
+#~~!...........#
+#~~!...........#
+#!!!...........#
+################
+`;
+
+/** Its roof's look, presentation only: shingles over wood. */
+const ROOF = { shape: 'roof', materials: ['material:shingles', 'material:wood'], castShadow: true, receiveShadow: true };
+
+/** The level `level:{{name}}`: replace this sentence with what it is. */
+export const {{name}} = defineLevel('level:{{name}}', {
+  text: TEXT,
+  file: '{{id}}.ts',
+  rooms: { hall: 'material:planks', loft: 'material:carpet' }, // each room's floor
+  recipes: { roof: ROOF },
+});

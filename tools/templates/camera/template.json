@@ -1,0 +1,12 @@
+{
+  "describe": "A camera mode of a game's own (the kind camera): its code cam3=<name>[,…] and the camera it makes of its own pure steps (followCamera), with a unit test that its code makes it and gives it back, that it follows the player smoothly and settles on him, and that the camera rig blends into it (PLAN.md WP 13.8).",
+  "id": "the module's path, labs/<lab>/cameras/<name>, the name a word no engine camera or view has (its code is cam3=<name>): labs/box/cameras/dolly",
+  "pattern": "^(labs/[a-z][a-z0-9-]*/cameras|tools/templates/camera)/[a-z][A-Za-z0-9]*$",
+  "sample": "tools/templates/camera/sampleCamera",
+  "files": {
+    "camera.ts.tmpl": "{{id}}.ts",
+    "camera.test.ts.tmpl": "{{id}}.test.ts"
+  },
+  "checks": ["types", "lint", "test", "docs"],
+  "next": "make it frame what its file comment says; import {{id}}.ts in the page (labs/box/main.ts in the box, labs/game/main.ts in a game) so its code reaches it; see it with node x shot <page> --cam cam3={{name}}, or ?cam3={{name}} and __engine.camera.set('cam3={{name}}', { blend: true }) in the page; then node x docs --write"
+}

@@ -1,0 +1,78 @@
+/**
+ * @file Unit tests for the weapon `weapon:{{name}}` ({{id}}.ts): its prop's parts build clean, its muzzle at their
+ * front; on a range (a floor, the player at the origin facing +Z carrying it holstered, a target 10 m ahead) he draws
+ * it, aims down its sights and fires its magazine into the target, never faster than its rate (held for an automatic
+ * one, a press a shot otherwise), the burst's kick climbing by its recoil steps, and its last round brings the reload
+ * from empty, the magazine full again its seconds later.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { buildPropPart, createHeadless, inspectGeometry, partMatrix } from '../../../engine';
+import {
+  addWeapons,
+  createCharacter,
+  defineScene,
+  defineThing,
+  physicsOf,
+  recoilStep,
+  spawnActor,
+  spawnThing,
+  weaponsFor,
+  type WeaponsState,
+} from '../../../engine/sim-api';
+import { {{name}}, {{name}}Prop } from './{{name}}';
+
+/** The target, a crate that never goes down. */
+const TARGET = defineThing('thing:{{name}}Target', { prop: 'prop:crate', hp: 1000, rise: 1 }).id;
+
+/** The range: a floor, the player at the origin facing +Z carrying it, holstered, and a target 10 m ahead. */
+const range = defineScene('weapon-test:{{name}}', {
+  physics: true,
+  setup(w) {
+    const floor = { shape: { type: 'box', size: [40, 1, 40] }, position: [0, -0.5, 0] } as const;
+    physicsOf(w).addBody({ type: 'fixed', colliders: [floor] });
+    const character = createCharacter({ movement: 'movement:apex' });
+    spawnActor(w, { at: [0, 0, 0], character, components: { weapons: weaponsFor([{{name}}.id]) } });
+    spawnThing(w, TARGET, [0, 0.95, 10]); // its middle at the eye's height
+    addWeapons(w);
+  },
+});
+
+describe('weapon:{{name}}', () => {
+  it('is drawn as parts that build clean, its muzzle at their front', () => {
+    let front = -Infinity;
+    for (const part of {{name}}Prop.parts) {
+      const report = inspectGeometry(buildPropPart(part).applyMatrix4(partMatrix(part)));
+      expect([report.missing, report.degenerate, report.flipped, report.badNormals], part.name).toEqual([[], 0, 0, 0]);
+      front = Math.max(front, report.max[2]);
+    }
+    expect(Math.abs({{name}}.muzzle[2] - front)).toBeLessThan(0.01);
+  });
+
+  it('fires its magazine down the sights at its rate, its kick climbing, and reloads from empty', async () => {
+    const { auto, draw, magazine, rate, reload, sights } = {{name}};
+    const engine = await createHeadless({ scene: range });
+    const weapons = () => (engine.get(1) as unknown as { weapons: WeaponsState }).weapons;
+    const aim = { look: [0, 0] as [number, number] }; // level along +Z, at the target
+    engine.step(10, aim);
+    engine.step(1, { ...aim, b: ['weapon1'] });
+    engine.step(Math.ceil(60 * (draw + sights)) + 1, { ...aim, b: ['aim'] }); // drawn, its sights up
+    expect([weapons().slot, weapons().aim]).toEqual([0, 1]);
+    const times: number[] = [];
+    for (let k = 0; k < 60 * 60 && weapons().shots < magazine; k++) {
+      const fire = auto || k % 2 === 0; // an automatic one held, any other a press a shot
+      engine.step(1, { ...aim, b: fire ? ['aim', 'fire'] : ['aim'] });
+      if (weapons().shot !== times[times.length - 1]) times.push(weapons().shot);
+    }
+    expect([weapons().shots, times.length]).toEqual([magazine, magazine]);
+    for (let n = 1; n < times.length; n++) expect(times[n] - times[n - 1]).toBeGreaterThanOrEqual(1 / rate - 1e-9);
+    expect(weapons().hits).toBeGreaterThan(0); // the first rounds, down the sights, struck the target
+    let climb = 0;
+    for (let n = 0; n < magazine; n++) climb += recoilStep({{name}}, n)[0];
+    if (auto) expect(weapons().kick[0]).toBeCloseTo(climb, 6); // a burst too quick to settle between its shots
+    expect(weapons().reload).toBeCloseTo(times[times.length - 1] + reload.empty, 6); // its last round reloads it
+    let steps = 0;
+    for (; weapons().mags[0] < magazine && steps < 60 * 10; steps++) engine.step(1, aim);
+    expect(Math.abs(steps / 60 - reload.empty)).toBeLessThanOrEqual(1 / 60 + 1e-9);
+  });
+});

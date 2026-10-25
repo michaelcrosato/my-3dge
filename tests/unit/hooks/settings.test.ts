@@ -1,13 +1,15 @@
 /**
- * @file The Claude Code project settings, skills and subagents in `.claude/` (PLAN.md §8.10, WP 0.10): every hook
- * event points at a script that exists, the allow list holds §8.10's entries, each skill and subagent has the
- * frontmatter Claude Code loads it by, the verifier returns §11.3's JSON verdict, and every repository path their
- * Markdown cites exists or is planned (the docs path checks of tools/lib/docsPaths.ts).
+ * @file The Claude Code project settings, skills and subagents in `.claude/` (PLAN.md §8.10, WP 0.10, WP 12.1): every
+ * hook event points at a script that exists, the allow list holds §8.10's entries, each skill and subagent has the
+ * frontmatter Claude Code loads it by, the verifier returns §11.3's JSON verdict, every repository path their Markdown
+ * cites exists or is planned (the docs path checks of tools/lib/docsPaths.ts), and the `add-entry` skill's
+ * description names every kind `x new` has a template for, so an agent asking for one finds it.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { ModuleDoc } from '../../../tools/lib/docs';
+import { listKinds } from '../../../tools/cmd/new';
 import { checkPaths } from '../../../tools/lib/docsPaths';
 import { ROOT } from '../../../tools/x';
 
@@ -36,7 +38,7 @@ function frontmatter(path: string): { fields: Record<string, string>; body: stri
   return { fields, body: match[2] };
 }
 
-const SKILLS = ['x-loop', 'three-webgpu', 'escalation', 'determinism-debugging', 'rapier', 'stress-box'];
+const SKILLS = ['x-loop', 'three-webgpu', 'escalation', 'determinism-debugging', 'rapier', 'stress-box', 'add-entry'];
 const AGENTS = ['verifier', 'visual-reviewer'];
 
 describe('.claude/settings.json', () => {
@@ -82,6 +84,12 @@ describe('.claude/ skills and subagents', () => {
       expect(fields.description.length).toBeLessThanOrEqual(1024);
       expect(body.split('\n').length).toBeLessThan(120);
     }
+  });
+
+  it('names every kind x new has in the add-entry skill’s description', () => {
+    const { description } = frontmatter(join(CLAUDE, 'skills', 'add-entry', 'SKILL.md')).fields;
+    const missing = listKinds(ROOT).filter((kind) => !new RegExp(`\\b${kind.kind}\\b`).test(description));
+    expect(missing.map((kind) => kind.kind)).toEqual([]);
   });
 
   it('defines the verifier and the visual reviewer, each returning a JSON verdict', () => {

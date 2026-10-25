@@ -1,0 +1,82 @@
+/**
+ * @file Unit tests for the interactable `{{name}}` ({{id}}.ts) in a yard: a floor, the player at the origin facing +Z,
+ * one 1.2 m before him and a locked one 1.3 m to his east. The one before him is what he would use, its prompt `Open`;
+ * `interact` opens it and shuts it again. Facing the locked one, he sees `Locked` and using it leaves it shut; his punch
+ * (`melee`) bursts it open. The same run gives the same hashes twice.
+ * @see {{id}}.ts
+ */
+import { describe, expect, it } from 'vitest';
+import { createHeadless } from '../../../engine';
+import {
+  addInteraction,
+  addMelee,
+  createCharacter,
+  defineScene,
+  physicsOf,
+  spawnActor,
+  type Intents,
+} from '../../../engine/sim-api';
+import { {{name}} } from './{{name}}';
+
+/** The yard (see the file comment): the player is entity 1, the one before him 2, the locked one 3. */
+const yard = defineScene('interactable-test:{{name}}', {
+  physics: true,
+  setup(w) {
+    const floor = { shape: { type: 'box', size: [20, 1, 20] }, position: [0, -0.5, 0] } as const;
+    physicsOf(w).addBody({ type: 'fixed', colliders: [floor] });
+    spawnActor(w, { at: [0, 0, 0], character: createCharacter({ movement: 'movement:apex' }) });
+    {{name}}.add(w, { at: [0, 0, 1.2], yaw: Math.PI }); // its front toward him
+    {{name}}.add(w, { at: [1.3, 0, 0], yaw: -Math.PI / 2, locked: true });
+    addInteraction(w);
+    addMelee(w);
+  },
+});
+
+/** Its component, as an entity holds it. */
+type State = { open: boolean; locked: boolean };
+
+/** Facing north (+Z), or east (+X), level. */
+const [NORTH, EAST]: Intents[] = [{ look: [0, 0] }, { look: [Math.PI / 2, 0] }];
+
+/** A headless run of the yard, stepped twice (the queries see the bodies from the first step). */
+async function run() {
+  const engine = await createHeadless({ scene: yard });
+  engine.step(2, NORTH);
+  const interactor = () => (engine.get(1) as unknown as { interactor: { target: number; prompt: string } }).interactor;
+  const state = (id: number) => (engine.get(id) as unknown as Record<string, State>)[{{name}}.component];
+  return { engine, interactor, state };
+}
+
+describe('{{name}}', () => {
+  it('shows its prompt to the player before it, and opens and shuts with interact', async () => {
+    const { engine, interactor, state } = await run();
+    expect([interactor().target, interactor().prompt]).toEqual([2, 'Open']);
+    engine.step(1, { ...NORTH, b: ['interact'] });
+    expect([state(2).open, interactor().prompt]).toEqual([true, 'Close']);
+    engine.step(1, NORTH);
+    engine.step(1, { ...NORTH, b: ['interact'] });
+    expect([state(2).open, interactor().prompt]).toEqual([false, 'Open']);
+  });
+
+  it('stays shut while locked, and bursts open at a punch', async () => {
+    const { engine, interactor, state } = await run();
+    engine.step(10, EAST);
+    expect([interactor().target, interactor().prompt]).toEqual([3, 'Locked']);
+    engine.step(1, { ...EAST, b: ['interact'] });
+    expect(state(3)).toEqual({ open: false, locked: true });
+    engine.step(1, { ...EAST, b: ['melee'] });
+    engine.step(60, EAST);
+    expect(state(3)).toEqual({ open: true, locked: false });
+    expect(state(2).open).toBe(false); // the one behind him untouched
+  });
+
+  it('gives the same hashes every run', async () => {
+    const hashes = async () => {
+      const { engine } = await run();
+      engine.step(1, { ...NORTH, b: ['interact'] });
+      engine.step(30, EAST);
+      return engine.hash();
+    };
+    expect(await hashes()).toBe(await hashes());
+  });
+});

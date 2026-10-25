@@ -103,7 +103,7 @@ Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - labs/box/README.md: the box's scenes, settings and quick loop; adding a scene or a variant (a variant is a new
   scene file or a settings preset, never a change of meaning in a passing scene).
 - tests/replays/README.md: the replay format; checking, recording and making replays.
-- tools/templates/: `node x new <kind> <id>` writes a module, scene, material… from its kind's template and checks it
-  (`node x new` lists the kinds).
-- .claude/skills/: the skills, each loaded when its description says (x-loop after any change, stress-box for the box,
-  determinism-debugging when hashes part, rapier, three-webgpu, escalation).
+- tools/templates/README.md: the kinds `node x new <kind> <id>` writes from a template and checks (a module, scene,
+  prop, weapon, level…), where each goes, what shows it, and how to add a kind (`node x new` lists them).
+- .claude/skills/: the skills, each loaded when its description says (x-loop after any change, add-entry for a new
+  entry of a kind, stress-box for the box, determinism-debugging when hashes part, rapier, three-webgpu, escalation).
