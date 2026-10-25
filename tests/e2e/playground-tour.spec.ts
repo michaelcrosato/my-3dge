@@ -111,9 +111,10 @@ test.describe('the playground’s tour', () => {
   }) => {
     await page.goto('labs/playground/?replay=playground-tour&playground.attract=on&playground.title=off&quality=low');
     await harness.ready({ timeout: SITE_READY });
+    await harness.tick(2); // a frame runs only on a tick: the HUD and the attract mode read the run in their frames
     await expect(page.locator('[data-ui=attract]')).toBeVisible();
     const code = async () => (await call<{ code: string }>(page, 'camera.get')).code.split(',')[0];
-    const mode = () => page.locator('[data-ui=hud][data-id=mode]').textContent();
+    const mode = () => page.locator('[data-ui=hud][data-id=mode]').textContent({ timeout: 10_000 });
     const [camera, before] = [await code(), await mode()];
     await harness.tick(ATTRACT.cycle * 60 + 2);
     expect(await code()).not.toBe(camera); // the next camera, blending in
