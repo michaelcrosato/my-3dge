@@ -18,7 +18,8 @@
  * stopping at the first that fails. `dryRunTask` judges a task twice with no model call: its acceptance must fail on
  * the start (else it proves nothing, `EVALS_NOT_REAL`) and pass once the reference solution is applied
  * (`EVALS_SOLUTION_FAILS`); `attemptTask` hands an agent's command the prompt on its standard input in the copy, stops
- * it after the task's minutes, keeps its output and diff under out/evals/<id>/, and judges what it left.
+ * it after the task's minutes, its whole process group with it (`stopGroup`: a timed-out shell leaves its children
+ * running), keeps its output and diff under out/evals/<id>/, and judges what it left.
  *
  * Invariants: nothing here writes inside the repository but out/; a copy lives under the system's temporary directory
  * and is removed after its task unless kept; children never inherit Vitest's or git's variables.
@@ -284,6 +285,24 @@ function scratch(id: string, keep: boolean) {
 /** The first line of an error's message. */
 const firstLine = (error: unknown) => (error instanceof Error ? error.message : String(error)).split('\n')[0];
 
+/**
+ * Kills the process group `pid` leads (an attempt's shell, started `detached`, and all it started) and waits, up to
+ * `ms`, until none of it is left: `spawnSync`'s timeout kills the shell alone, and its children would go on writing.
+ */
+export function stopGroup(pid: number | undefined, ms = 10_000): void {
+  const alive = () => {
+    try {
+      process.kill(-pid!, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (!pid || !alive()) return;
+  process.kill(-pid, 'SIGKILL');
+  for (const until = Date.now() + ms; alive() && Date.now() < until; ) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20); // prettier-ignore
+}
+
 /** One task's dry run: its acceptance fails on the start and passes with the reference solution (see the file comment). */
 export async function dryRunTask(
   root: string,
@@ -333,7 +352,10 @@ export async function attemptTask(
     const prompt = `${PREAMBLE}\n\n${task.prompt}\n`;
     writeFileSync(join(dir, 'prompt.md'), prompt);
     const env = childEnv({ EVAL_TASK: task.id, EVAL_PROMPT_FILE: join(dir, 'prompt.md') });
-    const run = spawnSync(agent, { cwd: copy, shell: true, input: prompt, env, encoding: 'utf8', timeout: task.minutes * 60_000, maxBuffer: 256 * 1024 * 1024 }); // prettier-ignore
+    // detached: the shell leads a process group of its own (spawnSync honours it as spawn does; its types omit it)
+    const options = { cwd: copy, shell: true, detached: true, input: prompt, env, encoding: 'utf8' as const, timeout: task.minutes * 60_000, maxBuffer: 256 * 1024 * 1024 }; // prettier-ignore
+    const run = spawnSync(agent, options);
+    stopGroup(run.pid); // before its copy is read: nothing it started edits on past its minutes
     mkdirSync(out, { recursive: true });
     writeFileSync(join(out, 'agent.log'), `${run.stdout ?? ''}${run.stderr ?? ''}`);
     git(copy, ['add', '-A']);

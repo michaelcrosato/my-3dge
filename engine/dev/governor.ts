@@ -98,7 +98,7 @@ export interface Governor {
   frame(ms: number): void;
   /** The budget `setting` affords now, on a touch screen (`touch`) or elsewhere. */
   budget(setting: QualitySetting, touch: boolean): QualityBudget;
-  /** Holds it (true) or lets it run (false). */
+  /** Holds it (true) or lets it run (false); only a change starts a new second, so the page may say it every frame. */
   freeze(frozen: boolean): void;
   /** What it holds, as plain data. */
   state(): GovernorState;
@@ -161,7 +161,7 @@ export function createGovernor(options: { log?: Pick<Log, 'warnOnce'> } = {}): G
       };
     },
     freeze(frozen) {
-      [s.frozen, ms, frames] = [frozen, 0, 0];
+      if (frozen !== s.frozen) [s.frozen, ms, frames] = [frozen, 0, 0];
     },
     state() {
       const { tier, scale, calm, bad, good, seconds, moves, frozen } = s;

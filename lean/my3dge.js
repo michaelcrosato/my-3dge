@@ -38796,7 +38796,7 @@ function Ufe(e = {}) {
       };
     },
     freeze(c) {
-      [n.frozen, o, r] = [c, 0, 0];
+      c !== n.frozen && ([n.frozen, o, r] = [c, 0, 0]);
     },
     state() {
       const { tier: c, scale: l, calm: u, bad: d, good: h, seconds: f, moves: p, frozen: m } = n;

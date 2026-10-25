@@ -9972,6 +9972,7 @@ For the agents who maintain the engine.
 - `readBaseline` (function): Reads evals/baseline.json, or undefined when there is none.
 - `readTasks` (function): Every task under evals/, by id, and the problems with any (`EVALS_BAD_TASK`, naming the file and the fix).
 - `STEP_TIMEOUT_MS` (const): How long one acceptance step may run before it is stopped, in ms: it bounds a hang, never a slow machine.
+- `stopGroup` (function): Kills the process group `pid` leads (an attempt's shell, started `detached`, and all it started) and waits, up to `ms`, until none of it is left: `spawnSync`'s timeout kills the shell alone, and its children would go on writing.
 - `Verdict` (interface): A judgement of one attempt: whether it passes, why not (the first step that failed), and the steps it ran.
 
 ### [`tools/lib/filmCompare.ts`](../tools/lib/filmCompare.ts)

@@ -2,7 +2,8 @@
  * @file Tests the performance governor (engine/dev/governor.ts, WP 7.5) on simulated frame times: three slow seconds
  * demote a tier and no fewer do; calm seconds promote one, never above where `auto` starts; a demotion soon after a
  * promotion doubles the calm, so a machine on the edge settles instead of flickering; a tier set by hand is kept and
- * `auto` starts again from its own tier; frozen, it holds; on a touch screen the drawn pixels' scale follows the
+ * `auto` starts again from its own tier; frozen, it holds, and told every frame that it is not, it still moves (only a
+ * change of state starts a new second); on a touch screen the drawn pixels' scale follows the
  * frame rate; every move is advice; and a run whose governor moves tiers between its steps keeps the hash of a run
  * without one.
  */
@@ -76,6 +77,17 @@ describe('the performance governor', () => {
     governor.freeze(false);
     run(GOVERNOR.drop, 20);
     expect(governor.budget('auto', true).tier).toBe('low');
+  });
+
+  it('moves under a page that says it is not frozen before every frame, as engine/app/engine.ts does', () => {
+    const { governor } = governed();
+    for (let i = 0; i < (GOVERNOR.drop + 1) * 25; i++) {
+      governor.freeze(false); // the page's draw, each frame (Codex on #34: each call used to start a new second)
+      governor.frame(40);
+      governor.budget('auto', false); // the frame's pixel caps (engine/app/drawing.ts)
+    }
+    expect(governor.budget('auto', false).tier).toBe('medium'); // three slow seconds counted: one tier down
+    expect(governor.state().seconds).toBeGreaterThanOrEqual(GOVERNOR.drop);
   });
 
   it('on a touch screen, scales the drawn pixels down with each slow second and back up with calm ones', () => {

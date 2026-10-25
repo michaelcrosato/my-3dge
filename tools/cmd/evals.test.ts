@@ -4,16 +4,17 @@
  * this tree (its start, then its solution on the start), so a change under a task names the task to make again; a
  * malformed task is named with its fix, by `x check` too; in a scratch repository, a dry run passes a real task and
  * fails one whose acceptance passes before any work and one whose solution does not pass it; a live run judges what
- * an agent's command left; and a live run without an agent is a usage error naming the owner's escalation.
+ * an agent's command left, once its process group is stopped (`stopGroup`: a timed-out shell's children with it); and
+ * a live run without an agent is a usage error naming the owner's escalation.
  * The full dry run over every task (`node x evals --dry-run`) is the WP's verify command, not a unit test.
  * @see tools/cmd/evals.ts
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'; // prettier-ignore
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { attemptTask, AREAS, dryRunTask, git, patchedFiles, readBaseline, readTasks } from '../lib/evals';
+import { attemptTask, AREAS, dryRunTask, git, patchedFiles, readBaseline, readTasks, stopGroup } from '../lib/evals';
 import { CHILD_TIMEOUT_MS, ROOT, UsageError } from '../x';
 import command, { check } from './evals';
 
@@ -156,6 +157,24 @@ describe('in a scratch repository', () => {
     },
     CHILD_TIMEOUT_MS,
   );
+});
+
+describe('stopGroup', () => {
+  it('stops what a timed-out attempt leaves running: the shell is gone, the child it started is not', () => {
+    const options = { shell: true, detached: true, timeout: 300 }; // as attemptTask runs an agent, timed out at once
+    const run = spawnSync('(while true; do sleep 1; done) & sleep 30', options);
+    const alive = () => {
+      try {
+        process.kill(-run.pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    expect([(run.error as NodeJS.ErrnoException | undefined)?.code, alive()]).toEqual(['ETIMEDOUT', true]);
+    stopGroup(run.pid);
+    expect(alive()).toBe(false);
+  });
 });
 
 describe('x evals', () => {
