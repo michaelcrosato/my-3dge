@@ -3816,12 +3816,12 @@ The stress test had no sound. The engine's sound data and synth design come over
 **Gate G12, Alive:** the shooter and the platformer keep the player in view indoors (WP 13.27); melee, the door kick and both firearms work in every camera, golden in Node and in the page; the neighbours, the dog and the dummies react; every event has its sound; day and night in both looks; GPU features each with its downgrade playable and the hash unchanged; hands and feet within §5's bounds with the re-imported clips.
 
 #### WP-13.25 The front end
-- **Owns:** `labs/playground/ui/`, extends `labs/playground/main.ts`, `tests/e2e/playground.spec.ts`
+- **Owns:** `labs/playground/ui/`, `tests/e2e/playground-ui.spec.ts`, extends `labs/playground/main.ts`, `tests/e2e/playground.spec.ts`, `engine/app/{engine,drawing,store}.ts`, `engine/input/input.ts` (ADR-0025 amendment 38)
 - **Needs:** WP 10.6, WP 10.9, WP 13.9, WP 13.20
 - **Size:** M
 - **Build** (docs/PLAYGROUND.md §8.3): the title screen; the spawn picker (each area and room); pause; settings (camera mode and field of view, controls with rebinding, sensitivity, the movement profile, the look, audio levels, graphics and quality); the HUD per camera mode (crosshair, prompts, ammo, the feel readout); photo mode (the free camera, the looks).
 - **Done when:** every screen through DOM queries; settings and bindings survive a reload (the store); menu choices that change play are recorded and replay.
-- **Verify:** `npm run e2e -- tests/e2e/playground.spec.ts`
+- **Verify:** `npm run e2e -- tests/e2e/playground.spec.ts tests/e2e/playground-ui.spec.ts`
 
 #### WP-13.26 The tour and the hand-over
 - **Owns:** extends `labs/playground/`, `docs/GAME-GUIDE.md`, `labs/game/`, `tests/replays/playground-tour.replay.json`

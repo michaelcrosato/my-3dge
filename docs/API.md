@@ -3456,6 +3456,7 @@ For the agents who maintain the engine.
 - `StoreBackend` (interface): Where a store writes: the Web Storage calls it uses (`localStorage` is one).
 - `StoreMode` (type): One of `STORE_MODES`: whose play a store keeps.
 - `StoreOptions` (interface): How a store is made (see the file comment).
+- `textStorage` (function): The store as the two string calls of `localStorage` (`getItem`, `setItem`), for a module that saves text of its own: the bindings (engine/input/bindings.ts), which the engine saves through the page's store (`createEngine({ store })`).
 
 ### [`engine/app/view.ts`](../engine/app/view.ts)
 
@@ -8208,8 +8209,10 @@ For the agents who maintain the engine.
 - `APEX_JUMP` (const): Apex's jump (m): 56 units.
 - `APEX_RUN` (const): Apex's run with a weapon out (m/s): 173.5 units/s; holstered, the player runs 1.15 times as fast.
 - `PLAYER_LOOK` (const): How the player is drawn: `body:player` on the adult build, empty-handed.
-- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned.
-- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m).
+- `PLAYER_MOVEMENTS` (const): The profiles the player may move by: Apex's, the default, and the Stress Box hero's.
+- `PLAYER_SETTINGS` (const): The player's setting (see the file comment).
+- `playerCharacter` (function): The player's character: `movement:apex`, its run and its jump's height (a take-off of √(2 g h)) as tuned; on another profile, that profile's own character, the tuning unused.
+- `PlayerTuning` (interface): What a scene may tune: the run with a weapon out (m/s) and the jump's height (m); and the profile, Apex's by default.
 - `spawnPlayer` (function): Stands the player in `w` (a scene with physics) at `at`, facing `yaw`: an actor the step's intents move, carrying `weapons` (ids, in slot order; none by default), holstered.
 
 ### [`labs/playground/cast/ways.ts`](../labs/playground/cast/ways.ts)
@@ -8538,6 +8541,63 @@ For the agents who maintain the engine.
 - `SoundFrame` (interface): What `frame` reads each drawn frame (the engine's `onFrame` gives it): never a way to change play.
 - `WIND` (const): The wind past his ears: none below `from` m/s, full (`vol`) at `full`, in twentieths, eased over `ease` s.
 - `ZIP` (const): The zipline's hum while he rides, its level.
+
+### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
+
+- `createFrontEnd` (function): Makes the front end, nothing open (see the file comment).
+- `FRONT_END_SETTINGS` (const): The title screen's view setting (see the file comment).
+- `FrontEnd` (interface): The front end (see the file comment).
+- `FrontEndOptions` (interface): What the front end needs of the page.
+- `ScreenName` (type): The screens.
+- `spawnOnOpen` (function): Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran.
+- `titleOnOpen` (function): Whether the title screen opens with the page (see the file comment).
+
+### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
+
+- `feelLine` (function): The feel readout's line: speed over the ground, m/s, and the mode (or, on the ground, the gait).
+- `HUD_MODES` (const): Each camera mode's HUD, by the mode's name (labs/playground/views.ts).
+- `HUD_SETTINGS` (const): The readout's view setting (see the file comment).
+- `HudFrame` (interface): What one frame's HUD shows: the mode's name, the look, the room line, the player, and the readout setting.
+- `HudMode` (interface): What a camera mode's HUD shows (see the file comment).
+- `HudPlayer` (type): The player as the HUD reads him: where he is and how fast, how he moves, what he would use, his weapons.
+- `showHud` (function): Shows `frame`'s HUD on `ui`, the prompts read from `input` (see the file comment); `hidden` clears it.
+
+### [`labs/playground/ui/photo.ts`](../labs/playground/ui/photo.ts)
+
+- `createPhoto` (function): Makes photo mode, closed: its hint in `parent`, its drag over `canvas`.
+- `Photo` (interface): Photo mode (see the file comment).
+- `PHOTO` (const): How the drag turns the camera: radians a CSS pixel.
+- `PhotoCamera` (interface): The camera member, as photo mode uses it.
+
+### [`labs/playground/ui/prefs.ts`](../labs/playground/ui/prefs.ts)
+
+- `NO_PREFS` (const): No preferences: a first visit.
+- `PREF_BUSES` (const): The audio buses the settings screen sets, master first (engine/audio/runtime/mixer.ts's).
+- `PREF_SETTINGS` (const): The settings the settings screen offers and the store keeps, by path.
+- `Prefs` (interface): What is kept (see the file comment).
+- `PREFS_KEY` (const): The key the preferences are kept under.
+- `PREFS_PREFIX` (const): The store's prefix: the playground's own, so other pages on the origin keep apart.
+- `PrefSetting` (type): One of `PREF_SETTINGS`.
+- `prefsQuery` (function): Writes `prefs` into `search` (see the file comment) and returns the keys it wrote: the camera's (`cam` or `cam3`) when the query names no camera, then each kept setting the query lacks and the routes accept on `scenes`.
+- `readPrefs` (function): The preferences `store` keeps, or none; whatever is not of their shape is dropped.
+- `savePrefs` (function): Keeps `prefs` in `store`; false when the store refused it.
+
+### [`labs/playground/ui/settings.ts`](../labs/playground/ui/settings.ts)
+
+- `CONTROL_ACTIONS` (const): The actions the controls list, with their names: the four moves, then those the player answers (controls.ts).
+- `createSettings` (function): Makes the settings screen in `parent` (see the file comment).
+- `RowSchema` (interface): A setting's schema as the screen reads it: its type, range and choices.
+- `SETTING_ROWS` (const): The rows, in the screen's order (see the file comment).
+- `SettingRow` (interface): What a row sets: a setting by path, the camera mode, or a bus's level.
+- `SettingsOptions` (interface): How the screen is made.
+- `SettingsScreen` (interface): The settings screen.
+
+### [`labs/playground/ui/spawns.ts`](../labs/playground/ui/spawns.ts)
+
+- `SPAWN_SETTINGS` (const): The spawn picker's view setting (see the file comment): a place's id, or none.
+- `spawnPlace` (function): The place `id` names, or undefined.
+- `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
+- `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 

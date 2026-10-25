@@ -15,15 +15,15 @@
  * its poll, the virtual device's at the sample). `camera()` gives what the camera takes each frame (mouse look under
  * pointer lock and the right stick, scaled by the view settings `input.*`, engine/input/look.ts; the wheel; a map that
  * aims with the pointer keeps the stick for aiming). `prompt(action)` labels a binding on the device used last;
- * `use(map)` switches the map live (one per camera mode, WP 13.9), what is held read through it from the next sample.
- * A code a held binding waits on (WP 13.20) is held back as it goes down, until it is a tap or a hold (`sample`).
+ * `use(map)` switches the map live (one per camera mode, WP 13.9), what is held read through it from the next sample;
+ * `bindingsFor(map)`, another map's bindings, unswitched, for a controls screen (WP 13.25). A code a held binding waits
+ * on (WP 13.20) is held back as it goes down, until it is a tap or a hold (`sample`).
  *
  * Clearing: a page blur, the page going hidden and `clear()` let go of every held code and drop pending presses, so
- * nothing stays held after alt-tab; a gamepad that disconnects lets go of its own. `listen(device)` waits for the next
- * key or mouse button (`keyboard`) or pad button (`gamepad`) for rebinding, swallowing it; Escape cancels (null).
+ * nothing stays held after alt-tab; a gamepad that disconnects lets go of its own. `listen(device)` serves rebinding.
  *
  * Invariants: nothing here reads a clock; edges are counted per sample; a code is held only between its press and
- * release reports. Without `window` and `document` (Node), only the gamepad source given and the virtual device feed it.
+ * release reports. In Node (no `window`, `document`), only the gamepad source given and the virtual device feed it.
  *
  * Carried from `my-3d2dge:engine/my-3d2dge.js:482-512, 542-555, 594-622` (the input object, blur, `move`, `tick`),
  * sampled per frame; shardfall's short taps and prompts (`shardfall:crates/pav_app/src/input.rs:590-610`).
@@ -105,6 +105,8 @@ export interface Input {
   readonly bindings: Bindings;
   /** Switches to the action map `map` (an id, its bindings made and saved as the first's, or bindings); returns them. */
   use(map: string | Bindings): Bindings;
+  /** The bindings of the action map `map` (an id), made and saved as the first's, without switching to them. */
+  bindingsFor(map: string): Bindings;
   /** The virtual device, merged into every sample (`__engine.input` drives it). */
   readonly virtual: VirtualDevice;
   /** The mouse (pointer lock, pointer), when there is a page. */
@@ -279,6 +281,11 @@ export function createInput(options: InputOptions = {}): Input {
       bindings = typeof map === 'string' ? (known.get(map) ?? made(map)) : map;
       known.set(bindings.map.id, bindings);
       return bindings;
+    },
+    bindingsFor(map) {
+      const found = known.get(map) ?? made(map);
+      known.set(found.map.id, found);
+      return found;
     },
     virtual,
     mouse,

@@ -4,9 +4,10 @@
  * frame presses without holding, a hold presses once, sticks walk at their strength with the deadzone applied, keys and
  * pads are bound by code, the move actions and the system layer stay out of the buttons, blur and a hidden page let go,
  * prompts follow the last device used, `listen` captures a code for rebinding, and the virtual device merges in; WP
- * 13.9: the map switches live, view actions are heard at once and never sent, the aim follows the map's rule from the
- * free pointer and the right stick, and the camera's look is scaled by the look settings; WP 13.20: a code a held
- * binding waits on is a tap of its plain binding when let go sooner, and kept down presses and holds the held one.
+ * 13.9: the map switches live (another map's bindings handed out without a switch, WP 13.25), view actions are heard at
+ * once and never sent, the aim follows the map's rule from the free pointer and the right stick, and the camera's look
+ * is scaled by the look settings; WP 13.20: a code a held binding waits on is a tap of its plain binding when let go
+ * sooner, and kept down presses and holds the held one.
  * @see engine/input/input.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -245,6 +246,9 @@ describe('createInput', () => {
     expect(heard).toHaveLength(5);
     input.use('actionMap:a');
     expect(input.bindings).toBe(first); // the same bindings, rebinds and all
+    const other = input.bindingsFor('actionMap:b'); // another map's, for a controls screen: no switch
+    expect([input.bindings, other.rebind('jump', 'KeyM').ok]).toEqual([first, true]);
+    expect(input.use('actionMap:b')).toBe(other); // switching to it later uses them, rebind and all
   });
 
   it('waits on a code a held binding names: a tap is its plain binding, kept down its held one (WP 13.20)', () => {

@@ -15,16 +15,13 @@
  * F shows and hides the feel panel (labs/playground/feel.ts, WP 13.4), whose sliders tune the run through recorded
  * settings.
  *
- * Each drawn frame (`onFrame`) it shows the gym's signs (labs/playground/levels/gym.ts) as labels over their features,
- * in the gym's own scene and where the gym stands on the site (labs/playground/levels/site.ts), those within
- * `SIGN_RANGE` of the player, and the HUD: the camera mode and the look in use, the room the player is in
- * on a scene's site (`whereLine`, a room's data: PLAN.md WP 13.15), what using the thing in reach does, with the key
- * that uses it on the device used last (its `interactor`'s prompt, WP 13.16), the player's weapon, its rounds, his
- * hits and his accuracy, and the crosshair while the screen's centre aims one (labs/playground/weapons/hud.ts, WP
- * 13.20), and the keys of the map in use as its prompts give them (`keysLine`); it plays the frame's sound
- * (labs/playground/sounds/page.ts, WP 13.22: the run's events, the room's reverb, the ambience, the wind), silent until
- * the first key, click or touch, and runs the weather (labs/playground/weather.ts, WP 11.3: the rain outdoors and the
- * dust indoors, as `playground.rain` and `playground.dust` say). It reads the run and never changes it.
+ * Each drawn frame (`onFrame`) it runs the front end (labs/playground/ui/frontEnd.ts, WP 13.25: the title screen,
+ * pause on Escape, the spawn picker, settings kept by the store with the bindings, photo mode), shows the gym's signs
+ * (labs/playground/levels/gym.ts) within `SIGN_RANGE` of the player and the HUD of the camera mode in use
+ * (labs/playground/ui/hud.ts: the room on a site's scene, `whereLine`), plays the frame's sound
+ * (labs/playground/sounds/page.ts, WP 13.22), silent until the first key, click or touch, and runs the weather
+ * (labs/playground/weather.ts, WP 11.3: `playground.rain` and `playground.dust`). It reads the run and changes it only
+ * through the front end's recorded picks (a spawn, a restart, the movement profile).
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
@@ -37,8 +34,8 @@
  * `node x shot labs/playground --scene gym --cam iso` reports what it draws.
  */
 /// <reference types="vite/client" />
-import { createEngine, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
-import { keysLine, playgroundMap } from './controls';
+import { createEngine, createStore, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
+import { playgroundMap } from './controls';
 import { mountFeelPanel } from './feel';
 import './ground';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
@@ -48,7 +45,9 @@ import { gym } from './scenes/gym';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
 import { createPlaygroundSound } from './sounds/page';
 import { runWeather } from './weather';
-import { showsCrosshair, weaponLine, type WeaponsView } from './weapons/hud';
+import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
+import { showHud, type HudPlayer } from './ui/hud';
+import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
 
 /** How near the player a sign shows (m): the features around him, not the whole gym at once. */
 const SIGN_RANGE = 24;
@@ -80,8 +79,18 @@ const replays = Object.fromEntries(
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
 
-/** The page's query, with the shooter camera, the cel look and whole-number zooms when it names none of them. */
+/**
+ * The page's query: the player's kept preferences where it names none (labs/playground/ui/prefs.ts; a replay's page
+ * keeps nothing, its store in `demo`), then the shooter camera, the cel look and whole-number zooms where it names none.
+ */
 const search = new URLSearchParams(location.search);
+const store = createStore({ prefix: PREFS_PREFIX, mode: search.has('replay') ? 'demo' : 'play' });
+const prefs = readPrefs(store);
+prefsQuery(
+  prefs,
+  search,
+  sceneEntries.map((entry) => entry.id),
+);
 if (!search.has('cam') && !search.has('cam3')) search.set('cam3', 'shoulder');
 if (!search.has('post.look')) search.set('post.look', PLAYGROUND_LOOKS[0]);
 if (!search.has('cam.wholeZoom')) search.set('cam.wholeZoom', 'true');
@@ -128,14 +137,17 @@ function whereLine(scene: EngineFrame['scene'], at: { x: number; y: number; z: n
   return found?.room ? `Room: ${found.room.name}` : found ? 'Indoors' : 'Outdoors';
 }
 
-/** The player's entity as the HUD reads it: where it is, and what it would use (engine/sim/interact.ts). */
-type PlayerEntity = { actor: { player: boolean; x: number; y: number; z: number }; interactor?: { prompt: string }; weapons?: WeaponsView }; // prettier-ignore
+/** The player's entity as the page reads it: where it is, how it moves and what it would use (labs/playground/ui/hud.ts). */
+type PlayerEntity = HudPlayer & { actor: { player: boolean; x: number; y: number; z: number } };
+
+/** The front end (labs/playground/ui/frontEnd.ts): null until the engine is up. */
+let frontEnd: FrontEnd | null = null;
 
 /** The inspector's camera member; null before the engine starts. */
 const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? null;
 
-/** Shows the signs near the player and the HUD's lines. */
-function showFrame({ world, scene }: EngineFrame): void {
+/** Shows the signs near the player and the HUD's lines (labs/playground/ui/hud.ts); none of it in photo mode. */
+function showFrame({ world, scene, setting }: EngineFrame): void {
   const ui = engine?.ui;
   if (!ui) return;
   const origin = signs.length === 0 ? gymAt(scene) : null;
@@ -149,20 +161,19 @@ function showFrame({ world, scene }: EngineFrame): void {
   const players = world.query('actor') as unknown as PlayerEntity[];
   const entity = players.find((one) => one.actor.player);
   const player = entity?.actor;
+  const photo = frontEnd?.state().screens.at(-1) === 'photo';
   for (const sign of signs) {
-    sign.label.visible = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
+    sign.label.visible = !photo && (!player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE);
   }
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
-  const look = showing.look.replace(/^look:playground-/, '');
-  ui.hud('mode', `Camera: ${showing.camera} · Look: ${look}`, { at: 'top-right' });
-  ui.hud('room', player ? whereLine(scene, player) : null, { at: 'top-left' });
-  if (!engine?.input) return;
-  const use = entity?.interactor?.prompt;
-  ui.hud('use', use ? `${engine.input.prompt('interact')}: ${use}` : null, { at: 'bottom', keys: true });
-  const draw = `${engine.input.prompt('weapon1')} ${engine.input.prompt('weapon2')}`;
-  ui.hud('weapon', entity?.weapons ? weaponLine(entity.weapons, draw) : null, { at: 'bottom-right' });
-  ui.crosshair(showsCrosshair(entity?.weapons, engine.input.bindings.map.aimWith === 'centre'));
-  ui.hud('keys', keysLine(engine.input), { at: 'bottom', keys: true });
+  const where = player ? whereLine(scene, player) : null;
+  const readout = String(setting('playground.readout'));
+  showHud(
+    ui,
+    engine?.input ?? null,
+    { mode: showing.camera, look: showing.look, where, player: entity, readout },
+    photo,
+  );
 }
 
 /** A view action of the map in use (labs/playground/controls.ts): the camera's switch, the shoulder, a view's turn. */
@@ -182,6 +193,11 @@ function onView(action: string): void {
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
 const sound = createPlaygroundSound(); // published as window.__playgroundSound
+for (const bus of PREF_BUSES) if (prefs.volumes[bus] !== undefined) sound.audio.volume(bus, prefs.volumes[bus]);
+/** The frame drawn last: the front end reads its scene and settings. */
+let last: EngineFrame | null = null;
+/** Whether the query's spawn pick (`playground.spawn`) waits for the first frame with the front end up. */
+let spawning = search.has('playground.spawn');
 engine = await createEngine({
   canvas,
   actionMap: playgroundMap,
@@ -190,13 +206,32 @@ engine = await createEngine({
   levels,
   replays,
   search: `?${search}`,
+  store,
+  modal: () => frontEnd?.modal() ?? false,
+  cameraInput: () => frontEnd?.cameraInput(),
   onFrame: (frame) => {
+    last = frame;
+    if (spawning && frontEnd) [spawning] = [false, spawnOnOpen(engine!, search, frame.scene)];
+    frontEnd?.frame(frame.dt);
     showFrame(frame);
     sound.frame(frame);
     runWeather(frame, (at) => !!placeAt(frame.scene, at)); // the rain and the dust (labs/playground/weather.ts)
   },
 });
 if (engine.inspector) mountFeelPanel(document, engine.inspector, search);
+if (engine.inspector && engine.ui && engine.input) {
+  frontEnd = createFrontEnd({
+    engine,
+    canvas,
+    store,
+    prefs,
+    audio: sound.audio,
+    scene: () => last?.scene ?? null,
+    setting: (path) => last?.setting(path),
+    onView: (change) => void (showing = { ...showing, ...change }),
+  });
+  if (titleOnOpen(search.get('playground.title') ?? 'auto', search, navigator.webdriver)) frontEnd.open('title');
+}
 
 addEventListener('keydown', (event) => {
   const inspector = engine?.inspector;

@@ -33,7 +33,7 @@ import type { Chrome } from '../ui/chrome';
 import type { Overlay } from '../ui/overlay';
 import type { TouchLayer } from '../ui/touch';
 import { queryViewOf } from '../sim/queryView';
-import type { CameraPose } from '../gfx/cameras/pose';
+import type { CameraInput, CameraPose } from '../gfx/cameras/pose';
 import type { QueryView } from '../sim/queryView';
 import type { Scene } from '../sim/scene';
 import type { World, WorldEvents } from '../sim/world';
@@ -58,6 +58,8 @@ export interface PageParts {
   numbers: DamageNumbers | null;
   /** The performance governor (engine/dev/governor.ts): `auto`'s tier as the frame rate asks. */
   governor: Governor | null;
+  /** The page's own camera input, laid over the devices' each drawn frame (`EngineOptions.cameraInput`). */
+  cameraInput?: () => CameraInput | undefined;
   /** Whether the first frame is drawn. */
   ready: boolean;
 }
@@ -147,7 +149,7 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
       parts.governor?.frame(dt * 1000);
       touchFrame();
       gfx.resolution.update();
-      const cameraInput = parts.input?.camera();
+      const cameraInput = { ...parts.input?.camera(), ...parts.cameraInput?.() };
       const view = viewNow().frame({ alpha, dt, aspect: aspect(), input: cameraInput });
       keepWidth(view.camera, aspect());
       const { shake } = viewNow().stage.fx.effects;

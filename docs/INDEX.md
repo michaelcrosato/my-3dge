@@ -359,7 +359,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `parseRoutes`, `ROUTE_CODES`, `ROUTE_KEYS`, `RouteOptions`, `routeQuery`, `Routes`
   - Tests: [`engine/app/routes.test.ts`](../engine/app/routes.test.ts)
 - [`store.ts`](../engine/app/store.ts): The store (PLAN.md WP 10.9, §9.1, ADR-0024): what a game keeps across sessions, outside the sim (high scores, progress, its settings).
-  - Exports: `createStore`, `memoryBackend`, `Store`, `STORE_CODES`, `STORE_FORMAT`, `STORE_MODES`, `StoreBackend`, `StoreMode`, `StoreOptions`
+  - Exports: `createStore`, `memoryBackend`, `Store`, `STORE_CODES`, `STORE_FORMAT`, `STORE_MODES`, `StoreBackend`, `StoreMode`, `StoreOptions`, `textStorage`
   - Tests: [`engine/app/store.test.ts`](../engine/app/store.test.ts)
 - [`view.ts`](../engine/app/view.ts): The view of a run (PLAN.md §6.4's `view.update`, §8.3, WP 2.7): what a running scene looks like, built without a GPU, so a page draws it and `createHeadless({ view: true })` dumps it in Node.
   - Exports: `ADVANCE_FRAME`, `CameraInfo`, `createRunView`, `DEFAULT_CAMERA`, `HEADLESS_ASPECT`, `RunView`, `RunViewOptions`, `VIEW_CODES`, `ViewFrame`
@@ -1849,7 +1849,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `PARTNER_BLOWS`, `RING_PARTNERS`, `standPartners`
   - Tests: [`labs/playground/cast/partners.test.ts`](../labs/playground/cast/partners.test.ts)
 - [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1–13.3): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
-  - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
+  - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `PLAYER_MOVEMENTS`, `PLAYER_SETTINGS`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
 - [`ways.ts`](../labs/playground/cast/ways.ts): The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the goal lies on another node.
   - Exports: `plainWays`, `replanWays`, `waysOf`, `wayTo`
@@ -2002,6 +2002,27 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`page.ts`](../labs/playground/sounds/page.ts): The playground's sound in its page (docs/PLAYGROUND.md §8.1, PLAN.md WP 13.22): `createPlaygroundSound()` makes the page's audio runtime (engine/audio/runtime/audio.ts: locked, silent, until the first key, click or end of a touch) and returns `frame`, which the page runs once per drawn frame (labs/playground/main.ts's `onFrame`).
   - Exports: `BEDS`, `createPlaygroundSound`, `EARS`, `groundOf`, `LOG_SIZE`, `PlaygroundSound`, `PlaygroundSoundInfo`, `SoundFrame`, `WIND`, `ZIP`
   - Tests: [`labs/playground/sounds/page.test.ts`](../labs/playground/sounds/page.test.ts)
+
+## labs/playground/ui
+
+- [`frontEnd.ts`](../labs/playground/ui/frontEnd.ts): The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): its screens over the game, the engine's menus (engine/ui/menu.ts) and the playground's panels, on a stack (closing one shows the one under it again): - the title screen (`title`: Play, Spawn, Settings, Photo mode), shown as the page opens while the view setting `playground.title` says so (`auto`: unless a replay plays or automation drives the browser, as the menu for humans; `on`, `off`); Escape plays; - pause (`pause`: Resume, Spawn, Settings, Photo mode, Restart, Title screen), opened by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a browser spends the first Escape on the lock); - the spawn picker (`spawns`, labs/playground/ui/spawns.ts), settings (`settings`, labs/playground/ui/settings.ts) and photo mode (`photo`, labs/playground/ui/photo.ts).
+  - Exports: `createFrontEnd`, `FRONT_END_SETTINGS`, `FrontEnd`, `FrontEndOptions`, `ScreenName`, `spawnOnOpen`, `titleOnOpen`
+  - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
+- [`hud.ts`](../labs/playground/ui/hud.ts): The playground's HUD by camera mode (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what each of the five modes shows over the game (`HUD_MODES`), and `showHud`, which the page (labs/playground/main.ts) runs each drawn frame: - the camera and the look in use, top right, and the room the player is in on a scene's site, top left; - the crosshair where the screen's centre aims a gun (first person and the shooter: `showsCrosshair`, labs/playground/weapons/hud.ts), never in the views that aim with the pointer; - the prompts: what using the thing in reach does, with the key that uses it on the device used last (WP 13.16); - the ammo: the weapon out and its rounds, the range's count (`weaponLine`, WP 13.20); - the keys of the map in use, as its prompts give them (`keysLine`, labs/playground/controls.ts); - the feel readout (`feelLine`): the player's speed over the ground and how he moves (the movement model's mode or gait), which the platformer, isometric and top-down show (where the view gives speed away least), and every mode with the view setting `playground.readout` at `on` (`off` hides it everywhere).
+  - Exports: `feelLine`, `HUD_MODES`, `HUD_SETTINGS`, `HudFrame`, `HudMode`, `HudPlayer`, `showHud`
+  - Tests: [`labs/playground/ui/hud.test.ts`](../labs/playground/ui/hud.test.ts)
+- [`photo.ts`](../labs/playground/ui/photo.ts): The playground's photo mode (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): the run paused, the free camera (the engine's fly camera, a bare `cam3=fly`, which starts from the camera on screen: engine/gfx/cameras/fly.ts) flown with the map's move keys, the jump key climbing and the crouch key sinking, the sprint key fast; turned by dragging the mouse over the game (`PHOTO.drag` rad a pixel); its lens narrowed and widened with the wheel, as ever; the HUD hidden; the looks switched with P, as ever.
+  - Exports: `createPhoto`, `Photo`, `PHOTO`, `PhotoCamera`
+  - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
+- [`prefs.ts`](../labs/playground/ui/prefs.ts): The playground's preferences (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what its settings screen changes and the page's store keeps across sessions (`createStore`, engine/app/store.ts, under `PREFS_PREFIX`): the camera mode the page opens in, the settings of `PREF_SETTINGS` by path (the field of view, the mouse, the look, the quality, the movement profile) and the audio buses' levels.
+  - Exports: `NO_PREFS`, `PREF_BUSES`, `PREF_SETTINGS`, `Prefs`, `PREFS_KEY`, `PREFS_PREFIX`, `PrefSetting`, `prefsQuery`, `readPrefs`, `savePrefs`
+  - Tests: [`labs/playground/ui/prefs.test.ts`](../labs/playground/ui/prefs.test.ts)
+- [`settings.ts`](../labs/playground/ui/settings.ts): The playground's settings screen (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): a panel over the game, in the look of the engine's menus (engine/ui/widgets.ts's box), with a row for each thing the player sets (`SETTING_ROWS`): the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the look, the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio levels; then the controls: each action the player answers with its key, a button to rebind it, and one to reset them all.
+  - Exports: `CONTROL_ACTIONS`, `createSettings`, `RowSchema`, `SETTING_ROWS`, `SettingRow`, `SettingsOptions`, `SettingsScreen`
+  - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
+- [`spawns.ts`](../labs/playground/ui/spawns.ts): The spawn picker's places (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): each area of the block (`SITE_AREAS`: its spawn, facing as it faces) and each room of its structures (`roomPlace`, labs/playground/scenes/site.ts: at the room's marker, ducked under a low ceiling), each as the arguments of the block's dev action `place`, so a pick is a recorded operation of the run and its replay holds it.
+  - Exports: `SPAWN_SETTINGS`, `spawnPlace`, `SpawnPlace`, `spawnPlaces`
+  - Tests: [`labs/playground/ui/spawns.test.ts`](../labs/playground/ui/spawns.test.ts)
 
 ## labs/playground/weapons
 

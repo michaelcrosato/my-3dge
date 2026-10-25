@@ -32,6 +32,11 @@ it.
    HUD counts the range's hits and the accuracy.
 3. T steps through the five cameras (X swaps the shooter's shoulder, Q and E turn isometric), P switches between the
    cel and the pixel look, M shows and hides the menu.
+4. The page opens on its title screen (`labs/playground/ui/`, WP 13.25): Play, Spawn (each area of the block and each
+   room of the house), Settings (the camera, the field of view, the mouse, the movement profile, the look, the
+   quality, the volumes, and every action's key, rebound in every camera at once) and Photo mode (the free camera:
+   the move keys fly it, Space and C climb and sink, a drag turns it, Esc leaves). Esc pauses, with the same screens
+   and Restart; the settings and the keys are kept for the next visit.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
 pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
@@ -119,6 +124,7 @@ perspective cameras draw its variant, `look:playground-pixel-perspective`). P sw
 | Zoom | the wheel | |
 | The feel panel | F | |
 | The menu | M | |
+| Pause (the title screen, spawn, settings, photo mode, restart) | Esc | Start |
 
 Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
 changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
@@ -137,6 +143,10 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
 | `playground.day` | How many minutes of play a day on the block takes (0, the default, holds the hour), when the scene starts. Changes play: recorded in replays. |
 | `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
+| `playground.title` | The title screen: `auto` shows it as the page opens unless a replay plays or automation drives the browser, `on` and `off` force it. A view setting. |
+| `playground.spawn` | Where the page puts the player once a scene of the block is up: a spawn picker's place, area:range or room:house/kitchen, run as the dev action `place`, so the run records it. A view setting. |
+| `playground.movement` | The profile the player moves by: `movement:apex` (the default) or `movement:platformer`, the Stress Box hero's feel, when the scene starts. Changes play: recorded in replays. |
+| `playground.readout` | The HUD's feel readout, the player's speed and how he moves: `auto` shows it in the platformer, isometric and top-down cameras, `on` in every camera, `off` in none. A view setting. |
 | `playground.rain` | How hard it rains on the block, 0 (dry, the default) to 1 (a downpour, about 29,000 drops falling round the player as GPU particles, WP 11.3); none falls while he is indoors. A view setting, live. |
 | `playground.dust` | How thick the dust motes hang about the player indoors, 0 (none, the default) to 1. A view setting, live. |
 | `movement.gaits.run` | One of the shooter model's numbers, live: every number and switch of the model has its setting, `movement.<group>.<field>` (`node x describe setting` lists them; `movement.mantle.boost` turns on the mantle boost), Apex's by default; off its default it replaces that number for every character on the model from the next step. Changes play: recorded in replays. |

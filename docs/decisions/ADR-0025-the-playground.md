@@ -1948,3 +1948,35 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - Evidence: engine/dev/governor.test.ts (the demotions and promotions on simulated frame times, the edge machine,
   the hand-set tier, the freeze, the touch scale, a headless run's hash unchanged with the governor moving between its
   steps); engine/app/engine.ts and drawing.ts feed it the frames' real time and read its budget.
+
+## Amendment 38 (2026-10-25, WP 13.25): the front end
+
+- **The screens** (labs/playground/ui/, docs/PLAYGROUND.md §8.3): the title screen (Play, Spawn, Settings, Photo
+  mode; `playground.title`, `auto` hidden while a replay plays or automation drives the browser, as the menu for
+  humans), pause (Esc or the pad's Start; Resume, Spawn, Settings, Photo mode, Restart, Title screen), the spawn
+  picker (the block's 8 areas and the house's 17 rooms), settings (the camera, the field of view, the mouse and its
+  inversion, the movement profile, the look, the quality and the governor's switch, four volumes, every action's key
+  with rebinding) and photo mode (the fly camera from the view on screen, flown on the move keys, turned by a drag).
+  A screen pauses the run; the HUD of each camera mode is a table (labs/playground/ui/hud.ts) with a feel readout.
+- **The engine's part,** the smallest that serves a game's front end: `createEngine({ store })` keeps the bindings in
+  the game's store (`textStorage`, engine/app/store.ts: until now a page's rebinds were forgotten on reload);
+  `input.bindingsFor(map)` hands out another map's bindings without switching (each camera mode has its own map, WP
+  13.9, and a rebind must hold in all five); `createEngine({ modal })` keeps every intent out of the run while a
+  screen holds the page (the loop kept a press sampled under a pause for the next step, so Space picking Resume
+  jumped); `createEngine({ cameraInput })` lays a page's camera input over the devices' (photo mode's move keys and
+  drag: under a pause the engine lets go of the pointer lock, so the mouse cannot turn the view).
+- **Calls:** picks that change play are recorded operations: a spawn is the block's dev action `place` (from another
+  scene, the block's page opens with the view setting `playground.spawn`, run as its first operation); Restart is
+  `seed`; the movement profile is the sim setting `playground.movement` (Apex's, or the Stress Box hero's untuned),
+  set and the scene started again. A rebind is all or nothing over the five maps: a key another action holds in any
+  mode is refused before anything changes. A pointer lock let go while the run plays pauses it (a browser spends the
+  first Esc on the lock). Volumes go to the page's audio runtime and the store, not to settings (the runtime reads
+  none); the graphics row offers the quality tiers and the governor, not the GPU features one by one (a feature
+  turned off mid-play builds pipelines, amendment 37). The HUD stays under the menus and hides in photo mode. The
+  front end's T2 is a spec of its own, tests/e2e/playground-ui.spec.ts: playground.spec.ts, at 352 lines, would pass
+  the 400-line cap (PLAN.md's WP 13.25 names both).
+- Evidence: tests/e2e/playground-ui.spec.ts (every screen through DOM queries; settings and a rebind kept over a
+  reload; a menu key reaching no intent; the movement profile and both spawn picks recorded and replayed in Node to
+  their hashes; the crosshair and the readout by camera); labs/playground/ui/{prefs,spawns,hud}.test.ts,
+  labs/playground/scenes/gym.test.ts (the platformer profile), engine/app/store.test.ts (`textStorage`, bindings kept
+  and a demo store's dropped), engine/input/input.test.ts (`bindingsFor`).
