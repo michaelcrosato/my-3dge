@@ -9,7 +9,8 @@
  * (`target.begin`), steps it, and after each step lets the target draw (`target.draw`, a page's frame; nothing
  * headless). It returns the hashes at the replay's checkpoints (every step with `every: true`), as `playReplay` does,
  * and with `until` stops there with the state and trace. `views` switches the camera or changes view settings at
- * the steps it names, which never changes play (a non-view setting there is `APP_PLAY_SETTING`).
+ * the steps it names, which never changes play (a non-view setting there is `APP_PLAY_SETTING`), and shoots the view
+ * there when one says `shot` (the result's `shots`: a replay's film, WP 13.26).
  *
  * Invariants: the step loop is `playReplay`'s, so both give the same hashes for the same replay (engine/app/
  * playback.test.ts compares them every step); playback steps only through the session, so the run records itself.
@@ -83,6 +84,8 @@ export interface ViewChange {
   cam?: string;
   blend?: boolean;
   set?: Record<string, SettingValue>;
+  /** Shoots the view there, after the change, with these `shot` options (`true`: the defaults), where it can draw. */
+  shot?: true | Record<string, unknown>;
 }
 
 /** How `playInto` plays. */
@@ -110,6 +113,8 @@ export interface PlayResult {
   /** With `until`: the state and trace there. */
   state?: WorldState;
   trace?: WorldTrace;
+  /** The shots `views` asked for, each at its step, where the target shoots. */
+  shots?: { step: number; shot: unknown }[];
 }
 
 /** What a replay plays into: an engine that can start a run, step it, and draw it. */
@@ -125,6 +130,8 @@ export interface PlayTarget {
   camera?(code: string, blend?: boolean): void;
   /** Sets a view setting. */
   setView(path: string, value: SettingValue): void;
+  /** Shoots the view now (a page's `shot`); absent headless. */
+  shoot?(options: Record<string, unknown>): Promise<unknown>;
 }
 
 /** Plays a replay's text from step 0 in `target` (see the file comment). */
@@ -151,6 +158,7 @@ export async function playInto(target: PlayTarget, text: string, options: PlayIn
   }
   const marks = options.every ? undefined : new Set(checkpointsOf(replay));
   const hashes: Record<string, string> = {};
+  const shots: { step: number; shot: unknown }[] = [];
   let frames = 0;
   for (let k = 0; k <= until; k++) {
     if (!marks || marks.has(k)) hashes[k] = session.world.hash();
@@ -158,6 +166,7 @@ export async function playInto(target: PlayTarget, text: string, options: PlayIn
     for (const [, change] of (options.views ?? []).filter(([step]) => step === k)) {
       if (change.cam !== undefined) target.camera?.(change.cam, change.blend === true);
       for (const [path, value] of Object.entries(change.set ?? {})) target.setView(path, value);
+      if (change.shot && target.shoot) shots.push({ step: k, shot: await target.shoot(change.shot === true ? {} : change.shot) }); // prettier-ignore
     }
     playback.step(session);
     target.stepped();
@@ -167,6 +176,7 @@ export async function playInto(target: PlayTarget, text: string, options: PlayIn
     }
   }
   const result: PlayResult = { scene: replay.scene, steps: until, hashes, hash: session.world.hash(), frames };
+  if (shots.length) result.shots = shots;
   if (options.until !== undefined)
     Object.assign(result, { state: session.world.state(), trace: session.world.trace() });
   return result;

@@ -2,8 +2,9 @@
  * @file Unit tests for engine/app/playback.ts (T1, PLAN.md §6.5 item 9, WP 2.7): a replay played one step at a time
  * gives `playReplay`'s hashes at every step (the kernel's replays, with intents, settings and dev actions, and the
  * box's), and its goldens; it records itself again point for point; `playInto` hashes the checkpoints or every step,
- * stops at `until` with the state and trace, draws after every n-th step, applies view changes, and refuses a view
- * change that would change play (`APP_PLAY_SETTING`) or a replay holding a view setting (`SIM_BAD_REPLAY`).
+ * stops at `until` with the state and trace, draws after every n-th step, applies view changes and shoots where one
+ * asks, and refuses a view change that would change play (`APP_PLAY_SETTING`) or a replay holding a view setting
+ * (`SIM_BAD_REPLAY`).
  * @see engine/app/playback.ts
  */
 import { readFileSync } from 'node:fs';
@@ -80,6 +81,18 @@ describe('playInto', () => {
         .record()
         .inputs.some(([, change]) => change.set),
     ).toBe(false);
+  });
+
+  it('shoots the view where a view change asks, each shot at its step, a film of the replay (WP 13.26)', async () => {
+    const { played, session } = target();
+    const shoot = async (options: Record<string, unknown>) => ({ tick: session().world.tick, options });
+    const views = [
+      [0, { shot: true }],
+      [3, { cam: 'cam=iso', shot: { pixels: true } }],
+    ] as const;
+    const run = await playInto({ ...played, shoot }, text('kernel-movers'), { until: 5, views });
+    expect(run.shots).toEqual([{ step: 0, shot: { tick: 0, options: {} } }, { step: 3, shot: { tick: 3, options: { pixels: true } } }]); // prettier-ignore
+    expect((await playInto(played, text('kernel-movers'), { until: 5, views })).shots).toBeUndefined(); // no shoot: headless
   });
 
   it('refuses a view change that changes play, and a replay holding a view setting', async () => {

@@ -1,9 +1,10 @@
 /**
  * @file The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): its screens over the game, the engine's
  * menus (engine/ui/menu.ts) and the playground's panels, on a stack (closing one shows the one under it again):
- * - the title screen (`title`: Play, Spawn, Settings, Photo mode), shown as the page opens while the view setting
- *   `playground.title` says so (`auto`: unless a replay plays or automation drives the browser, as the menu for
- *   humans; `on`, `off`); Escape plays;
+ * - the title screen (`title`: Play, Spawn, Settings, Photo mode, Watch the tour), shown as the page opens while the
+ *   view setting `playground.title` says so (`auto`: unless a replay plays or automation drives the browser, as the
+ *   menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle` seconds, it opens the attract mode
+ *   (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no automation drives the browser;
  * - pause (`pause`: Resume, Spawn, Settings, Photo mode, Restart, Title screen), opened by the system layer's `pause`
  *   (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a browser spends the first Escape
  *   on the lock);
@@ -30,6 +31,7 @@
 import { createMenu, type CameraInput, type Engine, type EngineFrame, type Menu, type MenuItem, type Store } from '../../../engine'; // prettier-ignore
 import { defineSettings } from '../../../engine/sim-api';
 import { cameraMode, PLAYGROUND_CAMERAS } from '../views';
+import { ATTRACT, attractPage } from './attract';
 import { createPhoto, type PhotoCamera } from './photo';
 import { PREF_BUSES, savePrefs, type Prefs } from './prefs';
 import { createSettings, type RowSchema, type SettingRow } from './settings';
@@ -66,6 +68,8 @@ export interface FrontEndOptions {
   setting(path: string): unknown;
   /** The camera mode or the look changed here, for the page's HUD. */
   onView(change: { camera?: string; look?: string }): void;
+  /** Whether an idle title screen opens the attract mode (`playground.attract` `auto`, no automation). */
+  attract?: boolean;
 }
 
 /** The front end (see the file comment). */
@@ -192,6 +196,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         { label: 'Spawn…', id: 'spawns' },
         { label: 'Settings…', id: 'settings' },
         { label: 'Photo mode', id: 'photo' },
+        ...(name === 'title' ? [{ label: 'Watch the tour', id: 'tour' }] : []),
         ...(name === 'pause'
           ? [
               { label: 'Restart', id: 'restart' },
@@ -200,6 +205,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
           : []),
       ];
       return menuScreen(name, name === 'title' ? 'The Playground' : 'Paused', items, (id) => {
+        if (id === 'tour') return location.assign(attractPage(location.pathname));
         if (id === 'restart') restart();
         if (id === 'play' || id === 'restart' || id === 'title') closeAll();
         if (id === 'title') show('title');
@@ -241,6 +247,10 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     const playing = !stack.length && options.setting('time.paused') !== true && input.bindings.map.lock;
     if (!document.pointerLockElement && playing) show('pause');
   });
+  // an idle title screen opens the attract mode: any key, click or move of the pointer counts as a player there
+  let idle = 0;
+  const awake = () => void (idle = 0);
+  for (const type of ['keydown', 'pointerdown', 'pointermove']) addEventListener(type, awake);
   const state = () => ({ screens: [...stack], paused });
   Object.assign(window, { __playgroundUi: { state } });
   return {
@@ -248,6 +258,8 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     frame(dt) {
       if (current) current.update(dt);
       else if (input.pressed('pause')) show('pause');
+      idle = stack.at(-1) === 'title' && options.attract ? idle + dt : 0;
+      if (idle >= ATTRACT.idle) location.assign(attractPage(location.pathname));
     },
     modal: () => stack.length > 0,
     cameraInput: () => photo.cameraInput(),

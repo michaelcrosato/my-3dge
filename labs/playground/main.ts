@@ -16,7 +16,8 @@
  * settings.
  *
  * Each drawn frame (`onFrame`) it runs the front end (labs/playground/ui/frontEnd.ts, WP 13.25: the title screen,
- * pause on Escape, the spawn picker, settings kept by the store with the bindings, photo mode), shows the gym's signs
+ * pause on Escape, the spawn picker, settings kept by the store with the bindings, photo mode; the attract mode, the
+ * tour with the view cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), shows the gym's signs
  * (labs/playground/levels/gym.ts) within `SIGN_RANGE` of the player and the HUD of the camera mode in use
  * (labs/playground/ui/hud.ts: the room on a site's scene, `whereLine`), plays the frame's sound
  * (labs/playground/sounds/page.ts, WP 13.22), silent until the first key, click or touch, and runs the weather
@@ -45,6 +46,7 @@ import { gym } from './scenes/gym';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
 import { createPlaygroundSound } from './sounds/page';
 import { runWeather } from './weather';
+import { createAttract, TOUR_REPLAY, type Attract } from './ui/attract';
 import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
 import { showHud, type HudPlayer } from './ui/hud';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
@@ -198,6 +200,8 @@ for (const bus of PREF_BUSES) if (prefs.volumes[bus] !== undefined) sound.audio.
 let last: EngineFrame | null = null;
 /** Whether the query's spawn pick (`playground.spawn`) waits for the first frame with the front end up. */
 let spawning = search.has('playground.spawn');
+/** The attract mode (labs/playground/ui/attract.ts) while this page plays the tour as one; null otherwise. */
+let attract: Attract | null = null;
 engine = await createEngine({
   canvas,
   actionMap: playgroundMap,
@@ -213,6 +217,7 @@ engine = await createEngine({
     last = frame;
     if (spawning && frontEnd) [spawning] = [false, spawnOnOpen(engine!, search, frame.scene)];
     frontEnd?.frame(frame.dt);
+    attract?.frame(frame.dt, frame.world.tick);
     showFrame(frame);
     sound.frame(frame);
     runWeather(frame, (at) => !!placeAt(frame.scene, at)); // the rain and the dust (labs/playground/weather.ts)
@@ -229,7 +234,12 @@ if (engine.inspector && engine.ui && engine.input) {
     scene: () => last?.scene ?? null,
     setting: (path) => last?.setting(path),
     onView: (change) => void (showing = { ...showing, ...change }),
+    attract: (search.get('playground.attract') ?? 'auto') === 'auto' && !navigator.webdriver,
   });
+  if (search.get('playground.attract') === 'on' && replays[TOUR_REPLAY]) {
+    const { steps } = JSON.parse(await replays[TOUR_REPLAY]()) as { steps: number };
+    attract = createAttract(engine, engine.ui.root, { steps, look: showing.look, onView: (change) => void (showing = { ...showing, ...change }) }); // prettier-ignore
+  }
   if (titleOnOpen(search.get('playground.title') ?? 'auto', search, navigator.webdriver)) frontEnd.open('title');
 }
 
