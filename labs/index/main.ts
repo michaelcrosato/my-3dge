@@ -15,7 +15,8 @@ import type { LabsIndex } from './labs';
 
 const index = JSON.parse(labsText) as LabsIndex;
 const today = new Date().toISOString().slice(0, 10);
-const list = document.getElementById('list')!;
+// another page that imports this module (the box page, which runs the file's example) has no #list: a list of its own
+const list = document.getElementById('list') ?? document.createElement('div');
 for (const section of index.sections) {
   if (!section.entries.length && section.id === 'temporary') continue;
   list.append(el(document, 'h2', {}, section.title));

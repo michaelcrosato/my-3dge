@@ -34,6 +34,7 @@ interface AnimInspector {
 }
 
 const params = new URLSearchParams(location.search);
+params.set('scene', lineup.id); // its one scene, whatever page imports it (as the physics and library labs do)
 if (!params.has('lab.anim.mannequin')) params.set('lab.anim.mannequin', 'true');
 const play = params.get('lab.anim.play') ?? 'idle';
 // a library clip needs every set registered (and the mannequin with them); else the mannequin alone
@@ -46,10 +47,11 @@ const panel = labPanel(document, {
   what: 'The humanoid on every build and the mannequin, told one state, pose, stance or move from one clock.',
   command: 'node x gallery move · node x sheet · node x sim labs/anim/scenes/lineup',
 });
-const overlay = document.querySelector<HTMLCanvasElement>('#overlay')!;
+const overlay = document.querySelector<HTMLCanvasElement>('#overlay'); // none in another page that imports this
 let bones = params.get('bones') === '1';
 let inspector: AnimInspector | null = null;
 const onFrame = (frame: EngineFrame) => {
+  if (!overlay) return;
   if (!bones || !inspector) return void overlay.getContext('2d')?.clearRect(0, 0, overlay.width, overlay.height);
   const live = inspector;
   drawBones(
