@@ -22397,30 +22397,31 @@ function uL(e) {
 }
 async function ree(e, t, n = {}) {
   const s = uL(JSON.parse(t)), { replay: o } = s, r = Math.min(n.until ?? o.steps, o.steps), i = n.draw ?? 1;
-  for (const [p, m] of n.views ?? [])
-    for (const g of Object.keys(m.set ?? {}))
-      if (!p4(e.registry, g)) throw j("APP_PLAY_SETTING", { step: p, path: g });
-  const c = [...Object.keys(o.settings), ...o.inputs.flatMap(([, p]) => Object.keys(p.set ?? {}))].filter((p) => e.registry.has("setting", p) && p4(e.registry, p));
+  for (const [m, g] of n.views ?? [])
+    for (const y of Object.keys(g.set ?? {}))
+      if (!p4(e.registry, y)) throw j("APP_PLAY_SETTING", { step: m, path: y });
+  const c = [...Object.keys(o.settings), ...o.inputs.flatMap(([, m]) => Object.keys(m.set ?? {}))].filter((m) => e.registry.has("setting", m) && p4(e.registry, m));
   if (c.length) {
-    const p = `${c.join(", ")} ${c.length > 1 ? "are" : "is"} marked view, which never changes play`;
-    throw j("SIM_BAD_REPLAY", { where: `the replay of ${o.scene}`, problem: p });
+    const m = `${c.join(", ")} ${c.length > 1 ? "are" : "is"} marked view, which never changes play`;
+    throw j("SIM_BAD_REPLAY", { where: `the replay of ${o.scene}`, problem: m });
   }
   const l = e.begin(o);
   if (l.world.hz !== o.hz) {
-    const p = `it was recorded at ${o.hz} Hz; the world steps at ${l.world.hz} Hz (time.hz)`;
-    throw j("SIM_BAD_REPLAY", { where: `the replay of ${o.scene}`, problem: p });
+    const m = `it was recorded at ${o.hz} Hz; the world steps at ${l.world.hz} Hz (time.hz)`;
+    throw j("SIM_BAD_REPLAY", { where: `the replay of ${o.scene}`, problem: m });
   }
-  const u = n.every ? void 0 : new Set(oee(o)), d = {};
-  let h = 0;
-  for (let p = 0; p <= r && ((!u || u.has(p)) && (d[p] = l.world.hash()), p !== r); p++) {
-    for (const [, m] of (n.views ?? []).filter(([g]) => g === p)) {
-      m.cam !== void 0 && e.camera?.(m.cam, m.blend === !0);
-      for (const [g, y] of Object.entries(m.set ?? {})) e.setView(g, y);
+  const u = n.every ? void 0 : new Set(oee(o)), d = {}, h = [];
+  let f = 0;
+  for (let m = 0; m <= r && ((!u || u.has(m)) && (d[m] = l.world.hash()), m !== r); m++) {
+    for (const [, g] of (n.views ?? []).filter(([y]) => y === m)) {
+      g.cam !== void 0 && e.camera?.(g.cam, g.blend === !0);
+      for (const [y, w] of Object.entries(g.set ?? {})) e.setView(y, w);
+      g.shot && e.shoot && h.push({ step: m, shot: await e.shoot(g.shot === !0 ? {} : g.shot) });
     }
-    s.step(l), e.stepped(), e.draw && i > 0 && (p + 1) % i === 0 && (await e.draw(), h++);
+    s.step(l), e.stepped(), e.draw && i > 0 && (m + 1) % i === 0 && (await e.draw(), f++);
   }
-  const f = { scene: o.scene, steps: r, hashes: d, hash: l.world.hash(), frames: h };
-  return n.until !== void 0 && Object.assign(f, { state: l.world.state(), trace: l.world.trace() }), f;
+  const p = { scene: o.scene, steps: r, hashes: d, hash: l.world.hash(), frames: f };
+  return h.length && (p.shots = h), n.until !== void 0 && Object.assign(p, { state: l.world.state(), trace: l.world.trace() }), p;
 }
 Q("gfx", {
   GFX_BAD_GEOMETRY: {
@@ -31824,7 +31825,7 @@ it("replay", {
     options: {
       type: "object",
       default: {},
-      description: "{ every, until, draw, views }: hash every step; stop after until steps (with the state and trace); draw every n-th step (0: never); [[step, { cam, blend, set }]] view changes (blend: as the page's live switch)."
+      description: "{ every, until, draw, views }: hash every step; stop after until steps (with the state and trace); draw every n-th step (0: never); [[step, { cam, blend, set, shot }]] view changes (blend: as the page's live switch; shot: shoot there, the result's shots)."
     }
   },
   impl: (e, t, n) => hd(e).replay(t, n)
@@ -32401,7 +32402,8 @@ function wN(e) {
             camera: h ? (x, k) => {
               h.setCamera(x, { blend: k });
             } : void 0,
-            setView: (x, k) => r ? r.setView(x, k) : l.session.set(x, k)
+            setView: (x, k) => r ? r.setView(x, k) : l.session.set(x, k),
+            shoot: r && ((x) => r.shot(x))
           },
           v,
           b

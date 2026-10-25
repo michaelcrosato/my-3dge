@@ -47,10 +47,13 @@ get them as their second argument (`held(intents, 'jump')`, `pressed(intents, 'a
 Space jumps, Shift dashes.
 
 **Characters, physics and the rest** are in the API below, area by area: levels as text (`compileLevel`, glyphs `#`
-wall, `.` floor, `@` spawn, `w` low wall, `P` pillar, `^` stairs), characters (`createCharacter`, `spawnActor`),
-physics (`physicsOf(w)` and its `.raycast`, `.overlap`), props, crowds and steering, combat, materials and textures as
-data, looks and post-processing, particle emitters, sound as data, cameras (`?cam=iso`, `?cam3=chase`), the HUD
-(`engine.ui.hud`) and touch controls.
+wall, `.` floor, `@` spawn, `w` low wall, `P` pillar, `^` stairs) and sites of buildings on a terrain (`defineSite`),
+characters (`createCharacter`, Apex Legends' movement with `{ movement: 'movement:apex' }`: sprint, slide, mantle,
+climb; `spawnActor`), physics (`physicsOf(w)` and its `.raycast`, `.overlap`), props, ladders, ziplines, doors,
+windows and switches, crowds and steering, combat, melee and firearms (`addMelee`, `defineWeapon`), materials and
+textures as data, looks and post-processing, particle emitters, sound as data, cameras (`?cam=iso`, `?cam3=chase`,
+the shooter's `?cam3=shoulder`), the HUD (`engine.ui.hud`), menus and a store for saves and settings (`createMenu`,
+`createStore`, `createEngine({ store, modal })`) and touch controls.
 
 ## Rules that keep play reproducible
 

@@ -8542,6 +8542,23 @@ For the agents who maintain the engine.
 - `WIND` (const): The wind past his ears: none below `from` m/s, full (`vol`) at `full`, in twentieths, eased over `ease` s.
 - `ZIP` (const): The zipline's hum while he rides, its level.
 
+### [`labs/playground/tour.ts`](../labs/playground/tour.ts)
+
+- `buildTour` (function): The tour (see the file comment) from `replays`, by name, over `segments` (the whole tour by default).
+- `MOVER_ROUND` (const): The range's movers' round, steps: there and back along the track at its speed, at 60 Hz.
+- `TOUR` (const): The tour's segments, in order: the street's on its own scene, the gym's, empty-handed, then the block's, the guns last.
+- `TourReplay` (interface): A replay as the tour reads and writes it (engine/sim/replay.ts's format, goldens aside).
+- `TourSegment` (interface): A segment: the replay it plays, and where its player starts when the replay does not `place` him at step 0.
+
+### [`labs/playground/ui/attract.ts`](../labs/playground/ui/attract.ts)
+
+- `Attract` (interface): The attract mode on a page (see the file comment).
+- `ATTRACT` (const): The attract mode's numbers: seconds on an idle title screen before it starts, and seconds a view shows.
+- `ATTRACT_SETTINGS` (const): The attract mode's view setting (see the file comment).
+- `attractPage` (function): The tour's page at `path` (the playground's): its replay, the attract mode on, no title screen over it.
+- `createAttract` (function): Starts the attract mode in a page whose engine plays the tour: the banner in `root`, the view cycling from the look `look`, until a key, a click, a pad button or the tour's `steps` call `leave` (the playground again, by default).
+- `TOUR_REPLAY` (const): The tour's replay, as the page offers it (`?replay=<name>`).
+
 ### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
 
 - `createFrontEnd` (function): Makes the front end, nothing open (see the file comment).

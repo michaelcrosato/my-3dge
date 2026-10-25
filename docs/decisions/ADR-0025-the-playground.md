@@ -2053,3 +2053,32 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - Evidence: `node x new --test-all` (24 templates pass), tools/cmd/new.test.ts, tests/unit/hooks/settings.test.ts. Not
   verified: `x new` inside a game made by tools/game/new-game.mjs (by reasoning: engine/ and tools/ are copied and no
   template cites an engine-only path), the new entries on a page, how well the skills trigger.
+
+## Amendment 41 (2026-10-25, WP 13.26): the tour and the hand-over
+
+- **The tour is built, not recorded** (labs/playground/tour.ts, docs/PLAYGROUND.md §9.2): the playground's eight
+  replays played in turn on the block, 7,540 steps, as one replay (tests/replays/playground-tour.replay.json). Each
+  segment is its replay's inputs moved and shifted, never edited: it starts with the block's dev action `place` where
+  its replay starts, lets go of what the segment before still held, and a replay of the gym moves to where the gym
+  stands on the block. So a segment re-recorded makes the tour stale, and labs/playground/tour.test.ts says so until
+  `buildTour` makes it again; and the tour shows each segment's features on the block (35 kinds of event, from the
+  slide and the skydive to the dog's fetch, the door kick and a target standing again).
+- **Calls:** the tour opens on the street's own scene (`playground:site-street`), so the dog's game is its replay's,
+  played from step 0; the range starts on a whole number of its movers' rounds (`MOVER_ROUND`, 240 steps), so its
+  shots meet the targets where its replay met them. The gym's segments play on the block's gym, empty-handed, before
+  the house, the ring and the range, the guns last. Goldens at the first and the last step only: the segments' own
+  replays hold theirs, and the tour's last hash covers every step before it.
+- **Shots in a replay's view changes** (engine/app/playback.ts `ViewChange.shot`, the result's `shots`; the page's and
+  headless targets shoot through the drawing): a film of a run is the replay played with its cameras, its look and
+  the steps it shoots as view changes, so the goldens hold while it is filmed. tests/e2e/playground-tour.spec.ts plays
+  the tour in each look through the five cameras twice round, twelve shots on a contact sheet per look
+  (out/film/playground-tour-<look>/sheet.png and film.json); the sheets are written, never compared, and go out with
+  the stage's PR.
+- **The attract mode** (labs/playground/ui/attract.ts, the view setting `playground.attract`): the tour's page, a
+  banner over it, the camera stepping every 8 s (blended) and the look every 16 s; a key, a click, a pad's button or
+  the tour's end gives the playground back. The title screen offers it (Watch the tour) and opens it after a minute
+  with nothing pressed, unless automation drives the browser, as the menus do.
+- **The hand-over:** docs/GAME-GUIDE.md §4 names what the playground added to the public API (sites, Apex's movement
+  and the feel tools, rides, doors, windows and switches, the day's clock, the front end's menus, store and modal
+  input, the new cameras); lean/README.md's overview likewise; the starter game (labs/game/) pauses under a menu
+  (`createMenu`, `createEngine({ store, modal })`), as lean/game.html need not (it keeps no store).

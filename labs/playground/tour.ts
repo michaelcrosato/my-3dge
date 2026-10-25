@@ -20,9 +20,9 @@
  * Game code, a page's or a test's: it imports only the playground's own files.
  *
  * @example
- * TOUR.map((segment) => segment.replay); // ['playground-gym', 'playground-moves', …, 'playground-range']
+ * TOUR.map((segment) => segment.replay); // ['playground-street', 'playground-gym', …, 'playground-range']
  * const one = { scene: 'playground:gym', settings: {}, seed: 1, hz: 60, steps: 2, inputs: [[0, { move: [0, 1] }]] };
- * buildTour({ 'playground-gym': one }, [TOUR[0]]).inputs[0][1].args; // { at: [20.25, 0, 15.25], yaw: 0, speed: 0 }
+ * buildTour({ 'playground-gym': one }, [TOUR[1]]).inputs[0][1].args; // { at: [20.25, 0, 15.25], yaw: 0, speed: 0 }
  * @see labs/playground/tour.test.ts
  */
 import { SITE_AREAS, SITE_STRUCTURES } from './levels/site';

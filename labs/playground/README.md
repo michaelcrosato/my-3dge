@@ -43,6 +43,9 @@ pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run 
 `?replay=playground-rides` the rides, `?replay=playground-site` the house's doors, lights, windows and garage,
 `?replay=playground-melee` the shed's door kicked in and the ring's dummies punched and kicked, `?replay=playground-range`
 the range's targets shot down with the pistol and the rifle), then hands you the controls.
+`labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`): those runs in
+turn on the block, from the street's dog to the range, with the view stepping through the five cameras and both looks;
+the title screen's Watch the tour opens it, and an idle title screen does after a minute.
 
 ## The demo index
 
@@ -146,6 +149,7 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
 | `playground.title` | The title screen: `auto` shows it as the page opens unless a replay plays or automation drives the browser, `on` and `off` force it. A view setting. |
 | `playground.spawn` | Where the page puts the player once a scene of the block is up: a spawn picker's place, area:range or room:house/kitchen, run as the dev action `place`, so the run records it. A view setting. |
 | `playground.movement` | The profile the player moves by: `movement:apex` (the default) or `movement:platformer`, the Stress Box hero's feel, when the scene starts. Changes play: recorded in replays. |
+| `playground.attract` | The attract mode, the tour playing behind a banner with the view stepping through the cameras and the looks: `on` is the tour's page itself, `auto` opens it after a minute on the title screen with nothing pressed unless automation drives the browser, `off` never; a key gives the page back. A view setting. |
 | `playground.readout` | The HUD's feel readout, the player's speed and how he moves: `auto` shows it in the platformer, isometric and top-down cameras, `on` in every camera, `off` in none. A view setting. |
 | `playground.rain` | How hard it rains on the block, 0 (dry, the default) to 1 (a downpour, about 29,000 drops falling round the player as GPU particles, WP 11.3); none falls while he is indoors. A view setting, live. |
 | `playground.dust` | How thick the dust motes hang about the player indoors, 0 (none, the default) to 1. A view setting, live. |
