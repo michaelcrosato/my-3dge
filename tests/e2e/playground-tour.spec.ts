@@ -3,8 +3,9 @@
  * `window.__engine` and DOM queries:
  * 1. In each look, the tour (tests/replays/playground-tour.replay.json, labs/playground/tour.ts) plays in the page
  *    through the five cameras, twice round (`__engine.replay`, a frame drawn every `DRAW` steps), its goldens holding,
- *    no pipeline built after the warm-up and no advice; the frames it shoots on the way (`SHOTS`) are the look's
- *    film: a contact sheet, out/film/playground-tour-<look>/sheet.png, with film.json (each frame's step and camera).
+ *    no pipeline built over it (a shot's own passes built first, by one shot) and no advice; the frames it shoots on
+ *    the way (`SHOTS`) are the look's film: a contact sheet, out/film/playground-tour-<look>/sheet.png, with film.json
+ *    (each frame's step and camera).
  * 2. The attract mode (`?replay=playground-tour&playground.attract=on`, labs/playground/ui/attract.ts): its banner
  *    shows over the tour, the view steps to the next camera after `ATTRACT.cycle` seconds and the look after two, and a
  *    key gives the page back (the playground, without the replay). Its page draws at the `low` tier: the cycle is real
@@ -34,8 +35,8 @@ const SITE_READY = 420_000;
 /** A frame drawn every this many steps while the tour plays: a second of play, about a dozen frames in each camera
  * twice round (a frame every 6 steps, 1,257 a look, passed the 40 minutes the test allows on this platform). */
 const DRAW = 60;
-/** The frames each look's film shoots, evenly over the tour. */
-const SHOTS = 12;
+/** The frames each look's film shoots, evenly over the tour, and how (the pixels alone). */
+const [SHOTS, SHOT] = [12, { pixels: true, ids: false, metrics: false, thumbnail: false }];
 
 /** Calls the `__engine` member at `path` with `args`. */
 function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promise<T> {
@@ -81,11 +82,16 @@ test.describe('the playground’s tour', () => {
       const views: [number, Record<string, unknown>][] = [];
       for (let k = 0; k < PLAYGROUND_CAMERAS.length * 2; k++) views.push([k * turn, { cam: PLAYGROUND_CAMERAS[k % PLAYGROUND_CAMERAS.length].code, blend: k > 0 }]); // prettier-ignore
       const every = Math.floor(STEPS / SHOTS);
-      for (let k = 0; k < SHOTS; k++) views.push([Math.floor(every / 2) + k * every, { shot: { pixels: true, ids: false, metrics: false, thumbnail: false } }]); // prettier-ignore
+      for (let k = 0; k < SHOTS; k++) views.push([Math.floor(every / 2) + k * every, { shot: SHOT }]); // prettier-ignore
       views.sort(([a], [b]) => a - b);
+      // a shot draws the look's passes into a target of its own, building their pipelines the first time (8 in the box's
+      // toon look): one shot first, so what the counter adds over the tour is its frames' alone
+      await call(page, 'shot', SHOT);
+      const cold = async () => (await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp;
+      const shot = await cold();
       const run = await call<{ hashes: Record<string, string>; shots: { step: number; shot: Shot }[] }>(page, 'replay', TOUR, { draw: DRAW, views }); // prettier-ignore
       expect(run.hashes).toEqual(hashes['linux-x64']);
-      expect((await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp).toBe(0);
+      expect((await cold()) - shot, 'pipelines built over the tour').toBe(0);
       expect(harness.advice()).toEqual([]);
       // the look's film: the shots on a contact sheet, labelled with their step and camera
       const camera = (step: number) => views.filter(([at, v]) => at <= step && v.cam).at(-1)?.[1].cam as string;
