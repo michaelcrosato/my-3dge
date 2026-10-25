@@ -438,6 +438,12 @@ profile and its saved replay), never as a blocker:
 10. Everything in both looks, at noon and at night.
 11. A downpour (`?playground.rain=1`) on the street, and the dust indoors (`playground.dust=1`): does the frame rate
     hold? `__engine.stats().gpuMs` should rise by under 1 ms (`GPU_RING.budgetMs`, WP 11.3).
+12. The labs index at /labs/index/ (WP 10.8): the Animation Lab's row, scrubbing a move, the bones; the Library
+    Lab's search and Apply.
+13. The front end (WP 13.25): the title screen, pause (Esc), the spawn picker, settings (rebind a key, the field of
+    view, the movement profile, the volumes) and photo mode; reload: are the settings and the key kept?
+14. Watch the tour from the title screen (WP 13.26): the camera steps every 8 s and the look every 16 s; does any key
+    give the playground back?
 
 ## 10. The work
 

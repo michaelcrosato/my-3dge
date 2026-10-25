@@ -116,9 +116,13 @@ test.describe('the playground’s tour', () => {
     const code = async () => (await call<{ code: string }>(page, 'camera.get')).code.split(',')[0];
     const mode = () => page.locator('[data-ui=hud][data-id=mode]').textContent({ timeout: 10_000 });
     const [camera, before] = [await code(), await mode()];
-    await harness.tick(ATTRACT.cycle * 60 + 2);
+    // a cycle's frames a second at a time: one evaluate drawing all 482 at once crashed the page under load
+    const cycle = async () => {
+      for (let left = ATTRACT.cycle * 60 + 2; left > 0; left -= 60) await harness.tick(Math.min(60, left));
+    };
+    await cycle();
     expect(await code()).not.toBe(camera); // the next camera, blending in
-    await harness.tick(ATTRACT.cycle * 60 + 2);
+    await cycle();
     expect((await mode())?.replace(/^Camera: [^·]*/, '')).not.toBe(before?.replace(/^Camera: [^·]*/, '')); // the other look
     await page.keyboard.press('KeyK');
     await page.waitForURL((url) => url.pathname.endsWith('/labs/playground/') && !url.search.includes('replay'));
