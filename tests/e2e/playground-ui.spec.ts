@@ -90,7 +90,7 @@ test.describe('the playground’s front end', () => {
     expect(await screens(page)).toEqual({ screens: ['title'], paused: true });
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
-    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Spawn…', 'Settings…', 'Photo mode']); // prettier-ignore
+    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Spawn…', 'Settings…', 'Photo mode', 'Watch the tour']); // prettier-ignore
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -209,7 +209,6 @@ test.describe('the playground’s front end', () => {
     const range = spawnPlaces().find((place) => place.id === 'area:range')!;
     const at = (await player(page)).actor;
     expect(Math.hypot(at.x - range.args.at[0], at.z - range.args.at[2])).toBeLessThan(0.5);
-    expect((await recording(page)).replay.inputs[0][1]).toHaveProperty('dev'); // the pick: its first operation
 
     await pick(page, harness, 'title', 'spawns'); // the block's page opens on the title screen too
     await pick(page, harness, 'spawns', 'room:house/kitchen');
@@ -219,6 +218,7 @@ test.describe('the playground’s front end', () => {
     await call(page, 'render', 2);
     expect((await hud(page)).room).toBe('Room: kitchen');
     const { replay, hash } = await recording(page);
+    expect(replay.inputs[0]).toMatchObject([0, { dev: 'place', args: range.args }]); // the pick on opening, under the title: recorded at step 0, held until a step follows (engine/sim/session.ts)
     expect(replay.inputs.filter(([, change]) => JSON.stringify(change).includes('"place"'))).toHaveLength(2);
     expect(playReplay(replay).hashes[String(replay.steps)]).toBe(hash);
 
