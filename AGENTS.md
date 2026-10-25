@@ -106,4 +106,5 @@ Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - tools/templates/README.md: the kinds `node x new <kind> <id>` writes from a template and checks (a module, scene,
   prop, weapon, level…), where each goes, what shows it, and how to add a kind (`node x new` lists them).
 - .claude/skills/: the skills, each loaded when its description says (x-loop after any change, add-entry for a new
-  entry of a kind, stress-box for the box, determinism-debugging when hashes part, rapier, three-webgpu, escalation).
+  entry of a kind, stress-box for the box, determinism-debugging when hashes part, animation-authoring, visual-qa,
+  perf-budgets, rapier, three-webgpu, escalation).

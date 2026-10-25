@@ -38,7 +38,10 @@ function frontmatter(path: string): { fields: Record<string, string>; body: stri
   return { fields, body: match[2] };
 }
 
-const SKILLS = ['x-loop', 'three-webgpu', 'escalation', 'determinism-debugging', 'rapier', 'stress-box', 'add-entry'];
+const SKILLS = [
+  ...['x-loop', 'three-webgpu', 'escalation', 'determinism-debugging', 'rapier', 'stress-box', 'add-entry'],
+  ...['animation-authoring', 'visual-qa', 'perf-budgets'],
+];
 const AGENTS = ['verifier', 'visual-reviewer'];
 
 describe('.claude/settings.json', () => {
