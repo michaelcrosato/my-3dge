@@ -7,6 +7,7 @@
  * `node x describe prop <id>` prints one.
  *
  * @example
+ * // browser
  * // labs/props/#gallery/prop/prop:crate
  * @see tests/e2e/labs.spec.ts
  */

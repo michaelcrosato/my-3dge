@@ -8,6 +8,7 @@
  * sheet (`--look <id>` draws every material in one look), and `node x describe material <id>` prints one.
  *
  * @example
+ * // browser
  * // labs/materials/#gallery/look/look:playground-pixel
  * @see tests/e2e/labs.spec.ts
  */

@@ -9,6 +9,7 @@
  * text is the page's DOM, so tests read it with DOM queries (tests/e2e/labs.spec.ts).
  *
  * @example
+ * // browser
  * // a lab's main.ts, in its page:
  * // const panel = labPanel(document, { title: 'Props Lab', what: 'Every prop.', command: 'node x gallery prop' });
  * // entryList(panel.section('Props'), [{ label: 'prop:crate', href: '#gallery/prop/prop:crate', current: true }]);

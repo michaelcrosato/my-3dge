@@ -3,19 +3,18 @@
 Read this first: where things stand, what is next and the open issues, on one screen (`node x docs --check` fails it
 past 40 lines). The integrator rewrites it at each gate; every WP's status and notes are in the ledger, PLAN.md §14.
 
-## Next: the rest of stage G12, then G13 (Phase 13, ADR-0025)
+## Next: gate G12's merge, then G13 (Phase 13, ADR-0025)
 
-- Main was red, unseen (found 2026-10-24): its full runs on 39e06b0 (#27) and 9b988aa (#28) hit the job's 120 min in
-  T2. #29, #30 and #31 fixed it (ADR-0023 amendments 1–3): a game's imports guarded, the full run in four shards
-  dealt by minutes (about 53 each), a cancelled run red, and 13 failing tests' faults from G11 and G12 fixed.
-- U-8 is done (ADR-0014 amendment 18): the platform's Chromium is 153, the pins and GitHub's run with it; ports of
-  V8's own fdlibm for the 18 Math functions 153 computes otherwise keep every golden; U-7 (three r186+) is measurable.
-- Next, G12's stage PR: WP 13.24 (its ledger row lists what is left: specs, the verifier); WP 8.8 (`node x esc open`
-  for the owner's Quaternius GLBs, 15 minutes on the alternative, then decide); WP 10.8 (lab pages); gate G12 (the
-  verifier, the ledger, this file, docs/PLAYGROUND.md §9.3's checklist, `node x ci --local`, the merge, main's run);
-  then G13 (13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26). `node x deps --qualify` listed no upgrade on 2026-10-24.
-- The owner's: the GLBs (WP 8.8), model access for WP 12.2's live evals, the new dependencies WPs 7.6 and 12.2
-  name, ESC-0002's call. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
+- Stage G12 is built: WP 13.24 (the two looks; its review's shimmer fixed: the shadows' noise and the shading's
+  quads stay on the world as the pixel look's pans cross whole pixels, amendment 35), WP 8.8 (Mesh2Motion and CMU
+  re-imported in format 2: hands, spine, foot roll, contacts and events; the review's hand pops and legacy import
+  fixed, ADR-0010 amendment 7) and WP 10.8 (seven lab pages, their index and `x lab`, amendment 36). Next: the gate's
+  verifier, `node x ci --local`, the stage PR (with docs/PLAYGROUND.md §9.3's checklist), the merge and main's run.
+- Then G13: 13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26. `node x deps --qualify` listed no upgrade on 2026-10-24.
+- The owner's: the Quaternius GLBs (ESC-0003: its clips stay format 1 until they come), model access for WP 12.2's
+  live evals, the new dependencies WPs 7.6 and 12.2 name, ESC-0002's call; for the playtest, the accent weak from
+  isometric in both looks and the cel look's dark night there. Their go-ahead (2026-10-22): a bot may play with
+  infinite health and ammo.
 
 ## Where things stand (2026-10-24)
 
@@ -26,8 +25,11 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 ## What waits, and the open issues
 
 - The box's sound map reads its actors when it reads, not where an event says (amendment 29). Amendment 22 proposes
-  triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Not verifiable here: speakers, touch
-  (ADR-0021), pads, real GPUs (`stats().gpuMs` on the owner's: the rain's 1 ms), the pixel look's glide on a screen.
+  triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Owner: top-down's pixel look panned
+  across a whole pixel changes 7–10 pixels of a soft shadow band (0 without shadows; amendment 35). Clip contacts:
+  walks' and swaying idles' hands can read as holds; no foot lock reads a clip's foot contacts yet (ADR-0010 am. 7).
+  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs` on the owner's: the rain's 1 ms),
+  the pixel look's glide on a screen.
 - At their size cap (395–400 lines), split on the next change: engine/world/siteNav.ts, gfx/{sky,stage,instancing}.ts,
   anim/{poses,humanoid,locomotion,clip/layer,traversal/plant}.ts, gfx/puppets/{draw,crowd}.ts, sim/actors.ts,
   labs/box/menu.ts, tools/{cmd/audio,lib/browser}.ts. The feel kit poses apart from the page: share one.

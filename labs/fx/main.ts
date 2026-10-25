@@ -7,6 +7,7 @@
  * `node x describe emitter <id>` prints one.
  *
  * @example
+ * // browser
  * // labs/fx/#gallery/emitter/emitter:fire
  * @see tests/e2e/labs.spec.ts
  */

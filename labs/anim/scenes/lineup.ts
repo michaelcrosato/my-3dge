@@ -12,8 +12,8 @@
  * The page (labs/anim/main.ts) draws the move's phases as a timeline and the figures' bones over them.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts. The same job without the page: `node x gallery move` (each
- * move on the humanoid, filmed at its phases), `node x sheet` (a body's states as a contact sheet) and `node x sim
- * labs/anim/scenes/lineup --set lab.anim.play=move:jab` (the lineup headless).
+ * move on the humanoid, filmed at its phases), `node x sheet` (a body's states as a contact sheet) and `node x sim`
+ * on labs/anim/scenes/lineup.ts (`--set lab.anim.play=move:jab`: the lineup headless).
  *
  * @example
  * // labs/anim/?lab.anim.play=move:jab&lab.anim.time=0.3

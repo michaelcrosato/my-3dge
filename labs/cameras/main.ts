@@ -11,6 +11,7 @@
  * and `__engine.camera.set` / `camera.get` in an `x inspect` session.
  *
  * @example
+ * // browser
  * // labs/cameras/?cam3=orbit,30,25,6,8,0.8,8
  * @see tests/e2e/labs.spec.ts
  */

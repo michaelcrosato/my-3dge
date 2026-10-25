@@ -9,8 +9,8 @@
  * library clip (`lab.anim.play=clip:<set>/<clip>`, the Library Lab's retarget preview) it registers every set first.
  *
  * The same job without the page: `node x gallery move` (each move on the humanoid at its phases, on a contact sheet),
- * `node x sheet` (a body's states as a contact sheet) and `node x sim labs/anim/scenes/lineup --set
- * lab.anim.play=move:jab` (the row headless; `__engine.anim(id)` in an `x inspect` session for each figure's joints).
+ * `node x sheet` (a body's states as a contact sheet) and `node x sim` on labs/anim/scenes/lineup.ts (`--set
+ * lab.anim.play=move:jab`: the row headless; `__engine.anim(id)` in an `x inspect` session for each figure's joints).
  *
  * @example
  * // labs/anim/?lab.anim.play=move:jab&lab.anim.time=0.2
