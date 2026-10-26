@@ -37,6 +37,11 @@ it.
    quality, the volumes, and every action's key, rebound in every camera at once) and Photo mode (the free camera:
    the move keys fly it, Space and C climb and sink, a drag turns it, Esc leaves). Esc pauses, with the same screens
    and Restart; the settings and the keys are kept for the next visit.
+5. Owner checks, on the title screen and in pause (`labs/playground/ui/checks.ts`, WP 13.28), list what only the
+   owner can judge: the playtest of `docs/PLAYGROUND.md` §9.3, and the calls agents made in the owner's absence. Each
+   says in plain words what to try and what to judge; Go there opens it with the scene, camera, look and spot it needs
+   (`playground.check`); Esc, then Answer this check, takes a verdict and a note; Copy my answers gives the text to
+   paste back to an agent.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
 pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
@@ -148,6 +153,7 @@ so no test's screenshot holds it; `?playground.menu=on` shows it there.
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
 | `playground.title` | The title screen: `auto` shows it as the page opens unless a replay plays or automation drives the browser, `on` and `off` force it. A view setting. |
 | `playground.spawn` | Where the page puts the player once a scene of the block is up: a spawn picker's place, area:range or room:house/kitchen, run as the dev action `place`, so the run records it. A view setting. |
+| `playground.check` | The owner's check under way (`labs/playground/ui/checks.ts`): its id, which the HUD names and pause offers to answer; the page puts the player at the check's spot as the scene comes up, through the dev action `place`, so the run records it. Empty: none. A view setting. |
 | `playground.movement` | The profile the player moves by: `movement:apex` (the default) or `movement:platformer`, the Stress Box hero's feel, when the scene starts. Changes play: recorded in replays. |
 | `playground.attract` | The attract mode, the tour playing behind a banner with the view stepping through the cameras and the looks: `on` is the tour's page itself, `auto` opens it after a minute on the title screen with nothing pressed unless automation drives the browser, `off` never; a key gives the page back. A view setting. |
 | `playground.readout` | The HUD's feel readout, the player's speed and how he moves: `auto` shows it in the platformer, isometric and top-down cameras, `on` in every camera, `off` in none. A view setting. |

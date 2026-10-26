@@ -1618,7 +1618,7 @@ Playground: G9 → 13.1 → {13.2, 13.3, 13.8} ; 13.3 → 13.4 → {13.5, 13.7} 
           {13.8, 13.18} → 13.27 ; {13.16, 13.11, 10.4} → 13.19 ; {10.4, 13.9, 13.12} → 13.20 ;
           {13.15, 10.4, 10.2, 10.1, 13.2} → 13.21 ;
           {13.15, 13.16, 13.6} → 13.22 ; {11.5, 13.15, 13.16} → 13.23 ; {13.8, 13.17, 13.23} → 13.24 ⇒ G12 ;
-          {10.6, 10.9, 13.9, 13.20} → 13.25 → 13.26 ⇒ G13
+          {10.6, 10.9, 13.9, 13.20} → 13.25 → 13.26 ⇒ G13 ; {13.25, 13.26} → 13.28 (the owner's direction, after G13)
 Upgrades (each when it qualifies or measures better, between stages): U-1 Vitest 4 ; U-2 the lint majors ; U-3 three r183 ;
           U-4 Vite 8, TypeScript 6 ; U-5 Node 26 ; U-6 Rapier after 0.21 ; U-7 three r184 and later ; U-8 the platform's Chromium
 ```
@@ -3536,6 +3536,7 @@ The stress test had no sound. The engine's sound data and synth design come over
 | The house | 13.13, 13.14, 10.5, 13.15, 10.3, 13.16, 13.17, 7.7, 13.18, 12.3 | **G11** |
 | Alive | 13.27, 10.4, 13.19, 13.20, 10.2, 10.1, 13.21, 13.22, 11.1, 11.2, 11.5, 13.23, 11.3, 13.24, 8.8, 10.8 | **G12** |
 | The tech demo | 13.25, 7.5, 11.4, 12.1, 12.2, 7.6, 13.26 | **G13** |
+| After the gate, at the owner's direction | 13.28 | |
 
 **Rules for the playground** (the box's rules, §9.0, hold too):
 - **Engine, not game.** The site, the cast, the player's body and every tuned number stay in `labs/playground/`; a mechanism enters `engine/` only through a WP that names it, in a generic form (§5.7).
@@ -3833,6 +3834,14 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Verify:** `node x replay tests/replays/playground-tour.replay.json --browser sim && node x docs --check && node x engine --test && npm run e2e -- tests/e2e/playground-tour.spec.ts tests/e2e/game.spec.ts` (the spec plays the tour in the page as it renders, in both looks; ADR-0025 amendment 41)
 
 **Gate G13, The tech demo:** every row of Phase 13 and every WP it fired is done or blocked only on the owner (named in docs/PROGRESS.md); the tour plays through; the quick gate and main's full run are green; the owner's checklist goes out.
+
+#### WP-13.28 The owner's checks
+- **Owns:** `labs/playground/ui/{checks,checkList,checkPanel}.ts`, extends `labs/playground/ui/frontEnd.ts`, `labs/playground/main.ts`, `tests/e2e/playground-ui.spec.ts` (ADR-0025 amendment 44)
+- **Needs:** WP 13.25, WP 13.26
+- **Size:** S
+- **Build** (the owner's direction of 2026-10-26; docs/PLAYGROUND.md §9.3): what only the owner can judge, listed in the game: §9.3's playtest, the looks, sound and devices not verifiable here, and each escalation awaiting the owner's review, in plain words with its choices. A check opens where it is judged (a scene, a camera, a look, a setting, a spot to stand, or another page) and keeps the owner's verdict and note, copied out as text to paste back to an agent.
+- **Done when:** the title screen and pause list the checks; a check's Go there opens it at its spot, recorded; the answers survive a reload and come out as text; a test holds the list to the records awaiting review and to every item of §9.3.
+- **Verify:** `npm test -- labs/playground/ui/checks && npm run e2e -- tests/e2e/playground-ui.spec.ts`
 
 ### Phase H: Production hardening (not scheduled)
 

@@ -22,7 +22,9 @@
  * (labs/playground/ui/hud.ts: the room on a site's scene, `whereLine`), plays the frame's sound
  * (labs/playground/sounds/page.ts, WP 13.22), silent until the first key, click or touch, and runs the weather
  * (labs/playground/weather.ts, WP 11.3: `playground.rain` and `playground.dust`). It reads the run and changes it only
- * through the front end's recorded picks (a spawn, a restart, the movement profile).
+ * through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's spot: a
+ * check opened here (`playground.check`, labs/playground/ui/checks.ts, WP 13.28) puts the player at its spot as the
+ * scene comes up, and the HUD's bottom-left line names it; the answers keep in a store that a replay leaves on too.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
@@ -47,6 +49,7 @@ import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoul
 import { createPlaygroundSound } from './sounds/page';
 import { runWeather } from './weather';
 import { createAttract, TOUR_REPLAY, type Attract } from './ui/attract';
+import { checkLine, ownerCheck, placeOnOpen } from './ui/checks';
 import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
 import { showHud, type HudPlayer } from './ui/hud';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
@@ -87,6 +90,9 @@ const replays = Object.fromEntries(
  */
 const search = new URLSearchParams(location.search);
 const store = createStore({ prefix: PREFS_PREFIX, mode: search.has('replay') ? 'demo' : 'play' });
+/** The owner's answers to the checks, and the check under way (labs/playground/ui/checks.ts). */
+const checkStore = createStore({ prefix: PREFS_PREFIX });
+const check = ownerCheck(search.get('playground.check'));
 const prefs = readPrefs(store);
 prefsQuery(
   prefs,
@@ -176,6 +182,7 @@ function showFrame({ world, scene, setting }: EngineFrame): void {
     { mode: showing.camera, look: showing.look, where, player: entity, readout },
     photo,
   );
+  ui.hud('check', check && !photo ? checkLine(check) : null, { at: 'bottom-left' });
 }
 
 /** A view action of the map in use (labs/playground/controls.ts): the camera's switch, the shoulder, a view's turn. */
@@ -198,8 +205,8 @@ const sound = createPlaygroundSound(); // published as window.__playgroundSound
 for (const bus of PREF_BUSES) if (prefs.volumes[bus] !== undefined) sound.audio.volume(bus, prefs.volumes[bus]);
 /** The frame drawn last: the front end reads its scene and settings. */
 let last: EngineFrame | null = null;
-/** Whether the query's spawn pick (`playground.spawn`) waits for the first frame with the front end up. */
-let spawning = search.has('playground.spawn');
+/** Whether the query's spawn pick (`playground.spawn`) or check's spot waits for the first frame with the front end. */
+let opening = search.has('playground.spawn') || !!check?.go?.place;
 /** The attract mode (labs/playground/ui/attract.ts) while this page plays the tour as one; null otherwise. */
 let attract: Attract | null = null;
 engine = await createEngine({
@@ -215,7 +222,10 @@ engine = await createEngine({
   cameraInput: () => frontEnd?.cameraInput(),
   onFrame: (frame) => {
     last = frame;
-    if (spawning && frontEnd) [spawning] = [false, spawnOnOpen(engine!, search, frame.scene)];
+    if (opening && frontEnd) {
+      opening = false;
+      if (!spawnOnOpen(engine!, search, frame.scene)) placeOnOpen(engine!, check, frame.scene);
+    }
     frontEnd?.frame(frame.dt);
     attract?.frame(frame.dt, frame.world.tick);
     showFrame(frame);
@@ -235,6 +245,8 @@ if (engine.inspector && engine.ui && engine.input) {
     setting: (path) => last?.setting(path),
     onView: (change) => void (showing = { ...showing, ...change }),
     attract: (search.get('playground.attract') ?? 'auto') === 'auto' && !navigator.webdriver,
+    checkStore,
+    check,
   });
   if (search.get('playground.attract') === 'on' && replays[TOUR_REPLAY]) {
     const { steps } = JSON.parse(await replays[TOUR_REPLAY]()) as { steps: number };

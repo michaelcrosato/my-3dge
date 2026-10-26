@@ -8606,6 +8606,37 @@ For the agents who maintain the engine.
 - `createAttract` (function): Starts the attract mode in a page whose engine plays the tour: the banner in `root`, the view cycling from the look `look`, until a key, a click, a pad button or the tour's `steps` call `leave` (the playground again, by default).
 - `TOUR_REPLAY` (const): The tour's replay, as the page offers it (`?replay=<name>`).
 
+### [`labs/playground/ui/checkList.ts`](../labs/playground/ui/checkList.ts)
+
+- `CheckGo` (interface): Where a check is judged (see the file comment).
+- `CheckOption` (interface): One choice of a decide check: its id, its words, and the escalation record's option it takes (from 1).
+- `OWNER_CHECKS` (const): The checks, the decisions first (see the file comment).
+- `OwnerCheck` (interface): One check (see the file comment).
+
+### [`labs/playground/ui/checkPanel.ts`](../labs/playground/ui/checkPanel.ts)
+
+- `ChecksPanel` (interface): The checks screen.
+- `ChecksPanelOptions` (interface): How the panel is made.
+- `createChecksPanel` (function): Makes the checks screen in `parent` (see the file comment).
+
+### [`labs/playground/ui/checks.ts`](../labs/playground/ui/checks.ts)
+
+- `answered` (const): Whether `answer` settles its check: a verdict given.
+- `answersText` (function): The answers as text to paste back to an agent: the decisions, then the try checks, then what is left.
+- `CHECK_SETTINGS` (const): The view setting naming the check under way (see the file comment).
+- `CheckAnswer` (interface): An answer: the verdict (a try check's `TRY_VERDICTS` id, a decide check's option id), a note, and its day.
+- `checkLine` (const): The HUD's line while `check` is under way.
+- `CHECKS_KEY` (const): The store's key for the answers.
+- `checkUrl` (function): The link that opens `check` where it is judged, from the playground page at `here` (see the file comment).
+- `OWNER_CHECKS` (const from [`labs/playground/ui/checkList.ts`](../labs/playground/ui/checkList.ts)): The checks, the decisions first (see the file comment).
+- `ownerCheck` (function): The check `id`; undefined for none.
+- `OwnerCheck` (interface from [`labs/playground/ui/checkList.ts`](../labs/playground/ui/checkList.ts)): One check (see the file comment).
+- `placeOnOpen` (function): Puts the player at `check`'s spot once its scene is up (the dev action `place`, recorded); false when none ran.
+- `readAnswers` (function): The answers kept in `store`, each of a known check and of its shape.
+- `saveAnswer` (function): Keeps `answer` to check `id` in `store` (null forgets it); false when the store refused it.
+- `TRY_VERDICTS` (const): A try check's verdicts.
+- `verdictLabel` (function): The words of `check`'s verdict `verdict`, its option named for a decide check.
+
 ### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
 
 - `createFrontEnd` (function): Makes the front end, nothing open (see the file comment).

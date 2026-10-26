@@ -1,15 +1,18 @@
 /**
  * @file The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): its screens over the game, the engine's
  * menus (engine/ui/menu.ts) and the playground's panels, on a stack (closing one shows the one under it again):
- * - the title screen (`title`: Play, Spawn, Settings, Photo mode, Watch the tour), shown as the page opens while the
- *   view setting `playground.title` says so (`auto`: unless a replay plays or automation drives the browser, as the
- *   menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle` seconds, it opens the attract mode
- *   (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no automation drives the browser;
- * - pause (`pause`: Resume, Spawn, Settings, Photo mode, Restart, Title screen), opened by the system layer's `pause`
- *   (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a browser spends the first Escape
- *   on the lock);
- * - the spawn picker (`spawns`, labs/playground/ui/spawns.ts), settings (`settings`, labs/playground/ui/settings.ts)
- *   and photo mode (`photo`, labs/playground/ui/photo.ts).
+ * - the title screen (`title`: Play, Owner checks, Spawn, Settings, Photo mode, Watch the tour), shown as the page
+ *   opens while the view setting `playground.title` says so (`auto`: unless a replay plays or automation drives the
+ *   browser, as the menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle` seconds, it opens the
+ *   attract mode (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no automation drives the
+ *   browser;
+ * - pause (`pause`: Resume, Answer this check while one is under way, Spawn, Settings, Photo mode, Owner checks,
+ *   Restart, Title screen), opened by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let
+ *   go while the map wants it (a browser spends the first Escape on the lock);
+ * - the spawn picker (`spawns`, labs/playground/ui/spawns.ts), settings (`settings`, labs/playground/ui/settings.ts),
+ *   photo mode (`photo`, labs/playground/ui/photo.ts) and the owner's checks (`checks`, opened on the list; `check`,
+ *   on the check under way: labs/playground/ui/checkPanel.ts), whose answers go to `checkStore` and whose Go there
+ *   opens the check's link (labs/playground/ui/checks.ts `checkUrl`; another page in a new tab).
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one.
  *
@@ -18,7 +21,9 @@
  * (`?scene=site&playground.spawn=<id>`, run as its first operation: `spawnOnOpen`); Restart starts the scene again on
  * its seed (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again.
  * The camera mode, the view settings and the audio levels change the view alone; the store keeps them (prefs.ts).
- * `state()`, `window.__playgroundUi.state()` in the page, names the open screens for the tests.
+ * `state()`, `window.__playgroundUi.state()` in the page, names the open screens for the tests;
+ * `__playgroundUi.checks()` lists the owner's checks with their answers, and `__playgroundUi.answers()` gives them as
+ * the text to paste.
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's own files.
  *
@@ -32,6 +37,8 @@ import { createMenu, type CameraInput, type Engine, type EngineFrame, type Menu,
 import { defineSettings } from '../../../engine/sim-api';
 import { cameraMode, PLAYGROUND_CAMERAS } from '../views';
 import { ATTRACT, attractPage } from './attract';
+import { createChecksPanel } from './checkPanel';
+import { answered, answersText, checkUrl, OWNER_CHECKS, readAnswers, saveAnswer, type OwnerCheck } from './checks';
 import { createPhoto, type PhotoCamera } from './photo';
 import { PREF_BUSES, savePrefs, type Prefs } from './prefs';
 import { createSettings, type RowSchema, type SettingRow } from './settings';
@@ -51,7 +58,7 @@ export const FRONT_END_SETTINGS = defineSettings({
 });
 
 /** The screens. */
-export type ScreenName = 'title' | 'pause' | 'spawns' | 'settings' | 'photo';
+export type ScreenName = 'title' | 'pause' | 'spawns' | 'settings' | 'photo' | 'checks' | 'check';
 
 /** What the front end needs of the page. */
 export interface FrontEndOptions {
@@ -70,6 +77,10 @@ export interface FrontEndOptions {
   onView(change: { camera?: string; look?: string }): void;
   /** Whether an idle title screen opens the attract mode (`playground.attract` `auto`, no automation). */
   attract?: boolean;
+  /** Where the owner's answers are kept: a store that keeps them while a replay plays too. */
+  checkStore: Store;
+  /** The owner's check under way (`playground.check`); none without one. */
+  check?: OwnerCheck;
 }
 
 /** The front end (see the file comment). */
@@ -188,21 +199,31 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     return out;
   };
 
+  /** The owner's checks item: how many are left to do. */
+  const checksItem = (): MenuItem => {
+    const answers = readAnswers(options.checkStore);
+    const left = OWNER_CHECKS.filter((check) => !answered(answers[check.id])).length;
+    return { label: `Owner checks… (${left ? `${left} to do` : 'all answered'})`, id: 'checks' };
+  };
+  /** Opens `check` where it is judged: this page at its link, or another page in a new tab. */
+  const go = (check: OwnerCheck) => {
+    const url = checkUrl(check, location.href);
+    if (check.go?.page) open(url, '_blank', 'noopener');
+    else location.assign(url);
+  };
+
   /** Makes screen `name`. */
   function make(name: ScreenName): Screen {
     if (name === 'title' || name === 'pause') {
       const items: MenuItem[] = [
         { label: name === 'title' ? 'Play' : 'Resume', id: 'play' },
+        ...(name === 'title' ? [checksItem()] : []),
+        ...(name === 'pause' && options.check ? [{ label: 'Answer this check…', id: 'check' }] : []),
         { label: 'Spawn…', id: 'spawns' },
         { label: 'Settings…', id: 'settings' },
         { label: 'Photo mode', id: 'photo' },
         ...(name === 'title' ? [{ label: 'Watch the tour', id: 'tour' }] : []),
-        ...(name === 'pause'
-          ? [
-              { label: 'Restart', id: 'restart' },
-              { label: 'Title screen', id: 'title' },
-            ]
-          : []),
+        ...(name === 'pause' ? [checksItem(), { label: 'Restart', id: 'restart' }, { label: 'Title screen', id: 'title' }] : []), // prettier-ignore
       ];
       return menuScreen(name, name === 'title' ? 'The Playground' : 'Paused', items, (id) => {
         if (id === 'tour') return location.assign(attractPage(location.pathname));
@@ -226,6 +247,21 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         search.set('playground.spawn', place.id);
         location.assign(`${location.pathname}?${search}`);
       });
+    }
+    if (name === 'checks' || name === 'check') {
+      const panel = createChecksPanel(root, {
+        answers: () => readAnswers(options.checkStore),
+        key: (action) => input.prompt(action),
+        today: () => new Date().toISOString().slice(0, 10),
+        onAnswer: (id, answer) => void saveAnswer(options.checkStore, id, answer),
+        onGo: go,
+        onBack: back,
+        open: name === 'check' ? options.check?.id : undefined,
+      });
+      return {
+        update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && panel.back()),
+        remove: () => panel.remove(),
+      };
     }
     if (name === 'settings') {
       const panel = createSettings(root, { values: values(), schema, input, onChange: change, onBack: back });
@@ -252,7 +288,12 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
   const awake = () => void (idle = 0);
   for (const type of ['keydown', 'pointerdown', 'pointermove']) addEventListener(type, awake);
   const state = () => ({ screens: [...stack], paused });
-  Object.assign(window, { __playgroundUi: { state } });
+  const checks = () => {
+    const answers = readAnswers(options.checkStore);
+    return OWNER_CHECKS.map(({ id, kind, title }) => ({ id, kind, title, verdict: answers[id]?.verdict ?? '', note: answers[id]?.note ?? '' })); // prettier-ignore
+  };
+  const answers = () => answersText(OWNER_CHECKS, readAnswers(options.checkStore));
+  Object.assign(window, { __playgroundUi: { state, checks, answers } });
   return {
     open: (name) => show(name),
     frame(dt) {
