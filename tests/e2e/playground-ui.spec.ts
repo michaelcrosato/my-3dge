@@ -10,7 +10,11 @@
  *    its hash in Node; Restart starts it again on its seed;
  * 3. the spawn picker, from the gym, opens the block at the area picked; on the block it puts the player in the room
  *    picked through the recorded dev action `place`, the HUD naming the room; the run replays to its hash in Node; the
- *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric.
+ *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
+ * 4. the owner's checks (WP 13.28): the title lists them with how many are left; a check's view names the player's
+ *    keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps them; the answers come out as
+ *    text; Go there opens the check's page at its spot through the recorded `place`, the HUD naming the check, and
+ *    pause answers it.
  *
  * Invariants: the page is read through `[data-ui]` elements, `__engine` and `__playgroundUi` only; frames are run with
  * the virtual clock (`harness.tick`), so the front end reads each key at a frame as the page's loop samples it.
@@ -22,11 +26,15 @@ import '../../labs/playground/scenes/gym';
 import '../../labs/playground/scenes/site';
 import { CONTROL_ACTIONS, SETTING_ROWS } from '../../labs/playground/ui/settings';
 import { spawnPlaces } from '../../labs/playground/ui/spawns';
+import { OWNER_CHECKS, ownerCheck } from '../../labs/playground/ui/checks';
 import { expect, test } from './fixtures';
 
 /** The page's engine and front end, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
-declare const __playgroundUi: { state(): { screens: string[]; paused: boolean } };
+declare const __playgroundUi: {
+  state(): { screens: string[]; paused: boolean };
+  checks(): { id: string; verdict: string; note: string }[];
+};
 
 /** How long the gym's page and the site's may take to warm up (ms): playground.spec.ts's. */
 const [READY, SITE_READY] = [120_000, 420_000];
@@ -54,6 +62,9 @@ async function pick(page: Page, harness: { tick(n?: number): Promise<void> }, me
   await page.locator(`[data-ui=menu][data-id="${menu}"] [data-ui=item][data-id="${id}"]`).click();
   await harness.tick(2);
 }
+
+/** The owner's checks item, with `left` of them to do. */
+const checksItem = (left: number) => `Owner checks… (${left} to do)`;
 
 /** A setting row's value as the screen shows it. */
 const shown = (page: Page, id: string) => page.locator(`[data-ui=setting][data-id="${id}"]`).getAttribute('data-value');
@@ -90,7 +101,7 @@ test.describe('the playground’s front end', () => {
     expect(await screens(page)).toEqual({ screens: ['title'], paused: true });
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
-    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Spawn…', 'Settings…', 'Photo mode', 'Watch the tour']); // prettier-ignore
+    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', checksItem(OWNER_CHECKS.length), 'Spawn…', 'Settings…', 'Photo mode', 'Watch the tour']); // prettier-ignore
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -126,7 +137,7 @@ test.describe('the playground’s front end', () => {
     await page.keyboard.press('Escape');
     await harness.tick(2);
     expect((await screens(page)).screens).toEqual(['pause']);
-    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Spawn…', 'Settings…', 'Photo mode', 'Restart', 'Title screen']); // prettier-ignore
+    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Spawn…', 'Settings…', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Restart', 'Title screen']); // prettier-ignore
     const before = await player(page);
     await page.keyboard.press('Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
     await harness.tick(2);
@@ -234,6 +245,65 @@ test.describe('the playground’s front end', () => {
     expect((await hud(page)).mode).toMatch(/^Camera: isometric/);
     await expect(page.locator('[data-ui=crosshair]')).toHaveCount(0);
     expect((await hud(page)).readout).toMatch(/m\/s/);
+    expect(harness.advice()).toEqual([]);
+  });
+  test('the owner’s checks: listed, answered and kept, and a check opened at its spot, recorded', async ({
+    page,
+    harness,
+  }) => {
+    await page.goto('labs/playground/?playground.title=on');
+    await harness.ready({ timeout: READY });
+    await harness.tick(2);
+    await pick(page, harness, 'title', 'checks');
+    const panel = page.locator('[data-ui=checks]');
+    await expect(panel).toHaveAttribute('data-value', 'list');
+    for (const check of OWNER_CHECKS) await expect(panel.locator(`[data-ui=item][data-id="check:${check.id}"]`)).toHaveCount(1); // prettier-ignore
+    await panel.locator('[data-ui=item][data-id="check:mantle"]').click();
+    await expect(panel).toHaveAttribute('data-value', 'check:mantle');
+    await expect(panel).toContainText('press Space to climb'); // the player's key for {jump}
+    await panel.locator('[data-ui=item][data-id="verdict:needs-work"]').click();
+    await panel.locator('[data-ui=check-note]').pressSequentially('pause'); // P, the look's key, reaches nothing
+    await harness.tick(2);
+    expect((await hud(page)).mode).toBe('Camera: shooter · Look: cel'); // the look kept
+    expect(await page.evaluate(() => __playgroundUi.checks().find((check) => check.id === 'mantle'))).toMatchObject({ verdict: 'needs-work', note: 'pause' }); // prettier-ignore
+    await panel.locator('[data-ui=item][data-id=back]').click();
+    await expect(panel.locator('[data-ui=item][data-id="check:mantle"]')).toHaveAttribute('data-value', 'needs-work');
+    await panel.locator('[data-ui=item][data-id=answers]').click();
+    await expect(panel.locator('[data-ui=answers-text]')).toHaveValue(/- mantle \(docs\/PLAYGROUND\.md §9\.3, item 3\), Mantle, vault and climb: Needs work \(say what in the note\)\. Note: pause/); // prettier-ignore
+    await page.keyboard.press('Escape'); // back to the list
+    await harness.tick(2);
+    await expect(panel).toHaveAttribute('data-value', 'list');
+    await panel.locator('[data-ui=item][data-id="check:mantle"]').click();
+    await panel.locator('[data-ui=item][data-id=go]').click();
+    await page.waitForURL(/playground\.check=mantle/);
+    await harness.ready({ timeout: READY });
+    await harness.tick(2);
+    expect(await screens(page)).toEqual({ screens: [], paused: false }); // no title screen on a check's page
+    await call(page, 'pause');
+    const spot = ownerCheck('mantle')!.go!.place!.at;
+    const at = (await player(page)).actor;
+    expect(Math.hypot(at.x - spot[0], at.z - spot[2])).toBeLessThan(0.25);
+    await call(page, 'render', 2);
+    expect((await hud(page)).check).toBe('Checking: Mantle, vault and climb · Esc, then Answer this check');
+    const { replay, hash } = await recording(page);
+    const places = replay.inputs.filter(([, change]) => (change as { dev?: string }).dev === 'place');
+    expect(places).toMatchObject([[expect.any(Number), { dev: 'place', args: { at: [...spot], yaw: 0 } }]]);
+    expect(playReplay(replay).hashes[String(replay.steps)]).toBe(hash);
+    await call(page, 'resume');
+    await page.keyboard.press('Escape');
+    await harness.tick(2);
+    const items = await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents();
+    expect(items.slice(0, 2)).toEqual(['Resume', 'Answer this check…']);
+    expect(items).toContain(checksItem(OWNER_CHECKS.length - 1));
+    await pick(page, harness, 'pause', 'check');
+    await expect(panel).toHaveAttribute('data-value', 'check:mantle');
+    await expect(panel.locator('[data-ui=item][data-id="verdict:needs-work"]')).toHaveAttribute('data-value', 'selected'); // prettier-ignore
+    await expect(panel.locator('[data-ui=check-note]')).toHaveValue('pause');
+    await panel.locator('[data-ui=item][data-id="verdict:good"]').click();
+    await panel.locator('[data-ui=item][data-id=back]').click();
+    await harness.tick(2);
+    expect((await screens(page)).screens).toEqual(['pause']);
+    expect(await page.evaluate(() => __playgroundUi.checks().find((check) => check.id === 'mantle')?.verdict)).toBe('good'); // prettier-ignore
     expect(harness.advice()).toEqual([]);
   });
 });

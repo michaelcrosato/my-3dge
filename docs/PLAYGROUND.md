@@ -396,7 +396,7 @@ yard, ambient occlusion the rooms; rain and dust are GPU particles (WP 11.3).
 (WP 10.6, WP 10.9, WP 13.25.) A title screen; the spawn picker (each area and room); pause; settings (camera mode and
 field of view, controls and rebinding, sensitivity, the movement profile, the look, audio levels, graphics and quality),
 kept across sessions by the store; the HUD for each camera (crosshair, prompts, ammo, the feel readout); photo mode
-(the free camera and the looks).
+(the free camera and the looks); the owner's checks (WP 13.28, §9.3).
 
 ## 9. How we know it feels and looks right
 
@@ -423,7 +423,9 @@ and a check in T2.
 ### 9.3 The owner's playtest
 
 At each gate the stage's PR carries this checklist; the owner plays, and notes come back as tuning (the feel panel's
-profile and its saved replay), never as a blocker:
+profile and its saved replay), never as a blocker. The playground lists it in the game as the owner's checks (WP 13.28:
+the title screen's Owner checks, labs/playground/ui/checks.ts), with the calls awaiting the owner's review: each says
+in plain words what to try and judge, opens the place it is judged in, and keeps the answer to paste back. The checklist:
 
 1. Sprint the strip in first person: speed, the sprint's field of view, the stop.
 2. Slide down the 20° ramp and slide-jump off its end: is the speed kept?

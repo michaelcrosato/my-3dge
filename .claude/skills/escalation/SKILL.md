@@ -25,11 +25,16 @@ and the Vercel deploys they trigger. Everything else is your call, recorded as a
 
 1. `node x esc open "<question>" --principle <Name> --option "<a>" --option "<b>" --recommend 1 [--why "<reason>"]`.
    `--principle` takes the doctrine's short names (Assets, Mastery, Common ground…), comma-separated.
-2. Post the printed message where the owner is watching: the session's chat, or the PR. In a Claude Code cloud
-   session, schedule a check-in for the deadline (`send_later`) and end the turn; an answer resumes the session.
+2. Post the printed message where the owner is watching: the session's chat, or the PR, under a first line in plain
+   words: what you need from them and how to answer ("reply 1 or 2"). In a Claude Code cloud session, schedule a
+   check-in for the deadline (`send_later`) and end the turn; an answer resumes the session.
+   In the same commit as the record, add its decide check to labs/playground/ui/checkList.ts: the question and the
+   choices as a player would say them, the call you take first, each choice naming its option. The owner answers it
+   in the game (the title screen's Owner checks) and pastes the answers back; `npm test` holds the list to the records
+   awaiting review (labs/playground/ui/checks.test.ts).
 3. Never perform the action while waiting. Take the doctrine's preferred alternative instead: procedural or text
    instead of binary, the free path, a stub behind the feature registry.
-4. The owner answers: `node x esc answer ESC-NNNN "<answer>"`, then act on it.
+4. The owner answers: `node x esc answer ESC-NNNN "<answer>"`, remove its decide check, then act on it.
 5. No answer by the deadline (15 minutes): commit the current work, decide, then
    `node x esc decide ESC-NNNN --call "<what was done and why>" --commit <sha>`, and continue.
 6. For the rest of the run, or until the owner answers, report further conflicts without stopping: each still gets

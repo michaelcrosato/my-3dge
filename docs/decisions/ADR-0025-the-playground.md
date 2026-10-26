@@ -2259,3 +2259,35 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   - `qBetween`, exported from engine/anim/clip/spine.ts for its test.
 - **Evidence:** tools/cmd/evals.test.ts, tools/stryker/sample.test.ts, `node x evals --dry-run` (14 of 14 real),
   `npx stryker run` (out/stryker/mutation.json).
+
+## Amendment 44 (2026-10-26, WP 13.28): the owner's checks
+
+- **The owner's direction (2026-10-26):** they scan and approve decisions and plans; testing that is subjective, or
+  costly in tokens to do here, is theirs, noted where the game starts, best as a menu item that says what to confirm
+  and takes them there. And the escalations' records, as posted, did not say what they were to do.
+- **Built:** the owner's checks (labs/playground/ui/): checkList.ts lists them, 5 decisions (ESC-0002 to ESC-0006,
+  each in plain words with its choices, the call already taken first, each naming the record's option) and 23 to try
+  (§9.3's 14 items, split where one item holds two places; the looks WP 13.26's films noted; the sound, the pixel
+  look's glide and a pad, which docs/PROGRESS.md names as not verifiable here); checks.ts holds the view setting
+  `playground.check`, the links, the answers in the page's store and their text; checkPanel.ts is the screen. The
+  title screen and pause list them with how many are left, pause answers the check under way, and the HUD's
+  bottom-left line names it.
+- **Calls:**
+  - A check's spot is the scene's dev action `place`, run as the page's first operation as a spawn pick is, so a run
+    opened on a check replays. The spots come from the gym's courses and the block's data, never written twice.
+  - `playground.check`'s schema lists the checks' ids, so a stale link is refused naming the setting, as any bad value
+    is.
+  - The answers keep in a store of their own on the playground's prefix, in `play` mode: a replay's page leaves it on,
+    and the tour is one of the checks. They stay in the browser: the owner pastes Copy my answers' text into the chat,
+    and an agent records each decision (`node x esc answer`) and tunes from the notes. The page has no server to write
+    to, and Vercel serves it static.
+  - Another page (the labs index, the Stress Box at crowd-5000) opens in a new tab, so the answer waits where it was.
+  - The list and the records agree by test: labs/playground/ui/checks.test.ts holds the decide checks to the records
+    awaiting review, both ways, and the try checks to every numbered item of §9.3. AGENTS.md and the escalation skill
+    have an agent who escalates write its decide check in the same commit, and post a first line in plain words.
+- **Files outside Owns:** labs/playground/README.md (Play it's step 5, the setting's row), docs/PLAYGROUND.md (§8.3,
+  §9.3), docs/PROGRESS.md, AGENTS.md and .claude/skills/escalation/SKILL.md.
+- **Evidence:** labs/playground/ui/checks.test.ts (the list against the records and §9.3, every link parsing, every
+  spot holding the player through the recorded `place`, the answers' shape and text); tests/e2e/playground-ui.spec.ts
+  test 4 (listed, answered with a key typed into the note reaching nothing else, kept, copied out; Go there opening the
+  check at its spot, recorded and replayed in Node, the HUD naming it, pause answering it).

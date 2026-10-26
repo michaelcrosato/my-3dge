@@ -49,6 +49,9 @@ pushes, stage PRs, merges and branch deletions are pre-approved, ADR-0021), a pr
 against the doctrine looks best: node x esc open … → post it → wait up to 15 minutes, doing the preferred
 alternative, never the action itself → answered: act on it. No answer: commit, decide, node x esc decide …,
 continue, and report later conflicts without stopping. Record every escalation, conflict and call.
+The owner answers in the game: each escalation awaiting their review gets a decide check, in plain words with its
+choices, in labs/playground/ui/checkList.ts (gone once answered), and whatever only they can judge (feel, looks,
+sound, devices) a try check there, never a checklist in prose alone; their pasted answers come back to record.
 
 ## The loop
 1. node x deps --update: adopt compatible releases first, in a commit of their own.
