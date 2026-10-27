@@ -38,8 +38,7 @@ params.set('scene', lineup.id); // its one scene, whatever page imports it (as t
 if (!params.has('lab.anim.mannequin')) params.set('lab.anim.mannequin', 'true');
 const play = params.get('lab.anim.play') ?? 'idle';
 // a library clip needs every set registered (and the mannequin with them); else the mannequin alone
-if (play.startsWith('clip:'))
-  await loadLibrary(import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' })); // prettier-ignore
+if (play.startsWith('clip:')) await loadLibrary((await import('../box/clipFiles')).CLIP_FILES);
 else loadMannequin(quaternius);
 
 const panel = labPanel(document, {

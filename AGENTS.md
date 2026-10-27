@@ -73,9 +73,11 @@ sound, devices) a try check there, never a checklist in prose alone; their paste
   main's last one went: a red main is fixed before other work.
 - At each gate and at the end of a goal: push, open the stage's PR, merge it, then wait for main's full run and
   report it. Start the next stage from the updated main (PLAN.md §11.1).
-- Vercel and the touch controls have no tests (ADR-0021). The owner paused Vercel on 2026-10-15 (ADR-0023): until
-  they say it is back on, ignore its statuses and errors. When it is on, look once at a stage PR's Vercel status and
-  fix a failed build; fix anything else about either only when the owner reports it.
+- Vercel and the touch controls have no tests (ADR-0021). Vercel is on again (2026-10-27, ADR-0023 amendment 4) and
+  kept cheap: production builds a merge to main that changes what ships, and a branch push builds a preview only when
+  its commit message says [preview] (scripts/vercel-ignore.mjs); say it on a change to the build itself (vite.config.ts,
+  package.json, vercel.json, a new page) and look once at that preview before merging. After a merge that ships, look
+  once at main's production deployment and fix a failed build; fix anything else only when the owner reports it.
 - Never downgrade silently: every downgrade emits an advice code.
 - Ask the entry, never the id: shared code reads registry hooks and never compares ids.
 - No game content in the engine; the box's own content stays in labs/box/, the playground's in labs/playground/

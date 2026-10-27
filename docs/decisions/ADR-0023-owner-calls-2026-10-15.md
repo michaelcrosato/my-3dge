@@ -81,3 +81,32 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    new order's first run (on 1c4c540, d289543's tree) ran materials.spec.ts after box-hall.spec.ts, whose imports
    put the props' materials in the worker's shared registry, which the spec read for what the page should have: it
    now reads the built-ins from a registry of its own.
+4. **2026-10-27: Vercel back on, and cheaper** (the owner's direction: Vercel is unpaused, and its cost is to come
+   down without losing quality or what it serves; the calls are mine). Decision 6 ends. What was measured first:
+   production still served 2026-10-15's build, every deployment since blocked by the pause; before it, Vercel built
+   every push of every branch (agents push a branch many times a stage, and nobody opens those previews: merges wait
+   on the quick gate); the hashed files under `/assets/` were served with `max-age=0, must-revalidate`, so each visit
+   asked again for every file it loads; and the animation library shipped as 1,270 files, which the Library Lab, the
+   Animation Lab with a library clip and the box's clip mode fetched at once, a request each.
+   - **What Vercel builds** (scripts/vercel-ignore.mjs, vercel.json's `ignoreCommand`): production builds a merge to
+     `main` that changes a file that can ship, since the last deployment that succeeded; one that changes only what
+     never ships (`NEVER_SHIPS`: docs, the plan, tests but the replays the pages play, tools but the one
+     vite.config.ts imports, CI and agents' files; checked against the build's module graph on this day) is skipped,
+     the site byte for byte the same. A branch push builds a preview only when its commit message says `[preview]`.
+     Whatever the script cannot tell (no earlier deployment, its commit outside the shallow clone, `VERCEL_ENV`
+     unset) builds. It lists what never ships, not what does: a page importing from a new place costs one build,
+     never a stale site. This replaces ADR-0021 decision 1's deployment of every push and its look at a stage PR's
+     Vercel status: a stage that changes the build itself asks for a preview and looks once; after a merge that
+     ships, one look at main's production deployment, whose failure leaves the last good build serving.
+   - **`/assets/` cached a year, immutable** (vercel.json's one header): Vite hashes every file name there (1,276 of
+     1,276 at 5657cda; vite.config.ts sets no output names), so a returning visitor asks for none of them again. The
+     pages themselves keep Vercel's default, `must-revalidate`, so a new deployment shows at once.
+   - **The library in one chunk** (labs/box/clipFiles.ts, imported by those three pages when they need it): one
+     request instead of 1,270, 1.22 MB gzipped instead of 1.8 MB, the same text. The build went from 1,300 files and
+     16 MB to 74 files and 13 MB, and `vite build` from 17.8 s to 10.1 s here.
+   - **Not taken:** Rapier's WASM as a file of its own (the 5.8 MB chunk, 1.86 MB gzipped, about a third smaller as
+     binary) needs Rapier's non-compat package, a new dependency and so the owner's call; turning previews off in
+     the project's Vercel settings, an outward action vercel.json makes unneeded and which a PR could not show.
+   - **Not verified here:** Vercel's own run of the script and the header, first seen on this change's production
+     deployment (one look, as above). Enforced by tests/unit/vercel-ignore.test.ts, a unit test of the script and the
+     configs in Node, not a deployment test (ADR-0021).
