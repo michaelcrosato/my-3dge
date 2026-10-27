@@ -12,8 +12,10 @@
  * Game code, a page's: it imports nothing.
  *
  * @example
- * // const { CLIP_FILES } = await import('./clipFiles');
- * // await loadLibrary(CLIP_FILES); // __engine.describe('clipset').ids: ['clipset:cmu', 'clipset:mesh2motion', …]
+ * // browser (Vite reads the files: `import.meta.glob`)
+ * const [path, read] = Object.entries(CLIP_FILES)[0]; // ['../../data/anim/sets/<set>/<file>.json', …]
+ * typeof JSON.parse(await read()); // 'object': the file, as loadLibrary reads it
+ * // labs/box/main.ts, clip mode: await loadLibrary((await import('./clipFiles')).CLIP_FILES);
  */
 /// <reference types="vite/client" />
 

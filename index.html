@@ -6,12 +6,13 @@
     <link rel="icon" href="data:," />
     <title>my-3dge</title>
     <!--
-      The landing page (PLAN.md WP 0.12): it opens the Stress Box (labs/box/, WP 2.7), passing on this URL's query
-      and hash, so /?scene=room&cam=topdown reaches the page that reads it. Routing lives in files, not in
-      vercel.json, so `npx vite preview` serves what Vercel serves.
+      The landing page (PLAN.md WP 0.12): it opens the playground (labs/playground/, the game the owner plays and
+      checks; ADR-0021 amendment 3), passing on this URL's query and hash, so /?scene=gym&cam3=follow reaches the page
+      that reads it. The playground's menu links the labs index and the Stress Box (labs/box/). Routing lives in
+      files, not in vercel.json, so `npx vite preview` serves what Vercel serves.
     -->
     <script>
-      location.replace('labs/box/' + location.search + location.hash);
+      location.replace('labs/playground/' + location.search + location.hash);
     </script>
     <style>
       html,
@@ -35,6 +36,6 @@
     </style>
   </head>
   <body>
-    <p><a href="labs/box/">Open the Stress Box</a></p>
+    <p><a href="labs/playground/">Open the playground</a></p>
   </body>
 </html>

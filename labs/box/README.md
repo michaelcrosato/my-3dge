@@ -144,7 +144,8 @@ Set one with `node x set box.room.speed 3`, as a URL parameter (`labs/box/?box.r
 
 ## The page
 
-`labs/box/` opens the room; the landing page (`index.html`) opens the box. Its routes: `?scene=room`, `?seed=4`,
+`labs/box/` opens the room (the site's landing page, `index.html`, opens the playground, whose menu links here). Its
+routes: `?scene=room`, `?seed=4`,
 `?cam=iso` (a camera code: `cam=topdown`, `cam=iso,45,2,persp`, `cam3=orbit`, `cam3=fly`; with the hero also
 `cam3=chase`, `cam3=first` and `cam3=rail`, which follow him), any setting by its path,
 and `?replay=box-1-room` (a replay played in real time; `?replay=box-2-jump` opens the hero's room, `?replay=box-3-climb`

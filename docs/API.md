@@ -8491,6 +8491,7 @@ For the agents who maintain the engine.
 - `MENU_STORAGE_KEY` (const): The `localStorage` key that remembers whether the reader left the menu `open` or `closed`.
 - `MenuEntry` (interface): A listed scene, as its module exports it.
 - `menuShown` (function): Whether `setting` (the query's `playground.menu`) shows the menu in a browser automation does or does not drive.
+- `PAGES` (const): The other pages the menu links, [path from this page, name, hover text] each.
 - `PLAYGROUND_MENU_SETTINGS` (const): The menu's view setting (see the file comment).
 - `PlaygroundMenuOptions` (interface): What the menu lists.
 
