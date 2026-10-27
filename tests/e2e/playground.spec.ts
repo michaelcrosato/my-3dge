@@ -11,7 +11,9 @@
  *    in both looks, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
  *    to 15 px tall), the sky's dome and backdrop left out as background, and the MRT reads the sky as the background
  *    too (the parts view is black where the ID pass finds nothing), so no outline inks the dome's edges;
- * 5. the menu for humans (`?playground.menu=on`) lists every scene, the five cameras, the two looks and every replay;
+ * 5. the site's landing page (`index.html`, ADR-0021 amendment 3) opens the page with its query and hash; the menu for
+ *    humans (`?playground.menu=on`) lists every scene, the five cameras, the two looks, every replay and the other
+ *    pages (the labs index and the Stress Box);
  * 6. the keyboard reaches the player through the playground's action map (WP 13.3): W runs and Shift sprints, the
  *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
  *    clock's frames (`harness.tick`);
@@ -283,7 +285,21 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('shows the menu for humans when asked: every scene, five cameras, two looks and every replay', async ({
+  test('opens from the landing page, which passes on its query: the gym in the platformer camera', async ({
+    page,
+    harness,
+  }) => {
+    await page.goto('/?scene=gym&cam3=follow');
+    await harness.ready({ timeout: READY });
+    await harness.assertWebGPU();
+    expect(new URL(page.url()).pathname).toBe('/labs/playground/');
+    expect(await call(page, 'info')).toMatchObject({ scene: 'playground:gym', headless: false, runtime: 'browser' });
+    expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=follow(,|$)/);
+    expect(await page.locator('#msg').isHidden()).toBe(true);
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('shows the menu for humans when asked: every scene, five cameras, two looks, every replay and the other pages', async ({
     page,
     harness,
   }) => {
@@ -302,6 +318,9 @@ test.describe('the playground', () => {
     expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
     expect(await links('looks')).toEqual(['cel', 'pixel']);
     expect(await links('replays')).toEqual(replays.map((file) => file.replace(/^playground-|\.replay\.json$/g, '')).sort()); // prettier-ignore
+    expect(await links('pages')).toEqual(['all pages', 'stress box']);
+    const hrefs = await page.locator('#playground-menu [data-menu=pages] a').evaluateAll((all) => all.map((a) => new URL((a as HTMLAnchorElement).href).pathname)); // prettier-ignore
+    expect(hrefs).toEqual(['/labs/index/', '/labs/box/']);
     expect(await page.locator('#playground-menu [data-menu=controls] tr').count()).toBeGreaterThanOrEqual(8);
     await page.keyboard.press('KeyM');
     expect(await page.locator('#playground-menu').isHidden()).toBe(true);

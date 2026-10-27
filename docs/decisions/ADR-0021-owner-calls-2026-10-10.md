@@ -42,3 +42,14 @@ amendment 4 (the owner's direction of 2026-10-27, to keep Vercel's cost down): p
 that changes what ships, a branch builds a preview only when asked (`[preview]`), and the look is at main's
 production deployment after such a merge, or at a preview a stage that changes the build asks for. Nothing more is
 tested.
+
+## Amendment 3 (2026-10-27): the landing page opens the playground
+
+The owner, opening the production site (my-3dge.vercel.app), found only the Stress Box, which the landing page
+(`index.html`, WP 0.12) had opened since WP 2.7: the playground, where the owner plays the tech demo and works the
+Owner checks (WP 13.28), was reachable only by its path. The landing page now opens `labs/playground/`, passing on the
+URL's query and hash as before, and the playground's menu for humans links the other pages: the labs index
+(`labs/index/`, every page and lab) and the Stress Box (`labs/box/`). The box's own routes (`labs/box/?scene=…`) are
+unchanged; `/?scene=…` now names a playground scene. tests/e2e/playground.spec.ts checks the landing page and the
+menu's links; the box's spec opens the box at its own path. PLAN.md's WP 0.12 bullet, its layout and I-53 are edited
+to match.

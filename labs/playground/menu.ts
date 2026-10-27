@@ -3,9 +3,11 @@
  * it, as a small HTML/CSS panel in the top-left corner over the game. It lists every scene the page imports
  * (labs/playground/scenes/, the README's demo index) as a link to `?scene=<name>`, the five camera modes and the two
  * looks (labs/playground/views.ts) as links that keep the scene, the playground's replays as links to
- * `?replay=<name>`, and the controls: the actions the player answers, with the keys and pad buttons of the map of the
- * camera the page opens in (`playgroundMap`, labs/playground/controls.ts: each mode has its own, and the HUD shows the
- * one in use), labelled by the engine's `codeLabel` in the reader's keyboard layout, then the page's own keys.
+ * `?replay=<name>`, the other pages (`PAGES`: the labs index and the Stress Box, which the site's landing page no
+ * longer opens; ADR-0021 amendment 3), and the controls: the actions the player answers, with the keys and pad buttons
+ * of the map of the camera the page opens in (`playgroundMap`, labs/playground/controls.ts: each mode has its own, and
+ * the HUD shows the one in use), labelled by the engine's `codeLabel` in the reader's keyboard layout, then the page's
+ * own keys.
  *
  * Toggle: the button in the corner, or M (`MENU_KEY`). The panel is a page panel (`data-panel`, engine/ui/chrome.ts):
  * in touch mode a tap on the game closes it. It opens unless the reader closed it last (`MENU_STORAGE_KEY` in
@@ -54,6 +56,12 @@ export const MENU_KEY = 'KeyM';
 
 /** The `localStorage` key that remembers whether the reader left the menu `open` or `closed`. */
 export const MENU_STORAGE_KEY = 'my3dge:playground:menu';
+
+/** The other pages the menu links, [path from this page, name, hover text] each. */
+export const PAGES: readonly (readonly [string, string, string])[] = [
+  ['../index/', 'all pages', 'The labs index: every page and lab, with what each is for'],
+  ['../box/', 'stress box', "The Stress Box: the engine's integration target, a scene for each capability"],
+];
 
 /** A listed scene, as its module exports it. */
 export interface MenuEntry {
@@ -211,6 +219,11 @@ export function createPlaygroundMenu(document: Document, options: PlaygroundMenu
     chips('cameras', `Camera (${codeLabel(getActionMap(map).actions.camera?.[0] ?? 'KeyT')})`, cameras),
     chips('looks', `Look (${codeLabel(LOOK_KEY)})`, looks),
     chips('replays', 'Replays', replays),
+    chips(
+      'pages',
+      'Other pages',
+      PAGES.map(([href, name, hint]) => [href, false, hint, name]),
+    ),
     el('section', { 'data-menu': 'controls', 'data-keyboard': true }, el('h2', {}, 'Controls'), el('table', {}, rows)),
   );
   const toggle = el('button', { id: 'playground-menu-toggle', class: 'pg-menu-toggle', type: 'button' }, '☰ Menu M');

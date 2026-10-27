@@ -137,9 +137,10 @@ perspective cameras draw its variant, `look:playground-pixel-perspective`). P sw
 Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
 changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
 faces where it moves, and isometric and top-down aim with the pointer. The HUD shows the keys of the map in use; the
-menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays and the controls of the camera
-the page opens in. A browser that automation drives (the tests, every `x` command that opens the page) gets no menu,
-so no test's screenshot holds it; `?playground.menu=on` shows it there.
+menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays, the other pages (the labs index
+and the Stress Box) and the controls of the camera the page opens in. The site's landing page (`index.html`) opens
+this page (ADR-0021 amendment 3). A browser that automation drives (the tests, every `x` command that opens the page)
+gets no menu, so no test's screenshot holds it; `?playground.menu=on` shows it there.
 
 ## Settings
 

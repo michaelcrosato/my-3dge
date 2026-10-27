@@ -1,6 +1,7 @@
 /**
  * @file T2 for the Stress Box, stage 1 (PLAN.md §9.0, WP 2.7): the box page (labs/box) on WebGPU. The room starts
- * ready on WebGPU from the landing page; without WebGPU it shows `GFX_NO_WEBGPU` on the page as its one error record,
+ * ready on WebGPU, its route's seed kept (the landing page opens the playground since ADR-0021 amendment 3:
+ * tests/e2e/playground.spec.ts); without WebGPU it shows `GFX_NO_WEBGPU` on the page as its one error record,
  * never turns ready and still steps through `__engine`, while `render` and `shot` throw; from cam iso the ID pass lists
  * the floor, every wall run, the low wall, the pillar and the three movers, the look metrics raise no note, and the
  * thumbnail matches its baseline (`x shot labs/box --scene room --cam iso --thumb box-room-iso`); cycling every camera
@@ -70,8 +71,8 @@ async function open(page: Page, harness: Harness, query = '') {
 test.describe('the box, stage 1', () => {
   test.setTimeout(180_000);
 
-  test('the landing page opens the room, ready on WebGPU', async ({ page, harness }) => {
-    await page.goto('/?seed=2');
+  test("opens the room, ready on WebGPU, its route's seed kept", async ({ page, harness }) => {
+    await page.goto('labs/box/?seed=2');
     await harness.ready({ timeout: 60_000 });
     await harness.assertWebGPU();
     expect(new URL(page.url()).pathname).toBe('/labs/box/');

@@ -75,7 +75,8 @@ Vercel imports the repository, and [`vercel.json`](vercel.json) does the rest: `
 cost down ([ADR-0023](docs/decisions/ADR-0023-owner-calls-2026-10-15.md) amendment 4), a merge to `main` deploys to
 production when it changes what ships, a branch push builds a preview only when its commit message says `[preview]`
 ([`scripts/vercel-ignore.mjs`](scripts/vercel-ignore.mjs)), and the hashed files under `/assets/` are cached for a
-year. The landing page, `index.html`, opens the Stress Box (`labs/box/`) with the URL's query and hash. Nothing tests
+year. The landing page, `index.html`, opens the playground (`labs/playground/`) with the URL's query and hash; its menu
+links the labs index and the Stress Box (`labs/box/`). Nothing tests
 the deployment, by the owner's order ([ADR-0021](docs/decisions/ADR-0021-owner-calls-2026-10-10.md)). To build and
 serve the same output locally:
 
