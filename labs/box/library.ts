@@ -1,6 +1,7 @@
 /**
  * @file The animation library on the box page (PLAN.md §10, WP 8.9): `loadLibrary(files)` registers every set of
- * `data/anim/sets/` the page loaded as text (labs/box/main.ts, through `import.meta.glob`, never a fetch), each as a
+ * `data/anim/sets/` the page loaded as text (labs/box/clipFiles.ts, one chunk through `import.meta.glob`, never a
+ * fetch), each as a
  * `clipset` entry (engine/anim/clip/clipsets.ts: its `_set.json` and its clip files joined, `clipSetFromFiles`), then
  * the mannequin, its build and body, from the Quaternius set (engine/gfx/puppets/bodies/mannequin.ts): what clip mode
  * (labs/box/scenes/clips.ts) plays and draws. The page calls it before it opens clip mode; no other scene loads it.
@@ -15,8 +16,7 @@
  * Game code, a page's: it imports only engine/index.ts.
  *
  * @example
- * // const files = import.meta.glob<string>('../../data/anim/sets/*\/*.json', { query: '?raw', import: 'default' });
- * // await loadLibrary(files); // __engine.describe('clipset').ids: ['clipset:cmu', 'clipset:mesh2motion', …]
+ * // await loadLibrary((await import('./clipFiles')).CLIP_FILES); // __engine.describe('clipset').ids: ['clipset:cmu', …]
  */
 import { clipSetFromFiles, defineClipSet, defineMannequin, getClipSet, parseClip } from '../../engine';
 

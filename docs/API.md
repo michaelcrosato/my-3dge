@@ -7903,6 +7903,10 @@ For the agents who maintain the engine.
 - `WISP_SHOT` (const): The wisp's shot on the floor: a narrow line from under it, as far as it shoots.
 - `WispData` (interface): The wisp's own state, beside its crowd agent.
 
+### [`labs/box/clipFiles.ts`](../labs/box/clipFiles.ts)
+
+- `CLIP_FILES` (const): The library's files as `loadLibrary` takes them: each path, and its text.
+
 ### [`labs/box/library.ts`](../labs/box/library.ts)
 
 - `loadLibrary` (function): Registers the sets in `files` (path → its text, loaded on demand), then the mannequin from the Quaternius set.

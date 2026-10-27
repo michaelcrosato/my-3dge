@@ -20,7 +20,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain, cel and pixel looks); Watch the tour plays it all.
-  Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Vercel paused.
+  Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Vercel on again (ADR-0023 amendment 4).
 
 ## What waits, and the open issues
 

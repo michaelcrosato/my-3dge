@@ -33,7 +33,7 @@ interface LibraryInspector {
 /** How many hits the search lists. */
 const HITS = 25;
 
-await loadLibrary(import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' }));
+await loadLibrary((await import('../box/clipFiles')).CLIP_FILES);
 const params = new URLSearchParams(location.search);
 params.set('scene', clips.id);
 const asked = params.get('box.clips.clip') ?? 'quaternius/Dance_Loop';

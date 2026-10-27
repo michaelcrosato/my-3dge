@@ -8,8 +8,8 @@
  * runes glowing on the dais (labs/box/looks/hall-floor.ts). Its sound (labs/box/sounds/page.ts, `window.__boxSound`)
  * runs each drawn frame through `onFrame`: silent until the first key, click or end of a touch, then the sim's events
  * as sounds, the demo song and the torches. Clip mode (`?scene=clips`, or `?replay=` one of its replays,
- * labs/box/scenes/clips.ts) loads the animation library first: every set under data/anim/sets/, as text
- * (`import.meta.glob`, never a fetch), registered by labs/box/library.ts; no other scene loads it.
+ * labs/box/scenes/clips.ts) loads the animation library first: every set under data/anim/sets/, as text in one chunk
+ * (labs/box/clipFiles.ts, never a fetch), registered by labs/box/library.ts; no other scene loads it.
  * Before the engine starts, the menu for humans (labs/box/menu.ts) lists those scenes, replays and looks, cameras and
  * the controls, so a person sees what the box offers while it loads, or after a bad route; automation never gets it.
  * Everything else a page does (routes, the renderer, the warm-up, the frame loop, `window.__engine`, the error overlay,
@@ -70,16 +70,13 @@ const replays = Object.fromEntries(
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
 
-/** The animation library's files (data/anim/sets/<set>/*.json), as text loaded on demand: clip mode plays them. */
-const libraryFiles = import.meta.glob<string>('../../data/anim/sets/*/*.json', { query: '?raw', import: 'default' });
-
 // clip mode (labs/box/scenes/clips.ts) needs the library registered before it starts; the other scenes never load it
 const params = new URLSearchParams(location.search);
 const named = params.get('replay') ?? '';
 const replayScene = async () => (JSON.parse(await replays[named]()) as { scene: string }).scene; // ?replay alone
 const scene = params.get('scene') ?? (Object.hasOwn(replays, named) ? await replayScene() : '');
 createBoxMenu(document, { scenes: sceneEntries, looks, replays: Object.keys(replays), scene });
-if (/^(box:)?clips$/.test(scene)) await loadLibrary(libraryFiles);
+if (/^(box:)?clips$/.test(scene)) await loadLibrary((await import('./clipFiles')).CLIP_FILES); // the library's one chunk
 
 const canvas = document.querySelector<HTMLCanvasElement>('#view')!;
 const sound = createBoxSound();

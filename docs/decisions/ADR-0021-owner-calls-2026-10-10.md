@@ -34,3 +34,11 @@ AGENTS.md's rules; the `verifier`'s exception list; §8.14's pre-approved list.
   drives them.
 - `keepWidth` (the portrait lens) applies to any picture taller than wide, as in shardfall, not only on touch screens.
 - PLAN.md's WP-3.12 Buttons bullet is edited to match.
+
+## Amendment 2 (2026-10-27): what Vercel deploys
+
+Decision 1's "a Vercel deployment of every push", and its look at a stage PR's Vercel status, give way to ADR-0023
+amendment 4 (the owner's direction of 2026-10-27, to keep Vercel's cost down): production deploys a merge to `main`
+that changes what ships, a branch builds a preview only when asked (`[preview]`), and the look is at main's
+production deployment after such a merge, or at a preview a stage that changes the build asks for. Nothing more is
+tested.
