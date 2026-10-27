@@ -2282,6 +2282,10 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
     and an agent records each decision (`node x esc answer`) and tunes from the notes. The page has no server to write
     to, and Vercel serves it static.
   - Another page (the labs index, the Stress Box at crowd-5000) opens in a new tab, so the answer waits where it was.
+  - The panel is worked as a menu is (Codex's finding on #35): `uiUp` and `uiDown` move the focus over its buttons and
+    `uiAccept` presses the focused one, so the keys and a pad's D-pad work it as they work the title screen (the
+    keyboard device keeps Enter and Space from a button's own press). A press steps once: the engine's repeat
+    (`createRepeat`) is not in its public API, and a panel of some thirty buttons does without it.
   - The list and the records agree by test: labs/playground/ui/checks.test.ts holds the decide checks to the records
     awaiting review, both ways, and the try checks to every numbered item of §9.3. AGENTS.md and the escalation skill
     have an agent who escalates write its decide check in the same commit, and post a first line in plain words.
