@@ -9,7 +9,10 @@
  * - the answers (`answers`): `answersText` in a box, a Copy button (the clipboard, else the text selected for the
  *   player's own copy) and Forget my answers, which asks again before it forgets.
  * A verdict or a note calls `onAnswer` at once (the front end keeps it in the store); Go there calls `onGo`. `back()`
- * goes back to the list from a check or the answers, and otherwise (the list, or the check it opened on) `onBack`. A key typed in the note reaches nothing else: the
+ * goes back to the list from a check or the answers, and otherwise (the list, or the check it opened on) `onBack`.
+ * `update(input)`, each frame, works it as a menu is worked: `uiUp` and `uiDown` (the arrows, the pad's D-pad and
+ * stick) move the focus over its buttons, round the ends, and `uiAccept` (Enter, Space, the pad's south button)
+ * presses the one focused; a view shown while the focus was in the panel focuses its first button. A key typed in the note reaches nothing else: the
  * page's own keys (P, F, M) listen on the window, and the devices skip keys typed into a field.
  *
  * Elements: `[data-ui=checks]` (`data-value` the view), a `[data-ui=item]` per button (`data-id`: `check:<id>`,
@@ -27,6 +30,7 @@
  * // document.querySelector('[data-ui=item][data-id="check:sprint"]').click(); // the sprint's view, Go there in it
  * @see tests/e2e/playground-ui.spec.ts
  */
+import type { UiInput } from '../../../engine';
 import { answered, answersText, OWNER_CHECKS, TRY_VERDICTS, type CheckAnswer, type OwnerCheck } from './checks';
 
 /** How the panel is made. */
@@ -51,6 +55,8 @@ export interface ChecksPanel {
   view(): string;
   /** Goes back a view; from the view it opened on, calls `onBack`. */
   back(): void;
+  /** Reads a frame's input: the focus moved over the buttons, the focused one pressed (see the file comment). */
+  update(input: UiInput): void;
   remove(): void;
 }
 
@@ -68,6 +74,7 @@ const STYLE = `
 .pg-checks { left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: 88%; overflow-y: auto; width: min(640px, 94%); }
 .pg-checks button { font: inherit; display: block; width: 100%; text-align: left; margin: 0.2em 0; }
 .pg-checks button[data-value=selected] { outline: 2px solid currentColor; }
+.pg-checks button:focus { outline: 2px dashed currentColor; outline-offset: 2px; }
 .pg-checks h3 { margin: 0.8em 0 0.3em; font-size: 1em; }
 .pg-checks p { margin: 0.4em 0; line-height: 1.35; }
 .pg-checks .pg-small { font-size: 0.85em; opacity: 0.8; }
@@ -109,14 +116,28 @@ export function createChecksPanel(parent: HTMLElement, options: ChecksPanelOptio
     return order.find((check) => !answered(answers[check.id]));
   };
 
+  /** The panel's buttons, in order. */
+  const buttons = () => [...el.querySelectorAll<HTMLButtonElement>('button[data-ui=item]')];
+
   /** Shows `next` (see the file comment). */
   function show(next: string): void {
+    const focused = el.contains(doc.activeElement);
     view = next;
     el.dataset.value = next;
     el.replaceChildren();
-    if (next === 'list') return list();
-    if (next === 'answers') return answersView();
-    checkView(OWNER_CHECKS.find((check) => `check:${check.id}` === next)!);
+    if (next === 'list') list();
+    else if (next === 'answers') answersView();
+    else checkView(OWNER_CHECKS.find((check) => `check:${check.id}` === next)!);
+    if (focused) buttons()[0]?.focus();
+  }
+
+  /** Moves the focus `step` buttons on, round the ends (from none: the first, or the last going back). */
+  function move(step: number): void {
+    const all = buttons();
+    const at = all.indexOf(doc.activeElement as HTMLButtonElement);
+    const next = all[((at < 0 ? (step > 0 ? -1 : 0) : at) + step + all.length) % all.length];
+    next?.focus();
+    next?.scrollIntoView({ block: 'nearest' });
   }
 
   function list(): void {
@@ -191,5 +212,16 @@ export function createChecksPanel(parent: HTMLElement, options: ChecksPanelOptio
   }
 
   show(first);
-  return { el, view: () => view, back, remove: () => el.remove() };
+  return {
+    el,
+    view: () => view,
+    back,
+    update(input) {
+      const step = (input.pressed('uiDown') ? 1 : 0) - (input.pressed('uiUp') ? 1 : 0);
+      if (step) return move(step);
+      const at = buttons().indexOf(doc.activeElement as HTMLButtonElement);
+      if (at >= 0 && input.pressed('uiAccept')) buttons()[at].click();
+    },
+    remove: () => el.remove(),
+  };
 }

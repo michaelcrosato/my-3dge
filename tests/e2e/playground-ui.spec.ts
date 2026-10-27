@@ -11,10 +11,10 @@
  * 3. the spawn picker, from the gym, opens the block at the area picked; on the block it puts the player in the room
  *    picked through the recorded dev action `place`, the HUD naming the room; the run replays to its hash in Node; the
  *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
- * 4. the owner's checks (WP 13.28): the title lists them with how many are left; a check's view names the player's
- *    keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps them; the answers come out as
- *    text; Go there opens the check's page at its spot through the recorded `place`, the HUD naming the check, and
- *    pause answers it.
+ * 4. the owner's checks (WP 13.28): the title lists them with how many are left; the keys work the panel as a menu; a
+ *    check's view names the player's keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps
+ *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place`, the
+ *    HUD naming the check, and pause answers it.
  *
  * Invariants: the page is read through `[data-ui]` elements, `__engine` and `__playgroundUi` only; frames are run with
  * the virtual clock (`harness.tick`), so the front end reads each key at a frame as the page's loop samples it.
@@ -258,6 +258,15 @@ test.describe('the playground’s front end', () => {
     const panel = page.locator('[data-ui=checks]');
     await expect(panel).toHaveAttribute('data-value', 'list');
     for (const check of OWNER_CHECKS) await expect(panel.locator(`[data-ui=item][data-id="check:${check.id}"]`)).toHaveCount(1); // prettier-ignore
+    for (const key of ['ArrowDown', 'ArrowDown', 'Enter', 'Enter']) {
+      await page.keyboard.press(key); // the keys work it as a menu: down twice, the second check, its first choice
+      await harness.tick(2);
+    }
+    await expect(panel).toHaveAttribute('data-value', 'check:esc-0003');
+    await expect(panel.locator('[data-ui=item][data-id="verdict:without"]')).toHaveAttribute('data-value', 'selected');
+    await page.keyboard.press('Escape');
+    await harness.tick(2);
+    await expect(panel).toHaveAttribute('data-value', 'list');
     await panel.locator('[data-ui=item][data-id="check:mantle"]').click();
     await expect(panel).toHaveAttribute('data-value', 'check:mantle');
     await expect(panel).toContainText('press Space to climb'); // the player's key for {jump}
@@ -294,7 +303,7 @@ test.describe('the playground’s front end', () => {
     await harness.tick(2);
     const items = await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents();
     expect(items.slice(0, 2)).toEqual(['Resume', 'Answer this check…']);
-    expect(items).toContain(checksItem(OWNER_CHECKS.length - 1));
+    expect(items).toContain(checksItem(OWNER_CHECKS.length - 2)); // esc-0003 and mantle answered
     await pick(page, harness, 'pause', 'check');
     await expect(panel).toHaveAttribute('data-value', 'check:mantle');
     await expect(panel.locator('[data-ui=item][data-id="verdict:needs-work"]')).toHaveAttribute('data-value', 'selected'); // prettier-ignore

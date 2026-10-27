@@ -29,12 +29,12 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   across a whole pixel changes 7–10 pixels of a soft shadow band (amendment 35). Clip contacts: hands read as holds in
   walks, idles and more (WP 8.8's row); no foot lock reads a clip's foot contacts yet. Not verifiable here: speakers,
   touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms), the pixel look's glide, a desktop MCP client.
-- Mutation (WP 12.2, ESC-0006): the run's fixed tenth of sim's and anim's functions catches 94.40%, a fresh draw of
-  the rest 74.3%: rotate the sample's seed a stage at a time and report a fresh draw at each gate.
+- Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
 - At their size cap (395–400 lines), split on the next change: engine/world/siteNav.ts, gfx/{sky,stage,instancing}.ts,
   anim/{poses,humanoid,locomotion,clip/layer,traversal/{plant,pose}}.ts, sim/actors.ts, labs/box/menu.ts,
   tools/{cmd/audio,cmd/anim,lib/browser}.ts. The feel kit poses apart from the page: share one.
-- The quick gate is over its 5 min (CI_BUDGET: 8–10 min at G13); under load `npm test` can fail on RPC timeouts.
+- The quick gate is over its 5 min (CI_BUDGET: 8–10 min at G13); under load `npm test` can fail on RPC timeouts;
+  audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba; 20 of 20 here, green on its re-run).
 - The box room's page budget is over (35 pipelines, 43 textures, a compute call: WP 11.5's row). `x shot` and `x film`
   never ready the playground's page (they freeze its clock); the tour's page goldens come from its spec (amendment 41).
   Random play lost the shooter's chest in 4–5% of frames (before WP 13.27). Untested: shafts in cascades.

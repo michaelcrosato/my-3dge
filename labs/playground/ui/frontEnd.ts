@@ -259,7 +259,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         open: name === 'check' ? options.check?.id : undefined,
       });
       return {
-        update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && panel.back()),
+        update: () => (input.pressed('uiCancel') || input.pressed('pause') ? panel.back() : panel.update(input)),
         remove: () => panel.remove(),
       };
     }
