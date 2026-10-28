@@ -9572,7 +9572,7 @@ For the agents who maintain the engine.
 - `findSession` (function): The running session's info, or null; a session whose process is gone is cleared.
 - `Opened` (interface): A shot taken (for `x shot`), with what the page said: its signal, its failures so far and its console.
 - `pageErrorFinding` (const): A page error as a failure.
-- `pageFailures` (function): The failures of a page that should be ready: its thrown errors, its error signals, no signal, another backend.
+- `pageFailures` (function): The failures of a page that should be ready within `ms`: its thrown errors, its error signals, no signal, another backend.
 - `reloadLines` (const): The line every reply starts with when Vite reloaded the page since the last one, else nothing.
 - `SESSION_FILE` (const): Where a running session says where it listens.
 - `SessionInfo` (interface): What `session.json` holds.
@@ -9683,7 +9683,7 @@ For the agents who maintain the engine.
 - `frameMetrics` (const): The look metrics of a frame of RGBA bytes (engine/gfx/lookMetrics.ts), as the e2e suites import them from here.
 - `judgeFrame` (function): The verdict on a frame's look notes: notes that fail are failures, the others warnings.
 - `pageUrl` (function): The page's URL path with `scene`, `cam` and each `key=value` of `set` added as URL parameters.
-- `READY_TIMEOUT_MS` (const): How long a page may take to signal ready or an error, in milliseconds.
+- `READY_TIMEOUT_MS` (const): How long a page may take to signal ready or an error, in milliseconds: as long as `x inspect` and `x perf` wait.
 - `resolvePage` (function): Turns a page argument into the URL path to open (relative to the server) and the file that must exist for it.
 - `shotMetrics` (function): A shot's numbers for report.json: the look metrics, the ID-pass list and the marks' legend, flat.
 

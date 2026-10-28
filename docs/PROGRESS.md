@@ -15,26 +15,26 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   access for the live evals, the crowd's CPU render, the mutants outside the sample). Their answers come back pasted
   from Copy my answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
-## Where things stand (2026-10-26)
+## Where things stand (2026-10-28)
 
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain, cel and pixel looks); Watch the tour plays it all.
   Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Vercel on again; the site opens the playground.
+- Tidied after G13 (ADR-0025 amendment 45): the cast floods its ways lazily, the cap's 15 files split, the box's sounds
+  where their events say, `x shot`/`x film` on the playground, the box room's page budget re-recorded and held.
 
 ## What waits, and the open issues
 
-- The box's sound map reads its actors when it reads, not where an event says (amendment 29). Amendment 22 proposes
-  triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Owner: top-down's pixel look panned
-  across a whole pixel changes 7–10 pixels of a soft shadow band (amendment 35). Clip contacts: hands read as holds in
-  walks, idles and more (WP 8.8's row); no foot lock reads a clip's foot contacts yet. Not verifiable here: speakers,
-  touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms), the pixel look's glide, a desktop MCP client.
+- Amendment 22 proposes triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Owner:
+  top-down's pixel look panned across a whole pixel changes 7–10 pixels of a soft shadow band (amendment 35). Clip
+  contacts: hands read as holds in walks, idles and more (WP 8.8's row); no foot lock reads a clip's foot contacts yet.
+  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms), the pixel
+  look's glide, a desktop MCP client.
 - Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
-- At their size cap (395–400 lines), split on the next change: engine/world/siteNav.ts, gfx/{sky,stage,instancing}.ts,
-  anim/{poses,humanoid,locomotion,clip/layer,traversal/{plant,pose}}.ts, sim/actors.ts, labs/box/menu.ts,
-  tools/{cmd/audio,cmd/anim,lib/browser}.ts. The feel kit poses apart from the page: share one.
-- The quick gate is over its 5 min (CI_BUDGET: 8–10 min at G13); under load `npm test` can fail on RPC timeouts;
-  audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba; 20 of 20 here, green on its re-run).
-- The box room's page budget is over (35 pipelines, 43 textures, a compute call: WP 11.5's row). `x shot` and `x film`
-  never ready the playground's page (they freeze its clock); the tour's page goldens come from its spec (amendment 41).
-  Random play lost the shooter's chest in 4–5% of frames (before WP 13.27). Untested: shafts in cascades.
+- Near the size cap (392–394 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
+  tools/cmd/replay.ts; four tests at 399–400. The feel kit poses apart from the page: share one.
+- The quick gate is over its 5 min (CI_BUDGET), its long pole the playground's soak and site tests; under load
+  `npm test` can fail on RPC timeouts; audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba).
+- The tour's page goldens come from its spec (amendment 41). Random play lost the shooter's chest in 4–5% of frames
+  (before WP 13.27). Untested: shafts in cascades.

@@ -2295,3 +2295,34 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
   spot holding the player through the recorded `place`, the answers' shape and text); tests/e2e/playground-ui.spec.ts
   test 4 (listed, answered with a key typed into the note reaching nothing else, kept, copied out; Go there opening the
   check at its spot, recorded and replayed in Node, the HUD naming it, pause answering it).
+
+## Amendment 45 (2026-10-28): the tidy-up after G13
+
+The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md's open issues, taken in turn:
+
+- **The cast's ways** (engine/world/siteNavGraph.ts, split from siteNav.ts): the dog flooded the whole block
+  (58,396 nodes, 3–15 ms) each time the player it follows crossed a tile, about ten a second, in the page and in
+  every playground test. A flood now walks flat arrays of each node's steps in, in the same order with the same sums
+  (2x; a hash of 432 fields unchanged), and `flowField(goal, { lazy: true })` floods only as far as `direction`,
+  `crouch` and `rise` read it: its pops come in a full flood's order, only paused, so they answer exactly as on the
+  full field (4,800 reads in random order, none different; siteNavGraph.test.ts reads every open node of the fixture
+  site). The cast's `wayTo` takes it: 0.45 ms against 5.45 for a dog-like reader. The bot keeps full fields: it reads
+  their entries directly. `createSiteNav` keeps a site's last four navigations by their options, the blocks' numbers
+  too, so a world remade with its props where they were, the bot's and the cast's, share one (derived data, a pure
+  function of the site and the options). The house's soak took 69 s against 109, site-downstairs 37 against 77.
+- **The box's sound map** reads an actor's event where the event says it happened (`at`), as the playground's
+  does (amendment 29's open point): FIGHT_TIMELINE re-recorded, the same 77 sounds at the same steps with the same
+  effects and gains, 35 placed anew; box-audio.spec agrees in Chromium.
+- **The files at their line cap**, fifteen, each split by one concept moved whole, behaviour unchanged (the ledger's
+  list in docs/PROGRESS.md; the commits name each move).
+- **`x shot` and `x film` on the playground** (WP 13.21's "found and left"): the page readies under the virtual clock,
+  as its specs show; the tools gave up after 30 s, and the gym warms up in about a minute on SwiftShader, the site in
+  several. They now wait `READY_MS` (300 s) as `x inspect`, `x perf` and the MCP session do, and the failure names the
+  time it waited (it named 300 s while waiting 30). `node x shot labs/playground --scene gym --cam iso`, the README's
+  step, works again; `--ready-ms` still sets another.
+- **The box room's page budget** (tests/baselines/perf/box-room.json) re-recorded with its reason: everything over it
+  came with stage G12 (the room drew the old budget exactly at G11); the features priced one by one account for all 13
+  textures, the compute call and 7 of the 11 pipelines, and the other 4 and the 2 geometries came with the same
+  squashed stage. LONG_RUNS now holds it at each gate.
+- **Left, with why:** audio.spec's one hang in an offline render on GitHub (20 of 20 here; nothing to fix without a
+  failure to read); the feel kit's posing apart from the page's; the shafts under a cascaded sun (no page draws them).
