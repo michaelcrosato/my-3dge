@@ -2,7 +2,8 @@
  * @file The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a
  * world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow
  * fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the
- * goal lies on another node. `plainWays()` is the site's alone, without a scene's props, for placing things in a
+ * goal lies on another node, and lazy: flooded only as far as `direction` reads it, which answers as on a full field
+ * (engine/world/siteNavGraph.ts), so the dog following the player across tiles floods a few metres, not the block. `plainWays()` is the site's alone, without a scene's props, for placing things in a
  * scene's setup, whose props no query sees yet.
  *
  * - The navigation is made the first time a step asks (`waysOf`), round the props as they stand then (the scene's
@@ -11,8 +12,8 @@
  *   world with a count of the remakes (the component `siteWays`), so a world restored from a capture makes the very
  *   same ways the run had then, whatever the props did since.
  *
- * Invariants: derived data, apart from `siteWays`'s boxes (plain numbers, hashed and captured with the world); a field
- * is a pure function of the navigation and its goal's node.
+ * Invariants: derived data, apart from `siteWays`'s boxes (plain numbers, hashed and captured with the world); a field's
+ * answers are a pure function of the navigation and its goal's node.
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
  *
@@ -94,6 +95,6 @@ export function wayTo<C extends object>(
   const node = nav.nodeAt(goal[0], goal[1], goal[2]);
   let kept = fields.get(key);
   if (!kept || kept.node !== node)
-    fields.set(key, (kept = { node, field: nav.flowField([goal[0], goal[1], goal[2]]) }));
+    fields.set(key, (kept = { node, field: nav.flowField([goal[0], goal[1], goal[2]], { lazy: true }) }));
   return { nav, field: kept.field };
 }

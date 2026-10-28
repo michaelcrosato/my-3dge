@@ -312,7 +312,7 @@ game agent's manual.
 - `createPuppetBatches` (function from [`engine/gfx/puppets/batches.ts`](../engine/gfx/puppets/batches.ts)): Makes instanced puppet batches (see the file comment).
 - `createScriptedGamepad` (function from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): Makes a scripted pad in slot `index` (0); call `next()` once per frame, before the input samples.
 - `createShoulderCamera` (function from [`engine/gfx/cameras/shoulder.ts`](../engine/gfx/cameras/shoulder.ts)): A shoulder camera: over the hero's shoulder (`input.eye`), turned by the devices, in front of the walls.
-- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
+- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): `site`'s navigation (see the file comment): one made before for the same options when kept, else a new one.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
 - `createStore` (function from [`engine/app/store.ts`](../engine/app/store.ts)): Makes a store (see the file comment).
@@ -1501,7 +1501,7 @@ game agent's manual.
 - `createCharacter` (function from [`engine/physics/character.ts`](../engine/physics/character.ts)): Checks a character's settings and fills the defaults; throws `CORE_BAD_SPEC` naming each problem.
 - `createFootPlantState` (function from [`engine/anim/locomotion/locks.ts`](../engine/anim/locomotion/locks.ts)): A new, unlocked `FootPlantState`.
 - `createInputBuffer` (function from [`engine/input/intents.ts`](../engine/input/intents.ts)): A fresh input buffer: nothing held, pressed or consumed.
-- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
+- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): `site`'s navigation (see the file comment): one made before for the same options when kept, else a new one.
 - `createSkeleton` (function from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): The skeleton of `build` (a build or its id; `build:chibi` by default), in its T-shaped rest pose.
 - `createWorldPose` (function from [`engine/anim/fk.ts`](../engine/anim/fk.ts)): An empty `WorldPose` for `forwardKinematics` to fill.
 - `CROWD_AGENT` (const from [`engine/physics/crowd.ts`](../engine/physics/crowd.ts)): An agent with every field at its default: queued, a walker's capsule at the origin.
@@ -7124,7 +7124,7 @@ For the agents who maintain the engine.
 - `addSiteBodies` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a site's bodies (its terrain, cut, then each structure's) and returns their ids in that order.
 - `addSiteLadders` (function from [`engine/sim/rides.ts`](../engine/sim/rides.ts)): Places the ladders of every structure of `site` (engine/world/site.ts), in the world; returns their entities.
 - `addTerrainBody` (function from [`engine/sim/levelBodies.ts`](../engine/sim/levelBodies.ts)): Adds a terrain's body (one fixed body: its heightfield, or with `cut` cells, one triangle mesh of the rest) and returns the body's id.
-- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): Builds `site`'s navigation (see the file comment).
+- `createSiteNav` (function from [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)): `site`'s navigation (see the file comment): one made before for the same options when kept, else a new one.
 - `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `defineTerrain` (function from [`engine/world/terrain.ts`](../engine/world/terrain.ts)): Registers a terrain on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
 - `floorBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The height (m) of the highest surface at or under (x, y, z): a storey's floor (flat, a ramp, a flight, a dais, under a solid too), the top of a solid standing there (a low wall, a railing, a wall, the head over a door, a window or a low ceiling, even with no floor above it), a roof's top, or the ground slab under the level; null where nothing is (outside the ground slab).
@@ -7682,8 +7682,8 @@ For the agents who maintain the engine.
 
 ### [`engine/world/siteNav.ts`](../engine/world/siteNav.ts)
 
-- `createSiteNav` (function): Builds `site`'s navigation (see the file comment).
-- `CROUCH_COST` (const): How many times its length a step costs where a body must crouch to take it (a crouch-walk's pace against a run).
+- `createSiteNav` (function): `site`'s navigation (see the file comment): one made before for the same options when kept, else a new one.
+- `CROUCH_COST` (const from [`engine/world/siteNavGraph.ts`](../engine/world/siteNavGraph.ts)): How many times its length a step costs where a body must crouch to take it (a crouch-walk's pace against a run).
 - `NavBlock` (interface from [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)): A box of the world (m) a body cannot walk through: a prop's body, a door's leaf where it opens to.
 - `SiteNav` (interface): A site's navigation (see the file comment).
 - `SiteNavGrid` (interface): One of a site's grids: the terrain's or a structure's storey's, and its first node's number.
@@ -7696,6 +7696,11 @@ For the agents who maintain the engine.
 - `clearOffset` (function): `tile`'s clear point on `grid` as an offset from its centre (m; see the file comment); `own` is each tile's openness in its own grid, before the blocks closed any.
 - `ClearOptions` (interface): What `clearOffset` keeps clear of (see the file comment).
 - `clearPoints` (function): Every node's clear point on a site's graph (engine/world/siteNav.ts), each found once: a function giving a node's on its floor (m).
+
+### [`engine/world/siteNavGraph.ts`](../engine/world/siteNavGraph.ts)
+
+- `CROUCH_COST` (const): How many times its length a step costs where a body must crouch to take it (a crouch-walk's pace against a run).
+- `siteNavGraph` (function): The graph's searches over `grids` and `links` (see the file comment).
 
 ### [`engine/world/siteNavGrids.ts`](../engine/world/siteNavGrids.ts)
 

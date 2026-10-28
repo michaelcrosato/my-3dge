@@ -1511,6 +1511,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`siteNavClear.ts`](../engine/world/siteNavClear.ts): Where on a tile a site's navigation walks a body (PLAN.md WP 13.15, WP 13.18; engine/world/siteNav.ts): its clear point.
   - Exports: `CLEAR_SAMPLES`, `ClearGraph`, `clearOffset`, `ClearOptions`, `clearPoints`
   - Tests: [`engine/world/siteNavClear.test.ts`](../engine/world/siteNavClear.test.ts)
+- [`siteNavGraph.ts`](../engine/world/siteNavGraph.ts): The searches over a site's navigation graph (PLAN.md WP 13.15, WP 13.18; engine/world/siteNav.ts builds it).
+  - Exports: `CROUCH_COST`, `siteNavGraph`
+  - Tests: [`engine/world/siteNav.test.ts`](../engine/world/siteNav.test.ts), [`engine/world/siteNavGraph.test.ts`](../engine/world/siteNavGraph.test.ts)
 - [`siteNavGrids.ts`](../engine/world/siteNavGrids.ts): The grids a site's navigation walks (PLAN.md WP 13.15; engine/world/siteNav.ts).
   - Exports: `blockedSurface`, `CURB`, `NavBlock`, `siteTerrainSurface`, `storeyCeilings`, `storeyLinks`, `storeySurface`, `tileHighs`
   - Tests: [`engine/world/siteNav.test.ts`](../engine/world/siteNav.test.ts), [`engine/world/siteNavGrids.test.ts`](../engine/world/siteNavGrids.test.ts)
@@ -1535,7 +1538,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`things.ts`](../engine/world/things.ts): Things (PLAN.md WP 10.4; doctrine: Common ground): what can be hit, as a range's targets and a ring's dummies are.
   - Exports: `defineThing`, `getThing`, `hitThing`, `stepThing`, `Thing`, `THING_FIELDS`, `THING_KIND_FIELDS`, `thingAt`, `ThingHit`, `thingKind`, `ThingKind`, `ThingOutcome`, `ThingSpec`, `ThingStanding`, `thingState`, `ThingTouch`
   - Tests: [`engine/world/things.test.ts`](../engine/world/things.test.ts)
-- [`tileHeap.ts`](../engine/world/tileHeap.ts): The tile heap (PLAN.md WP 4.3): an indexed binary min-heap of tiles keyed by a typed array, which navigation's searches run on (engine/world/nav.ts: A* and the flow fields' Dijkstra), so a query allocates nothing but its answer.
+- [`tileHeap.ts`](../engine/world/tileHeap.ts): The tile heap (PLAN.md WP 4.3): an indexed binary min-heap of tiles keyed by a typed array, which navigation's searches run on (engine/world/nav.ts: A* and the flow fields' Dijkstra; engine/world/siteNavGraph.ts's floods, a lazy one's paused on a heap of its own), so a query allocates nothing but its answer.
   - Exports: `TileHeap`
   - Tests: [`engine/world/nav.test.ts`](../engine/world/nav.test.ts)
 - [`traverse.ts`](../engine/world/traverse.ts): Traversal as world data (PLAN.md WP 13.7, docs/PLAYGROUND.md §2.3 and §3.2): ziplines, ladders and launchers, the specs a scene places them by (engine/sim/rides.ts's `addZipline`, `addLadder`, `addLauncher`), their checks, and the ladders a level's ladder glyphs stand (`levelLadders`).
@@ -1875,7 +1878,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1–13.3): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
   - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `PLAYER_MOVEMENTS`, `PLAYER_SETTINGS`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
-- [`ways.ts`](../labs/playground/cast/ways.ts): The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the goal lies on another node.
+- [`ways.ts`](../labs/playground/cast/ways.ts): The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the goal lies on another node, and lazy: flooded only as far as `direction` reads it, which answers as on a full field (engine/world/siteNavGraph.ts), so the dog following the player across tiles floods a few metres, not the block.
   - Exports: `plainWays`, `replanWays`, `waysOf`, `wayTo`
   - Tests: [`labs/playground/cast/neighbours.test.ts`](../labs/playground/cast/neighbours.test.ts)
 
