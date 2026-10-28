@@ -7956,8 +7956,6 @@ For the agents who maintain the engine.
 
 - `BOX_ACTION_MAP` (const): The action map the page's input binds: createEngine's default (engine/input/input.ts).
 - `BoxMenuOptions` (interface): What the menu lists.
-- `ControlRow` (interface): One row of the controls: what it does, then the keys and mouse buttons, then the pad's buttons.
-- `controlRows` (function): The rows of the controls for `map`: moving first, then each other action in the map's order.
 - `createBoxMenu` (function): Builds the menu in `document` when `box.menu` shows it (see the file comment) and returns its panel; null when it stays out (automation, or `box.menu=off`).
 - `linkQuery` (function): A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable.
 - `MENU_KEY` (const): The key that shows and hides the menu: M, which no action map binds.
@@ -7968,6 +7966,11 @@ For the agents who maintain the engine.
 - `menuStartsOpen` (function): Whether the menu starts open: unless `storage` remembers the reader closing it; storage that throws forgets.
 - `MenuStorage` (type): Where the menu remembers being open or closed: the `localStorage` shape.
 - `rememberMenu` (function): Remembers in `storage` that the reader left the menu open or closed; storage that throws (blocked, full) forgets.
+
+### [`labs/box/menuControls.ts`](../labs/box/menuControls.ts)
+
+- `ControlRow` (interface): One row of the controls: what it does, then the keys and mouse buttons, then the pad's buttons.
+- `controlRows` (function): The rows of the controls for `map`: moving first, then each other action in the map's order.
 
 ### [`labs/box/scenes/clips.ts`](../labs/box/scenes/clips.ts)
 
@@ -9103,6 +9106,17 @@ For the agents who maintain the engine.
 - `parseMotionList` (function): The takes on the site's full motion list (`search.php?subjectnumber=%&motion=%`), from its HTML.
 - `SITE` (const): The site; it serves plain HTTP.
 
+### [`tools/anim/command.ts`](../tools/anim/command.ts)
+
+- `list` (const): A flag's comma-separated list, if given.
+- `number` (const): A flag's number, `fallback` when not given; a usage error when not a number.
+- `runImport` (function): `x anim import …` (see the file comment).
+- `setIn` (function): The set in directory `dir` of `sets` (or at `dir`, when absolute); a missing one names `--sets`.
+- `setsOf` (function): The directory of sets `--sets` names, from `root` (`data/anim/sets` by default); a missing one names the flag.
+- `text` (const): A flag's text, if given.
+- `Values` (type): A command's flag values.
+- `writeOrCheck` (function): Writes `files` into `dir`, or with `check` lists the files that differ; a result either way.
+
 ### [`tools/anim/contacts.ts`](../tools/anim/contacts.ts)
 
 - `AIRBORNE` (const): How long (s) nothing may be held before a foot's contact is a landing: a jump's, not a run's flight.
@@ -9345,11 +9359,7 @@ For the agents who maintain the engine.
 
 - `default` (default): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
 - `encodeWav` (function): Encodes samples as a 16-bit mono PCM WAV file, clamped to ±1.
-- `mixSoundEvents` (function): The events' effects rendered (each once per variant, seed 0, at 44,100 Hz) and summed into one mono mix at least `seconds` long, with each event's span in it, `[start, end)` in samples.
 - `Picture` (type): A picture as RGBA bytes, row by row from the top.
-- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step through `createPlayback` (engine/app/playback.ts, the page's real-time playback), hashing its checkpoints, and reads the sound events from the sim's event trace after setup and after each step, as the box's page does (labs/box/sounds/events.ts).
-- `SoundEvent` (interface): One sound event of a replay: when, from which sim event, which effect at which gain and variant.
-- `SoundTimeline` (interface): A replay's sound events, the problems of those that name no sound, its length and the hashes of its checkpoints.
 - `spectrogram` (function): A spectrogram of `samples` as RGBA bytes (see the file comment for its axes and colours).
 - `SPECTROGRAM` (const): The spectrogram's size, FFT length, floor (dBFS) and lowest frequency (Hz).
 
@@ -9768,19 +9778,12 @@ For the agents who maintain the engine.
 - `chromiumPath` (function): The Chromium executable: `$CHROMIUM_PATH`; else `DEFAULT_CHROMIUM` when it exists; else `cachedChromium()` when it exists (a machine outside the container, after scripts/setup.sh); else `DEFAULT_CHROMIUM`, so the launch error names the platform's path.
 - `ConsoleRecord` (interface): One console message the page printed.
 - `DEFAULT_CHROMIUM` (const): The container's Chromium (153 since 2026-10-22); `$CHROMIUM_PATH` overrides it.
-- `describePageError` (function): One line for a page error: its message and where it was thrown (`tests/pages/harness.ts:12:9`).
 - `GpuLog` (interface): What WebGPU really did in the page, counted by the probe: `window.__gpu`.
 - `initScript` (function): The init script for `page.addInitScript`: the virtual clock seeded with `seed`, then the WebGPU probe.
 - `launchBrowser` (function): Launches the platform's Chromium with WebGPU, for `x` commands that open pages.
 - `launchOptions` (function): Playwright's launch options for WebGPU on this platform, shared by `playwright.config.ts` and the `x` commands.
-- `mapPageError` (function): Maps one uncaught page error to its source frames.
-- `mapStack` (function): Maps every frame of a browser stack to its source through the served modules' inline source maps.
-- `PageError` (interface): A page error with its stack mapped to sources; `file`, `line` and `column` are its first repository frame.
 - `PageWatch` (interface): What `preparePage` collects while the page runs.
-- `parseStack` (function): Splits a V8 stack into its frames' function names, URLs and 1-based positions.
 - `preparePage` (function): Prepares a page before it loads anything: installs the init script (virtual clock seeded with `seed`, seeded `Math.random` and named streams, the WebGPU probe) and starts collecting console messages and mapped page errors.
-- `servedPath` (function): The repository-relative path of a URL the dev server serves (`/@fs/…` included), or the URL itself.
-- `SourceFrame` (interface): One frame of a stack, at its source position when a source map gave one.
 - `VIEWPORT` (const): The viewport every harness page gets.
 - `VirtualClock` (interface): The page's virtual clock and seeded streams, installed as `window.__clock`.
 - `WEBGPU_FLAGS` (const): Shardfall's WebGPU flags (PLAN.md §8.8): SwiftShader through Vulkan, presenting to the page's own canvas.
@@ -10068,6 +10071,16 @@ For the agents who maintain the engine.
 - `Signals` (interface): A page's ready-or-error signal (PLAN.md §8.3), read once.
 - `waitReady` (function): Waits until `tab` signals ready or an error, or throws an uncaught error, or `ms` pass; returns the last signal.
 
+### [`tools/lib/pageErrors.ts`](../tools/lib/pageErrors.ts)
+
+- `describePageError` (function): One line for a page error: its message and where it was thrown (`tests/pages/harness.ts:12:9`).
+- `mapPageError` (function): Maps one uncaught page error to its source frames.
+- `mapStack` (function): Maps every frame of a browser stack to its source through the served modules' inline source maps.
+- `PageError` (interface): A page error with its stack mapped to sources; `file`, `line` and `column` are its first repository frame.
+- `parseStack` (function): Splits a V8 stack into its frames' function names, URLs and 1-based positions.
+- `servedPath` (function): The repository-relative path of a URL the dev server serves (`/@fs/…` included), or the URL itself.
+- `SourceFrame` (interface): One frame of a stack, at its source position when a source map gave one.
+
 ### [`tools/lib/perfBudget.ts`](../tools/lib/perfBudget.ts)
 
 - `BUDGET_KEYS` (const): What a Node run and a ladder rung measure: milliseconds per step, per hash and per capture.
@@ -10114,6 +10127,13 @@ For the agents who maintain the engine.
 - `SourceEngine` (type): The parts of the old engine's `E` (`My3D2dge`) the vectors call.
 - `STATES` (const): The humanoid state matrix (WP 0.11): locomotion, every pose, and both stances (while walking).
 - `STEPS` (const): The steps of each humanoid run.
+
+### [`tools/lib/replaySounds.ts`](../tools/lib/replaySounds.ts)
+
+- `mixSoundEvents` (function): The events' effects rendered (each once per variant, seed 0, at 44,100 Hz) and summed into one mono mix at least `seconds` long, with each event's span in it, `[start, end)` in samples.
+- `replaySoundEvents` (function): Plays `replay` (its scene defined on `registry`) step by step through `createPlayback` (engine/app/playback.ts, the page's real-time playback), hashing its checkpoints, and reads the sound events from the sim's event trace after setup and after each step, as the box's page does (labs/box/sounds/events.ts).
+- `SoundEvent` (interface): One sound event of a replay: when, from which sim event, which effect at which gain and variant.
+- `SoundTimeline` (interface): A replay's sound events, the problems of those that name no sound, its length and the hashes of its checkpoints.
 
 ### [`tools/lib/replayState.ts`](../tools/lib/replayState.ts)
 

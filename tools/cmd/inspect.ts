@@ -30,14 +30,8 @@ import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } 
 import { createServer, request } from 'node:http';
 import { join } from 'node:path';
 import type { Browser, Page } from '@playwright/test';
-import {
-  describePageError,
-  launchBrowser,
-  preparePage,
-  VIEWPORT,
-  type ConsoleRecord,
-  type PageError,
-} from '../lib/browser';
+import { launchBrowser, preparePage, VIEWPORT, type ConsoleRecord } from '../lib/browser';
+import { describePageError, type PageError } from '../lib/pageErrors';
 import type { Finding } from '../lib/report';
 import type { ShotJson, ShotOptions } from '../../engine/gfx/shot';
 import { readSignals, READY_MS, waitReady, type PageEngine, type Signals } from '../lib/page';

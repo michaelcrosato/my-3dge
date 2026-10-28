@@ -5,8 +5,9 @@
  * replays as links to `?replay=<name>`, cameras and looks as links that keep the scene (the query with only `cam` and
  * `cam3`, or `post.look`, changed), and the controls: every action of the map the page's input binds (`BOX_ACTION_MAP`,
  * createEngine's default) with its keys and mouse buttons and its pad buttons, labelled by the engine's `codeLabel` in
- * the reader's keyboard layout (`readKeyboardLayout`), then the wheel, the menu's key and the sound's first gesture;
- * in touch mode the box's touch buttons (`touchlayout:box`, labs/box/touch.ts) instead of the keys.
+ * the reader's keyboard layout (`readKeyboardLayout`; the rows: labs/box/menuControls.ts), then the wheel, the menu's
+ * key and the sound's first gesture; in touch mode the box's touch buttons (`touchlayout:box`, labs/box/touch.ts)
+ * instead of the keys.
  *
  * Toggle: the button in the corner, or M (`MENU_KEY`, a key no action map binds: tests/e2e/box-menu.spec.ts checks
  * every registered map, the system layer and the reserved codes). The panel is a page panel (`data-panel`,
@@ -31,8 +32,9 @@
  * // createBoxMenu(document, { scenes, looks, replays: Object.keys(replays), scene });
  * // document.querySelector('#box-menu a[href^="?scene="]')?.getAttribute('href'); // '?scene=room'
  */
-import { codeLabel, getActionMap, getTouchLayout, readKeyboardLayout, type ActionMap } from '../../engine';
+import { codeLabel, getActionMap, getTouchLayout, readKeyboardLayout } from '../../engine';
 import { defineSettings } from '../../engine/sim-api';
+import { controlRows } from './menuControls';
 import { BOX_TOUCH } from './touch';
 
 /** The menu's view setting (see the file comment). */
@@ -89,29 +91,6 @@ const CAMERAS: readonly { key: 'cam' | 'cam3'; value: string; label: string }[] 
 /** The view settings a scene or replay link keeps from the page's query. */
 const KEPT = ['post.look', 'touch', 'box.menu'];
 
-/** What each action does in the box; an action missing here shows its name. */
-const ACTION_WORDS: Readonly<Record<string, string>> = {
-  jump: 'Jump',
-  dash: 'Dash',
-  attack: 'Attack (shove)',
-  skill: 'Bolt',
-  interact: 'Interact (unused)',
-};
-
-/** A pad label's direction (`D-pad Up`, `L Stick Left`): the move row names the pad and the stick once. */
-const DIRECTION = / (Up|Down|Left|Right)$/;
-
-/** Codes shown in words or arrows rather than as `codeLabel` names them. */
-const WORDS: Readonly<Record<string, string>> = {
-  MouseLeft: 'Left click',
-  MouseRight: 'Right click',
-  MouseMiddle: 'Middle click',
-  ArrowUp: '↑',
-  ArrowDown: '↓',
-  ArrowLeft: '←',
-  ArrowRight: '→',
-};
-
 /** A listed entry: a scene or a look, as its module exports it. */
 export interface MenuEntry {
   readonly id: string;
@@ -132,14 +111,6 @@ export interface BoxMenuOptions {
   search?: string;
   /** Where it remembers being open or closed (the page's `localStorage`); null remembers nothing. */
   storage?: MenuStorage | null;
-}
-
-/** One row of the controls: what it does, then the keys and mouse buttons, then the pad's buttons. */
-export interface ControlRow {
-  action: string;
-  words: string;
-  keys: string;
-  pad: string;
 }
 
 /** Whether `setting` (the query's `box.menu`) shows the menu in a browser that automation does or does not drive. */
@@ -185,33 +156,6 @@ export function linkQuery(search: string, changes: Record<string, string | null>
   for (const key of keep ?? []) if (from.has(key)) params.set(key, from.get(key)!);
   const text = params.toString().replaceAll('%3A', ':').replaceAll('%2C', ',');
   return text ? `?${text}` : './';
-}
-
-/** The rows of the controls for `map`: moving first, then each other action in the map's order. */
-export function controlRows(map: ActionMap, layout?: ReadonlyMap<string, string>): ControlRow[] {
-  const label = (code: string) => WORDS[code] ?? codeLabel(code, { layout }).replace(/^[LR] (?=Shift|Ctrl|Alt)/, '');
-  const unique = (labels: string[]) => [...new Set(labels)];
-  const keys = (codes: readonly string[]) => unique(codes.filter((code) => !/^(Pad|touch:)/.test(code)).map(label));
-  const pad = (codes: readonly string[]) =>
-    unique(codes.filter((code) => code.startsWith('Pad')).map((c) => codeLabel(c)));
-  const [forward, back, left, right] = map.move.map((action) => map.actions[action] ?? []);
-  const ways = [forward, left, back, right].map(keys);
-  const rows = Array.from({ length: Math.max(...ways.map((way) => way.length)) }, (_, i) => ways.map((way) => way[i]));
-  const moving: ControlRow = {
-    action: 'move',
-    words: 'Move',
-    keys: rows.map((row) => row.filter(Boolean).join(' ')).join(' / '),
-    pad: unique(pad([...forward, ...back, ...left, ...right]).map((name) => name.replace(DIRECTION, ''))).join(' / '),
-  };
-  const others = Object.entries(map.actions)
-    .filter(([action]) => !map.move.includes(action))
-    .map(([action, codes]) => ({
-      action,
-      words: ACTION_WORDS[action] ?? action,
-      keys: keys(codes).join(' / '),
-      pad: pad(codes).join(' / '),
-    }));
-  return [moving, ...others];
 }
 
 /** The menu's look, added once as `<style id="box-menu-style">`. */

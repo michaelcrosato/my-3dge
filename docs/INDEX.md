@@ -1648,8 +1648,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `loadLibrary`, `loadMannequin`, `registerEdit`
 - [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for every scene.
 - [`menu.ts`](../labs/box/menu.ts): The box page's menu for humans (labs/box/index.html): what the box offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
-  - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `ControlRow`, `controlRows`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
+  - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
   - Tests: [`labs/box/menu.test.ts`](../labs/box/menu.test.ts)
+- [`menuControls.ts`](../labs/box/menuControls.ts): The controls the box page's menu lists (labs/box/menu.ts): a row for each action of an action map, what it does in the box (`Move`, `Jump`, `Attack (shove)`…), its keys and mouse buttons labelled by the engine's `codeLabel` in the reader's keyboard layout (arrows and clicks in words), and its pad buttons, the move row naming the pad and the stick once.
+  - Exports: `ControlRow`, `controlRows`
+  - Tests: [`labs/box/menuControls.test.ts`](../labs/box/menuControls.test.ts)
 - [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12, WP 6.7; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
   - Exports: `BOX_TOUCH`
 
@@ -2249,6 +2252,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`cmu.ts`](../tools/anim/cmu.ts): The CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), fetched on demand into `.cache/anim/` (PLAN.md §5.3 and §10.3, WP 8.5): about 2,500 takes by 113 subjects, each subject a skeleton (`NN.asf`) and each take a motion (`NN_MM.amc`) at 120 frames a second (some at 60).
   - Exports: `ANIM_CACHE`, `ARCHIVE`, `asfOf`, `CMU_CACHE`, `cmuAll`, `cmuArchive`, `cmuGet`, `cmuIndex`, `IndexedTake`, `parseMotionList`, `SITE`
   - Tests: [`tools/anim/cmu.test.ts`](../tools/anim/cmu.test.ts)
+- [`command.ts`](../tools/anim/command.ts): The shared parts of `node x anim`'s subcommands (tools/cmd/anim.ts, PLAN.md §10, WP 8.5): its flags read (`text`, `list`, `number`), the directory of sets `--sets` names and a set in it, a set's files written or checked (`writeOrCheck`, `--check`: list the files that differ), and `import` (`runImport`: .glb files or the CMU takes into a set, its committed clips re-imported from their source kept).
+  - Exports: `list`, `number`, `runImport`, `setIn`, `setsOf`, `text`, `Values`, `writeOrCheck`
+  - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
 - [`contacts.ts`](../tools/anim/contacts.ts): Contacts and events, detected at import (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): when each foot and hand holds the ground or a surface (a clip's `contacts`), and the moments gameplay listens for (its `events`: `step`, `land`, `hit`), read from a capture's 36 body points.
   - Exports: `AIRBORNE`, `CARRY`, `detectContacts`, `FOOT_CLEAR`, `HAND_FLOOR`, `HANG`, `HOLD`, `HOLD_REACH`, `STILL`, `treadmill`
   - Tests: [`tools/anim/contacts.test.ts`](../tools/anim/contacts.test.ts)
@@ -2316,7 +2322,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`, `subcommandOf`, `targetOf`
   - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
 - [`audio.ts`](../tools/cmd/audio.ts): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
-  - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
+  - Exports: `default`, `encodeWav`, `Picture`, `spectrogram`, `SPECTROGRAM`
   - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetRules`, `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
@@ -2441,8 +2447,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/lib
 
-- [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
-  - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
+- [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and the console and the page's errors collected, mapped to `.ts` files and lines (tools/lib/pageErrors.ts) (§8.1, §8.8).
+  - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `PageWatch`, `preparePage`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts), [`tools/lib/browser.test.ts`](../tools/lib/browser.test.ts)
 - [`ciShards.ts`](../tools/lib/ciShards.ts): How the full run splits T2 over its machines (ADR-0023 amendment 3): by minutes, not by count.
   - Exports: `E2eReport`, `E2eSuite`, `minutesFromReports`, `minutesOf`, `planShards`, `readT2Minutes`, `SPEC_DIR`, `specFiles`, `T2_MINUTES`, `T2Minutes`, `UNMEASURED_MINUTES`, `writeMinutes`
@@ -2510,6 +2516,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
   - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`pageErrors.ts`](../tools/lib/pageErrors.ts): Page errors mapped to their sources (PLAN.md §8.1, §8.8): a browser's stack parsed into frames (`parseStack`), each mapped to its `.ts` file and line through the inline source map Vite serves with the module (`mapStack`), and an uncaught page error named by its first frame in the repository (`mapPageError`, `describePageError`), as tools/lib/browser.ts's `preparePage` collects them.
+  - Exports: `describePageError`, `mapPageError`, `mapStack`, `PageError`, `parseStack`, `servedPath`, `SourceFrame`
+  - Tests: [`tools/lib/pageErrors.test.ts`](../tools/lib/pageErrors.test.ts)
 - [`perfBudget.ts`](../tools/lib/perfBudget.ts): Performance budgets and their trend (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5), for `x perf` (tools/cmd/perf.ts, whose file comment says how each way measures).
   - Exports: `BUDGET_KEYS`, `BUDGET_SHAPE`, `budgetPath`, `Budgets`, `DEFAULT_STEPS`, `LADDER`, `median`, `PAGE_KEYS`, `PAGE_TIMES`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `Section`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
   - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
@@ -2519,6 +2528,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`portVectors.ts`](../tools/lib/portVectors.ts): The port vectors' builders (PLAN.md WP 0.11, §9.0), for `x port refs` (tools/cmd/port.ts, which formats, writes and checks them): `loadEngine` loads `my-3d2dge:engine/my-3d2dge.js` from a checkout into a Node `vm` context (`console` the only shim; `Math.random` the engine's own `rng`, reseeded per record from its id), and each builder records one file's worth of the old engine's outputs: `coreVectors` (`rng`, `hash2`, `noise2`, the angle helpers), `colorVectors`, `humanoidVectors` per build (the state matrix of `STATES` at eight facings, sampled `everyNth`), `moveVectors` (`E.move` in every phase on every build) and `blobScript` (the `BLOB_SCRIPTS`).
   - Exports: `BLOB_SCRIPTS`, `blobScript`, `BUILDS`, `colorVectors`, `coreVectors`, `DT`, `ENGINE`, `everyNth`, `humanoidRun`, `humanoidVectors`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `SourceEngine`, `STATES`, `STEPS`
   - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
+- [`replaySounds.ts`](../tools/lib/replaySounds.ts): A replay's sound events, read and mixed in Node (PLAN.md §8.1, WP 9.4, I-23), for `node x audio --replay` (tools/cmd/audio.ts): `replaySoundEvents` plays a replay step by step through the page's playback, against its goldens, and reads the sounds its scene's `sounds` gives each traced sim event (`{ sfx, vol?, variant? }` or a list: engine/sim/scene.ts), after setup and after each step, as the page reads them, so an event read at step k plays at k / hz seconds; `mixSoundEvents` renders their effects and sums them into one mono mix, unspatialized.
+  - Exports: `mixSoundEvents`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`
+  - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`replayState.ts`](../tools/lib/replayState.ts): The state a replay reaches, for `x replay --state` and `--until n` (tools/cmd/replay.ts; gate G7's review): `writeState(root, file, runtime, until?)` plays a replay file in a runtime (Node's, tools/cmd/sim.ts `nodeRuntime`) to its last step, or to step `until`, and writes the canonical state there and its event trace, as `x sim` writes its own, to `stateFile(file)`: `out/replay/<name>/state.json`, `<name>` the file's without `.replay.json`.
   - Exports: `stateFile`, `writeState`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)

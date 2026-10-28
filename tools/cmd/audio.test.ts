@@ -20,7 +20,8 @@ import { HALL_LEVEL } from '../../labs/box/scenes/hall';
 import '../../labs/box/sounds/effects';
 import { FIGHT_TIMELINE, soundTimeline } from '../../tests/pages/boxAudioTimeline';
 import { dispatch, ROOT } from '../x';
-import { encodeWav, mixSoundEvents, replaySoundEvents, SPECTROGRAM, spectrogram } from './audio';
+import { mixSoundEvents, replaySoundEvents } from '../lib/replaySounds';
+import { encodeWav, SPECTROGRAM, spectrogram } from './audio';
 
 /** Runs `node x audio …` in this repository; resolves to the exit code and printed lines. */
 async function audio(...args: string[]): Promise<{ code: number; lines: string[] }> {

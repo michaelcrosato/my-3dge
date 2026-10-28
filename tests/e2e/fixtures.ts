@@ -21,13 +21,8 @@
  */
 import { decodePng } from '../../tools/lib/png';
 import { test as base, expect, type Page } from '@playwright/test';
-import {
-  describePageError,
-  preparePage,
-  type AdapterRecord,
-  type ConsoleRecord,
-  type PageError,
-} from '../../tools/lib/browser';
+import { preparePage, type AdapterRecord, type ConsoleRecord } from '../../tools/lib/browser';
+import { describePageError, type PageError } from '../../tools/lib/pageErrors';
 import { describeUnlisted, findUnlisted, loadAllowList, type Warning } from '../setup/adviceTrap';
 
 /** Playwright's `expect`, re-exported so a suite imports everything from this file. */

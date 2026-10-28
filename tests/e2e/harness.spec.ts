@@ -8,7 +8,7 @@
  */
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { parseStack } from '../../tools/lib/browser';
+import { parseStack } from '../../tools/lib/pageErrors';
 import { fnv1a } from '../../tools/lib/hash';
 import { expect, test } from './fixtures';
 
