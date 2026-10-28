@@ -1,18 +1,19 @@
 /**
  * @file Animation metrics on a feel course (PLAN.md WP 13.4, docs/PLAYGROUND.md §5.1 and §9.1): `createAnimTrack()`
  * poses an actor's animator as the page poses it (engine/gfx/puppets/actors.ts: its sim data loaded into an animator of
- * the track's own, the foot plant last in the post slot, at the actor's feet and yaw, its movement shown, on the sim's
- * ground through the query view) once a step, and keeps its joints and sockets (engine/anim/stateMatrix.ts
- * `RUN_POINTS`) with heights from the actor's feet (for the pops), and its soles with heights from the ground the plant
- * stood them on (`FootPlant.floorAt`, for the slide), so a sole on a deck or a ramp stands on its floor as one on the
- * ground does; off the ground (traversing, flying) from the physics ground under them (WP 13.11). Over a range of frames it reads the anim QA's rules (engine/anim/motionMetrics.ts): `footSlide`, the
- * most a sole slides on the floor in one contact, and `pop`, the largest one-step jump of a point against its
- * neighbours (m; 0 when nothing qualifies); `handGap(point)`, the closest either hand comes to a point (m); and
- * `muzzle`, the farthest the gun hand's barrel line points from the aim while the sights are fully up (rad, WP 13.20).
- * §5.1's bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a contact, the muzzle within 2° of the aim.
- * Each frame keeps the eyes too (`eye(k)`),
- * where the first-person camera stands, and the last frame's body gives first person's arms their input (`armsInput`,
- * engine/gfx/viewmodel/rig.ts `armsInputOf`: the hands it holds on contacts, a carried gun, a kick).
+ * the track's own, its plants attached and laid as the page's are, engine/anim/bodyPlants.ts, the foot plant last in
+ * the post slot, at the actor's feet and yaw, its movement shown, on the sim's ground through the query view) once a
+ * step, and keeps its joints and sockets (engine/anim/stateMatrix.ts `RUN_POINTS`) with heights from the actor's feet
+ * (for the pops), and its soles with heights from the ground the plant stood them on (`FootPlant.floorAt`, for the
+ * slide), so a sole on a deck or a ramp stands on its floor as one on the ground does; off the ground (traversing,
+ * flying) from the physics ground under them (WP 13.11). Over a range of frames it reads the anim QA's rules
+ * (engine/anim/motionMetrics.ts): `footSlide`, the most a sole slides on the floor in one contact, and `pop`, the
+ * largest one-step jump of a point against its neighbours (m; 0 when nothing qualifies); `handGap(point)`, the closest
+ * either hand comes to a point (m); and `muzzle`, the farthest the gun hand's barrel line points from the aim while the
+ * sights are fully up (rad, WP 13.20). §5.1's bounds: 5 cm of slide, no pop past the QA's 9/16 m, 3 cm from a contact,
+ * the muzzle within 2° of the aim. Each frame keeps the eyes too (`eye(k)`), where the first-person camera stands, and
+ * the last frame's body gives first person's arms their input (`armsInput`, engine/gfx/viewmodel/rig.ts `armsInputOf`:
+ * the hands it holds on contacts, a carried gun, a kick).
  *
  * Invariants: posing never writes what the sim saves (engine/anim/character.ts), so measuring leaves a run's hash as it
  * is; the track keeps animators of its own, never the world's.
@@ -22,14 +23,15 @@
  * // track.footSlide(1, 300); // the most a sole slid in one contact over frames 1–300, m
  * @see engine/dev/feel/anim.test.ts
  */
+import { attachPlants, layPlants, type BodyPlants } from '../../anim/bodyPlants';
 import { AnimatorPool, type Animator, type AnimatorData } from '../../anim/character';
 import { getBuild } from '../../anim/builds';
 import { jointPosition, jointRotation, socketPosition } from '../../anim/fk';
-import { FOOT_PLANT, FootPlant, queryGround, type GroundQueries } from '../../anim/footPlant';
-import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
+import { FOOT_PLANT, queryGround, type GroundQueries } from '../../anim/footPlant';
+import { MovementPose, type BodyView, type MotionView } from '../../anim/locomotion/motion';
 import type { HullView, RideView, TraversalView } from '../../anim/traversal/contacts';
-import { HOLD, HoldPlant, LookPose, type HeldLook, type Look } from '../../anim/traversal/hold';
-import { TraversalPlant } from '../../anim/traversal/plant';
+import { HOLD, LookPose, type HeldLook, type HoldPlant, type Look } from '../../anim/traversal/hold';
+import type { TraversalPlant } from '../../anim/traversal/plant';
 import { TraversalPose } from '../../anim/traversal/pose';
 import { motionTrack, worstPop, worstSlide } from '../../anim/motionMetrics';
 import { JOINTS, SOCKETS } from '../../anim/skeleton';
@@ -82,7 +84,7 @@ export interface TrackTraverse {
  */
 export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
   const pool = new AnimatorPool();
-  const planted = new WeakMap<object, { plant: FootPlant; traversal: TraversalPlant; hold: HoldPlant }>();
+  const planted = new WeakMap<object, BodyPlants>();
   /** Each actor's last hold: a new one, made with its animator when the weapon changes, follows its draw. */
   const holds = new Map<number, HoldPlant>();
   const moving = new Map<number, MovementPose>();
@@ -132,27 +134,18 @@ export function createAnimTrack(where = 'feel', queries?: GroundQueries) {
       const animator = pool.get(id, data, { dt });
       let own = planted.get(animator);
       if (!own) {
-        const plant = new FootPlant({ name: 'feel:footPlant' }).attach(animator);
-        const traversal = new TraversalPlant({ name: 'feel:traversal' }).attach(animator);
-        const hold = Object.assign(new HoldPlant({ name: 'feel:hold' }).follow(holds.get(id)).attach(animator), { contacts: traversal }); // prettier-ignore
-        planted.set(animator, (own = { plant, traversal, hold }));
-        holds.set(id, hold);
+        planted.set(animator, (own = attachPlants(animator, 'feel', holds.get(id))));
+        holds.set(id, own.hold);
       }
       const { plant, traversal, hold } = own;
       const at = new Vector3(feet[0], feet[1], feet[2]);
       const travels = (traversing.get(id) ?? new TraversalPose()).update((motion as TraversalView | null) ?? null, traverse?.ride ?? null, traverse?.hull ?? null, animator.body.build, at, body ?? null, dt); // prettier-ignore
       traversing.set(id, travels);
-      traversal.pose = travels;
       const look = (looking.get(id) ?? new LookPose()).update(traverse?.look ?? null, dt);
       looking.set(id, look);
-      [hold.look, hold.busy] = [look.look, travels.weight]; // the head along the look, as the page's
-      plant.weight = travels.plantShare; // the traversal holds the legs off the ground (WP 13.11)
-      if (plant.weight === 0) plant.reset();
-      plant.locks = plantsFeet(motion);
-      plant.ground = ground;
-      const pose = moving.get(id) ?? new MovementPose();
-      moving.set(id, pose.update(motion, dt, body));
-      pose.apply(animator);
+      const shown = (moving.get(id) ?? new MovementPose()).update(motion, dt, body);
+      moving.set(id, shown);
+      layPlants(animator, own, { motion, shown, traversal: travels, look }, ground); // as the page lays them
       animator.pose({ at, yaw });
       last = { animator, traversal };
       const { skeleton, world } = animator.body;

@@ -21,12 +21,13 @@ import { Actions, type ActionsState } from '../../anim/actions';
 import type { Animator, AnimatorData } from '../../anim/character';
 import type { ClipsData } from '../../anim/clip/clipsets';
 import type { ClipLayer } from '../../anim/clip/layer';
-import { FootPlant } from '../../anim/footPlant';
+import { attachPlants } from '../../anim/bodyPlants';
+import type { FootPlant } from '../../anim/footPlant';
 import type { MotionView, MovementPose } from '../../anim/locomotion/motion';
 import { RagdollLayer } from '../../anim/ragdoll';
 import { Reactions, type ReactionState } from '../../anim/reactions';
-import { HoldPlant, type LookPose } from '../../anim/traversal/hold';
-import { TraversalPlant } from '../../anim/traversal/plant';
+import type { HoldPlant, LookPose } from '../../anim/traversal/hold';
+import type { TraversalPlant } from '../../anim/traversal/plant';
 import type { TraversalPose } from '../../anim/traversal/pose';
 import { Secondary } from '../../anim/secondary';
 import type { SecondaryComponent } from '../../sim/reactions';
@@ -148,9 +149,7 @@ export function layersFor(
     const material = materials.get(puppet.compiled.body.material);
     const chains =
       secondary && wanted ? createChainMeshes(secondary, { material, color: wanted.color, name: `actor#${id}` }) : null;
-    const plant = new FootPlant({ name: 'view:footPlant' }).attach(animator);
-    const traversal = new TraversalPlant({ name: 'view:traversal' }).attach(animator);
-    const hold = Object.assign(new HoldPlant({ name: 'view:hold' }).follow(own?.hold).attach(animator), { contacts: traversal }); // prettier-ignore
+    const { plant, traversal, hold } = attachPlants(animator, 'view', own?.hold); // engine/anim/bodyPlants.ts
     const ragdoll = new RagdollLayer({ name: 'view:ragdoll' }).attach(animator); // after the reactions' lying layer
     own = { animator, key, reactions, actions, clips, secondary, chains, plant, traversal, hold, ragdoll };
     layers.set(id, own);

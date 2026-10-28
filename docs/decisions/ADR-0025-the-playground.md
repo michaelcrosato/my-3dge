@@ -2324,5 +2324,10 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   came with stage G12 (the room drew the old budget exactly at G11); the features priced one by one account for all 13
   textures, the compute call and 7 of the 11 pipelines, and the other 4 and the 2 geometries came with the same
   squashed stage. LONG_RUNS now holds it at each gate.
+- **The feel kit poses as the page does** through one module, engine/anim/bodyPlants.ts (`attachPlants`,
+  `layPlants`): every course's measured values the same to the last bit before and after (27 reports).
+- **The shafts under a cascaded sun** drawn and measured (enhanced.spec, the shading page's `shading.cascades`): the
+  widest cascade's map cuts them as one map does. Reading the cascades nearest first measured no better, so the air
+  keeps its one map.
 - **Left, with why:** audio.spec's one hang in an offline render on GitHub (20 of 20 here; nothing to fix without a
-  failure to read); the feel kit's posing apart from the page's; the shafts under a cascaded sun (no page draws them).
+  failure to read).

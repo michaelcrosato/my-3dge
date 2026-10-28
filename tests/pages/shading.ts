@@ -11,8 +11,9 @@
  * `render(n)`, `stats()` (the renderer's, `pipelinesAfterWarmUp` among them), `shot(options)` (engine/gfx/shot.ts,
  * the frame as the chain draws it) and `camera.set('perspective' | 'orthographic')`; `metal()`, the boxes on screen
  * (px, the drawing buffer's) of the ball and the plate; and `shadow()`, a patch of floor in a pillar's shadow and the
- * same patch beside it in the sun, as screen polygons. So `node x shot tests/pages/shading.html --set
- * 'post.filters={"ssr":{"scope":"all"}}'` shoots any section.
+ * same patch beside it in the sun, as screen polygons. With `?shading.cascades=true` its sun casts through cascades
+ * (engine/gfx/enhanced/csm.ts; `cascades()`, how many), as the sky's does under `feature:cascadedShadows`. So
+ * `node x shot tests/pages/shading.html --set 'post.filters={"ssr":{"scope":"all"}}'` shoots any section.
  *
  * Invariants: `ready` turns true once the warm-up and the first frame are done, never after an error; presentation
  * only: there is no sim.
@@ -21,7 +22,9 @@
  */
 import * as THREE from 'three/webgpu';
 import { registry } from '../../engine/core/registry';
-import { createSettings } from '../../engine/core/settings';
+import { createSettings, defineSettings } from '../../engine/core/settings';
+import { CASCADES } from '../../engine/gfx/enhanced/csm';
+import { cascadeSunFor } from '../../engine/gfx/features';
 import { createPost } from '../../engine/gfx/post/chain';
 import { definePostSettings } from '../../engine/gfx/post/settings';
 import { createRenderer, type FrameView, type Gfx, type GfxError } from '../../engine/gfx/renderer';
@@ -95,6 +98,17 @@ function corner(): { scene: THREE.Scene; metal: THREE.Mesh[]; sun: THREE.Directi
   return { scene, metal: [ball, plate], sun };
 }
 
+/** The page's own setting: its sun casts through cascades (`?shading.cascades=true`). */
+const SHADING_SETTINGS = {
+  'shading.cascades': {
+    type: 'boolean',
+    default: false,
+    view: true,
+    description:
+      "Whether the shading page's sun casts through cascades (engine/gfx/enhanced/csm.ts), as the sky's does.",
+  },
+} as const;
+
 /** Pillar/north's foot and top: its shadow on the floor runs from the foot along the sunlight's way. */
 const PILLAR = { foot: [1, 0, -2], height: 6 } as const;
 
@@ -114,6 +128,7 @@ function cameras(): Record<'perspective' | 'orthographic', THREE.Camera> {
 /** Starts the renderer and the chain over the corner; warms up and publishes the page's signal. */
 async function start(): Promise<void> {
   definePostSettings(registry);
+  defineSettings(SHADING_SETTINGS, registry);
   const settings = createSettings();
   settings.fromUrl(location.search);
   let gfx: Gfx;
@@ -126,6 +141,10 @@ async function start(): Promise<void> {
   }
   gfx.renderer.shadowMap.enabled = true;
   const { scene, metal, sun } = corner();
+  // The sun through cascades, as the sky's casts with feature:cascadedShadows (engine/gfx/sky.ts). They copy its shadow
+  // camera but stand `CASCADES.margin` back along the light, so, as the sky's, its far plane reaches past the margin.
+  const cascades = settings.get<boolean>('shading.cascades') ? cascadeSunFor(sun, gfx.features) : null;
+  if (cascades) Object.assign(sun.shadow.camera, { far: 3 * 12 + CASCADES.margin }).updateProjectionMatrix();
   const lenses = cameras();
   let camera = lenses.perspective;
   const post = createPost(gfx, { settings });
@@ -139,6 +158,7 @@ async function start(): Promise<void> {
   /** Draws until a frame is drawn, waiting out any warm-up; resolves once the GPU has finished it. */
   const settle = async () => {
     for (let tries = 0; tries < 10; tries++) {
+      cascades?.follow(camera);
       const frameView = viewNow();
       if (gfx.frame(frameView).drawn) return gfx.device.queue.onSubmittedWorkDone();
       if (gfx.warmup.running) await gfx.warmup.run(frameView).catch(() => undefined);
@@ -196,6 +216,8 @@ async function start(): Promise<void> {
     },
     metal: () => metal.map(boxOf),
     shadow,
+    /** How many cascades the sun casts through: 0 without `?cascades`, or before its first build made them. */
+    cascades: () => (cascades?.node as { lights?: unknown[] } | undefined)?.lights?.length ?? 0,
     /** `x shot`'s entry: the frame as the chain draws it now. */
     shot: async (options: ShotOptions = {}): Promise<ShotJson> => {
       await settle();

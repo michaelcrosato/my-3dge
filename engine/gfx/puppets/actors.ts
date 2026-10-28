@@ -22,7 +22,7 @@
  * chains hang under the puppet (engine/gfx/puppets/chains.ts: `actor#<id>/cape`…), and its `post` slot ends with a
  * `FootPlant` (engine/anim/footPlant.ts) on the ground the sim's `queries` find, faded out as far as its clips hold its
  * legs (clipsets.ts `legsHeld`). WP 13.10: an actor's movement (`motion`) shows on its body (motion.ts `MovementPose`)
- * and locks its feet as `plantsFeet` lets it. What it keeps of each actor and its layers: actorLayers.ts.
+ * and locks its feet as `plantsFeet` lets it, laid as the feel kit's (anim/bodyPlants.ts); its layers: actorLayers.ts.
  *
  * Invariants: presentation only (doctrine: WebGPU only): its animators and their layers are its own, loaded from the
  * sim's data at every pose and never writing it, so drawing, culling or not drawing never changes the hash (the
@@ -39,6 +39,7 @@
  * @see engine/gfx/puppets/actors.test.ts
  */
 import { Group } from 'three/webgpu';
+import { layPlants } from '../../anim/bodyPlants';
 import type { ActionsState } from '../../anim/actions';
 import { getBuild } from '../../anim/builds';
 import { AnimatorPool, type Animator, type AnimatorData, type TrailSample } from '../../anim/character';
@@ -46,7 +47,7 @@ import { ClipLayerPool, legsHeld, type ClipsData } from '../../anim/clip/clipset
 import type { WorldPose } from '../../anim/fk';
 import { queryGround } from '../../anim/footPlant';
 import type { GroundProbe } from '../../anim/ik';
-import { MovementPose, plantsFeet, type BodyView, type MotionView } from '../../anim/locomotion/motion';
+import { MovementPose, type BodyView, type MotionView } from '../../anim/locomotion/motion';
 import { blendRagdollPoses, RAGDOLL_FADE, type RagdollLayer } from '../../anim/ragdoll';
 import { Reactions, type ReactionState } from '../../anim/reactions';
 import { hullOf, rideOf, type TraversalView } from '../../anim/traversal/contacts';
@@ -291,14 +292,8 @@ export function createActorPuppets(options: { materials: PuppetMaterials; regist
           if (animator.layer('clips') !== (layer ?? undefined)) animator.drop('clips');
           if (layer && !animator.layer('clips')) animator.use('clips', layer);
           const own = layersFor(layers, id, animator, actor, puppet, layer, options.materials);
-          own.plant.weight =
-            (1 - (layer ? Math.min(1, layer.weight) * legsHeld(layer) : 0)) * actor.traversal.plantShare; // a clip plants the feet it holds (retarget.ts's contact IK), a traversal its own off the ground (WP 13.11)
-          if (own.plant.weight === 0) own.plant.reset(); // skipped, it keeps no stale lock
-          own.plant.locks = plantsFeet(actor.motion); // never while it slides, flies, mantles, climbs or rides (WP 13.10)
-          own.plant.ground = ground.probe; // on stairs and slopes
-          actor.shown.apply(animator); // its crouch, slide, air, landing and lean (WP 13.10)
-          own.traversal.pose = actor.traversal; // its hands and feet on what it traverses (WP 13.11)
-          [own.hold.look, own.hold.busy] = [actor.look.look, actor.traversal.weight]; // its look and its gun
+          // its plants, as the feel kit lays them (engine/anim/bodyPlants.ts): a clip plants the feet it holds (retarget.ts's contact IK) // prettier-ignore
+          layPlants(animator, own, actor, ground.probe, layer ? Math.min(1, layer.weight) * legsHeld(layer) : 0);
           if (own.reactions && actor.reactions) own.reactions.load(actor.reactions);
           if (own.actions && actor.actions) own.actions.load(actor.actions); // its effectors, flip and squash (WP 13.11)
           layRagdoll(own.ragdoll, actor.ragdoll, k, step); // its ragdoll's parts, faded in and out (WP 10.2)
