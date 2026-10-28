@@ -42,7 +42,7 @@ import { MathUtils, Quaternion, Vector3 } from '../core/math';
 import { SIM_DT } from '../core/time';
 import { B } from './authoring';
 import type { Animator } from './character';
-import { KNOCKDOWN, STEP } from './humanoid';
+import { KNOCKDOWN, STEP } from './humanoidRates';
 import type { JointName } from './skeleton';
 import type { AnimatorInput } from './states';
 import { Timeline, type TimelineEvent, type TimelinePhase, type TimelineState } from './timeline';

@@ -45,7 +45,7 @@ import { TRAVERSAL_STATES } from '../../engine/anim/traversal/matrix';
 import { animCheckBody, type AnimCheckName } from '../../engine/anim/check';
 import { RUN_POINTS, runPoints, STATE_MATRIX, type MatrixRun, type MatrixState } from '../../engine/anim/stateMatrix';
 import { ADDED_MOVES, ENGINE_MOVES } from '../../engine/anim/moves-data';
-import { POSES, STANCES, type PoseName, type StanceName, type Weapon } from '../../engine/anim/poses';
+import { POSES, STANCES, type PoseName, type StanceName, type Weapon } from '../../engine/anim/poseNames';
 import { Reactions } from '../../engine/anim/reactions';
 import { SAMPLE_STATES } from '../../engine/anim/states';
 import { Attack } from '../../engine/anim/attack';

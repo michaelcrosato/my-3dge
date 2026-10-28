@@ -10,7 +10,7 @@ import { Quaternion, Vector3 } from '../../engine/core/math';
 import type { MatrixRun } from '../../engine/anim/stateMatrix';
 import { ENGINE_MOVES } from '../../engine/anim/moves-data';
 import { Pose } from '../../engine/anim/pose';
-import { POSES, STANCES } from '../../engine/anim/poses';
+import { POSES, STANCES } from '../../engine/anim/poseNames';
 import { createSkeleton } from '../../engine/anim/skeleton';
 import { SAMPLE_STATES } from '../../engine/anim/states';
 import { readBaselines, runQa } from '../cmd/qa';

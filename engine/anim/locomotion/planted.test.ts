@@ -8,7 +8,8 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
 import { getBuild } from '../builds';
-import { GAIT, gaitFoot, restContext, strideShare, type EffectorContext } from '../locomotion';
+import { gaitFoot, restContext, strideShare, type EffectorContext } from '../locomotion';
+import { GAIT } from './gait';
 import { footCycle, PLANTED, plantedDuty, plantedEase, plantedKnee, plantedStep } from './planted';
 
 describe('the planted stride', () => {

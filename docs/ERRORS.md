@@ -237,9 +237,9 @@ Raised by `animCheck` (engine/anim/check.ts) for a rigid pair naming a point the
 
 - Message: `{name} is not a humanoid {what}{suggestion}; it is ignored`
 - Fix: use one of: {names}
-- Registered in: [`engine/anim/poses.ts` line 51](../engine/anim/poses.ts)
+- Registered in: [`engine/anim/poseNames.ts` line 22](../engine/anim/poseNames.ts)
 
-Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.
+Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poseNames.ts) list them all. An unknown weapon holds nothing.
 
 ### ANIM_UNKNOWN_STATE
 

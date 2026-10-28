@@ -11,7 +11,8 @@ import { describe, expect, it } from 'vitest';
 import { Vector3 } from '../../core/math';
 import { getBuild } from '../builds';
 import { TRAVERSAL } from './contacts';
-import { createLimbTargets, layTarget, TRAVERSAL_POSE, TraversalPose } from './pose';
+import { createLimbTargets, layTarget } from './limbTargets';
+import { TRAVERSAL_POSE, TraversalPose } from './pose';
 
 const adult = getBuild('build:adult');
 const hull = { radius: 0.41, skin: 0.01, hang: 2.032, rung: 0.3 };

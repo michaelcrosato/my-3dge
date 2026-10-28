@@ -39,7 +39,9 @@ import { boneMask, socketIndex, type JointName } from '../skeleton';
 import type { AnimLayer } from '../weights';
 import { clearArm, clearLeg, faceOf, keepOff, type Face } from './clear';
 import { TRAVERSAL, mantleShare, lowPull } from './contacts';
-import { createLimbTargets, layTarget, type LimbTarget, type TraversalPose } from './pose';
+import { createLimbTargets, layTarget, type LimbTarget } from './limbTargets';
+import type { TraversalPose } from './pose';
+import { swingGrip } from './swing';
 
 /** The plant's numbers: angles in radians, lengths as shares of the limb's or in metres. */
 export const TRAVERSAL_PLANT = {
@@ -372,29 +374,3 @@ export class TraversalPlant implements AnimLayer {
     }
   }
 }
-
-/**
- * Where hand `side`'s grip is `k` (0 to 1) of the way from where it is to `point`, written into `out`: swung about
- * the shoulder (its direction turned and its distance eased) rather than straight across, so a reach overhead or across
- * the body never folds the arm through the shoulder; a turn of nearly half a circle goes through the body's front.
- */
-export function swingGrip(animator: Animator, side: LimbSide, point: Vector3, k: number, out: Vector3): Vector3 {
-  const { skeleton, world, pose } = animator.body;
-  const shoulder = jointPosition(world, `upperArm${side}`, w[0]);
-  const from = socketPosition(skeleton, world, `weapon${side}`, out).sub(shoulder);
-  const to = w[1].subVectors(point, shoulder);
-  const [a, b] = [from.length(), to.length()];
-  if (a < 1e-6 || b < 1e-6 || k >= 1) return out.copy(point);
-  from.divideScalar(a);
-  to.divideScalar(b);
-  const axis = w[2].crossVectors(from, to);
-  if (axis.length() < 0.3) axis.crossVectors(from, w[3].set(0, 0, 1).applyQuaternion(pose.rootRot)); // through the front
-  const angle = Math.atan2(w[3].crossVectors(from, to).length(), from.dot(to));
-  const turn = sq.setFromAxisAngle(axis.normalize(), angle * k);
-  return from
-    .applyQuaternion(turn)
-    .multiplyScalar(MathUtils.lerp(a, b, k))
-    .add(shoulder);
-}
-const w = Array.from({ length: 4 }, () => new Vector3());
-const sq = new Quaternion();

@@ -14,7 +14,7 @@ import { jointPosition, jointRotation, jointToWorld } from './fk';
 import { Humanoid, type HumanoidInput } from './humanoid';
 import { hashPose, type Pose } from './pose';
 import { jointIndex } from './skeleton';
-import { POSES, STANCES } from './poses';
+import { POSES, STANCES } from './poseNames';
 
 type V3 = [number, number, number];
 /** One reference run (tools/cmd/port.ts `humanoidRun`). */

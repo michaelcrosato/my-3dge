@@ -5965,54 +5965,7 @@ function uq(e, t, n = 0) {
   const s = No, o = Math.min(1, Math.max(0, (t - s.walkShare) / (1 - s.walkShare))) * (1 - n), r = Pp(t, n), i = Np(e, !1) % 0.5, a = i < r || r >= 0.5 ? 0 : Math.sin(Math.PI * (i - r) / (0.5 - r));
   return [-0.1 + s.runRise * a, o];
 }
-function WT() {
-  return { crouch: 0, slide: 0, fall: 0, land: 0, hard: 0, pitch: 0, lean: 0, bank: 0 };
-}
-const Pa = {
-  slideDrop: 0.7,
-  // a full slide's seat: the pelvis a hand's span off the floor
-  slideLean: 0.8,
-  // a full slide's backward lean
-  softDrop: 0.12,
-  // a soft landing's dip, and a hard one's
-  hardDrop: 0.5,
-  hardLean: 0.9
-}, CS = (e) => (t, n, s, o) => Zn(e[n], o), dq = [
-  {
-    name: "slide",
-    weight: (e) => e.slide,
-    at: (e, t, n, s) => ve(t === "R" ? 0.85 : -0.12, He(t) * (e.build.footSpread + 0.02), t === "R" ? 0.05 : 0.07, s)
-  },
-  {
-    name: "rise",
-    weight: (e) => e.w.air * Math.max(0, -e.shown.fall) * 0.5,
-    at: CS({ L: [-0.12, -0.11, 0.32], R: [0.18, 0.11, 0.42] })
-  },
-  {
-    name: "fall",
-    weight: (e) => e.w.air * Math.max(0, e.shown.fall) * 0.7,
-    at: CS({ L: [-0.06, -0.12, 0.06], R: [0.12, 0.12, 0.1] })
-  }
-], hq = [
-  {
-    name: "slide",
-    weight: (e) => e.slide,
-    at: (e, t, n, s) => t === "L" ? ve(-0.35, -0.35, 0.19, s) : Zn([0.35, 0.05, -0.1], s).add(e.shoulders[t])
-    // prettier-ignore
-  },
-  {
-    name: "fall",
-    weight: (e) => e.w.air * Math.max(0, e.shown.fall) * 0.6,
-    at: (e, t, n, s) => Zn(t === "L" ? [0.05, -0.32, 0.12] : [0.05, 0.32, 0.12], s).add(e.shoulders[t])
-    // prettier-ignore
-  },
-  {
-    name: "land",
-    weight: (e, t) => e.shown.land * e.shown.hard * (t === "R" ? 1 : 0.6),
-    at: (e, t, n, s) => t === "R" ? ve(0.42, 0.2, 0.02, s) : Zn([-0.25, -0.25, -0.2], s).add(e.shoulders[t])
-    // prettier-ignore
-  }
-], Nt = {
+const Nt = {
   /** Breathing: radians of its cycle per second. */
   breatheRate: 2.3,
   /** How far each breath lifts the pelvis, metres (fades out with speed). */
@@ -6088,6 +6041,54 @@ const Pa = {
   /** How far a swinging hand lifts at the ends of its swing, metres (× |sin phase|). */
   handLift: 0.075
 };
+function WT() {
+  return { crouch: 0, slide: 0, fall: 0, land: 0, hard: 0, pitch: 0, lean: 0, bank: 0 };
+}
+const Pa = {
+  slideDrop: 0.7,
+  // a full slide's seat: the pelvis a hand's span off the floor
+  slideLean: 0.8,
+  // a full slide's backward lean
+  softDrop: 0.12,
+  // a soft landing's dip, and a hard one's
+  hardDrop: 0.5,
+  hardLean: 0.9
+}, CS = (e) => (t, n, s, o) => Zn(e[n], o), dq = [
+  {
+    name: "slide",
+    weight: (e) => e.slide,
+    at: (e, t, n, s) => ve(t === "R" ? 0.85 : -0.12, He(t) * (e.build.footSpread + 0.02), t === "R" ? 0.05 : 0.07, s)
+  },
+  {
+    name: "rise",
+    weight: (e) => e.w.air * Math.max(0, -e.shown.fall) * 0.5,
+    at: CS({ L: [-0.12, -0.11, 0.32], R: [0.18, 0.11, 0.42] })
+  },
+  {
+    name: "fall",
+    weight: (e) => e.w.air * Math.max(0, e.shown.fall) * 0.7,
+    at: CS({ L: [-0.06, -0.12, 0.06], R: [0.12, 0.12, 0.1] })
+  }
+], hq = [
+  {
+    name: "slide",
+    weight: (e) => e.slide,
+    at: (e, t, n, s) => t === "L" ? ve(-0.35, -0.35, 0.19, s) : Zn([0.35, 0.05, -0.1], s).add(e.shoulders[t])
+    // prettier-ignore
+  },
+  {
+    name: "fall",
+    weight: (e) => e.w.air * Math.max(0, e.shown.fall) * 0.6,
+    at: (e, t, n, s) => Zn(t === "L" ? [0.05, -0.32, 0.12] : [0.05, 0.32, 0.12], s).add(e.shoulders[t])
+    // prettier-ignore
+  },
+  {
+    name: "land",
+    weight: (e, t) => e.shown.land * e.shown.hard * (t === "R" ? 1 : 0.6),
+    at: (e, t, n, s) => t === "R" ? ve(0.42, 0.2, 0.02, s) : Zn([-0.25, -0.25, -0.2], s).add(e.shoulders[t])
+    // prettier-ignore
+  }
+];
 function fq(e, t) {
   const n = Math.sin(G.clamp(e.down, 0, 1) * Math.PI) * Nt.fallCrouch;
   return Math.max(e.crouch, t.crouch, n);
@@ -6293,13 +6294,58 @@ function zq(e) {
   const { rootPos: t, rootRot: n, rootScale: s } = e;
   return new Ys().number(t.x).number(t.y).number(t.z).number(n.x).number(n.y).number(n.z).number(n.w).number(s.x).number(s.y).number(s.z).numbers(e.local).hex();
 }
-const Tq = {
+J("anim", {
+  ANIM_UNKNOWN_POSE: {
+    template: "{name} is not a humanoid {what}{suggestion}; it is ignored",
+    fix: "use one of: {names}",
+    doc: "Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poseNames.ts) list them all. An unknown weapon holds nothing."
+  }
+});
+const K2 = {
+  cheer: "Both fists pumping above the head (an item found, a victory).",
+  cast: "Both hands thrust forward.",
+  guard: "A boxer's guard: fists up by the chin, knees bent, feet apart.",
+  kneel: "Down on the right knee.",
+  crouch: "Crouched low, feet wide.",
+  wave: "The free hand waves: the left when the right holds a weapon.",
+  hips: "Hands on the hips.",
+  block: "The weapon upright across the body, both hands on it.",
+  die: "A stagger, the knees give, then the body topples onto its back and stays down.",
+  down: "Knocked flat onto the back; it gets up when the pose ends."
+}, X2 = {
+  guard: "Fists up while moving.",
+  ready: "The weapon held forward in both hands (with a weapon)."
+}, Y2 = {
+  /** Nothing: the hands are fists (the knuckle line rests as a sword's would). */
+  none: [0.55, 0.35, -0.75],
+  /** A blade held low, pointing forward, out and down. */
+  sword: [0.55, 0.35, -0.75],
+  /** A gun held low, muzzle forward and down. */
+  gun: [0.8, 0, -0.6],
+  /** A staff held upright, leaning forward. */
+  staff: [0.3, 0.15, 1]
+};
+function J2(e, t, n, s) {
+  if (t === void 0 || Object.hasOwn(e, t)) return t;
+  const o = Object.keys(e), r = { name: JSON.stringify(t), what: n, suggestion: ue(String(t), o) };
+  s.warnOnce("ANIM_UNKNOWN_POSE", { ...r, names: o.join(", ") }, `${n}:${t}`);
+}
+function Tq(e, t = Pe) {
+  return J2(K2, e, "pose", t);
+}
+function Iq(e, t = Pe) {
+  return J2(X2, e, "stance", t);
+}
+function Rq(e, t = Pe) {
+  return J2(Y2, e, "weapon", t);
+}
+const Lq = {
   turntable: "Four views round it, a quarter turn apart, from 25° up, fitted to its size.",
   front: "One view from its front left, 25° up, fitted to its size."
 }, Dy = {
   camera: {
     type: "string",
-    description: `How the gallery frames it: ${Object.entries(Tq).map(([e, t]) => `\`${e}\` (${t})`).join(", ")}, or a camera code drawn as written.`
+    description: `How the gallery frames it: ${Object.entries(Lq).map(([e, t]) => `\`${e}\` (${t})`).join(", ")}, or a camera code drawn as written.`
     // prettier-ignore
   },
   duration: {
@@ -6329,10 +6375,10 @@ function Pc(e = {}) {
     default: { camera: t, duration: n, states: [...s] }
   };
 }
-function Iq(e) {
+function Pq(e) {
   return e.kinds().filter((t) => e.describe(t).fields.some((n) => n.key === "gallery"));
 }
-const XT = 16, K2 = 9.2 / XT, Rd = (e, t, n) => ({ type: "array", items: { type: "number" }, default: e, unit: t, description: n }), YT = {
+const XT = 16, Q2 = 9.2 / XT, Rd = (e, t, n) => ({ type: "array", items: { type: "number" }, default: e, unit: t, description: n }), YT = {
   time: {
     type: "object",
     description: "Seconds of each phase: the wind-up, the strike, the recovery; and the share of the recovery held.",
@@ -6407,7 +6453,7 @@ const XT = 16, K2 = 9.2 / XT, Rd = (e, t, n) => ({ type: "array", items: { type:
     description: "The lunge as body motion only, or as root motion that moves the character forward."
   },
   gallery: Pc()
-}, Pb = ["wind", "active", "recover"], Rq = {
+}, Pb = ["wind", "active", "recover"], Nq = {
   // blades, staves and clubs (the right hand)
   "move:slash": { arc: [1.7, -1.7], height: [-0.375, -0.5625], reach: [0.46875, 0.46875], time: { wind: 0.08, active: 0.1, recover: 0.22 } },
   "move:backslash": { arc: [-1.5, 1.6], height: [-0.5, -0.3125], reach: [0.46875, 0.46875], body: { lunge: 0.05 }, time: { wind: 0.07, active: 0.1, recover: 0.2 } },
@@ -6436,7 +6482,7 @@ const XT = 16, K2 = 9.2 / XT, Rd = (e, t, n) => ({ type: "array", items: { type:
   "move:throw": { plane: "vertical", arc: [2.5, -0.25], reach: [0.46875, 0.46875], body: { lunge: 0.1125, lean: 0.45 }, trail: !1, time: { wind: 0.16, active: 0.08, recover: 0.24 } },
   "move:bash": { hand: "both", plane: "vertical", arc: [1, -0.35], reach: [0.3125, 0.3125], body: { lunge: 0.1875, hop: 0.075, crouch: 0.45, lean: 0.55 }, trail: !1, time: { wind: 0.12, active: 0.07, recover: 0.24 } },
   "move:claw": { arc: [1.2, -1], height: [0.0625, -0.25], reach: [0.4375, 0.4375], body: { lunge: 0.1125, lean: 0.4 }, trail: !1, time: { wind: 0.12, active: 0.08, recover: 0.24 } }
-}, Lq = {
+}, jq = {
   "move:breach": { limb: "footR", arc: [0.05, 0], kickHeight: [0.6, 0.85], reach: [0.4375, 0.5], body: { lean: -0.3, lunge: 0, crouch: 0 }, hitAt: 0.5, time: { wind: 0.75, active: 0.16, recover: 0.5 } }
 };
 function JT(e) {
@@ -6446,7 +6492,7 @@ function JT(e) {
   const { wind: n, active: s, recover: o } = e.time;
   return n + s + o <= 0 && t.push("time has no wind, active or recover: the move would never play"), t;
 }
-function X2(e) {
+function Z2(e) {
   if (!e.kinds().includes("move")) {
     e.defineKind("move", {
       description: "A named strike: the swing (arc, height, reach, plane), what strikes, the body motion, the phase times and the hit window.",
@@ -6455,20 +6501,20 @@ function X2(e) {
       defineWith: "defineMove('<id>', { arc: [a0, a1], reach: [r0, r1], time: { wind, active, recover } })",
       check: (t) => JT(t)
     });
-    for (const [t, n] of Object.entries({ ...Rq, ...Lq })) e.def("move", t, n);
+    for (const [t, n] of Object.entries({ ...Nq, ...jq })) e.def("move", t, n);
   }
 }
-X2(B);
+Z2(B);
 function Xpe(e, t, n = B) {
-  return X2(n), n.def("move", e, t);
+  return Z2(n), n.def("move", e, t);
 }
 function _f(e, t = B) {
-  return X2(t), t.get("move", e);
+  return Z2(t), t.get("move", e);
 }
 const QT = /* @__PURE__ */ new WeakMap();
 function jp(e, t, n = B) {
   let s;
-  if (typeof e == "string" ? s = _f(e.includes(":") ? e : `move:${e}`, n) : "kind" in e && "id" in e && e.kind === "move" ? s = e : s = QT.get(e) ?? Pq(e, GS(e, "move:custom")), !t) return s;
+  if (typeof e == "string" ? s = _f(e.includes(":") ? e : `move:${e}`, n) : "kind" in e && "id" in e && e.kind === "move" ? s = e : s = QT.get(e) ?? Cq(e, GS(e, "move:custom")), !t) return s;
   const { id: o, kind: r, ...i } = s, a = { ...i, ...t, time: { ...i.time, ...t.time }, body: { ...i.body, ...t.body } };
   return GS(a, o);
 }
@@ -6477,7 +6523,7 @@ function GS(e, t) {
   if (o.length) throw D("CORE_BAD_SPEC", { where: n, problems: o.join("; ") });
   return Ft(s);
 }
-function Pq(e, t) {
+function Cq(e, t) {
   return QT.set(e, t), t;
 }
 function Fy(e, t, n) {
@@ -6558,7 +6604,7 @@ const Cp = {
   down: "number",
   body: "object",
   trail: "trail"
-}, Nq = {
+}, Dq = {
   number: "a finite number",
   boolean: "true or false",
   vector: "a Vector3",
@@ -6566,7 +6612,7 @@ const Cp = {
   name: "a name",
   trail: `one of ${Object.keys(Cp).join(", ")}`
 };
-function jq(e, t) {
+function Fq(e, t) {
   switch (e) {
     case "number":
       return typeof t == "number" && Number.isFinite(t);
@@ -6582,15 +6628,15 @@ function jq(e, t) {
       return typeof t == "string" && Object.hasOwn(Cp, t);
   }
 }
-function Cq(e, t = Pe, n) {
+function qq(e, t = Pe, n) {
   let s;
   const o = Object.keys(qh);
   for (const [r, i] of Object.entries(e)) {
     if (i === void 0) continue;
     const a = Object.hasOwn(qh, r) ? qh[r] : void 0;
-    if (!(a && jq(a, i))) {
+    if (!(a && Fq(a, i))) {
       if (a) {
-        const c = a === "trail" && typeof i == "string" ? ue(i, Object.keys(Cp)) : "", l = { name: r, value: V(i), expected: Nq[a], suggestion: c };
+        const c = a === "trail" && typeof i == "string" ? ue(i, Object.keys(Cp)) : "", l = { name: r, value: V(i), expected: Dq[a], suggestion: c };
         t.warnOnce("ANIM_BAD_STATE", l, `state:${r}`);
       } else {
         const c = { name: JSON.stringify(r), suggestion: ue(r, o), names: o.join(", ") };
@@ -6643,20 +6689,20 @@ const Dp = {
   windLunge: 0.3,
   /** In the recover, the swing drifts this share of its span further, over the hold. */
   drift: 0.08
-}, Dq = { L: [0.2375, -0.0625, 0.025], R: [0.14375, 0.09375, -0.0375] }, ZT = { wind: 1, active: 2, recover: 3 }, Fq = `a move at phase ${Pb.slice(0, -1).join(", ")} or ${Pb.at(-1)}, with a finite u`;
-function qq(e, t) {
+}, Bq = { L: [0.2375, -0.0625, 0.025], R: [0.14375, 0.09375, -0.0375] }, ZT = { wind: 1, active: 2, recover: 3 }, Gq = `a move at phase ${Pb.slice(0, -1).join(", ")} or ${Pb.at(-1)}, with a finite u`;
+function Hq(e, t) {
   if (!e) return;
   const { phase: n, u: s } = e, o = typeof n == "string" && Object.hasOwn(ZT, n);
   if (o && typeof s == "number" && Number.isFinite(s)) return e;
   const r = typeof n == "string" && !o ? ue(n, Pb) : "", i = `a move at phase ${V(n)}, with u ${V(s)}`;
-  t.warnOnce("ANIM_BAD_STATE", { name: "body", value: i, expected: Fq, suggestion: r }, "state:body.move");
+  t.warnOnce("ANIM_BAD_STATE", { name: "body", value: i, expected: Gq, suggestion: r }, "state:body.move");
 }
-function Bq() {
+function Uq() {
   const [e, t, n] = [Ze.rest.ground, Ze.restHeight.hand, 0.4375], s = { theta: e, height: t, reach: n, theta0: e, height0: t, reach0: n }, o = { windK: 1, turn: 0, hand: 1, kick: 0, vertical: 0, from: Array(9).fill(0) };
   return { weight: 0, phase: 0, move: 0, ...s, ...o };
 }
 const US = /* @__PURE__ */ new WeakMap();
-function Gq(e) {
+function Wq(e) {
   let t = US.get(e);
   if (t === void 0) {
     const { gallery: n, ...s } = e;
@@ -6664,11 +6710,11 @@ function Gq(e) {
   }
   return t;
 }
-function Hq(e, t, n, s, o, r = Pe) {
+function Vq(e, t, n, s, o, r = Pe) {
   let i = 0, a;
-  const c = qq(t, r), l = c ? jp(c.move) : void 0, u = c ? ZT[c.phase] : 0, d = l ? Gq(l) : e.move;
-  if (l && u === 1 && (e.phase !== 1 || e.move !== d) && Uq(e, l, n, s()), [e.windK, e.turn] = [1, 0], c && l) {
-    const f = G.clamp(c.u, 0, 1), p = l.limb === "footR", m = !p && l.plane === "vertical", g = l.hand === "L", y = l.reachScale === "arm" ? n.armLength / K2 : 1, [w, v] = l.arc, [b, x] = p ? l.kickHeight : l.height, [k, A] = [l.reach[0] * y, l.reach[1] * y], { lean: _, hop: M, crouch: S } = l.body, O = l.rootMotion === "apply" ? 0 : l.body.lunge;
+  const c = Hq(t, r), l = c ? jp(c.move) : void 0, u = c ? ZT[c.phase] : 0, d = l ? Wq(l) : e.move;
+  if (l && u === 1 && (e.phase !== 1 || e.move !== d) && Kq(e, l, n, s()), [e.windK, e.turn] = [1, 0], c && l) {
+    const f = G.clamp(c.u, 0, 1), p = l.limb === "footR", m = !p && l.plane === "vertical", g = l.hand === "L", y = l.reachScale === "arm" ? n.armLength / Q2 : 1, [w, v] = l.arc, [b, x] = p ? l.kickHeight : l.height, [k, A] = [l.reach[0] * y, l.reach[1] * y], { lean: _, hop: M, crouch: S } = l.body, O = l.rootMotion === "apply" ? 0 : l.body.lunge;
     if ([e.phase, e.move, e.kick, e.vertical] = [u, d, p ? 1 : 0, m ? 1 : 0], e.hand = l.hand === "both" ? 2 : g ? -1 : 1, a = { lean: 0, lunge: 0, hop: 0, crouch: 0, twist: 0, lead: g ? "R" : "L" }, i = 1, u === 1) {
       const z = dr.outQuad(f);
       e.theta = G.lerp(e.theta0, w, z), e.height = G.lerp(e.height0, b, f), e.reach = G.lerp(e.reach0, k, z), e.windK = z, [a.lean, a.lunge, a.crouch] = [
@@ -6689,8 +6735,8 @@ function Hq(e, t, n, s, o, r = Pe) {
   const h = i > e.weight ? Ze.rates[0] : Ze.rates[1];
   return e.weight = De(e.weight, i, o * h), a;
 }
-function Uq(e, t, n, s) {
-  const o = t.limb === "footR", r = e.weight > Ze.chain, i = !n.armed || t.hand === "L" || !t.trail, [a, c] = o ? [Ze.restHeight.kick, t.kickHeight[0]] : [Ze.restHeight.hand, t.height[0]], l = t.reachScale === "arm" ? n.armLength / K2 : 1;
+function Kq(e, t, n, s) {
+  const o = t.limb === "footR", r = e.weight > Ze.chain, i = !n.armed || t.hand === "L" || !t.trail, [a, c] = o ? [Ze.restHeight.kick, t.kickHeight[0]] : [Ze.restHeight.hand, t.height[0]], l = t.reachScale === "arm" ? n.armLength / Q2 : 1;
   e.theta0 = r ? e.theta : !o && t.plane === "vertical" ? Ze.rest.vertical : Ze.rest.ground, e.height0 = r && e.kick === (o ? 1 : 0) ? e.height : i ? c : a, e.reach0 = r ? e.reach : (t.windReach ?? 0.75 * t.reach[0]) * l, s.hands.L.toArray(e.from, 0), s.hands.R.toArray(e.from, 3), s.blade.toArray(e.from, 6);
 }
 const [Kl, Of, Kc, Bh] = Array.from({ length: 4 }, () => new R());
@@ -6698,7 +6744,7 @@ function eI(e, t) {
   const [n, s] = [Math.cos(e.theta), Math.sin(e.theta)], o = e.hand === -1 ? -1 : 1;
   e.vertical ? (ve(n * e.reach, o * Ze.side, s * e.reach, Kl).add(t.chest), ve(n, Ze.bladeOut, s, Of).normalize()) : (ve(n * e.reach, s * e.reach, e.height, Kl).add(t.chest), ve(n, s, -0.12, Of).normalize());
 }
-function Wq(e, t, n) {
+function Xq(e, t, n) {
   const s = e.weight;
   if (!(s > 0)) return n;
   eI(e, n);
@@ -6713,7 +6759,7 @@ function Wq(e, t, n) {
     if (Bh.fromArray(e.from, i === "L" ? 0 : 3), c === o) a.lerp(r ? Bh.lerp(Kl, e.windK) : Kl, s);
     else if (e.hand === 2) a.lerp(Kc.copy(Kl).addScaledVector(Of, -0.10625), s);
     else {
-      const [l, u, d] = Ze.pullBack, f = (!t.armed || t.w.stanceGuard > 0.5 ? Zn(Dq[i], Kc) : ve(l, c * u, d, Kc)).add(n.chest);
+      const [l, u, d] = Ze.pullBack, f = (!t.armed || t.w.stanceGuard > 0.5 ? Zn(Bq[i], Kc) : ve(l, c * u, d, Kc)).add(n.chest);
       a.lerp(r ? Bh.lerp(f, e.windK) : f, r ? s : s * Ze.pullShare);
     }
   }
@@ -6723,53 +6769,8 @@ function Wq(e, t, n) {
   }
   return n;
 }
-function Vq(e, t, n, s) {
+function Yq(e, t, n, s) {
   return s.copy(t), !(e.weight > 0) || e.kick || e.hand === -1 || (eI(e, n), s.lerp(Of, e.weight), e.windK < 1 && s.copy(Bh.fromArray(e.from, 6).lerp(s, e.windK))), s;
-}
-J("anim", {
-  ANIM_UNKNOWN_POSE: {
-    template: "{name} is not a humanoid {what}{suggestion}; it is ignored",
-    fix: "use one of: {names}",
-    doc: "Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing."
-  }
-});
-const Y2 = {
-  cheer: "Both fists pumping above the head (an item found, a victory).",
-  cast: "Both hands thrust forward.",
-  guard: "A boxer's guard: fists up by the chin, knees bent, feet apart.",
-  kneel: "Down on the right knee.",
-  crouch: "Crouched low, feet wide.",
-  wave: "The free hand waves: the left when the right holds a weapon.",
-  hips: "Hands on the hips.",
-  block: "The weapon upright across the body, both hands on it.",
-  die: "A stagger, the knees give, then the body topples onto its back and stays down.",
-  down: "Knocked flat onto the back; it gets up when the pose ends."
-}, J2 = {
-  guard: "Fists up while moving.",
-  ready: "The weapon held forward in both hands (with a weapon)."
-}, Q2 = {
-  /** Nothing: the hands are fists (the knuckle line rests as a sword's would). */
-  none: [0.55, 0.35, -0.75],
-  /** A blade held low, pointing forward, out and down. */
-  sword: [0.55, 0.35, -0.75],
-  /** A gun held low, muzzle forward and down. */
-  gun: [0.8, 0, -0.6],
-  /** A staff held upright, leaning forward. */
-  staff: [0.3, 0.15, 1]
-};
-function Z2(e, t, n, s) {
-  if (t === void 0 || Object.hasOwn(e, t)) return t;
-  const o = Object.keys(e), r = { name: JSON.stringify(t), what: n, suggestion: ue(String(t), o) };
-  s.warnOnce("ANIM_UNKNOWN_POSE", { ...r, names: o.join(", ") }, `${n}:${t}`);
-}
-function Kq(e, t = Pe) {
-  return Z2(Y2, e, "pose", t);
-}
-function Xq(e, t = Pe) {
-  return Z2(J2, e, "stance", t);
-}
-function Yq(e, t = Pe) {
-  return Z2(Q2, e, "weapon", t);
 }
 const Pd = (e) => (t, n, s, o) => Zn(e[n], o), qy = (e) => (t, n, s, o) => Zn(e[n], o).add(t.shoulders[n]), Nd = (e) => (t, n, s, o) => Zn(e[n], o).add(t.chest), Jq = (e) => (t, n, s, o) => Zn(e[n], o).add(t.hips[n]), WS = { L: [0.2375, -0.0625, 0.025], R: [0.14375, 0.09375, -0.0375] }, Qq = [
   /** Dash: the right foot kicked forward and up, the left trailing far behind. */
@@ -6925,8 +6926,8 @@ function KS(e, t, n) {
     mq(e, o, n.hips[o]), bq(e, o, n.shoulders[o]);
   for (const o of Ai)
     Gy(Qq, e, o, Rb(e, o, n.feet[o])), Gy(Zq, e, o, vq(e, o, n.hands[o]));
-  const s = Zn(Q2[t], n.blade).normalize();
-  return e.arm && Vq(e.arm, s, Wq(e.arm, e, n), s), Gy(eB, e, "R", s).normalize(), e.w.down > 0 && n.blade.lerp(Zn(tB, Gh), e.w.down).normalize(), n;
+  const s = Zn(Y2[t], n.blade).normalize();
+  return e.arm && Yq(e.arm, s, Xq(e.arm, e, n), s), Gy(eB, e, "R", s).normalize(), e.w.down > 0 && n.blade.lerp(Zn(tB, Gh), e.w.down).normalize(), n;
 }
 const Ce = {
   /** Rate the speed weight eases toward the speed share. */
@@ -7012,7 +7013,7 @@ class ex {
   #s = VS();
   /** A humanoid standing at the origin, facing +Z. Warns `ANIM_UNKNOWN_POSE` for an unknown weapon. */
   constructor(t = {}) {
-    this.build = typeof t.build == "object" ? t.build : Zs(t.build ?? "build:chibi"), this.skeleton = $r(this.build), this.#n = t.log ?? Pe, this.weapon = Yq(t.weapon, this.#n) ?? "none", this.dt = t.dt ?? ss, this.#e = t.rng ?? new kr(0);
+    this.build = typeof t.build == "object" ? t.build : Zs(t.build ?? "build:chibi"), this.skeleton = $r(this.build), this.#n = t.log ?? Pe, this.weapon = Rq(t.weapon, this.#n) ?? "none", this.dt = t.dt ?? ss, this.#e = t.rng ?? new kr(0);
     const n = { speed: 0, dash: 0, hurt: 0, attack: 0, air: 0, point: 0, climb: 0, down: 0 }, s = Object.fromEntries(XS.map((o) => [o, 0]));
     this.state = {
       clock: t.clock ?? this.#e.next() * Ce.clockSpread,
@@ -7026,12 +7027,12 @@ class ex {
       lead: -1,
       weights: { ...n, stanceGuard: 0, stanceReady: 0, ...s },
       body: { lunge: 0, hop: 0, crouch: 0, lean: 0, twist: 0 },
-      arm: Bq()
+      arm: Uq()
     }, this.solve();
   }
   /** Eases the state one fixed step toward `input`: the sim's part. Warns once for a misspelt pose or stance. */
   step(t = {}) {
-    const { dt: n, build: s, state: o } = this, r = Ce, i = o.weights, a = t.body && "move" in t.body ? t.body : void 0, c = { armed: this.weapon !== "none", armLength: s.armUpper + s.armLower }, l = () => KS(this.#o(this.#s), this.weapon, this.#s), u = Hq(o.arm, a, c, l, n, this.#n);
+    const { dt: n, build: s, state: o } = this, r = Ce, i = o.weights, a = t.body && "move" in t.body ? t.body : void 0, c = { armed: this.weapon !== "none", armLength: s.armUpper + s.armLower }, l = () => KS(this.#o(this.#s), this.weapon, this.#s), u = Vq(o.arm, a, c, l, n, this.#n);
     o.clock += n, t.position && this.position.copy(t.position), t.yaw !== void 0 && (this.yaw = t.yaw);
     const d = t.velocity ?? nB;
     this.#t = t.run ?? 0;
@@ -7043,9 +7044,9 @@ class ex {
     o.phase += n * h / (s.stride * s.size * Sf(i.speed, s.plantedStride, i.crouch, Af(o.moveF, o.moveR)[1]));
     const f = (x, k, [A, _]) => De(x, k ? 1 : 0, n * (k ? A : _));
     i.dash = f(i.dash, t.dash, r.dash), i.hurt = De(i.hurt, t.hurt ? 1 : 0, n * r.hurt), i.attack = f(i.attack, t.body !== void 0, r.attack), i.air = f(i.air, t.air, r.air);
-    const p = Kq(t.pose, this.#n);
+    const p = Tq(t.pose, this.#n);
     for (const x of XS) i[x] = De(i[x], p === x ? 1 : 0, n * r.pose);
-    const m = Xq(t.stance, this.#n);
+    const m = Iq(t.stance, this.#n);
     i.stanceGuard = De(i.stanceGuard, m === "guard" ? 1 : 0, n * r.stance), i.stanceReady = De(i.stanceReady, m === "ready" ? 1 : 0, n * r.stance), i.climb = De(i.climb, t.climb ? 1 : 0, n * r.climb);
     const g = r.climbReach * (s.armUpper + s.armLower) * s.size;
     t.climb && (o.climbPhase += n * Math.abs(d.y) / g * Math.PI), o.dieTime = p === "die" ? o.dieTime + n : 0;
@@ -7212,7 +7213,7 @@ const JS = {
   // a fist's or a foot's
 }, lB = it(new ex({ clock: 0 }).state), tI = Me({
   build: { type: "string", default: "build:chibi", description: "Its build’s id." },
-  weapon: { type: "string", enum: Object.keys(Q2), default: "none", description: "What its right hand holds." },
+  weapon: { type: "string", enum: Object.keys(Y2), default: "none", description: "What its right hand holds." },
   preciseHits: { type: "boolean", default: !1, description: "Posed in the sim every tick, so weapon sweeps hit." },
   started: { type: "boolean", default: !1, description: "Whether its breathing phase was drawn from its stream." },
   state: { type: "object", default: lB, description: "The body’s state (HumanoidState): what its step eases." },
@@ -7252,7 +7253,7 @@ class nI {
   }
   /** The sim's step: checks `states` (states.ts), eases the body one tick, lists the tick's `events`. */
   step(t = {}) {
-    const n = Cq(t, this.#n, this.#t), s = this.body.state.phase;
+    const n = qq(t, this.#n, this.#t), s = this.body.state.phase;
     this.body.step(n), this.trailing = n.trail, this.events.length = 0;
     const { phase: o, weights: r } = this.body.state, i = r.speed < JS.minSpeed || Math.max(r.climb, r.down) > JS.maxWeight;
     if (n.air || i) return this;
@@ -9787,7 +9788,7 @@ function NH(e) {
     }
   };
 }
-const gs = (e) => Un(e, new R(), 1e-3), bo = (e, t, n = 0, s = 0) => new R(e === "L" ? t : -t, n, s);
+const Zo = { fade: 0.12, out: 0.2, quick: 0.07, move: 1.25, loco: 0.25 }, gs = (e) => Un(e, new R(), 1e-3), bo = (e, t, n = 0, s = 0) => new R(e === "L" ? t : -t, n, s);
 function QI(e) {
   const [t, n, s] = [js(e.Pr), js(e.Cr), js(e.Hr)], o = t.clone().invert(), r = (h) => h.applyQuaternion(o), i = (h) => r(h.applyQuaternion(n)), a = (h) => r(h.applyQuaternion(s)), c = (h, f) => new R(0, -Math.sin(f * Math.PI / 180), Math.cos(f * Math.PI / 180)).multiplyScalar(h / 1e3), l = { pelvis: new R(0, e.H0 / 1e3, 0) }, u = [...e.spine, e.neckSeg];
   ["spine1", "spine2", "chest", "neck", "head"].forEach((h, f) => l[h] = r(gs(u[f])));
@@ -9987,7 +9988,7 @@ function u0e(e, t, n = {}) {
   const u = [...ie.map((h, f) => ({ name: `${h}.quaternion`, type: "quaternion", times: i, values: a[f] })), { name: "root.position", type: "vector", times: i, values: c }], d = `clip:${e.name}@${t.build.id}`;
   return { name: e.name, duration: e.duration, uuid: d, blendMode: 2500, tracks: u };
 }
-const Zo = { fade: 0.12, out: 0.2, quick: 0.07, move: 1.25, loco: 0.25 }, [o1, H5, JH, QH] = [new ht(), new ht(), new ht(), $s()], [ZH, r1, eU, Hd] = [new R(0, 1, 0), new Q(), new R(), new R()], U5 = (e) => G.smoothstep(e, 0, 1), Ud = (e) => !e.play.additive && (!e.play.mask || e.play.mask === "full"), W5 = (e, t) => t.play.loop === void 0 || t.play.loop === e.loop ? e : { ...e, loop: t.play.loop }, i1 = (e, t) => Math.max(1e-6, t ?? e.play.out ?? Zo.out);
+const [o1, H5, JH, QH] = [new ht(), new ht(), new ht(), $s()], [ZH, r1, eU, Hd] = [new R(0, 1, 0), new Q(), new R(), new R()], U5 = (e) => G.smoothstep(e, 0, 1), Ud = (e) => !e.play.additive && (!e.play.mask || e.play.mask === "full"), W5 = (e, t) => t.play.loop === void 0 || t.play.loop === e.loop ? e : { ...e, loop: t.play.loop }, i1 = (e, t) => Math.max(1e-6, t ?? e.play.out ?? Zo.out);
 class kx {
   name;
   /** The animator fades the whole layer by it. */
@@ -10364,7 +10365,7 @@ function iU(e) {
     for (const { type: c, ...l } of a) e.emit("clip", { id: n, type: c, ...l });
   }
 }
-const co = { out: 0.2, pivot: 0.55, arm: K2, leg: 0.75 }, Ax = { forward: [1, 0, 0], back: [-1, 0, 0], left: [0, 0, -1], right: [0, 0, 1], spin: [0, 1, 0] }, X5 = ["handL", "handR", "footL", "footR", "look"], Jc = (e) => ({ type: "array", items: { type: "number" }, unit: "m", description: e }), oa = (e) => ({ type: "boolean", description: e }), c1 = (e) => ({ type: "number", minimum: 0, maximum: 1, default: 0, description: e }), Wd = (e, t) => ({ type: "number", default: 0, unit: t, description: e }), ai = (e) => ({ type: "number", minimum: 0, unit: "s", description: e }), aU = {
+const co = { out: 0.2, pivot: 0.55, arm: Q2, leg: 0.75 }, Ax = { forward: [1, 0, 0], back: [-1, 0, 0], left: [0, 0, -1], right: [0, 0, 1], spin: [0, 1, 0] }, X5 = ["handL", "handR", "footL", "footR", "look"], Jc = (e) => ({ type: "array", items: { type: "number" }, unit: "m", description: e }), oa = (e) => ({ type: "boolean", description: e }), c1 = (e) => ({ type: "number", minimum: 0, maximum: 1, default: 0, description: e }), Wd = (e, t) => ({ type: "number", default: 0, unit: t, description: e }), ai = (e) => ({ type: "number", minimum: 0, unit: "s", description: e }), aU = {
   name: { type: "string", required: !0, description: "Its name, fired as an event as it begins; `go` takes it." },
   seconds: { ...ai("How long it lasts; held until next, how long its channels take to reach their targets."), required: !0 },
   until: { type: "string", enum: ["time", "next"], default: "time", description: "Ends after its seconds, or holds until next() or go()." },
@@ -26161,51 +26162,146 @@ function g$(e, t, n, s, o) {
   const r = t.zipline, i = r ? Nv.set(r.to[0] - r.from[0], r.to[1] - r.from[1], r.to[2] - r.from[2]) : Nv.set(0, 0, 0);
   return i.lengthSq() > 1e-9 && i.normalize().multiplyScalar((e.rideDir ?? 1) < 0 ? -1 : 1), o[0].set(s.x, s.y + n.hang, s.z).addScaledVector(i, -0.07), o[1].set(s.x, s.y + n.hang, s.z).addScaledVector(i, Je.cable), o;
 }
-const bi = {
-  toes: 0.01,
-  // m: a toe's tip is kept this far off the wall
-  knee: 0.06,
-  // m: a knee this far (its joint: the kneecap stands in front of it, and over the top this far)
-  elbow: 0.03,
-  // m: an elbow this far, under the top and over it
-  swing: 4
-}, lr = Array.from({ length: 3 }, () => new R());
-function Poe(e, t) {
-  const n = e.lastView("mantle");
-  return n && n.mantle !== "none" ? ([t.nx, t.nz, t.top] = [n.wallX ?? 0, n.wallZ ?? 0, n.lipY ?? 0], t.point.set((n.lipX ?? 0) + t.nx * 2 * e.hull.skin, 0, (n.lipZ ?? 0) + t.nz * 2 * e.hull.skin), t) : !(e.weights.climb > 0) && !e.walled ? null : ([t.nx, t.nz, t.top] = [e.wall[0], e.wall[1], 1 / 0], t.point.copy(e.wallAt), t);
+function jv(e, t, n, s, o) {
+  const { skeleton: r, world: i, pose: a } = e.body, c = ee(i, `upperArm${t}`, hl[0]), l = $e(r, i, `weapon${t}`, o).sub(c), u = hl[1].subVectors(n, c), [d, h] = [l.length(), u.length()];
+  if (d < 1e-6 || h < 1e-6 || s >= 1) return o.copy(n);
+  l.divideScalar(d), u.divideScalar(h);
+  const f = hl[2].crossVectors(l, u);
+  f.length() < 0.3 && f.crossVectors(l, hl[3].set(0, 0, 1).applyQuaternion(a.rootRot));
+  const p = Math.atan2(hl[3].crossVectors(l, u).length(), l.dot(u)), m = Poe.setFromAxisAngle(f.normalize(), p * s);
+  return l.applyQuaternion(m).multiplyScalar(G.lerp(d, h, s)).add(c);
 }
-function sp(e, t, n, s = -0.01) {
-  const o = (t.x - e.point.x) * e.nx + (t.z - e.point.z) * e.nz;
-  return !(t.y < e.top + s) || o < -0.45 ? 0 : Math.max(0, n - o);
-}
-function Noe(e, t, n) {
-  const s = sp(e, t, n, 0);
-  return s > 0 ? t.set(t.x + e.nx * s, t.y, t.z + e.nz * s) : t;
-}
-function zP(e, t) {
-  if (!t(e)) return !1;
-  let [n, s] = [0, e];
-  for (let o = 0; o < 8; o++) {
-    const r = (n + s) / 2;
-    t(r) ? s = r : n = r;
+const hl = Array.from({ length: 4 }, () => new R()), Poe = new Q();
+class zP {
+  /** What the hold poses now, or null before any look. */
+  look = null;
+  /** Follows `look` (null: none) over `dt` seconds; returns itself. */
+  update(t, n) {
+    const s = this.look, o = n / St.raise, r = G.clamp((s?.raised ?? 0) + (t?.aiming === !0 ? o : -o), 0, 1), i = G.clamp((s?.weight ?? 0) + (t ? o : -o), 0, 1);
+    return this.look = t || s ? { yaw: t?.yaw ?? s.yaw, pitch: t?.pitch ?? s.pitch, raised: r, weight: i } : null, this;
   }
-  return t(s), !0;
 }
-function y$(e, t, n, s, o, r) {
-  const { skeleton: i, pose: a, world: c } = e.body, l = sp(r, Es(i, c, `toe${t}`, lr[0]), bi.toes);
-  l > 0 && (n.set(n.x + r.nx * l, n.y, n.z + r.nz * l), o(s));
-  const u = () => sp(r, ee(c, `shin${t}`, lr[0]), bi.knee, bi.knee);
-  if (!(u() > 0)) return;
-  const d = G.smoothstep(ee(c, `thigh${t}`, lr[0]).y - r.top, 0, 0.3), h = ve(0, He(t) * G.lerp(1, 0.6, d), G.lerp(0.3, 1, d), lr[1]).applyQuaternion(a.rootRot);
-  zP(bi.swing, (f) => (o(lr[2].copy(s).addScaledVector(h, f).normalize()), !(u() > 0)));
+const St = {
+  head: 1,
+  // how much of the look the head takes (a traversal halves it)
+  yaw: 0.9,
+  // the gun follows the aim's heading this far either side of the body's…
+  twist: 0.7,
+  // …the chest turning this share of the way with it
+  ready: 0.45,
+  // held low and ready this far below the aim
+  sprint: [0.75, 0.7, 0.15],
+  // at a sprint: this far below level, turned this far across the body, the grip this much lower
+  grip: [0.22, 0.06, 0.1],
+  // the right hand's grip: ahead of the shoulder along the barrel, under it, in toward the middle
+  sights: [0.17, 0.13],
+  // aiming down the sights, that grip this far along the sight line from the right eye, and under it
+  fore: 0.3,
+  // the foregrip this far along the barrel from the grip (the left hand slides back to half that…
+  reach: 0.92,
+  // …to stay within this share of its reach, the arm and the grip; the gun comes in past that)
+  runSpeed: [1.17, 1.24],
+  // the gait's speed share (of the build's `speedRef`, at most 1.25) over which a run turns into a sprint
+  raise: 0.2,
+  // seconds the sights take to come up or down, and a look to come or go
+  draw: 0.25
+  // seconds the hands take to come onto a gun drawn, and to leave one holstered
+}, _t = Array.from({ length: 8 }, () => new R()), y$ = [new R(), new R()], w$ = [new R(), new R()], tr = Array.from({ length: 3 }, () => new Q()), Noe = new le(), b$ = new ht(), joe = ws(["neck", "head"]), Coe = qT.filter((e) => e.joint !== "chest");
+class TP {
+  name;
+  weight = 1;
+  /** It ends the `post` slot after the traversal plant: attach it last. */
+  last = !0;
+  /** Where the body looks now (a `LookPose`'s), set by the view before each pose; null: where its head does. */
+  look = null;
+  /** How much a traversal holds the hands (0 to 1): the hold lowers, the head turns half as far. */
+  busy = 0;
+  /** The traversal plant before it, whose hands on a contact (a hard landing's too) the gun yields to. */
+  contacts = null;
+  /** What the hands carry, as the view says (WP 13.20's weapons); null: the body's own weapon. */
+  carry = null;
+  /** Where the last pose aimed the gun's barrel (world, unit), and where it put the left hand on it, when it held one. */
+  // prettier-ignore
+  barrel = new R();
+  support = new R();
+  /** Whether the last pose held a gun (its hands free enough): the view draws one in the hand (WP 13.20). */
+  holding = !1;
+  /** How far the last pose raised the sights, 0 to 1: first person centres them (WP 13.20). */
+  aimed = 0;
+  /** How far the hands are on the gun, 0 to 1, eased over `HOLD.draw` as one is drawn and holstered (WP 13.20). */
+  drawn = 0;
+  /** The body's clock at the last pose: how far `drawn` moves; NaN before the first. */
+  #e = Number.NaN;
+  constructor(t = {}) {
+    this.name = t.name ?? "hold";
+  }
+  /**
+   * Takes up `previous`'s draw (`drawn` and its clock), when one body's hold is made again: the view makes an actor's
+   * animator again when its weapon changes (engine/anim/character.ts `AnimatorPool`), so the hands ease on as they were.
+   */
+  follow(t) {
+    return t && ([this.drawn, this.#e] = [t.drawn, t.#e]), this;
+  }
+  /** Adds it at the end of `animator`'s `post` slot: attach it after the traversal plant. */
+  attach(t) {
+    return t.use("post", this), this;
+  }
+  /** Turns the head toward the look and holds the gun (see the file comment). */
+  apply(t) {
+    const n = t.body, { skeleton: s, pose: o, world: r } = n, i = this.look, a = this.contacts ? Math.max(this.contacts.limbs[0].weight, this.contacts.limbs[1].weight) : 0, c = 1 - G.clamp(Math.max(this.busy, a), 0, 1), l = (this.carry ?? n.weapon) === "gun", u = n.state.clock, h = Number.isNaN(this.#e) || u < this.#e ? l ? 1 : 0 : this.drawn + (l ? 1 : -1) * (u - this.#e) / St.draw;
+    this.drawn = h > 1 - 1e-9 ? 1 : h < 1e-9 ? 0 : h, this.#e = u;
+    const f = this.drawn > 0 && c > 0;
+    [this.holding, this.aimed] = [f, 0];
+    const p = c * this.drawn, m = i ? G.clamp(Doe(n.yaw, i.yaw), -0.9, St.yaw) * i.weight : 0;
+    if (f && m !== 0) {
+      const Y = tr[1].setFromAxisAngle(_t[0].set(0, 1, 0), m * St.twist * p), Z = tt(r, "spine2", tr[2]).invert();
+      o.setRotation("chest", Z.multiply(Y.multiply(tt(r, "chest", tr[0])))), Oe(s, o, r);
+    }
+    if (i) {
+      const Y = $e(s, r, "eyeL", _t[0]).add($e(s, r, "eyeR", _t[1])).multiplyScalar(0.5), Z = x$(i.yaw, i.pitch, _t[1]);
+      b$.copy(o), BT(s, o, r, Y.addScaledVector(Z, 10), { chain: Coe }), rd(b$, o, St.head * (0.5 + 0.5 * c) * i.weight, o, { mask: joe }), Oe(s, o, r);
+    }
+    if (!f) return;
+    const g = n.build, y = g.size, w = n.yaw, v = G.smoothstep(n.state.weights.speed, St.runSpeed[0], St.runSpeed[1]), b = G.smoothstep(i?.raised ?? 0, 0, 1) * (1 - v);
+    this.aimed = b;
+    const x = w + m, k = (i?.pitch ?? 0) * (i?.weight ?? 0), A = G.lerp(k - St.ready, -0.75, v), _ = x$(G.lerp(x, w + St.sprint[1], v), G.lerp(A, k, b), this.barrel), M = _t[2].set(-Math.cos(w), 0, Math.sin(w)), S = ee(r, "upperArmR", _t[3]).addScaledVector(_, St.grip[0] * y).addScaledVector(_t[4].set(0, 1, 0), -(St.grip[1] + St.sprint[2] * v) * y).addScaledVector(M, -0.1 * y);
+    if (b > 0) {
+      const Y = $e(s, r, "eyeR", _t[6]), Z = _t[7].set(0, 1, 0).addScaledVector(_, -_.y).normalize();
+      S.lerp(Y.addScaledVector(_, St.sights[0] * y).addScaledVector(Z, -0.13 * y), b);
+    }
+    const O = ee(r, "upperArmL", _t[6]), $ = St.reach * (g.armUpper + g.armLower + Hs.grip * g.handLength) * y, E = _t[7].subVectors(S, O), z = E.dot(_), T = z * z - E.lengthSq() + $ * $, I = T >= 0 ? Math.min(St.fore * y, -z + Math.sqrt(T)) : St.fore * y, L = this.support.copy(S).addScaledVector(_, Math.max(St.fore * y * 0.5, I)), j = L.distanceTo(O) - $;
+    if (j > 0) {
+      const Y = _t[7].subVectors(O, L).normalize().multiplyScalar(j);
+      S.add(Y), L.add(Y);
+    }
+    const F = G.smoothstep(p, 0, 1), [N, P] = [jv(t, "R", S, F, y$[0]), jv(t, "L", L, F, y$[1])], C = tr[1].copy(tt(r, "handR", tr[1])), [H, K] = [v$(o, "R", w$[0]), v$(o, "L", w$[1])];
+    yr(s, o, r, "handR", N, { pole: H }), yr(s, o, r, "handR", N, { pole: H, rotation: C.slerp(Foe(t, _), F) });
+    const q = _t[6].subVectors(P, ee(r, "upperArmL", _t[7])).normalize(), U = tt(r, "handL", tr[2]), X = tr[0].setFromUnitVectors(_t[7].set(1, 0, 0).applyQuaternion(U), q).multiply(U);
+    yr(s, o, r, "handL", P, { pole: K, rotation: U.slerp(X, F) });
+  }
 }
-function joe(e, t, n, s, o) {
-  const { pose: r, world: i } = e.body, a = () => sp(o, ee(i, `forearm${t}`, lr[0]), bi.elbow, bi.elbow);
-  if (!(a() > 0)) return;
-  const c = ve(-0.4, He(t) * 0.6, -1, lr[1]).applyQuaternion(r.rootRot).normalize();
-  zP(bi.swing, (l) => (s(lr[2].copy(n).addScaledVector(c, l).normalize()), !(a() > 0)));
+function v$(e, t, n) {
+  return ve(-0.3, t === "R" ? 0.6 : -0.6, -1, n).applyQuaternion(e.rootRot);
 }
-const ph = ["mantle", "climb", "ladder", "zipline", "skydive", "slideJump"], w$ = {
+function x$(e, t, n) {
+  return n.set(Math.sin(e) * Math.cos(t), Math.sin(t), Math.cos(e) * Math.cos(t));
+}
+function Doe(e, t) {
+  return Math.atan2(Math.sin(t - e), Math.cos(t - e));
+}
+function Foe(e, t) {
+  const { world: n } = e.body, s = ee(n, "handR", _t[6]).sub(ee(n, "forearmR", _t[7])), o = s.addScaledVector(t, -s.dot(t)).negate();
+  return o.lengthSq() < 1e-12 && o.set(1, 0, 0), o.normalize(), tr[0].setFromRotationMatrix(Noe.makeBasis(o, _t[7].crossVectors(t, o), t));
+}
+function si(e, t, n, s) {
+  if (!(n > 0)) return;
+  const o = e.weight + n, r = !(e.weight > 0);
+  r ? e.point.copy(t) : e.point.lerp(t, n / o), [e.weight, e.held] = [Math.min(1, o), s && r && n >= 1 - 1e-9];
+}
+function qoe() {
+  return [0, 1, 2, 3].map(() => ({ point: new R(), weight: 0, held: !1 }));
+}
+const ph = ["mantle", "climb", "ladder", "zipline", "skydive", "slideJump"], k$ = {
   ease: 12,
   // a way's weight eases in and out at this: about 0.08 s; a zipline's at `cable`, the hands reaching higher
   cable: 7.5,
@@ -26226,11 +26322,11 @@ const ph = ["mantle", "climb", "ladder", "zipline", "skydive", "slideJump"], w$ 
   walled: 0.35
   // m: a climb's wall stays the body's while its front is within this of it, after it lets go
 }, ba = [0, 1, 2, 3];
-function b$(e) {
+function M$(e) {
   const t = e?.mode;
   return t === "mantle" || t === "climb" || t === "ladder" || t === "zipline" || t === "skydive" ? t : null;
 }
-class TP {
+class IP {
   /** Each way's weight now, 0 to 1. */
   // Stryker disable next-line ObjectLiteral: its feet start out of reach (#feet at infinity), so the first update sets every weight
   weights = { mantle: 0, climb: 0, ladder: 0, zipline: 0, skydive: 0, slideJump: 0 };
@@ -26285,7 +26381,7 @@ class TP {
   }
   /** The way it traverses now, or null. */
   get traversal() {
-    return b$(this.view);
+    return M$(this.view);
   }
   /** The last state `way` saw while it was the body's mode (what a way easing out still shows), or null. */
   lastView(t) {
@@ -26307,7 +26403,7 @@ class TP {
    * `build`, its feet at `feet` and its velocity `body`; returns itself.
    */
   update(t, n, s, o, r, i, a) {
-    const c = w$, l = b$(t), u = this.view?.mode;
+    const c = k$, l = M$(t), u = this.view?.mode;
     if (this.#u.distanceTo(r) > c.teleport) {
       for (const v of ph) this.weights[v] = 0;
       this.reach.set(0, 0, 0), this.#e = !1;
@@ -26359,7 +26455,7 @@ class TP {
       this.reach.copy(t), this.#t.set(0, 0, 0);
       return;
     }
-    const s = w$.settle, o = Hr.subVectors(t, this.reach), r = o.length();
+    const s = k$.settle, o = Hr.subVectors(t, this.reach), r = o.length();
     if (r < 1e-9) return;
     const i = Math.min(r / n, s * (Math.sqrt(n * n / 4 + 2 * r / s) - n / 2)), a = o.multiplyScalar(i / r).sub(this.#t);
     a.length() > s * n && a.multiplyScalar(s * n / a.length()), this.#t.add(a), this.reach.addScaledVector(this.#t, n);
@@ -26429,14 +26525,584 @@ class TP {
     }
   }
 }
-function si(e, t, n, s) {
-  if (!(n > 0)) return;
-  const o = e.weight + n, r = !(e.weight > 0);
-  r ? e.point.copy(t) : e.point.lerp(t, n / o), [e.weight, e.held] = [Math.min(1, o), s && r && n >= 1 - 1e-9];
+const mh = [new R(), new R()], Hr = new R(), Ur = new R(), sp = 0.3, Boe = {
+  cable: "material:default",
+  pole: "material:default",
+  balloon: "material:glow",
+  ladder: "material:planks",
+  pad: "material:glow",
+  frame: "material:default",
+  mat: "material:checker"
+};
+function A$(e, t, n, s, o) {
+  const r = new R(s[0] - n[0], s[1] - n[1], s[2] - n[2]), i = Math.max(r.length(), 1e-3), a = mk({
+    radiusBottom: o,
+    radiusTop: o,
+    height: i,
+    radialSegments: 8,
+    smooth: !0
+  }), c = new Q().setFromUnitVectors(new R(0, 1, 0), r.normalize());
+  return { name: e, geometry: a, look: t, at: n, turn: c };
 }
-const mh = [new R(), new R()], Hr = new R(), Ur = new R();
-function Coe() {
-  return [0, 1, 2, 3].map(() => ({ point: new R(), weight: 0, held: !1 }));
+function lc(e, t, n, s, o = 0) {
+  const r = Ro({ width: s[0], height: s[1], depth: s[2] });
+  return { name: e, geometry: r, look: t, at: n, turn: new Q().setFromAxisAngle(new R(0, 1, 0), o) };
+}
+function Goe(e) {
+  const [t, n, s] = [e.from, e.to, e.feet], o = [A$("cable", "cable", t, n, 0.02)];
+  if ([t, n].forEach((r, i) => {
+    !e.poles || e.balloon || s[i] === void 0 || r[1] - s[i] <= 0.05 || (o.push(A$(`pole${i}`, "pole", [r[0], s[i], r[2]], r, 0.06)), o.push(lc(`pulley${i}`, "pole", [r[0], r[1] - 0.1, r[2]], [0.2, 0.2, 0.2])));
+  }), e.balloon) {
+    const r = t[1] > n[1] ? t : n, i = new hb(2.5, 16, 12);
+    o.push({ name: "balloon", geometry: i, look: "balloon", at: [r[0], r[1] + 2.5, r[2]] });
+  }
+  return o;
+}
+function Hoe(e) {
+  const [t, n, s, o] = [e.foot, e.top, e.normal, e.width], r = Math.atan2(s[0], s[1]), [i, a] = [s[1], -s[0]], c = n - t[1], l = [];
+  for (const u of [-1, 1]) {
+    const d = [t[0] + i * u * (o / 2), t[1], t[2] + a * u * (o / 2)];
+    l.push(lc(`rail${u < 0 ? 0 : 1}`, "ladder", d, [0.06, c + 0.4, 0.06], r));
+  }
+  for (let u = 1, d = sp; d < c + 0.2; u++, d += sp)
+    l.push(lc(`rung${u}`, "ladder", [t[0], t[1] + d - 0.02, t[2]], [o, 0.04, 0.04], r));
+  return l;
+}
+function Uoe(e) {
+  const [t, n] = [e.at, e.size];
+  if (e.mesh === "pad") {
+    const o = Math.min(n[0], n[1]) / 2;
+    return [{ name: "pad", geometry: mk({ radiusBottom: o, radiusTop: o * 0.9, height: 0.06, radialSegments: 16, smooth: !0 }), look: "pad", at: [t[0], t[1] - 0.04, t[2]] }];
+  }
+  const s = [lc("mat", "mat", [t[0], t[1] - 0.03, t[2]], [n[0] - 0.2, 0.04, n[1] - 0.2])];
+  for (const [o, r, i, a] of [
+    [0, -1, n[0], 0.1],
+    [0, 1, n[0], 0.1],
+    [-1, 0, 0.1, n[1]],
+    [1, 0, 0.1, n[1]]
+  ])
+    s.push(lc(`rim${o}${r}`, "frame", [t[0] + o * (n[0] - 0.1) / 2, t[1] - 0.08, t[2] + r * (n[1] - 0.1) / 2], [i, 0.1, a]));
+  for (const [o, r] of [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1]
+  ])
+    s.push(lc(`leg${o}${r}`, "frame", [t[0] + o * (n[0] - 0.2) / 2, 0, t[2] + r * (n[1] - 0.2) / 2], [0.08, Math.max(t[1] - 0.08, 0.01), 0.08]));
+  return s;
+}
+const Cv = { zipline: Goe, ladder: Hoe, launcher: Uoe }, Woe = Object.freeze(Object.keys(Cv));
+function Voe(e) {
+  const t = new en();
+  t.name = "rides";
+  const n = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Set(), o = (r) => {
+    r.traverse((i) => i.isMesh && i.geometry.dispose()), r.removeFromParent();
+  };
+  return {
+    root: t,
+    capture(r) {
+      const i = /* @__PURE__ */ new Set();
+      for (const a of r) {
+        const c = Object.keys(Cv).find((f) => a[f] !== void 0);
+        if (!c) continue;
+        i.add(a.id);
+        const l = a[c], u = `${c}:${JSON.stringify(l)}`;
+        if (n.get(a.id)?.key === u) continue;
+        const d = n.get(a.id);
+        d && o(d.group);
+        const h = new en();
+        h.name = `${c}#${a.id}`;
+        for (const f of Cv[c](l)) {
+          const p = new cn(f.geometry, e.materials.get(Boe[f.look]));
+          Object.assign(p, { name: `${c}#${a.id}/${f.name}`, castShadow: !0, receiveShadow: !0 }), Object.assign(p.userData, { entity: a.id, component: c }), p.position.set(f.at[0], f.at[1], f.at[2]), f.turn && p.quaternion.copy(f.turn), h.add(p), s.add(f.look);
+        }
+        h.updateMatrixWorld(!0), t.add(h), t.parent || e.scene.add(t), n.set(a.id, { key: u, group: h });
+      }
+      for (const [a, { group: c }] of n)
+        i.has(a) || (o(c), n.delete(a));
+      return i;
+    },
+    register(r) {
+      const i = () => [...n.values()].flatMap(({ group: c }) => c.children), a = [
+        r.register("stage:rides", { objects: i }),
+        r.keyPart("stage:rides", () => [...s].sort().join(";"))
+      ];
+      return { dispose: () => a.forEach((c) => c.dispose()) };
+    },
+    dispose() {
+      for (const { group: r } of n.values()) o(r);
+      n.clear(), t.clear();
+    }
+  };
+}
+const Koe = {
+  "material:puppet": {
+    description: "A puppet, lit: white, multiplied by each part’s slot colour (vertex or instance colours).",
+    vertexColors: !0,
+    roughness: 0.8
+  },
+  "material:puppetGlow": {
+    description: "A puppet’s eyes and glows, unlit: white, multiplied by the slot colour.",
+    vertexColors: !0,
+    unlit: !0
+  }
+};
+function RP(e = B) {
+  Xi(e);
+  for (const [t, n] of Object.entries(Koe))
+    e.has("material", t) || l0(t, n, e);
+}
+RP();
+function yo(e, t = !1) {
+  const n = t ? e.toNonIndexed() : e;
+  for (const s of Object.keys(n.attributes))
+    s !== "position" && s !== "normal" && n.deleteAttribute(s);
+  return t && n.computeVertexNormals(), n;
+}
+function Xoe() {
+  const e = new c2(0.5, 0.5, 0.8, 4, 1).translate(0, 0.4, 0), t = new vz(0.5, 0.2, 4, 1, !0).translate(0, 0.9, 0), n = [yo(e, !0), yo(t, !0)], s = new Lo();
+  for (const o of ["position", "normal"]) {
+    const r = n.map((i) => i.getAttribute(o).array);
+    s.setAttribute(o, new on(Float32Array.from(r.flatMap((i) => Array.from(i))), 3));
+  }
+  return s;
+}
+function Yoe() {
+  const e = yo(new vp(1, 1, 1, 1, 4, 1).translate(0, 0.5, 0), !0), t = e.getAttribute("position");
+  for (let n = 0; n < t.count; n++) t.setX(n, t.getX(n) * (1 + 0.25 * t.getY(n)));
+  return e.computeVertexNormals(), e;
+}
+const S$ = /* @__PURE__ */ new Map();
+function Ok(e) {
+  let t = S$.get(e);
+  if (t) return t;
+  if (e.startsWith("limb@")) {
+    const n = Number(e.slice(5));
+    t = yo(new c2(n, 1, 1, 10, 1, !0).translate(0, 0.5, 0));
+  } else e === "ball" ? t = yo(new hb(1, 12, 8)) : e === "eye" ? t = yo(new hb(1, 8, 6)) : e === "box" ? t = yo(new vp(1, 1, 1), !0) : e === "cone" ? t = yo(new vz(1, 1, 8).translate(0, 0.5, 0)) : e === "blade" ? t = Xoe() : t = Yoe();
+  return S$.set(e, t), t;
+}
+function Joe(e, t) {
+  const { length: n, radiusStart: s, radiusEnd: o } = t, r = t.shape === "limb" ? EL({ length: n, radiusStart: s, radiusEnd: o, radialSegments: 10, capSegments: 3 }) : Ok(t.shape), i = t.bone < 0 ? [0, 0, 0] : Array.from(e.rest.subarray(t.bone * 3, t.bone * 3 + 3)), a = new le().fromArray(t.matrix).premultiply(new le().makeTranslation(i[0], i[1], i[2]));
+  return yo(r.clone()).applyMatrix4(a);
+}
+function LP(e) {
+  const n = [...e.pieces.filter((p) => !p.glow), ...e.pieces.filter((p) => p.glow)].map((p) => ({ piece: p, geometry: Joe(e, p) })), s = n.reduce((p, m) => p + m.geometry.getAttribute("position").count, 0), [o, r, i] = [0, 0, 0].map(() => new Float32Array(s * 3)), a = new Uint16Array(s * 4), c = new Float32Array(s * 4), l = [], u = [];
+  let d = 0, h = 0;
+  for (const { piece: p, geometry: m } of n) {
+    const g = m.getAttribute("position").count;
+    u.push({ part: p.part, shape: p.shape, slot: p.slot, start: d, count: g }), o.set(m.getAttribute("position").array, d * 3), r.set(m.getAttribute("normal").array, d * 3);
+    const y = e.colors[p.slot];
+    for (let v = d; v < d + g; v++)
+      i.set(y, v * 3), a[v * 4] = p.bone + 1, c[v * 4] = 1;
+    const w = m.getIndex();
+    for (let v = 0; v < (w ? w.count : g); v++) l.push(d + (w ? w.getX(v) : v));
+    p.glow || (h = l.length), d += g;
+  }
+  const f = new Lo();
+  return f.setAttribute("position", new on(o, 3)), f.setAttribute("normal", new on(r, 3)), f.setAttribute("color", new on(i, 3)), f.setAttribute("skinIndex", new on(a, 4)), f.setAttribute("skinWeight", new on(c, 4)), f.setIndex(l), h > 0 && f.addGroup(0, h, 0), l.length > h && f.addGroup(h, l.length - h, 1), f.userData.pieces = u, f;
+}
+function Qoe(e, t) {
+  const { body: n, skeleton: s, rest: o } = e, r = [new Vk(), ...ie.map(() => new Vk())];
+  r[0].name = "root", ie.forEach((f, p) => {
+    const m = r[p + 1];
+    m.name = f, m.position.fromArray(s.offsets, p * 3), r[Be[p] + 1].add(m);
+  });
+  const i = r.map(
+    (f, p) => p ? new le().makeTranslation(-o[p * 3 - 3], -o[p * 3 - 2], -o[p * 3 - 1]) : new le()
+  ), a = LP(e), c = [t.materials.get(n.material), t.materials.get(n.glowMaterial)], l = new wz(a, c);
+  l.name = t.name ?? `puppet:${n.id}`, l.add(r[0]), l.bind(new L8(r, i), new le()), Object.assign(l, { castShadow: !0, receiveShadow: !0, boundingSphere: new bz() }), Object.assign(l.userData, { body: n.id, build: s.build.id });
+  const [u, d] = [new R(), { hidden: /* @__PURE__ */ new Set() }], h = {
+    mesh: l,
+    compiled: e,
+    setPose(f) {
+      r[0].position.copy(f.rootPos), r[0].quaternion.copy(f.rootRot), r[0].scale.copy(f.rootScale);
+      for (let m = 0; m < ie.length; m++) r[m + 1].quaternion.fromArray(f.local, m * 4);
+      u.fromArray(s.offsets, 0).multiply(f.rootScale).applyQuaternion(f.rootRot).add(f.rootPos);
+      const p = Math.max(Math.abs(f.rootScale.x), Math.abs(f.rootScale.y), Math.abs(f.rootScale.z));
+      return l.boundingSphere.set(u, e.reach * p), h;
+    },
+    socketPosition(f, p = new R()) {
+      const m = dt.indexOf(f), g = r[s.socketJoints[m] + 1];
+      return g.updateWorldMatrix(!0, !1), p.fromArray(s.socketOffsets, m * 3).applyMatrix4(g.matrixWorld);
+    },
+    hide(f) {
+      const p = new Set(f.map((y) => ie.indexOf(y) + 1));
+      if (p.size === d.hidden.size && [...p].every((y) => d.hidden.has(y))) return h;
+      const [m, g] = [a.getAttribute("skinIndex"), a.getAttribute("skinWeight")];
+      for (let y = 0; y < m.count; y++) g.setX(y, p.has(m.getX(y)) ? 0 : 1);
+      return [d.hidden, g.needsUpdate] = [p, !0], h;
+    },
+    drawCalls(f = 0) {
+      return a.groups.length * (1 + (l.castShadow ? f : 0));
+    },
+    register(f, p = l.name) {
+      return f.register(p, { objects: () => [l] });
+    },
+    dispose() {
+      a.dispose(), l.removeFromParent();
+    }
+  };
+  return h.setPose(new ht());
+}
+const Uu = Math.PI / 180, mt = Object.freeze({
+  /** Their lens, vertical degrees (three.js's `fov`): Apex's 70 at 4:3. */
+  fov: bk(70),
+  /** Their near plane, m: a point of them nearer the eye, along the view, is cut. */
+  near: 0.1,
+  /** M drawn per m of their depth past their near plane. */
+  squeeze: 0.15,
+  /** Their near plane is drawn this many times the picture's own. */
+  lift: 1.2,
+  /** How far out on their frame, a share of the half-frame, `intoArmsFrame` keeps a point by default. */
+  margin: 0.85,
+  /** M: a part of them nearer the eye than this is hidden. */
+  cull: 0.12
+}), Zoe = {
+  "cam.armsFov": {
+    type: "number",
+    default: 70,
+    minimum: 50,
+    maximum: 110,
+    view: !0,
+    description: "First person's arms' own field of view, as Apex Legends' slider gives it: horizontal degrees at 4:3. A view setting: never in the hash."
+    // prettier-ignore
+  },
+  "cam.fullBody": {
+    type: "boolean",
+    default: !1,
+    view: !0,
+    description: "First person shows the whole body under the camera (seen looking down) beside the arms, not the arms alone. A view setting: never in the hash."
+    // prettier-ignore
+  }
+};
+at(Zoe);
+function PP(e) {
+  return typeof e == "number" && Number.isFinite(e) ? bk(e) : mt.fov;
+}
+function NP(e, t) {
+  const n = t * mt.lift;
+  return e >= mt.near ? n + (e - mt.near) * mt.squeeze : e * n / mt.near;
+}
+function jP(e, t = mt.fov) {
+  return Math.tan(e.fov / 2 * Uu) / Math.max(e.zoom, 1e-6) / Math.tan(t / 2 * Uu);
+}
+function $k(e, t) {
+  const n = [t[0] - e.position[0], t[1] - e.position[1], t[2] - e.position[2]], s = (o) => o[0] * n[0] + o[1] * n[1] + o[2] * n[2];
+  return [s(Mn(e)), s(eo(e)), s(Ke(e))];
+}
+function CP(e, t, n, s) {
+  const [o, r, i] = [Mn(e), eo(e), Ke(e)], a = (c) => e.position[c] + o[c] * t + r[c] * n + i[c] * s;
+  return [a(0), a(1), a(2)];
+}
+function DP(e, t, n = mt.fov) {
+  const [s, o, r] = $k(e, t), i = r >= mt.near ? NP(r, e.near) / r : e.near * mt.lift / mt.near, a = jP(e, n);
+  return CP(e, s * a * i, o * a * i, r * i);
+}
+function ere(e, t, n, s = mt.fov) {
+  const [o, r, i] = $k(e, t), a = Math.tan(s / 2 * Uu);
+  return NP(i, e.near) > e.near ? Math.abs(r) <= i * a && Math.abs(o) <= i * a * n : !1;
+}
+function tre(e, t, n, s = mt.margin, o = mt.fov) {
+  const [r, i, a] = $k(e, t), c = Math.hypot(r, i, a), [l, u] = [Math.tan(o / 2 * Uu), Math.tan(o / 2 * Uu) * n], d = Math.max(a, 0.05 * c, 1e-9), [h, f] = [r / (d * u), i / (d * l)];
+  if (Math.abs(h) <= s && Math.abs(f) <= s && a > 0) return t;
+  const [p, m] = [Math.max(-s, Math.min(s, h)) * u, Math.max(-s, Math.min(s, f)) * l], g = c / Math.hypot(p, m, 1);
+  return CP(e, p * g, m * g, g);
+}
+const ot = Object.freeze({
+  ready: [0.13, -0.13, 0.4],
+  /** A sprint's fists, and their pump forward and up over the gait's phase. */
+  sprint: [0.17, -0.2, 0.34],
+  pump: [0.08, 0.08],
+  /** A slide's hands: the right low and back, the left out ahead. */
+  slide: [0.22, -0.24, 0.32],
+  slideLeft: [-0.25, -0.17, 0.43],
+  air: [0.16, -0.08, 0.38],
+  /** The breath's rise (m) and rate (rad/s); the weapon bob's sway across and dip (m) at its full share. */
+  breath: [4e-3, 1.6],
+  bob: [8e-3, 0.012],
+  /** The sway: m per rad/s of the look's turn, the most, and its lag (s). */
+  sway: [0.012, 0.04, 0.08],
+  /** S: the states ease in and out. */
+  ease: 0.1,
+  /** The elbow's way in the camera's frame (the right arm's): out, down and a little back. */
+  pole: [0.55, -1, -0.25],
+  /** How far out on the arms' frame a hand's grip may go, a share of the half-frame: a lowered fist half shows. */
+  margin: 0.95,
+  /** The share of the arm's reach a hand is drawn within, and the nearest it comes to the eye (m). */
+  reach: 0.95,
+  nearest: 0.22
+}), pn = Array.from({ length: 8 }, () => new R()), _$ = ie.map((e, t) => Be.flatMap((n, s) => n === t ? [s] : [])), O$ = Array.from({ length: 3 }, () => new Q()), nre = new R(0, 1, 0);
+function sre(e, t, n, s, o) {
+  const [r, i, a] = [Mn(e), eo(e), Ke(e)], [c, l, u] = [t[0] * n * s, t[1] * s, t[2] * s];
+  return o.set(...e.position).add(pn[7].set(r[0] * c + i[0] * l + a[0] * u, r[1] * c + i[1] * l + a[1] * u, r[2] * c + i[2] * l + a[2] * u));
+}
+const Lw = (e, t, n) => [e[0] + (t[0] - e[0]) * n, e[1] + (t[1] - e[1]) * n, e[2] + (t[2] - e[2]) * n];
+class FP {
+  skeleton;
+  pose = new ht();
+  world = $s();
+  /** The grips after the last update, left then right (world, m). */
+  hands = [new R(), new R()];
+  /** The parts the last update showed (see the file comment). */
+  shown = [];
+  #e;
+  /** The arm's reach to its grip, and to its wrist (m). */
+  #t;
+  #n = { sprint: 0, slide: 0, air: 0 };
+  #s = [0, 0];
+  #o = null;
+  constructor(t) {
+    this.skeleton = $r(t);
+    const n = Oe(this.skeleton, this.pose, this.world);
+    this.#e = new R(...h0(this.skeleton, n));
+    const { lengths: s, socketOffsets: o } = this.skeleton, r = Us("weaponR") * 3, i = Math.hypot(o[r], o[r + 1], o[r + 2]), a = s[ie.indexOf("forearmR")] + s[ie.indexOf("handR")];
+    this.#t = [a + i, a];
+  }
+  /** Poses the arms against `camera` from `input` after a frame of `dt` real seconds (see the file comment). */
+  update(t, n, s) {
+    const { skeleton: o, pose: r, world: i } = this, a = o.build.size, c = n.player, l = s > 0 ? 1 - Math.exp(-s / ot.ease) : 1, u = c !== null && !c.grounded && c.mode === "air", d = { sprint: c?.sprinting && !c.sliding ? 1 : 0, slide: c?.sliding ? 1 : 0, air: u ? 1 : 0 };
+    for (const g of ["sprint", "slide", "air"]) this.#n[g] += (d[g] - this.#n[g]) * l;
+    this.#r(t, s), r.reset(), r.rootRot.setFromAxisAngle(nre, t.yaw), r.rootPos.set(...t.position).sub(pn[0].copy(this.#e).applyQuaternion(r.rootRot)), Oe(o, r, i);
+    const h = pn[1].set(...t.position);
+    for (const [g, y] of ["L", "R"].entries()) this.#i(t, n, y, g, h, a);
+    const f = n.kick && n.kick.weight > 0 ? n.kick : null;
+    f && (tp.forEach((g, y) => r.setRotation(g, O$[0].identity().slerp(f.local[y], f.weight))), Oe(o, r, i));
+    const p = f && f.weight > 0.01 ? [...ep, ...tp] : ep, m = new Set(rP(o, i, t.position, { show: p, near: mt.cull }));
+    return this.shown = ie.filter((g) => !m.has(g)), $e(o, i, "weaponL", this.hands[0]), $e(o, i, "weaponR", this.hands[1]), this;
+  }
+  /** Points along the parts the last update showed (each joint, its bone's middle and far end) and the grips: what a depth check tests. */
+  // prettier-ignore
+  points() {
+    const { skeleton: t, world: n } = this, s = (r) => ee(n, r, pn[0]), o = this.hands.map(Pl);
+    for (const r of this.shown) {
+      const i = ie.indexOf(r), a = Pl(s(i)), c = _$[i].length ? _$[i].map((l) => Pl(s(l))) : [Pl(Es(t, n, i, pn[0]))];
+      o.push(a, ...c.flatMap((l) => [l, [(a[0] + l[0]) / 2, (a[1] + l[1]) / 2, (a[2] + l[2]) / 2]]));
+    }
+    return o;
+  }
+  /** Eases the sway toward the look's turn since the last update. */
+  #r(t, n) {
+    const s = this.#o;
+    this.#o = { yaw: t.yaw, pitch: t.pitch };
+    const [o, r, i] = ot.sway, a = s && n > 0 ? [Jt(s.yaw, t.yaw) / n, (t.pitch - s.pitch) / n] : [0, 0], c = [G.clamp(o * a[0], -r, r), G.clamp(-o * a[1], -r, r)], l = n > 0 ? 1 - Math.exp(-n / i) : 0;
+    for (const u of [0, 1]) this.#s[u] += (c[u] - this.#s[u]) * l;
+  }
+  /** Puts hand `side` (index `i`) where the state and the body want it, kept on the frame and in reach. */
+  #i(t, n, s, o, r, i) {
+    const { skeleton: a, pose: c, world: l } = this, u = s === "R" ? 1 : -1, d = this.#n, h = Math.sin(n.phase) * u, f = [ot.sprint[0], ot.sprint[1] + ot.pump[1] * h, ot.sprint[2] + ot.pump[0] * h], p = s === "R" ? ot.slide : [-ot.slideLeft[0], ot.slideLeft[1], ot.slideLeft[2]];
+    let m = Lw(Lw(Lw(ot.ready, ot.air, d.air), f, d.sprint), p, d.slide);
+    const g = n.effects ? [n.effects.bobPhase, n.effects.bobShare] : [0, 0], y = ot.breath[0] * Math.sin(n.clock * ot.breath[1]) - ot.bob[1] * g[1] * (1 - Math.cos(g[0])) / 2, w = ot.bob[0] * g[1] * Math.sin(g[0] / 2) + this.#s[0];
+    m = [m[0] + w * u, m[1] + y + this.#s[1], m[2]];
+    const v = sre(t, m, u, i, pn[2]), b = n.gun && n.gun.weight > 0 ? n.gun : null;
+    b && v.lerp(pn[3].copy(r).add(b.grips[o]), b.weight);
+    const x = n.punch && n.punch.weight > 0 ? n.punch.grips[o] : null;
+    x && v.lerp(pn[3].copy(r).add(x), G.clamp(n.punch.weight, 0, 1));
+    const k = n.held[o], A = k ? G.clamp(k.weight, 0, 1) : 0;
+    k && A > 0 && v.lerp(k.point, A);
+    const _ = tre(t, [v.x, v.y, v.z], n.aspect, ot.margin, n.fov);
+    v.set(..._);
+    const M = ee(l, `upperArm${s}`, pn[3]), S = pn[4].subVectors(v, r), O = S.length();
+    O > 1e-9 && S.divideScalar(O);
+    const $ = ot.nearest * i, E = (H, K) => {
+      const q = S.dot(pn[5].subVectors(H, M)), U = q * q - pn[5].lengthSq() + K * K, [X, Y] = U >= 0 ? [-q - Math.sqrt(U), -q + Math.sqrt(U)] : [-q, -q];
+      return G.clamp(O, Math.max(X, $), Math.max(Y, $));
+    };
+    O > 1e-9 && v.copy(r).addScaledVector(S, E(r, ot.reach * this.#t[0]));
+    const [z, T, I] = [Mn(t), eo(t), Ke(t)], L = ot.pole, j = pn[6].set(z[0] * L[0] * u + T[0] * L[1] + I[0] * L[2], z[1] * L[0] * u + T[1] * L[1] + I[1] * L[2], z[2] * L[0] * u + T[2] * L[1] + I[2] * L[2]).normalize(), F = `hand${s}`;
+    yr(a, c, l, F, v, { pole: j });
+    const N = tt(l, `forearm${s}`, O$[1]);
+    k && A > 0 && N.slerp(k.rotation, A);
+    const P = Us(s === "R" ? "weaponR" : "weaponL") * 3, C = pn[7].fromArray(a.socketOffsets, P).applyQuaternion(N).negate().add(r);
+    O > 1e-9 && v.copy(r).addScaledVector(S, E(C, ot.reach * this.#t[1])), yr(a, c, l, F, v, { pole: j, rotation: N });
+  }
+}
+function qP(e, t, n, s = null) {
+  const o = e.body, { skeleton: r, world: i, state: a } = o, c = t?.limbs, l = ["L", "R"].map((v, b) => {
+    const x = c?.[b];
+    return x && x.weight > 0 ? { point: x.point.clone(), rotation: tt(i, `hand${v}`), weight: x.weight } : null;
+  }), d = a.arm.kick === 1 && a.arm.weight > 0 ? { local: tp.map((v) => o.pose.getRotation(v)), weight: a.arm.weight } : null, h = Math.max(t?.pose?.weight ?? 0, c?.[0].weight ?? 0, c?.[1].weight ?? 0), f = new R(...h0(r, i)).lerp($e(r, i, "eyeR"), s?.aimed ?? 0), p = [$e(r, i, "weaponL").sub(f), $e(r, i, "weaponR").sub(f)], m = o.weapon === "gun" && h < 1 ? { grips: p, weight: 1 - G.clamp(h, 0, 1) } : null, g = a.arm.weight > 0 && a.arm.kick !== 1 ? a.arm.hand : 0, y = (v) => g === 2 || g === (v === 0 ? -1 : 1) ? p[v] : null, w = g !== 0 ? { grips: [y(0), y(1)], weight: a.arm.weight } : null;
+  return { ...n, phase: a.phase, clock: a.clock, held: l, kick: d, gun: m, punch: w };
+}
+const Pl = (e) => [e.x, e.y, e.z], Pw = Object.freeze({ back: 0.03, lift: 0.05, time: 0.06 }), ore = new Set([...ep, ...tp].map((e) => ie.indexOf(e)));
+function rre(e) {
+  return { ...e, pieces: e.pieces.filter((t) => !t.glow && ore.has(t.bone)) };
+}
+function ire(e, t) {
+  const { look: n } = t, s = t.registry ?? B, o = e.mesh, r = rre(e.compiled), i = LP(r), a = [r.body.material, r.body.glowMaterial].map((I) => n.arms(t.materials.get(I))), c = new cn(i, a), l = new FP(e.compiled.skeleton.build), u = o.geometry.getAttribute("position").count;
+  o.geometry.setAttribute("viewmodel", new on(new Float32Array(u), 1)), o.material = (Array.isArray(o.material) ? o.material : [o.material]).map((I) => n.body(I)), o.userData.restyle = (I) => n.body(I), Object.assign(c, { name: `${o.name}/arms`, castShadow: !1, receiveShadow: !0, frustumCulled: !1, visible: !1 }), c.userData = { ...o.userData, viewmodel: "arms", restyle: (I) => n.arms(I) }, o.add(c), r0(s);
+  const [d, h] = [/* @__PURE__ */ new Map(), /* @__PURE__ */ new Set()], f = (I) => {
+    if (d.has(I.id) || h.has(I.id)) return d.get(I.id) ?? null;
+    const L = dte(I, s);
+    if (!L) return h.add(I.id), null;
+    const j = new cn(L, a[0]);
+    return Object.assign(j, { name: `${o.name}/gun`, castShadow: !1, receiveShadow: !0, frustumCulled: !1, visible: !1 }), j.userData = { ...c.userData, viewmodel: "gun", weapon: I.id }, o.add(j), d.set(I.id, j), j;
+  };
+  for (const { id: I } of s.list("weapon")) f(s.get("weapon", I));
+  const [p, m, g] = [new R(), new Q(), new R(1, 0, 0)];
+  let [y, w, v] = [0, 0, null];
+  const b = (I) => {
+    for (const L of d.values())
+      L.visible = L === I, L !== I && (L.position.copy(o.skeleton.bones[0].position), L.scale.setScalar(0), L.updateMatrixWorld(!0));
+  };
+  b();
+  const x = (I, L) => {
+    const j = I.player?.shots ?? 0;
+    w = (j > y ? 1 : w) * Math.exp(-I.dt / Pw.time), y = j;
+    const { hold: F, gun: N } = L, P = N && F?.holding && l.shown.includes("handR") && f(N) || void 0;
+    if (b(P), v = null, !P || !N || !F) return;
+    P.scale.setScalar(1);
+    const C = F.barrel, H = F.look, [K, q] = [Math.atan2(C.x, C.z), Math.asin(G.clamp(C.y, -1, 1))], U = H ? [Jt(H.yaw, K) * H.weight, q - H.pitch * H.weight] : [0, 0], [X, Y] = [I.pose.yaw + U[0], I.pose.pitch + U[1]];
+    p.set(Math.sin(X) * Math.cos(Y), Math.sin(Y), Math.cos(X) * Math.cos(Y)), P.position.copy(l.hands[1]).addScaledVector(p, -Pw.back * w), FL(p, P.quaternion).multiply(m.setFromAxisAngle(g, -Pw.lift * w)), P.updateMatrixWorld(!0);
+    const Z = qL(N, { position: P.position, rotation: P.quaternion });
+    v = new R(...DP(I.pose, [Z.x, Z.y, Z.z], I.fov));
+  }, k = o.geometry.getAttribute("viewmodel"), A = o.geometry.getAttribute("skinIndex");
+  let _ = "";
+  const M = (I) => {
+    const L = I.join();
+    if (L === _) return;
+    const j = new Set(I.map((N) => ie.indexOf(N) + 1)), F = I.length === ie.length;
+    for (let N = 0; N < k.count; N++) k.setX(N, F || j.has(A.getX(N)) ? 1 : 0);
+    [_, k.needsUpdate] = [L, !0];
+  }, [S, O] = [i.getAttribute("position"), i.getAttribute("normal")], [$, E] = [Float32Array.from(S.array), Float32Array.from(O.array)], z = i.getAttribute("skinIndex"), T = () => {
+    const I = new Set(l.shown.map((N) => ie.indexOf(N))), { matrices: L } = l.world, [j, F] = [S.array, O.array];
+    for (let N = 0; N < S.count; N++) {
+      const P = z.getX(N) - 1;
+      if (!I.has(P)) {
+        j.fill(0, N * 3, N * 3 + 3);
+        continue;
+      }
+      const C = P * 16, [H, K, q] = [$[N * 3] - r.rest[P * 3], $[N * 3 + 1] - r.rest[P * 3 + 1], $[N * 3 + 2] - r.rest[P * 3 + 2]], [U, X, Y] = [E[N * 3], E[N * 3 + 1], E[N * 3 + 2]];
+      for (let Z = 0; Z < 3; Z++)
+        j[N * 3 + Z] = L[C + Z] * H + L[C + 4 + Z] * K + L[C + 8 + Z] * q + L[C + 12 + Z], F[N * 3 + Z] = L[C + Z] * U + L[C + 4 + Z] * X + L[C + 8 + Z] * Y;
+    }
+    [S.needsUpdate, O.needsUpdate] = [!0, !0];
+  };
+  return {
+    arms: c,
+    guns: d,
+    get muzzle() {
+      return v;
+    },
+    rig: l,
+    update(I, L) {
+      if (!I || !L)
+        return M([]), c.visible = !1, b(), v = null, { hidden: [], arms: [] };
+      const { player: j, effects: F, aspect: N, fov: P } = I;
+      n.frame(I.pose, P), l.update(I.pose, qP(L.animator, L.contacts, { player: j, effects: F, aspect: N, fov: P }, L.hold), I.dt), T(), x(I, L);
+      const { entity: C, component: H, protagonist: K } = o.userData;
+      Object.assign(c, { name: `${o.name}/arms`, visible: !0 }), Object.assign(c.userData, { entity: C, component: H, protagonist: K });
+      for (const Y of d.values())
+        Y.name = `${o.name}/gun`, Object.assign(Y.userData, { entity: C, component: H, protagonist: K });
+      const { skeleton: q, world: U } = L.animator.body, X = wne(q, U, I.pose.position, I.fullBody === !0);
+      return M(X), { hidden: X, arms: [...l.shown] };
+    },
+    dispose() {
+      i.dispose(), c.removeFromParent();
+      for (const I of d.values())
+        I.geometry.dispose(), I.removeFromParent();
+      M([]);
+    }
+  };
+}
+const are = {
+  MeshLambertMaterial: l2,
+  MeshBasicMaterial: Xs,
+  MeshStandardMaterial: xz,
+  MeshPhongMaterial: N8,
+  MeshToonMaterial: P8
+}, cre = /* @__PURE__ */ new Set(["uuid", "version", "userData"]);
+function Ek(e) {
+  const t = e.isNodeMaterial === !0, n = t ? null : are[e.type];
+  if (!t && !n) return null;
+  const s = e.clone(), o = n ? new n() : s, r = e;
+  for (const i in r) !cre.has(i) && !i.startsWith("_") && (o[i] = r[i]);
+  return [o.uuid, o.userData] = [s.uuid, s.userData], o;
+}
+J("gfx", {
+  GFX_VIEWMODEL_MATERIAL: {
+    template: "first person cannot draw {material} for the viewmodel: three.js has no node material for a {type}",
+    fix: "give the player's body a mesh material three.js turns into a node material (Lambert, Phong, standard, toon, basic, or a node material)",
+    // prettier-ignore
+    doc: "Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material: a material it cannot copy into a node material is drawn as it is, so first person shows the body, or the arms are no longer drawn at their own depth and a wall may cut them."
+    // prettier-ignore
+  }
+});
+function lre(e = {}) {
+  const t = e.log ?? Pe, n = pe(1).setGroup(we), s = pe(0.05 * mt.lift).setGroup(we), o = pe(new le()).setGroup(we), r = pe(new le()).setGroup(we), [i, a] = [be(mt.near), be(mt.squeeze)], c = xn(mf("viewmodel", "float").greaterThan(0.5), ut(0, 0, 0), M0), l = nj("vec3", "vViewmodelPlaced"), u = ln(() => {
+    const p = sj.mul(Re(M0, 1)).xyz.toVar();
+    l.assign(p);
+    const m = o.mul(Re(p, 1)).xyz.toVar(), g = m.z.negate(), y = xn(g.greaterThanEqual(i), s.add(g.sub(i).mul(a)).div(g), s.div(i)), w = ut(m.x.mul(n), m.y.mul(n), m.z).mul(y);
+    return zz.mul(r.mul(Re(w, 1))).xyz;
+  })(), d = { body: /* @__PURE__ */ new Map(), arms: /* @__PURE__ */ new Map() }, h = /* @__PURE__ */ new Set(), f = (p, m) => {
+    if (h.has(m)) return m;
+    const g = d[p].get(m);
+    if (g) return g;
+    const y = Ek(m);
+    return y ? (y.name = `${m.name || m.type}+${p}`, p === "body" ? [y.positionNode, y.castShadowPositionNode] = [c, M0] : [y.positionNode, y.receivedShadowPositionNode] = [u, l], d[p].set(m, y), h.add(y), y) : (t.warnOnce("GFX_VIEWMODEL_MATERIAL", { material: m.name || m.type, type: m.type }, m.uuid), m);
+  };
+  return {
+    body: (p) => f("body", p),
+    arms: (p) => f("arms", p),
+    owns: (p) => h.has(p),
+    frame(p, m = mt.fov) {
+      n.value = jP(p, m), s.value = p.near * mt.lift;
+      const [g, y, w] = [Mn(p), eo(p), Ke(p)], [v, b, x] = p.position;
+      r.value.set(g[0], y[0], -w[0], v, g[1], y[1], -w[1], b, g[2], y[2], -w[2], x, 0, 0, 0, 1), o.value.copy(r.value).invert();
+    },
+    get lens() {
+      return { spread: n.value, base: s.value, view: o.value.clone() };
+    },
+    dispose() {
+      for (const p of h) p.dispose();
+      for (const p of Object.values(d)) p.clear();
+      h.clear();
+    }
+  };
+}
+const bi = {
+  toes: 0.01,
+  // m: a toe's tip is kept this far off the wall
+  knee: 0.06,
+  // m: a knee this far (its joint: the kneecap stands in front of it, and over the top this far)
+  elbow: 0.03,
+  // m: an elbow this far, under the top and over it
+  swing: 4
+}, lr = Array.from({ length: 3 }, () => new R());
+function ure(e, t) {
+  const n = e.lastView("mantle");
+  return n && n.mantle !== "none" ? ([t.nx, t.nz, t.top] = [n.wallX ?? 0, n.wallZ ?? 0, n.lipY ?? 0], t.point.set((n.lipX ?? 0) + t.nx * 2 * e.hull.skin, 0, (n.lipZ ?? 0) + t.nz * 2 * e.hull.skin), t) : !(e.weights.climb > 0) && !e.walled ? null : ([t.nx, t.nz, t.top] = [e.wall[0], e.wall[1], 1 / 0], t.point.copy(e.wallAt), t);
+}
+function op(e, t, n, s = -0.01) {
+  const o = (t.x - e.point.x) * e.nx + (t.z - e.point.z) * e.nz;
+  return !(t.y < e.top + s) || o < -0.45 ? 0 : Math.max(0, n - o);
+}
+function dre(e, t, n) {
+  const s = op(e, t, n, 0);
+  return s > 0 ? t.set(t.x + e.nx * s, t.y, t.z + e.nz * s) : t;
+}
+function BP(e, t) {
+  if (!t(e)) return !1;
+  let [n, s] = [0, e];
+  for (let o = 0; o < 8; o++) {
+    const r = (n + s) / 2;
+    t(r) ? s = r : n = r;
+  }
+  return t(s), !0;
+}
+function $$(e, t, n, s, o, r) {
+  const { skeleton: i, pose: a, world: c } = e.body, l = op(r, Es(i, c, `toe${t}`, lr[0]), bi.toes);
+  l > 0 && (n.set(n.x + r.nx * l, n.y, n.z + r.nz * l), o(s));
+  const u = () => op(r, ee(c, `shin${t}`, lr[0]), bi.knee, bi.knee);
+  if (!(u() > 0)) return;
+  const d = G.smoothstep(ee(c, `thigh${t}`, lr[0]).y - r.top, 0, 0.3), h = ve(0, He(t) * G.lerp(1, 0.6, d), G.lerp(0.3, 1, d), lr[1]).applyQuaternion(a.rootRot);
+  BP(bi.swing, (f) => (o(lr[2].copy(s).addScaledVector(h, f).normalize()), !(u() > 0)));
+}
+function hre(e, t, n, s, o) {
+  const { pose: r, world: i } = e.body, a = () => op(o, ee(i, `forearm${t}`, lr[0]), bi.elbow, bi.elbow);
+  if (!(a() > 0)) return;
+  const c = ve(-0.4, He(t) * 0.6, -1, lr[1]).applyQuaternion(r.rootRot).normalize();
+  BP(bi.swing, (l) => (s(lr[2].copy(n).addScaledVector(c, l).normalize()), !(a() > 0)));
 }
 const It = {
   glide: 85 * Math.PI / 180,
@@ -26460,8 +27126,8 @@ const It = {
   // a foot's target never comes nearer its hip than this share of the leg
   ahead: 0.2
   // m: that hand goes down this far ahead of its shoulder, flat, its fingers forward
-}, gh = ["L", "R"], ae = Array.from({ length: 8 }, () => new R()), cs = Array.from({ length: 3 }, () => new Q()), yh = (e) => G.smoothstep(e, 0, 1), v$ = new ht(), Doe = { L: ws("legL"), R: ws("legR") }, x$ = new Q(), Foe = new Q(), Lw = [new R(), new R()], qoe = new R(), Boe = { point: new R(), nx: 0, nz: 1, top: 0 };
-class IP {
+}, gh = ["L", "R"], ae = Array.from({ length: 8 }, () => new R()), cs = Array.from({ length: 3 }, () => new Q()), yh = (e) => G.smoothstep(e, 0, 1), E$ = new ht(), fre = { L: ws("legL"), R: ws("legR") }, z$ = new Q(), pre = new Q(), Nw = [new R(), new R()], mre = new R(), gre = { point: new R(), nx: 0, nz: 1, top: 0 };
+class GP {
   name;
   weight = 1;
   /** It ends the `post` slot after the foot plant (engine/anim/footPlant.ts), so a hand it puts down stays down. */
@@ -26469,7 +27135,7 @@ class IP {
   /** The traversal it poses, set by the view before each pose; null poses nothing. */
   pose = null;
   /** Where the last pose put each limb (left hand, right hand, left foot, right foot) and whether on its contact. */
-  limbs = Coe();
+  limbs = qoe();
   constructor(t = {}) {
     this.name = t.name ?? "traversal";
   }
@@ -26494,43 +27160,43 @@ class IP {
       x && h.ladder > 0 && i.rootPos.add(ae[0].set(-x.normal[0], 0, -x.normal[1]).multiplyScalar(It.ladder * h.ladder)), i.rootPos.add(n.reach), Oe(r, i, a), n.targets(c, s);
     }
     const f = [null, null], p = n?.lastView("mantle");
-    if (p ? f[0] = f[1] = Lw[0].set(-(p.wallX ?? 0), 0, -(p.wallZ ?? 0)) : n && n.weights.climb > 0 && (f[0] = f[1] = Lw[0].set(0, 1, 0)), n && (this.#r(t, n, f), this.#o(t, n)), u > It.landing[0]) {
+    if (p ? f[0] = f[1] = Nw[0].set(-(p.wallX ?? 0), 0, -(p.wallZ ?? 0)) : n && n.weights.climb > 0 && (f[0] = f[1] = Nw[0].set(0, 1, 0)), n && (this.#r(t, n, f), this.#o(t, n)), u > It.landing[0]) {
       const y = ae[1].set(0, 0, It.ahead).applyQuaternion(i.rootRot).setY(0), w = ee(a, "upperArmR", ae[0]).add(y).setY(c.y + Je.palm);
-      si(s[1], w, G.smoothstep(u, It.landing[0], It.landing[1]), u >= It.landing[1]), f[1] = Lw[1].set(0, 0, 1).applyQuaternion(i.rootRot).setY(0), this.#n(
+      si(s[1], w, G.smoothstep(u, It.landing[0], It.landing[1]), u >= It.landing[1]), f[1] = Nw[1].set(0, 0, 1).applyQuaternion(i.rootRot).setY(0), this.#n(
         t,
         $e(r, a, "weaponR", ae[1]).lerp(s[1].point, yh(s[1].weight))
       );
     }
-    const m = n ? Poe(n, Boe) : null;
+    const m = n ? ure(n, gre) : null;
     for (const y of gh) {
       const w = s[y === "L" ? 2 : 3];
       if (!(w.weight > 0)) {
         m && this.#t(t, y, m);
         continue;
       }
-      v$.copy(i);
+      E$.copy(i);
       const v = ae[1].fromArray(r.socketOffsets, Us(`contact${y}`) * 3), b = ve(0, 1, 0, ae[4]).applyQuaternion(i.rootRot), x = ee(a, `thigh${y}`, ae[5]), k = ae[3].subVectors(w.point, x), A = (l.legUpper + l.legLower) * l.size * It.fold;
       k.length() < A && w.point.copy(x).addScaledVector(k.lengthSq() > 1e-12 ? k.normalize() : ae[3].set(0, -1, 0), A);
-      const _ = ae[3].subVectors(w.point, x).normalize().cross(b).negate(), M = n && (n.view?.mode ?? "ground") !== "ground" ? n.weights.skydive * n.landing : 0, S = n ? Math.max(n.weights.climb, n.weights.ladder) : 0, O = Math.max(M, S, 1 - G.smoothstep(w.point.y - c.y, 0.02, 0.2)), $ = O > 0 ? x$.copy(this.#e(t, y, O)) : null, E = (T) => zs(r, i, a, `foot${y}`, w.point, { offset: v, pole: T, ...$ ? { rotation: $ } : {} });
-      E(_), m && y$(t, y, w.point, _, E, m);
+      const _ = ae[3].subVectors(w.point, x).normalize().cross(b).negate(), M = n && (n.view?.mode ?? "ground") !== "ground" ? n.weights.skydive * n.landing : 0, S = n ? Math.max(n.weights.climb, n.weights.ladder) : 0, O = Math.max(M, S, 1 - G.smoothstep(w.point.y - c.y, 0.02, 0.2)), $ = O > 0 ? z$.copy(this.#e(t, y, O)) : null, E = (T) => zs(r, i, a, `foot${y}`, w.point, { offset: v, pole: T, ...$ ? { rotation: $ } : {} });
+      E(_), m && $$(t, y, w.point, _, E, m);
       const z = yh(w.weight);
-      z < 1 && rd(v$, i, z, i, { mask: Doe[y] }), Oe(r, i, a), m && z < 1 && this.#t(t, y, m);
+      z < 1 && rd(E$, i, z, i, { mask: fre[y] }), Oe(r, i, a), m && z < 1 && this.#t(t, y, m);
     }
     const g = (l.armUpper + l.armLower) * l.size;
     for (const y of gh) {
       const w = s[y === "L" ? 0 : 1];
       if (!(w.weight > 0)) continue;
       const v = yh(w.weight), b = jv(t, y, w.point, v, ae[2]);
-      m && Noe(m, b, Je.palm);
+      m && dre(m, b, Je.palm);
       const x = G.smoothstep((b.y - ee(a, `upperArm${y}`, ae[5]).y) / g, -0.3, 0.6), k = ve(G.lerp(-0.5, 0.25, x), He(y) * 0.6, -1, ae[3]).applyQuaternion(i.rootRot);
       yr(r, i, a, `hand${y}`, b, { pole: k });
       let [A, _] = [f[y === "L" ? 0 : 1], v];
       if (m && A) {
         const O = (b.x - m.point.x) * m.nx + (b.z - m.point.z) * m.nz;
-        _ = Math.max(v, 1 - G.smoothstep(O, 0.05, 0.25)), Number.isFinite(m.top) && (A = qoe.set(0, 1, 0).lerp(A, G.smoothstep(b.y - m.top, -0.08, 0.03)).normalize());
+        _ = Math.max(v, 1 - G.smoothstep(O, 0.05, 0.25)), Number.isFinite(m.top) && (A = mre.set(0, 1, 0).lerp(A, G.smoothstep(b.y - m.top, -0.08, 0.03)).normalize());
       }
-      const M = Foe.copy(this.#s(t, y, A, _)), S = (O) => yr(r, i, a, `hand${y}`, b, { pole: O, rotation: M });
-      S(k), m && joe(t, y, k, S, m);
+      const M = pre.copy(this.#s(t, y, A, _)), S = (O) => yr(r, i, a, `hand${y}`, b, { pole: O, rotation: M });
+      S(k), m && hre(t, y, k, S, m);
     }
   }
   /** Foot `side`'s world rotation turned `share` (0 to 1) of the way to level: its toes along the ground. */
@@ -26543,8 +27209,8 @@ class IP {
   }
   /** Keeps leg `side` as the pose has it out of `face`, its foot where it is, its knee swung off (clear.ts). */
   #t(t, n, s) {
-    const { skeleton: o, pose: r, world: i } = t.body, a = ae[1].fromArray(o.socketOffsets, Us(`contact${n}`) * 3), c = $e(o, i, `contact${n}`, ae[2]), l = x$.copy(tt(i, `foot${n}`, cs[0])), u = ee(i, `thigh${n}`, ae[5]), d = ee(i, `foot${n}`, ae[3]).sub(u).normalize(), h = ee(i, `shin${n}`, ae[4]).sub(u);
-    h.addScaledVector(d, -h.dot(d)), h.lengthSq() < 1e-10 && h.set(0, 0, 1).applyQuaternion(r.rootRot), y$(t, n, c, h.normalize(), (f) => zs(o, r, i, `foot${n}`, c, { offset: a, pole: f, rotation: l }), s);
+    const { skeleton: o, pose: r, world: i } = t.body, a = ae[1].fromArray(o.socketOffsets, Us(`contact${n}`) * 3), c = $e(o, i, `contact${n}`, ae[2]), l = z$.copy(tt(i, `foot${n}`, cs[0])), u = ee(i, `thigh${n}`, ae[5]), d = ee(i, `foot${n}`, ae[3]).sub(u).normalize(), h = ee(i, `shin${n}`, ae[4]).sub(u);
+    h.addScaledVector(d, -h.dot(d)), h.lengthSq() < 1e-10 && h.set(0, 0, 1).applyQuaternion(r.rootRot), $$(t, n, c, h.normalize(), (f) => zs(o, r, i, `foot${n}`, c, { offset: a, pole: f, rotation: l }), s);
   }
   /**
    * Bends the spine forward at its base (never the root: the feet stay planted) just far enough for the right hand's
@@ -26632,672 +27298,6 @@ class IP {
       }
   }
 }
-function jv(e, t, n, s, o) {
-  const { skeleton: r, world: i, pose: a } = e.body, c = ee(i, `upperArm${t}`, hl[0]), l = $e(r, i, `weapon${t}`, o).sub(c), u = hl[1].subVectors(n, c), [d, h] = [l.length(), u.length()];
-  if (d < 1e-6 || h < 1e-6 || s >= 1) return o.copy(n);
-  l.divideScalar(d), u.divideScalar(h);
-  const f = hl[2].crossVectors(l, u);
-  f.length() < 0.3 && f.crossVectors(l, hl[3].set(0, 0, 1).applyQuaternion(a.rootRot));
-  const p = Math.atan2(hl[3].crossVectors(l, u).length(), l.dot(u)), m = Goe.setFromAxisAngle(f.normalize(), p * s);
-  return l.applyQuaternion(m).multiplyScalar(G.lerp(d, h, s)).add(c);
-}
-const hl = Array.from({ length: 4 }, () => new R()), Goe = new Q();
-class RP {
-  /** What the hold poses now, or null before any look. */
-  look = null;
-  /** Follows `look` (null: none) over `dt` seconds; returns itself. */
-  update(t, n) {
-    const s = this.look, o = n / St.raise, r = G.clamp((s?.raised ?? 0) + (t?.aiming === !0 ? o : -o), 0, 1), i = G.clamp((s?.weight ?? 0) + (t ? o : -o), 0, 1);
-    return this.look = t || s ? { yaw: t?.yaw ?? s.yaw, pitch: t?.pitch ?? s.pitch, raised: r, weight: i } : null, this;
-  }
-}
-const St = {
-  head: 1,
-  // how much of the look the head takes (a traversal halves it)
-  yaw: 0.9,
-  // the gun follows the aim's heading this far either side of the body's…
-  twist: 0.7,
-  // …the chest turning this share of the way with it
-  ready: 0.45,
-  // held low and ready this far below the aim
-  sprint: [0.75, 0.7, 0.15],
-  // at a sprint: this far below level, turned this far across the body, the grip this much lower
-  grip: [0.22, 0.06, 0.1],
-  // the right hand's grip: ahead of the shoulder along the barrel, under it, in toward the middle
-  sights: [0.17, 0.13],
-  // aiming down the sights, that grip this far along the sight line from the right eye, and under it
-  fore: 0.3,
-  // the foregrip this far along the barrel from the grip (the left hand slides back to half that…
-  reach: 0.92,
-  // …to stay within this share of its reach, the arm and the grip; the gun comes in past that)
-  runSpeed: [1.17, 1.24],
-  // the gait's speed share (of the build's `speedRef`, at most 1.25) over which a run turns into a sprint
-  raise: 0.2,
-  // seconds the sights take to come up or down, and a look to come or go
-  draw: 0.25
-  // seconds the hands take to come onto a gun drawn, and to leave one holstered
-}, _t = Array.from({ length: 8 }, () => new R()), k$ = [new R(), new R()], M$ = [new R(), new R()], tr = Array.from({ length: 3 }, () => new Q()), Hoe = new le(), A$ = new ht(), Uoe = ws(["neck", "head"]), Woe = qT.filter((e) => e.joint !== "chest");
-class LP {
-  name;
-  weight = 1;
-  /** It ends the `post` slot after the traversal plant: attach it last. */
-  last = !0;
-  /** Where the body looks now (a `LookPose`'s), set by the view before each pose; null: where its head does. */
-  look = null;
-  /** How much a traversal holds the hands (0 to 1): the hold lowers, the head turns half as far. */
-  busy = 0;
-  /** The traversal plant before it, whose hands on a contact (a hard landing's too) the gun yields to. */
-  contacts = null;
-  /** What the hands carry, as the view says (WP 13.20's weapons); null: the body's own weapon. */
-  carry = null;
-  /** Where the last pose aimed the gun's barrel (world, unit), and where it put the left hand on it, when it held one. */
-  // prettier-ignore
-  barrel = new R();
-  support = new R();
-  /** Whether the last pose held a gun (its hands free enough): the view draws one in the hand (WP 13.20). */
-  holding = !1;
-  /** How far the last pose raised the sights, 0 to 1: first person centres them (WP 13.20). */
-  aimed = 0;
-  /** How far the hands are on the gun, 0 to 1, eased over `HOLD.draw` as one is drawn and holstered (WP 13.20). */
-  drawn = 0;
-  /** The body's clock at the last pose: how far `drawn` moves; NaN before the first. */
-  #e = Number.NaN;
-  constructor(t = {}) {
-    this.name = t.name ?? "hold";
-  }
-  /**
-   * Takes up `previous`'s draw (`drawn` and its clock), when one body's hold is made again: the view makes an actor's
-   * animator again when its weapon changes (engine/anim/character.ts `AnimatorPool`), so the hands ease on as they were.
-   */
-  follow(t) {
-    return t && ([this.drawn, this.#e] = [t.drawn, t.#e]), this;
-  }
-  /** Adds it at the end of `animator`'s `post` slot: attach it after the traversal plant. */
-  attach(t) {
-    return t.use("post", this), this;
-  }
-  /** Turns the head toward the look and holds the gun (see the file comment). */
-  apply(t) {
-    const n = t.body, { skeleton: s, pose: o, world: r } = n, i = this.look, a = this.contacts ? Math.max(this.contacts.limbs[0].weight, this.contacts.limbs[1].weight) : 0, c = 1 - G.clamp(Math.max(this.busy, a), 0, 1), l = (this.carry ?? n.weapon) === "gun", u = n.state.clock, h = Number.isNaN(this.#e) || u < this.#e ? l ? 1 : 0 : this.drawn + (l ? 1 : -1) * (u - this.#e) / St.draw;
-    this.drawn = h > 1 - 1e-9 ? 1 : h < 1e-9 ? 0 : h, this.#e = u;
-    const f = this.drawn > 0 && c > 0;
-    [this.holding, this.aimed] = [f, 0];
-    const p = c * this.drawn, m = i ? G.clamp(Voe(n.yaw, i.yaw), -0.9, St.yaw) * i.weight : 0;
-    if (f && m !== 0) {
-      const Y = tr[1].setFromAxisAngle(_t[0].set(0, 1, 0), m * St.twist * p), Z = tt(r, "spine2", tr[2]).invert();
-      o.setRotation("chest", Z.multiply(Y.multiply(tt(r, "chest", tr[0])))), Oe(s, o, r);
-    }
-    if (i) {
-      const Y = $e(s, r, "eyeL", _t[0]).add($e(s, r, "eyeR", _t[1])).multiplyScalar(0.5), Z = _$(i.yaw, i.pitch, _t[1]);
-      A$.copy(o), BT(s, o, r, Y.addScaledVector(Z, 10), { chain: Woe }), rd(A$, o, St.head * (0.5 + 0.5 * c) * i.weight, o, { mask: Uoe }), Oe(s, o, r);
-    }
-    if (!f) return;
-    const g = n.build, y = g.size, w = n.yaw, v = G.smoothstep(n.state.weights.speed, St.runSpeed[0], St.runSpeed[1]), b = G.smoothstep(i?.raised ?? 0, 0, 1) * (1 - v);
-    this.aimed = b;
-    const x = w + m, k = (i?.pitch ?? 0) * (i?.weight ?? 0), A = G.lerp(k - St.ready, -0.75, v), _ = _$(G.lerp(x, w + St.sprint[1], v), G.lerp(A, k, b), this.barrel), M = _t[2].set(-Math.cos(w), 0, Math.sin(w)), S = ee(r, "upperArmR", _t[3]).addScaledVector(_, St.grip[0] * y).addScaledVector(_t[4].set(0, 1, 0), -(St.grip[1] + St.sprint[2] * v) * y).addScaledVector(M, -0.1 * y);
-    if (b > 0) {
-      const Y = $e(s, r, "eyeR", _t[6]), Z = _t[7].set(0, 1, 0).addScaledVector(_, -_.y).normalize();
-      S.lerp(Y.addScaledVector(_, St.sights[0] * y).addScaledVector(Z, -0.13 * y), b);
-    }
-    const O = ee(r, "upperArmL", _t[6]), $ = St.reach * (g.armUpper + g.armLower + Hs.grip * g.handLength) * y, E = _t[7].subVectors(S, O), z = E.dot(_), T = z * z - E.lengthSq() + $ * $, I = T >= 0 ? Math.min(St.fore * y, -z + Math.sqrt(T)) : St.fore * y, L = this.support.copy(S).addScaledVector(_, Math.max(St.fore * y * 0.5, I)), j = L.distanceTo(O) - $;
-    if (j > 0) {
-      const Y = _t[7].subVectors(O, L).normalize().multiplyScalar(j);
-      S.add(Y), L.add(Y);
-    }
-    const F = G.smoothstep(p, 0, 1), [N, P] = [jv(t, "R", S, F, k$[0]), jv(t, "L", L, F, k$[1])], C = tr[1].copy(tt(r, "handR", tr[1])), [H, K] = [S$(o, "R", M$[0]), S$(o, "L", M$[1])];
-    yr(s, o, r, "handR", N, { pole: H }), yr(s, o, r, "handR", N, { pole: H, rotation: C.slerp(Koe(t, _), F) });
-    const q = _t[6].subVectors(P, ee(r, "upperArmL", _t[7])).normalize(), U = tt(r, "handL", tr[2]), X = tr[0].setFromUnitVectors(_t[7].set(1, 0, 0).applyQuaternion(U), q).multiply(U);
-    yr(s, o, r, "handL", P, { pole: K, rotation: U.slerp(X, F) });
-  }
-}
-function S$(e, t, n) {
-  return ve(-0.3, t === "R" ? 0.6 : -0.6, -1, n).applyQuaternion(e.rootRot);
-}
-function _$(e, t, n) {
-  return n.set(Math.sin(e) * Math.cos(t), Math.sin(t), Math.cos(e) * Math.cos(t));
-}
-function Voe(e, t) {
-  return Math.atan2(Math.sin(t - e), Math.cos(t - e));
-}
-function Koe(e, t) {
-  const { world: n } = e.body, s = ee(n, "handR", _t[6]).sub(ee(n, "forearmR", _t[7])), o = s.addScaledVector(t, -s.dot(t)).negate();
-  return o.lengthSq() < 1e-12 && o.set(1, 0, 0), o.normalize(), tr[0].setFromRotationMatrix(Hoe.makeBasis(o, _t[7].crossVectors(t, o), t));
-}
-const op = 0.3, Xoe = {
-  cable: "material:default",
-  pole: "material:default",
-  balloon: "material:glow",
-  ladder: "material:planks",
-  pad: "material:glow",
-  frame: "material:default",
-  mat: "material:checker"
-};
-function O$(e, t, n, s, o) {
-  const r = new R(s[0] - n[0], s[1] - n[1], s[2] - n[2]), i = Math.max(r.length(), 1e-3), a = mk({
-    radiusBottom: o,
-    radiusTop: o,
-    height: i,
-    radialSegments: 8,
-    smooth: !0
-  }), c = new Q().setFromUnitVectors(new R(0, 1, 0), r.normalize());
-  return { name: e, geometry: a, look: t, at: n, turn: c };
-}
-function lc(e, t, n, s, o = 0) {
-  const r = Ro({ width: s[0], height: s[1], depth: s[2] });
-  return { name: e, geometry: r, look: t, at: n, turn: new Q().setFromAxisAngle(new R(0, 1, 0), o) };
-}
-function Yoe(e) {
-  const [t, n, s] = [e.from, e.to, e.feet], o = [O$("cable", "cable", t, n, 0.02)];
-  if ([t, n].forEach((r, i) => {
-    !e.poles || e.balloon || s[i] === void 0 || r[1] - s[i] <= 0.05 || (o.push(O$(`pole${i}`, "pole", [r[0], s[i], r[2]], r, 0.06)), o.push(lc(`pulley${i}`, "pole", [r[0], r[1] - 0.1, r[2]], [0.2, 0.2, 0.2])));
-  }), e.balloon) {
-    const r = t[1] > n[1] ? t : n, i = new hb(2.5, 16, 12);
-    o.push({ name: "balloon", geometry: i, look: "balloon", at: [r[0], r[1] + 2.5, r[2]] });
-  }
-  return o;
-}
-function Joe(e) {
-  const [t, n, s, o] = [e.foot, e.top, e.normal, e.width], r = Math.atan2(s[0], s[1]), [i, a] = [s[1], -s[0]], c = n - t[1], l = [];
-  for (const u of [-1, 1]) {
-    const d = [t[0] + i * u * (o / 2), t[1], t[2] + a * u * (o / 2)];
-    l.push(lc(`rail${u < 0 ? 0 : 1}`, "ladder", d, [0.06, c + 0.4, 0.06], r));
-  }
-  for (let u = 1, d = op; d < c + 0.2; u++, d += op)
-    l.push(lc(`rung${u}`, "ladder", [t[0], t[1] + d - 0.02, t[2]], [o, 0.04, 0.04], r));
-  return l;
-}
-function Qoe(e) {
-  const [t, n] = [e.at, e.size];
-  if (e.mesh === "pad") {
-    const o = Math.min(n[0], n[1]) / 2;
-    return [{ name: "pad", geometry: mk({ radiusBottom: o, radiusTop: o * 0.9, height: 0.06, radialSegments: 16, smooth: !0 }), look: "pad", at: [t[0], t[1] - 0.04, t[2]] }];
-  }
-  const s = [lc("mat", "mat", [t[0], t[1] - 0.03, t[2]], [n[0] - 0.2, 0.04, n[1] - 0.2])];
-  for (const [o, r, i, a] of [
-    [0, -1, n[0], 0.1],
-    [0, 1, n[0], 0.1],
-    [-1, 0, 0.1, n[1]],
-    [1, 0, 0.1, n[1]]
-  ])
-    s.push(lc(`rim${o}${r}`, "frame", [t[0] + o * (n[0] - 0.1) / 2, t[1] - 0.08, t[2] + r * (n[1] - 0.1) / 2], [i, 0.1, a]));
-  for (const [o, r] of [
-    [-1, -1],
-    [-1, 1],
-    [1, -1],
-    [1, 1]
-  ])
-    s.push(lc(`leg${o}${r}`, "frame", [t[0] + o * (n[0] - 0.2) / 2, 0, t[2] + r * (n[1] - 0.2) / 2], [0.08, Math.max(t[1] - 0.08, 0.01), 0.08]));
-  return s;
-}
-const Cv = { zipline: Yoe, ladder: Joe, launcher: Qoe }, Zoe = Object.freeze(Object.keys(Cv));
-function ere(e) {
-  const t = new en();
-  t.name = "rides";
-  const n = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Set(), o = (r) => {
-    r.traverse((i) => i.isMesh && i.geometry.dispose()), r.removeFromParent();
-  };
-  return {
-    root: t,
-    capture(r) {
-      const i = /* @__PURE__ */ new Set();
-      for (const a of r) {
-        const c = Object.keys(Cv).find((f) => a[f] !== void 0);
-        if (!c) continue;
-        i.add(a.id);
-        const l = a[c], u = `${c}:${JSON.stringify(l)}`;
-        if (n.get(a.id)?.key === u) continue;
-        const d = n.get(a.id);
-        d && o(d.group);
-        const h = new en();
-        h.name = `${c}#${a.id}`;
-        for (const f of Cv[c](l)) {
-          const p = new cn(f.geometry, e.materials.get(Xoe[f.look]));
-          Object.assign(p, { name: `${c}#${a.id}/${f.name}`, castShadow: !0, receiveShadow: !0 }), Object.assign(p.userData, { entity: a.id, component: c }), p.position.set(f.at[0], f.at[1], f.at[2]), f.turn && p.quaternion.copy(f.turn), h.add(p), s.add(f.look);
-        }
-        h.updateMatrixWorld(!0), t.add(h), t.parent || e.scene.add(t), n.set(a.id, { key: u, group: h });
-      }
-      for (const [a, { group: c }] of n)
-        i.has(a) || (o(c), n.delete(a));
-      return i;
-    },
-    register(r) {
-      const i = () => [...n.values()].flatMap(({ group: c }) => c.children), a = [
-        r.register("stage:rides", { objects: i }),
-        r.keyPart("stage:rides", () => [...s].sort().join(";"))
-      ];
-      return { dispose: () => a.forEach((c) => c.dispose()) };
-    },
-    dispose() {
-      for (const { group: r } of n.values()) o(r);
-      n.clear(), t.clear();
-    }
-  };
-}
-const tre = {
-  "material:puppet": {
-    description: "A puppet, lit: white, multiplied by each part’s slot colour (vertex or instance colours).",
-    vertexColors: !0,
-    roughness: 0.8
-  },
-  "material:puppetGlow": {
-    description: "A puppet’s eyes and glows, unlit: white, multiplied by the slot colour.",
-    vertexColors: !0,
-    unlit: !0
-  }
-};
-function PP(e = B) {
-  Xi(e);
-  for (const [t, n] of Object.entries(tre))
-    e.has("material", t) || l0(t, n, e);
-}
-PP();
-function yo(e, t = !1) {
-  const n = t ? e.toNonIndexed() : e;
-  for (const s of Object.keys(n.attributes))
-    s !== "position" && s !== "normal" && n.deleteAttribute(s);
-  return t && n.computeVertexNormals(), n;
-}
-function nre() {
-  const e = new c2(0.5, 0.5, 0.8, 4, 1).translate(0, 0.4, 0), t = new vz(0.5, 0.2, 4, 1, !0).translate(0, 0.9, 0), n = [yo(e, !0), yo(t, !0)], s = new Lo();
-  for (const o of ["position", "normal"]) {
-    const r = n.map((i) => i.getAttribute(o).array);
-    s.setAttribute(o, new on(Float32Array.from(r.flatMap((i) => Array.from(i))), 3));
-  }
-  return s;
-}
-function sre() {
-  const e = yo(new vp(1, 1, 1, 1, 4, 1).translate(0, 0.5, 0), !0), t = e.getAttribute("position");
-  for (let n = 0; n < t.count; n++) t.setX(n, t.getX(n) * (1 + 0.25 * t.getY(n)));
-  return e.computeVertexNormals(), e;
-}
-const $$ = /* @__PURE__ */ new Map();
-function Ok(e) {
-  let t = $$.get(e);
-  if (t) return t;
-  if (e.startsWith("limb@")) {
-    const n = Number(e.slice(5));
-    t = yo(new c2(n, 1, 1, 10, 1, !0).translate(0, 0.5, 0));
-  } else e === "ball" ? t = yo(new hb(1, 12, 8)) : e === "eye" ? t = yo(new hb(1, 8, 6)) : e === "box" ? t = yo(new vp(1, 1, 1), !0) : e === "cone" ? t = yo(new vz(1, 1, 8).translate(0, 0.5, 0)) : e === "blade" ? t = nre() : t = sre();
-  return $$.set(e, t), t;
-}
-function ore(e, t) {
-  const { length: n, radiusStart: s, radiusEnd: o } = t, r = t.shape === "limb" ? EL({ length: n, radiusStart: s, radiusEnd: o, radialSegments: 10, capSegments: 3 }) : Ok(t.shape), i = t.bone < 0 ? [0, 0, 0] : Array.from(e.rest.subarray(t.bone * 3, t.bone * 3 + 3)), a = new le().fromArray(t.matrix).premultiply(new le().makeTranslation(i[0], i[1], i[2]));
-  return yo(r.clone()).applyMatrix4(a);
-}
-function NP(e) {
-  const n = [...e.pieces.filter((p) => !p.glow), ...e.pieces.filter((p) => p.glow)].map((p) => ({ piece: p, geometry: ore(e, p) })), s = n.reduce((p, m) => p + m.geometry.getAttribute("position").count, 0), [o, r, i] = [0, 0, 0].map(() => new Float32Array(s * 3)), a = new Uint16Array(s * 4), c = new Float32Array(s * 4), l = [], u = [];
-  let d = 0, h = 0;
-  for (const { piece: p, geometry: m } of n) {
-    const g = m.getAttribute("position").count;
-    u.push({ part: p.part, shape: p.shape, slot: p.slot, start: d, count: g }), o.set(m.getAttribute("position").array, d * 3), r.set(m.getAttribute("normal").array, d * 3);
-    const y = e.colors[p.slot];
-    for (let v = d; v < d + g; v++)
-      i.set(y, v * 3), a[v * 4] = p.bone + 1, c[v * 4] = 1;
-    const w = m.getIndex();
-    for (let v = 0; v < (w ? w.count : g); v++) l.push(d + (w ? w.getX(v) : v));
-    p.glow || (h = l.length), d += g;
-  }
-  const f = new Lo();
-  return f.setAttribute("position", new on(o, 3)), f.setAttribute("normal", new on(r, 3)), f.setAttribute("color", new on(i, 3)), f.setAttribute("skinIndex", new on(a, 4)), f.setAttribute("skinWeight", new on(c, 4)), f.setIndex(l), h > 0 && f.addGroup(0, h, 0), l.length > h && f.addGroup(h, l.length - h, 1), f.userData.pieces = u, f;
-}
-function rre(e, t) {
-  const { body: n, skeleton: s, rest: o } = e, r = [new Vk(), ...ie.map(() => new Vk())];
-  r[0].name = "root", ie.forEach((f, p) => {
-    const m = r[p + 1];
-    m.name = f, m.position.fromArray(s.offsets, p * 3), r[Be[p] + 1].add(m);
-  });
-  const i = r.map(
-    (f, p) => p ? new le().makeTranslation(-o[p * 3 - 3], -o[p * 3 - 2], -o[p * 3 - 1]) : new le()
-  ), a = NP(e), c = [t.materials.get(n.material), t.materials.get(n.glowMaterial)], l = new wz(a, c);
-  l.name = t.name ?? `puppet:${n.id}`, l.add(r[0]), l.bind(new L8(r, i), new le()), Object.assign(l, { castShadow: !0, receiveShadow: !0, boundingSphere: new bz() }), Object.assign(l.userData, { body: n.id, build: s.build.id });
-  const [u, d] = [new R(), { hidden: /* @__PURE__ */ new Set() }], h = {
-    mesh: l,
-    compiled: e,
-    setPose(f) {
-      r[0].position.copy(f.rootPos), r[0].quaternion.copy(f.rootRot), r[0].scale.copy(f.rootScale);
-      for (let m = 0; m < ie.length; m++) r[m + 1].quaternion.fromArray(f.local, m * 4);
-      u.fromArray(s.offsets, 0).multiply(f.rootScale).applyQuaternion(f.rootRot).add(f.rootPos);
-      const p = Math.max(Math.abs(f.rootScale.x), Math.abs(f.rootScale.y), Math.abs(f.rootScale.z));
-      return l.boundingSphere.set(u, e.reach * p), h;
-    },
-    socketPosition(f, p = new R()) {
-      const m = dt.indexOf(f), g = r[s.socketJoints[m] + 1];
-      return g.updateWorldMatrix(!0, !1), p.fromArray(s.socketOffsets, m * 3).applyMatrix4(g.matrixWorld);
-    },
-    hide(f) {
-      const p = new Set(f.map((y) => ie.indexOf(y) + 1));
-      if (p.size === d.hidden.size && [...p].every((y) => d.hidden.has(y))) return h;
-      const [m, g] = [a.getAttribute("skinIndex"), a.getAttribute("skinWeight")];
-      for (let y = 0; y < m.count; y++) g.setX(y, p.has(m.getX(y)) ? 0 : 1);
-      return [d.hidden, g.needsUpdate] = [p, !0], h;
-    },
-    drawCalls(f = 0) {
-      return a.groups.length * (1 + (l.castShadow ? f : 0));
-    },
-    register(f, p = l.name) {
-      return f.register(p, { objects: () => [l] });
-    },
-    dispose() {
-      a.dispose(), l.removeFromParent();
-    }
-  };
-  return h.setPose(new ht());
-}
-const Uu = Math.PI / 180, mt = Object.freeze({
-  /** Their lens, vertical degrees (three.js's `fov`): Apex's 70 at 4:3. */
-  fov: bk(70),
-  /** Their near plane, m: a point of them nearer the eye, along the view, is cut. */
-  near: 0.1,
-  /** M drawn per m of their depth past their near plane. */
-  squeeze: 0.15,
-  /** Their near plane is drawn this many times the picture's own. */
-  lift: 1.2,
-  /** How far out on their frame, a share of the half-frame, `intoArmsFrame` keeps a point by default. */
-  margin: 0.85,
-  /** M: a part of them nearer the eye than this is hidden. */
-  cull: 0.12
-}), ire = {
-  "cam.armsFov": {
-    type: "number",
-    default: 70,
-    minimum: 50,
-    maximum: 110,
-    view: !0,
-    description: "First person's arms' own field of view, as Apex Legends' slider gives it: horizontal degrees at 4:3. A view setting: never in the hash."
-    // prettier-ignore
-  },
-  "cam.fullBody": {
-    type: "boolean",
-    default: !1,
-    view: !0,
-    description: "First person shows the whole body under the camera (seen looking down) beside the arms, not the arms alone. A view setting: never in the hash."
-    // prettier-ignore
-  }
-};
-at(ire);
-function jP(e) {
-  return typeof e == "number" && Number.isFinite(e) ? bk(e) : mt.fov;
-}
-function CP(e, t) {
-  const n = t * mt.lift;
-  return e >= mt.near ? n + (e - mt.near) * mt.squeeze : e * n / mt.near;
-}
-function DP(e, t = mt.fov) {
-  return Math.tan(e.fov / 2 * Uu) / Math.max(e.zoom, 1e-6) / Math.tan(t / 2 * Uu);
-}
-function $k(e, t) {
-  const n = [t[0] - e.position[0], t[1] - e.position[1], t[2] - e.position[2]], s = (o) => o[0] * n[0] + o[1] * n[1] + o[2] * n[2];
-  return [s(Mn(e)), s(eo(e)), s(Ke(e))];
-}
-function FP(e, t, n, s) {
-  const [o, r, i] = [Mn(e), eo(e), Ke(e)], a = (c) => e.position[c] + o[c] * t + r[c] * n + i[c] * s;
-  return [a(0), a(1), a(2)];
-}
-function qP(e, t, n = mt.fov) {
-  const [s, o, r] = $k(e, t), i = r >= mt.near ? CP(r, e.near) / r : e.near * mt.lift / mt.near, a = DP(e, n);
-  return FP(e, s * a * i, o * a * i, r * i);
-}
-function are(e, t, n, s = mt.fov) {
-  const [o, r, i] = $k(e, t), a = Math.tan(s / 2 * Uu);
-  return CP(i, e.near) > e.near ? Math.abs(r) <= i * a && Math.abs(o) <= i * a * n : !1;
-}
-function cre(e, t, n, s = mt.margin, o = mt.fov) {
-  const [r, i, a] = $k(e, t), c = Math.hypot(r, i, a), [l, u] = [Math.tan(o / 2 * Uu), Math.tan(o / 2 * Uu) * n], d = Math.max(a, 0.05 * c, 1e-9), [h, f] = [r / (d * u), i / (d * l)];
-  if (Math.abs(h) <= s && Math.abs(f) <= s && a > 0) return t;
-  const [p, m] = [Math.max(-s, Math.min(s, h)) * u, Math.max(-s, Math.min(s, f)) * l], g = c / Math.hypot(p, m, 1);
-  return FP(e, p * g, m * g, g);
-}
-const ot = Object.freeze({
-  ready: [0.13, -0.13, 0.4],
-  /** A sprint's fists, and their pump forward and up over the gait's phase. */
-  sprint: [0.17, -0.2, 0.34],
-  pump: [0.08, 0.08],
-  /** A slide's hands: the right low and back, the left out ahead. */
-  slide: [0.22, -0.24, 0.32],
-  slideLeft: [-0.25, -0.17, 0.43],
-  air: [0.16, -0.08, 0.38],
-  /** The breath's rise (m) and rate (rad/s); the weapon bob's sway across and dip (m) at its full share. */
-  breath: [4e-3, 1.6],
-  bob: [8e-3, 0.012],
-  /** The sway: m per rad/s of the look's turn, the most, and its lag (s). */
-  sway: [0.012, 0.04, 0.08],
-  /** S: the states ease in and out. */
-  ease: 0.1,
-  /** The elbow's way in the camera's frame (the right arm's): out, down and a little back. */
-  pole: [0.55, -1, -0.25],
-  /** How far out on the arms' frame a hand's grip may go, a share of the half-frame: a lowered fist half shows. */
-  margin: 0.95,
-  /** The share of the arm's reach a hand is drawn within, and the nearest it comes to the eye (m). */
-  reach: 0.95,
-  nearest: 0.22
-}), pn = Array.from({ length: 8 }, () => new R()), E$ = ie.map((e, t) => Be.flatMap((n, s) => n === t ? [s] : [])), z$ = Array.from({ length: 3 }, () => new Q()), lre = new R(0, 1, 0);
-function ure(e, t, n, s, o) {
-  const [r, i, a] = [Mn(e), eo(e), Ke(e)], [c, l, u] = [t[0] * n * s, t[1] * s, t[2] * s];
-  return o.set(...e.position).add(pn[7].set(r[0] * c + i[0] * l + a[0] * u, r[1] * c + i[1] * l + a[1] * u, r[2] * c + i[2] * l + a[2] * u));
-}
-const Pw = (e, t, n) => [e[0] + (t[0] - e[0]) * n, e[1] + (t[1] - e[1]) * n, e[2] + (t[2] - e[2]) * n];
-class BP {
-  skeleton;
-  pose = new ht();
-  world = $s();
-  /** The grips after the last update, left then right (world, m). */
-  hands = [new R(), new R()];
-  /** The parts the last update showed (see the file comment). */
-  shown = [];
-  #e;
-  /** The arm's reach to its grip, and to its wrist (m). */
-  #t;
-  #n = { sprint: 0, slide: 0, air: 0 };
-  #s = [0, 0];
-  #o = null;
-  constructor(t) {
-    this.skeleton = $r(t);
-    const n = Oe(this.skeleton, this.pose, this.world);
-    this.#e = new R(...h0(this.skeleton, n));
-    const { lengths: s, socketOffsets: o } = this.skeleton, r = Us("weaponR") * 3, i = Math.hypot(o[r], o[r + 1], o[r + 2]), a = s[ie.indexOf("forearmR")] + s[ie.indexOf("handR")];
-    this.#t = [a + i, a];
-  }
-  /** Poses the arms against `camera` from `input` after a frame of `dt` real seconds (see the file comment). */
-  update(t, n, s) {
-    const { skeleton: o, pose: r, world: i } = this, a = o.build.size, c = n.player, l = s > 0 ? 1 - Math.exp(-s / ot.ease) : 1, u = c !== null && !c.grounded && c.mode === "air", d = { sprint: c?.sprinting && !c.sliding ? 1 : 0, slide: c?.sliding ? 1 : 0, air: u ? 1 : 0 };
-    for (const g of ["sprint", "slide", "air"]) this.#n[g] += (d[g] - this.#n[g]) * l;
-    this.#r(t, s), r.reset(), r.rootRot.setFromAxisAngle(lre, t.yaw), r.rootPos.set(...t.position).sub(pn[0].copy(this.#e).applyQuaternion(r.rootRot)), Oe(o, r, i);
-    const h = pn[1].set(...t.position);
-    for (const [g, y] of ["L", "R"].entries()) this.#i(t, n, y, g, h, a);
-    const f = n.kick && n.kick.weight > 0 ? n.kick : null;
-    f && (tp.forEach((g, y) => r.setRotation(g, z$[0].identity().slerp(f.local[y], f.weight))), Oe(o, r, i));
-    const p = f && f.weight > 0.01 ? [...ep, ...tp] : ep, m = new Set(rP(o, i, t.position, { show: p, near: mt.cull }));
-    return this.shown = ie.filter((g) => !m.has(g)), $e(o, i, "weaponL", this.hands[0]), $e(o, i, "weaponR", this.hands[1]), this;
-  }
-  /** Points along the parts the last update showed (each joint, its bone's middle and far end) and the grips: what a depth check tests. */
-  // prettier-ignore
-  points() {
-    const { skeleton: t, world: n } = this, s = (r) => ee(n, r, pn[0]), o = this.hands.map(Pl);
-    for (const r of this.shown) {
-      const i = ie.indexOf(r), a = Pl(s(i)), c = E$[i].length ? E$[i].map((l) => Pl(s(l))) : [Pl(Es(t, n, i, pn[0]))];
-      o.push(a, ...c.flatMap((l) => [l, [(a[0] + l[0]) / 2, (a[1] + l[1]) / 2, (a[2] + l[2]) / 2]]));
-    }
-    return o;
-  }
-  /** Eases the sway toward the look's turn since the last update. */
-  #r(t, n) {
-    const s = this.#o;
-    this.#o = { yaw: t.yaw, pitch: t.pitch };
-    const [o, r, i] = ot.sway, a = s && n > 0 ? [Jt(s.yaw, t.yaw) / n, (t.pitch - s.pitch) / n] : [0, 0], c = [G.clamp(o * a[0], -r, r), G.clamp(-o * a[1], -r, r)], l = n > 0 ? 1 - Math.exp(-n / i) : 0;
-    for (const u of [0, 1]) this.#s[u] += (c[u] - this.#s[u]) * l;
-  }
-  /** Puts hand `side` (index `i`) where the state and the body want it, kept on the frame and in reach. */
-  #i(t, n, s, o, r, i) {
-    const { skeleton: a, pose: c, world: l } = this, u = s === "R" ? 1 : -1, d = this.#n, h = Math.sin(n.phase) * u, f = [ot.sprint[0], ot.sprint[1] + ot.pump[1] * h, ot.sprint[2] + ot.pump[0] * h], p = s === "R" ? ot.slide : [-ot.slideLeft[0], ot.slideLeft[1], ot.slideLeft[2]];
-    let m = Pw(Pw(Pw(ot.ready, ot.air, d.air), f, d.sprint), p, d.slide);
-    const g = n.effects ? [n.effects.bobPhase, n.effects.bobShare] : [0, 0], y = ot.breath[0] * Math.sin(n.clock * ot.breath[1]) - ot.bob[1] * g[1] * (1 - Math.cos(g[0])) / 2, w = ot.bob[0] * g[1] * Math.sin(g[0] / 2) + this.#s[0];
-    m = [m[0] + w * u, m[1] + y + this.#s[1], m[2]];
-    const v = ure(t, m, u, i, pn[2]), b = n.gun && n.gun.weight > 0 ? n.gun : null;
-    b && v.lerp(pn[3].copy(r).add(b.grips[o]), b.weight);
-    const x = n.punch && n.punch.weight > 0 ? n.punch.grips[o] : null;
-    x && v.lerp(pn[3].copy(r).add(x), G.clamp(n.punch.weight, 0, 1));
-    const k = n.held[o], A = k ? G.clamp(k.weight, 0, 1) : 0;
-    k && A > 0 && v.lerp(k.point, A);
-    const _ = cre(t, [v.x, v.y, v.z], n.aspect, ot.margin, n.fov);
-    v.set(..._);
-    const M = ee(l, `upperArm${s}`, pn[3]), S = pn[4].subVectors(v, r), O = S.length();
-    O > 1e-9 && S.divideScalar(O);
-    const $ = ot.nearest * i, E = (H, K) => {
-      const q = S.dot(pn[5].subVectors(H, M)), U = q * q - pn[5].lengthSq() + K * K, [X, Y] = U >= 0 ? [-q - Math.sqrt(U), -q + Math.sqrt(U)] : [-q, -q];
-      return G.clamp(O, Math.max(X, $), Math.max(Y, $));
-    };
-    O > 1e-9 && v.copy(r).addScaledVector(S, E(r, ot.reach * this.#t[0]));
-    const [z, T, I] = [Mn(t), eo(t), Ke(t)], L = ot.pole, j = pn[6].set(z[0] * L[0] * u + T[0] * L[1] + I[0] * L[2], z[1] * L[0] * u + T[1] * L[1] + I[1] * L[2], z[2] * L[0] * u + T[2] * L[1] + I[2] * L[2]).normalize(), F = `hand${s}`;
-    yr(a, c, l, F, v, { pole: j });
-    const N = tt(l, `forearm${s}`, z$[1]);
-    k && A > 0 && N.slerp(k.rotation, A);
-    const P = Us(s === "R" ? "weaponR" : "weaponL") * 3, C = pn[7].fromArray(a.socketOffsets, P).applyQuaternion(N).negate().add(r);
-    O > 1e-9 && v.copy(r).addScaledVector(S, E(C, ot.reach * this.#t[1])), yr(a, c, l, F, v, { pole: j, rotation: N });
-  }
-}
-function GP(e, t, n, s = null) {
-  const o = e.body, { skeleton: r, world: i, state: a } = o, c = t?.limbs, l = ["L", "R"].map((v, b) => {
-    const x = c?.[b];
-    return x && x.weight > 0 ? { point: x.point.clone(), rotation: tt(i, `hand${v}`), weight: x.weight } : null;
-  }), d = a.arm.kick === 1 && a.arm.weight > 0 ? { local: tp.map((v) => o.pose.getRotation(v)), weight: a.arm.weight } : null, h = Math.max(t?.pose?.weight ?? 0, c?.[0].weight ?? 0, c?.[1].weight ?? 0), f = new R(...h0(r, i)).lerp($e(r, i, "eyeR"), s?.aimed ?? 0), p = [$e(r, i, "weaponL").sub(f), $e(r, i, "weaponR").sub(f)], m = o.weapon === "gun" && h < 1 ? { grips: p, weight: 1 - G.clamp(h, 0, 1) } : null, g = a.arm.weight > 0 && a.arm.kick !== 1 ? a.arm.hand : 0, y = (v) => g === 2 || g === (v === 0 ? -1 : 1) ? p[v] : null, w = g !== 0 ? { grips: [y(0), y(1)], weight: a.arm.weight } : null;
-  return { ...n, phase: a.phase, clock: a.clock, held: l, kick: d, gun: m, punch: w };
-}
-const Pl = (e) => [e.x, e.y, e.z], Nw = Object.freeze({ back: 0.03, lift: 0.05, time: 0.06 }), dre = new Set([...ep, ...tp].map((e) => ie.indexOf(e)));
-function hre(e) {
-  return { ...e, pieces: e.pieces.filter((t) => !t.glow && dre.has(t.bone)) };
-}
-function fre(e, t) {
-  const { look: n } = t, s = t.registry ?? B, o = e.mesh, r = hre(e.compiled), i = NP(r), a = [r.body.material, r.body.glowMaterial].map((I) => n.arms(t.materials.get(I))), c = new cn(i, a), l = new BP(e.compiled.skeleton.build), u = o.geometry.getAttribute("position").count;
-  o.geometry.setAttribute("viewmodel", new on(new Float32Array(u), 1)), o.material = (Array.isArray(o.material) ? o.material : [o.material]).map((I) => n.body(I)), o.userData.restyle = (I) => n.body(I), Object.assign(c, { name: `${o.name}/arms`, castShadow: !1, receiveShadow: !0, frustumCulled: !1, visible: !1 }), c.userData = { ...o.userData, viewmodel: "arms", restyle: (I) => n.arms(I) }, o.add(c), r0(s);
-  const [d, h] = [/* @__PURE__ */ new Map(), /* @__PURE__ */ new Set()], f = (I) => {
-    if (d.has(I.id) || h.has(I.id)) return d.get(I.id) ?? null;
-    const L = dte(I, s);
-    if (!L) return h.add(I.id), null;
-    const j = new cn(L, a[0]);
-    return Object.assign(j, { name: `${o.name}/gun`, castShadow: !1, receiveShadow: !0, frustumCulled: !1, visible: !1 }), j.userData = { ...c.userData, viewmodel: "gun", weapon: I.id }, o.add(j), d.set(I.id, j), j;
-  };
-  for (const { id: I } of s.list("weapon")) f(s.get("weapon", I));
-  const [p, m, g] = [new R(), new Q(), new R(1, 0, 0)];
-  let [y, w, v] = [0, 0, null];
-  const b = (I) => {
-    for (const L of d.values())
-      L.visible = L === I, L !== I && (L.position.copy(o.skeleton.bones[0].position), L.scale.setScalar(0), L.updateMatrixWorld(!0));
-  };
-  b();
-  const x = (I, L) => {
-    const j = I.player?.shots ?? 0;
-    w = (j > y ? 1 : w) * Math.exp(-I.dt / Nw.time), y = j;
-    const { hold: F, gun: N } = L, P = N && F?.holding && l.shown.includes("handR") && f(N) || void 0;
-    if (b(P), v = null, !P || !N || !F) return;
-    P.scale.setScalar(1);
-    const C = F.barrel, H = F.look, [K, q] = [Math.atan2(C.x, C.z), Math.asin(G.clamp(C.y, -1, 1))], U = H ? [Jt(H.yaw, K) * H.weight, q - H.pitch * H.weight] : [0, 0], [X, Y] = [I.pose.yaw + U[0], I.pose.pitch + U[1]];
-    p.set(Math.sin(X) * Math.cos(Y), Math.sin(Y), Math.cos(X) * Math.cos(Y)), P.position.copy(l.hands[1]).addScaledVector(p, -Nw.back * w), FL(p, P.quaternion).multiply(m.setFromAxisAngle(g, -Nw.lift * w)), P.updateMatrixWorld(!0);
-    const Z = qL(N, { position: P.position, rotation: P.quaternion });
-    v = new R(...qP(I.pose, [Z.x, Z.y, Z.z], I.fov));
-  }, k = o.geometry.getAttribute("viewmodel"), A = o.geometry.getAttribute("skinIndex");
-  let _ = "";
-  const M = (I) => {
-    const L = I.join();
-    if (L === _) return;
-    const j = new Set(I.map((N) => ie.indexOf(N) + 1)), F = I.length === ie.length;
-    for (let N = 0; N < k.count; N++) k.setX(N, F || j.has(A.getX(N)) ? 1 : 0);
-    [_, k.needsUpdate] = [L, !0];
-  }, [S, O] = [i.getAttribute("position"), i.getAttribute("normal")], [$, E] = [Float32Array.from(S.array), Float32Array.from(O.array)], z = i.getAttribute("skinIndex"), T = () => {
-    const I = new Set(l.shown.map((N) => ie.indexOf(N))), { matrices: L } = l.world, [j, F] = [S.array, O.array];
-    for (let N = 0; N < S.count; N++) {
-      const P = z.getX(N) - 1;
-      if (!I.has(P)) {
-        j.fill(0, N * 3, N * 3 + 3);
-        continue;
-      }
-      const C = P * 16, [H, K, q] = [$[N * 3] - r.rest[P * 3], $[N * 3 + 1] - r.rest[P * 3 + 1], $[N * 3 + 2] - r.rest[P * 3 + 2]], [U, X, Y] = [E[N * 3], E[N * 3 + 1], E[N * 3 + 2]];
-      for (let Z = 0; Z < 3; Z++)
-        j[N * 3 + Z] = L[C + Z] * H + L[C + 4 + Z] * K + L[C + 8 + Z] * q + L[C + 12 + Z], F[N * 3 + Z] = L[C + Z] * U + L[C + 4 + Z] * X + L[C + 8 + Z] * Y;
-    }
-    [S.needsUpdate, O.needsUpdate] = [!0, !0];
-  };
-  return {
-    arms: c,
-    guns: d,
-    get muzzle() {
-      return v;
-    },
-    rig: l,
-    update(I, L) {
-      if (!I || !L)
-        return M([]), c.visible = !1, b(), v = null, { hidden: [], arms: [] };
-      const { player: j, effects: F, aspect: N, fov: P } = I;
-      n.frame(I.pose, P), l.update(I.pose, GP(L.animator, L.contacts, { player: j, effects: F, aspect: N, fov: P }, L.hold), I.dt), T(), x(I, L);
-      const { entity: C, component: H, protagonist: K } = o.userData;
-      Object.assign(c, { name: `${o.name}/arms`, visible: !0 }), Object.assign(c.userData, { entity: C, component: H, protagonist: K });
-      for (const Y of d.values())
-        Y.name = `${o.name}/gun`, Object.assign(Y.userData, { entity: C, component: H, protagonist: K });
-      const { skeleton: q, world: U } = L.animator.body, X = wne(q, U, I.pose.position, I.fullBody === !0);
-      return M(X), { hidden: X, arms: [...l.shown] };
-    },
-    dispose() {
-      i.dispose(), c.removeFromParent();
-      for (const I of d.values())
-        I.geometry.dispose(), I.removeFromParent();
-      M([]);
-    }
-  };
-}
-const pre = {
-  MeshLambertMaterial: l2,
-  MeshBasicMaterial: Xs,
-  MeshStandardMaterial: xz,
-  MeshPhongMaterial: N8,
-  MeshToonMaterial: P8
-}, mre = /* @__PURE__ */ new Set(["uuid", "version", "userData"]);
-function Ek(e) {
-  const t = e.isNodeMaterial === !0, n = t ? null : pre[e.type];
-  if (!t && !n) return null;
-  const s = e.clone(), o = n ? new n() : s, r = e;
-  for (const i in r) !mre.has(i) && !i.startsWith("_") && (o[i] = r[i]);
-  return [o.uuid, o.userData] = [s.uuid, s.userData], o;
-}
-J("gfx", {
-  GFX_VIEWMODEL_MATERIAL: {
-    template: "first person cannot draw {material} for the viewmodel: three.js has no node material for a {type}",
-    fix: "give the player's body a mesh material three.js turns into a node material (Lambert, Phong, standard, toon, basic, or a node material)",
-    // prettier-ignore
-    doc: "Advice from the viewmodel (engine/gfx/viewmodel/material.ts), once per material: a material it cannot copy into a node material is drawn as it is, so first person shows the body, or the arms are no longer drawn at their own depth and a wall may cut them."
-    // prettier-ignore
-  }
-});
-function gre(e = {}) {
-  const t = e.log ?? Pe, n = pe(1).setGroup(we), s = pe(0.05 * mt.lift).setGroup(we), o = pe(new le()).setGroup(we), r = pe(new le()).setGroup(we), [i, a] = [be(mt.near), be(mt.squeeze)], c = xn(mf("viewmodel", "float").greaterThan(0.5), ut(0, 0, 0), M0), l = nj("vec3", "vViewmodelPlaced"), u = ln(() => {
-    const p = sj.mul(Re(M0, 1)).xyz.toVar();
-    l.assign(p);
-    const m = o.mul(Re(p, 1)).xyz.toVar(), g = m.z.negate(), y = xn(g.greaterThanEqual(i), s.add(g.sub(i).mul(a)).div(g), s.div(i)), w = ut(m.x.mul(n), m.y.mul(n), m.z).mul(y);
-    return zz.mul(r.mul(Re(w, 1))).xyz;
-  })(), d = { body: /* @__PURE__ */ new Map(), arms: /* @__PURE__ */ new Map() }, h = /* @__PURE__ */ new Set(), f = (p, m) => {
-    if (h.has(m)) return m;
-    const g = d[p].get(m);
-    if (g) return g;
-    const y = Ek(m);
-    return y ? (y.name = `${m.name || m.type}+${p}`, p === "body" ? [y.positionNode, y.castShadowPositionNode] = [c, M0] : [y.positionNode, y.receivedShadowPositionNode] = [u, l], d[p].set(m, y), h.add(y), y) : (t.warnOnce("GFX_VIEWMODEL_MATERIAL", { material: m.name || m.type, type: m.type }, m.uuid), m);
-  };
-  return {
-    body: (p) => f("body", p),
-    arms: (p) => f("arms", p),
-    owns: (p) => h.has(p),
-    frame(p, m = mt.fov) {
-      n.value = DP(p, m), s.value = p.near * mt.lift;
-      const [g, y, w] = [Mn(p), eo(p), Ke(p)], [v, b, x] = p.position;
-      r.value.set(g[0], y[0], -w[0], v, g[1], y[1], -w[1], b, g[2], y[2], -w[2], x, 0, 0, 0, 1), o.value.copy(r.value).invert();
-    },
-    get lens() {
-      return { spread: n.value, base: s.value, view: o.value.clone() };
-    },
-    dispose() {
-      for (const p of h) p.dispose();
-      for (const p of Object.values(d)) p.clear();
-      h.clear();
-    }
-  };
-}
 const T$ = { hair: 0.05, tail: 0.07 }, [Wr, jw, I$, wh] = [new R(), new R(), new R(), new R()], [yre, wre] = [new R(1, 0, 0), new R(0, 0, 1)];
 function bre(e, t, n) {
   const s = new Lo(), o = new on(new Float32Array(e * 3), 3);
@@ -27377,7 +27377,7 @@ function Mre(e, t, n, s, o, r, i) {
     c && Dv(c);
     const u = s.secondary, d = s.reactions ? new Jp({ name: "view:reactions" }).attach(n) : null, h = s.actions ? new Yp({ name: "view:actions", ...r ? { clips: r } : {} }).attach(n) : null, f = u && (u.hair || u.cape || u.tail) ? u : null, p = f ? new GK({ name: "view:secondary", squash: !1, cape: f.cape, tail: f.tail, ...f.hair ? { hair: f.hair } : {} }) : null;
     p && n.use("secondary", p);
-    const m = i.get(o.compiled.body.material), g = p && f ? xre(p, { material: m, color: f.color, name: `actor#${t}` }) : null, y = new xR({ name: "view:footPlant" }).attach(n), w = new IP({ name: "view:traversal" }).attach(n), v = Object.assign(new LP({ name: "view:hold" }).follow(c?.hold).attach(n), { contacts: w }), b = new tJ({ name: "view:ragdoll" }).attach(n);
+    const m = i.get(o.compiled.body.material), g = p && f ? xre(p, { material: m, color: f.color, name: `actor#${t}` }) : null, y = new xR({ name: "view:footPlant" }).attach(n), w = new GP({ name: "view:traversal" }).attach(n), v = Object.assign(new TP({ name: "view:hold" }).follow(c?.hold).attach(n), { contacts: w }), b = new tJ({ name: "view:ragdoll" }).attach(n);
     c = { animator: n, key: a, reactions: d, actions: h, clips: r, secondary: p, chains: g, plant: y, traversal: w, hold: v, ragdoll: b }, e.set(t, c);
   }
   const l = c.chains?.meshes ?? [];
@@ -27684,12 +27684,12 @@ function Pre(e, t, n, s) {
 const qv = "body:humanoid", Nre = (e, t = qv) => t === qv ? e : `${e}+${t}`;
 function jre(e) {
   const t = e.registry ?? B;
-  PP(t);
+  RP(t);
   const n = new en();
   n.name = "actors";
   const s = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map(), r = new Wi(), i = new Mx(t), a = /* @__PURE__ */ new Map(), c = /* @__PURE__ */ new Map(), l = /* @__PURE__ */ new Map(), u = new R();
   let d = 1 / 60, h = { of: null, probe: null }, f = null, p = null, m = 0;
-  const g = gre(), y = /* @__PURE__ */ new Map(), w = /* @__PURE__ */ new Map();
+  const g = lre(), y = /* @__PURE__ */ new Map(), w = /* @__PURE__ */ new Map();
   let v = null;
   const b = /* @__PURE__ */ new Map(), x = /* @__PURE__ */ new WeakMap(), k = (M) => {
     M.hide([]), y.get(M)?.update(null, null), M.mesh.removeFromParent();
@@ -27700,9 +27700,9 @@ function jre(e) {
     if (E && E.compiled.skeleton.build.id === S.build && E.compiled.body.id === $) return E;
     E && k(E);
     const z = `${S.build}|${$}`;
-    return E = b.get(z)?.pop() ?? rre(KP($, S.build, { registry: t }), { materials: e.materials, name: `actor#${M}` }), x.set(E, z), E.mesh.name = `actor#${M}`, Object.assign(E.mesh.userData, { entity: M, component: "actor", protagonist: O }), n.add(E.mesh), o.set(M, E), E;
+    return E = b.get(z)?.pop() ?? Qoe(KP($, S.build, { registry: t }), { materials: e.materials, name: `actor#${M}` }), x.set(E, z), E.mesh.name = `actor#${M}`, Object.assign(E.mesh.userData, { entity: M, component: "actor", protagonist: O }), n.add(E.mesh), o.set(M, E), E;
   }, _ = (M) => {
-    y.has(M) || y.set(M, fre(M, { materials: e.materials, look: g, registry: t }));
+    y.has(M) || y.set(M, ire(M, { materials: e.materials, look: g, registry: t }));
   };
   return {
     root: n,
@@ -27716,12 +27716,12 @@ function jre(e) {
         $.add(I.id);
         const j = { x: L.x, y: L.y, z: L.z, yaw: L.yaw }, F = I.animator ?? null, N = I.clips ?? null, P = I.puppet?.body ?? qv, C = s.get(I.id), H = L.player === !0, K = F ? A(I.id, F, H, P) : null;
         K && H && _(K);
-        const q = I.reactions ?? null, U = I.actions ?? null, X = I.secondary ?? null, Y = I.motion ?? null, Z = I.actor, se = (C?.shown ?? new _P()).update(Y, S, Z), me = C?.traversal ?? new TP();
+        const q = I.reactions ?? null, U = I.actions ?? null, X = I.secondary ?? null, Y = I.motion ?? null, Z = I.actor, se = (C?.shown ?? new _P()).update(Y, S, Z), me = C?.traversal ?? new IP();
         if (F) {
-          const bt = $P(T.get(Y?.ride ?? -1)), tn = OP(L.character, op);
+          const bt = $P(T.get(Y?.ride ?? -1)), tn = OP(L.character, sp);
           me.update(Y, bt, tn, Zs(F.build), u.set(j.x, j.y, j.z), Z, S);
         }
-        const Ue = (C?.look ?? new RP()).update(l.get(I.id) ?? null, S), nt = C ? C.after : j, Ee = DL(I, t) ?? C?.carry ?? null, We = Lre(I.ragdoll, C?.ragdoll ?? null);
+        const Ue = (C?.look ?? new zP()).update(l.get(I.id) ?? null, S), nt = C ? C.after : j, Ee = DL(I, t) ?? C?.carry ?? null, We = Lre(I.ragdoll, C?.ragdoll ?? null);
         s.set(I.id, { before: nt, after: j, player: H, data: F, clips: N, puppet: K, reactions: q, actions: U, secondary: X, motion: Y, shown: se, traversal: me, look: Ue, carry: Ee, ragdoll: We }), K && E.add(I.id);
       }
       for (const I of [...s.keys()]) $.has(I) || s.delete(I);
@@ -31850,7 +31850,7 @@ function Yce(e) {
   v.name = "stand-ins";
   const b = jre({ materials: e.materials, registry: e.registry });
   t.add(v, b.root);
-  const x = Jae({ scene: t, materials: e.materials, registry: e.registry }), k = ere({ scene: t, materials: e.materials }), A = Oae({ scene: t, materials: e.materials, level: n, registry: e.registry }), _ = sce({ props: x, actors: b }), M = Xae({
+  const x = Jae({ scene: t, materials: e.materials, registry: e.registry }), k = Voe({ scene: t, materials: e.materials }), A = Oae({ scene: t, materials: e.materials, level: n, registry: e.registry }), _ = sce({ props: x, actors: b }), M = Xae({
     registry: e.registry,
     trails: () => b.trails(),
     muzzle: (P) => b.muzzle(P),
@@ -31858,7 +31858,7 @@ function Yce(e) {
   });
   t.add(M.effects.root);
   let S = 1;
-  const O = Wce(e.registry), $ = (P) => e.registry.kinds().includes("component") && e.registry.has("component", P), E = Zoe.filter((P) => $(P) && !O.includes(P)), z = [...O, ...M.kinds.filter((P) => !O.includes(P)), ...E], T = /* @__PURE__ */ new Map(), I = /* @__PURE__ */ new Map(), L = /* @__PURE__ */ new Map(), j = /* @__PURE__ */ new Set(), F = (P) => {
+  const O = Wce(e.registry), $ = (P) => e.registry.kinds().includes("component") && e.registry.has("component", P), E = Woe.filter((P) => $(P) && !O.includes(P)), z = [...O, ...M.kinds.filter((P) => !O.includes(P)), ...E], T = /* @__PURE__ */ new Map(), I = /* @__PURE__ */ new Map(), L = /* @__PURE__ */ new Map(), j = /* @__PURE__ */ new Set(), F = (P) => {
     let C = T.get(P);
     return C || T.set(P, C = Ro({ width: P, height: P, depth: P })), C;
   };
@@ -32006,7 +32006,7 @@ function Qce(e) {
     p.configure(pP(F));
     const N = p.update({ ...$(), ...I }, L);
     l.fx.effects.shake.add(p.shake());
-    const P = { fov: jP(F("cam.armsFov")), fullBody: F("cam.fullBody") === !0 }, C = p.firstShare() > 0.5 ? { pose: N, dt: L, aspect: g, player: _, effects: p.effects(), ...P } : null;
+    const P = { fov: PP(F("cam.armsFov")), fullBody: F("cam.fullBody") === !0 }, C = p.firstShare() > 0.5 ? { pose: N, dt: L, aspect: g, player: _, effects: p.effects(), ...P } : null;
     y = l.actors.firstPerson(C);
     const H = l.actors.player(), K = p.camera.fade === !0;
     return H && l.frame(N, H.feet, { fade: K, view: p.camera.type === "view" }), N;
@@ -32387,10 +32387,10 @@ const lp = "dev:gallery", As = [8, 0, 8], hle = 1.2, fle = ["position", "velocit
 function ple(e) {
   if (Object.hasOwn(Uv, e)) return { states: {}, move: [...Uv[e]] };
   const t = Dp[e];
-  return t ? { states: Object.fromEntries(Object.entries(t.states).filter(([s]) => !fle.includes(s))), move: null } : Object.hasOwn(Y2, e) ? { states: { pose: e }, move: null } : Object.hasOwn(J2, e) ? { states: { stance: e }, move: null } : null;
+  return t ? { states: Object.fromEntries(Object.entries(t.states).filter(([s]) => !fle.includes(s))), move: null } : Object.hasOwn(K2, e) ? { states: { pose: e }, move: null } : Object.hasOwn(X2, e) ? { states: { stance: e }, move: null } : null;
 }
 [
-  .../* @__PURE__ */ new Set([...Object.keys(Uv), ...Object.keys(Dp), ...Object.keys(Y2), ...Object.keys(J2)])
+  .../* @__PURE__ */ new Set([...Object.keys(Uv), ...Object.keys(Dp), ...Object.keys(K2), ...Object.keys(X2)])
 ];
 const Wv = (e, t = null) => ({ states: e, move: t, swing: "", attack: null });
 function mle(e) {
@@ -32545,7 +32545,7 @@ const y0 = {
   emitter: { steps: () => 1, length: (e, t) => vle(e, t), burst: !0 }
 }, xE = { turntable: [30, 120, 210, 300], front: [30] }, xle = 25, kE = (e) => Math.round(e * 1e3) / 1e3;
 function Pk(e = B) {
-  return Iq(e).filter((t) => Object.hasOwn(y0, t));
+  return Pq(e).filter((t) => Object.hasOwn(y0, t));
 }
 function Kv(e, t, n = B) {
   const s = Pk(n);
@@ -39580,12 +39580,12 @@ function bpe(e = "feel", t) {
       const A = n.get(m, g, { dt: v });
       let _ = s.get(A);
       if (!_) {
-        const Y = new xR({ name: "feel:footPlant" }).attach(A), Z = new IP({ name: "feel:traversal" }).attach(A), se = Object.assign(new LP({ name: "feel:hold" }).follow(o.get(m)).attach(A), { contacts: Z });
+        const Y = new xR({ name: "feel:footPlant" }).attach(A), Z = new GP({ name: "feel:traversal" }).attach(A), se = Object.assign(new TP({ name: "feel:hold" }).follow(o.get(m)).attach(A), { contacts: Z });
         s.set(A, _ = { plant: Y, traversal: Z, hold: se }), o.set(m, se);
       }
-      const { plant: M, traversal: S, hold: O } = _, $ = new R(y[0], y[1], y[2]), E = (i.get(m) ?? new TP()).update(b ?? null, k?.ride ?? null, k?.hull ?? null, A.body.build, $, x ?? null, v);
+      const { plant: M, traversal: S, hold: O } = _, $ = new R(y[0], y[1], y[2]), E = (i.get(m) ?? new IP()).update(b ?? null, k?.ride ?? null, k?.hull ?? null, A.body.build, $, x ?? null, v);
       i.set(m, E), S.pose = E;
-      const z = (a.get(m) ?? new RP()).update(k?.look ?? null, v);
+      const z = (a.get(m) ?? new zP()).update(k?.look ?? null, v);
       a.set(m, z), [O.look, O.busy] = [z.look, E.weight], M.weight = E.plantShare, M.weight === 0 && M.reset(), M.locks = SP(b), M.ground = c;
       const T = r.get(m) ?? new _P();
       r.set(m, T.update(b, v, x)), T.apply(A), A.pose({ at: $, yaw: w }), d = { animator: A, traversal: S };
@@ -39594,7 +39594,7 @@ function bpe(e = "feel", t) {
     },
     /** First person's arms' input off the last frame's body, for a frame with `frame`'s camera inputs; null before one. */
     armsInput(m) {
-      return d ? GP(d.animator, d.traversal, m) : null;
+      return d ? qP(d.animator, d.traversal, m) : null;
     },
     /** Where frame `k`'s eyes are (world, m): where the first-person camera stands. */
     eye(m) {
@@ -39645,7 +39645,7 @@ function xpe(e, t, n = xi.aspect) {
 function kpe(e, t, n) {
   const [s, o, r] = [Ke(e), Mn(e), eo(e)], i = Math.tan(e.fov / 2 * Math.PI / 180) / e.zoom;
   for (const a of t.points) {
-    const c = lu(qP(e, a, t.fov), e.position), l = ji(c, s);
+    const c = lu(DP(e, a, t.fov), e.position), l = ji(c, s);
     if (!(l > 0) || Math.abs(ji(c, r)) > l * i || Math.abs(ji(c, o)) > l * i * xi.aspect) continue;
     if (l < e.near) return !0;
     const u = ff(c), d = [c[0] / u, c[1] / u, c[2] / u];
@@ -39667,7 +39667,7 @@ function Mpe(e, t = {}) {
     frame(i, a = {}) {
       const { eye: c, queries: l, dt: u = 1 / 60, player: d = null } = a;
       n.step(d);
-      const h = a.look, f = n.update({ follow: i, player: d, ...c ? { eye: c } : {}, ...l ? { queries: l } : {}, ...h ? { view: h } : {} }, u), p = { type: "ball", radius: xi.ball }, m = l ? l.overlap(p, f.position, { groups: "world", fixed: !0 }).length > 0 : !1, g = n.firstShare() > 0.5, y = g && a.arms ? a.arms(f, n.effects()) : null, w = (E) => are(f, E, xi.aspect, y?.fov), v = g ? y?.hands.some(w) ?? !1 : xpe(f, [i[0], i[1] + xi.chest, i[2]]), b = y ? kpe(f, y, l) : !1, x = (E) => jn({ position: [0, 0, 0], yaw: E[0], pitch: E[1] }), k = o ?? r, A = h && k && vpe.includes(n.camera.type) ? Iv(x(k), x(h)) : 0, _ = n.camera.pose();
+      const h = a.look, f = n.update({ follow: i, player: d, ...c ? { eye: c } : {}, ...l ? { queries: l } : {}, ...h ? { view: h } : {} }, u), p = { type: "ball", radius: xi.ball }, m = l ? l.overlap(p, f.position, { groups: "world", fixed: !0 }).length > 0 : !1, g = n.firstShare() > 0.5, y = g && a.arms ? a.arms(f, n.effects()) : null, w = (E) => ere(f, E, xi.aspect, y?.fov), v = g ? y?.hands.some(w) ?? !1 : xpe(f, [i[0], i[1] + xi.chest, i[2]]), b = y ? kpe(f, y, l) : !1, x = (E) => jn({ position: [0, 0, 0], yaw: E[0], pitch: E[1] }), k = o ?? r, A = h && k && vpe.includes(n.camera.type) ? Iv(x(k), x(h)) : 0, _ = n.camera.pose();
       [o, r] = [h, [_.yaw, _.pitch]];
       const M = c ?? [i[0], i[1] + xi.chest, i[2]], S = n.blend(), O = { move: S.move + A * ff(lu(f.position, M)), turn: S.turn + A }, $ = { pose: f, feet: i, inside: m, seen: v, clipped: b, allowed: O };
       return s.push($), $;
@@ -39704,10 +39704,10 @@ function uye(e, t = {}) {
   if (!i) throw D("DEV_COURSE_NO_PLAYER", { course: e.id, scene: e.scene });
   const a = e.measures.find((M) => M8.includes(M.metric));
   if (a && !i.animator) throw D("DEV_COURSE_NO_ANIMATOR", { course: e.id, measure: a.name, scene: e.scene });
-  const c = [...e.measures.map((M) => M.camera ?? ""), ...e.views.map(([, M]) => M)], l = i.animator !== void 0 && c.some((M) => M.startsWith("cam3=first")), u = Hx(o), d = a || l ? bpe(e.id, u) : void 0, h = e.measures.filter((M) => M.camera !== void 0).map((M) => ({ m: M, track: void 0, arms: void 0 })), f = (M) => n.kinds().includes("setting") && n.has("setting", M), p = (M) => f(M) ? s.settings.get(M) : void 0, m = pP(p), g = jP(p("cam.armsFov"));
+  const c = [...e.measures.map((M) => M.camera ?? ""), ...e.views.map(([, M]) => M)], l = i.animator !== void 0 && c.some((M) => M.startsWith("cam3=first")), u = Hx(o), d = a || l ? bpe(e.id, u) : void 0, h = e.measures.filter((M) => M.camera !== void 0).map((M) => ({ m: M, track: void 0, arms: void 0 })), f = (M) => n.kinds().includes("setting") && n.has("setting", M), p = (M) => f(M) ? s.settings.get(M) : void 0, m = pP(p), g = PP(p("cam.armsFov"));
   let [y, w] = [0, Fp];
   const v = (M) => {
-    const S = r(), O = Ape(S), $ = w.look ? { yaw: w.look[0], pitch: w.look[1], aiming: (w.b ?? []).includes("aim") } : null, E = { ride: S.motion && S.motion.ride >= 0 ? $P(o.get(S.motion.ride)) : null, hull: OP(S.actor.character, op), look: $ };
+    const S = r(), O = Ape(S), $ = w.look ? { yaw: w.look[0], pitch: w.look[1], aiming: (w.b ?? []).includes("aim") } : null, E = { ride: S.motion && S.motion.ride >= 0 ? $P(o.get(S.motion.ride)) : null, hull: OP(S.actor.character, sp), look: $ };
     d && S.animator && d.frame(S.id, S.animator, O.feet, O.yaw, o.dt, S.motion, S.actor, E);
     const z = h.length ? UL(S, (w.b ?? []).includes("aim")) : null, [T, I, L] = O.feet, j = z?.eye !== void 0 ? [T, I + z.eye, L] : d?.eye(M);
     for (const F of h) {
@@ -39717,7 +39717,7 @@ function uye(e, t = {}) {
       F.track ??= Mpe(F.m.camera, m);
       const N = (P, C) => {
         const H = d?.armsInput({ player: z, effects: C, aspect: xi.aspect, fov: g });
-        return !H || !S.animator ? null : (F.arms ??= new BP(S.animator.build), F.arms.update(P, H, o.dt), { hands: F.arms.hands.map(Pl), points: F.arms.points(), fov: g });
+        return !H || !S.animator ? null : (F.arms ??= new FP(S.animator.build), F.arms.update(P, H, o.dt), { hands: F.arms.hands.map(Pl), points: F.arms.points(), fov: g });
       };
       F.track.frame(O.feet, { queries: u, dt: o.dt, player: z, look: w.look, arms: N, ...j ? { eye: j } : {} });
     }
@@ -40038,7 +40038,7 @@ export {
   Eb as PHASES,
   Bz as PHYSICS_SETTINGS,
   Wh as POINT_INDEX,
-  Y2 as POSES,
+  K2 as POSES,
   Ou as POSE_POINTS,
   _he as POST_SETTINGS,
   VX as PROJECTILE,
@@ -40083,7 +40083,7 @@ export {
   dt as SOCKETS,
   bX as SPATIAL_HASH_FIELDS,
   Jd as SQUASH,
-  J2 as STANCES,
+  X2 as STANCES,
   Vs as STATE_MATRIX,
   IQ as STEP_GAITS,
   o$ as STICK_REACH,
@@ -40115,7 +40115,7 @@ export {
   Bf as USE_REACH,
   Tde as VOICE_LIMITS,
   Sye as Vector3,
-  Q2 as WEAPONS,
+  Y2 as WEAPONS,
   PY as WEAPONS_FIELDS,
   TY as WEAPON_FIELDS,
   x0e as actOn,
@@ -40184,7 +40184,7 @@ export {
   pme as canSee,
   XX as capsuleCast,
   _e as cellHash,
-  Cq as checkBodyStates,
+  qq as checkBodyStates,
   zX as clearSight,
   u0e as clipJSON,
   rU as clipLayerOf,
@@ -40234,7 +40234,7 @@ export {
   nye as createPadCursor,
   Nhe as createPost,
   cte as createPropMeshes,
-  rre as createPuppet,
+  Qoe as createPuppet,
   hae as createPuppetBatches,
   qge as createScriptedGamepad,
   Sse as createShoulderCamera,

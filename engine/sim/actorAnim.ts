@@ -13,7 +13,7 @@
  * @see engine/sim/actors.test.ts
  */
 import { AnimatorPool } from '../anim/character';
-import { STEP } from '../anim/humanoid';
+import { STEP } from '../anim/humanoidRates';
 import { Vector3 } from '../core/math';
 import type { ActorComponents } from './actors';
 import { stepActorActions } from './actorActions';

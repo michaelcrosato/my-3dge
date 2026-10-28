@@ -1,8 +1,7 @@
 /**
- * @file Held poses, stances and the humanoid's effector layers (PLAN.md WP 3.6, §5.2; I-09): the names a humanoid
- * takes (`POSES`, `STANCES`, `WEAPONS`), with a warning that suggests the closest name for a misspelt one, and the
- * ordered tables that lay each pose, stance and state over the gait's targets: `FOOT_LAYERS` for the soles,
- * `HAND_LAYERS` for the wrists, `BLADE_LAYERS` for the weapon's direction.
+ * @file The humanoid's effector layers (PLAN.md WP 3.6, §5.2; I-09): for the names it takes (engine/anim/poseNames.ts:
+ * `POSES`, `STANCES`, `WEAPONS`), the ordered tables that lay each pose, stance and state over the gait's targets:
+ * `FOOT_LAYERS` for the soles, `HAND_LAYERS` for the wrists, `BLADE_LAYERS` for the weapon's direction.
  *
  * Invariants:
  * - A table's order is the priority: each layer moves the target toward its own by its weight (my-3d2dge's
@@ -19,17 +18,12 @@
  * and `:1979-1988` (the weapon's direction). The camera-side wave (`_camSide`) is gone: the free hand waves.
  *
  * @example
- * import { createLog } from '../core/log';
  * import { getBuild } from './builds';
  * import { restContext } from './locomotion';
- * const quiet = createLog({ console: { warn: () => {}, error: () => {} } });
- * poseName('cheer'); // 'cheer'
- * poseName('cheeer', quiet); // undefined, and quiet.advice[0].message ends '(did you mean "cheer"?); it is ignored'
  * const ctx = restContext(getBuild('build:heroic'));
  * layerWeights(HAND_LAYERS, ctx).every((w) => w.weight === 0); // true: nothing held at rest
  * @see engine/anim/poses.test.ts
  */
-import { defineCodes, didYouMean, log, type Log } from '../core/log';
 import { Vector3 } from '../core/math';
 import { B, fromFRU, SIDES, sideSign, type FRU, type LimbSide, type Sided } from './authoring';
 import {
@@ -43,82 +37,9 @@ import {
 } from './locomotion';
 import type { EffectorContext } from './locomotion';
 import { plantedEase } from './locomotion/planted';
+import { WEAPONS, type Weapon } from './poseNames';
 import { SHOWN_FOOT_LAYERS, SHOWN_HAND_LAYERS } from './locomotion/shown';
 import { armBlade, layArm } from './strike';
-
-/** The codes this module raises, with their fixes. */
-export const POSE_CODES = defineCodes('anim', {
-  ANIM_UNKNOWN_POSE: {
-    template: '{name} is not a humanoid {what}{suggestion}; it is ignored',
-    fix: 'use one of: {names}',
-    doc: 'Raised once per name by the humanoid (engine/anim/humanoid.ts) for a `pose`, `stance` or `weapon` it does not know. The message names the closest names; `POSES`, `STANCES` and `WEAPONS` (engine/anim/poses.ts) list them all. An unknown weapon holds nothing.',
-  },
-});
-
-/** The held poses, each with what it shows. `die` and `down` are reactions: they knock the body flat. */
-export const POSES = {
-  cheer: 'Both fists pumping above the head (an item found, a victory).',
-  cast: 'Both hands thrust forward.',
-  guard: "A boxer's guard: fists up by the chin, knees bent, feet apart.",
-  kneel: 'Down on the right knee.',
-  crouch: 'Crouched low, feet wide.',
-  wave: 'The free hand waves: the left when the right holds a weapon.',
-  hips: 'Hands on the hips.',
-  block: 'The weapon upright across the body, both hands on it.',
-  die: 'A stagger, the knees give, then the body topples onto its back and stays down.',
-  down: 'Knocked flat onto the back; it gets up when the pose ends.',
-} as const;
-
-/** A pose's name. */
-export type PoseName = keyof typeof POSES;
-
-/** The stances, held while moving. */
-export const STANCES = {
-  guard: 'Fists up while moving.',
-  ready: 'The weapon held forward in both hands (with a weapon).',
-} as const;
-
-/** A stance's name. */
-export type StanceName = keyof typeof STANCES;
-
-/** What the right hand holds, by the direction its blade rests in: `[forward, right, up]`, normalised when used. */
-export const WEAPONS = {
-  /** Nothing: the hands are fists (the knuckle line rests as a sword's would). */
-  none: [0.55, 0.35, -0.75],
-  /** A blade held low, pointing forward, out and down. */
-  sword: [0.55, 0.35, -0.75],
-  /** A gun held low, muzzle forward and down. */
-  gun: [0.8, 0, -0.6],
-  /** A staff held upright, leaning forward. */
-  staff: [0.3, 0.15, 1],
-} as const satisfies Record<string, FRU>;
-
-/** A weapon's name. */
-export type Weapon = keyof typeof WEAPONS;
-
-/** Returns `name` when `table` has it; otherwise warns `ANIM_UNKNOWN_POSE` once for it and returns undefined. */
-function known<T extends string>(table: object, name: string | undefined, what: string, to: Log): T | undefined {
-  if (name === undefined || Object.hasOwn(table, name)) return name as T | undefined;
-  const names = Object.keys(table);
-  const values = { name: JSON.stringify(name), what, suggestion: didYouMean(String(name), names) };
-  to.warnOnce('ANIM_UNKNOWN_POSE', { ...values, names: names.join(', ') }, `${what}:${name}`);
-  return undefined;
-}
-
-/** `name` if it is a pose; otherwise warns once, suggesting the closest, and returns undefined. */
-export function poseName(name: string | undefined, to: Log = log): PoseName | undefined {
-  return known<PoseName>(POSES, name, 'pose', to);
-}
-
-/** `name` if it is a stance; otherwise warns once, suggesting the closest, and returns undefined. */
-export function stanceName(name: string | undefined, to: Log = log): StanceName | undefined {
-  return known<StanceName>(STANCES, name, 'stance', to);
-}
-
-/** `name` if it is a weapon; otherwise warns once, suggesting the closest, and returns undefined. */
-export function weaponName(name: string | undefined, to: Log = log): Weapon | undefined {
-  return known<Weapon>(WEAPONS, name, 'weapon', to);
-}
 
 /** Places a layer's target for `side` (rig-local, model frame), given the target so far; an `add` layer's offset. */
 export type Placement = (ctx: EffectorContext, side: LimbSide, current: Vector3, out: Vector3) => Vector3;
