@@ -2538,6 +2538,13 @@ For the agents who maintain the engine.
 - `BlobPose` (type): The blob's pose: each joint's world matrix (`BLOB_JOINTS` says what it places).
 - `BlobState` (interface): The blob's state: what `step` eases and `pose` reads, plain data.
 
+### [`engine/anim/bodyPlants.ts`](../engine/anim/bodyPlants.ts)
+
+- `attachPlants` (function): Attaches the foot plant, the traversal plant and the hold to `animator`, in that order, named `<prefix>:footPlant`…; the hold follows `previous`.
+- `BodyPlants` (interface): A body's plants, in the order they run.
+- `layPlants` (function): Lays `plants` for `animator`'s next pose from `body` (see the file comment), on `ground`; `legsHeld`, how much a clip holds the legs (0 to 1).
+- `PlantedBody` (interface): What the view keeps of a body between poses, as `layPlants` reads it.
+
 ### [`engine/anim/builds.ts`](../engine/anim/builds.ts)
 
 - `Build` (type): A `build` entry: one body's proportions, in metres before `size`.
