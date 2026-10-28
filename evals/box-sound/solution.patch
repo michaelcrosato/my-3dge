@@ -30,10 +30,10 @@ index 7f8185c..3738fa0 100644
  export const boxHit = defineSfx('sfx:boxHit', {
    voices: [
 diff --git a/labs/box/sounds/events.test.ts b/labs/box/sounds/events.test.ts
-index 9858b12..6de50fe 100644
+index 5cc9add..bda0d05 100644
 --- a/labs/box/sounds/events.test.ts
 +++ b/labs/box/sounds/events.test.ts
-@@ -48,7 +48,7 @@ describe('the box’s sound events', () => {
+@@ -49,7 +49,7 @@ describe('the box’s sound events', () => {
      });
      expect(sound('hit', { position: at, size: 0.5 })?.vol).toBeCloseTo(0.3, 9); // a bolt on a wall, softer
      expect(sound('shot', { position: at, size: 1 })).toMatchObject({ sfx: 'sfx:boxLaunch', vol: 0.8, position: at });
@@ -42,7 +42,7 @@ index 9858b12..6de50fe 100644
      expect(sound('slain', { position: at, size: 1 })).toMatchObject({ sfx: 'sfx:boxDeath', vol: 1, duck: true });
      expect(sound('land', { id: 1, speed: 4 })).toMatchObject({ sfx: 'sfx:boxThud', vol: 0.5, position: [2, 0, 3] });
      expect(sound('jump', { id: 1 })).toMatchObject({ sfx: 'sfx:whoosh', position: [2, 0, 3] });
-@@ -69,7 +69,7 @@ describe('the box’s sound events', () => {
+@@ -72,7 +72,7 @@ describe('the box’s sound events', () => {
    });
  
    it('names only effects that exist', () => {
@@ -52,7 +52,7 @@ index 9858b12..6de50fe 100644
    });
  
 diff --git a/labs/box/sounds/events.ts b/labs/box/sounds/events.ts
-index 008ae89..362bcc5 100644
+index 861098c..fe21535 100644
 --- a/labs/box/sounds/events.ts
 +++ b/labs/box/sounds/events.ts
 @@ -10,8 +10,8 @@
@@ -66,8 +66,8 @@ index 008ae89..362bcc5 100644
   * - every other event (`damage`, `lap`…) plays nothing.
   *
   * `createSoundReader().read(world, level)` maps the events a world has delivered since the last read, in order, each
-@@ -106,7 +106,7 @@ const SOUNDS: Readonly<Record<string, (p: Payload, world: SoundWorld, level: Com
-   dash: (p, world) => sound('sfx:whoosh', 0.9, feetOf(world, p.id)),
+@@ -109,7 +109,7 @@ const SOUNDS: Readonly<Record<string, (p: Payload, world: SoundWorld, level: Com
+   dash: (p, world) => sound('sfx:whoosh', 0.9, feetOf(world, p)),
    hit: (p) => sound('sfx:boxHit', clamp(0.15 + 0.3 * (p.size ?? 1), 0.15, 0.5), p.position),
    shot: (p) => sound('sfx:boxLaunch', clamp(0.8 * (p.size ?? 1), 0.3, 1), p.position),
 -  slam: (p) => sound('sfx:boxThud', 0.8, p.position),
@@ -76,20 +76,18 @@ index 008ae89..362bcc5 100644
  };
  
 diff --git a/tests/pages/boxAudioTimeline.ts b/tests/pages/boxAudioTimeline.ts
-index 98fe952..d962f7b 100644
+index 36786ee..621e011 100644
 --- a/tests/pages/boxAudioTimeline.ts
 +++ b/tests/pages/boxAudioTimeline.ts
-@@ -26,9 +26,11 @@ import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/
-  * (WP 7.8): the big ones knock walkers down for a while, so the run changes and gives 79 sounds where it gave 81.
-  * Again after G9 (WP 5.7, ADR-0020 amendment 9): the hero shoves the crowd aside instead of steering round it, so
-  * his path through the foes changes and the run gives 77 sounds; and once more for the hits' gain (at most 0.5, so
-- * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds.
-+ * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds. And
-+ * for the slimes' pounces, which land with their own squelch (`sfx:boxSquelch`) instead of the thud: the same 77
+@@ -29,8 +29,10 @@ import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/
+  * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds. And
+  * since 2026-10-28 for where the actors' sounds stand, where their events say (`at`), not where they are when read
+  * (ADR-0025 amendment 29): the same 77 sounds at the same steps with the same effects and gains, 35 of them placed anew.
++ * And for the slimes' pounces, which land with their own squelch (`sfx:boxSquelch`) instead of the thud: the same 77
 + * sounds, the same run.
   */
--export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '288bca340783f86f' };
-+export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '6ddb5f5eb68b2d17' };
+-export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '1f603c8df751e03b' };
++export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '559943cbc29295a7' };
  
  /** A replay's sound timeline: its sounds, their hash, the world's hash at the end and the events missed (0). */
  export interface Timeline {
