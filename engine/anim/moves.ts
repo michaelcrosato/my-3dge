@@ -33,7 +33,7 @@ import { TRAIL, type Animator } from './character';
 import { jointPosition, jointRotation, socketPosition } from './fk';
 import { Humanoid } from './humanoid';
 import { resolveMove, type Move, type MoveInput, type MovePhase, type MoveSpec } from './moves-data';
-import type { Weapon } from './poses';
+import type { Weapon } from './poseNames';
 import type { TrailName } from './states';
 
 /** The codes this module raises, with their fixes. */

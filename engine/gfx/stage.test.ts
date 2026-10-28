@@ -22,7 +22,8 @@ import { makeTerrain } from '../world/terrain';
 import { makePose } from './cameras/pose';
 import { splitRuns } from './level/runs';
 import { createMaterialLibrary } from './materials/library';
-import { createStage, placeableKinds, placeOf } from './stage';
+import { createStage } from './stage';
+import { placeableKinds, placeOf } from './standIns';
 
 const room = compileLevel(readFileSync('fixtures/levels/room.txt', 'utf8'), { file: 'room.txt' });
 

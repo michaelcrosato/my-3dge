@@ -38,33 +38,21 @@
  * targetOf(['show', 'cmu/Walk_Loop']); // 'show-cmu-Walk_Loop'
  * @see tools/cmd/anim.test.ts
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { normalizedLens, clipText } from '../../engine/anim/clip/lens';
 import { restSkeleton } from '../../engine/anim/clip/rest';
 import { clipJSON } from '../../engine/anim/clip/retarget';
 import { validateClip } from '../../engine/anim/clip/validate';
 import { SHEET_VIEWS, type SheetView } from '../../engine/anim/sheet';
 import { CMU_SUBCOMMANDS, cmuTargets, runCmu } from '../anim/cmu-cli';
+import { list, number, runImport, setIn, setsOf, text, writeOrCheck, type Values } from '../anim/command';
 import { cutSet } from '../anim/cut';
 import { findClips } from '../anim/find';
-import { listGlb } from '../anim/glb-library';
 import { fetchMesh2Motion, MESH2MOTION, SET_SOURCES } from '../anim/fetch';
-import { importSet, type Catalog } from '../anim/import';
-import {
-  keepUpgrades,
-  readSet,
-  readSetDir,
-  repackSets,
-  SET_FILE,
-  setDirName,
-  splitSet,
-  SETS_DIR,
-  writeSetDir,
-  type SetFiles,
-} from '../anim/repack';
+import { readSet, repackSets, setDirName, SETS_DIR, splitSet } from '../anim/repack';
 import { readUpgraded, reimport, upgradedOf, upgradeSet, writeUpgraded } from '../anim/upgrade';
-import { bakeReport, clipSheet, resolveClip, shownDir } from '../anim/view';
+import { bakeReport, clipSheet, resolveClip } from '../anim/view';
 import { targetSlug } from '../lib/report';
 import { closest, UsageError, type Command, type CommandResult } from '../x';
 
@@ -86,7 +74,6 @@ const FLAGS: Record<Sub, string[]> = {
   fetch: [],
   upgrade: ['check'],
 };
-type Values = Record<string, unknown>;
 
 /** The subcommand named first, or a usage error naming the closest. */
 export function subcommandOf(positionals: string[]): Sub {
@@ -98,99 +85,6 @@ export function subcommandOf(positionals: string[]): Sub {
 
 /** The report's target: the subcommand and its first arguments. */
 export const targetOf = (positionals: string[]) => targetSlug(positionals.slice(0, 3).join('-').replace(/\//g, '-'));
-
-const text = (values: Values, flag: string) =>
-  typeof values[flag] === 'string' ? (values[flag] as string) : undefined;
-const list = (values: Values, flag: string) =>
-  text(values, flag)
-    ?.split(',')
-    .map((s) => s.trim());
-const number = (values: Values, flag: string, fallback: number) => {
-  const raw = text(values, flag);
-  if (raw === undefined) return fallback;
-  if (!/^\d+(\.\d+)?$/.test(raw)) throw new UsageError(`--${flag} takes a number, not "${raw}"`);
-  return +raw;
-};
-
-/** The directory of sets `--sets` names, from `root` (`data/anim/sets` by default); a missing one names the flag. */
-function setsOf(values: Values, root: string): string {
-  const given = text(values, 'sets');
-  const dir = resolve(root, given ?? 'data/anim/sets');
-  if (!existsSync(dir))
-    throw new Error(`no directory ${given ?? 'data/anim/sets'}: --sets takes a directory of set directories`);
-  return dir;
-}
-
-/** The set in directory `dir` of `sets` (or at `dir`, when absolute); a missing one names `--sets`. */
-function setIn(dir: string, sets: string) {
-  if (!existsSync(join(resolve(sets, dir), SET_FILE)))
-    throw new Error(
-      `no set ${dir} in ${shownDir(sets)}: name one of its set directories, or another with --sets <dir>`,
-    );
-  return readSet(dir, sets);
-}
-
-/** Writes `files` into `dir`, or with `check` lists the files that differ; a result either way. */
-function writeOrCheck(dir: string, files: SetFiles, check: boolean, root: string): CommandResult {
-  const where = relative(root, dir);
-  if (!check) {
-    const { written, removed } = writeSetDir(dir, files);
-    const summary = `${where}: ${Object.keys(files).length} files, ${written.length} written, ${removed.length} removed`;
-    return { ok: true, summary, lines: [...written, ...removed.map((f) => `removed ${f}`)] };
-  }
-  const on = existsSync(dir) ? readSetDir(dir) : {};
-  const differ = [...new Set([...Object.keys(on), ...Object.keys(files)])].filter((f) => on[f] !== files[f]).sort();
-  const failures = differ.map((f) => ({
-    id: 'ANIM_SET_DIFFERS',
-    message: `${where}/${f} differs from what the tool writes: run it without --check, or find why`,
-    file: `${where}/${f}`,
-  }));
-  return {
-    ok: !differ.length,
-    summary: differ.length
-      ? `${differ.length} of ${Object.keys(files).length} files differ`
-      : `${where}: all ${Object.keys(files).length} files as the tool writes them`,
-    failures,
-  };
-}
-
-/** `x anim import …` (see the file comment). */
-function runImport(files: string[], values: Values, root: string): CommandResult {
-  const cmu = values.cmu === true;
-  if (!files.length && !cmu) throw new UsageError('import needs .glb files, or --cmu');
-  if (values.list) {
-    const lines = files.flatMap((file) => {
-      const what = listGlb(readFileSync(resolve(root, file)), file);
-      return [
-        `${file}: rig ${what.rig ?? 'not recognised'}`,
-        `clips: ${what.clips.join(', ')}`,
-        `bones: ${what.bones.join(', ')}`,
-      ];
-    });
-    return { ok: true, summary: `${files.length} file(s) listed`, lines };
-  }
-  const catalogFile = text(values, 'catalog') ?? (cmu ? 'data/anim/catalogs/cmu.json' : undefined);
-  const catalog = catalogFile ? (JSON.parse(readFileSync(resolve(root, catalogFile), 'utf8')) as Catalog) : undefined;
-  const rm = list(values, 'rm') ?? [];
-  const glbs = files.map((file, i) => ({
-    file,
-    bytes: readFileSync(resolve(root, file)),
-    ...(rm[i] ? { rm: readFileSync(resolve(root, rm[i])) } : {}),
-  }));
-  const blade = text(values, 'blade');
-  const { set, notes } = importSet({
-    ...{ glbs, cmu, catalog, name: text(values, 'name'), title: text(values, 'title'), credit: text(values, 'credit') },
-    ...{ sources: list(values, 'sources'), rest: list(values, 'rest'), clips: list(values, 'clips') },
-    ...{ tol: number(values, 'tol', 30), fps: number(values, 'fps', 30), legacy: values.legacy === true },
-    ...(blade ? { blade: new RegExp(blade) } : {}),
-  });
-  const committed = join(SETS_DIR, setDirName(set.set));
-  const out = resolve(root, text(values, 'out') ?? committed);
-  // into the committed set, its clips re-imported from their source (WP 8.8) stay as committed: never undone
-  const result = writeOrCheck(out, splitSet(out === committed ? keepUpgrades(set) : set), values.check === true, root);
-  const count = `${Object.keys(set.clips).length} clips, format ${set.format}`;
-  return { ...result, summary: `${set.set}: ${count}; ${result.summary}`, lines: [...(result.lines ?? []), ...notes] };
-}
 
 /** Writes `body` under `out/anim/<target>/<file>`; the artifact. */
 function artifact(root: string, target: string, file: string, body: string, describes: string) {

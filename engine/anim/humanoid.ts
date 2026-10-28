@@ -1,9 +1,9 @@
 /**
  * @file The procedural humanoid (PLAN.md WP 3.6, §5.2; I-09): my-3d2dge's `Humanoid` on the rotation skeleton.
- * `step(input)` eases the state toward the input at a fixed step: the weights, the gait's phase, the clocks.
- * `solve()` runs the effector stage (poses.ts `effectorStage`: locomotion.ts's gait, then the pose layers in order)
- * and the solve stage (authoring.ts: the spine from lean and twist, the arms and legs through `twoBoneRot` with the
- * old hints as poles, the feet, the weapon hand), writing `pose` and its FK, `world`. `update(input)` does both.
+ * `step(input)` eases the state toward the input at a fixed step (humanoidRates.ts): the weights, the gait's phase,
+ * the clocks. `solve()` runs the effector stage (poses.ts `effectorStage`: locomotion.ts's gait, then the pose layers
+ * in order) and the solve stage (authoring.ts: the spine from lean and twist, the arms and legs through `twoBoneRot`
+ * with the old hints as poles, the feet, the weapon hand), writing `pose` and its FK, `world`; `update` does both.
  *
  * Invariants:
  * - `step` is the sim's part: `state` is plain numbers (WP 3.7 hashes and captures it). `solve` reads only `state`,
@@ -45,67 +45,18 @@ import { SIM_DT } from '../core/time';
 import { B, holdAlong, relaxHand, SIDES, sideSign, solveArm, solveLeg, solveSpine, type Rig, type LimbSide } from './authoring'; // prettier-ignore
 import { getBuild, type Build } from './builds';
 import { createWorldPose, forwardKinematics, type WorldPose } from './fk';
-import { crouchShare, GAIT, gaitKnee, gaitStance, strideShare, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion'; // prettier-ignore
+import { crouchShare, gaitKnee, gaitStance, strideShare, type BodyMotion, type EffectorContext, type HumanoidWeights } from './locomotion'; // prettier-ignore
+import { GAIT } from './locomotion/gait';
 import { onFeet } from './locomotion/locks';
 import { plantedEase, plantedMove } from './locomotion/planted';
 import { createShown, type ShownMovement } from './locomotion/shown';
 import { Pose } from './pose';
 import type { MoveInput } from './moves-data';
-import { createEffectors, effectorStage, poseName, stanceName, weaponName, type Effectors, type PoseName, type StanceName, type Weapon } from './poses'; // prettier-ignore
+import { poseName, stanceName, weaponName, type PoseName, type StanceName, type Weapon } from './poseNames';
+import { createEffectors, effectorStage, type Effectors } from './poses';
 import { createSkeleton, jointIndex, type Skeleton } from './skeleton';
+import { KNOCKDOWN, STEP } from './humanoidRates';
 import { createArmState, stepArm, type ArmState } from './strike';
-
-/** Every constant of the state update: rates are per second, times in seconds; pairs are [in, out]. */
-export const STEP = {
-  /** Rate the speed weight eases toward the speed share. */
-  speed: 7,
-  /** Top of the speed share (speed ÷ the build's `speedRef`): a sprint stretches the stride. */
-  speedShareMax: 1.25,
-  /** Slowest speed that turns the movement direction, m/s (3 source units/s). */
-  turnSpeed: 0.1875,
-  /** Share of the way the movement direction follows the velocity, per second (at most all of it per step). */
-  turnRate: 10,
-  /** Rates a dash eases in and out. */
-  dash: [24, 8],
-  /** Rate a flinch eases in and out. */
-  hurt: 14,
-  /** Rates a move's weight eases in and out. */
-  attack: [30, 7],
-  /** Rates the airborne tuck eases in and out (a landing is quick). */
-  air: [10, 18],
-  /** Rate a held pose eases in and out. */
-  pose: 9,
-  /** Rate a stance eases in and out. */
-  stance: 10,
-  /** Rate the climb eases in and out. */
-  climb: 12,
-  /** Share of the arm's length a hand climbs per half cycle, so the hands keep pace with the climb. */
-  climbReach: 0.4,
-  /** Rates pointing eases in and out. */
-  point: [30, 8],
-  /** Rate the aim turns, radians per second. */
-  aim: 14,
-  /** The die pose: a flinch until `hurt`, the knees giving over `kneel` at `kneelRate`, the topple from `down`. */
-  die: { hurt: 0.25, kneel: [0.2, 0.6], kneelRate: 10, down: 0.45 },
-  /** A fall's rate starts at `rate` and gains `gain` per unit fallen (faster and faster); it gets up at `rise`. */
-  fall: { rate: 2.5, gain: 10, rise: 3.2 },
-  /** Blinks: shut for `shut`, then open `gap` plus up to `spread` more, from the entity's stream. */
-  blink: { shut: 0.12, gap: 2, spread: 3 },
-  /** The breathing clock starts up to this far in, from the entity's stream. */
-  clockSpread: 10,
-  /** Share of the way each channel of a move's body motion eases, per second (at most all of it per step). */
-  body: { lunge: 22, hop: 25, crouch: 20, lean: 25, twist: 25 },
-} as const;
-
-/** Every constant of the knockdown (a rigid turn of the whole body, until reactions take it over, WP 6.2). */
-export const KNOCKDOWN = {
-  /** The body's turn back at full weight, radians: 0.96 of a quarter turn. */
-  turn: 0.96 * (Math.PI / 2),
-  /** How far the body lifts, metres. */
-  lift: 0.0875,
-  /** Share of `hipHeight + torso` the body slides forward, to lie centred on its position. */
-  shift: 0.5,
-} as const;
 
 /** The poses with a weight of their own (`die` and `down` drive the down weight instead). */
 const HELD = ['cheer', 'cast', 'guard', 'kneel', 'crouch', 'wave', 'hips', 'block'] as const;

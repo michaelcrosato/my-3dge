@@ -30,7 +30,7 @@
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { copyValue } from '../core/schema';
 import { defineSettings } from '../core/settings';
-import { POSES, STANCES } from '../anim/poses';
+import { POSES, STANCES } from '../anim/poseNames';
 import { Attack, type AttackState } from '../anim/attack';
 import { SAMPLE_STATES, type AnimatorInput } from '../anim/states';
 import { physicsOf } from '../physics/binding';

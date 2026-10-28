@@ -30,14 +30,8 @@ import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } 
 import { createServer, request } from 'node:http';
 import { join } from 'node:path';
 import type { Browser, Page } from '@playwright/test';
-import {
-  describePageError,
-  launchBrowser,
-  preparePage,
-  VIEWPORT,
-  type ConsoleRecord,
-  type PageError,
-} from '../lib/browser';
+import { launchBrowser, preparePage, VIEWPORT, type ConsoleRecord } from '../lib/browser';
+import { describePageError, type PageError } from '../lib/pageErrors';
 import type { Finding } from '../lib/report';
 import type { ShotJson, ShotOptions } from '../../engine/gfx/shot';
 import { readSignals, READY_MS, waitReady, type PageEngine, type Signals } from '../lib/page';
@@ -121,13 +115,13 @@ export const pageErrorFinding =
     ...(error.file ? { file: error.file, line: error.line } : {}),
   });
 
-/** The failures of a page that should be ready: its thrown errors, its error signals, no signal, another backend. */
-export function pageFailures(page: string, file: string, signals: Signals | undefined, thrown: Finding[]): Finding[] {
+/** The failures of a page that should be ready within `ms`: its thrown errors, its error signals, no signal, another backend. */ // prettier-ignore
+export function pageFailures(page: string, file: string, signals: Signals | undefined, thrown: Finding[], ms = READY_MS): Finding[] { // prettier-ignore
   const failures = [...thrown];
   for (const error of signals?.errors ?? [])
     failures.push({ id: 'SHOT_PAGE_SIGNAL', message: `${page} signalled ${error}` });
   if (!signals?.ready && failures.length === 0) {
-    const message = `${page} signalled neither window.__engine.ready nor an error within ${READY_MS} ms; publish __engine (PLAN.md §8.3)`;
+    const message = `${page} signalled neither window.__engine.ready nor an error within ${ms} ms; publish __engine (PLAN.md §8.3), or give a page still warming up longer (--ready-ms)`; // prettier-ignore
     failures.push({ id: 'SHOT_NOT_READY', message, file });
   }
   const backend = signals?.info?.backend ?? (signals?.info?.adapter as { backend?: unknown } | undefined)?.backend;

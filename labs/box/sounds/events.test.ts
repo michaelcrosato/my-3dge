@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for the box's sound events (labs/box/sounds/events.ts) and effects (effects.ts): each event type
- * plays what the file comment says, where it says, footsteps by the surface underfoot; the reader reads each event
- * once and a new world from its first; and the fight replay's sound timeline, read in Node after every step, is the
- * recorded run's and gives its golden (`FIGHT_TIMELINE`), the one Chromium must give too (tests/e2e/box-audio.spec.ts).
+ * plays what the file comment says, where it says (an actor's where its event happened), footsteps by the surface
+ * underfoot; the reader reads each event once and a new world from its first; and the fight replay's sound timeline,
+ * read in Node after every step, is the recorded run's and gives its golden (`FIGHT_TIMELINE`), the one Chromium must
+ * give too (tests/e2e/box-audio.spec.ts).
  * @see labs/box/sounds/events.ts
  */
 import { readFileSync } from 'node:fs';
@@ -55,6 +56,8 @@ describe('the box’s sound events', () => {
     expect(sound('dash', { id: 1 })).toMatchObject({ sfx: 'sfx:whoosh', position: [2, 0, 3] });
     expect(sound('footstep', { id: 1, side: 'L', speed: 1 })).toMatchObject({ sfx: 'sfx:boxStep', vol: 0.9 });
     expect(sound('footstep', { id: 9, side: 'L', speed: 0 })).toMatchObject({ position: null, vol: 0.4 }); // gone
+    // Where the event says it happened, not where the actor stands when read (a frame's read, steps later), gone too.
+    for (const type of ['footstep', 'land', 'jump', 'dash']) expect(sound(type, { id: 9, at })?.position).toEqual(at);
     expect([sound('damage', { target: 4 }), sound('lap', { laps: 2 }), sound('hit', 3)]).toEqual([null, null, null]);
     expect(SOUND_EVENTS).toEqual(['footstep', 'land', 'jump', 'dash', 'hit', 'shot', 'slam', 'slain']);
   });

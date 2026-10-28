@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { Animator, type AnimatorData } from '../anim/character';
-import { STEP } from '../anim/humanoid';
+import { STEP } from '../anim/humanoidRates';
 import { GAIT_FOOT } from '../anim/proc/gait';
 import type { QuadrupedState } from '../anim/quadruped';
 import { Vector3 } from '../core/math';

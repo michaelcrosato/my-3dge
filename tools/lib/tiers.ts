@@ -76,7 +76,7 @@ export function t2Workers(cores: number): number {
 
 /**
  * The long runs (PLAN.md §8.2): no budget, run at each gate. The flake hunt, the kernel's perf budget (WP 1.5; T1
- * never asserts timing), the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json) and the clip
+ * never asserts timing), the box room page's (WP 5.5: tests/baselines/perf/box-room.json), the crowd ladder's (WPs 5.5, 5.7: tests/baselines/perf/box-crowd-1000.json) and the clip
  * library's QA, every clip played on every build (WP 8.6: T1 plays a sample), and clip mode in the box page playing
  * every clip (WP 8.9: T2 plays one of each set), and every replay once more in Chromium's sim-only page (after G9:
  * T2's parity plays only the box's stages, so physics-40, physics-props, the crowd and nav fixtures and the lift were
@@ -85,6 +85,7 @@ export function t2Workers(cores: number): number {
 export const LONG_RUNS: readonly { name: string; command: readonly string[] }[] = [
   { name: 'flake hunt', command: ['npm', 'run', 'e2e', '--', '--repeat-each', '3'] },
   { name: 'kernel budget', command: ['node', 'x', 'perf', 'fixtures/scenes/kernel', '--budget'] },
+  { name: 'box room page budget', command: ['node', 'x', 'perf', 'labs/box', '--scene', 'room', '--budget'] },
   {
     name: 'crowd ladder',
     command: ['node', 'x', 'perf', 'labs/box', '--scene', 'crowd-1000', '--ladder', '--budget'],

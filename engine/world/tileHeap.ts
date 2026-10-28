@@ -1,6 +1,7 @@
 /**
  * @file The tile heap (PLAN.md WP 4.3): an indexed binary min-heap of tiles keyed by a typed array, which navigation's
- * searches run on (engine/world/nav.ts: A* and the flow fields' Dijkstra), so a query allocates nothing but its answer.
+ * searches run on (engine/world/nav.ts: A* and the flow fields' Dijkstra; engine/world/siteNavGraph.ts's floods, a lazy
+ * one's paused on a heap of its own), so a query allocates nothing but its answer.
  * Split from nav.ts at its line cap (WP 10.5).
  *
  * Invariants: ties go to the lower tile index, so equal keys pop in index order on every run; pushing a tile it holds
@@ -10,6 +11,7 @@
  * const heap = new TileHeap(4);
  * heap.start(new Float64Array([3, 1, 1, 0]));
  * [2, 0, 1].forEach((tile) => heap.push(tile));
+ * heap.peek(); // 1: the least key, left in
  * [heap.pop(), heap.pop(), heap.pop()]; // [1, 2, 0]: the lower tile first on a tie
  * @see engine/world/nav.test.ts
  */
@@ -42,6 +44,11 @@ export class TileHeap {
     }
     heap[k] = tile;
     this.#at[tile] = k;
+  }
+
+  /** The tile with the least key, left in it; −1 when it is empty. */
+  peek(): number {
+    return this.size ? this.#heap[0] : -1;
   }
 
   /** Removes and returns the tile with the least key. */

@@ -8,7 +8,7 @@ import { Vector3 } from '../core/math';
 import { Rng } from '../core/rng';
 import { SIM_DT } from '../core/time';
 import { Humanoid, type HumanoidInput } from './humanoid';
-import { POSES } from './poses';
+import { POSES } from './poseNames';
 import {
   activeWeights,
   easeWeight,

@@ -48,6 +48,7 @@ import {
   type RideView,
   type TraversalView,
 } from './contacts';
+import { layTarget, type LimbTarget } from './limbTargets';
 
 /** The ways a body traverses, each with its own eased weight. */
 export const TRAVERSALS = ['mantle', 'climb', 'ladder', 'zipline', 'skydive', 'slideJump'] as const;
@@ -69,13 +70,6 @@ export const TRAVERSAL_POSE = {
   hang: 5, // a mantle hang's rate: the body eases under its hands, and back as it goes on
   walled: 0.35, // m: a climb's wall stays the body's while its front is within this of it, after it lets go
 } as const;
-
-/** Where one hand or foot goes now: a world point, how much (0 to 1), and whether it is on its contact. */
-export interface LimbTarget {
-  readonly point: Vector3;
-  weight: number;
-  held: boolean;
-}
 
 /** A climb's hold for one limb: the cycle it was taken in, and where. */
 interface Hold {
@@ -372,25 +366,6 @@ export class TraversalPose {
   }
 }
 
-/**
- * Lays `point` into `target` at `weight` (0 to 1) beside what it holds: the points blend by their weights, which add
- * up to at most 1; it is on its contact (`held`) only when this point alone holds it fully, nothing blended in (a way
- * easing out under another easing in holds nothing).
- */
-export function layTarget(target: LimbTarget, point: Vector3, weight: number, held: boolean): void {
-  if (!(weight > 0)) return;
-  const total = target.weight + weight;
-  const alone = !(target.weight > 0);
-  if (alone) target.point.copy(point);
-  else target.point.lerp(point, weight / total);
-  [target.weight, target.held] = [Math.min(1, total), held && alone && weight >= 1 - 1e-9];
-}
-
 const GRIPS: [Vector3, Vector3] = [new Vector3(), new Vector3()];
 const POINT = new Vector3();
 const NEED = new Vector3();
-
-/** Four limb targets at weight 0, for `TraversalPose.targets`. */
-export function createLimbTargets(): [LimbTarget, LimbTarget, LimbTarget, LimbTarget] {
-  return [0, 1, 2, 3].map(() => ({ point: new Vector3(), weight: 0, held: false })) as [LimbTarget, LimbTarget, LimbTarget, LimbTarget]; // prettier-ignore
-}

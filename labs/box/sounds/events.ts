@@ -23,7 +23,9 @@
  *
  * Invariants: pure reads: the world and its events are never changed, and nothing here plays a sound. Positions are
  * world space, metres, as the sim gives them, so the same run gives the same bits everywhere. An actor's events
- * sound at its feet; one it no longer has sounds unplaced.
+ * sound at its feet as the event says (`at`: where a jump, a landing or a dash began, where a step was posed), so a
+ * frame's read places each where it happened (ADR-0025 amendment 29); one without them, at its feet when read, and
+ * one whose actor is gone, unplaced.
  *
  * @example
  * const reader = createSoundReader();
@@ -67,15 +69,16 @@ export interface SoundWorld {
 }
 
 /** An event's payload as the mapping reads it (every field optional). */
-type Payload = { id?: number; speed?: number; size?: number; position?: Point };
+type Payload = { id?: number; speed?: number; size?: number; position?: Point; at?: Point };
 /** A sound without its step and type, or null for none. */
 type Sound = Omit<BoxSoundEvent, 'step' | 'type'>;
 
 /** `value` held to [low, high]. */
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
 
-/** Where an actor's feet are (its `actor` component), or null once it has none. */
-function feetOf(world: SoundWorld, id: number | undefined): Point | null {
+/** Where an actor's event happened: its feet as the event says (`at`), else as its `actor` component has them now, or null once it has none. */ // prettier-ignore
+function feetOf(world: SoundWorld, { id, at }: Payload): Point | null {
+  if (at) return at;
   const actor =
     id === undefined ? undefined : (world.get(id) as { actor?: { x: number; y: number; z: number } })?.actor;
   return actor ? [actor.x, actor.y, actor.z] : null;
@@ -98,12 +101,12 @@ const sound = (sfx: string, vol: number, position: Point | null | undefined, duc
 /** The sound for each event type that has one (see the file comment). */
 const SOUNDS: Readonly<Record<string, (p: Payload, world: SoundWorld, level: CompiledLevel | null) => Sound>> = {
   footstep: (p, world, level) => {
-    const feet = feetOf(world, p.id);
+    const feet = feetOf(world, p);
     return sound(footstepSfx(level, feet), clamp(0.4 + 0.5 * (p.speed ?? 1), 0.4, 1), feet);
   },
-  land: (p, world) => sound('sfx:boxThud', clamp((p.speed ?? 0) / 8, 0.3, 1), feetOf(world, p.id)),
-  jump: (p, world) => sound('sfx:whoosh', 0.5, feetOf(world, p.id)),
-  dash: (p, world) => sound('sfx:whoosh', 0.9, feetOf(world, p.id)),
+  land: (p, world) => sound('sfx:boxThud', clamp((p.speed ?? 0) / 8, 0.3, 1), feetOf(world, p)),
+  jump: (p, world) => sound('sfx:whoosh', 0.5, feetOf(world, p)),
+  dash: (p, world) => sound('sfx:whoosh', 0.9, feetOf(world, p)),
   hit: (p) => sound('sfx:boxHit', clamp(0.15 + 0.3 * (p.size ?? 1), 0.15, 0.5), p.position),
   shot: (p) => sound('sfx:boxLaunch', clamp(0.8 * (p.size ?? 1), 0.3, 1), p.position),
   slam: (p) => sound('sfx:boxThud', 0.8, p.position),

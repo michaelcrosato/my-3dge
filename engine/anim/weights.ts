@@ -26,7 +26,7 @@
  */
 import { approach } from '../core/math';
 import type { Animator } from './character';
-import { STEP } from './humanoid';
+import { STEP } from './humanoidRates';
 import type { HumanoidWeights } from './locomotion';
 import type { BodyStateName } from './states';
 

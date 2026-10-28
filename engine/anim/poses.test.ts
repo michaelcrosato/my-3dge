@@ -15,7 +15,8 @@ import { jointPosition, jointToWorld, tipPosition } from './fk';
 import { gaitFoot, pelvisTarget, restContext, spineDirection } from './locomotion';
 import { plantedHeight } from './locomotion/planted';
 import { hashPose } from './pose';
-import { FOOT_LAYERS, HAND_LAYERS, layerWeights, poseName, stanceName, weaponName } from './poses';
+import { poseName, stanceName, weaponName } from './poseNames';
+import { FOOT_LAYERS, HAND_LAYERS, layerWeights } from './poses';
 import { jointIndex, PROPORTIONS } from './skeleton';
 
 /** Steps `hero` `steps` times with `input`. */

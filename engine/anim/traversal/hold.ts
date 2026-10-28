@@ -32,13 +32,14 @@
 import { MathUtils, Matrix4, Quaternion, Vector3 } from '../../core/math';
 import { B } from '../authoring';
 import type { Animator } from '../character';
-import type { Weapon } from '../poses';
+import type { Weapon } from '../poseNames';
 import { forwardKinematics, jointPosition, jointRotation, socketPosition } from '../fk';
 import { aim, AIM_CHAIN, handTo } from '../ik';
 import { blendPoses, Pose } from '../pose';
 import { boneMask, PROPORTIONS } from '../skeleton';
 import type { AnimLayer } from '../weights';
-import { swingGrip, type TraversalPlant } from './plant';
+import type { TraversalPlant } from './plant';
+import { swingGrip } from './swing';
 
 /** Where the body looks: its heading and pitch (rad, world, up above 0), and whether it aims down the sights. */
 export interface Look {

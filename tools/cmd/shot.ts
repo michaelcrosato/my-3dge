@@ -23,8 +23,9 @@
  * or an `.html` file, with an optional query: `node x shot labs/hello`, `node x shot tests/pages/shot.html --cam iso
  * --marks`.
  *
- * `--ready-ms <n>` gives the page longer to signal ready than `READY_TIMEOUT_MS` (30 s): a styled look on the hall
- * under load can take more (WP 7.8).
+ * `--ready-ms <n>` gives the page another time to signal ready than `READY_TIMEOUT_MS` (300 s, tools/lib/page.ts
+ * `READY_MS`): the playground's gym warms up in about a minute on SwiftShader, its site in several (it was 30 s, which
+ * no playground page met; WP 13.21 found it and blamed the virtual clock, but the page readies under it).
  *
  * Usage: node x shot <page> [--scene s] [--cam code] [--set k=v…] [--ids] [--metrics] [--marks] [--png]
  * [--thumb case [--update]] [--ready-ms n]. Fails (exit 1) when the page signals an error or throws, reports another backend than
@@ -48,11 +49,11 @@ import { decodePng } from '../lib/png';
 import { targetSlug, type Artifact, type Finding, type Report } from '../lib/report';
 import { startVite } from '../lib/vite';
 import { UsageError, wholeFlag, type Command, type CommandResult } from '../x';
-import { waitReady, type Signals } from '../lib/page';
+import { READY_MS, waitReady, type Signals } from '../lib/page';
 import { findSession, pageErrorFinding, pageFailures, shootInSession, type Opened } from './inspect';
 
-/** How long a page may take to signal ready or an error, in milliseconds. */
-export const READY_TIMEOUT_MS = 30_000;
+/** How long a page may take to signal ready or an error, in milliseconds: as long as `x inspect` and `x perf` wait. */
+export const READY_TIMEOUT_MS = READY_MS;
 
 /** The look metrics of a frame of RGBA bytes (engine/gfx/lookMetrics.ts), as the e2e suites import them from here. */
 export const frameMetrics = (rgba: Uint8Array, width: number, height: number): LookMetrics =>
@@ -347,7 +348,7 @@ export default {
       await tab.goto(`${server.url}${path}`);
       const signals = await waitReady(tab, watch, readyMs);
       const runtime = browserRuntime(browser.version());
-      const failures = pageFailures(page, file, signals, (await watch.errors()).map(pageErrorFinding(page)));
+      const failures = pageFailures(page, file, signals, (await watch.errors()).map(pageErrorFinding(page)), readyMs);
       if (failures.length > 0 || !signals)
         return { ok: false, summary: `${page} did not draw`, target, browser: runtime, failures };
       const { shot, noIds } = await shootPage(tab, signals, asked);

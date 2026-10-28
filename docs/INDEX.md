@@ -62,7 +62,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 | `setting`         | The engine's and the game's settings, by dotted path: one schema for x set, URL parameters and __engine.set.                                                                                                                       | [`engine/core/settings.ts`](../engine/core/settings.ts)                       |
 | `sfx`             | A sound effect: voices for the DSP core, layers of other effects, variants and a mixer bus.                                                                                                                                        | [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)                     |
 | `site`            | Sites: levels standing on a terrain, each placed at an offset and a quarter turn.                                                                                                                                                  | [`engine/world/site.ts`](../engine/world/site.ts)                             |
-| `sky`             | Sky presets: what surrounds and lights a level (background, dome, backdrop, sun, ambient light, fog, how bright the point lights shine).                                                                                           | [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)                                   |
+| `sky`             | Sky presets: what surrounds and lights a level (background, dome, backdrop, sun, ambient light, fog, how bright the point lights shine).                                                                                           | [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)                           |
 | `song`            | A looping tune in tracker notation: tempo, bars and tracks of notes or drum tokens.                                                                                                                                                | [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)                   |
 | `strikable`       | How an entity holding a component takes a strike (doors, breakables, WP 13.16).                                                                                                                                                    | [`engine/sim/interact.ts`](../engine/sim/interact.ts)                         |
 | `telegraph`       | Telegraphs: an attack's warning shape on the floor (arc, ring, line or cone, in metres), drawn as it winds up and tested for hits and near misses when it goes off.                                                                | [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)                 |
@@ -137,13 +137,16 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `FootRoll`, `heading`, `heelPosition`, `kneePole`, `layToes`, `liftHeel`, `pitchHeel`
   - Tests: [`engine/anim/footPlant.test.ts`](../engine/anim/footPlant.test.ts)
 - [`humanoid.ts`](../engine/anim/humanoid.ts): The procedural humanoid (PLAN.md WP 3.6, §5.2; I-09): my-3d2dge's `Humanoid` on the rotation skeleton.
-  - Exports: `Humanoid`, `HumanoidInput`, `HumanoidOptions`, `HumanoidState`, `KNOCKDOWN`, `STEP`
+  - Exports: `Humanoid`, `HumanoidInput`, `HumanoidOptions`, `HumanoidState`
+  - Tests: [`engine/anim/humanoid.test.ts`](../engine/anim/humanoid.test.ts)
+- [`humanoidRates.ts`](../engine/anim/humanoidRates.ts): The procedural humanoid's rates (PLAN.md WP 3.6, §5.2; engine/anim/humanoid.ts steps by them): `STEP`, every constant of its state update (how fast each weight eases in and out, the turn, the die pose's and a fall's timings, the blinks, the breathing clock's spread, a move's body motion), and `KNOCKDOWN`, the rigid turn that lays the body flat until reactions take it over (WP 6.2).
+  - Exports: `KNOCKDOWN`, `STEP`
   - Tests: [`engine/anim/humanoid.test.ts`](../engine/anim/humanoid.test.ts)
 - [`ik.ts`](../engine/anim/ik.ts): Inverse kinematics for the humanoid skeleton (PLAN.md WP 3.5, I-11): `twoBone` (my-3d2dge's `ik3`) places a limb's middle joint, `twoBoneRot` turns a leg or an arm to a target with a pole, `aim` spreads a look-at over chest, neck and head within limits, and `handTo` puts a grip in a hand; `GroundProbe` is how a solver asks for the ground (engine/anim/footPlant.ts's `footPlant`, moved there after G9, stands the feet on it).
   - Exports: `aim`, `AIM_CHAIN`, `AimLink`, `AimOptions`, `GroundHit`, `GroundProbe`, `handTo`, `IK_CODES`, `Limb`, `LimbEnd`, `LIMBS`, `SLACK`, `twoBone`, `TwoBoneOptions`, `twoBoneRot`
   - Tests: [`engine/anim/ik.test.ts`](../engine/anim/ik.test.ts)
 - [`locomotion.ts`](../engine/anim/locomotion.ts): Procedural locomotion for the humanoid (PLAN.md WP 3.6, §5.2): my-3d2dge's gait, idle, lean and arm-swing formulas as effector targets in the character's own terms (`B(f, r, u)`, authoring.ts): where the pelvis rides, where each foot and hand swings, which way the spine and the head lean, where the shoulders sit.
-  - Exports: `BodyMotion`, `crouchShare`, `EffectorContext`, `GAIT`, `gaitFoot`, `gaitHand`, `gaitKnee`, `gaitStance`, `headDirection`, `hipTarget`, `HumanoidWeights`, `pelvisTarget`, `restContext`, `shoulderTarget`, `spineDirection`, `strideShare`
+  - Exports: `BodyMotion`, `crouchShare`, `EffectorContext`, `gaitFoot`, `gaitHand`, `gaitKnee`, `gaitStance`, `headDirection`, `hipTarget`, `HumanoidWeights`, `pelvisTarget`, `restContext`, `shoulderTarget`, `spineDirection`, `strideShare`
   - Tests: [`engine/anim/poses.test.ts`](../engine/anim/poses.test.ts)
 - [`motionMetrics.ts`](../engine/anim/motionMetrics.ts): Motion metrics on a track of points (PLAN.md §8.6, WP 6.6; WP 13.4 moved them here from tools/qa/anim/metrics.ts, so the anim QA family and the feel kit, engine/dev/feel/anim.ts, read motion by one set of rules): a `Track` holds points per step, world and measured from the body, and each metric returns the worst case (`Found`, larger is worse) and the sentence naming where it happened.
   - Exports: `ANIM_QA`, `footSlide`, `Found`, `m`, `motionTrack`, `pops`, `Track`, `worse`, `worstPop`, `worstSlide`
@@ -157,8 +160,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`pose.ts`](../engine/anim/pose.ts): Poses (PLAN.md WP 3.4, I-08, I-49): `Pose` holds a root transform and one local rotation per joint of the humanoid skeleton; `blendPoses` crossfades two (slerp or nlerp) under a bone mask, `makeAdditive` and `addPose` make and apply additive layers, and `hashPose` digests one.
   - Exports: `addPose`, `BlendOptions`, `blendPoses`, `hashPose`, `JointRef`, `makeAdditive`, `Pose`, `POSE_LENGTH`
   - Tests: [`engine/anim/pose.test.ts`](../engine/anim/pose.test.ts)
-- [`poses.ts`](../engine/anim/poses.ts): Held poses, stances and the humanoid's effector layers (PLAN.md WP 3.6, §5.2; I-09): the names a humanoid takes (`POSES`, `STANCES`, `WEAPONS`), with a warning that suggests the closest name for a misspelt one, and the ordered tables that lay each pose, stance and state over the gait's targets: `FOOT_LAYERS` for the soles, `HAND_LAYERS` for the wrists, `BLADE_LAYERS` for the weapon's direction.
-  - Exports: `applyLayers`, `BLADE_LAYERS`, `createEffectors`, `DROPPED_BLADE`, `EffectorLayer`, `Effectors`, `effectorStage`, `FOOT_LAYERS`, `HAND_LAYERS`, `layerWeights`, `Placement`, `POSE_CODES`, `poseName`, `PoseName`, `POSES`, `stanceName`, `StanceName`, `STANCES`, `Weapon`, `weaponName`, `WEAPONS`
+- [`poseNames.ts`](../engine/anim/poseNames.ts): The names a humanoid takes (PLAN.md WP 3.6, §5.2; I-09): its held poses (`POSES`), its stances (`STANCES`) and what its right hand holds (`WEAPONS`, by the direction its blade rests in), each with what it shows, and `poseName`, `stanceName` and `weaponName`, which pass a known name and warn `ANIM_UNKNOWN_POSE` once for an unknown one, suggesting the closest.
+  - Exports: `POSE_CODES`, `poseName`, `PoseName`, `POSES`, `stanceName`, `StanceName`, `STANCES`, `Weapon`, `weaponName`, `WEAPONS`
+  - Tests: [`engine/anim/poses.test.ts`](../engine/anim/poses.test.ts)
+- [`poses.ts`](../engine/anim/poses.ts): The humanoid's effector layers (PLAN.md WP 3.6, §5.2; I-09): for the names it takes (engine/anim/poseNames.ts: `POSES`, `STANCES`, `WEAPONS`), the ordered tables that lay each pose, stance and state over the gait's targets: `FOOT_LAYERS` for the soles, `HAND_LAYERS` for the wrists, `BLADE_LAYERS` for the weapon's direction.
+  - Exports: `applyLayers`, `BLADE_LAYERS`, `createEffectors`, `DROPPED_BLADE`, `EffectorLayer`, `Effectors`, `effectorStage`, `FOOT_LAYERS`, `HAND_LAYERS`, `layerWeights`, `Placement`
   - Tests: [`engine/anim/poses.test.ts`](../engine/anim/poses.test.ts)
 - [`quadruped.ts`](../engine/anim/quadruped.ts): The quadruped rig (PLAN.md WP 13.21, on WP 10.1's blocks; docs/PLAYGROUND.md §7.4): a four-legged body (a dog, a fox, a wolf) for a crowd body (engine/sim/crowdBodies.ts), its state plain data as the blob's and the floater's.
   - Exports: `Quadruped`, `QUADRUPED`, `QUADRUPED_LEGS`, `QUADRUPED_RIG`, `QuadrupedBone`, `QuadrupedInput`, `QuadrupedOptions`, `QuadrupedPose`, `QuadrupedState`
@@ -220,6 +226,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`layer.ts`](../engine/anim/clip/layer.ts): The clip layer (PLAN.md §10.4, WP 8.4): library clips played in the animator's `clips` slot (WP 3.7, engine/anim/weights.ts), stacked, the last played on top (`current`), each fading in over what plays under it.
   - Exports: `CLIP_LAYER`, `ClipLayer`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerState`, `ClipPlay`, `ClipSlot`, `ClipStepInput`
   - Tests: [`engine/anim/clip/layer-play.test.ts`](../engine/anim/clip/layer-play.test.ts), [`engine/anim/clip/layer.test.ts`](../engine/anim/clip/layer.test.ts)
+- [`layerData.ts`](../engine/anim/clip/layerData.ts): What the clip layer plays and keeps (PLAN.md §10.4, WP 8.4; engine/anim/clip/layer.ts plays it): a play's options (`ClipPlay`: my-3d2dge's moment fields), a slot (a clip playing, its time and weight), the layer's plain state (`ClipLayerState`, which the sim saves, hashes and captures), its events, what a step is told (`ClipStepInput`), its timings (`CLIP_LAYER`) and what it is made with (`ClipLayerOptions`).
+  - Exports: `CLIP_LAYER`, `ClipLayerEvent`, `ClipLayerOptions`, `ClipLayerState`, `ClipPlay`, `ClipSlot`, `ClipStepInput`
+  - Tests: [`engine/anim/clip/layer.test.ts`](../engine/anim/clip/layer.test.ts)
 - [`lens.ts`](../engine/anim/clip/lens.ts): How a clip reads (PLAN.md §10.2, WP 8.2): `LEGEND`, what every key field means, and each field's shape (`KEY_ARRAYS`, `KEY_NUMBERS`, `ANGLE_ENTRIES`), which parsing, in-betweening and the validator read; `clipText`, the text an agent reads and edits, ported from `my-3d2dge:src/mocap/readable.js`'s `text` with no change in its output; and the normalized lens, every angle folded to (−180°, 180°] for reading, without changing the stored data.
   - Exports: `ANGLE_ENTRIES`, `clipText`, `foldAngle`, `KEY_ARRAYS`, `KEY_FIELDS`, `KEY_NUMBERS`, `LEGEND`, `normalizedLens`, `REQUIRED`
   - Tests: [`engine/anim/clip/lens.test.ts`](../engine/anim/clip/lens.test.ts)
@@ -247,6 +256,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## engine/anim/locomotion
 
+- [`gait.ts`](../engine/anim/locomotion/gait.ts): The gait's constants (PLAN.md WP 3.6, §5.2; engine/anim/locomotion.ts's formulas read them): every number of the humanoid's gait, idle, lean and arm swing (breathing, the bob, the sway, the stride, the lean, the shoulders, the head and the hands), each with its line.
+  - Exports: `GAIT`
+  - Tests: [`engine/anim/humanoid.test.ts`](../engine/anim/humanoid.test.ts)
 - [`locks.ts`](../engine/anim/locomotion/locks.ts): The foot plant's stance locks (PLAN.md WP 13.10, the rule ADR-0009 amendment 8 asked for; ADR-0025 amendment 10): `holdFoot` keeps a sole where it landed while its body says the foot stands (the humanoid's `stance()`: the planted stride's contact window, engine/anim/locomotion/planted.ts), and lets it go over `FOOT_LOCK.release` once the window ends, lifting as its animation lifts it, so a push-off never drags it along the floor (at once when its animation took it up, but a toe-off in its stride on the level it held on: it eases out of a lock the body sped away from).
   - Exports: `createFootPlantState`, `FOOT_LOCK`, `FootLock`, `FootPlantState`, `holdFoot`, `HoldOptions`, `onFeet`
   - Tests: [`engine/anim/locomotion/locks.test.ts`](../engine/anim/locomotion/locks.test.ts)
@@ -321,15 +333,21 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`hold.ts`](../engine/anim/traversal/hold.ts): Holding and aiming (PLAN.md WP 13.11, docs/PLAYGROUND.md §5.1): the layer that ends the animator's `post` slot, after the traversal plant (engine/anim/traversal/plant.ts), posing what the body does with its look and its weapon from what the view tells it before each pose: - the head and eyes toward the aim (`look`: the heading and pitch the player looks along, from the page's intents; ADR-0025 amendment 10 sent them here), the neck and the head sharing the turn within their limits (engine/anim/ik.ts `aim`, its chain without the chest, so the hands on what they hold stay there); - a gun carried (`carry`, as the view says, else the body's weapon `gun`): its stock at the right shoulder, the right hand on its grip and the left on its handguard (two-hand IK, `handTo`), held low and ready (`HOLD.ready` below the aim), raised along the aim when aiming down the sights (`aiming`: its sight line through the right eye, `HOLD.sights`), lowered and turned across the body at a sprint, the hands low (the gait's speed past the run, `HOLD.sprint`); its barrel follows the aim's pitch and, within `HOLD.yaw` of the body's heading, its yaw, the chest turning with it (the aim offsets), the hand along the barrel so the muzzle points where the aim does, the left hand slid back along the handguard to stay in reach (`support`), the gun drawn in past that; - a traversal holding the hands (`busy`: `TraversalPose.weight`), or the traversal plant's hands on a contact (`contacts`: a hard landing's hand), lowers the hold as far as they hold them, and the head turns half as far.
   - Exports: `HeldLook`, `HOLD`, `HoldPlant`, `Look`, `LookPose`
   - Tests: [`engine/anim/traversal/hold.test.ts`](../engine/anim/traversal/hold.test.ts)
+- [`limbTargets.ts`](../engine/anim/traversal/limbTargets.ts): Where a traversing body's hands and feet go (PLAN.md WP 13.11; engine/anim/traversal/pose.ts lays them, plant.ts solves the limbs onto them): a `LimbTarget` a limb, its world point, its weight and whether it is on its contact; `layTarget` lays a point into one beside what it holds already, and `createLimbTargets` makes the four (the hands, then the feet) at weight 0.
+  - Exports: `createLimbTargets`, `layTarget`, `LimbTarget`
+  - Tests: [`engine/anim/traversal/pose.test.ts`](../engine/anim/traversal/pose.test.ts)
 - [`matrix.ts`](../engine/anim/traversal/matrix.ts): The traversal and holding states of the state matrix (PLAN.md WP 13.11, docs/PLAYGROUND.md §5.1): the ways the playground's player traverses and holds, as `stateMatrix` runs them (engine/anim/stateMatrix.ts), so the anim QA family measures them and `x sheet` draws them for a `plantedStride` build (tools/qa/anim.ts `humanoidStates`, ids `traversal:<name>` and `hold:<name>`): the 2 m mantle (`grab`), the grab held as a hang (`hang`), a 1 m wall vaulted at a sprint (`vault`), a wall-climb let go (`climb`), up and back down a ladder (`ladder`), a zipline ridden and let go (`zipline`), the skydive's glide, dive and landing (`skydive`), a slide-jump (`slideJump`), a gun aimed through a sweep of pitch and heading (`hold:aim`) and lowered at a sprint (`hold:sprint`).
   - Exports: `TRAVERSAL_STATES`
   - Tests: [`engine/anim/traversal/matrix.test.ts`](../engine/anim/traversal/matrix.test.ts)
 - [`plant.ts`](../engine/anim/traversal/plant.ts): The traversal plant (PLAN.md WP 13.11, docs/PLAYGROUND.md §5.1): the layer that poses a traversing body at the end of the animator's `post` slot, after the foot plant (engine/anim/footPlant.ts), from the view's `TraversalPose` (engine/anim/traversal/pose.ts), which the view sets on it before each pose (`pose`): - the body: a skydive tilted onto its front (spread in its glide, its arms back in its dive), upright again in its landing pose; drawn `TRAVERSAL_PLANT.ladder` nearer a ladder than its hull stands; and moved toward the hands as far as they need to reach what they hold (a mantle's press up past the lip, a high grab, a short build's cable); - the free limbs: a mantle's legs hanging under the lip, the grab's right foot stepping up the face late in it and the pull's left after it, each onto the top as the hip rises past the lip; a low ledge's legs tucked (swung aside in a vault); a zipline's legs swinging with the ride; the skydive's spread, dive and landing; a slide-jump's legs out ahead, reaching down as it falls, its arms forward and up; - the limbs on contacts (`TraversalPose.targets`): each hand's grip socket and each foot's contact socket solved onto its target as far as its weight says (the knees forward, the elbows down and out under a hand over the shoulder, back behind one under it), the wrist in line with the forearm, flat on a top, a foot level on a hold or a rung; each leg kept out of the wall it traverses (engine/anim/traversal/clear.ts); and a hard landing's right hand (the humanoid's shown `land`, WP 13.10) put down flat on the floor at the bottom of its dip.
-  - Exports: `swingGrip`, `TRAVERSAL_PLANT`, `TraversalPlant`
+  - Exports: `TRAVERSAL_PLANT`, `TraversalPlant`
   - Tests: [`engine/anim/traversal/plant.test.ts`](../engine/anim/traversal/plant.test.ts)
 - [`pose.ts`](../engine/anim/traversal/pose.ts): The view's traversal poses (PLAN.md WP 13.11, docs/PLAYGROUND.md §5.1): `TraversalPose` follows what the shooter model's state says the body does (`TraversalView`, engine/anim/traversal/contacts.ts) once a sim step and eases a weight for each way it traverses (`TRAVERSALS`): a mantle (the grab, the hang, the pull, a low ledge vaulted at a run with one hand), a wall-climb, a ladder, a zipline, a skydive (its spread glide, its dive, its landing pose) and a slide-jump.
-  - Exports: `createLimbTargets`, `layTarget`, `LimbTarget`, `Traversal`, `TRAVERSAL_POSE`, `TraversalPose`, `TRAVERSALS`
+  - Exports: `Traversal`, `TRAVERSAL_POSE`, `TraversalPose`, `TRAVERSALS`
   - Tests: [`engine/anim/traversal/pose.test.ts`](../engine/anim/traversal/pose.test.ts)
+- [`swing.ts`](../engine/anim/traversal/swing.ts): A hand swung to a grip (PLAN.md WP 13.11, WP 13.20: engine/anim/traversal/plant.ts swings a hand onto its hold, hold.ts the gun's hands onto the gun): `swingGrip` moves hand `side`'s grip socket `k` of the way to a point about the shoulder, its direction turned and its distance eased, rather than straight across, so a reach overhead or across the body never folds the arm through the shoulder; a turn of nearly half a circle goes through the body's front.
+  - Exports: `swingGrip`
+  - Tests: [`engine/anim/traversal/hold.test.ts`](../engine/anim/traversal/hold.test.ts)
 
 ## engine/app
 
@@ -614,6 +632,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`idpass.ts`](../engine/gfx/idpass.ts): The ID pass (PLAN.md §8.5, I-28): every drawable object in a flat colour of its own, unlit, without antialiasing, so a readback says which object covers each pixel and an agent reads "the hero covers 0 px" or "one object covers 71%: the camera is inside a wall" as text.
   - Exports: `decodeIds`, `Drawable`, `idColour`, `IdEntry`, `IdPass`, `IdTable`, `IdUnseen`, `listDrawables`, `UnseenReason`, `withIdScene`
   - Tests: [`engine/gfx/idpass.test.ts`](../engine/gfx/idpass.test.ts), [`tests/e2e/shot.spec.ts`](../tests/e2e/shot.spec.ts)
+- [`instanceSync.ts`](../engine/gfx/instanceSync.ts): The instance sync fix (PLAN.md WP 3.8, I-19; engine/gfx/instancing.ts, whose file comment tells the quirk): r182's `InstanceNode` syncs its buffers' versions in its node update, which runs after the renderer uploads the object's buffers, so a change after a quiet frame shows one render late.
+  - Exports: `INSTANCE_SYNC`, `syncBeforeUpload`
+  - Tests: [`engine/gfx/instancing.test.ts`](../engine/gfx/instancing.test.ts)
 - [`instancing.ts`](../engine/gfx/instancing.ts): The instancing service (PLAN.md WP 3.8, §4.7, Appendix B; I-15, I-19): `createInstancedBatch({ name, geometry, material })` draws many copies of one geometry with one shared material, in pages of three.js `InstancedMesh`es, and is the one place that knows r182's instancing quirks (its `InstanceNode`, measured): - **One render late.** `InstanceNode` copies the matrices and colours into a buffer per render object (the frame, the shadow map and the ID pass each hold one) and syncs the copy's version in its node update, which runs after the renderer uploads the object's buffers: a change after a quiet frame shows one frame late, and a pass drawn now and then (a shot's ID pass) shows the change before (tests/e2e/instancing.spec.ts).
   - Exports: `createInstancedBatch`, `INSTANCE_SYNC`, `InstanceColor`, `InstancedBatch`, `InstancedBatchOptions`, `InstancedBatchStats`, `instancePath`, `INSTANCING_CODES`, `PAGE_SLOTS`, `syncBeforeUpload`, `UNIFORM_INSTANCE_LIMIT`
   - Tests: [`engine/gfx/instancing.test.ts`](../engine/gfx/instancing.test.ts), [`tests/e2e/instancing.spec.ts`](../tests/e2e/instancing.spec.ts)
@@ -652,8 +673,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`sky.ts`](../engine/gfx/sky.ts): Skies (PLAN.md WP 7.1, §6.6 kind `sky`): what surrounds and lights a level, as presets of data, and `createSky`, which puts a preset on a scene.
   - Exports: `BACKDROP`, `BACKDROP_KINDS`, `BackdropSpec`, `bakeBackdrop`, `createSky`, `defineSkies`, `defineSky`, `Sky`, `SKY_FIELDS`, `SkyEntry`, `SkyOptions`, `SkyReport`, `SkySpec`
   - Tests: [`engine/gfx/sky.test.ts`](../engine/gfx/sky.test.ts), [`tests/e2e/lights.spec.ts`](../tests/e2e/lights.spec.ts)
+- [`skyKind.ts`](../engine/gfx/skyKind.ts): The kind `sky` (PLAN.md WP 7.1, §6.6): its fields (`SKY_FIELDS`: the background colour, the dome, the sun, the ambient light, the fog, the backdrop's layers and how bright the light pool's point lights shine), `defineSky` for a preset, and the built-in presets, declared on the shared registry when this module loads: `sky:hall`, the torch-lit hall (dark, torches, fog past the focus), and `sky:daylight`, a plain day for fixtures.
+  - Exports: `BackdropSpec`, `defineSkies`, `defineSky`, `SKY_FIELDS`, `SkyEntry`, `SkySpec`
+  - Tests: [`engine/gfx/sky.test.ts`](../engine/gfx/sky.test.ts)
 - [`stage.ts`](../engine/gfx/stage.ts): The stage (PLAN.md §6.4's view, §9.0, WP 2.7): a running scene's presentation graph, built from plain data with no GPU, so a page draws it and a headless engine dumps it (`createHeadless({ view: true })`).
-  - Exports: `createStage`, `placeableKinds`, `placeOf`, `Stage`, `StageOptions`, `StandInPlace`
+  - Exports: `createStage`, `Stage`, `StageOptions`
   - Tests: [`engine/gfx/stage.test.ts`](../engine/gfx/stage.test.ts)
 - [`stageCrowd.ts`](../engine/gfx/stageCrowd.ts): Crowd bodies on the stage (PLAN.md WP 5.7 core proposal, ADR-0008 amendment 6; §6.4's view; I-21): every entity with the component `crowdBody` (engine/sim/crowdBodies.ts: a humanoid, blob, floater or quadruped rig, where it stands and its rig's state) drawn through a crowd (engine/gfx/puppets/crowd.ts: instanced batches, a few dozen draw calls for thousands), seen through the crowd's level of detail (engine/gfx/puppets/lod.ts) from the frame's camera.
   - Exports: `createStageCrowd`, `StageCrowd`, `StageCrowdOptions`
@@ -679,6 +703,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`stageSky.ts`](../engine/gfx/stageSky.ts): The stage's lights (PLAN.md §6.4's view, WP 7.8, ADR-0008 amendment 10): the stage's own, a hemisphere light and one shadow-casting sun fitted to the level under a plain background, and a sky on demand (engine/gfx/sky.ts: the light pool lit from the level's light spots and flickering, the sky's sun, its dome and backdrop, the ambient light and the fog).
   - Exports: `createStageSky`, `StageSky`, `StageSkyOptions`, `StageSkyView`
   - Tests: [`engine/gfx/stageSky.test.ts`](../engine/gfx/stageSky.test.ts), [`tests/e2e/box-look.spec.ts`](../tests/e2e/box-look.spec.ts)
+- [`standIns.ts`](../engine/gfx/standIns.ts): The stage's stand-ins (engine/gfx/stage.ts, PLAN.md WP 2.7): which entities stand somewhere and where.
+  - Exports: `placeableKinds`, `placeOf`, `StandInPlace`
+  - Tests: [`engine/gfx/stage.test.ts`](../engine/gfx/stage.test.ts)
 - [`storeyCut.ts`](../engine/gfx/storeyCut.ts): The cutaway by storey (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): what the classic views (isometric and top-down: the camera type `view`) leave out of a level written as storeys, so the player shows inside it: every storey above the player's (`storeyBelow`, engine/world/level/heights.ts: a flight is its storey's to its top), the roof while the player is indoors, in a room or under the roof's footprint (a shed with no room marked), and his own storey's heads while he is under a low ceiling (a floor glyph's `head`, not an opening's: the crawlspace), its door heads with it, since they are one mesh: `cutPlace(level, x, y, z)` says all three.
   - Exports: `aboveStorey`, `createStoreyCut`, `cutPlace`, `planStoreys`, `StoreyCut`, `StoreyPiece`
   - Tests: [`engine/gfx/storeyCut.test.ts`](../engine/gfx/storeyCut.test.ts)
@@ -1346,6 +1373,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`actorActions.ts`](../engine/sim/actorActions.ts): Actions on actors (PLAN.md WP 13.11; engine/anim/actions.ts, WP 8.7): the component `actions` holds an animated actor's `Actions` as the plain data `Actions.save()` writes (`ACTIONS_FIELDS`), so the sim hashes, captures and restores what plays and where.
   - Exports: `ActionComponents`, `ACTIONS_FIELDS`, `actOn`, `ACTOR_ACTION_CODES`, `defineActionKinds`, `stepActorActions`
   - Tests: [`engine/sim/actorActions.test.ts`](../engine/sim/actorActions.test.ts)
+- [`actorAnim.ts`](../engine/sim/actorAnim.ts): The actors' animators in the sim (PLAN.md WP 3.7, WP 7.8, WP 13.10; engine/sim/actors.ts adds them): the systems `actors.anim`, each animated actor's animator stepped in id order, told its `states`, what its reactions' and actions' beats tell it, and the controller's (`velocity`, `yaw`, `air`, `dash`; a movement model's duck as the pose `crouch`), its events emitted with its feet (`at`) and its gait; and `actors.pose`, the `preciseHits` animators posed where their feet are now, so their trail is sim data.
+  - Exports: `poseAnimators`, `stepAnimators`
+  - Tests: [`engine/sim/actors.test.ts`](../engine/sim/actors.test.ts)
 - [`actorClips.ts`](../engine/sim/actorClips.ts): Clips on actors (PLAN.md §10.4, WP 8.9): the clip layer (engine/anim/clip/layer.ts) in an actor's animator, as sim data.
   - Exports: `addClips`, `clipLayerOf`, `clipsFor`, `ClipsSpec`, `defineClipKinds`, `locomoteClips`, `playClip`, `seekClip`, `stopClip`
   - Tests: [`engine/sim/actorClips.test.ts`](../engine/sim/actorClips.test.ts)
@@ -1511,6 +1541,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`siteNavClear.ts`](../engine/world/siteNavClear.ts): Where on a tile a site's navigation walks a body (PLAN.md WP 13.15, WP 13.18; engine/world/siteNav.ts): its clear point.
   - Exports: `CLEAR_SAMPLES`, `ClearGraph`, `clearOffset`, `ClearOptions`, `clearPoints`
   - Tests: [`engine/world/siteNavClear.test.ts`](../engine/world/siteNavClear.test.ts)
+- [`siteNavGraph.ts`](../engine/world/siteNavGraph.ts): The searches over a site's navigation graph (PLAN.md WP 13.15, WP 13.18; engine/world/siteNav.ts builds it).
+  - Exports: `CROUCH_COST`, `siteNavGraph`
+  - Tests: [`engine/world/siteNav.test.ts`](../engine/world/siteNav.test.ts), [`engine/world/siteNavGraph.test.ts`](../engine/world/siteNavGraph.test.ts)
 - [`siteNavGrids.ts`](../engine/world/siteNavGrids.ts): The grids a site's navigation walks (PLAN.md WP 13.15; engine/world/siteNav.ts).
   - Exports: `blockedSurface`, `CURB`, `NavBlock`, `siteTerrainSurface`, `storeyCeilings`, `storeyLinks`, `storeySurface`, `tileHighs`
   - Tests: [`engine/world/siteNav.test.ts`](../engine/world/siteNav.test.ts), [`engine/world/siteNavGrids.test.ts`](../engine/world/siteNavGrids.test.ts)
@@ -1535,7 +1568,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`things.ts`](../engine/world/things.ts): Things (PLAN.md WP 10.4; doctrine: Common ground): what can be hit, as a range's targets and a ring's dummies are.
   - Exports: `defineThing`, `getThing`, `hitThing`, `stepThing`, `Thing`, `THING_FIELDS`, `THING_KIND_FIELDS`, `thingAt`, `ThingHit`, `thingKind`, `ThingKind`, `ThingOutcome`, `ThingSpec`, `ThingStanding`, `thingState`, `ThingTouch`
   - Tests: [`engine/world/things.test.ts`](../engine/world/things.test.ts)
-- [`tileHeap.ts`](../engine/world/tileHeap.ts): The tile heap (PLAN.md WP 4.3): an indexed binary min-heap of tiles keyed by a typed array, which navigation's searches run on (engine/world/nav.ts: A* and the flow fields' Dijkstra), so a query allocates nothing but its answer.
+- [`tileHeap.ts`](../engine/world/tileHeap.ts): The tile heap (PLAN.md WP 4.3): an indexed binary min-heap of tiles keyed by a typed array, which navigation's searches run on (engine/world/nav.ts: A* and the flow fields' Dijkstra; engine/world/siteNavGraph.ts's floods, a lazy one's paused on a heap of its own), so a query allocates nothing but its answer.
   - Exports: `TileHeap`
   - Tests: [`engine/world/nav.test.ts`](../engine/world/nav.test.ts)
 - [`traverse.ts`](../engine/world/traverse.ts): Traversal as world data (PLAN.md WP 13.7, docs/PLAYGROUND.md §2.3 and §3.2): ziplines, ladders and launchers, the specs a scene places them by (engine/sim/rides.ts's `addZipline`, `addLadder`, `addLauncher`), their checks, and the ladders a level's ladder glyphs stand (`levelLadders`).
@@ -1645,8 +1678,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `loadLibrary`, `loadMannequin`, `registerEdit`
 - [`main.ts`](../labs/box/main.ts): The Stress Box page (labs/box/index.html, PLAN.md §9.0): it imports every module under `labs/box/scenes/`, so a scene added there opens at `?scene=<name>` with no change here, and the box's levels, then starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`room` by default), with the box's replays offered to `?replay=<name>` and the box's touch layout (labs/box/touch.ts: attack, then jump, dash and the bolt) for every scene.
 - [`menu.ts`](../labs/box/menu.ts): The box page's menu for humans (labs/box/index.html): what the box offers and how to play it, as a small HTML/CSS panel in the top-left corner over the game.
-  - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `ControlRow`, `controlRows`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
+  - Exports: `BOX_ACTION_MAP`, `BoxMenuOptions`, `createBoxMenu`, `linkQuery`, `MENU_KEY`, `MENU_SETTINGS`, `MENU_STORAGE_KEY`, `MenuEntry`, `menuShown`, `menuStartsOpen`, `MenuStorage`, `rememberMenu`
   - Tests: [`labs/box/menu.test.ts`](../labs/box/menu.test.ts)
+- [`menuControls.ts`](../labs/box/menuControls.ts): The controls the box page's menu lists (labs/box/menu.ts): a row for each action of an action map, what it does in the box (`Move`, `Jump`, `Attack (shove)`…), its keys and mouse buttons labelled by the engine's `codeLabel` in the reader's keyboard layout (arrows and clicks in words), and its pad buttons, the move row naming the pad and the stick once.
+  - Exports: `ControlRow`, `controlRows`
+  - Tests: [`labs/box/menuControls.test.ts`](../labs/box/menuControls.test.ts)
 - [`touch.ts`](../labs/box/touch.ts): The box's touch layout (PLAN.md WP 3.10, WP 3.12, WP 6.7; ADR-0021: built, not tested): `touchlayout:box`, the buttons a phone or tablet shows over the box page (engine/ui/touch.ts draws them, engine/input/devices/touch.ts reads them).
   - Exports: `BOX_TOUCH`
 
@@ -1875,7 +1911,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`player.ts`](../labs/playground/cast/player.ts): The playground's player (docs/PLAYGROUND.md §3, PLAN.md WP 13.1–13.3): the character the keys move, the body it is drawn as, and `spawnPlayer`, which stands it in a scene.
   - Exports: `APEX_GRAVITY`, `APEX_JUMP`, `APEX_RUN`, `PLAYER_LOOK`, `PLAYER_MOVEMENTS`, `PLAYER_SETTINGS`, `playerCharacter`, `PlayerTuning`, `spawnPlayer`
   - Tests: [`labs/playground/scenes/gym.test.ts`](../labs/playground/scenes/gym.test.ts)
-- [`ways.ts`](../labs/playground/cast/ways.ts): The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the goal lies on another node.
+- [`ways.ts`](../labs/playground/cast/ways.ts): The cast's ways about the block (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): one navigation of the site a world, round its props (engine/world/siteNav.ts `createSiteNav`, engine/sim/propBlocks.ts `propObstacles`), and flow fields over it: `wayTo(w, key, goal)` keeps one a key (a neighbour's stop, the dog's goal), made again only when the goal lies on another node, and lazy: flooded only as far as `direction` reads it, which answers as on a full field (engine/world/siteNavGraph.ts), so the dog following the player across tiles floods a few metres, not the block.
   - Exports: `plainWays`, `replanWays`, `waysOf`, `wayTo`
   - Tests: [`labs/playground/cast/neighbours.test.ts`](../labs/playground/cast/neighbours.test.ts)
 
@@ -2246,6 +2282,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`cmu.ts`](../tools/anim/cmu.ts): The CMU Graphics Lab Motion Capture Database (mocap.cs.cmu.edu), fetched on demand into `.cache/anim/` (PLAN.md §5.3 and §10.3, WP 8.5): about 2,500 takes by 113 subjects, each subject a skeleton (`NN.asf`) and each take a motion (`NN_MM.amc`) at 120 frames a second (some at 60).
   - Exports: `ANIM_CACHE`, `ARCHIVE`, `asfOf`, `CMU_CACHE`, `cmuAll`, `cmuArchive`, `cmuGet`, `cmuIndex`, `IndexedTake`, `parseMotionList`, `SITE`
   - Tests: [`tools/anim/cmu.test.ts`](../tools/anim/cmu.test.ts)
+- [`command.ts`](../tools/anim/command.ts): The shared parts of `node x anim`'s subcommands (tools/cmd/anim.ts, PLAN.md §10, WP 8.5): its flags read (`text`, `list`, `number`), the directory of sets `--sets` names and a set in it, a set's files written or checked (`writeOrCheck`, `--check`: list the files that differ), and `import` (`runImport`: .glb files or the CMU takes into a set, its committed clips re-imported from their source kept).
+  - Exports: `list`, `number`, `runImport`, `setIn`, `setsOf`, `text`, `Values`, `writeOrCheck`
+  - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
 - [`contacts.ts`](../tools/anim/contacts.ts): Contacts and events, detected at import (PLAN.md §10.2, WP 8.8; ADR-0010 amendment 7): when each foot and hand holds the ground or a surface (a clip's `contacts`), and the moments gameplay listens for (its `events`: `step`, `land`, `hit`), read from a capture's 36 body points.
   - Exports: `AIRBORNE`, `CARRY`, `detectContacts`, `FOOT_CLEAR`, `HAND_FLOOR`, `HANG`, `HOLD`, `HOLD_REACH`, `STILL`, `treadmill`
   - Tests: [`tools/anim/contacts.test.ts`](../tools/anim/contacts.test.ts)
@@ -2313,7 +2352,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `default`, `subcommandOf`, `targetOf`
   - Tests: [`tools/cmd/anim.test.ts`](../tools/cmd/anim.test.ts)
 - [`audio.ts`](../tools/cmd/audio.ts): Renders a sound in Node and prints its numbers, or mixes a replay's sound events (PLAN.md §8.1, WP 9.4, I-23).
-  - Exports: `default`, `encodeWav`, `mixSoundEvents`, `Picture`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`, `spectrogram`, `SPECTROGRAM`
+  - Exports: `default`, `encodeWav`, `Picture`, `spectrogram`, `SPECTROGRAM`
   - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`check.ts`](../tools/cmd/check.ts): Runs the repository checks no standard tool covers, last in `npm run check` (PLAN.md §8.1).
   - Exports: `assetRules`, `assetScan`, `binaryKind`, `CheckContext`, `CheckOutcome`, `CheckPlugin`, `default`, `discoverPlugins`, `isLane`, `repositoryFiles`, `runChecks`, `scanAssets`
@@ -2438,8 +2477,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tools/lib
 
-- [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and page errors mapped to `.ts` files and lines through Vite's inline source maps (§8.1, §8.8).
-  - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `describePageError`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `mapPageError`, `mapStack`, `PageError`, `PageWatch`, `parseStack`, `preparePage`, `servedPath`, `SourceFrame`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
+- [`browser.ts`](../tools/lib/browser.ts): Chromium for the tools and the e2e fixture, through Playwright: the launch options `playwright.config.ts` also uses, the init script every page gets before its own scripts run (a virtual clock, seeded randomness and a WebGPU probe), and the console and the page's errors collected, mapped to `.ts` files and lines (tools/lib/pageErrors.ts) (§8.1, §8.8).
+  - Exports: `AdapterRecord`, `browserRuntime`, `cachedChromium`, `CHROMIUM_VERSION`, `chromiumPath`, `ConsoleRecord`, `DEFAULT_CHROMIUM`, `GpuLog`, `initScript`, `launchBrowser`, `launchOptions`, `PageWatch`, `preparePage`, `VIEWPORT`, `VirtualClock`, `WEBGPU_FLAGS`
   - Tests: [`tests/e2e/harness.spec.ts`](../tests/e2e/harness.spec.ts), [`tools/lib/browser.test.ts`](../tools/lib/browser.test.ts)
 - [`ciShards.ts`](../tools/lib/ciShards.ts): How the full run splits T2 over its machines (ADR-0023 amendment 3): by minutes, not by count.
   - Exports: `E2eReport`, `E2eSuite`, `minutesFromReports`, `minutesOf`, `planShards`, `readT2Minutes`, `SPEC_DIR`, `specFiles`, `T2_MINUTES`, `T2Minutes`, `UNMEASURED_MINUTES`, `writeMinutes`
@@ -2507,6 +2546,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
   - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
+- [`pageErrors.ts`](../tools/lib/pageErrors.ts): Page errors mapped to their sources (PLAN.md §8.1, §8.8): a browser's stack parsed into frames (`parseStack`), each mapped to its `.ts` file and line through the inline source map Vite serves with the module (`mapStack`), and an uncaught page error named by its first frame in the repository (`mapPageError`, `describePageError`), as tools/lib/browser.ts's `preparePage` collects them.
+  - Exports: `describePageError`, `mapPageError`, `mapStack`, `PageError`, `parseStack`, `servedPath`, `SourceFrame`
+  - Tests: [`tools/lib/pageErrors.test.ts`](../tools/lib/pageErrors.test.ts)
 - [`perfBudget.ts`](../tools/lib/perfBudget.ts): Performance budgets and their trend (PLAN.md §8.1, §8.7, WPs 1.5 and 5.5), for `x perf` (tools/cmd/perf.ts, whose file comment says how each way measures).
   - Exports: `BUDGET_KEYS`, `BUDGET_SHAPE`, `budgetPath`, `Budgets`, `DEFAULT_STEPS`, `LADDER`, `median`, `PAGE_KEYS`, `PAGE_TIMES`, `PageKey`, `PerfBudget`, `PerfKey`, `readBudget`, `recordTrend`, `regressions`, `Section`, `TREND_FILE`, `TREND_LIMIT`, `Way`, `withinBudget`
   - Tests: [`tools/cmd/perf.test.ts`](../tools/cmd/perf.test.ts)
@@ -2516,6 +2558,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`portVectors.ts`](../tools/lib/portVectors.ts): The port vectors' builders (PLAN.md WP 0.11, §9.0), for `x port refs` (tools/cmd/port.ts, which formats, writes and checks them): `loadEngine` loads `my-3d2dge:engine/my-3d2dge.js` from a checkout into a Node `vm` context (`console` the only shim; `Math.random` the engine's own `rng`, reseeded per record from its id), and each builder records one file's worth of the old engine's outputs: `coreVectors` (`rng`, `hash2`, `noise2`, the angle helpers), `colorVectors`, `humanoidVectors` per build (the state matrix of `STATES` at eight facings, sampled `everyNth`), `moveVectors` (`E.move` in every phase on every build) and `blobScript` (the `BLOB_SCRIPTS`).
   - Exports: `BLOB_SCRIPTS`, `blobScript`, `BUILDS`, `colorVectors`, `coreVectors`, `DT`, `ENGINE`, `everyNth`, `humanoidRun`, `humanoidVectors`, `LoadedEngine`, `loadEngine`, `moveRecord`, `moveVectors`, `SourceEngine`, `STATES`, `STEPS`
   - Tests: [`tools/cmd/port.test.ts`](../tools/cmd/port.test.ts)
+- [`replaySounds.ts`](../tools/lib/replaySounds.ts): A replay's sound events, read and mixed in Node (PLAN.md §8.1, WP 9.4, I-23), for `node x audio --replay` (tools/cmd/audio.ts): `replaySoundEvents` plays a replay step by step through the page's playback, against its goldens, and reads the sounds its scene's `sounds` gives each traced sim event (`{ sfx, vol?, variant? }` or a list: engine/sim/scene.ts), after setup and after each step, as the page reads them, so an event read at step k plays at k / hz seconds; `mixSoundEvents` renders their effects and sums them into one mono mix, unspatialized.
+  - Exports: `mixSoundEvents`, `replaySoundEvents`, `SoundEvent`, `SoundTimeline`
+  - Tests: [`tools/cmd/audio.test.ts`](../tools/cmd/audio.test.ts)
 - [`replayState.ts`](../tools/lib/replayState.ts): The state a replay reaches, for `x replay --state` and `--until n` (tools/cmd/replay.ts; gate G7's review): `writeState(root, file, runtime, until?)` plays a replay file in a runtime (Node's, tools/cmd/sim.ts `nodeRuntime`) to its last step, or to step `until`, and writes the canonical state there and its event trace, as `x sim` writes its own, to `stateFile(file)`: `out/replay/<name>/state.json`, `<name>` the file's without `.replay.json`.
   - Exports: `stateFile`, `writeState`
   - Tests: [`tools/cmd/replay.test.ts`](../tools/cmd/replay.test.ts)

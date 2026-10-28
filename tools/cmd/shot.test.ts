@@ -29,8 +29,8 @@ describe('resolvePage and pageUrl', () => {
 });
 
 describe('--ready-ms', () => {
-  it('is in the usage and the options: a page may take longer than 30 s to signal ready (WP 7.8)', () => {
-    expect(READY_TIMEOUT_MS).toBe(30_000);
+  it('is in the usage and the options: a page has 300 s to signal ready, as x inspect gives it, unless asked (WP 7.8)', () => {
+    expect(READY_TIMEOUT_MS).toBe(300_000);
     expect(shot.usage).toContain('[--ready-ms n]');
     expect(shot.options['ready-ms']).toEqual({ type: 'string' });
   });

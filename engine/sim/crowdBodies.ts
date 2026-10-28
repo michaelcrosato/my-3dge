@@ -41,7 +41,7 @@ import { Blob, type BlobInput, type BlobState } from '../anim/blob';
 import { Floater, type FloaterState } from '../anim/floater';
 import type { GaitProbe } from '../anim/proc/gait';
 import { Quadruped, type QuadrupedState } from '../anim/quadruped';
-import { STEP } from '../anim/humanoid';
+import { STEP } from '../anim/humanoidRates';
 import type { AnimatorInput } from '../anim/states';
 import { codeError } from '../core/log';
 import { Vector3 } from '../core/math';

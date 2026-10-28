@@ -38,7 +38,7 @@ import { basename, join, relative, resolve } from 'node:path';
 import { SIM_MATH_NAMES, type SimMathName } from '../../engine/core/simMath';
 import { checkReplay, firstDifference, judgeRuns, partingOf, type Parting, type Replay } from '../../engine/sim/replay';
 import { componentTable, hashState } from '../../engine/sim/state';
-import { describePageError } from '../lib/browser';
+import { describePageError } from '../lib/pageErrors';
 import { replayBrowser, type BrowserMode } from '../lib/page';
 import { stateFile, writeState } from '../lib/replayState';
 import { walk } from '../lib/docs';

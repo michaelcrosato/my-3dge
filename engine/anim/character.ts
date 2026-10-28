@@ -43,7 +43,7 @@ import { fru, type LimbSide } from './authoring';
 import { forwardKinematics, jointPosition, jointRotation, socketPosition } from './fk';
 import { Humanoid, type HumanoidOptions, type HumanoidState } from './humanoid';
 import { blendPoses, Pose } from './pose';
-import { WEAPONS, type Weapon } from './poses';
+import { WEAPONS, type Weapon } from './poseNames';
 import { JOINTS, SOCKETS, type SocketName } from './skeleton';
 import { checkBodyStates, TRAILS, type AnimatorInput, type TrailName } from './states';
 import { activeWeights, LAYER_SLOTS, LOD, SLOTS, type AnimLayer, type LayerSlot, type SlotName } from './weights';
