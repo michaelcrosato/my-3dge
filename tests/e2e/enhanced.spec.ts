@@ -19,7 +19,9 @@
  * 4. the shading page (tests/pages/shading.html), for what the box cannot show: reflections change the steel ball and
  *    plate, through either lens, and no pixel outside them; the air's shafts and halos each add light, and the sun's
  *    shadow map cuts the shafts (in a low mist they add half as much light over floor in a pillar's shadow as beside
- *    it); at the `medium` tier bounce light and shafts draw nothing, and the look is told once (`GFX_POST_TIER`).
+ *    it); at the `medium` tier bounce light and shafts draw nothing, and the look is told once (`GFX_POST_TIER`); and
+ *    with its sun casting through three cascades (`shading.cascades`), the widest one's map, which the air reads, cuts
+ *    the shafts as the one map does.
  * That a feature off never changes play is tests/e2e/features.spec.ts's for every feature; each one's cost is
  * `x perf --feature` (the WP's ledger row).
  *
@@ -38,6 +40,7 @@ declare const __engine: Record<string, (...args: unknown[]) => unknown> & {
   camera: { set(code: string): unknown };
   metal(): [number, number, number, number][];
   shadow(): { shade: [number, number][]; sun: [number, number][] };
+  cascades(): number;
 };
 
 /** What a frame gives the spec: its look metrics, the share of pixels lit past luma 60, and the entities seen. */
@@ -338,6 +341,29 @@ test('the shading page: reflections on the steel alone, shafts and halos in the 
   expect(changed(base.rgba, (await shade(page, 'perspective', SECTIONS.gi)).rgba)).toBe(0);
   expect(changed(clear.rgba, (await air(2.4, 0)).rgba)).toBe(0);
   expect(harness.advice().map((advice) => advice.code)).toEqual(['GFX_POST_TIER', 'GFX_POST_TIER']);
+});
+
+test('the shafts under a cascaded sun: the air reads its widest cascade, and the pillar still cuts them', async ({
+  page,
+  harness,
+}) => {
+  await page.goto('tests/pages/shading.html?shading.cascades=true');
+  await harness.ready({ timeout: 120_000 });
+  await harness.assertWebGPU();
+  // As the shading page's own test above, with the sun casting through cascades (engine/gfx/enhanced/air.ts reads the
+  // widest one's map, engine/gfx/enhanced/csm.ts): the shafts in a low mist add less light over the floor in
+  // pillar/north's shadow than beside it in the sun (measured 0.035 against 0.073, as with one map; reading the
+  // cascades nearest first instead gave 0.037, no better, so the air keeps its one map).
+  const mist = (shafts: number) => shade(page, 'perspective', { air: { scope: 'all', haze: 1.4, height: 0.6, shafts, halos: 0 } }); // prettier-ignore
+  const [still, lit] = [await mist(0), await mist(2.4)];
+  expect(await page.evaluate(() => __engine.cascades())).toBe(3);
+  const regions = await page.evaluate(() => __engine.shadow());
+  const [inShade, inSun] = [regions.shade, regions.sun].map((patch) => addedIn(patch, still, lit));
+  console.log(`light shafts under cascades, linear luminance added over the floor in shade and in sun: ${JSON.stringify([inShade, inSun])}`); // prettier-ignore
+  expect(lit.lumaMean).toBeGreaterThan(still.lumaMean);
+  expect(inSun).toBeGreaterThan(0.03);
+  expect(inShade).toBeLessThan(inSun * 0.7);
+  expect(harness.advice()).toEqual([]);
 });
 
 /** The hall as the lights page draws it (tests/pages/lights.ts), its pool of 12, the camera on the dais. */
