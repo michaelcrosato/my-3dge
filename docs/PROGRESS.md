@@ -21,8 +21,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain, cel and pixel looks); Watch the tour plays it all.
   Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Vercel on again; the site opens the playground.
-- Tidied after G13 (ADR-0025 amendment 45): the cast floods its ways lazily, the cap's 15 files split, the box's sounds
-  where their events say, `x shot`/`x film` on the playground, the box room's page budget re-recorded and held.
+- Tidied after G13 (ADR-0025 amendment 45): lazy floods for the cast, the cap's 15 files split, the box's sounds placed,
+  `x shot`/`x film` on the playground, the box room's budget, the feel kit posing as the page, cascaded shafts tested.
 
 ## What waits, and the open issues
 
@@ -33,8 +33,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   look's glide, a desktop MCP client.
 - Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
 - Near the size cap (392–394 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
-  tools/cmd/replay.ts; four tests at 399–400. The feel kit poses apart from the page: share one.
+  tools/cmd/replay.ts; four tests at 399–400.
 - The quick gate is over its 5 min (CI_BUDGET), its long pole the playground's soak and site tests; under load
   `npm test` can fail on RPC timeouts; audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba).
 - The tour's page goldens come from its spec (amendment 41). Random play lost the shooter's chest in 4–5% of frames
-  (before WP 13.27). Untested: shafts in cascades.
+  (before WP 13.27).
