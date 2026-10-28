@@ -6,8 +6,8 @@
  *   the shadow map and the ID pass each hold one) and syncs the copy's version in its node update, which runs after
  *   the renderer uploads the object's buffers: a change after a quiet frame shows one frame late, and a pass drawn
  *   now and then (a shot's ID pass) shows the change before (tests/e2e/instancing.spec.ts). Importing this module
- *   moves the sync before the upload (`syncBeforeUpload`: an `updateBefore` running the node's own update, once per
- *   render). On a release other than r182 it changes nothing, and `createInstancedBatch` advises
+ *   moves the sync before the upload (`syncBeforeUpload`, engine/gfx/instanceSync.ts: an `updateBefore` running the
+ *   node's own update, once per render). On a release other than r182 it changes nothing, and `createInstancedBatch` advises
  *   `GFX_INSTANCING_UNPINNED` once (r185's rewrite syncs every frame).
  * - **The uniform-buffer limit.** Up to 1,000 slots, r182 reads the matrices from a uniform buffer sized by the
  *   capacity (WebGPU's 64 KiB binding), compiling a shader per mesh (`instancePath`); above, from an instanced
@@ -43,15 +43,14 @@ import {
   Group,
   InstancedBufferAttribute,
   InstancedMesh,
-  InstanceNode,
-  REVISION,
   type Material,
   type Matrix4,
 } from 'three/webgpu';
-import { NodeUpdateType } from 'three/tsl';
 import { codeError, defineCodes, log as sharedLog, type Log } from '../core/log';
-import { PINNED_REVISION } from './pipelines';
+import { INSTANCE_SYNC } from './instanceSync';
 import type { Warmup } from './warmup';
+
+export { INSTANCE_SYNC, syncBeforeUpload } from './instanceSync';
 
 /** The codes the instancing service raises, with their fixes. */
 export const INSTANCING_CODES = defineCodes('gfx', {
@@ -67,7 +66,7 @@ export const INSTANCING_CODES = defineCodes('gfx', {
   },
   GFX_INSTANCING_UNPINNED: {
     template: 'the instancing service did not move the instance sync before the upload: {problems}',
-    fix: "instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instancing.ts (PINNED_REVISION in engine/gfx/pipelines.ts)",
+    fix: "instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instanceSync.ts (PINNED_REVISION in engine/gfx/pipelines.ts)",
     doc: "Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.js is not r182 or its `InstanceNode` lacks the `update`/`getUpdateBeforeType` the fix wraps: r182 uploads an instance change one render late, and the service's fix was not applied (r185's rewrite syncs every frame, which also fixes it).",
   },
   GFX_INSTANCE_SLOT: {
@@ -87,46 +86,6 @@ export const PAGE_SLOTS = 1024;
 export function instancePath(slots: number): 'uniform' | 'attribute' {
   return slots <= UNIFORM_INSTANCE_LIMIT ? 'uniform' : 'attribute';
 }
-
-/** The part of r182's `InstanceNode` the sync fix wraps. */
-interface InstanceNodeShape {
-  update(frame: unknown): void;
-  updateBefore(frame: unknown): void;
-  getUpdateBeforeType(): string;
-  [SYNCED]?: true;
-}
-
-/** Marks an `InstanceNode` prototype as wrapped, so a second import or call changes nothing. */
-const SYNCED = Symbol('my3dge.instanceSync');
-
-/**
- * Makes r182's `InstanceNode` sync its buffers' versions before the renderer uploads them (see the file comment):
- * every instance node gets an `updateBefore` that runs its own `update` once per render. Returns whether it did,
- * and if not why: another release, or a node class without the methods r182's has.
- */
-export function syncBeforeUpload(
-  node: { prototype: object } | undefined = InstanceNode,
-  revision: string = REVISION,
-): { patched: boolean; problems: string[] } {
-  const proto = node?.prototype as InstanceNodeShape | undefined;
-  const problems: string[] = [];
-  if (revision !== PINNED_REVISION)
-    problems.push(`three.js is r${revision}, the fix wraps r${PINNED_REVISION}'s InstanceNode`);
-  if (typeof proto?.update !== 'function' || typeof proto.getUpdateBeforeType !== 'function') {
-    problems.push('InstanceNode has no update() and getUpdateBeforeType() to wrap');
-  }
-  if (problems.length || !proto) return { patched: false, problems };
-  if (proto[SYNCED]) return { patched: true, problems };
-  proto.getUpdateBeforeType = () => NodeUpdateType.RENDER;
-  proto.updateBefore = function (this: InstanceNodeShape, frame: unknown) {
-    this.update(frame);
-  };
-  proto[SYNCED] = true;
-  return { patched: true, problems };
-}
-
-/** What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`): `patched` is true on r182. */
-export const INSTANCE_SYNC = syncBeforeUpload();
 
 /** A colour: three.js's `Color` (linear `r`, `g`, `b`) or linear `[r, g, b]`. */
 export type InstanceColor = { r: number; g: number; b: number } | ArrayLike<number>;

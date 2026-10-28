@@ -799,7 +799,7 @@ Recorded from the device's `uncapturederror` event (engine/gfx/renderer.ts): a v
 
 - Message: `instanced batch {name}: {problem}`
 - Fix: name per-instance attributes in the attributes option with an item size of 1 to 4, not instanceMatrix, instanceColor or an attribute the geometry has ({names})
-- Registered in: [`engine/gfx/instancing.ts` line 63](../engine/gfx/instancing.ts)
+- Registered in: [`engine/gfx/instancing.ts` line 62](../engine/gfx/instancing.ts)
 
 Raised by `createInstancedBatch` and `setAttributeAt` (engine/gfx/instancing.ts) for a per-instance attribute with an item size outside 1–4, one named like an attribute the geometry has or like `instanceMatrix`/`instanceColor`, or one the batch was not made with.
 
@@ -807,7 +807,7 @@ Raised by `createInstancedBatch` and `setAttributeAt` (engine/gfx/instancing.ts)
 
 - Message: `instanced batch {name} asks for pages of {slots} slots`
 - Fix: give pageSlots a whole number above 1000 (1024 by default): at 1,000 or fewer, r182 keeps the matrices in a uniform buffer and compiles a shader for every page
-- Registered in: [`engine/gfx/instancing.ts` line 58](../engine/gfx/instancing.ts)
+- Registered in: [`engine/gfx/instancing.ts` line 57](../engine/gfx/instancing.ts)
 
 Raised by `createInstancedBatch` (engine/gfx/instancing.ts) for a page size of 1,000 slots or fewer, or not a whole number. r182 puts up to 1,000 instance matrices in a uniform buffer sized by the mesh, so each such page would build pipelines of its own; above 1,000 every page shares one shader (PLAN.md §4.7).
 
@@ -815,15 +815,15 @@ Raised by `createInstancedBatch` (engine/gfx/instancing.ts) for a page size of 1
 
 - Message: `instanced batch {name} has no slot {slot}`
 - Fix: pass a whole slot number of at least 0; slots above the capacity add pages, so only negative or fractional slots fail
-- Registered in: [`engine/gfx/instancing.ts` line 73](../engine/gfx/instancing.ts)
+- Registered in: [`engine/gfx/instancing.ts` line 72](../engine/gfx/instancing.ts)
 
 Raised by the slot methods of an instanced batch (engine/gfx/instancing.ts) for a slot that is negative, fractional or not a number.
 
 ### GFX_INSTANCING_UNPINNED
 
 - Message: `the instancing service did not move the instance sync before the upload: {problems}`
-- Fix: instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instancing.ts (PINNED_REVISION in engine/gfx/pipelines.ts)
-- Registered in: [`engine/gfx/instancing.ts` line 68](../engine/gfx/instancing.ts)
+- Fix: instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instanceSync.ts (PINNED_REVISION in engine/gfx/pipelines.ts)
+- Registered in: [`engine/gfx/instancing.ts` line 67](../engine/gfx/instancing.ts)
 
 Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.js is not r182 or its `InstanceNode` lacks the `update`/`getUpdateBeforeType` the fix wraps: r182 uploads an instance change one render late, and the service's fix was not applied (r185's rewrite syncs every frame, which also fixes it).
 

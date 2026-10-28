@@ -10364,29 +10364,7 @@ function iU(e) {
     for (const { type: c, ...l } of a) e.emit("clip", { id: n, type: c, ...l });
   }
 }
-function aU(e, t) {
-  if (e.player) return t;
-  const n = Mu(e.intents, Mu({ b: e.held })), { p: s, ...o } = e.intents;
-  return [e.held, e.intents] = [[...n.b ?? []], o], n;
-}
-function cU(e, t, n, s = !1, o = !1, r = !1) {
-  const [i, , a] = t.aim ?? [], l = i !== void 0 && Math.hypot(i - e.x, a - e.z) > 0.05 ? Math.atan2(i - e.x, a - e.z) : t.look?.[0], u = t.cam ?? t.look?.[0], d = e.player && n.toggleCrouch;
-  return {
-    sprint: wr(t, "sprint"),
-    sprintPressed: Xt(t, "sprint"),
-    ...e.player && n.holdSprint ? { sprintHold: !0 } : {},
-    walk: wr(t, "walk") || r,
-    crouch: !d && wr(t, "crouch"),
-    crouchToggle: Xt(t, "crouchToggle") || d && Xt(t, "crouch"),
-    usePressed: Xt(t, "interact") && !s,
-    // a use took the press (engine/sim/interact.ts): no ride
-    ...t.look ? { view: t.look[0], pitch: t.look[1] } : {},
-    ...u !== void 0 ? { frame: u } : {},
-    ...l !== void 0 ? { face: l } : {},
-    ...o ? { swinging: o } : {}
-  };
-}
-const co = { out: 0.2, pivot: 0.55, arm: K2, leg: 0.75 }, Ax = { forward: [1, 0, 0], back: [-1, 0, 0], left: [0, 0, -1], right: [0, 0, 1], spin: [0, 1, 0] }, X5 = ["handL", "handR", "footL", "footR", "look"], Jc = (e) => ({ type: "array", items: { type: "number" }, unit: "m", description: e }), oa = (e) => ({ type: "boolean", description: e }), c1 = (e) => ({ type: "number", minimum: 0, maximum: 1, default: 0, description: e }), Wd = (e, t) => ({ type: "number", default: 0, unit: t, description: e }), ai = (e) => ({ type: "number", minimum: 0, unit: "s", description: e }), lU = {
+const co = { out: 0.2, pivot: 0.55, arm: K2, leg: 0.75 }, Ax = { forward: [1, 0, 0], back: [-1, 0, 0], left: [0, 0, -1], right: [0, 0, 1], spin: [0, 1, 0] }, X5 = ["handL", "handR", "footL", "footR", "look"], Jc = (e) => ({ type: "array", items: { type: "number" }, unit: "m", description: e }), oa = (e) => ({ type: "boolean", description: e }), c1 = (e) => ({ type: "number", minimum: 0, maximum: 1, default: 0, description: e }), Wd = (e, t) => ({ type: "number", default: 0, unit: t, description: e }), ai = (e) => ({ type: "number", minimum: 0, unit: "s", description: e }), aU = {
   name: { type: "string", required: !0, description: "Its name, fired as an event as it begins; `go` takes it." },
   seconds: { ...ai("How long it lasts; held until next, how long its channels take to reach their targets."), required: !0 },
   until: { type: "string", enum: ["time", "next"], default: "time", description: "Ends after its seconds, or holds until next() or go()." },
@@ -10442,7 +10420,7 @@ const co = { out: 0.2, pivot: 0.55, arm: K2, leg: 0.75 }, Ax = { forward: [1, 0,
   flags: { type: "array", items: { type: "string" }, default: [], description: "Flags it raises (invulnerable)." }
 }, i6 = {
   desc: { type: "string", required: !0, description: "What it is and where its timing comes from." },
-  beats: { type: "array", required: !0, items: { type: "object", properties: lU }, description: "Its beats." },
+  beats: { type: "array", required: !0, items: { type: "object", properties: aU }, description: "Its beats." },
   exit: { type: "string", default: "", description: 'The beat finish() goes to ("": it stops).' },
   pair: { type: "string", default: "", description: "The partner's action, played in lockstep (a grab's victim)." },
   check: { type: "object", default: { seconds: 0, signals: [], lift: [] }, description: "How the anim QA plays it (actionCheck).", properties: {
@@ -10462,7 +10440,7 @@ const co = { out: 0.2, pivot: 0.55, arm: K2, leg: 0.75 }, Ax = { forward: [1, 0,
     }
   } }
 };
-function uU(e) {
+function cU(e) {
   const t = [], n = e.beats.map((r) => r.name), s = (r, i, a = n) => r && !a.includes(r) && t.push(`${i} ${JSON.stringify(r)} is unknown${ue(r, a)}`);
   n.length || t.push("it has no beats"), n.forEach((r, i) => n.indexOf(r) < i && t.push(`two beats are named ${JSON.stringify(r)}`)), e.beats.forEach((r) => {
     s(r.then, `beat ${r.name}'s then`), r.move && r.motion && t.push(`beat ${r.name} has a move and a motion: a move brings its own`);
@@ -10477,11 +10455,11 @@ function Xp(e) {
     description: "A multi-beat sequence played on a body: beats of body states, clips, IK targets, flips and events. The engine's set is data/anim/actions/, one file each (loadActions).",
     fields: i6,
     defineWith: "defineAction('<id>', { desc, beats: [{ name, seconds, … }] })",
-    check: (t) => uU(t)
+    check: (t) => cU(t)
   });
 }
 Xp(B);
-function dU(e, t, n = B) {
+function lU(e, t, n = B) {
   return Xp(n), n.def("action", e, t);
 }
 function Xh(e, t = B) {
@@ -10493,7 +10471,7 @@ function v0e(e, t = B) {
     if (typeof s != "string" || !s)
       throw D("CORE_BAD_SPEC", { where: r, problems: 'no "action" name' });
     const i = `action:${s}`, a = t.has("action", i) ? t.get("action", i) : void 0;
-    return a && ((l) => Object.entries(l).every(([u, d]) => Ao(d, a?.[u])))(Dz(i6, o).value) ? a : dU(i, o, t);
+    return a && ((l) => Object.entries(l).every(([u, d]) => Ao(d, a?.[u])))(Dz(i6, o).value) ? a : lU(i, o, t);
   });
 }
 const Jn = 1e-9;
@@ -10592,7 +10570,7 @@ J("anim", {
     doc: "Thrown by `Actions.play` (engine/anim/actions.ts) for an action with a `clip` beat when the player was made without `clips`: the beat would play nothing, silently."
   }
 });
-const sn = { motion: 0, effectors: 5, flip: 25, scale: 27, count: 30 }, l1 = ["lean", "lunge", "hop", "crouch", "twist"], Y5 = Object.keys(Ax), J5 = (e) => G.smoothstep(e, 0, 1), rv = 2 * Math.PI, hU = (e) => e - rv * Math.ceil((e - Math.PI) / rv), [rr, u1, d1, fU] = [new R(), new R(), new R(), new R()], [h1, Q5] = [new Q(), new ht()], pU = { handL: ws("armL"), handR: ws("armR"), footL: ws("legL"), footR: ws("legR"), look: ws(["chest", "neck", "head"]) };
+const sn = { motion: 0, effectors: 5, flip: 25, scale: 27, count: 30 }, l1 = ["lean", "lunge", "hop", "crouch", "twist"], Y5 = Object.keys(Ax), J5 = (e) => G.smoothstep(e, 0, 1), rv = 2 * Math.PI, uU = (e) => e - rv * Math.ceil((e - Math.PI) / rv), [rr, u1, d1, dU] = [new R(), new R(), new R(), new R()], [h1, Q5] = [new Q(), new ht()], hU = { handL: ws("armL"), handR: ws("armR"), footL: ws("legL"), footR: ws("legR"), look: ws(["chest", "neck", "head"]) };
 function f1(e, t) {
   let n = 1 / 0;
   for (let s = 0; s < fe; s++) n = Math.min(n, t.positions[s * 3 + 1], Es(e, t, s, rr).y);
@@ -10737,7 +10715,7 @@ class Yp {
         const p = d1.fromArray(r.socketOffsets, Us(l === "footL" ? "contactL" : "contactR") * 3);
         zs(r, s, o, l, rr, { offset: p });
       }
-      rd(Q5, s, h, s, { mask: pU[l] }), Oe(r, s, o);
+      rd(Q5, s, h, s, { mask: hU[l] }), Oe(r, s, o);
     });
   }
   /** What plays, as plain JSON. */
@@ -10761,7 +10739,7 @@ class Yp {
   /** Begins beat `index` of `action` (−1, or no action: rest), `late` seconds before the step's end. */
   #i(t, n, s) {
     const o = this.state, r = this.#s()?.name ?? "";
-    o.from = this.channels(), o.from[sn.flip] = hU(o.from[sn.flip]);
+    o.from = this.channels(), o.from[sn.flip] = uU(o.from[sn.flip]);
     const i = t?.beats[n];
     if ([this.#t, o.playing, o.beat, o.t] = i ? [t, t.id, n, 0] : [void 0, "", -1, 0], !i)
       return t && r && this.events.push({ type: "end", phase: r, late: s }), this.#a(), -1;
@@ -10780,7 +10758,7 @@ class Yp {
   }
   /** `flipLayer`: squashes the body keeping its lowest point, turns it about its pivot, rolls it on the ground. */
   #c(t) {
-    const n = this.channels(), { pose: s, world: o, skeleton: r, build: i, position: a, yaw: c } = t.body, [l, u] = [n[sn.flip], Ax[Y5[n[sn.flip + 1]] ?? "forward"]], d = fU.fromArray(n, sn.scale), h = !d.equals(u1.set(1, 1, 1)), f = this.#s()?.flip?.ground;
+    const n = this.channels(), { pose: s, world: o, skeleton: r, build: i, position: a, yaw: c } = t.body, [l, u] = [n[sn.flip], Ax[Y5[n[sn.flip + 1]] ?? "forward"]], d = dU.fromArray(n, sn.scale), h = !d.equals(u1.set(1, 1, 1)), f = this.#s()?.flip?.ground;
     if (!h && Math.abs(l) < 1e-9 && !f) return;
     if (h) {
       const g = f1(r, o);
@@ -10797,7 +10775,7 @@ J("sim", {
     doc: "Raised by `actOn` (engine/sim/actorActions.ts) when an action with a `clip` beat is played on an actor without the component `clips`: the beat would play nothing."
   }
 });
-const iv = new Yp().save(), mU = Me({
+const iv = new Yp().save(), fU = Me({
   playing: { type: "string", default: "", description: "The action playing, by id (`action:roll`); empty when none." },
   beat: { type: "integer", default: -1, minimum: -1, description: "Its beat’s index; −1 at rest." },
   t: {
@@ -10816,7 +10794,7 @@ const iv = new Yp().save(), mU = Me({
 });
 function c6(e = B) {
   if (e.kinds().includes("component") && e.has("component", "actions")) return;
-  qe("actions", { description: "An actor’s actions (engine/anim/actions.ts): the one playing, its beat and its channels.", fields: mU }, e);
+  qe("actions", { description: "An actor’s actions (engine/anim/actions.ts): the one playing, its beat and its channels.", fields: fU }, e);
 }
 c6();
 function l6(e, t, n) {
@@ -10842,7 +10820,7 @@ function x0e(e, t, n) {
   for (const { type: l, ...u } of r.events) s.emit("action", { id: t, type: l, ...u });
   return o.actions;
 }
-function gU(e, t, n) {
+function pU(e, t, n) {
   const s = n.actions;
   if (!s || s.playing === "" && s.t >= co.out) return {};
   const o = l6(e, t, n).load(s), r = o.step();
@@ -10879,9 +10857,9 @@ const gn = {
   ],
   getUpBack: [{ name: "sitUp", duration: 0.25, content: { down: 0.5, pose: "crouch" } }, ...Z5],
   getUpFront: [{ name: "pushUp", duration: 0.3, content: { down: 0.5, pose: "cast" } }, ...Z5]
-}, [e_, d6, yU] = [new R(0, 1, 0), new R(1, 0, 0), new R(0, 0, 1)], wU = Object.freeze({}), [bU, vU] = [new Q(), new Q().setFromAxisAngle(d6, Math.PI / 2)], [h6, t_] = [new R(), new R()], [p1, m1, g1, xU] = [new Q(), new Q(), new Q(), new Q()];
+}, [e_, d6, mU] = [new R(0, 1, 0), new R(1, 0, 0), new R(0, 0, 1)], gU = Object.freeze({}), [yU, wU] = [new Q(), new Q().setFromAxisAngle(d6, Math.PI / 2)], [h6, t_] = [new R(), new R()], [p1, m1, g1, bU] = [new Q(), new Q(), new Q(), new Q()];
 function f6(e) {
-  return h6.copy(yU).applyQuaternion(e).y >= 0 ? "up" : "down";
+  return h6.copy(mU).applyQuaternion(e).y >= 0 ? "up" : "down";
 }
 const n_ = (e, t) => e.x * Math.sin(t) + e.z * Math.cos(t) > 0;
 class Jp {
@@ -10925,7 +10903,7 @@ class Jp {
   }
   /** The body states the phase playing tells the humanoid: lay them over the animator's input. */
   get body() {
-    return this.#n?.current?.content ?? wU;
+    return this.#n?.current?.content ?? gU;
   }
   /** A hit travelling along `direction` (world) on a body facing `yaw`, `strength` about 1: a flinch along it. */
   hit(t, n, s = 1) {
@@ -10976,7 +10954,7 @@ class Jp {
     const { side: n, forward: s } = this.flinch;
     if (n === 0 && s === 0) return;
     const o = t.body.pose, r = h6.set(-n, 1, s).normalize(), i = p1.identity().slerp(m1.setFromUnitVectors(e_, r), 1 / gn.spine.length), a = o.getRotation("pelvis", m1), c = (u, d) => {
-      const h = o.getRotation(u, g1), f = xU.copy(a).invert().multiply(d).multiply(a).multiply(h);
+      const h = o.getRotation(u, g1), f = bU.copy(a).invert().multiply(d).multiply(a).multiply(h);
       o.setRotation(u, f), a.multiply(f);
     };
     for (const u of gn.spine) c(u, i);
@@ -11010,12 +10988,12 @@ class Jp {
     const c = ve(-s * Qa.shift * (r.hipHeight + r.torso), 0, s * Qa.lift, t_).multiplyScalar(r.size);
     o.rootPos.copy(n.rootOffset).applyQuaternion(a).add(c).applyQuaternion(i).add(n.position);
     for (const l of ["thighL", "shinL", "thighR", "shinR"])
-      o.setRotation(l, o.getRotation(l, g1).slerp(bU, s));
+      o.setRotation(l, o.getRotation(l, g1).slerp(yU, s));
     for (const l of ["footL", "footR"])
-      o.setRotation(l, o.getRotation(l, g1).slerp(vU, s));
+      o.setRotation(l, o.getRotation(l, g1).slerp(wU, s));
   }
 }
-const y1 = new Jp().save(), kU = Me({
+const y1 = new Jp().save(), vU = Me({
   flinch: {
     type: "array",
     items: { type: "number" },
@@ -11046,7 +11024,7 @@ const y1 = new Jp().save(), kU = Me({
     default: y1.timeline,
     description: "The phase playing (−1: none) and the seconds into it."
   }
-}), MU = Me({
+}), xU = Me({
   hair: {
     type: "string",
     enum: ["", "long", "ponytail"],
@@ -11059,13 +11037,13 @@ const y1 = new Jp().save(), kU = Me({
 });
 function p6(e = B) {
   if (e.kinds().includes("component") && e.has("component", "reactions")) return;
-  qe("reactions", { description: "A body’s reactions (engine/anim/reactions.ts): its flinch, and the knockdown, death or get-up playing.", fields: kU }, e), qe("secondary", { description: "The secondary motion (hair, a cape, a tail) the view hangs on an actor’s puppet, and its colour.", fields: MU }, e);
+  qe("reactions", { description: "A body’s reactions (engine/anim/reactions.ts): its flinch, and the knockdown, death or get-up playing.", fields: vU }, e), qe("secondary", { description: "The secondary motion (hair, a cape, a tail) the view hangs on an actor’s puppet, and its colour.", fields: xU }, e);
 }
 p6();
 const s_ = /* @__PURE__ */ new Map(), m6 = (e) => {
   let t = s_.get(e);
   return t || s_.set(e, t = new Jp({ dt: e })), t;
-}, AU = Object.freeze({});
+}, kU = Object.freeze({});
 function cv(e, t, n) {
   const s = e;
   if (!s.has(t))
@@ -11073,11 +11051,58 @@ function cv(e, t, n) {
   const o = s.get(t)?.reactions ?? s.add(t, "reactions"), r = m6(s.dt).load(o);
   return n(r), Object.assign(o, r.save());
 }
-function SU(e, t = ss) {
+function MU(e, t = ss) {
   const [n, s, o, r] = e.flinch;
-  if (e.playing === "" && n === 0 && s === 0 && o === 0 && r === 0) return AU;
+  if (e.playing === "" && n === 0 && s === 0 && o === 0 && r === 0) return kU;
   const i = m6(t).load(e);
   return i.step(), Object.assign(e, i.save()), i.body;
+}
+const o_ = /* @__PURE__ */ new WeakMap(), [r_, AU] = [new R(), new R()];
+function g6(e) {
+  const t = o_.get(e) ?? new Wi();
+  return o_.set(e, t), t.prune((s) => e.has(s)), [e.query("actor", "animator"), t];
+}
+function SU(e) {
+  const [t, n] = g6(e);
+  for (const s of t) {
+    const { id: o, actor: r, animator: i, reactions: a, motion: c } = s, l = e.rng.entity(o, "anim");
+    i.started || ([i.state.clock, i.started] = [l.next() * Ce.clockSpread, !0]);
+    const u = n.get(o, i, { rng: l, dt: e.dt });
+    r_.set(r.vx, r.vy, r.vz);
+    const h = { ...a ? { ...i.states, ...MU(a, e.dt) } : i.states, ...pU(e, o, s) }, f = c?.duck === "ducking" || c?.duck === "ducked", p = h.pose ?? (f ? "crouch" : void 0);
+    u.step({ ...h, pose: p, velocity: r_, yaw: r.yaw, air: !r.grounded, dash: r.dash > 0 }).save(i);
+    const [m, g] = [[r.x, r.y, r.z], c?.gait];
+    for (const { type: y, ...w } of u.events) e.emit(y, { id: o, ...w, at: m, ...g ? { gait: g } : {} });
+  }
+}
+function _U(e) {
+  const [t, n] = g6(e);
+  for (const { id: s, actor: o, animator: r } of t) {
+    if (!r.preciseHits) continue;
+    n.get(s, r, { rng: e.rng.entity(s, "anim"), dt: e.dt }).pose({ at: AU.set(o.x, o.y, o.z), yaw: o.yaw }).save(r);
+  }
+}
+function OU(e, t) {
+  if (e.player) return t;
+  const n = Mu(e.intents, Mu({ b: e.held })), { p: s, ...o } = e.intents;
+  return [e.held, e.intents] = [[...n.b ?? []], o], n;
+}
+function $U(e, t, n, s = !1, o = !1, r = !1) {
+  const [i, , a] = t.aim ?? [], l = i !== void 0 && Math.hypot(i - e.x, a - e.z) > 0.05 ? Math.atan2(i - e.x, a - e.z) : t.look?.[0], u = t.cam ?? t.look?.[0], d = e.player && n.toggleCrouch;
+  return {
+    sprint: wr(t, "sprint"),
+    sprintPressed: Xt(t, "sprint"),
+    ...e.player && n.holdSprint ? { sprintHold: !0 } : {},
+    walk: wr(t, "walk") || r,
+    crouch: !d && wr(t, "crouch"),
+    crouchToggle: Xt(t, "crouchToggle") || d && Xt(t, "crouch"),
+    usePressed: Xt(t, "interact") && !s,
+    // a use took the press (engine/sim/interact.ts): no ride
+    ...t.look ? { view: t.look[0], pitch: t.look[1] } : {},
+    ...u !== void 0 ? { frame: u } : {},
+    ...l !== void 0 ? { face: l } : {},
+    ...o ? { swinging: o } : {}
+  };
 }
 const kc = (e, t) => e < t ? -1 : e > t ? 1 : 0;
 function Ar(e) {
@@ -11105,7 +11130,7 @@ function Mc(e, t, n) {
     }
   return r;
 }
-const _U = [
+const EU = [
   [1, 0],
   [-1, 0],
   [0, 1],
@@ -11121,7 +11146,7 @@ function Vi(e, t, n, s = () => !0) {
     for (o[a] = u, i.push(a); i.length; ) {
       const g = i.pop(), y = g % e, w = (g - y) / e;
       m++, d = Math.min(d, y), f = Math.max(f, y), h = Math.min(h, w), p = Math.max(p, w);
-      for (const [v, b] of _U) {
+      for (const [v, b] of EU) {
         const x = y + v, k = w + b;
         if (x < 0 || k < 0 || x >= e || k >= t) continue;
         const A = k * e + x;
@@ -11132,8 +11157,8 @@ function Vi(e, t, n, s = () => !0) {
   }
   return { blocks: r, blockOf: o };
 }
-const g6 = ["north", "south", "west", "east"], y6 = (e, t, n) => Math.min(n, Math.max(t, e));
-function w6(e, t, n, s) {
+const y6 = ["north", "south", "west", "east"], w6 = (e, t, n) => Math.min(n, Math.max(t, e));
+function b6(e, t, n, s) {
   const [o, r, i, a] = e, c = [];
   if (t === "north" || t === "south") {
     const l = t === "north" ? r - 1 : a + 1;
@@ -11144,8 +11169,8 @@ function w6(e, t, n, s) {
   }
   return c;
 }
-const OU = (e) => `${e[2] - e[0] + 1} × ${e[3] - e[1] + 1} tiles`;
-function b6(e, t) {
+const zU = (e) => `${e[2] - e[0] + 1} × ${e[3] - e[1] + 1} tiles`;
+function v6(e, t) {
   const n = [], s = [];
   for (const o of Ar(e).filter((r) => r.floorShape === "ramp")) {
     const [r, i] = [o.floor, o.top], a = (c, l) => {
@@ -11159,7 +11184,7 @@ function b6(e, t) {
         s.push({ shape: "ramp", glyph: o, first: c, why: m });
         continue;
       }
-      const f = g6.filter((m) => w6(l, m, e.cols, e.rows).some(([g, y]) => a(g, y)));
+      const f = y6.filter((m) => b6(l, m, e.cols, e.rows).some(([g, y]) => a(g, y)));
       if (f.length === 1) {
         n.push({ glyph: o.id, surface: o.surface, tiles: l, rises: f[0], bottom: r, top: i });
         continue;
@@ -11170,13 +11195,13 @@ function b6(e, t) {
   }
   return { ramps: n, problems: s };
 }
-function v6(e) {
+function x6(e) {
   const t = [], n = [], s = e.tile;
   for (const o of Ar(e).filter((r) => r.floorShape === "dais"))
     for (const { first: r, rect: i } of Vi(e.cols, e.rows, Eo(e, [o])).blocks) {
       const [a, c, l, u] = i, d = l - a + 1, h = (d + 1) / 2 * s, f = h - o.edge;
       if (u - c + 1 !== d)
-        n.push({ shape: "dais", glyph: o, first: r, why: `spans ${OU(i)}, not a square` });
+        n.push({ shape: "dais", glyph: o, first: r, why: `spans ${zU(i)}, not a square` });
       else if (f > 0) {
         const p = [(a + l + 1) / 2 * s, (c + u + 1) / 2 * s], [m, g] = [o.floor, o.top];
         t.push({
@@ -11196,35 +11221,35 @@ function v6(e) {
     }
   return { daises: t, problems: n };
 }
-function x6(e, t, n, s) {
+function k6(e, t, n, s) {
   const [o, r, i, a] = e.tiles, [c, l, u, d] = [o * t, r * t, (i + 1) * t, (a + 1) * t], h = e.rises === "north" ? (d - s) / (d - l) : e.rises === "south" ? (s - l) / (d - l) : e.rises === "west" ? (u - n) / (u - c) : (n - c) / (u - c);
-  return y6(h, 0, 1);
+  return w6(h, 0, 1);
 }
-function $U(e, t, n, s) {
-  return e.bottom + (e.top - e.bottom) * x6(e, t, n, s);
+function TU(e, t, n, s) {
+  return e.bottom + (e.top - e.bottom) * k6(e, t, n, s);
 }
-function EU(e, t) {
+function IU(e, t) {
   const [n, s] = [Math.abs(e), Math.abs(t)];
   return Math.max(n, s, (n + s) * Math.SQRT1_2);
 }
-function zU(e, t, n) {
-  const s = EU(t - e.center[0], n - e.center[1]);
+function RU(e, t, n) {
+  const s = IU(t - e.center[0], n - e.center[1]);
   if (!(s < e.baseRadius)) return -1 / 0;
-  const o = y6((e.baseRadius - s) / (e.baseRadius - e.topRadius), 0, 1);
+  const o = w6((e.baseRadius - s) / (e.baseRadius - e.topRadius), 0, 1);
   return e.bottom + (e.top - e.bottom) * o;
 }
-function TU(e, t) {
+function LU(e, t) {
   const [n, s, o, r] = e.tiles, i = [
     [n * t, s * t],
     [(o + 1) * t, s * t],
     [n * t, (r + 1) * t],
     [(o + 1) * t, (r + 1) * t]
-  ], a = i.map(([c, l]) => [c, e.bottom + (e.top - e.bottom) * x6(e, t, c, l), l]).filter((c) => c[1] > 0);
+  ], a = i.map(([c, l]) => [c, e.bottom + (e.top - e.bottom) * k6(e, t, c, l), l]).filter((c) => c[1] > 0);
   return [...i.map(([c, l]) => [c, 0, l]), ...a];
 }
-const IU = Math.SQRT2 - 1;
+const PU = Math.SQRT2 - 1;
 function w1(e, t, n, s) {
-  const o = n * IU;
+  const o = n * PU;
   return [
     [n, o],
     [o, n],
@@ -11236,11 +11261,11 @@ function w1(e, t, n, s) {
     [n, -o]
   ].map(([i, a]) => [e + i, s, t + a]);
 }
-function k6(e) {
+function M6(e) {
   const [t, n] = e.center, s = w1(t, n, e.baseRadius, 0), o = e.bottom > 0 ? w1(t, n, e.baseRadius, e.bottom) : [];
   return [...s, ...o, ...w1(t, n, e.topRadius, e.top)];
 }
-function RU(e, t, n) {
+function NU(e, t, n) {
   const s = e.tile, { id: o, surface: r } = { id: t.id, surface: t.surface };
   if (t.collider === "box")
     return Mc(e.cols, e.rows, Eo(e, [t])).map((i) => ({
@@ -11258,14 +11283,14 @@ function RU(e, t, n) {
         shape: "hull",
         glyph: o,
         surface: r,
-        points: TU(c, s),
+        points: LU(c, s),
         tiles: c.tiles
       })),
       ...a.map((c) => ({
         shape: "hull",
         glyph: o,
         surface: r,
-        points: k6(c),
+        points: M6(c),
         tiles: c.tiles
       }))
     ];
@@ -11290,19 +11315,19 @@ function RU(e, t, n) {
   }
   return [];
 }
-function M6(e, t = { ramps: [], daises: [] }) {
-  return Ar(e).flatMap((n) => RU(e, n, t));
+function A6(e, t = { ramps: [], daises: [] }) {
+  return Ar(e).flatMap((n) => NU(e, n, t));
 }
-function A6(e) {
+function S6(e) {
   const t = e.tile;
   return { min: [-t, -1, -t], max: [(e.cols + 1) * t, 0, (e.rows + 1) * t] };
 }
-const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
+const jU = 3, CU = 3.5, DU = 0.75, Qc = 1, i_ = 0.5, to = (e) => ({
   char: String(e),
   description: `Floor with the spawn marker ${e} (spawn:${e}): where a scene places what it numbers ${e}, such as a mover's start.`,
   mesh: "floor",
   spawn: String(e)
-}), jU = {
+}), FU = {
   "glyph:floor": {
     char: ".",
     description: "Open floor at ground level: walkable.",
@@ -11311,7 +11336,7 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
   "glyph:wall": {
     char: "#",
     description: "A full-height wall (3 m): solid, a box collider, nobody walks or stands on it.",
-    top: LU,
+    top: jU,
     solid: !0,
     collider: "box",
     mesh: "wall",
@@ -11321,7 +11346,7 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
   "glyph:lowWall": {
     char: "w",
     description: "A low wall (0.75 m): solid at ground level, but a body may jump onto it and stand on its top.",
-    top: NU,
+    top: DU,
     solid: !0,
     collider: "box",
     mesh: "lowWall",
@@ -11330,7 +11355,7 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
   "glyph:pillar": {
     char: "P",
     description: "A pillar (3.5 m), 2 × 2 tiles: write it PP over PP. Solid, a box collider.",
-    top: PU,
+    top: CU,
     solid: !0,
     collider: "box",
     mesh: "pillar",
@@ -11353,7 +11378,7 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
   "glyph:marker7": to(7),
   "glyph:marker8": to(8),
   "glyph:marker9": to(9)
-}, CU = {
+}, qU = {
   "glyph:gallery": {
     char: "=",
     description: `A gallery: a walkway ${Qc} m up, a block from the ground (a box collider). Bodies drop off it anywhere and climb onto it by stairs.`,
@@ -11372,8 +11397,8 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
   },
   "glyph:dais": {
     char: "o",
-    description: `The dais: an octagonal platform ${o_} m up (a hull frustum), its edge a 1.5 m slope all round. Draw it as an octagon in a square; its base reaches half a tile past the drawn tiles.`,
-    top: o_,
+    description: `The dais: an octagonal platform ${i_} m up (a hull frustum), its edge a 1.5 m slope all round. Draw it as an octagon in a square; its base reaches half a tile past the drawn tiles.`,
+    top: i_,
     floorShape: "dais",
     edge: 1.5,
     collider: "hull",
@@ -11392,14 +11417,14 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
     lightHeight: 0.25,
     surface: "iron"
   }
-}, DU = {
+}, BU = {
   "glyph:ladder": {
     char: "|",
     description: "A ladder: open floor with a ladder against the neighbouring tile that stands highest (a wall, a tower), up to its top. Draw it along the face it climbs.",
     mesh: "floor",
     ladder: !0
   }
-}, Vd = 2.1, r_ = 0.9, FU = {
+}, Vd = 2.1, a_ = 0.9, GU = {
   "glyph:void": {
     char: "~",
     description: "Void: no floor on this storey (a stairwell, a double height, the air beside a building). Nobody stands here; what is below shows.",
@@ -11416,8 +11441,8 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
   },
   "glyph:window": {
     char: ":",
-    description: `A window in a wall: solid to its sill ${r_} m up, open to its head ${Vd} m up, the wall over it. Draw it a wall thick, with wall at both ends.`,
-    top: r_,
+    description: `A window in a wall: solid to its sill ${a_} m up, open to its head ${Vd} m up, the wall over it. Draw it a wall thick, with wall at both ends.`,
+    top: a_,
     solid: !0,
     collider: "box",
     mesh: "wall",
@@ -11447,7 +11472,7 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
     mesh: "floor",
     head: 1.4
   }
-}, qU = {
+}, HU = {
   char: {
     type: "string",
     required: !0,
@@ -11583,8 +11608,8 @@ const LU = 3, PU = 3.5, NU = 0.75, Qc = 1, o_ = 0.5, to = (e) => ({
     default: "",
     description: "Format 2: a room marker: the room, by name, its tiles' floor inside walls and openings ('' for none). One marker per room."
   }
-}, BU = ["void", "full", "opening", "head", "room"], lv = /^[A-Za-z0-9_-]+$/;
-function GU(e, t) {
+}, UU = ["void", "full", "opening", "head", "room"], lv = /^[A-Za-z0-9_-]+$/;
+function WU(e, t) {
   const n = [];
   if ([...e.char].length !== 1)
     n.push(`char is ${JSON.stringify(e.char)}; it must be exactly one character`);
@@ -11596,9 +11621,9 @@ function GU(e, t) {
   }
   return e.top < e.floor && n.push(`top ${e.top} is below floor ${e.floor}; top is at least floor`), e.ladder && e.solid && n.push("a ladder is climbed from its tiles: make it solid: false"), e.solid && e.nav.walkable && n.push("a solid glyph is not walkable: add nav: { walkable: false } (or make it solid: false)"), e.spawn && !lv.test(e.spawn) && n.push(`spawn "${e.spawn}" must be a word (letters, digits, _ and -)`), e.light && !lv.test(e.light) && n.push(`light "${e.light}" must be a word (letters, digits, _ and -)`), e.collider === "box" && e.top <= 0 && n.push(
     "a box collider needs a top above 0 (it is a box from the ground to top): set top, or collider: 'none'"
-  ), n.push(...UU(e), ...HU(e)), e.mesh || n.push("mesh is empty; name a recipe, or 'none'"), n;
+  ), n.push(...KU(e), ...VU(e)), e.mesh || n.push("mesh is empty; name a recipe, or 'none'"), n;
 }
-function HU(e) {
+function VU(e) {
   const t = [];
   return e.void && (e.solid || e.nav.walkable || e.collider !== "none" || e.floorShape !== "flat") && t.push("a void tile has no floor: make it solid: false, nav: { walkable: false }, collider: 'none', flat"), e.full && !(e.solid && e.collider === "box") && t.push("full fills its storey with its box: make it solid: true with collider: 'box'"), e.opening === "door" && (e.solid || !e.nav.walkable || e.collider !== "none" || !(e.head > 0)) && t.push(
     "a door is walked through under its head: make it solid: false, walkable, collider: 'none', with a head above 0"
@@ -11606,7 +11631,7 @@ function HU(e) {
     "a window is solid to its sill (top) and open up to its head: make it solid, collider: 'box', top above 0 and head above top"
   ), e.head > 0 && e.head <= Math.max(e.floor, e.top) && t.push(`head ${e.head} is not above what stands on its tiles (${Math.max(e.floor, e.top)} m)`), e.room && (e.void || e.solid || !e.nav.walkable) && t.push("a room marker stands on the room's floor: make it walkable, not solid and not void"), e.room && !lv.test(e.room) && t.push(`room "${e.room}" must be a word (letters, digits, _ and -)`), t;
 }
-function UU(e) {
+function KU(e) {
   const t = [], n = e.floorShape;
   return n !== "flat" && (e.top <= e.floor && n !== "flight" && t.push(`a ${n} rises: give it a top above its floor (${e.floor})`), e.solid && t.push(`a ${n} is walked on: it cannot be solid`), (e.collider === "box" || e.collider === "cylinder") && t.push(`a ${n}'s collider is 'hull' (under its slope) or 'none', not '${e.collider}'`)), n === "dais" && e.edge <= 0 && t.push("a dais needs an edge above 0: its sloped edge, across (m)"), e.collider === "hull" && n === "flat" && t.push(
     "a hull collider follows the floor's slope: give it floorShape: 'ramp', 'dais' or 'flight', or collider: 'box'"
@@ -11616,11 +11641,11 @@ function Sx(e) {
   if (!e.kinds().includes("glyph")) {
     e.defineKind("glyph", {
       description: "Level legend glyphs: what one map character means (heights, floor shape, solid, collider and mesh recipes, nav flags, spawn, light spot, surface, footprint; in a storey, void, full height, openings, heads and room markers).",
-      fields: qU,
+      fields: HU,
       defineWith: "defineGlyph('<id>', { char: '<one character>', description: '…', … })",
-      check: (t) => GU(t, e)
+      check: (t) => WU(t, e)
     });
-    for (const [t, n] of Object.entries({ ...jU, ...CU, ...DU, ...FU }))
+    for (const [t, n] of Object.entries({ ...FU, ...qU, ...BU, ...GU }))
       e.def("glyph", t, n);
   }
 }
@@ -11628,12 +11653,12 @@ Sx(B);
 function k0e(e, t, n = B) {
   return Sx(n), n.def("glyph", e, t);
 }
-function WU(e = B) {
+function XU(e = B) {
   return Sx(e), new Map(e.list("glyph").map((t) => [t.char, t]));
 }
-const i_ = 0.2, VU = "shingle", KU = Math.PI / 180;
-function XU(e, t) {
-  const n = e.roof ?? "flat", [s, o, r, i] = t.footprint, a = r - s >= i - o ? "x" : "z", c = n === "gable" ? e.ridge ?? a : a, l = n === "flat" ? 0 : e.pitch ?? 0, u = n === "flat" ? 0 : Math.tan(l * KU), d = c === "x" ? (i - o) / 2 : (r - s) / 2, h = n === "flat" ? t.ceiling + i_ : t.ceiling, f = n === "flat" ? h : h + d * u;
+const c_ = 0.2, YU = "shingle", JU = Math.PI / 180;
+function QU(e, t) {
+  const n = e.roof ?? "flat", [s, o, r, i] = t.footprint, a = r - s >= i - o ? "x" : "z", c = n === "gable" ? e.ridge ?? a : a, l = n === "flat" ? 0 : e.pitch ?? 0, u = n === "flat" ? 0 : Math.tan(l * JU), d = c === "x" ? (i - o) / 2 : (r - s) / 2, h = n === "flat" ? t.ceiling + c_ : t.ceiling, f = n === "flat" ? h : h + d * u;
   return {
     kind: n,
     storey: t.storey,
@@ -11645,35 +11670,35 @@ function XU(e, t) {
     ridge: c,
     eave: h,
     peak: f,
-    thickness: i_
+    thickness: c_
   };
 }
-function S6(e, t, n) {
+function _6(e, t, n) {
   const [s, o, r, i] = e.footprint, a = Math.min(t - s, r - t), c = Math.min(n - o, i - n);
   return e.ridge === "x" ? { across: c, along: a } : { across: a, along: c };
 }
-function _6(e, t, n) {
-  const { across: s, along: o } = S6(e, t, n);
+function O6(e, t, n) {
+  const { across: s, along: o } = _6(e, t, n);
   return s >= -e.eaves && o >= -e.eaves;
 }
 function Tu(e, t, n) {
-  if (!_6(e, t, n)) return -1 / 0;
+  if (!O6(e, t, n)) return -1 / 0;
   if (e.kind === "flat") return e.eave;
-  const { across: s, along: o } = S6(e, t, n), r = e.kind === "hip" ? Math.min(s, o) : s;
+  const { across: s, along: o } = _6(e, t, n), r = e.kind === "hip" ? Math.min(s, o) : s;
   return e.eave + r * e.slope;
 }
 function ad(e, t, n) {
   return Tu(e, t, n) - e.thickness;
 }
-function O6(e) {
+function $6(e) {
   const [t, n, s, o] = e.footprint, r = e.eaves;
   return [t - r, n - r, s + r, o + r];
 }
-function a_(e, t, n, s = 0) {
+function l_(e, t, n, s = 0) {
   return [t, Tu(e, t, n) - s, n];
 }
-function YU(e) {
-  const [t, n, s, o] = O6(e), [r, i, a, c] = e.footprint;
+function ZU(e) {
+  const [t, n, s, o] = $6(e), [r, i, a, c] = e.footprint;
   if (e.kind === "flat")
     return [
       [
@@ -11771,15 +11796,15 @@ function YU(e) {
     ]
   ];
 }
-function $6(e) {
-  return YU(e).map((t) => [
-    ...t.map(([n, s]) => a_(e, n, s)),
-    ...t.map(([n, s]) => a_(e, n, s, e.thickness))
+function E6(e) {
+  return ZU(e).map((t) => [
+    ...t.map(([n, s]) => l_(e, n, s)),
+    ...t.map(([n, s]) => l_(e, n, s, e.thickness))
   ]);
 }
-function c_(e) {
+function u_(e) {
   if (e.kind === "flat") return [];
-  const [t, n, s, o] = O6(e), [r, i, a, c] = e.footprint, [l, u] = [(r + a) / 2, (i + c) / 2];
+  const [t, n, s, o] = $6(e), [r, i, a, c] = e.footprint, [l, u] = [(r + a) / 2, (i + c) / 2];
   if (e.kind === "gable")
     return e.ridge === "x" ? [
       [
@@ -11804,7 +11829,7 @@ function c_(e) {
     [e.ridge === "x" ? [s, n] : [t, o], p]
   ];
 }
-function JU(e, t, n, s) {
+function eW(e, t, n, s) {
   const [o, r] = [e[n], t[n]];
   if (o === r || s < Math.min(o, r) || s > Math.max(o, r)) return null;
   const i = (s - o) / (r - o);
@@ -11819,14 +11844,14 @@ function _x(e, t, n) {
   ], c = ([y, w]) => y >= s && y <= r && w >= o && w <= i, l = (y, w) => y[0] === w[0] && y[1] === w[1], u = [], d = [];
   a.forEach((y, w) => {
     const v = a[(w + 1) % 4], b = y[0] === v[0] ? 0 : 1, x = [];
-    for (const [A, _] of c_(e)) {
-      const M = JU(A, _, b, y[b]);
+    for (const [A, _] of u_(e)) {
+      const M = eW(A, _, b, y[b]);
       M && c(M) && !l(M, y) && !l(M, v) && !x.some((S) => l(S, M)) && x.push(M);
     }
     const k = (A) => Math.abs(A[1 - b] - y[1 - b]);
     u.push(y, ...x.sort((A, _) => k(A) - k(_)));
   });
-  for (const [y, w] of c_(e))
+  for (const [y, w] of u_(e))
     for (const v of [y, w])
       c(v) && !u.some((b) => l(b, v)) && !d.some((b) => l(b, v)) && d.push(v);
   const h = ([y, w]) => ad(e, y, w), f = [];
@@ -11848,9 +11873,9 @@ function Zp(e, t, n) {
   const s = Qp(e, t, n);
   if (!s) return null;
   const o = e.legend[e.tiles[s.row * e.cols + s.col]], [r, i] = [s.col, s.row], a = o.floorShape === "ramp" || o.floorShape === "flight" ? e.ramps.find(({ tiles: [u, d, h, f] }) => r >= u && r <= h && i >= d && i <= f) : void 0;
-  let c = a ? $U(a, e.tile, t, n) : (e.base ?? 0) + o.floor, l;
+  let c = a ? TU(a, e.tile, t, n) : (e.base ?? 0) + o.floor, l;
   for (const u of e.daises) {
-    const d = zU(u, t, n);
+    const d = RU(u, t, n);
     d > c && ([c, l] = [d, u]);
   }
   return { at: s, glyph: o, floor: c, dais: l };
@@ -11867,9 +11892,9 @@ function Ox(e, t, n) {
     const [a, c] = [t - (o.col + 0.5) * e.tile, n - (o.row + 0.5) * e.tile];
     if (a * a + c * c > r.radius * r.radius) return i;
   }
-  return r.full && e.fullTop !== void 0 ? E6(e, t, n) : Math.max(i, (e.base ?? 0) + r.top);
+  return r.full && e.fullTop !== void 0 ? z6(e, t, n) : Math.max(i, (e.base ?? 0) + r.top);
 }
-function E6(e, t, n) {
+function z6(e, t, n) {
   const s = e.roofs?.find((o) => o.kind !== "flat");
   return s ? Math.min(e.fullTop, ad(s, t, n)) : e.fullTop;
 }
@@ -11881,8 +11906,8 @@ function A0e(e, t, n) {
   const s = Qp(e, t, n);
   return s ? e.solid[s.row * e.cols + s.col] : !0;
 }
-const z6 = 1e-6;
-function QU(e) {
+const T6 = 1e-6;
+function tW(e) {
   if (!e.storeys) return [e];
   const { tile: t, cols: n, rows: s, legend: o } = e;
   return e.storeys.map((r) => {
@@ -11894,37 +11919,37 @@ function $x(e, t, n, s) {
   let o = null;
   const r = (c, l, u) => {
     const d = !o || c > o.height || c === o.height && u > o.storey;
-    Number.isFinite(c) && c <= n + z6 && d && (o = { height: c, surface: l, storey: u });
+    Number.isFinite(c) && c <= n + T6 && d && (o = { height: c, surface: l, storey: u });
   }, [i, a] = [e.ground.min, e.ground.max];
-  t >= i[0] && t <= a[0] && s >= i[2] && s <= a[2] && r(a[1], "", -1), QU(e).forEach((c, l) => {
+  t >= i[0] && t <= a[0] && s >= i[2] && s <= a[2] && r(a[1], "", -1), tW(e).forEach((c, l) => {
     const u = Zp(c, t, s);
     if (!u || u.glyph.void) return;
     r(u.floor, u.dais?.surface ?? u.glyph.surface, l), u.glyph.solid && r(Ox(c, t, s), u.glyph.surface, l);
-    const d = (c.base ?? 0) + (u.glyph.head ?? 0), h = u.glyph.head && c.fullTop !== void 0 ? E6(c, t, s) : -1 / 0;
+    const d = (c.base ?? 0) + (u.glyph.head ?? 0), h = u.glyph.head && c.fullTop !== void 0 ? z6(c, t, s) : -1 / 0;
     h > d && r(h, u.glyph.surface, l);
   });
   for (const c of e.roofs ?? []) r(Tu(c, t, s), c.surface, -1);
   return o;
 }
-function T6(e, t, n, s) {
+function I6(e, t, n, s) {
   return $x(e, t, n, s)?.height ?? null;
 }
-function ZU(e, t, n, s) {
+function nW(e, t, n, s) {
   return $x(e, t, n, s)?.surface ?? "";
 }
-function I6(e, t) {
+function R6(e, t) {
   const n = e.storeys ?? [];
-  for (let s = n.length - 1; s > 0; s--) if (n[s].base - n[s].slab <= t + z6) return s;
+  for (let s = n.length - 1; s > 0; s--) if (n[s].base - n[s].slab <= t + T6) return s;
   return 0;
 }
 function e0(e, t, n, s) {
   return $x(e, t, n, s)?.storey ?? -1;
 }
-function R6(e, t, n, s) {
+function L6(e, t, n, s) {
   const o = e.storeys?.[e0(e, t, n, s)], r = Qp(e, t, s);
   return !o || !r ? null : e.rooms?.[o.room[r.row * e.cols + r.col]] ?? null;
 }
-function eW(e, t) {
+function sW(e, t) {
   const n = t.footprint, s = Eo(e, [t]), o = [];
   if (n === 1) {
     for (let r = 0; r < e.rows; r++)
@@ -11937,7 +11962,7 @@ function eW(e, t) {
   return o;
 }
 const Kd = (e) => e.collider === "box" || e.collider === "hull" ? 0 : e.floor;
-function L6(e, t = !1) {
+function P6(e, t = !1) {
   const n = /* @__PURE__ */ new Map();
   for (const o of Ar(e)) {
     if (o.mesh === "none") continue;
@@ -11948,7 +11973,7 @@ function L6(e, t = !1) {
     const [i, a] = [o[0], r[0]];
     return kc(i.mesh, a.mesh) || Kd(i) - Kd(a) || i.top - a.top || kc(i.surface, a.surface) || i.footprint - a.footprint;
   }).map((o) => {
-    const [r] = o, i = o.flatMap((a) => eW(e, a)).sort((a, c) => a[1] - c[1] || a[0] - c[0]);
+    const [r] = o, i = o.flatMap((a) => sW(e, a)).sort((a, c) => a[1] - c[1] || a[0] - c[0]);
     return {
       recipe: r.mesh,
       glyphs: o.map((a) => a.id),
@@ -11961,7 +11986,7 @@ function L6(e, t = !1) {
     };
   });
 }
-function tW(e, t, n, s) {
+function oW(e, t, n, s) {
   const [o, r, i, a] = e, c = [];
   if (t === "x")
     for (let l = r; l <= a; l++)
@@ -11971,7 +11996,7 @@ function tW(e, t, n, s) {
       c.push(r > 0 ? [l, r - 1] : null, a + 1 < s ? [l, a + 1] : null);
   return c;
 }
-function nW(e, t) {
+function rW(e, t) {
   const n = [], s = [], o = e.tile, r = (i) => {
     if (!i) return !1;
     const a = e.tiles[i[1] * e.cols + i[0]];
@@ -11985,7 +12010,7 @@ function nW(e, t) {
         s.push({ glyph: i, first: c, why: `is not a filled rectangle (${u} tiles in a ${m} × ${g} area)` });
         continue;
       }
-      const y = (b) => tW(l, b, e.cols, e.rows).every(r), w = m > g ? "x" : g > m ? "z" : y("x") ? "x" : "z";
+      const y = (b) => oW(l, b, e.cols, e.rows).every(r), w = m > g ? "x" : g > m ? "z" : y("x") ? "x" : "z";
       if (!y(w)) {
         const b = w === "x" ? "east and west" : "north and south";
         s.push({ glyph: i, first: c, why: `has no wall at both of its ends (${b}), so the way through it is not clear` });
@@ -12010,7 +12035,7 @@ function nW(e, t) {
   }
   return { openings: n, problems: s };
 }
-function sW(e, t, n) {
+function iW(e, t, n) {
   const [s, o, r, i] = e.tiles;
   if (e.axis === "x") {
     const c = Math.floor((s + r) / 2);
@@ -12019,10 +12044,10 @@ function sW(e, t, n) {
   const a = Math.floor((o + i) / 2);
   return [s > 0 ? [s - 1, a] : null, r + 1 < t ? [r + 1, a] : null];
 }
-const oW = (e, t) => t && !e.solid && e.opening === "none";
-function rW(e) {
+const aW = (e, t) => t && !e.solid && e.opening === "none";
+function cW(e) {
   const t = [], n = [], s = /* @__PURE__ */ new Map(), o = e.map(({ grid: r, floored: i }, a) => {
-    const { cols: c, rows: l, tile: u, tiles: d } = r, h = new Int32Array(c * l).fill(-1), f = (v, b) => oW(d[b * c + v], i[b * c + v]), { blocks: p, blockOf: m } = Vi(c, l, f), g = /* @__PURE__ */ new Map();
+    const { cols: c, rows: l, tile: u, tiles: d } = r, h = new Int32Array(c * l).fill(-1), f = (v, b) => aW(d[b * c + v], i[b * c + v]), { blocks: p, blockOf: m } = Vi(c, l, f), g = /* @__PURE__ */ new Map();
     d.forEach((v, b) => {
       if (v.room) {
         if (m[b] < 0) return void n.push({ storey: a, at: [b % c, Math.floor(b / c)], why: `the room ${v.room}'s marker stands on no floor` });
@@ -12069,15 +12094,15 @@ function rW(e) {
   });
   return { rooms: t, roomOf: o, problems: n };
 }
-function iW(e, t, n, s) {
+function lW(e, t, n, s) {
   return e.map((o) => {
-    const r = sW(o, n, s).map(
+    const r = iW(o, n, s).map(
       (i) => i ? t[o.storey][i[1] * n + i[0]] : -1
     );
     return { ...o, rooms: r };
   });
 }
-const P6 = "my3dge-level/1", aW = "my3dge-level/2", cW = J("level", {
+const N6 = "my3dge-level/1", uW = "my3dge-level/2", dW = J("level", {
   LEVEL_BAD_HEADER: {
     template: "{at}: {problem}",
     fix: "write the front matter as key: value lines between two lines holding only ---, before the map; its keys are description (text) and tile (metres per character, above 0)",
@@ -12184,11 +12209,11 @@ const P6 = "my3dge-level/1", aW = "my3dge-level/2", cW = J("level", {
   }
 });
 function rt(e, t, n, s) {
-  const o = p2(e) ?? cW[e];
+  const o = p2(e) ?? dW[e];
   return { code: e, line: n, column: s, message: `[${e}] ${Ds(o.template, t)}: ${Ds(o.fix, t)}` };
 }
-const ns = (e, t, n) => `${e}:${t}:${n}`, lW = ["description", "tile"], uW = ["storey", "base", "height", "roof", "pitch", "ridge", "eaves", "roofSurface"], dW = /^[A-Za-z0-9_-]+$/, If = (e) => e !== void 0 && e.trimEnd() === "---", Rf = (e) => e.trim() === "", hW = /^([A-Za-z_][\w-]*)\s*:(.*)$/;
-function fW(e) {
+const ns = (e, t, n) => `${e}:${t}:${n}`, hW = ["description", "tile"], fW = ["storey", "base", "height", "roof", "pitch", "ridge", "eaves", "roofSurface"], pW = /^[A-Za-z0-9_-]+$/, If = (e) => e !== void 0 && e.trimEnd() === "---", Rf = (e) => e.trim() === "", mW = /^([A-Za-z_][\w-]*)\s*:(.*)$/;
+function gW(e) {
   const t = e.trim(), n = t[0];
   if (n === '"' || n === "'") {
     let o = 1, r = "";
@@ -12208,24 +12233,24 @@ function fW(e) {
   const s = t.search(/\s#/);
   return { value: (s < 0 ? t : t.slice(0, s)).trim() };
 }
-function N6(e, t, n, s, o, r) {
+function j6(e, t, n, s, o, r) {
   const i = /* @__PURE__ */ new Set();
   for (let a = t + 1; a < n; a++) {
     const c = e[a], l = c.length - c.trimStart().length;
     if (Rf(c) || c.trimStart().startsWith("#")) continue;
-    const u = hW.exec(c.trim());
+    const u = mW.exec(c.trim());
     if (!u) {
       o(a + 1, l + 1, `${JSON.stringify(c.trim())} is not a key: value line`);
       continue;
     }
     const [, d, h] = u, f = l + d.length + 2 + (h.length - h.trimStart().length), p = s.includes(d);
     p ? i.has(d) && o(a + 1, l + 1, `the key "${d}" is given twice`) : o(a + 1, l + 1, `unknown key "${d}"${ue(d, s)}`), i.add(d);
-    const m = fW(h);
+    const m = gW(h);
     "problem" in m ? o(a + 1, f, m.problem) : p && r(d, m.value, a + 1, f);
   }
 }
-const j6 = (e, t) => e.findIndex((n, s) => s > t && If(n)), C6 = (e, t, n) => e.slice(t + 1, n).some((s) => /^\s*storey\s*:/.test(s));
-function D6(e, t, n, s, o, r) {
+const C6 = (e, t) => e.findIndex((n, s) => s > t && If(n)), D6 = (e, t, n) => e.slice(t + 1, n).some((s) => /^\s*storey\s*:/.test(s));
+function F6(e, t, n, s, o, r) {
   for (; t < n && Rf(e[t]); ) t++;
   for (; n > t && Rf(e[n - 1]); ) n--;
   const i = e.slice(t, n).map((u) => Array.from(u)), a = t + 1;
@@ -12241,55 +12266,55 @@ function D6(e, t, n, s, o, r) {
     r.push(rt("LEVEL_RAGGED_ROW", g, h, f));
   }), { rows: i, firstLine: a, width: l };
 }
-const pW = {
+const yW = {
   base: ["a number of metres", (e) => Number.isFinite(e)],
   height: ["a number of metres above 0", (e) => e > 0 && e <= 1e3],
   pitch: ["a number of degrees above 0 and below 80", (e) => e > 0 && e < 80],
   eaves: ["a number of metres from 0 to 10", (e) => e >= 0 && e <= 10]
 };
-function mW(e, t) {
+function wW(e, t) {
   const n = JSON.stringify(t);
   if (e === "storey" || e === "roofSurface")
-    return dW.test(t) ? { value: t } : { problem: `${e} is ${n}; it must be a word (letters, digits, _ and -)` };
+    return pW.test(t) ? { value: t } : { problem: `${e} is ${n}; it must be a word (letters, digits, _ and -)` };
   if (e === "roof")
     return ["gable", "hip", "flat"].includes(t) ? { value: t } : { problem: `roof is ${n}; it is gable, hip or flat` };
   if (e === "ridge")
     return t === "x" || t === "z" ? { value: t } : { problem: `ridge is ${n}; it is x (east to west) or z (north to south)` };
-  const [s, o] = pW[e], r = t === "" ? NaN : Number(t);
+  const [s, o] = yW[e], r = t === "" ? NaN : Number(t);
   return o(r) ? { value: r } : { problem: `${e} is ${n}; it must be ${s}` };
 }
-function gW(e, t, n, s) {
+function bW(e, t, n, s) {
   const o = [], r = (a, c, l) => s.push(rt("LEVEL_BAD_STOREY", { at: ns(n, a, c), problem: l }, a, c));
   let i = t;
   for (; i < e.length; ) {
-    const a = j6(e, i);
+    const a = C6(e, i);
     if (a < 0) {
       r(i + 1, 1, "the storey block opened here is never closed by a line holding only ---");
       break;
     }
     const c = {};
-    N6(e, i, a, uW, r, (f, p, m, g) => {
-      const y = mW(f, p);
+    j6(e, i, a, fW, r, (f, p, m, g) => {
+      const y = wW(f, p);
       "problem" in y ? r(m, g, y.problem) : c[f] = y.value;
-    }), C6(e, i, a) || r(i + 1, 1, "this block names no storey: give it a storey key (storey: ground)");
+    }), D6(e, i, a) || r(i + 1, 1, "this block names no storey: give it a storey key (storey: ground)");
     let l = a + 1;
     for (; l < e.length && !If(e[l]); ) l++;
-    const u = D6(e, a + 1, l, a + 2, n, s), { storey: d = "", ...h } = c;
+    const u = F6(e, a + 1, l, a + 2, n, s), { storey: d = "", ...h } = c;
     o.push({ name: String(d), line: i + 1, keys: h, ...u }), i = l;
   }
   return o;
 }
-function yW(e, t = {}) {
+function vW(e, t = {}) {
   const n = t.file ?? "level", s = e.split(/\r?\n/), o = [], r = { description: "", tile: 1 }, a = ((h) => (f, p, m) => o.push(rt(h, { at: ns(n, f, p), problem: m }, f, p)))("LEVEL_BAD_HEADER"), c = (h, f, p, m = []) => {
     const g = m.length ? 2 : 1;
     return { file: n, header: r, rows: h, firstLine: f, width: p, problems: o, format: g, storeys: m };
   };
   let l = 0;
   if (If(s[0])) {
-    const h = j6(s, 0);
+    const h = C6(s, 0);
     if (h < 0)
       return a(1, 1, "the front matter opened here is never closed by a line holding only ---"), c([], 1, 0);
-    C6(s, 0, h) || (N6(s, 0, h, lW, a, (f, p, m, g) => {
+    D6(s, 0, h) || (j6(s, 0, h, hW, a, (f, p, m, g) => {
       if (f !== "tile") return void (r.description = p);
       const y = p === "" ? NaN : Number(p);
       Number.isFinite(y) && y > 0 ? r.tile = y : a(m, g, `tile is ${JSON.stringify(p)}; it must be a number of metres above 0`);
@@ -12298,14 +12323,14 @@ function yW(e, t = {}) {
   let u = l;
   for (; u < s.length && Rf(s[u]); ) u++;
   if (If(s[u])) {
-    const h = gW(s, u, n, o);
+    const h = bW(s, u, n, o);
     return h.length ? c([], h[0].firstLine, h[0].width, h) : c([], u + 1, 0);
   }
-  const d = D6(s, l, s.length, l + 1, n, o);
+  const d = F6(s, l, s.length, l + 1, n, o);
   return c(d.rows, d.firstLine, d.width);
 }
-const wW = 0.3, bW = (e) => Math.round(e * 1e3) / 1e3;
-function vW(e, t) {
+const xW = 0.3, kW = (e) => Math.round(e * 1e3) / 1e3;
+function MW(e, t) {
   let [n, s, o, r] = [1 / 0, 1 / 0, -1 / 0, -1 / 0];
   t.forEach((a, c) => {
     if (!a) return;
@@ -12315,7 +12340,7 @@ function vW(e, t) {
   const i = e.tile;
   return o < 0 ? null : [n * i, s * i, (o + 1) * i, (r + 1) * i];
 }
-function xW(e, t, n, s) {
+function AW(e, t, n, s) {
   const o = [], r = [], { cols: i, rows: a } = e;
   for (const c of Ar(e).filter((l) => l.floorShape === "flight"))
     for (const { first: l, rect: u, tiles: d } of Vi(i, a, Eo(e, [c])).blocks) {
@@ -12337,7 +12362,7 @@ function xW(e, t, n, s) {
       const v = (k, A) => {
         const _ = t.grid.tiles[A * i + k];
         return t.floored[A * i + k] && _.nav.walkable && _.floorShape === "flat" && Math.abs(_.floor) <= s;
-      }, b = g6.filter((k) => w6(u, k, i, a).some(([A, _]) => v(A, _)));
+      }, b = y6.filter((k) => b6(u, k, i, a).some(([A, _]) => v(A, _)));
       if (b.length === 1) {
         o.push({ glyph: c.id, surface: c.surface, tiles: u, rises: b[0], bottom: c.floor, top: n });
         continue;
@@ -12347,7 +12372,7 @@ function xW(e, t, n, s) {
     }
   return { ramps: o, bad: r };
 }
-function kW(e, t, n) {
+function SW(e, t, n) {
   const { file: s, storeys: o } = e, r = [], i = { storeys: [], rooms: [], roomOf: [], problems: r }, a = (b, x) => ns(s, b, x), c = (b, x) => r.push(rt("LEVEL_BAD_STOREY", { at: a(b.line, 1), problem: x }, b.line, 1)), l = (b, x) => r.push(rt("LEVEL_BAD_ROOF", { at: a(b.line, 1), why: x }, b.line, 1)), [u] = o, [d, h, f] = [u.width, u.rows.length, e.header.tile], p = /* @__PURE__ */ new Set();
   if (o.forEach((b, x) => {
     b.name && p.has(b.name) && c(b, `the storey ${b.name} is named twice: name each storey once`), p.add(b.name), (b.width !== d || b.rows.length !== h) && c(b, `its map is ${b.width} × ${b.rows.length} tiles, the first storey's (${u.name}) ${d} × ${h}`);
@@ -12357,36 +12382,36 @@ function kW(e, t, n) {
   const m = o.map((b, x) => ({ cols: d, rows: h, tile: f, tiles: t[x] })), g = m.map((b) => b.tiles.map((x) => !x.void)), y = o.map((b, x) => {
     const k = b.keys.base;
     if (!b.keys.roof) return { base: k, height: b.keys.height, roof: null };
-    const A = vW(m[x], g[x]);
+    const A = MW(m[x], g[x]);
     if (!A)
       return l(b, `the storey ${b.name} has no floor to stand its roof on: every tile of its map is void`), { base: k, height: b.keys.height ?? 0, roof: null };
-    const _ = b.keys.roofSurface ?? VU, M = k + (b.keys.height ?? 0), S = XU(b.keys, { storey: x, ceiling: M, footprint: A, surface: _ });
+    const _ = b.keys.roofSurface ?? YU, M = k + (b.keys.height ?? 0), S = QU(b.keys, { storey: x, ceiling: M, footprint: A, surface: _ });
     return S.kind === "flat" ? { base: k, height: b.keys.height, roof: S } : { base: k, height: S.peak - S.thickness - k, roof: S };
   });
   if (y.forEach(({ base: b }, x) => {
     if (x === 0) return;
     const k = y[x - 1], A = k.base + k.height;
-    b > A + 1e-9 || c(o[x], `its base, ${b} m, is not above the ceiling of the storey below (${o[x - 1].name}: ${bW(A)} m): the gap between them is this storey's floor slab`);
+    b > A + 1e-9 || c(o[x], `its base, ${b} m, is not above the ceiling of the storey below (${o[x - 1].name}: ${kW(A)} m): the gap between them is this storey's floor slab`);
   }), r.length) return i;
   const w = o.map((b, x) => {
-    const { base: k, height: A, roof: _ } = y[x], M = y[x + 1], S = x === 0 ? wW : k - (y[x - 1].base + y[x - 1].height), O = M ? M.base : _?.kind === "flat" || !_ ? k + A : _.peak, { ramps: $, problems: E } = b6(m[x], n), { daises: z, problems: T } = v6(m[x]);
+    const { base: k, height: A, roof: _ } = y[x], M = y[x + 1], S = x === 0 ? xW : k - (y[x - 1].base + y[x - 1].height), O = M ? M.base : _?.kind === "flat" || !_ ? k + A : _.peak, { ramps: $, problems: E } = v6(m[x], n), { daises: z, problems: T } = x6(m[x]);
     for (const N of [...E, ...T]) {
       const [P, C] = [b.firstLine + N.first[1], N.first[0] + 1], { char: H, id: K, top: q, edge: U } = N.glyph, X = { at: a(P, C), char: H, glyph: K, why: N.why, top: q, edge: U };
       r.push(rt(N.shape === "ramp" ? "LEVEL_BAD_RAMP" : "LEVEL_BAD_DAIS", X, P, C));
     }
-    const I = M ? { grid: m[x + 1], floored: g[x + 1] } : null, L = xW(m[x], I, M ? M.base - k : 0, n);
+    const I = M ? { grid: m[x + 1], floored: g[x + 1] } : null, L = AW(m[x], I, M ? M.base - k : 0, n);
     for (const N of L.bad) {
       const [P, C] = [b.firstLine + N.first[1], N.first[0] + 1], H = { at: a(P, C), char: N.glyph.char, glyph: N.glyph.id, why: N.why };
       r.push(rt("LEVEL_BAD_FLIGHT", H, P, C));
     }
-    const j = nW(m[x], { index: x, base: k });
+    const j = rW(m[x], { index: x, base: k });
     for (const N of j.problems) {
       const [P, C] = [b.firstLine + N.first[1], N.first[0] + 1], H = { at: a(P, C), char: N.glyph.char, why: N.why, kind: N.glyph.opening };
       r.push(rt("LEVEL_BAD_OPENING", H, P, C));
     }
     const F = [...$, ...L.ramps].sort((N, P) => kc(N.glyph, P.glyph));
     return { parsed: b, index: x, base: k, height: A, slab: S, fullTop: O, grid: m[x], floored: g[x], ramps: F, daises: z, openings: j.openings, roof: _ };
-  }), v = rW(w.map(({ grid: b, floored: x, base: k }) => ({ grid: b, floored: x, base: k })));
+  }), v = cW(w.map(({ grid: b, floored: x, base: k }) => ({ grid: b, floored: x, base: k })));
   for (const b of v.problems) {
     const x = o[b.storey], [k, A] = [x.firstLine + b.at[1], b.at[0] + 1];
     r.push(rt("LEVEL_BAD_ROOM", { at: a(k, A), why: b.why }, k, A));
@@ -12402,7 +12427,7 @@ function Ac(e, t) {
   }
   const s = e.tile;
   return Ft({
-    format: P6,
+    format: N6,
     name: e.name,
     description: e.description,
     tile: s,
@@ -12428,7 +12453,7 @@ function Ac(e, t) {
     fullTop: n.fullTop
   });
 }
-const b1 = 8, l_ = [
+const b1 = 8, d_ = [
   [1, 0],
   [-1, 0],
   [0, 1],
@@ -12450,16 +12475,16 @@ function Ex(e, t, n, s, o, r) {
   }
   return !0;
 }
-function MW(e, t) {
-  const { areas: n, areaOf: s } = F6([e], [], t);
+function _W(e, t) {
+  const { areas: n, areaOf: s } = q6([e], [], t);
   return { areas: n.map(({ first: o, tiles: r }) => ({ first: [o[1], o[2]], tiles: r })), areaOf: s };
 }
-function F6(e, t, n) {
+function q6(e, t, n) {
   const [{ cols: s, rows: o }] = e, r = s * o, i = r * e.length, a = new Uint8Array(i);
   e.forEach((m, g) => {
     for (let y = 0; y < r; y++) {
       const [w, v] = [y % s, Math.floor(y / s)];
-      l_.forEach(([b, x], k) => {
+      d_.forEach(([b, x], k) => {
         Ex(m, w, v, b, x, n) && (a[g * r + y] |= 1 << k);
       });
     }
@@ -12467,8 +12492,8 @@ function F6(e, t, n) {
   const c = /* @__PURE__ */ new Map();
   for (const [m, g] of t)
     c.set(m, [...c.get(m) ?? [], g]), c.set(g, [...c.get(g) ?? [], m]);
-  const l = (m) => uv(e[Math.floor(m / r)], m % r), d = AW(i, l, (m, g) => {
-    l_.forEach(([y, w], v) => {
+  const l = (m) => uv(e[Math.floor(m / r)], m % r), d = OW(i, l, (m, g) => {
+    d_.forEach(([y, w], v) => {
       a[m] & 1 << v && g(m + w * s + y);
     });
     for (const y of c.get(m) ?? []) l(y) && g(y);
@@ -12485,7 +12510,7 @@ function F6(e, t, n) {
   }
   return { areas: f, areaOf: p };
 }
-function AW(e, t, n) {
+function OW(e, t, n) {
   const s = new Int32Array(e).fill(-1), o = new Int32Array(e), r = new Int32Array(e).fill(-1), i = new Uint8Array(e), a = [];
   let [c, l] = [0, 0];
   const u = (d, h) => {
@@ -12517,11 +12542,11 @@ function AW(e, t, n) {
   }
   return r;
 }
-const Iu = 3.5 / 16, ar = { width: 0.8128, standing: 1.8288, crouched: 1.19 }, u_ = 45, mo = (e) => `${e} tile${e === 1 ? "" : "s"}`;
-function SW(e) {
+const Iu = 3.5 / 16, ar = { width: 0.8128, standing: 1.8288, crouched: 1.19 }, h_ = 45, mo = (e) => `${e} tile${e === 1 ? "" : "s"}`;
+function $W(e) {
   return e === " " ? "a space" : e === "	" ? "a tab" : /^\p{Cc}$/u.test(e) ? `the control character U+${e.codePointAt(0)?.toString(16).padStart(4, "0")}` : JSON.stringify(e);
 }
-function _W(e, t, n, s) {
+function EW(e, t, n, s) {
   const o = /* @__PURE__ */ new Map(), r = e.map(({ rows: a, firstLine: c }) => {
     const l = [];
     return a.forEach(
@@ -12536,7 +12561,7 @@ function _W(e, t, n, s) {
   for (const [a, { line: c, column: l, count: u }] of o) {
     const d = i.filter((f) => f !== a && f.toLowerCase() === a.toLowerCase()), h = {
       at: ns(n, c, l),
-      shown: SW(a),
+      shown: $W(a),
       count: mo(u),
       suggestion: d.length ? ` (did you mean "${d[0]}"?)` : "",
       chars: i.join(" "),
@@ -12546,17 +12571,17 @@ function _W(e, t, n, s) {
   }
   return r;
 }
-function d_(e) {
+function f_(e) {
   return e.void ? "is void" : e.opening !== "none" ? `is a ${e.opening}` : e.floorShape === "flight" ? "is a flight of stairs to the storey above" : e.room ? `marks the room ${e.room}` : e.head > 0 ? `has a head ${e.head} m up` : "";
 }
-function OW(e, t, n, s) {
-  const o = [...new Set(e)].filter((r) => d_(r)).sort((r, i) => r.id < i.id ? -1 : 1);
+function zW(e, t, n, s) {
+  const o = [...new Set(e)].filter((r) => f_(r)).sort((r, i) => r.id < i.id ? -1 : 1);
   for (const r of o) {
-    const i = e.indexOf(r), [a, c] = [t.firstLine + Math.floor(i / t.width), i % t.width + 1], l = { at: ns(n, a, c), char: r.char, glyph: r.id, why: d_(r) };
+    const i = e.indexOf(r), [a, c] = [t.firstLine + Math.floor(i / t.width), i % t.width + 1], l = { at: ns(n, a, c), char: r.char, glyph: r.id, why: f_(r) };
     s.push(rt("LEVEL_NEEDS_STOREY", l, a, c));
   }
 }
-function $W(e, t, n, s) {
+function TW(e, t, n, s) {
   const { width: o, rows: r, firstLine: i } = t, a = [...new Set(e)].filter((c) => c.footprint > 1).sort((c, l) => c.id < l.id ? -1 : 1);
   for (const c of a) {
     const l = c.footprint, { blocks: u } = Vi(o, r.length, (d, h) => e[h * o + d] === c);
@@ -12569,20 +12594,20 @@ function $W(e, t, n, s) {
   }
 }
 function zx(e, t = {}) {
-  const n = yW(e, { file: t.file }), s = [...n.problems], o = { ramps: [], daises: [] }, r = n.format === 2 ? n.storeys : [n];
+  const n = vW(e, { file: t.file }), s = [...n.problems], o = { ramps: [], daises: [] }, r = n.format === 2 ? n.storeys : [n];
   if (r.every((y) => y.rows.length === 0)) return { parsed: n, glyphs: [], ...o, problems: s };
-  const { file: i } = n, a = _W(r, WU(t.registry), i, s);
+  const { file: i } = n, a = EW(r, XU(t.registry), i, s);
   if (s.length) return { parsed: n, glyphs: [], ...o, problems: s };
-  if (n.format === 1 && OW(a[0], n, i, s), r.forEach((y, w) => $W(a[w], y, i, s)), n.format === 2) {
+  if (n.format === 1 && zW(a[0], n, i, s), r.forEach((y, w) => TW(a[w], y, i, s)), n.format === 2) {
     if (s.length) return { parsed: n, glyphs: [], ...o, problems: s };
-    const y = kW(n, a, Iu);
+    const y = SW(n, a, Iu);
     return y.problems.length ? { parsed: n, glyphs: [], ...o, problems: y.problems } : { parsed: n, glyphs: [], ...o, storeys: y, problems: s };
   }
-  const [c] = a, { rows: l, width: u, firstLine: d } = n, h = { cols: u, rows: l.length, tile: n.header.tile, tiles: c }, { ramps: f, problems: p } = b6(h, Iu), { daises: m, problems: g } = v6(h);
-  for (const y of [...p, ...g]) s.push(EW(y, i, d));
+  const [c] = a, { rows: l, width: u, firstLine: d } = n, h = { cols: u, rows: l.length, tile: n.header.tile, tiles: c }, { ramps: f, problems: p } = v6(h, Iu), { daises: m, problems: g } = x6(h);
+  for (const y of [...p, ...g]) s.push(IW(y, i, d));
   return s.length ? { parsed: n, glyphs: [], ...o, problems: s } : { parsed: n, glyphs: c, ramps: f, daises: m, problems: s };
 }
-function EW(e, t, n) {
+function IW(e, t, n) {
   const [s, o] = [n + e.first[1], e.first[0] + 1], { char: r, id: i, top: a, edge: c } = e.glyph, l = { at: ns(t, s, o), char: r, glyph: i, why: e.why, top: a, edge: c };
   return rt(e.shape === "ramp" ? "LEVEL_BAD_RAMP" : "LEVEL_BAD_DAIS", l, s, o);
 }
@@ -12590,10 +12615,10 @@ function S0e(e, t = {}) {
   const { parsed: n, glyphs: s, ramps: o, daises: r, storeys: i, problems: a } = zx(e, t);
   if (a.length) return a;
   const c = t.climb ?? Iu;
-  if (i) return zW(n, i, c);
+  if (i) return RW(n, i, c);
   const { rows: l, firstLine: u, width: d, file: h } = n, f = {};
   for (const x of s) f[x.char] ??= x;
-  const p = s.map((x) => x.char), m = { tile: n.header.tile, cols: d, rows: l.length, tiles: p, legend: f, ramps: o, daises: r }, { areas: g, areaOf: y } = MW(m, c);
+  const p = s.map((x) => x.char), m = { tile: n.header.tile, cols: d, rows: l.length, tiles: p, legend: f, ramps: o, daises: r }, { areas: g, areaOf: y } = _W(m, c);
   let w = -1;
   g.forEach((x, k) => {
     (w < 0 || x.tiles > g[w].tiles) && (w = k);
@@ -12612,8 +12637,8 @@ function S0e(e, t = {}) {
     a.push(rt("LEVEL_UNREACHABLE_AREA", M, A, _));
   }), a;
 }
-const h_ = (e, t) => e.tiles[1] * t + e.tiles[0];
-function zW(e, t, n) {
+const p_ = (e, t) => e.tiles[1] * t + e.tiles[0];
+function RW(e, t, n) {
   const s = [], { storeys: o, rooms: r } = t, { file: i } = e, { cols: a, rows: c, tile: l } = o[0].grid, u = a * c, d = {};
   for (const b of o) for (const x of b.grid.tiles) d[x.char] ??= x;
   const h = o.map((b) => ({
@@ -12632,7 +12657,7 @@ function zW(e, t, n) {
     const k = o[x + 1];
     if (!k) return;
     const A = (_) => k.floored[_] && k.grid.tiles[_].nav.walkable;
-    for (const _ of b.ramps.filter((M) => d[b.grid.tiles[h_(M, a)].char].floorShape === "flight")) {
+    for (const _ of b.ramps.filter((M) => d[b.grid.tiles[p_(M, a)].char].floorShape === "flight")) {
       const [M, S, O, $] = _.tiles, E = _.rises === "north" || _.rises === "south" ? Array.from({ length: O - M + 1 }, (z, T) => _.rises === "north" ? [M + T, S, M + T, S - 1] : [M + T, $, M + T, $ + 1]) : Array.from({ length: $ - S + 1 }, (z, T) => _.rises === "west" ? [M, S + T, M - 1, S + T] : [O, S + T, O + 1, S + T]);
       for (const [z, T, I, L] of E) A(L * a + I) && p.push([x * u + T * a + z, (x + 1) * u + L * a + I]);
     }
@@ -12651,7 +12676,7 @@ function zW(e, t, n) {
       }
     });
   });
-  const { areas: m, areaOf: g } = F6(h, p, n);
+  const { areas: m, areaOf: g } = q6(h, p, n);
   let y = -1;
   m.forEach((b, x) => {
     (y < 0 || b.tiles > m[y].tiles) && (y = x);
@@ -12697,24 +12722,24 @@ function zW(e, t, n) {
     const { at: M, line: S, column: O } = f(x, A), $ = { at: M, count: mo(k), headroom: Math.round(_ * 1e3) / 1e3, body: ar.crouched };
     s.push(rt("LEVEL_LOW_HEADROOM", $, S, O));
   }), o.forEach((b, x) => {
-    for (const k of b.ramps.filter((A) => d[b.grid.tiles[h_(A, a)].char].floorShape === "flight")) {
+    for (const k of b.ramps.filter((A) => d[b.grid.tiles[p_(A, a)].char].floorShape === "flight")) {
       const [A, _, M, S] = k.tiles, O = k.top - k.bottom, $ = (k.rises === "north" || k.rises === "south" ? S - _ + 1 : M - A + 1) * l, E = Math.atan2(O, $) * 180 / Math.PI;
-      if (!(E > u_ + 1e-9)) continue;
-      const { at: z, line: T, column: I } = f(x, _ * a + A), L = { at: z, rise: O, run: $, angle: Math.round(E * 10) / 10, limit: u_, need: Math.ceil(O / l - 1e-9) };
+      if (!(E > h_ + 1e-9)) continue;
+      const { at: z, line: T, column: I } = f(x, _ * a + A), L = { at: z, rise: O, run: $, angle: Math.round(E * 10) / 10, limit: h_, need: Math.ceil(O / l - 1e-9) };
       s.push(rt("LEVEL_STEEP_FLIGHT", L, T, I));
     }
   }), s;
 }
 const v1 = 5;
-function TW(e) {
+function LW(e) {
   return (e.split(/[\\/]/).pop() ?? e).replace(/\.txt$/, "");
 }
-function IW(e) {
+function PW(e) {
   const t = { ...e };
-  for (const n of ["kind", ...BU]) delete t[n];
+  for (const n of ["kind", ...UU]) delete t[n];
   return t;
 }
-function RW(e, t = {}) {
+function NW(e, t = {}) {
   const n = t.file ?? t.name ?? "level", { parsed: s, glyphs: o, ramps: r, daises: i, storeys: a, problems: c } = zx(e, { ...t, file: n });
   if (c.length) {
     const M = c.length > v1 ? `; and ${c.length - v1} more` : "", S = c.slice(0, v1).map((O) => O.message);
@@ -12725,10 +12750,10 @@ function RW(e, t = {}) {
       problems: c
     });
   }
-  const l = t.name ?? (t.file ? TW(t.file) : "level");
-  if (a) return jW(a, s, l);
+  const l = t.name ?? (t.file ? LW(t.file) : "level");
+  if (a) return FW(a, s, l);
   const { rows: u, width: d, header: h } = s, f = u.length, p = h.tile, m = { cols: d, rows: f, tile: p, tiles: o }, g = {};
-  for (const M of o) g[M.char] ??= IW(M);
+  for (const M of o) g[M.char] ??= PW(M);
   const y = o.map((M) => M.char), w = { tile: p, cols: d, rows: f, tiles: y, legend: g, ramps: r, daises: i }, v = o.map((M, S) => [(S % d + 0.5) * p, (Math.floor(S / d) + 0.5) * p]), b = v.map(([M, S]) => Bi(w, M, S)), x = v.map(([M, S]) => Ox(w, M, S)), k = [], A = [];
   o.forEach((M, S) => {
     const [O, $] = [S % d, Math.floor(S / d)], [E, z] = v[S];
@@ -12742,7 +12767,7 @@ function RW(e, t = {}) {
     }), M.light && A.push({ tag: M.light, glyph: M.id, col: O, row: $, position: [E, x[S] + M.lightHeight, z] });
   });
   const _ = {
-    format: P6,
+    format: N6,
     name: l,
     description: h.description,
     tile: p,
@@ -12756,52 +12781,52 @@ function RW(e, t = {}) {
     floor: b,
     top: x,
     bounds: { min: [0, 0, 0], max: [d * p, x.reduce((M, S) => Math.max(M, S), 0), f * p] },
-    ground: A6(m),
-    colliders: M6(m, { ramps: r, daises: i }),
+    ground: S6(m),
+    colliders: A6(m, { ramps: r, daises: i }),
     ramps: r,
     daises: i,
-    meshes: L6(m),
+    meshes: P6(m),
     spawns: k,
     lights: A
   };
   return Ft(_);
 }
-const f_ = (e, t) => ({
+const m_ = (e, t) => ({
   ...e,
   bottom: e.bottom + t,
   top: e.top + t
-}), Xd = ([e, t, n], s) => [e, t + s, n], q6 = ([e, t, n, s], o) => [e * o, t * o, (n + 1) * o, (s + 1) * o];
-function p_(e, t, n, s, o) {
-  const r = e.grid.tile, [i, a, c, l] = q6(t, r);
+}), Xd = ([e, t, n], s) => [e, t + s, n], B6 = ([e, t, n, s], o) => [e * o, t * o, (n + 1) * o, (s + 1) * o];
+function g_(e, t, n, s, o) {
+  const r = e.grid.tile, [i, a, c, l] = B6(t, r);
   if (e.roof && e.roof.kind !== "flat") {
     const u = _x(e.roof, [i, a, c, l], n);
     return u && { shape: "hull", glyph: s, surface: o, points: u, tiles: t, storey: e.index };
   }
   return e.fullTop > n ? { shape: "box", glyph: s, surface: o, min: [i, n, a], max: [c, e.fullTop, l], tiles: t, storey: e.index } : null;
 }
-function LW(e) {
+function jW(e) {
   const { grid: t, base: n, index: s } = e, o = t.tile, r = [], i = [...new Set(t.tiles.filter((c, l) => e.floored[l]).map((c) => c.surface))].sort(kc);
   for (const c of i) {
     const l = (u, d) => e.floored[d * t.cols + u] && t.tiles[d * t.cols + u].surface === c;
     for (const u of Mc(t.cols, t.rows, l)) {
-      const [d, h, f, p] = q6(u, o);
+      const [d, h, f, p] = B6(u, o);
       r.push({ shape: "box", glyph: "", surface: c, min: [d, n - e.slab, h], max: [f, n, p], tiles: u, storey: s, part: "slab" });
     }
   }
   const a = new Map(Ar(t).map((c) => [c.id, c]));
-  for (const c of M6(t, { ramps: e.ramps, daises: e.daises }))
+  for (const c of A6(t, { ramps: e.ramps, daises: e.daises }))
     if (c.shape === "box" && a.get(c.glyph)?.full) {
-      const l = p_(e, c.tiles, n, c.glyph, c.surface);
+      const l = g_(e, c.tiles, n, c.glyph, c.surface);
       l && r.push(l);
     } else c.shape === "box" ? r.push({ ...c, min: Xd(c.min, n), max: Xd(c.max, n), storey: s }) : c.shape === "hull" ? r.push({ ...c, points: c.points.map((l) => Xd(l, n)), storey: s }) : r.push({ ...c, center: Xd(c.center, n), storey: s });
   for (const c of Ar(t).filter((l) => l.head > 0))
     for (const l of Mc(t.cols, t.rows, Eo(t, [c]))) {
-      const u = p_(e, l, n + c.head, c.id, c.surface);
+      const u = g_(e, l, n + c.head, c.id, c.surface);
       u && r.push({ ...u, part: "head" });
     }
   return r;
 }
-function PW(e, t, n) {
+function CW(e, t, n) {
   const { grid: s, base: o } = e, { cols: r, rows: i, tile: a } = s, c = s.tiles.map((w) => w.char), l = { tile: a, cols: r, rows: i, tiles: c, legend: t, ramps: e.ramps, daises: e.daises }, u = (w) => [(w % r + 0.5) * a, (Math.floor(w / r) + 0.5) * a], d = (w, v) => e.roof && e.roof.kind !== "flat" ? ad(e.roof, w, v) : e.fullTop, h = s.tiles.map((w, v) => w.void ? o : o + Bi(l, ...u(v))), f = s.tiles.map(
     (w, v) => w.void ? o : w.full ? d(...u(v)) : o + Ox(l, ...u(v))
   ), p = [], m = [];
@@ -12813,7 +12838,7 @@ function PW(e, t, n) {
     }
     w.light && m.push({ tag: w.light, glyph: w.id, col: b, row: x, position: [k, f[v] + w.lightHeight, A], storey: _ });
   });
-  const g = L6(s, !0).map((w) => {
+  const g = P6(s, !0).map((w) => {
     const v = w.glyphs.some((b) => s.tiles.find((x) => x.id === b)?.full);
     return { ...w, bottom: w.bottom + o, top: v ? e.fullTop : w.top + o };
   });
@@ -12832,12 +12857,12 @@ function PW(e, t, n) {
     floor: h,
     top: f,
     room: [...n],
-    ramps: e.ramps.map((w) => f_(w, o)),
-    daises: e.daises.map((w) => f_(w, o)),
+    ramps: e.ramps.map((w) => m_(w, o)),
+    daises: e.daises.map((w) => m_(w, o)),
     meshes: g
   }, spawns: p, lights: m };
 }
-function NW(e) {
+function DW(e) {
   const t = {};
   for (const n of e)
     for (const s of n.grid.tiles) {
@@ -12847,23 +12872,23 @@ function NW(e) {
     }
   return t;
 }
-function jW(e, t, n) {
-  const { storeys: s, roomOf: o } = e, [r] = s, { cols: i, rows: a, tile: c } = r.grid, l = NW(s), u = s.map((v, b) => PW(v, l, o[b])), d = s[s.length - 1].roof, h = s.flatMap(LW);
+function FW(e, t, n) {
+  const { storeys: s, roomOf: o } = e, [r] = s, { cols: i, rows: a, tile: c } = r.grid, l = DW(s), u = s.map((v, b) => CW(v, l, o[b])), d = s[s.length - 1].roof, h = s.flatMap(jW);
   if (d) {
     const v = [0, 0, i - 1, a - 1];
-    for (const b of $6(d))
+    for (const b of E6(d))
       h.push({ shape: "hull", glyph: "", surface: d.surface, points: b, tiles: v, storey: d.storey, part: "roof" });
   }
   const f = u[Math.max(
     0,
     s.findIndex((v) => v.base === 0)
-  )].storey, p = r.base - r.slab, m = Math.max(...u.map(({ storey: v }) => Math.max(v.fullTop, ...v.top)), d?.peak ?? -1 / 0), g = A6(r.grid), y = iW(
+  )].storey, p = r.base - r.slab, m = Math.max(...u.map(({ storey: v }) => Math.max(v.fullTop, ...v.top)), d?.peak ?? -1 / 0), g = S6(r.grid), y = lW(
     s.flatMap((v) => v.openings),
     o,
     i,
     a
   ), w = {
-    format: aW,
+    format: uW,
     name: n,
     description: t.header.description,
     tile: c,
@@ -12876,14 +12901,14 @@ function jW(e, t, n) {
     walkable: f.walkable,
     floor: f.floor,
     top: f.top,
-    bounds: FW(d, [0, p, 0], [i * c, m, a * c]),
+    bounds: GW(d, [0, p, 0], [i * c, m, a * c]),
     ground: { min: [g.min[0], p - 1, g.min[2]], max: [g.max[0], p, g.max[2]] },
     colliders: h,
     ramps: f.ramps,
     daises: f.daises,
     meshes: f.meshes,
     spawns: u.flatMap((v) => v.spawns),
-    lights: u.flatMap((v) => v.lights).map((v) => ({ ...v, room: DW(e, v, i, a) })),
+    lights: u.flatMap((v) => v.lights).map((v) => ({ ...v, room: BW(e, v, i, a) })),
     storeys: u.map((v) => v.storey),
     rooms: e.rooms,
     openings: y,
@@ -12891,15 +12916,15 @@ function jW(e, t, n) {
   };
   return Ft(w);
 }
-const CW = [[0, 0], [0, -1], [1, 0], [0, 1], [-1, 0]];
-function DW({ rooms: e, roomOf: t }, n, s, o) {
-  for (const [r, i] of CW) {
+const qW = [[0, 0], [0, -1], [1, 0], [0, 1], [-1, 0]];
+function BW({ rooms: e, roomOf: t }, n, s, o) {
+  for (const [r, i] of qW) {
     const [a, c] = [n.col + r, n.row + i], l = a >= 0 && c >= 0 && a < s && c < o ? t[n.storey][c * s + a] : -1;
     if (l >= 0) return e[l].id;
   }
   return "";
 }
-function FW(e, t, n) {
+function GW(e, t, n) {
   if (!e) return { min: t, max: n };
   const [s, o, r, i] = e.footprint, a = e.eaves;
   return {
@@ -12907,7 +12932,7 @@ function FW(e, t, n) {
     max: [Math.max(n[0], r + a), n[1], Math.max(n[2], i + a)]
   };
 }
-const qW = {
+const HW = {
   text: {
     type: "string",
     required: !0,
@@ -12934,7 +12959,7 @@ const qW = {
     description: "Mesh recipes for drawing it, presentation only: a recipe its glyphs name that the engine lacks, or one of the engine's drawn otherwise in this level, as engine/gfx/level/recipes.ts writes them ({ roof: { shape: 'roof', materials: ['material:shingles', 'material:wood'], castShadow: true, receiveShadow: true } })."
   }
 };
-function BW(e) {
+function UW(e) {
   return Object.entries(e).flatMap(([t, n]) => {
     const s = n ?? {}, o = s.materials;
     return typeof s.shape == "string" && Array.isArray(o) && o.length > 0 && o.every((i) => typeof i == "string") && typeof s.castShadow == "boolean" && typeof s.receiveShadow == "boolean" ? [] : [`recipes["${t}"] must be { shape, materials: [material ids], castShadow, receiveShadow }`];
@@ -12943,46 +12968,46 @@ function BW(e) {
 function Tx(e) {
   e.kinds().includes("level") || e.defineKind("level", {
     description: "Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.",
-    fields: qW,
+    fields: HW,
     defineWith: "defineLevel('<id>', { text, file, materials, rooms, recipes })",
     check: (t) => {
-      const n = t, { problems: s } = zx(n.text, { file: n.file || n.id, registry: e }), o = Object.entries(n.materials).filter(([, a]) => typeof a != "string").map(([a]) => `materials["${a}"] must be a material id (a string)`), r = Object.entries(n.rooms).filter(([, a]) => typeof a != "string").map(([a]) => `rooms["${a}"] must be a material id (a string)`), i = BW(n.recipes);
+      const n = t, { problems: s } = zx(n.text, { file: n.file || n.id, registry: e }), o = Object.entries(n.materials).filter(([, a]) => typeof a != "string").map(([a]) => `materials["${a}"] must be a material id (a string)`), r = Object.entries(n.rooms).filter(([, a]) => typeof a != "string").map(([a]) => `rooms["${a}"] must be a material id (a string)`), i = UW(n.recipes);
       return [...s.map((a) => a.message), ...o, ...r, ...i];
     }
   });
 }
 Tx(B);
-function GW(e, t, n = B) {
+function WW(e, t, n = B) {
   return Tx(n), n.def("level", e, t);
 }
 function t0(e, t = B) {
   Tx(t);
   const n = t.get("level", e);
-  return RW(n.text, {
+  return NW(n.text, {
     file: n.file || n.id,
     name: n.id.replace(/^level:/, ""),
     registry: t
   });
 }
-const HW = J("core", {
+const VW = J("core", {
   CORE_BAD_NOISE: {
     template: "noise option {option} must be {rule}, got {value}",
     fix: "pass createNoise2D/createNoise3D a kind of value, gradient or cell, octaves from 1 to 16, a finite gain, a positive lacunarity (an integer when period is set) and a period that is a positive integer, or none",
     doc: "Raised when a noise is created (engine/core/noise.ts), never while it is sampled, so a bad option fails at once instead of giving a noise that silently stops tiling."
   }
-}), Yh = 4294967296, UW = 374761393, WW = 668265263, VW = 3266489917, KW = 2246822519;
+}), Yh = 4294967296, KW = 374761393, XW = 668265263, YW = 3266489917, JW = 2246822519;
 function Ix(e, t, n, s) {
-  let o = Math.imul(e | 0, UW) + Math.imul(t | 0, WW) + Math.imul(n | 0, VW) + Math.imul(s, KW) | 0;
+  let o = Math.imul(e | 0, KW) + Math.imul(t | 0, XW) + Math.imul(n | 0, YW) + Math.imul(s, JW) | 0;
   return o = Math.imul(o ^ o >>> 13, 1274126177), o ^= o >>> 16, o >>> 0;
 }
 const fr = (e, t, n) => e + (t - e) * n, x1 = (e) => e * e * (3 - 2 * e), k1 = (e) => e * e * e * (e * (e * 6 - 15) + 10), Vn = (e, t) => t > 0 ? (e % t + t) % t : e, Rx = (e) => [Math.floor(e[0]), Math.floor(e[1]), Math.floor(e[2] ?? 0)];
-function XW(e) {
+function QW(e) {
   return (t, n, s) => {
     const [o, r, i] = Rx(t), [a, c, l] = [x1(t[0] - o), x1(t[1] - r), x1((t[2] ?? 0) - i)], [u, d] = [Vn(o, s), Vn(o + 1, s)], [h, f] = [Vn(r, s), Vn(r + 1, s)], p = (g, y, w) => Ix(g, y, w, n) / Yh, m = (g) => fr(fr(p(u, h, g), p(d, h, g), a), fr(p(u, f, g), p(d, f, g), a), c);
     return e === 2 ? m(0) : fr(m(Vn(i, s)), m(Vn(i + 1, s)), l);
   };
 }
-const qo = Math.SQRT1_2, m_ = [1, 0, qo, qo, 0, 1, -qo, qo, -1, 0, -qo, -qo, 0, -1, qo, -qo], M1 = [
+const qo = Math.SQRT1_2, y_ = [1, 0, qo, qo, 0, 1, -qo, qo, -1, 0, -qo, -qo, 0, -1, qo, -qo], M1 = [
   1,
   1,
   0,
@@ -13031,15 +13056,15 @@ const qo = Math.SQRT1_2, m_ = [1, 0, qo, qo, 0, 1, -qo, qo, -1, 0, -qo, -qo, 0, 
   0,
   -1,
   -1
-], YW = { 2: Math.SQRT2, 3: 1 / 1.0363538112118025 };
-function JW(e) {
-  const t = YW[e];
+], ZW = { 2: Math.SQRT2, 3: 1 / 1.0363538112118025 };
+function eV(e) {
+  const t = ZW[e];
   return (n, s, o) => {
     const [r, i, a] = Rx(n), [c, l, u] = [n[0] - r, n[1] - i, (n[2] ?? 0) - a], [d, h, f] = [k1(c), k1(l), k1(u)], p = (g, y, w) => {
       const v = Ix(Vn(r + g, o), Vn(i + y, o), e === 2 ? 0 : Vn(a + w, o), s);
       if (e === 2) {
         const x = (v >>> 29) * 2;
-        return m_[x] * (c - g) + m_[x + 1] * (l - y);
+        return y_[x] * (c - g) + y_[x + 1] * (l - y);
       }
       const b = (v >>> 28) * 3;
       return M1[b] * (c - g) + M1[b + 1] * (l - y) + M1[b + 2] * (u - w);
@@ -13047,14 +13072,14 @@ function JW(e) {
     return t * (e === 2 ? m(0) : fr(m(0), m(1), f));
   };
 }
-function QW(e) {
+function tV(e) {
   const t = [], n = [-2, -1, 0, 1, 2];
   for (const o of n) for (const r of n) for (const i of e === 2 ? [0] : n) t.push([o, r, i]);
   const s = (o) => Math.max(...o.map(Math.abs));
   return t.sort((o, r) => s(o) - s(r));
 }
-function ZW(e) {
-  const t = QW(e);
+function nV(e) {
+  const t = tV(e);
   return (n, s, o) => {
     const [r, i, a = 0] = n, [c, l, u] = Rx(n), d = (f, p) => Math.max(p - f, 0, f - p - 1);
     let h = 1 / 0;
@@ -13067,20 +13092,20 @@ function ZW(e) {
     return Math.sqrt(h);
   };
 }
-const g_ = {
-  value: XW,
-  gradient: JW,
-  cell: ZW
+const w_ = {
+  value: QW,
+  gradient: eV,
+  cell: nV
 };
 function Rr(e, t, n, s) {
   if (e) return;
-  const { template: o, fix: r } = HW.CORE_BAD_NOISE, i = o.replace("{option}", t).replace("{rule}", n).replace("{value}", String(s));
+  const { template: o, fix: r } = VW.CORE_BAD_NOISE, i = o.replace("{option}", t).replace("{rule}", n).replace("{value}", String(s));
   throw new RangeError(`[CORE_BAD_NOISE] ${i}: ${r}`);
 }
-function eV(e, t, n) {
+function sV(e, t, n) {
   const { seed: s = 0, period: o = 0, octaves: r = 1, lacunarity: i = 2, gain: a = 0.5 } = n;
-  Rr(Object.hasOwn(g_, e), "kind", "value, gradient or cell", e), Rr(Number.isFinite(s), "seed", "a finite number", s), Rr(o === 0 || Number.isInteger(o) && o > 0, "period", "a positive integer", o), Rr(Number.isInteger(r) && r >= 1 && r <= 16, "octaves", "an integer from 1 to 16", r), Rr(Number.isFinite(a), "gain", "a finite number", a), Rr(i > 0 && Number.isFinite(i), "lacunarity", "a positive number", i), Rr(!o || Number.isInteger(i), "lacunarity", "an integer when period is set", i);
-  const c = g_[e](t), l = s | 0;
+  Rr(Object.hasOwn(w_, e), "kind", "value, gradient or cell", e), Rr(Number.isFinite(s), "seed", "a finite number", s), Rr(o === 0 || Number.isInteger(o) && o > 0, "period", "a positive integer", o), Rr(Number.isInteger(r) && r >= 1 && r <= 16, "octaves", "an integer from 1 to 16", r), Rr(Number.isFinite(a), "gain", "a finite number", a), Rr(i > 0 && Number.isFinite(i), "lacunarity", "a positive number", i), Rr(!o || Number.isInteger(i), "lacunarity", "an integer when period is set", i);
+  const c = w_[e](t), l = s | 0;
   if (r === 1) return (m) => c(m, l, o);
   let [u, d] = [1, 1];
   const h = Array.from({ length: r }, (m, g) => {
@@ -13102,12 +13127,12 @@ function eV(e, t, n) {
     return g / f;
   };
 }
-function y_(e = "gradient", t = {}) {
-  const n = eV(e, 2, t), s = [0, 0];
+function b_(e = "gradient", t = {}) {
+  const n = sV(e, 2, t), s = [0, 0];
   return (o, r) => (s[0] = o, s[1] = r, n(s));
 }
-const tV = (e, t = !1) => ({ type: "array", items: { type: "number" }, ...t ? { required: t } : { default: [0, 0] }, unit: "m", description: e }), B6 = {
-  size: tV("Its extent along x and along z, each a whole number of cells: [24, 96].", !0),
+const oV = (e, t = !1) => ({ type: "array", items: { type: "number" }, ...t ? { required: t } : { default: [0, 0] }, unit: "m", description: e }), G6 = {
+  size: oV("Its extent along x and along z, each a whole number of cells: [24, 96].", !0),
   cell: { type: "number", default: 1, minimum: 0.25, maximum: 8, unit: "m", description: "The grid’s spacing: a height stands at every cell’s corners." },
   // prettier-ignore
   origin: { type: "array", items: { type: "number" }, default: [0, 0, 0], unit: "m", description: "Its north-west corner, at the height everything else is added to: [x, y, z]." },
@@ -13133,9 +13158,9 @@ const tV = (e, t = !1) => ({ type: "array", items: { type: "number" }, ...t ? { 
   // prettier-ignore
   materials: { type: "array", items: { type: "string" }, default: ["material:default"], description: "Drawing only: the layers’ materials, the ground, then the steep and the high (a game names its own)." }
   // prettier-ignore
-}, w_ = (e) => e * e * (3 - 2 * e), b_ = (e, t, n) => e < t ? t : e > n ? n : e;
-function G6(e) {
-  const t = [], n = (l, u) => Array.isArray(l) && l.length === u && l.every(Number.isFinite), { size: s = [0, 0], cell: o, origin: r, hills: i, flats: a, materials: c } = { ...U6(), ...e };
+}, v_ = (e) => e * e * (3 - 2 * e), x_ = (e, t, n) => e < t ? t : e > n ? n : e;
+function H6(e) {
+  const t = [], n = (l, u) => Array.isArray(l) && l.length === u && l.every(Number.isFinite), { size: s = [0, 0], cell: o, origin: r, hills: i, flats: a, materials: c } = { ...W6(), ...e };
   if (!n(s, 2) || !(s[0] > 0 && s[1] > 0))
     t.push("size must be [x, z], two positive numbers of metres");
   else
@@ -13154,10 +13179,10 @@ function G6(e) {
     (!n(h, 4) || !(h[2] > h[0] && h[3] > h[1]) || !Number.isFinite(d?.height) || !(Number(d?.margin) >= 0)) && t.push(`flats[${u}] must be { rect: [x0, z0, x1, z1] (x1 > x0, z1 > z0), height, margin (0 or more) } (m)`);
   }), (c.length < 1 || c.length > 3) && t.push("materials must name 1 to 3 materials: the ground, the steep, the high"), t;
 }
-function H6(e, t = "terrain") {
-  const n = G6(e);
+function U6(e, t = "terrain") {
+  const n = H6(e);
   if (n.length) throw D("CORE_BAD_SPEC", { where: `terrain ${t}`, problems: n.join("; ") });
-  const s = { ...U6(), ...e }, o = Math.round(s.size[0] / s.cell), r = Math.round(s.size[1] / s.cell), [i, a, c] = s.origin, l = { seed: s.seed, octaves: s.octaves, gain: 0.5, lacunarity: 2.03 }, u = y_("value", l), d = y_("value", { ...l, seed: s.seed ^ 2748 }), [h, f] = [s.scale, s.height], p = s.hills, m = s.flats, g = new Float32Array((r + 1) * (o + 1));
+  const s = { ...W6(), ...e }, o = Math.round(s.size[0] / s.cell), r = Math.round(s.size[1] / s.cell), [i, a, c] = s.origin, l = { seed: s.seed, octaves: s.octaves, gain: 0.5, lacunarity: 2.03 }, u = b_("value", l), d = b_("value", { ...l, seed: s.seed ^ 2748 }), [h, f] = [s.scale, s.height], p = s.hills, m = s.flats, g = new Float32Array((r + 1) * (o + 1));
   let [y, w] = [1 / 0, -1 / 0];
   for (let v = 0; v <= r; v++)
     for (let b = 0; b <= o; b++) {
@@ -13169,11 +13194,11 @@ function H6(e, t = "terrain") {
       }
       for (const M of p) {
         const [S, O] = [x - M.at[0], k - M.at[1]];
-        A += M.height * w_(b_(1 - Math.sqrt(S * S + O * O) / M.radius, 0, 1));
+        A += M.height * v_(x_(1 - Math.sqrt(S * S + O * O) / M.radius, 0, 1));
       }
       s.terrace > 0 && (A = Math.round(A / s.terrace) * s.terrace);
       for (const M of m) {
-        const [S, O, $, E] = M.rect, [z, T] = [Math.max(S - x, 0, x - $), Math.max(O - k, 0, k - E)], I = Math.sqrt(z * z + T * T), L = M.margin > 0 ? w_(b_((I - M.margin / 4) / (M.margin * 3 / 4), 0, 1)) : I > 0 ? 1 : 0;
+        const [S, O, $, E] = M.rect, [z, T] = [Math.max(S - x, 0, x - $), Math.max(O - k, 0, k - E)], I = Math.sqrt(z * z + T * T), L = M.margin > 0 ? v_(x_((I - M.margin / 4) / (M.margin * 3 / 4), 0, 1)) : I > 0 ? 1 : 0;
         A = A * L + M.height * (1 - L);
       }
       const _ = Math.fround(a + A);
@@ -13196,42 +13221,42 @@ function H6(e, t = "terrain") {
     flats: m.map((v) => ({ rect: [...v.rect], height: v.height, margin: v.margin }))
   };
 }
-function U6() {
+function W6() {
   return Object.fromEntries(
-    Object.entries(B6).flatMap(([e, t]) => "default" in t ? [[e, t.default]] : [])
+    Object.entries(G6).flatMap(([e, t]) => "default" in t ? [[e, t.default]] : [])
   );
 }
-function W6(e, t, n) {
+function V6(e, t, n) {
   const { cols: s, rows: o, cell: r, origin: i, heights: a } = e, [c, l] = [(t - i[0]) / r, (n - i[2]) / r];
   if (!(c >= 0 && l >= 0 && c <= s && l <= o)) return null;
   const [u, d] = [Math.min(Math.floor(c), s - 1), Math.min(Math.floor(l), o - 1)], h = (f, p) => a[p * (s + 1) + f];
   return { col: u, row: d, fu: c - u, fv: l - d, h00: h(u, d), h10: h(u + 1, d), h01: h(u, d + 1), h11: h(u + 1, d + 1) };
 }
 function Lf(e, t, n) {
-  const s = W6(e, t, n);
+  const s = V6(e, t, n);
   if (!s) return null;
   const { fu: o, fv: r, h00: i, h10: a, h01: c, h11: l } = s;
   return o + r <= 1 ? i + (a - i) * o + (c - i) * r : l + (c - l) * (1 - o) + (a - l) * (1 - r);
 }
-function V6(e, t, n) {
-  const s = W6(e, t, n);
+function K6(e, t, n) {
+  const s = V6(e, t, n);
   if (!s) return null;
   const { fu: o, fv: r, h00: i, h10: a, h01: c, h11: l } = s, u = e.cell;
   return o + r <= 1 ? [(a - i) / u, (c - i) / u] : [(l - c) / u, (l - a) / u];
 }
 function _0e(e, t, n, s = new R()) {
-  const o = V6(e, t, n);
+  const o = K6(e, t, n);
   return o ? s.set(-o[0], 1, -o[1]).normalize() : null;
 }
-function K6(e, t, n) {
-  const s = V6(e, t, n);
+function X6(e, t, n) {
+  const s = K6(e, t, n);
   return s ? Math.sqrt(s[0] * s[0] + s[1] * s[1]) : null;
 }
-function nV(e, t, n) {
-  const s = K6(e, t, n);
+function rV(e, t, n) {
+  const s = X6(e, t, n);
   return s === null ? "" : s >= e.steep ? e.steepSurface : e.surface;
 }
-function sV(e, t, n, s, o) {
+function iV(e, t, n, s, o) {
   let r = hr(e ^ Math.imul(t + 1, 2654435769));
   return r = hr(r ^ Math.imul(n, 2246822507)), r = hr(r ^ Math.imul(s, 3266489909)), hr(r ^ Math.imul(o + 1, 668265263)) / 4294967296;
 }
@@ -13239,10 +13264,10 @@ function O0e(e, t) {
   const { density: n, salt: s = 0, grade: o = e.steep, clear: r = 0, scale: i = [1, 1] } = t, { cols: a, rows: c, cell: l, origin: u, seed: d } = e, h = [];
   for (let f = 0; f < c; f++)
     for (let p = 0; p < a; p++) {
-      const m = (b) => sV(d, s, p, f, b);
+      const m = (b) => iV(d, s, p, f, b);
       if (!(m(0) < n)) continue;
       const [g, y] = [u[0] + (p + m(1)) * l, u[2] + (f + m(2)) * l];
-      if ((K6(e, g, y) ?? 1 / 0) > o || e.flats.some(({ rect: [b, x, k, A] }) => g > b - r && g < k + r && y > x - r && y < A + r)) continue;
+      if ((X6(e, g, y) ?? 1 / 0) > o || e.flats.some(({ rect: [b, x, k, A] }) => g > b - r && g < k + r && y > x - r && y < A + r)) continue;
       const v = m(3) * 2 * Math.PI;
       h.push({ position: [g, Lf(e, g, y), y], yaw: v, scale: i[0] + (i[1] - i[0]) * m(4) });
     }
@@ -13251,30 +13276,30 @@ function O0e(e, t) {
 function Lx(e) {
   e.kinds().includes("terrain") || e.defineKind("terrain", {
     description: "Terrain: outdoor ground as a seeded heightfield (noise, hills, terraces, flattened footprints).",
-    fields: B6,
+    fields: G6,
     defineWith: "defineTerrain('<id>', { size, cell, origin, seed, height, hills, flats, … })",
-    check: (t) => G6(t)
+    check: (t) => H6(t)
   });
 }
 Lx(B);
 function $0e(e, t, n = B) {
   return Lx(n), n.def("terrain", e, t);
 }
-function oV(e, t = B) {
+function aV(e, t = B) {
   Lx(t);
   const n = t.get("terrain", e);
-  return H6(n, n.id.replace(/^terrain:/, ""));
+  return U6(n, n.id.replace(/^terrain:/, ""));
 }
-const rV = {
+const cV = {
   terrain: { type: "string", default: "", description: "Its terrain (`terrain:<name>`); none when empty." },
   structures: { type: "array", items: { type: "object" }, default: [], description: "The levels standing on it: { level, at: [x, y, z], turn (quarter turns, 0 to 3), flatten (m, 4: the ground flattened round it), cuts ([[x0, z0, x1, z1]], its own metres: holes in the ground) }." }
   // prettier-ignore
 };
 function Gi(e, t, n) {
-  const [s, o] = X6(e.turn, t, n);
+  const [s, o] = Y6(e.turn, t, n);
   return [e.at[0] + s, e.at[2] + o];
 }
-function X6(e, t, n) {
+function Y6(e, t, n) {
   const [s, o, r, i] = [t || 0, n || 0, -t || 0, -n || 0];
   return [[s, o], [o, r], [r, i], [i, s]][e];
 }
@@ -13287,14 +13312,14 @@ function Ki(e, t, n) {
     [o, -s]
   ][e.turn];
 }
-function iV(e) {
+function lV(e) {
   return [[0, 0, 0, 1], [0, Math.SQRT1_2, 0, Math.SQRT1_2], [0, 1, 0, 0], [0, Math.SQRT1_2, 0, -Math.SQRT1_2]][e];
 }
 function dv(e, [t, n, s, o]) {
   const [r, i] = [Gi(e, t, n), Gi(e, s, o)];
   return [Math.min(r[0], i[0]), Math.min(r[1], i[1]), Math.max(r[0], i[0]), Math.max(r[1], i[1])];
 }
-function Y6(e) {
+function J6(e) {
   const t = [];
   return (e.structures ?? []).forEach((n, s) => {
     const o = n?.at;
@@ -13303,11 +13328,11 @@ function Y6(e) {
       (!Array.isArray(r) || r.length !== 4 || !(r[2] > r[0] && r[3] > r[1])) && t.push(`structures[${s}].cuts must be [x0, z0, x1, z1] rectangles (x1 > x0, z1 > z0)`);
   }), t;
 }
-function aV(e, t, n) {
+function uV(e, t, n) {
   const s = t0(e.level, n), o = e.turn ?? 0, r = [e.at[0], e.at[1], e.at[2]], i = dv({ at: r, turn: o }, [0, 0, s.cols * s.tile, s.rows * s.tile]), [a, c] = [s.bounds.min, s.bounds.max], l = dv({ at: r, turn: o }, [a[0], a[2], c[0], c[2]]), u = { min: [l[0], r[1] + a[1], l[1]], max: [l[2], r[1] + c[1], l[3]] };
   return { name: s.name, index: t, level: s, at: r, turn: o, footprint: i, bounds: u, cuts: e.cuts ?? [] };
 }
-function cV(e) {
+function dV(e) {
   const { level: t } = e, n = t.tile;
   if (!t.storeys) return [[0, 0, t.cols * n, t.rows * n], ...e.cuts];
   const s = [];
@@ -13318,10 +13343,10 @@ function cV(e) {
     });
   return [...s, ...e.cuts];
 }
-function lV(e, t) {
+function hV(e, t) {
   const { cols: n, rows: s, cell: o, origin: r } = e, [i, a, c] = [2 * n, 2 * s, o / 2], l = new Uint8Array(i * a);
   for (const h of t)
-    for (const f of cV(h)) {
+    for (const f of dV(h)) {
       const [p, m, g, y] = dv(h, f), [w, v] = [Math.ceil((p - r[0]) / c - 0.5), Math.floor((g - r[0]) / c - 0.5)], [b, x] = [Math.ceil((m - r[2]) / c - 0.5), Math.floor((y - r[2]) / c - 0.5)];
       for (let k = Math.max(0, b); k <= Math.min(a - 1, x); k++)
         for (let A = Math.max(0, w); A <= Math.min(i - 1, v); A++) l[k * i + A] = 1;
@@ -13335,26 +13360,26 @@ function lV(e, t) {
     }
   return d ? u : null;
 }
-function uV(e, t = "site", n = B) {
-  const s = Y6(e);
+function fV(e, t = "site", n = B) {
+  const s = J6(e);
   if (s.length) throw D("CORE_BAD_SPEC", { where: `site ${t}`, problems: s.join("; ") });
-  const o = (e.structures ?? []).map((i, a) => aV(i, a, n));
+  const o = (e.structures ?? []).map((i, a) => uV(i, a, n));
   let r = null;
   if (e.terrain) {
     const i = n.get("terrain", e.terrain), a = (e.structures ?? []).map((u, d) => {
       const [h, f, p, m] = o[d].footprint;
       return { rect: [h, f, p, m], height: u.at[1], margin: u.flatten ?? 4 };
     }), c = i.id.replace(/^terrain:/, ""), l = [...i.flats ?? [], ...a];
-    r = H6({ ...i, flats: l }, c);
+    r = U6({ ...i, flats: l }, c);
   }
-  return { name: t, terrain: r, structures: o, cut: r ? lV(r, o) : null };
+  return { name: t, terrain: r, structures: o, cut: r ? hV(r, o) : null };
 }
 function Px(e) {
   e.kinds().includes("site") || e.defineKind("site", {
     description: "Sites: levels standing on a terrain, each placed at an offset and a quarter turn.",
-    fields: rV,
+    fields: cV,
     defineWith: "defineSite('<id>', { terrain, structures: [{ level, at, turn, flatten, cuts }] })",
-    check: (t) => Y6(t)
+    check: (t) => J6(t)
   });
 }
 Px(B);
@@ -13364,9 +13389,9 @@ function E0e(e, t, n = B) {
 function Nx(e, t = B) {
   Px(t);
   const n = t.get("site", e);
-  return uV({ terrain: n.terrain || void 0, structures: n.structures }, n.id.replace(/^site:/, ""), t);
+  return fV({ terrain: n.terrain || void 0, structures: n.structures }, n.id.replace(/^site:/, ""), t);
 }
-const v_ = 0.1, Ru = (e, t = "m") => ({ type: "array", items: { type: "number" }, required: !0, unit: t, description: e }), J6 = Me({
+const k_ = 0.1, Ru = (e, t = "m") => ({ type: "array", items: { type: "number" }, required: !0, unit: t, description: e }), Q6 = Me({
   from: Ru("Its first anchor, where the cable is tied (m)."),
   to: Ru("Its second anchor (m)."),
   balloon: { type: "boolean", default: !1, description: "A redeploy balloon’s line: vertical, its upper anchor the balloon, which launches a skydive." },
@@ -13382,7 +13407,7 @@ const v_ = 0.1, Ru = (e, t = "m") => ({ type: "array", items: { type: "number" }
   normal: { type: "array", items: { type: "number" }, required: !0, description: "Out of the wall toward whoever climbs it, a unit [x, z]." },
   // prettier-ignore
   width: { type: "number", default: 0.6, minimum: 0.1, unit: "m", description: "Across its face." }
-}), Q6 = Me({
+}), Z6 = Me({
   at: Ru("The middle of its top, where the feet stand on it (m)."),
   size: { type: "array", items: { type: "number" }, default: [1.5, 1.5], unit: "m", description: "Its top across, along x and z." },
   // prettier-ignore
@@ -13396,8 +13421,8 @@ const v_ = 0.1, Ru = (e, t = "m") => ({ type: "array", items: { type: "number" }
   mesh: { type: "string", enum: ["pad", "trampoline"], default: "pad", description: "How the stage draws it." },
   solid: { type: "boolean", default: !1, description: "A fixed box stands under its top, from the ground (y 0): a trampoline’s frame." }
   // prettier-ignore
-}), dV = { zipline: J6, ladder: jx, launcher: Q6 }, Bo = (e, t) => Array.isArray(e) && e.length === t && e.every(Number.isFinite);
-function hV(e, t) {
+}), pV = { zipline: Q6, ladder: jx, launcher: Z6 }, Bo = (e, t) => Array.isArray(e) && e.length === t && e.every(Number.isFinite);
+function mV(e, t) {
   const n = [], s = t;
   if (e === "zipline") {
     if (!Bo(s.from, 3) || !Bo(s.to, 3)) return ["from and to are [x, y, z] in metres"];
@@ -13416,31 +13441,31 @@ function hV(e, t) {
   return n;
 }
 function Cx(e, t, n) {
-  const s = qt(dV[e], t, n), o = hV(e, t);
+  const s = qt(pV[e], t, n), o = mV(e, t);
   if (o.length > 0) throw D("CORE_BAD_SPEC", { where: n, problems: o.join("; ") });
   return s;
 }
-function fV(e) {
+function gV(e) {
   const [t, n, s] = e.at, [o, r] = e.size;
   return [
     [t - o / 2, n - 0.05, s - r / 2],
     [t + o / 2, n + e.reach, s + r / 2]
   ];
 }
-const x_ = [
+const M_ = [
   [0, -1],
   [1, 0],
   [0, 1],
   [-1, 0]
 ];
-function Z6(e) {
-  return e.storeys ? e.storeys.flatMap((t, n) => k_(Ac(e, n))) : k_(e);
+function eR(e) {
+  return e.storeys ? e.storeys.flatMap((t, n) => A_(Ac(e, n))) : A_(e);
 }
-function k_(e) {
+function A_(e) {
   const { cols: t, rows: n, tile: s } = e, o = (c, l) => c >= 0 && l >= 0 && c < t && l < n && e.legend[e.tiles[l * t + c]]?.ladder === !0, r = (c, l) => {
     let u = null;
     for (let d = 0; d < 4; d++) {
-      const [h, f] = x_[d], [p, m] = [c + h, l + f];
+      const [h, f] = M_[d], [p, m] = [c + h, l + f];
       if (p < 0 || m < 0 || p >= t || m >= n) continue;
       const g = e.top[m * t + p];
       g > e.floor[l * t + c] + 0.5 && (!u || g > u[1]) && (u = [d, g]);
@@ -13452,39 +13477,39 @@ function k_(e) {
       if (i.has(c * t + l) || !o(l, c)) continue;
       const u = r(l, c);
       if (!u) continue;
-      const [d, h] = u, [f, p] = x_[d], [m, g] = p === 0 ? [0, 1] : [1, 0];
+      const [d, h] = u, [f, p] = M_[d], [m, g] = p === 0 ? [0, 1] : [1, 0];
       let y = 0;
       for (; o(l + m * y, c + g * y); y++) {
         const A = r(l + m * y, c + g * y);
         if (!A || A[0] !== d || A[1] !== h || i.has((c + g * y) * t + l + m * y)) break;
         i.add((c + g * y) * t + l + m * y);
       }
-      const [w, v] = [l + 0.5 + m * y / 2 - m / 2, c + 0.5 + g * y / 2 - g / 2], b = [-f || 0, -p || 0], x = [(w + f * 0.5) * s, (v + p * 0.5) * s], k = [x[0] + b[0] * v_, e.floor[c * t + l], x[1] + b[1] * v_];
+      const [w, v] = [l + 0.5 + m * y / 2 - m / 2, c + 0.5 + g * y / 2 - g / 2], b = [-f || 0, -p || 0], x = [(w + f * 0.5) * s, (v + p * 0.5) * s], k = [x[0] + b[0] * k_, e.floor[c * t + l], x[1] + b[1] * k_];
       a.push(qt(jx, { foot: k, top: h, normal: b, width: y * s }, "levelLadders"));
     }
   return a;
 }
-const pV = 0.06, mV = { array: [], number: 0, boolean: !1, string: "" };
+const yV = 0.06, wV = { array: [], number: 0, boolean: !1, string: "" };
 function A1(e) {
   const t = Object.entries(e).map(([n, s]) => {
     if (!s.required) return [n, s];
     const { required: o, ...r } = s;
-    return [n, { ...r, default: mV[s.type] }];
+    return [n, { ...r, default: wV[s.type] }];
   });
   return Object.fromEntries(t);
 }
-function eR(e = B) {
-  e.kinds().includes("component") && e.has("component", "zipline") || (qe("zipline", { description: "A zipline: a cable between two anchors, ridden either way (engine/world/traverse.ts).", fields: A1(J6) }, e), qe("ladder", { description: "A ladder against a wall (engine/world/traverse.ts).", fields: A1(jx) }, e), qe("launcher", { description: "A jump pad or a trampoline (engine/world/traverse.ts).", fields: A1(Q6) }, e));
+function tR(e = B) {
+  e.kinds().includes("component") && e.has("component", "zipline") || (qe("zipline", { description: "A zipline: a cable between two anchors, ridden either way (engine/world/traverse.ts).", fields: A1(Q6) }, e), qe("ladder", { description: "A ladder against a wall (engine/world/traverse.ts).", fields: A1(jx) }, e), qe("launcher", { description: "A jump pad or a trampoline (engine/world/traverse.ts).", fields: A1(Z6) }, e));
 }
-eR();
+tR();
 function z0e(e, t) {
   const n = e, s = Cx("zipline", t, "addZipline(spec)");
   return s.poles && !s.balloon && [s.from, s.to].forEach(([o, r, i], a) => {
-    const [c, l] = [s.feet[a], r - s.feet[a]], u = { type: "cylinder", radius: pV, height: l };
+    const [c, l] = [s.feet[a], r - s.feet[a]], u = { type: "cylinder", radius: yV, height: l };
     l > 0.05 && Le(n).addBody({ type: "fixed", position: [o, c + l / 2, i], colliders: [{ shape: u }] });
   }), n.spawn({ zipline: s });
 }
-function tR(e, t) {
+function nR(e, t) {
   return e.spawn({ ladder: Cx("ladder", t, "addLadder(spec)") });
 }
 function T0e(e, t) {
@@ -13496,26 +13521,26 @@ function T0e(e, t) {
   return n.spawn({ launcher: s });
 }
 function I0e(e, t) {
-  return Z6(t).map((n) => tR(e, n));
+  return eR(t).map((n) => nR(e, n));
 }
 function R0e(e, t) {
   return t.structures.flatMap(
-    (n) => Z6(n.level).map((s) => {
-      const [o, r, i] = s.foot, [a, c] = Gi(n, o, i), l = X6(n.turn, ...s.normal);
-      return tR(e, { ...s, foot: [a, r + n.at[1], c], top: s.top + n.at[1], normal: l });
+    (n) => eR(n.level).map((s) => {
+      const [o, r, i] = s.foot, [a, c] = Gi(n, o, i), l = Y6(n.turn, ...s.normal);
+      return nR(e, { ...s, foot: [a, r + n.at[1], c], top: s.top + n.at[1], normal: l });
     })
   );
 }
-function gV(e) {
+function bV(e) {
   const t = e, n = t.query("zipline").map(({ id: r, zipline: i }) => ({ id: r, from: i.from, to: i.to, balloon: i.balloon })), s = t.query("ladder").map(({ id: r, ladder: i }) => ({ id: r, foot: i.foot, top: i.top, normal: i.normal, width: i.width })), o = t.query("launcher").map(
     ({ id: r, launcher: i }) => {
-      const [a, c] = fV(i);
+      const [a, c] = gV(i);
       return { id: r, min: a, max: c, top: i.at[1], velocity: i.velocity, bounce: i.bounce, keep: i.keep };
     }
   );
   return n.length + s.length + o.length > 0 ? { cables: n, ladders: s, launchers: o } : void 0;
 }
-const yV = {
+const vV = {
   body: { type: "integer", default: -1, minimum: -1, description: "Its body in the physics world." },
   player: { type: "boolean", default: !0, description: "Whether it reads the step’s intents (else actor.intents)." },
   character: { type: "any", default: $I(), description: "Its settings: what createCharacter returned." },
@@ -13524,7 +13549,7 @@ const yV = {
   x: { type: "number", default: 0, unit: "m", description: "Where its feet are, east." },
   y: { type: "number", default: 0, unit: "m", description: "Where its feet are, up." },
   z: { type: "number", default: 0, unit: "m", description: "Where its feet are, south." }
-}, wV = {
+}, xV = {
   "input.sprint": {
     type: "string",
     enum: ["toggle", "hold"],
@@ -13540,8 +13565,8 @@ const yV = {
     // prettier-ignore
   }
 };
-function bV(e = B) {
-  p6(e), c6(e), eR(e), (!e.kinds().includes("setting") || !e.has("setting", "physics.characterGravity")) && at(OI, e), e.has("setting", "movement.turnRate") || at(II, e), e.has("setting", "input.sprint") || at(wV, e), (!e.kinds().includes("component") || !e.has("component", "animator")) && qe("animator", { description: "A character animator (engine/anim/character.ts): what it keeps, and what its body is told.", fields: { ...tI, states: { type: "object", default: {}, description: "The body states its game code holds on." } } }, e), s6(e), e.has("component", "puppet") || qe("puppet", { description: "The body an actor is drawn as, when not the humanoid.", fields: { body: {
+function kV(e = B) {
+  p6(e), c6(e), tR(e), (!e.kinds().includes("setting") || !e.has("setting", "physics.characterGravity")) && at(OI, e), e.has("setting", "movement.turnRate") || at(II, e), e.has("setting", "input.sprint") || at(xV, e), (!e.kinds().includes("component") || !e.has("component", "animator")) && qe("animator", { description: "A character animator (engine/anim/character.ts): what it keeps, and what its body is told.", fields: { ...tI, states: { type: "object", default: {}, description: "The body states its game code holds on." } } }, e), s6(e), e.has("component", "puppet") || qe("puppet", { description: "The body an actor is drawn as, when not the humanoid.", fields: { body: {
     type: "string",
     default: "body:humanoid",
     description: "Its body’s id (the body grammar’s)."
@@ -13549,7 +13574,7 @@ function bV(e = B) {
     "actor",
     {
       description: "An entity the character controller moves.",
-      fields: { ...yV, ...EI }
+      fields: { ...vV, ...EI }
     },
     e
   ), qe(
@@ -13568,23 +13593,23 @@ function bV(e = B) {
     e
   ));
 }
-bV();
-function vV(e, t) {
+kV();
+function MV(e, t) {
   const n = e, s = Le(n), o = aI(s, t.character, t.at), { x: r, y: i, z: a } = Qs(s, o, t.character), c = { ...dx(), yaw: t.yaw ?? 0 };
-  n.systems.has("actors") || (n.systems.add("actors", kV, { phase: "anim" }), n.systems.add("actors.readback", _V, { phase: "readback" }));
+  n.systems.has("actors") || (n.systems.add("actors", SV, { phase: "anim" }), n.systems.add("actors.readback", _V, { phase: "readback" }));
   const l = { body: o, player: t.player ?? !0, character: t.character, x: r, y: i, z: a, ...c }, u = t.character.movement ? { motion: { ...ix(), holstered: t.holstered ?? !0 } } : {};
   if (!t.anim) return n.spawn({ ...t.components, ...u, actor: l });
-  n.systems.has("actors.anim") || (n.systems.add("actors.anim", AV, { phase: "anim" }), n.systems.add("actors.pose", SV, { phase: "readback" }));
+  n.systems.has("actors.anim") || (n.systems.add("actors.anim", SU, { phase: "anim" }), n.systems.add("actors.pose", _U, { phase: "readback" }));
   const { build: d = "build:chibi", weapon: h = "none", preciseHits: f = !1 } = t.anim, p = { build: typeof d == "string" ? d : d.id, weapon: h, preciseHits: f }, m = t.body !== void 0 ? { body: t.body } : void 0, g = t.clips && r6(n, t.clips, p.build);
   return n.spawn({ ...t.components, ...u, actor: l, animator: p, puppet: m, clips: g });
 }
-function nR(e, t, n, s, o = {}) {
+function sR(e, t, n, s, o = {}) {
   const r = e, i = r.get(t);
   if (!i?.actor) throw D("SIM_BAD_ARGUMENT", { where: "placeActor(w, id)", value: String(t), expected: "an actor’s id" });
   const { actor: a, motion: c } = i;
   if (o.crouch && !c) throw D("SIM_BAD_ARGUMENT", { where: "placeActor(options.crouch)", value: `true for actor ${t}, on no movement model`, expected: "no crouch: only an actor on a movement model (its component motion) crouches" });
   const l = Le(r), { offset: u, capsule: d } = a.character, h = rx(a.character, n, "placeActor(at)"), f = c && o.crouch ? uI(a.character, { ...c, stance: "crouch" }) : d.height, p = { maxDistance: f + d.radius, exclude: a.body, groups: "world" }, m = l.raycast([h[0], h[1] - d.height / 2, h[2]], [0, 1, 0], p);
-  if (m && !sR(r).has(m.body)) {
+  if (m && !oR(r).has(m.body)) {
     const v = Se(n, "placeActor(at)"), b = [v.x, v.y, v.z].map((A) => Math.round(A * 100) / 100).join(", "), [x, k] = [(u + d.radius + m.distance).toFixed(2), (f + 2 * d.radius).toFixed(2)];
     throw D("SIM_BAD_ARGUMENT", { where: "placeActor(at)", value: `[${b}], where a ceiling ${x} m over its feet cuts its ${o.crouch ? "crouched" : "standing"} hull, ${k} m tall (it would sink through the floor)`, expected: c && !o.crouch ? "a place with headroom, or { crouch: true } under a low ceiling" : "a place with headroom" });
   }
@@ -13592,8 +13617,8 @@ function nR(e, t, n, s, o = {}) {
   const { x: g, y, z: w } = Qs(l, a.body, a.character);
   Object.assign(a, dx(), { yaw: s ?? a.yaw, x: g, y, z: w }), c && Object.assign(c, ix(), { holstered: c.holstered }, o.crouch ? { stance: "crouch", duck: "ducked" } : {});
 }
-const sR = (e) => new Set(e.query("oneWay").map((t) => t.oneWay.body));
-function xV(e, t) {
+const oR = (e) => new Set(e.query("oneWay").map((t) => t.oneWay.body));
+function AV(e, t) {
   const n = e, s = n.get(t)?.actor;
   if (!s)
     throw D("SIM_BAD_ARGUMENT", { where: "removeActor(w, id)", value: String(t), expected: "an actor’s id" });
@@ -13603,44 +13628,19 @@ function xV(e, t) {
   for (const i of r) o.hasBody(i) && o.removeBody(i);
   n.despawn(t);
 }
-function kV(e, t) {
-  const n = Le(e), s = e.settings.get("physics.characterGravity"), o = e.settings.get("physics.gravity"), r = sR(e), i = hx((l) => e.settings.get(l)), a = gV(e), c = { holdSprint: e.settings.get("input.sprint") === "hold", toggleCrouch: e.settings.get("input.crouch") === "toggle" };
+function SV(e, t) {
+  const n = Le(e), s = e.settings.get("physics.characterGravity"), o = e.settings.get("physics.gravity"), r = oR(e), i = hx((l) => e.settings.get(l)), a = bV(e), c = { holdSprint: e.settings.get("input.sprint") === "hold", toggleCrouch: e.settings.get("input.crouch") === "toggle" };
   for (const l of e.query("actor")) {
     if (l.ragdoll) continue;
-    const { actor: u, motion: d } = l, h = aU(u, t), f = {
+    const { actor: u, motion: d } = l, h = OU(u, t), f = {
       move: h.move,
       jump: wr(h, "jump"),
       jumpPressed: Xt(h, "jump"),
       dashPressed: Xt(h, "dash"),
-      ...d ? cU(u, h, c, l.interactor?.usedAt === e.tick, (l.melee?.move ?? "") !== "", (l.weapons?.slot ?? -1) >= 0 && wr(h, "aim")) : {}
+      ...d ? $U(u, h, c, l.interactor?.usedAt === e.tick, (l.melee?.move ?? "") !== "", (l.weapons?.slot ?? -1) >= 0 && wr(h, "aim")) : {}
       // prettier-ignore
     }, p = d ? RI(u.character, i) : u.character, m = zI(n, u.body, p, u, f, { dt: e.dt, gravity: s, worldGravity: o, oneWay: r, rides: a }, d), g = [u.x, u.y, u.z];
     m.jumped && e.emit("jump", { id: l.id, at: g }), m.landed && e.emit("land", { id: l.id, speed: m.landed, at: g }), m.dashed && e.emit("dash", { id: l.id, at: g }), m.launched && e.emit("launch", { id: l.id, at: g }), m.entered && e.emit("move", { id: l.id, what: m.entered, at: g });
-  }
-}
-const M_ = /* @__PURE__ */ new WeakMap(), [A_, MV] = [new R(), new R()];
-function oR(e) {
-  const t = M_.get(e) ?? new Wi();
-  return M_.set(e, t), t.prune((s) => e.has(s)), [e.query("actor", "animator"), t];
-}
-function AV(e) {
-  const [t, n] = oR(e);
-  for (const s of t) {
-    const { id: o, actor: r, animator: i, reactions: a, motion: c } = s, l = e.rng.entity(o, "anim");
-    i.started || ([i.state.clock, i.started] = [l.next() * Ce.clockSpread, !0]);
-    const u = n.get(o, i, { rng: l, dt: e.dt });
-    A_.set(r.vx, r.vy, r.vz);
-    const h = { ...a ? { ...i.states, ...SU(a, e.dt) } : i.states, ...gU(e, o, s) }, f = c?.duck === "ducking" || c?.duck === "ducked", p = h.pose ?? (f ? "crouch" : void 0);
-    u.step({ ...h, pose: p, velocity: A_, yaw: r.yaw, air: !r.grounded, dash: r.dash > 0 }).save(i);
-    const [m, g] = [[r.x, r.y, r.z], c?.gait];
-    for (const { type: y, ...w } of u.events) e.emit(y, { id: o, ...w, at: m, ...g ? { gait: g } : {} });
-  }
-}
-function SV(e) {
-  const [t, n] = oR(e);
-  for (const { id: s, actor: o, animator: r } of t) {
-    if (!r.preciseHits) continue;
-    n.get(s, r, { rng: e.rng.entity(s, "anim"), dt: e.dt }).pose({ at: MV.set(o.x, o.y, o.z), yaw: o.yaw }).save(r);
   }
 }
 function _V(e) {
@@ -14424,7 +14424,7 @@ const T_ = (e, t, n) => {
     run(e, { at: t, yaw: n, id: s }) {
       const o = t;
       if (o.length !== 3) throw D("SIM_BAD_ARGUMENT", { where: "travel { at }", value: V(t), expected: "a point [x, y, z] in metres" });
-      nR(e, T_(e, "travel", s).id, o, n);
+      sR(e, T_(e, "travel", s).id, o, n);
     }
   },
   timeScale: {
@@ -16102,7 +16102,7 @@ function cX(e) {
   return { shape: { type: "cylinder", radius: t, height: n }, position: e.center, friction: Pu };
 }
 function lX(e, t, n) {
-  const s = [OR(t.ground.min, t.ground.max), ...t.colliders.map(cX)], o = n ? { position: n.at, rotation: iV(n.turn) } : {};
+  const s = [OR(t.ground.min, t.ground.max), ...t.colliders.map(cX)], o = n ? { position: n.at, rotation: lV(n.turn) } : {};
   return e.addBody({ type: "fixed", group: "world", ...o, colliders: s });
 }
 function uX(e, t, n) {
@@ -18064,7 +18064,7 @@ function UR(e, t, n) {
   const s = oJ(Zs(t.animator.build), n.poses);
   HR(Le(e), n), [n.bodies, n.joints, n.rise, n.lying] = [[], [], e.tick, s.lying];
   try {
-    nR(e, t.id, [s.at.x, t.actor.y, s.at.z], s.yaw);
+    sR(e, t.id, [s.at.x, t.actor.y, s.at.z], s.yaw);
   } catch {
     t.actor.yaw = s.yaw;
   }
@@ -18137,11 +18137,11 @@ const i0 = (e, t, n, s = 0) => t >= e.bounds.min[0] - s && t < e.bounds.max[0] +
 function KR(e, t, n, s) {
   let o = null;
   const r = sk(e, t, s);
-  r !== null && r <= n + VR && (o = { height: r, surface: nV(e.terrain, t, s) });
+  r !== null && r <= n + VR && (o = { height: r, surface: rV(e.terrain, t, s) });
   for (const i of e.structures) {
     if (!i0(i, t, s, i.level.tile)) continue;
-    const [a, c] = Ki(i, t, s), l = T6(i.level, a, n - i.at[1], c);
-    l === null || o && l + i.at[1] <= o.height || (o = { height: l + i.at[1], surface: ZU(i.level, a, n - i.at[1], c) || o?.surface || "" });
+    const [a, c] = Ki(i, t, s), l = I6(i.level, a, n - i.at[1], c);
+    l === null || o && l + i.at[1] <= o.height || (o = { height: l + i.at[1], surface: nW(i.level, a, n - i.at[1], c) || o?.surface || "" });
   }
   return o;
 }
@@ -18155,21 +18155,21 @@ function vJ(e, t, n, s) {
   for (const o of e.structures) {
     if (!i0(o, t, s) || n < o.bounds.min[1] || n > o.bounds.max[1]) continue;
     const [r, i] = Ki(o, t, s), a = n - o.at[1], c = e0(o.level, r, a, i);
-    return { structure: o, storey: c >= 0 ? c : I6(o.level, a), room: R6(o.level, r, a, i) };
+    return { structure: o, storey: c >= 0 ? c : R6(o.level, a), room: L6(o.level, r, a, i) };
   }
   return null;
 }
 function xJ(e, t, n, s) {
   const { level: o } = e, { tile: r, cols: i, rows: a, ground: c } = o;
   for (const m of o.roofs ?? [])
-    if (_6(m, t, s) && n <= Tu(m, t, s) && n >= Tu(m, t, s) - m.thickness) return !0;
+    if (O6(m, t, s) && n <= Tu(m, t, s) && n >= Tu(m, t, s) - m.thickness) return !0;
   const [l, u] = [Math.floor(t / r), Math.floor(s / r)];
   if (l < -1 || u < -1 || l > i || u > a) return !1;
   if (n < c.max[1] && n >= c.min[1]) return !0;
   if (l < 0 || u < 0 || l >= i || u >= a) return !1;
   const d = u * i + l, h = o.storeys;
   if (!h) return o.solid[d] && n < o.top[d];
-  const f = h[I6(o, n)];
+  const f = h[R6(o, n)];
   if (n < f.base) return f.floored[d];
   const p = o.legend[f.tiles[d]].head ?? 0;
   return p > 0 && n >= f.base + p && n < f.fullTop ? !0 : f.solid[d] && n < f.top[d];
@@ -18203,7 +18203,7 @@ function Hme(e, t = 1) {
       let m = sk(e, f, p);
       for (const g of e.structures) {
         if (m !== null || !i0(g, f, p)) continue;
-        const [y, w] = Ki(g, f, p), v = T6(g.level, y, (g.level.storeys?.[0]?.base ?? 0) + 1, w);
+        const [y, w] = Ki(g, f, p), v = I6(g.level, y, (g.level.storeys?.[0]?.base ?? 0) + 1, w);
         v !== null && (m = v + g.at[1]);
       }
       l.push(m !== null), u.push(m ?? 0);
@@ -22569,6 +22569,14 @@ function Tee(e, t = {}) {
   };
   return O4.set(e, i), i;
 }
+const $4 = /* @__PURE__ */ Symbol("my3dge.instanceSync");
+function Iee(e = yz, t = uu) {
+  const n = e?.prototype, s = [];
+  return t !== Xf && s.push(`three.js is r${t}, the fix wraps r${Xf}'s InstanceNode`), (typeof n?.update != "function" || typeof n.getUpdateBeforeType != "function") && s.push("InstanceNode has no update() and getUpdateBeforeType() to wrap"), s.length || !n ? { patched: !1, problems: s } : n[$4] ? { patched: !0, problems: s } : (n.getUpdateBeforeType = () => Y8.RENDER, n.updateBefore = function(o) {
+    this.update(o);
+  }, n[$4] = !0, { patched: !0, problems: s });
+}
+const E4 = Iee();
 J("gfx", {
   GFX_INSTANCE_PAGE: {
     template: "instanced batch {name} asks for pages of {slots} slots",
@@ -22582,7 +22590,7 @@ J("gfx", {
   },
   GFX_INSTANCING_UNPINNED: {
     template: "the instancing service did not move the instance sync before the upload: {problems}",
-    fix: "instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instancing.ts (PINNED_REVISION in engine/gfx/pipelines.ts)",
+    fix: "instanced meshes may show a change one frame late; check the new release's InstanceNode and update syncBeforeUpload in engine/gfx/instanceSync.ts (PINNED_REVISION in engine/gfx/pipelines.ts)",
     doc: "Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.js is not r182 or its `InstanceNode` lacks the `update`/`getUpdateBeforeType` the fix wraps: r182 uploads an instance change one render late, and the service's fix was not applied (r185's rewrite syncs every frame, which also fixes it)."
   },
   GFX_INSTANCE_SLOT: {
@@ -22591,21 +22599,14 @@ J("gfx", {
     doc: "Raised by the slot methods of an instanced batch (engine/gfx/instancing.ts) for a slot that is negative, fractional or not a number."
   }
 });
-const Iee = 1e3, u0 = 1024;
-function Ree(e) {
-  return e <= Iee ? "uniform" : "attribute";
+const Ree = 1e3, u0 = 1024;
+function Lee(e) {
+  return e <= Ree ? "uniform" : "attribute";
 }
-const $4 = /* @__PURE__ */ Symbol("my3dge.instanceSync");
-function Lee(e = yz, t = uu) {
-  const n = e?.prototype, s = [];
-  return t !== Xf && s.push(`three.js is r${t}, the fix wraps r${Xf}'s InstanceNode`), (typeof n?.update != "function" || typeof n.getUpdateBeforeType != "function") && s.push("InstanceNode has no update() and getUpdateBeforeType() to wrap"), s.length || !n ? { patched: !1, problems: s } : n[$4] ? { patched: !0, problems: s } : (n.getUpdateBeforeType = () => Y8.RENDER, n.updateBefore = function(o) {
-    this.update(o);
-  }, n[$4] = !0, { patched: !0, problems: s });
-}
-const E4 = Lee(), Pee = [1, 1, 1];
+const Pee = [1, 1, 1];
 function _r(e) {
   const { name: t, geometry: n, material: s } = e, o = e.pageSlots ?? u0;
-  if (!Number.isInteger(o) || Ree(o) === "uniform")
+  if (!Number.isInteger(o) || Lee(o) === "uniform")
     throw D("GFX_INSTANCE_PAGE", { name: t, slots: o });
   const r = new Map(Object.entries(e.attributes ?? {})), i = Object.keys(n.attributes), a = (b) => D("GFX_INSTANCE_ATTRIBUTE", { name: t, problem: b, names: i.join(", ") });
   for (const [b, x] of r) {
@@ -25410,7 +25411,7 @@ function soe(e) {
     const [i, a] = wP(r), [c] = o;
     _s(t.slot(s), o, o.map((l) => [oc(dh(l, c), i), oc(dh(l, c), a)]), r);
   };
-  for (const s of $6(e)) {
+  for (const s of E6(e)) {
     const o = s.length / 2, r = s.slice(0, o), i = s.slice(o);
     let a = noe(r);
     a[1] < 0 && (a = [-a[0], -a[1], -a[2]]), n(0, r, a), n(1, i, [-a[0], -a[1], -a[2]]);
@@ -25520,7 +25521,7 @@ function a$(e, t, n, s, o) {
 function coe(e, t, n, s) {
   const o = jc();
   for (const r of t) {
-    const i = k6(r), [a, c] = r.center, l = i.slice(0, li), u = i.slice(-li), d = i.length > 2 * li ? i.slice(li, 2 * li) : l;
+    const i = M6(r), [a, c] = r.center, l = i.slice(0, li), u = i.slice(-li), d = i.length > 2 * li ? i.slice(li, 2 * li) : l;
     d !== l && a$(o.slot(0), l, d, a, c), a$(o.slot(0), d, u, a, c), _s(
       o.slot(1),
       u,
@@ -31146,7 +31147,7 @@ function sce(e) {
 const rE = 0.1;
 function pN(e, t, n, s) {
   const o = e0(e, t, n + rE, s), r = (e.roofs ?? []).some(({ footprint: [i, a, c, l] }) => t > i && t < c && s > a && s < l);
-  return { storey: o, indoors: o >= 0 && (r || R6(e, t, n + rE, s) !== null), low: oce(e, o, t, n, s) };
+  return { storey: o, indoors: o >= 0 && (r || L6(e, t, n + rE, s) !== null), low: oce(e, o, t, n, s) };
 }
 function oce(e, t, n, s, o) {
   const r = Qp(e, n, o), i = e.storeys?.[t];
@@ -31800,42 +31801,43 @@ function Uce(e, t) {
     }
   };
 }
-const dE = "#2a3140", Wce = "material:stone", hE = 0.5;
-function Vce(e) {
+const dE = 0.5;
+function Wce(e) {
   if (!e.kinds().includes("component")) return [];
   const t = (o) => o?.type === "number" && o.unit === "m", n = (o) => t(o.x) && t(o.z);
   return e.list("component").filter((o) => n(o.fields)).map((o) => o.id);
 }
 const wl = (e, t, n) => typeof e[t] == "number" && Number.isFinite(e[t]) ? e[t] : n;
-function Kce(e, t) {
+function Vce(e, t) {
   for (const n of t) {
     const s = e[n];
     if (!s) continue;
-    const o = wl(s, "size", hE), r = {
+    const o = wl(s, "size", dE), r = {
       x: wl(s, "x", 0),
       y: wl(s, "y", 0),
       z: wl(s, "z", 0),
       yaw: wl(s, "yaw", 0),
-      size: o > 0 ? o : hE,
+      size: o > 0 ? o : dE,
       material: typeof s.material == "string" ? s.material : "material:default"
     };
     return { kind: n, place: r };
   }
 }
+const hE = "#2a3140", Kce = "material:stone";
 function Xce(e, t, n) {
   const s = Math.atan2(Math.sin(t - e), Math.cos(t - e));
   return e + s * n;
 }
 function Yce(e) {
   const t = new fc();
-  t.name = e.level ? `stage:${e.level.name}` : "stage", t.background = new lt(dE);
+  t.name = e.level ? `stage:${e.level.name}` : "stage", t.background = new lt(hE);
   const { level: n, site: s = null } = e, o = e.terrain ?? s?.terrain ?? null, r = !n && o ? { corner: [o.origin[0], o.origin[2]], size: [o.cols * o.cell, o.rows * o.cell] } : void 0, i = Uce(t, {
     level: n,
     area: r,
     registry: e.registry,
-    background: dE,
+    background: hE,
     rng: () => e.fxRng?.("stage", "lights")
-  }), [a, c] = n ? [n.cols * n.tile, n.rows * n.tile] : r?.size ?? [16, 16], [l, u] = r?.corner ?? [0, 0], d = [l + a / 2, 0, u + c / 2], h = n?.storeys ? n.bounds.min[1] : r ? o.origin[1] : 0, f = Oce([a, c], e.materials.get(Wce), { corner: [l, u], y: h, hole: !!r });
+  }), [a, c] = n ? [n.cols * n.tile, n.rows * n.tile] : r?.size ?? [16, 16], [l, u] = r?.corner ?? [0, 0], d = [l + a / 2, 0, u + c / 2], h = n?.storeys ? n.bounds.min[1] : r ? o.origin[1] : 0, f = Oce([a, c], e.materials.get(Kce), { corner: [l, u], y: h, hole: !!r });
   t.add(f);
   const p = n ? MP(n, e) : null;
   p && t.add(p.root);
@@ -31856,7 +31858,7 @@ function Yce(e) {
   });
   t.add(M.effects.root);
   let S = 1;
-  const O = Vce(e.registry), $ = (P) => e.registry.kinds().includes("component") && e.registry.has("component", P), E = Zoe.filter((P) => $(P) && !O.includes(P)), z = [...O, ...M.kinds.filter((P) => !O.includes(P)), ...E], T = /* @__PURE__ */ new Map(), I = /* @__PURE__ */ new Map(), L = /* @__PURE__ */ new Map(), j = /* @__PURE__ */ new Set(), F = (P) => {
+  const O = Wce(e.registry), $ = (P) => e.registry.kinds().includes("component") && e.registry.has("component", P), E = Zoe.filter((P) => $(P) && !O.includes(P)), z = [...O, ...M.kinds.filter((P) => !O.includes(P)), ...E], T = /* @__PURE__ */ new Map(), I = /* @__PURE__ */ new Map(), L = /* @__PURE__ */ new Map(), j = /* @__PURE__ */ new Set(), F = (P) => {
     let C = T.get(P);
     return C || T.set(P, C = Ro({ width: P, height: P, depth: P })), C;
   };
@@ -31884,7 +31886,7 @@ function Yce(e) {
       const Z = M.capture(K);
       p && !y && b.hasPlayer() && (y = Lv(p, { objects: () => k.root.children })), b.hasPlayer() && m?.follow(() => k.root.children);
       for (const se of K) {
-        const me = Kce(se, O), Ue = U.has(se.id) || X.has(se.id) || Y.has(se.id) || Z.has(se.id);
+        const me = Vce(se, O), Ue = U.has(se.id) || X.has(se.id) || Y.has(se.id) || Z.has(se.id);
         if (!me || q.has(se.id) || Ue) continue;
         q.add(se.id);
         const { kind: nt, place: Ee } = me, We = L.get(se.id);
@@ -31963,7 +31965,7 @@ function Qce(e) {
   const { registry: t } = e, n = e.run().scene, s = (I) => t.kinds().includes("level") && t.has("level", I);
   if (n.level !== void 0 && !s(n.level))
     throw D("APP_NO_LEVEL", { scene: n.id, level: n.level });
-  const o = n.level === void 0 ? null : t0(n.level, t), r = n.level === void 0 ? {} : kP(t, n.level), i = n.terrain === void 0 ? null : oV(n.terrain, t), a = n.site === void 0 ? null : Nx(n.site, t), c = (...I) => e.run().world.fxRng(...I), l = Yce({ level: o, terrain: i, site: a, materials: e.materials, registry: t, log: e.log, fxRng: c, ...r }), u = () => {
+  const o = n.level === void 0 ? null : t0(n.level, t), r = n.level === void 0 ? {} : kP(t, n.level), i = n.terrain === void 0 ? null : aV(n.terrain, t), a = n.site === void 0 ? null : Nx(n.site, t), c = (...I) => e.run().world.fxRng(...I), l = Yce({ level: o, terrain: i, site: a, materials: e.materials, registry: t, log: e.log, fxRng: c, ...r }), u = () => {
     const I = e.run(), j = !(t.kinds().includes("setting") && t.has("setting", "gfx.effects")) || I.settings.get("gfx.effects") !== !1, F = l.fx.effects.enabled !== j;
     return l.fx.effects.enabled = j, F;
   }, d = () => {
@@ -32396,7 +32398,7 @@ function mle(e) {
 }
 function Vv(e, t, n, s = As) {
   const o = $I(), r = { build: mle(t), weapon: "sword" };
-  vV(e, { at: s, character: o, player: !1, anim: r, body: t, components: { galleryFigure: n } });
+  MV(e, { at: s, character: o, player: !1, anim: r, body: t, components: { galleryFigure: n } });
 }
 function gle(e) {
   const [t, , n] = As;
@@ -32423,7 +32425,7 @@ const bE = {
 };
 function yle(e) {
   for (const t of e.query("sceneProp")) lR(e, t.id);
-  for (const t of e.query("actor")) xV(e, t.id);
+  for (const t of e.query("actor")) AV(e, t.id);
   for (const t of e.query("gallerySwatch")) e.despawn(t.id);
 }
 function vE(e, t, n, s) {
@@ -38923,7 +38925,7 @@ async function Qge(e) {
   try {
     Bk(n);
     for (const [q, U] of Object.entries(e.levels ?? {}))
-      n.has("level", q) || GW(q, U, n);
+      n.has("level", q) || WW(q, U, n);
     const N = e.search ?? location.search;
     if (o = Wfe(N, { scenes: e.scenes, registry: n, hash: e.hash ?? location.hash, log: t }), o.replay !== void 0) {
       k = await Xfe(o.replay, e.replays);
@@ -39899,7 +39901,7 @@ function dye(e, t) {
 export {
   RE as ABSORPTION,
   co as ACTION,
-  mU as ACTIONS_FIELDS,
+  fU as ACTIONS_FIELDS,
   qT as AIM_CHAIN,
   s$ as AIM_RANGE,
   Tse as AIM_RULES,
@@ -39995,8 +39997,8 @@ export {
   ie as JOINTS,
   Hh as LAYER_SLOTS,
   Ype as LEGACY_FIELDS,
-  P6 as LEVEL_FORMAT,
-  aW as LEVEL_FORMAT_2,
+  N6 as LEVEL_FORMAT,
+  uW as LEVEL_FORMAT_2,
   eoe as LEVEL_RECIPES,
   Ra as LIMBS,
   Nb as LOD,
@@ -40056,7 +40058,7 @@ export {
   Il as RAGDOLL_SIM,
   gn as REACTION,
   av as REACTIONS,
-  kU as REACTION_FIELDS,
+  vU as REACTION_FIELDS,
   yB as REPEAT_DELAY,
   wB as REPEAT_RATE,
   jk as RESERVED_CODES,
@@ -40069,14 +40071,14 @@ export {
   Dp as SAMPLE_STATES,
   GV as SCENE_PROP_FIELDS,
   phe as SCOPES,
-  MU as SECONDARY_FIELDS,
+  xU as SECONDARY_FIELDS,
   Bw as SHAKE,
   V0e as SHEET_CAMERAS,
   ege as SHOT_EMITTER,
   pQ as SHOT_EMITTER_FIELDS,
   ft as SHOULDER,
   il as SIGHT,
-  rV as SITE_FIELDS,
+  cV as SITE_FIELDS,
   rB as SLOTS,
   dt as SOCKETS,
   bX as SPATIAL_HASH_FIELDS,
@@ -40100,7 +40102,7 @@ export {
   dge as SwayChain,
   L1 as TAIL,
   jX as TELEGRAPH_SHAPES,
-  B6 as TERRAIN_FIELDS,
+  G6 as TERRAIN_FIELDS,
   rQ as THING_FIELDS,
   oQ as THING_KIND_FIELDS,
   dY as THROW_SPEED,
@@ -40128,7 +40130,7 @@ export {
   GJ as addDoor,
   _me as addInteraction,
   VY as addJoint,
-  tR as addLadder,
+  nR as addLadder,
   T0e as addLauncher,
   lX as addLevelBodies,
   Ume as addLevelDoors,
@@ -40193,7 +40195,7 @@ export {
   ZG as clipText,
   PN as codeLabel,
   KP as compileBody,
-  RW as compileLevel,
+  NW as compileLevel,
   kme as coneHits,
   wme as coneOf,
   wee as connectVirtualDevice,
@@ -40251,7 +40253,7 @@ export {
   sQ as daytimeOf,
   HI as decodePose,
   zc as def,
-  dU as defineAction,
+  lU as defineAction,
   Dle as defineActionMap,
   $re as defineBody,
   G2 as defineBuild,
@@ -40264,7 +40266,7 @@ export {
   $ge as defineGeometry,
   k0e as defineGlyph,
   Gpe as defineKind,
-  GW as defineLevel,
+  WW as defineLevel,
   Rge as defineLight,
   Kge as defineLook,
   iye as defineMannequin,
@@ -40301,7 +40303,7 @@ export {
   cR as entityOfBody,
   aY as fanHits,
   eQ as flipSwitch,
-  T6 as floorBelow,
+  I6 as floorBelow,
   Bi as floorHeight,
   gd as followCamera,
   OX as followFlow,
@@ -40329,7 +40331,7 @@ export {
   Nx as getSite,
   x0 as getSong,
   BX as getTelegraph,
-  oV as getTerrain,
+  aV as getTerrain,
   ck as getThing,
   ofe as getTouchLayout,
   dd as getWeapon,
@@ -40368,7 +40370,7 @@ export {
   cge as layerPose,
   y2 as lerpAng,
   rye as levelFloorTexture,
-  Z6 as levelLadders,
+  eR as levelLadders,
   U0e as levelProps,
   Jme as lightsAtDusk,
   EL as limbGeometry,
@@ -40384,8 +40386,8 @@ export {
   f6 as lyingOf,
   $q as makeAdditive,
   jn as makePose,
-  uV as makeSite,
-  H6 as makeTerrain,
+  fV as makeSite,
+  U6 as makeTerrain,
   ipe as mannequinBody,
   fX as measureFeel,
   IK as measureMove,
@@ -40411,7 +40413,7 @@ export {
   Co as pickTone,
   TL as pillarGeometry,
   zL as pillarParts,
-  nR as placeActor,
+  sR as placeActor,
   vge as placeExtras,
   Ioe as planCutaway,
   g0e as playClip,
@@ -40438,7 +40440,7 @@ export {
   Ige as recolor,
   hme as releaseToken,
   e0e as released,
-  xV as removeActor,
+  AV as removeActor,
   j9 as removeAgent,
   Tme as removeJoint,
   lR as removeProp,
@@ -40453,13 +40455,13 @@ export {
   l0e as restPoints,
   ZI as restSkeleton,
   G5 as retargetPose,
-  gV as ridesOf,
+  bV as ridesOf,
   Sge as rigCheck,
   Age as rigClosed,
   pP as rigOptions,
   Dee as ringGeometry,
   Uge as roomAcoustics,
-  R6 as roomAt,
+  L6 as roomAt,
   Wge as roomReverb,
   Fee as roundedBoxGeometry,
   Jge as routeQuery,
@@ -40492,7 +40494,7 @@ export {
   A0e as solidAt,
   Hi as songTiming,
   lde as songVoices,
-  vV as spawnActor,
+  MV as spawnActor,
   zo as spawnProp,
   Zme as spawnThing,
   LY as spreadOf,
@@ -40504,11 +40506,11 @@ export {
   gme as stepCrowdBody,
   _ge as stepGait,
   xme as stepProjectiles,
-  SU as stepReactions,
+  MU as stepReactions,
   lQ as stepThing,
   tge as stepVolleys,
   y0e as stopClip,
-  I6 as storeyAt,
+  R6 as storeyAt,
   e0 as storeyBelow,
   Ac as storeyView,
   Wme as strikeBody,
@@ -40520,7 +40522,7 @@ export {
   dQ as strikeThing,
   PH as strikeTime,
   M0e as surfaceAt,
-  ZU as surfaceBelow,
+  nW as surfaceBelow,
   Mme as sweepHits,
   iY as sweepTouches,
   Jj as swingTwist,
@@ -40529,14 +40531,14 @@ export {
   xY as takesStrike,
   WX as telegraphFill,
   $R as telegraphGap,
-  K6 as terrainGrade,
-  V6 as terrainGradient,
+  X6 as terrainGrade,
+  K6 as terrainGradient,
   Lf as terrainHeight,
   Fme as terrainNavGrid,
   WR as terrainNavSurface,
   _0e as terrainNormal,
-  G6 as terrainProblems,
-  nV as terrainSurface,
+  H6 as terrainProblems,
+  rV as terrainSurface,
   uQ as thingAt,
   aQ as thingState,
   Qp as tileAt,

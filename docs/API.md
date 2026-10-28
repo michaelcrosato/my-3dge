@@ -392,7 +392,7 @@ game agent's manual.
 - `defineSettings` (function from [`engine/core/settings.ts`](../engine/core/settings.ts)): Declares settings, path → field, on `registry` (the shared one by default).
 - `defineSfx` (function from [`engine/audio/data/sfx.ts`](../engine/audio/data/sfx.ts)): Defines an effect on `registry` (the shared one by default) and returns it.
 - `defineSite` (function from [`engine/world/site.ts`](../engine/world/site.ts)): Registers a site on `registry` (the shared one by default); throws `CORE_BAD_SPEC` naming its problems.
-- `defineSky` (function from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
+- `defineSky` (function from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `defineSong` (function from [`engine/audio/data/song.ts`](../engine/audio/data/song.ts)): Defines a song on `registry` (the shared one by default) and returns it.
 - `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineTelegraph` (function from [`engine/world/telegraphs.ts`](../engine/world/telegraphs.ts)): Defines a telegraph on `registry` (the shared one by default) and returns it.
@@ -1070,8 +1070,8 @@ game agent's manual.
 - `siteSurfaceBelow` (function from [`engine/world/siteQueries.ts`](../engine/world/siteQueries.ts)): The surface tag of `siteFloorBelow`'s surface at (x, y, z): '' where nothing is.
 - `Skeleton` (interface from [`engine/anim/skeleton.ts`](../engine/anim/skeleton.ts)): A humanoid skeleton made from a build: rest offsets, bone lengths, leaf tips and sockets, in metres.
 - `Sky` (interface from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): A sky on a scene; see the file comment.
-- `SkyEntry` (type from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): A `sky` entry.
-- `SkySpec` (type from [`engine/gfx/sky.ts`](../engine/gfx/sky.ts)): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
+- `SkyEntry` (type from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): A `sky` entry.
+- `SkySpec` (type from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
 - `SlotName` (type from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): A slot's name.
 - `SLOTS` (const from [`engine/anim/weights.ts`](../engine/anim/weights.ts)): The stack's slots, in order, with what fills each.
 - `smoothDamp` (function from [`engine/core/math.ts`](../engine/core/math.ts)): A critically damped spring toward `target` (Game Programming Gems 4's, as Unity's `SmoothDamp`): reaches it in about `smoothTime` seconds without overshoot.
@@ -4955,10 +4955,15 @@ For the agents who maintain the engine.
 - `UnseenReason` (type): Why a drawable object covers no pixel.
 - `withIdScene` (function): Runs `draw(root)` with `root` a stand-in for `scene` that draws the ID pass: it shares the scene's children, has no background, and overrides every material with the ID material reading `table`; the clear colour is transparent black meanwhile.
 
+### [`engine/gfx/instanceSync.ts`](../engine/gfx/instanceSync.ts)
+
+- `INSTANCE_SYNC` (const): What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`): `patched` is true on r182.
+- `syncBeforeUpload` (function): Makes r182's `InstanceNode` sync its buffers' versions before the renderer uploads them (see the file comment): every instance node gets an `updateBefore` that runs its own `update` once per render.
+
 ### [`engine/gfx/instancing.ts`](../engine/gfx/instancing.ts)
 
 - `createInstancedBatch` (function): Makes an instanced batch (see the file comment).
-- `INSTANCE_SYNC` (const): What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`): `patched` is true on r182.
+- `INSTANCE_SYNC` (const from [`engine/gfx/instanceSync.ts`](../engine/gfx/instanceSync.ts)): What importing this module did to r182's `InstanceNode` (see `syncBeforeUpload`): `patched` is true on r182.
 - `InstanceColor` (type): A colour: three.js's `Color` (linear `r`, `g`, `b`) or linear `[r, g, b]`.
 - `InstancedBatch` (interface): An instanced batch (see the file comment).
 - `InstancedBatchOptions` (interface): How `createInstancedBatch` makes a batch.
@@ -4966,7 +4971,7 @@ For the agents who maintain the engine.
 - `instancePath` (function): Where r182 reads an instanced mesh's matrices from, for a mesh of `slots` slots (see the file comment).
 - `INSTANCING_CODES` (const): The codes the instancing service raises, with their fixes.
 - `PAGE_SLOTS` (const): The default page size: above `UNIFORM_INSTANCE_LIMIT`, so every page shares one shader.
-- `syncBeforeUpload` (function): Makes r182's `InstanceNode` sync its buffers' versions before the renderer uploads them (see the file comment): every instance node gets an `updateBefore` that runs its own `update` once per render.
+- `syncBeforeUpload` (function from [`engine/gfx/instanceSync.ts`](../engine/gfx/instanceSync.ts)): Makes r182's `InstanceNode` sync its buffers' versions before the renderer uploads them (see the file comment): every instance node gets an `updateBefore` that runs its own `update` once per render.
 - `UNIFORM_INSTANCE_LIMIT` (const): r182's threshold: up to this many slots, an instanced mesh's matrices go to a uniform buffer (a shader per mesh).
 
 ### [`engine/gfx/level/brazier.ts`](../engine/gfx/level/brazier.ts)
@@ -5597,26 +5602,32 @@ For the agents who maintain the engine.
 
 - `BACKDROP` (const from [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)): The backdrop strip's size in texels, and its band round the camera (m): radius, height, foot below the eye.
 - `BACKDROP_KINDS` (const from [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)): The kinds of backdrop layer.
-- `BackdropSpec` (type): A backdrop as a `sky` entry gives it.
+- `BackdropSpec` (type from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): A backdrop as a `sky` entry gives it.
 - `bakeBackdrop` (function from [`engine/gfx/backdrop.ts`](../engine/gfx/backdrop.ts)): Bakes a backdrop into RGBA bytes, `width` × `height`, row 0 at the bottom; above the skylines is clear.
 - `createSky` (function): Puts a sky on `scene`: the light pool lit from `level`'s light spots (phases from `rng`, a visual stream), the sun, the dome, the backdrop and the atmosphere; shows `sky:daylight` until `set` names another preset.
-- `defineSkies` (function): Declares the kind `sky` and the built-in presets on `registry`, unless it has them.
-- `defineSky` (function): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
+- `defineSkies` (function from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): Declares the kind `sky` and the built-in presets on `registry`, unless it has them.
+- `defineSky` (function from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
 - `Sky` (interface): A sky on a scene; see the file comment.
-- `SKY_FIELDS` (const): The fields of a `sky` entry; see the file comment.
-- `SkyEntry` (type): A `sky` entry.
+- `SKY_FIELDS` (const from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): The fields of a `sky` entry; see the file comment.
+- `SkyEntry` (type from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): A `sky` entry.
 - `SkyOptions` (interface): How `createSky` makes a sky.
 - `SkyReport` (interface): What a sky shows now.
+- `SkySpec` (type from [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
+
+### [`engine/gfx/skyKind.ts`](../engine/gfx/skyKind.ts)
+
+- `BackdropSpec` (type): A backdrop as a `sky` entry gives it.
+- `defineSkies` (function): Declares the kind `sky` and the built-in presets on `registry`, unless it has them.
+- `defineSky` (function): Declares a sky preset (`sky:<name>`); see `SKY_FIELDS`.
+- `SKY_FIELDS` (const): The fields of a `sky` entry; see the file comment.
+- `SkyEntry` (type): A `sky` entry.
 - `SkySpec` (type): What `defineSky` takes: any of the fields, and any of a nested object's (a backdrop's layers whole).
 
 ### [`engine/gfx/stage.ts`](../engine/gfx/stage.ts)
 
 - `createStage` (function): Builds a stage (see the file comment).
-- `placeableKinds` (function): The component kinds whose entities stand somewhere: they declare `x` and `z` as numbers in metres.
-- `placeOf` (function): Where `entity` stands, from the first of `kinds` it holds; undefined when it holds none.
 - `Stage` (interface): A running scene's presentation graph (see the file comment).
 - `StageOptions` (interface): What a stage is made of: the level (none for an empty stage), where materials come from, and its registry.
-- `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
 
 ### [`engine/gfx/stageCrowd.ts`](../engine/gfx/stageCrowd.ts)
 
@@ -5671,6 +5682,12 @@ For the agents who maintain the engine.
 - `StageSky` (interface): The stage's lights (see the file comment).
 - `StageSkyOptions` (interface): What the stage's lights are made from.
 - `StageSkyView` (interface): What a frame gives the stage's lights: the camera, the focus (m), the time (s), the hour and the frame's lamps.
+
+### [`engine/gfx/standIns.ts`](../engine/gfx/standIns.ts)
+
+- `placeableKinds` (function): The component kinds whose entities stand somewhere: they declare `x` and `z` as numbers in metres.
+- `placeOf` (function): Where `entity` stands, from the first of `kinds` it holds; undefined when it holds none.
+- `StandInPlace` (interface): Where a stand-in stands and how it looks, read from its entity's placing component.
 
 ### [`engine/gfx/storeyCut.ts`](../engine/gfx/storeyCut.ts)
 
@@ -6576,6 +6593,11 @@ For the agents who maintain the engine.
 - `ACTOR_ACTION_CODES` (const): The codes this module raises.
 - `defineActionKinds` (function): Declares the component `actions` on `registry` (the shared one by default), once.
 - `stepActorActions` (function): Steps actor `entity`'s (id `id`) actions one tick, in place, and emits their events as `action`; returns what the beat tells the body, to lay over its states.
+
+### [`engine/sim/actorAnim.ts`](../engine/sim/actorAnim.ts)
+
+- `poseAnimators` (function): The system `actors.pose`: the `preciseHits` animators posed where their feet are now, so their trail is sim data.
+- `stepAnimators` (function): The system `actors.anim`: each animator's step in id order, told its `states` and the controller's (`velocity`, `yaw`, `air`, `dash`; a movement model's duck as the pose `crouch` where the states hold no pose), its breathing phase drawn from `rng.entity(id, 'anim')` at its first step; emits its events.
 
 ### [`engine/sim/actorClips.ts`](../engine/sim/actorClips.ts)
 
