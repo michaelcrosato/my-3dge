@@ -26,9 +26,11 @@ import { createSoundReader, timelineHash, type BoxSoundEvent } from '../../labs/
  * (WP 7.8): the big ones knock walkers down for a while, so the run changes and gives 79 sounds where it gave 81.
  * Again after G9 (WP 5.7, ADR-0020 amendment 9): the hero shoves the crowd aside instead of steering round it, so
  * his path through the foes changes and the run gives 77 sounds; and once more for the hits' gain (at most 0.5, so
- * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds.
+ * `x audio --replay` hears the fight's worst moment unclipped, labs/box/sounds/events.ts): the same 77 sounds. And
+ * since 2026-10-28 for where the actors' sounds stand, where their events say (`at`), not where they are when read
+ * (ADR-0025 amendment 29): the same 77 sounds at the same steps with the same effects and gains, 35 of them placed anew.
  */
-export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '288bca340783f86f' };
+export const FIGHT_TIMELINE = { replay: 'tests/replays/box-5-fight.replay.json', sounds: 77, hash: '1f603c8df751e03b' };
 
 /** A replay's sound timeline: its sounds, their hash, the world's hash at the end and the events missed (0). */
 export interface Timeline {
