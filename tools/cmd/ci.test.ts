@@ -132,7 +132,7 @@ describe('runCi', () => {
       ['npm run e2e', 'skipped', FULL_ONLY],
     ]);
     expect(read(root, LAST_GREEN)).toBe(`${SHA}\n`);
-    const logs = ['npm-ci', 'x-src', 'npm-run-check', 'npm-test', 'x-port-refs-check'].map(
+    const logs = ['npm-ci', 'x-src', 'npm-run-check', 'npm-test', 'x-port-refs-check', 'x-html-check'].map(
       (name, i) => `${CI_OUT.logs}/${i + 1}-${name}.log`,
     );
     expect(run.steps.map((step) => step.log)).toEqual([...logs, undefined, undefined, undefined]);
@@ -148,7 +148,7 @@ describe('runCi', () => {
     expect(run.steps.at(-1)).toMatchObject({
       status: 'ok',
       command: [...TIERS.T2.command],
-      log: `${CI_OUT.logs}/8-npm-run-e2e.log`,
+      log: `${CI_OUT.logs}/9-npm-run-e2e.log`,
       note: 'in full, 1 worker on 4 cores',
     });
     expect(read(root, CI_OUT.summary)).toContain('# x ci --local --full: ok');
@@ -234,9 +234,9 @@ describe('runCi', () => {
 
 describe("the quick gate's budget", () => {
   it('holds the quick steps together to five minutes: over warns and never fails the gate (ADR-0023)', async () => {
-    const within = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 296_000 } }).deps);
+    const within = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 295_000 } }).deps);
     expect(within.budget).toMatchObject({ ms: 300_000, budgetMs: 300_000, status: 'ok' });
-    const over = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 297_000 } }).deps);
+    const over = await runCi(sandbox(), fakeDeps({ 'npm test': { ms: 296_000 } }).deps);
     expect(over.ok).toBe(true);
     expect(over.budget).toMatchObject({ ms: 301_000, status: 'warn' });
   });
@@ -244,7 +244,7 @@ describe("the quick gate's budget", () => {
   it('leaves x new --test-all, x engine --test, T2 and the long runs out of it: nobody waits on them', async () => {
     const slow = { 'node x new --test-all': { ms: 150_000 }, 'node x engine --test': { ms: 120_000 }, 'npm run e2e': { ms: 3_900_000 }, ...Object.fromEntries(LONG_RUNS.map((entry) => [entry.command.join(' '), { ms: 600_000 }])) }; // prettier-ignore
     const run = await runCi(sandbox(), fakeDeps(slow).deps, { full: true, long: true });
-    expect(run.budget).toMatchObject({ ms: 5000, status: 'ok' });
+    expect(run.budget).toMatchObject({ ms: 6000, status: 'ok' });
   });
 });
 
@@ -255,7 +255,7 @@ describe('renderSummary', () => {
     const summary = renderSummary({ ...run, head: { ...run.head, dirty: [' M a.ts'] } });
     expect(summary).toContain('# x ci --local: FAIL');
     expect(summary).toContain('- Commit: c0ffee0 on work with 1 uncommitted changes\n');
-    expect(summary).toContain('- Budget: the quick gate took 5 s, within its 5 min budget\n');
+    expect(summary).toContain('- Budget: the quick gate took 6 s, within its 5 min budget\n');
     expect(summary).toContain('| `npm ci` | ok | 1 s | out/ci/logs/1-npm-ci.log |  |');
     expect(summary).toContain('| `npm test` | FAIL (exit 1) | 1 s | out/ci/logs/4-npm-test.log |  |');
     expect(summary).toContain(`| \`npm run e2e\` | skipped |  |  | ${FULL_ONLY} |`);
@@ -269,7 +269,7 @@ describe('renderSummary', () => {
     const cloud = renderSummary(await runCi(sandbox(), { ...deps, cores: 4 }, { full: true }));
     expect(cloud).toContain('# x ci --local --full: ok');
     expect(cloud).toContain(', 4 cores\n');
-    expect(cloud).toContain('| `npm run e2e` | ok | 57 min 40 s | out/ci/logs/8-npm-run-e2e.log | in full, 1 worker on 4 cores |'); // prettier-ignore
+    expect(cloud).toContain('| `npm run e2e` | ok | 57 min 40 s | out/ci/logs/9-npm-run-e2e.log | in full, 1 worker on 4 cores |'); // prettier-ignore
     const big = renderSummary(await runCi(sandbox(), deps, { full: true }));
     expect(big).toContain('| in full, 4 workers on 16 cores |');
   });
@@ -297,8 +297,8 @@ describe('node x ci through the dispatcher', () => {
     const root = sandbox();
     const { code, lines } = await x(root, ['--local'], fakeDeps().deps);
     expect(code).toBe(0);
-    expect(lines[0]).toBe(`x ci: ok: 5 steps passed in 5 s; c0ffee0 recorded in ${LAST_GREEN}`);
-    expect(lines).toContain('all passed in 5 s');
+    expect(lines[0]).toBe(`x ci: ok: 6 steps passed in 6 s; c0ffee0 recorded in ${LAST_GREEN}`);
+    expect(lines).toContain('all passed in 6 s');
     expect(lines).toContain(`summary: ${CI_OUT.summary}`);
     expect(lines.at(-1)).toBe('report: out/ci/local/report.json');
     expect(lines.length).toBeLessThanOrEqual(MAX_LINES);
@@ -316,7 +316,7 @@ describe('node x ci through the dispatcher', () => {
     );
     const slow = await x(sandbox(), ['--local'], fakeDeps({ 'npm test': { ms: 300_000 } }).deps);
     expect(slow.code).toBe(0);
-    expect(slow.lines.some((line) => line.startsWith('CI_BUDGET: the quick gate took 5 min 4 s, over its'))).toBe(true); // prettier-ignore
+    expect(slow.lines.some((line) => line.startsWith('CI_BUDGET: the quick gate took 5 min 5 s, over its'))).toBe(true); // prettier-ignore
     expect(slow.lines.length).toBeLessThanOrEqual(MAX_LINES);
   });
 
@@ -356,7 +356,7 @@ describe('node x ci through the dispatcher', () => {
     const { code, lines } = await x(sandbox(), ['--local', '--full'], deps);
     expect(code).toBe(0);
     expect(calls).toEqual(STEP_COMMANDS);
-    expect(lines[0]).toBe(`x ci: ok: 8 steps passed in 8 s; c0ffee0 recorded in ${LAST_GREEN}`);
+    expect(lines[0]).toBe(`x ci: ok: 9 steps passed in 9 s; c0ffee0 recorded in ${LAST_GREEN}`);
     expect(lines).toContain('npm run e2e: in full, 4 workers on 16 cores');
   });
 
