@@ -9,11 +9,12 @@
  * the advice trap first (tests/setup/adviceTrap.ts), and `vitest --changed` reruns everything on the files that
  * tools/lib/tiers.ts's `T1_FULL` names.
  *
- * The build (`npm run build`, which Vercel runs through vercel.json) writes dist/ from the landing page (the root's
+ * The build (`npm run build`) writes dist/ from the landing page (the root's
  * `index.html`) and every `labs/<name>/index.html`; test pages never ship (`harness.html` throws on purpose). In a game
  * made from the engine (engine-lock.json at its root, ADR-0024) the box is the worked example: served, never built. A page
  * ships only what it imports, never a `fetch()` of a repository path (§6.3). Nothing here needs the network, a
- * browser, the source checkouts or an `x` command: Vercel's build and Vitest both read this file. The reference to
+ * browser, the source checkouts or an `x` command: the build and Vitest both read this file. The one-file
+ * playground (playground.html, tools/lib/oneFile.ts) is built apart, with this file's alias. The reference to
  * `vitest/config`, which adds `test` to Vite's config type, is kept in the declaration tsc -b emits (`preserve`), so
  * the tests' project, which sees this file through it, knows `config.test` (Vitest 4's main types no longer add it).
  *

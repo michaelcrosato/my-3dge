@@ -30,7 +30,7 @@ bespoke code in the game-facing surface where an established tool or three.js AP
 internals below the best quality the builder can execute (Quality under the hood), game code reaching past
 engine/index.ts or engine/sim-api.ts, public exports without docs or errors without a fix, GPU work that can change
 play, silent downgrades, files outside Owns, missing or weak tests (would a plausible bug pass? ADR-0021 orders none
-for the touch controls and the Vercel deployment), docs drift, unbaselined QA changes, game content (PLAN.md §5.7),
+for the touch controls), docs drift, unbaselined QA changes, game content (PLAN.md §5.7),
 box sample content leaking into engine/, work built ahead of its trigger (North Star), production-hardening work
 outside Phase H (ADR-0021's exceptions aside), deviations from the doctrine without an escalation or an owner's call
 recorded in an ADR (ADR-0021).

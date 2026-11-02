@@ -53,3 +53,10 @@ URL's query and hash as before, and the playground's menu for humans links the o
 unchanged; `/?scene=…` now names a playground scene. tests/e2e/playground.spec.ts checks the landing page and the
 menu's links; the box's spec opens the box at its own path. PLAN.md's WP 0.12 bullet, its layout and I-53 are edited
 to match.
+
+## Amendment 4 (2026-11-02): no deployment
+
+The owner's call of 2026-11-02 ends the Vercel deployment (decision 1, amendment 2) and its pre-approval (decision 3):
+the engine is distributed and tested as `playground.html`, the playground as one self-contained page that the quick
+gate keeps current (ADR-0023 amendment 5). The touch controls stay built and untested, as decision 1 has them.
+Amendment 3's landing page stays for the dev server and `npx vite preview`; what the owner opens is the file.

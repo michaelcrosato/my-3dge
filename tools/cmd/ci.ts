@@ -12,11 +12,11 @@
  * `out/ci/last-green`, the base of the selections until main holds a gate.
  *
  * - **Steps:** `npm ci`, `x src`, `npm run check` (with `x deps --check` and `x docs --check`), `npm test`,
- *   `x port refs --check` and, in the full run, `x new --test-all`, `x engine --test` (a new game passes its own
+ *   `x port refs --check`, `x html --check` (playground.html matches its sources: tools/cmd/html.ts) and, in the full run, `x new --test-all`, `x engine --test` (a new game passes its own
  *   gate, tools/cmd/engine.ts) and `npm run e2e`, each from the root with its output
  *   kept in `out/ci/logs/<n>-<step>.log`, never printed. A failed `npm ci` skips the rest; after any other failure the
  *   next steps still run, so one run names every failure. The workflow's unit test keeps it running the full run
- *   (tools/cmd/ci-workflow.test.ts). The Vercel build is not a step (ADR-0021).
+ *   (tools/cmd/ci-workflow.test.ts).
  * - **Budget:** the quick steps' times together against `GATE_BUDGET_MS`; over it warns and never fails (ADR-0022).
  *   T2 and the long runs have none: nobody waits on them (ADR-0023).
  * - **`npm ci` reinstalls node_modules under this running process.** That is safe, measured: everything this command
@@ -68,6 +68,7 @@ export const CI_STEPS: readonly CiStep[] = [
   { name: 'npm run check', command: TIERS.T0.command, tier: 'T0' },
   { name: 'npm test', command: TIERS.T1.command, tier: 'T1' },
   { name: 'x port refs --check', command: ['node', 'x', 'port', 'refs', '--check'] },
+  { name: 'x html --check', command: ['node', 'x', 'html', '--check'] },
   { name: 'x new --test-all', command: ['node', 'x', 'new', '--test-all'], full: true },
   { name: 'x engine --test', command: ['node', 'x', 'engine', '--test'], full: true },
   { name: 'npm run e2e', command: TIERS.T2.command, tier: 'T2', full: true },

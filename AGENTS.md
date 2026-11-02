@@ -41,7 +41,7 @@ goldens are recorded on 24. npm's warning that an .npmrc allow-scripts setting i
 9. Mastery: only the pins tools/deps.json records, and an upgrade is a work package of its own; write the pinned
    release's idioms (docs/THREE-DELTA.md). → x deps --check, banned names
 10. Discovery first: target this container (Node 24, Chromium 153, WebGPU on SwiftShader); no production hardening
-    outside Phase H, except ADR-0021's touch controls and Vercel deployment.
+    outside Phase H, except ADR-0021's touch controls and the one-file playground (ADR-0023 amendment 5).
 
 ## Escalate, don't stall
 Owner approval needed (a binary asset, a new dependency, spending money, a repo setting, any other outward action;
@@ -73,11 +73,10 @@ sound, devices) a try check there, never a checklist in prose alone; their paste
   main's last one went: a red main is fixed before other work.
 - At each gate and at the end of a goal: push, open the stage's PR, merge it, then wait for main's full run and
   report it. Start the next stage from the updated main (PLAN.md §11.1).
-- Vercel and the touch controls have no tests (ADR-0021). Vercel is on again (2026-10-27, ADR-0023 amendment 4) and
-  kept cheap: production builds a merge to main that changes what ships, and a branch push builds a preview only when
-  its commit message says [preview] (scripts/vercel-ignore.mjs); say it on a change to the build itself (vite.config.ts,
-  package.json, vercel.json, a new page) and look once at that preview before merging. After a merge that ships, look
-  once at main's production deployment and fix a failed build; fix anything else only when the owner reports it.
+- No deployment: the engine is distributed and tested as playground.html, the playground in one self-contained page
+  (ADR-0023 amendment 5, the owner's call of 2026-11-02; Vercel is gone). A change that alters it commits it rebuilt
+  (node x html --write); the quick gate fails while it is stale (x html --check). The touch controls have no tests
+  (ADR-0021); fix what the owner reports from the file.
 - Never downgrade silently: every downgrade emits an advice code.
 - Ask the entry, never the id: shared code reads registry hooks and never compares ids.
 - No game content in the engine; the box's own content stays in labs/box/, the playground's in labs/playground/

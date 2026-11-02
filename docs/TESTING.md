@@ -26,8 +26,8 @@ it cannot drift from them (PLAN.md §8.2, §8.8).
 Each tier's command, and the long runs, are `TIERS` and `LONG_RUNS` in tools/lib/tiers.ts. Two runs use them
 (tools/cmd/ci.ts):
 
-- **The quick gate**, `node x ci --local`, before every merge: npm ci, x src, T0, T1 and x port refs --check, held
-  to five minutes together (tools/lib/tierBudgets.ts); over them warns, and wall-clock time never
+- **The quick gate**, `node x ci --local`, before every merge: npm ci, x src, T0, T1, x port refs --check and x html
+  --check (playground.html current), held to five minutes together (tools/lib/tierBudgets.ts); over them warns, and wall-clock time never
   fails a gate (ADR-0022).
 - **The full run**, `node x ci --local --full`: the same steps, x new --test-all, x engine --test (a game made from
   this checkout passes its own gate) and T2 in full (`--long` adds the long runs). GitHub runs it after each merge to

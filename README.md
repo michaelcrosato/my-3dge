@@ -49,8 +49,8 @@ that runs, is measured and is proved. The game that will run on the engine lives
 ## The Playground
 
 The tech demo (Phase 13, [`docs/PLAYGROUND.md`](docs/PLAYGROUND.md)): a house on a block where the player moves as in
-Apex Legends, in five cameras and two looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Run
-`npm run dev` and open http://127.0.0.1:5173/labs/playground/; `?replay=playground-tour&playground.attract=on` plays
+Apex Legends, in five cameras and two looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
+[`playground.html`](playground.html) (below), or run `npm run dev` and open http://127.0.0.1:5173/labs/playground/; `?replay=playground-tour&playground.attract=on` plays
 the tour through every feature. [`labs/playground/README.md`](labs/playground/README.md) says how it plays and what
 each scene shows.
 
@@ -68,21 +68,21 @@ appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is 
 Chromium 153 (WebGPU on SwiftShader). The rest of the toolchain is `npm run check` (types, lint, format and the
 repository checks), `npm run e2e` (the browser suites) and the `node x` command line (`node x help`).
 
-## Deploying
+## The one-file playground
 
-Vercel imports the repository, and [`vercel.json`](vercel.json) does the rest: `npm ci`, then `npm run build` (plain
-`vite build`, on the Node 24 that `package.json`'s `engines` names), then `dist/` served as static files. To keep its
-cost down ([ADR-0023](docs/decisions/ADR-0023-owner-calls-2026-10-15.md) amendment 4), a merge to `main` deploys to
-production when it changes what ships, a branch push builds a preview only when its commit message says `[preview]`
-([`scripts/vercel-ignore.mjs`](scripts/vercel-ignore.mjs)), and the hashed files under `/assets/` are cached for a
-year. The landing page, `index.html`, opens the playground (`labs/playground/`) with the URL's query and hash; its menu
-links the labs index and the Stress Box (`labs/box/`). Nothing tests
-the deployment, by the owner's order ([ADR-0021](docs/decisions/ADR-0021-owner-calls-2026-10-10.md)). To build and
-serve the same output locally:
+[`playground.html`](playground.html) is the playground as one self-contained HTML page: its script, styles and
+WebAssembly inline, nothing fetched. Download it and open it in a browser with WebGPU (a desktop Chrome or Edge); it is
+how the engine is distributed and tested ([ADR-0023](docs/decisions/ADR-0023-owner-calls-2026-10-15.md) amendment 5,
+in place of the Vercel deployment). Only the playground is in it: its menu's links to the labs index and the Stress
+Box need the dev server (`npm run dev`). It is rebuilt from the sources with every change that alters it, and the merge
+gate fails while it is stale:
 
 ```sh
-npm run build && npx vite preview
+node x html --write             # rebuild playground.html (about 11 s, the same bytes every time); commit it
+node x html --check             # the gate's check: the committed file matches a build of its sources
 ```
+
+`npm run build && npx vite preview` still builds and serves every page (`dist/`) locally.
 
 ## Where things are
 

@@ -12,7 +12,7 @@
   "ignoreStatic": true,
   "ignorers": ["sample"],
   "appendPlugins": ["./tools/stryker/sample.ts"],
-  "ignorePatterns": ["/out", "/.cache", "/dist", "/test-results", "/.vercel"],
+  "ignorePatterns": ["/out", "/.cache", "/dist", "/test-results"],
   "tempDirName": ".cache/stryker-tmp",
   "incremental": true,
   "incrementalFile": "out/stryker/incremental.json",

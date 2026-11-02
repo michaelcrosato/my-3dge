@@ -18,8 +18,8 @@ Escalate when an action needs the owner's approval, or a principle cannot be sat
 - following one principle would break another, or cannot be done;
 - going against the doctrine or the plan looks best: escalate with the reasoning, and keep to the doctrine meanwhile.
 
-Pre-approved, no escalation (ADR-0021): pushes, opening and squash-merging the stage PRs, deleting their branches,
-and the Vercel deploys they trigger. Everything else is your call, recorded as an ADR amendment (PLAN.md §11.4).
+Pre-approved, no escalation (ADR-0021): pushes, opening and squash-merging the stage PRs, and deleting their
+branches. Everything else is your call, recorded as an ADR amendment (PLAN.md §11.4).
 
 ## How
 

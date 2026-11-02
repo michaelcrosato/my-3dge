@@ -2402,6 +2402,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`help.ts`](../tools/cmd/help.ts): Prints the generated help: every command, or one command's file comment and flags.
   - Exports: `default`
   - Tests: [`tools/x.test.ts`](../tools/x.test.ts)
+- [`html.ts`](../tools/cmd/html.ts): Writes and checks the one-file playground, `playground.html` (tools/lib/oneFile.ts; ADR-0023 amendment 5): the playground as one self-contained HTML page, the file the engine is distributed and tested as.
+  - Exports: `createHtmlCommand`, `default`
+  - Tests: [`tools/cmd/html.test.ts`](../tools/cmd/html.test.ts)
 - [`inspect.ts`](../tools/cmd/inspect.ts): Keeps one headless page open over the Vite dev server, for `x eval`, `x dump` and `x set`, which `x shot` reuses while it runs (PLAN.md §8.1, WP 2.7; doctrine: Agent-operable).
   - Exports: `callSession`, `default`, `findSession`, `Opened`, `pageErrorFinding`, `pageFailures`, `reloadLines`, `SESSION_FILE`, `SessionInfo`, `sessionShot`, `SessionTab`, `shootInSession`
   - Tests: [`tests/e2e/box.spec.ts`](../tests/e2e/box.spec.ts), [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)
@@ -2546,6 +2549,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`lean.ts`](../tools/lib/lean.ts): The lean package, lean/ (ADR-0024 amendment 1, the owner's call of 2026-10-16): the engine shipped the way three.js, Rapier or Babylon.js ship, as a library and nothing else, with no tests, checks, tools or install.
   - Exports: `EXTERNAL`, `LEAN`, `LEAN_URL`, `leanBundle`, `leanFiles`, `leanFindings`, `leanHead`, `leanImports`, `withBlock`, `writeLean`
   - Tests: [`tools/lib/lean.test.ts`](../tools/lib/lean.test.ts)
+- [`oneFile.ts`](../tools/lib/oneFile.ts): The one-file playground, `playground.html` at the root (ADR-0023 amendment 5, the owner's call of 2026-11-02): the playground (labs/playground/) built as one self-contained HTML page, its script and styles inline and nothing fetched, so it opens from disk (file://) in a WebGPU browser, sent as one file.
+  - Exports: `buildOneFile`, `externalRefs`, `inlineBuild`, `ONE_FILE`, `ONE_FILE_NOTE`, `ONE_FILE_PAGE`
+  - Tests: [`tools/lib/oneFile.test.ts`](../tools/lib/oneFile.test.ts)
 - [`page.ts`](../tools/lib/page.ts): Pages for the `x` commands (PLAN.md §8.1, §8.3, WP 2.7): reading a page's ready-or-error signal (`window.__engine`), waiting for it, finding the page that draws a scene module's scenes, and playing replays in that page, opened on each replay's scene, for `x replay --browser page` (`pageRuntime`: `__engine.replay`, engine/app/playback.ts, which draws a frame after every step), or in tests/pages/replay.html for `--browser sim` (`replayBrowser`).
   - Exports: `BrowserMode`, `labPageOf`, `PageEngine`, `pageRuntime`, `readSignals`, `READY_MS`, `replayBrowser`, `scenePath`, `Signals`, `waitReady`
   - Tests: [`tools/cmd/inspect.test.ts`](../tools/cmd/inspect.test.ts)

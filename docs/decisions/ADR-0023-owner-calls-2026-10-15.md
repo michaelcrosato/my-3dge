@@ -88,7 +88,7 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    on the quick gate); the hashed files under `/assets/` were served with `max-age=0, must-revalidate`, so each visit
    asked again for every file it loads; and the animation library shipped as 1,270 files, which the Library Lab, the
    Animation Lab with a library clip and the box's clip mode fetched at once, a request each.
-   - **What Vercel builds** (scripts/vercel-ignore.mjs, vercel.json's `ignoreCommand`): production builds a merge to
+   - **What Vercel builds** (vercel-ignore.mjs in scripts/, vercel.json's `ignoreCommand`; both removed by amendment 5): production builds a merge to
      `main` that changes a file that can ship, since the last deployment that succeeded; one that changes only what
      never ships (`NEVER_SHIPS`: docs, the plan, tests but the replays the pages play, tools but the one
      vite.config.ts imports, CI and agents' files; checked against the build's module graph on this day) is skipped,
@@ -108,5 +108,34 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
      binary) needs Rapier's non-compat package, a new dependency and so the owner's call; turning previews off in
      the project's Vercel settings, an outward action vercel.json makes unneeded and which a PR could not show.
    - **Not verified here:** Vercel's own run of the script and the header, first seen on this change's production
-     deployment (one look, as above). Enforced by tests/unit/vercel-ignore.test.ts, a unit test of the script and the
+     deployment (one look, as above). Enforced by vercel-ignore.test.ts in tests/unit/ (removed by amendment 5), a unit test of the script and the
      configs in Node, not a deployment test (ADR-0021).
+5. **2026-11-02: no more Vercel; the one-file playground instead** (the owner's call: "we are no longer deploying
+   to vercel, for distribution and testing we will keep an up to date self contained html file rather than use
+   vercel"). Amendment 4 ends, and with it every deployment, preview and look at one.
+   - **The file:** `playground.html` at the root, the playground (labs/playground/, what the site opened) built as one
+     page by `node x html --write` (tools/lib/oneFile.ts): Vite's build of its page with every dynamic import folded
+     into one module script and every asset a data URL, both put inline, so it opens from disk (file://, a secure
+     context, so WebGPU runs) with nothing fetched: 6.9 MB at this change, built in about 11 s, the same bytes on
+     every run and machine (no path or time goes in). The playground is the one page: the owner plays it and works
+     its checks there (ADR-0021 amendment 3). The other pages (the labs index, the Stress Box) are not in it; its
+     menu's links to them, and the one check that opens the box, lead nowhere from the file and need the dev server.
+   - **Kept up to date by the gate:** `x html --check` is a step of the quick gate (tools/cmd/ci.ts), after `x port
+     refs --check`: it rebuilds the file and fails while the committed one differs (`HTML_STALE`) or loads anything
+     from outside (`HTML_EXTERNAL`). So at every merge the file on main matches its sources; a change that alters it
+     commits it rebuilt. It is not in `npm run check`, whose 25 s it would lengthen by half; the gate's steps are
+     minutes.
+   - **Committed, not a CI artefact or a release:** the owner asked to keep the file; committing it keeps it beside
+     the code that made it, at every commit, downloadable with no login. The cost is the repository's size: about
+     2.4 MB gzipped a version, against a 14 MB pack today. Recorded as the open issue to watch, not solved ahead of
+     need: if the history grows too large, the file moves to a release asset the full run publishes.
+   - **Tested:** tests/e2e/one-file.spec.ts opens it from disk, checks it starts on WebGPU, steps it and finds no
+     request leave the file; tools/lib/oneFile.test.ts and tools/cmd/html.test.ts test the inlining and the command.
+   - **Not asset-scanned:** the file carries its npm dependencies' binaries inline, as a self-contained page must
+     (Rapier's WebAssembly as base64, three.js's two SMAA lookup textures as data URLs), so `x check`'s asset scan
+     skips it by name (tools/cmd/check.ts): a build of sources the scan reads, it adds no asset of its own. The
+     owner's call covers it; no binary enters the repository otherwise.
+   - **Gone:** vercel.json, .vercelignore, the script vercel-ignore.mjs and its test. `npm run build` and `index.html`
+     stay, for `npx vite preview`. Disconnecting the Vercel project from the repository is the owner's, in Vercel's
+     settings (an outward action); until then Vercel may still try to build pushes with its defaults, which agents
+     ignore.
