@@ -15,3 +15,5 @@ package-lock.json
 # The lean package: the engine built as one module, and its page and README, hand-written but for the blocks
 # tools/lib/lean.ts writes (ADR-0024 amendment 1).
 lean/
+# The one-file playground: a build, written by node x html --write (tools/lib/oneFile.ts, ADR-0023 amendment 5).
+playground.html

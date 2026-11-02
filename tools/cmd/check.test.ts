@@ -172,6 +172,12 @@ describe('the asset scan', () => {
     expect(outcome.metrics).toMatchObject({ files: 1, binaries: 1 });
   });
 
+  it('skips the one-file playground, a build of the scanned sources (ADR-0023 amendment 5)', async () => {
+    const page = `<script type="module">init("${'QUJD'.repeat(400)}")</script>\n`;
+    expect((await scan({ 'playground.html': page })).failures).toEqual([]);
+    expect((await scan({ 'labs/playground.html': page })).failures).toEqual(['ASSET_BASE64 labs/playground.html']);
+  });
+
   it('skips files git ignores, and scans untracked ones', async () => {
     expect((await scan({ '.gitignore': '.cache/\n', '.cache/model.glb': PNG })).failures).toEqual([]);
     expect((await scan({ 'new/untracked.glb': PNG })).failures).toEqual(['ASSET_BINARY new/untracked.glb']);

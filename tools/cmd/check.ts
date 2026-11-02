@@ -11,7 +11,9 @@
  * In a game made from the engine (`isGame`, ADR-0024), which has no `x esc` and keeps the engine's files read-only, the
  * game's own approvals are `APPROVED-BINARIES.json` at its root, `{ path, reason }` (the reason: the owner's answer),
  * its fonts go anywhere in labs/game/ with their license beside them, and the engine's approvals stand as its
- * repository checked them. A file deleted between the listing and its read is skipped (`scanAssets`): at gate G6's
+ * repository checked them. The one-file playground (`ONE_FILE`, playground.html) is not scanned: a build of the scanned
+ * sources, it carries its npm dependencies' binaries inline (Rapier's WebAssembly, three.js's SMAA textures), as the
+ * owner asked of a self-contained file (ADR-0023 amendment 5). A file deleted between the listing and its read is skipped (`scanAssets`): at gate G6's
  * review, `x new module --test` wrote and removed its sample in the repository while a parallel `x check` scanned,
  * which crashed on the read.
  *
@@ -25,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { ONE_FILE } from '../lib/oneFile';
 import type { Finding } from '../lib/report';
 import { closest, commandNames, isGame, type Command, type CommandResult } from '../x';
 
@@ -237,6 +240,7 @@ export function scanAssets(root: string, files: readonly string[]): CheckOutcome
   let binaries = 0;
   let fonts = 0;
   for (const file of files) {
+    if (file === ONE_FILE) continue; // a build of the scanned sources (see the file comment)
     const bytes = readListed(join(root, file));
     if (!bytes) continue;
     scanned++;

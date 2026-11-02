@@ -20,7 +20,7 @@ Their sizes, fit and sources are PLAN.md §10.1's table.
 
 **100STYLE's credit (CC BY 4.0).** Any page or game that ships a `style100*` clip shows the credit on screen: the
 title, the authors, the license with its link, a link to the dataset, and a note that the clips were changed. SOURCES.md
-gives the wording and the links; the box shows it from WP 8.9, since Vercel publishes it (WP 0.12). The CC0 sets need
+gives the wording and the links; the box shows it from WP 8.9, since it ships (WP 0.12). The CC0 sets need
 no credit; CMU's terms and acknowledgment are in SOURCES.md.
 
 Beside the sets:

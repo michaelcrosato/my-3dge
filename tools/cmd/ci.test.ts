@@ -94,6 +94,7 @@ describe('CI_STEPS', () => {
       'npm run check',
       'npm test',
       'node x port refs --check',
+      'node x html --check',
       'node x new --test-all',
       'node x engine --test',
       'npm run e2e',
@@ -112,8 +113,8 @@ describe('CI_STEPS', () => {
     ]);
   });
 
-  it('leave the Vercel build out (ADR-0021)', () => {
-    expect(STEP_COMMANDS.some((command) => command.includes('build'))).toBe(false);
+  it('check the one-file playground in the quick gate (ADR-0023 amendment 5)', () => {
+    expect(QUICK_COMMANDS).toContain('node x html --check');
   });
 });
 

@@ -97,7 +97,7 @@ catalog's `"$library"`), and the sets `STYLE100…` because a set's name must no
   authors, the license with its link, a link to the dataset, and a note that the clips were changed. For example
   (the box's, WP 8.9): "Motion: 100STYLE, by Mason, Starke and Komura (2022), CC BY 4.0; converted to key poses, one
   loop per style and gait", linking https://creativecommons.org/licenses/by/4.0/ and
-  https://zenodo.org/records/8127870. The box counts from WP 8.9, since Vercel publishes it (WP 0.12).
+  https://zenodo.org/records/8127870. The box counts from WP 8.9, since it ships (WP 0.12).
 - **Files:** `100STYLE.zip` (1.47 GB) from the dataset's page: one BVH file per style and gait,
   `100STYLE/<Style>/<Style>_<Gait>.bvh` (gaits `FW`, `BW`, `FR`, `BR`, `SW`, `SR` and `ID` were cut; `TR1` to `TR3`
   were not), and the lists `Dataset_List.csv` and `Frame_Cuts.csv`. shardfall reads single takes out of the archive by

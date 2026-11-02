@@ -194,7 +194,7 @@ describe('in a game made from the engine', () => {
     expect([isGame(root(false)), isGame(root(true))]).toEqual([false, true]);
     expect(commandNames(root(false))).toEqual(['ci', 'docs', 'shot', 'sim']);
     expect(commandNames(root(true))).toEqual(['shot', 'sim']);
-    expect(ENGINE_ONLY_COMMANDS).toEqual(['ci', 'deps', 'docs', 'esc', 'port', 'src']);
+    expect(ENGINE_ONLY_COMMANDS).toEqual(['ci', 'deps', 'docs', 'esc', 'html', 'port', 'src']);
     const lines: string[] = [];
     const game = root(true);
     expect(await dispatch(['ci'], { root: game, print: (line) => lines.push(line) })).toBe(2);

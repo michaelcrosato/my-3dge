@@ -61,7 +61,7 @@ const goldens = (text: string) => (JSON.parse(text) as Replay).hashes['linux-x64
 /** Variables a test runner sets for its own workers; the `x` children start without them. */
 const RUNNER_VARIABLE = /^(VITEST|TEST_WORKER_INDEX$|TEST_PARALLEL_INDEX$|PW_TS_ESM|PW_TEST_SOURCE_TRANSFORM)/;
 /** What a scratch copy of the repository leaves out: it links node_modules' entries, and makes its own out/. */
-const NOT_COPIED = new Set(['.git', '.cache', 'node_modules', 'out', 'dist', 'test-results', '.vercel']);
+const NOT_COPIED = new Set(['.git', '.cache', 'node_modules', 'out', 'dist', 'test-results']);
 /**
  * The entries of node_modules a scratch copy does not link: Vite's caches. Vite's dependency hash includes the root,
  * so a shared node_modules/.vite would be re-optimized and swapped by every Vite the copy starts, under this

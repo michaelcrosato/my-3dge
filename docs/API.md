@@ -9572,6 +9572,11 @@ For the agents who maintain the engine.
 
 - `default` (default): Prints the generated help: every command, or one command's file comment and flags.
 
+### [`tools/cmd/html.ts`](../tools/cmd/html.ts)
+
+- `createHtmlCommand` (function): Builds the command; tests inject the build.
+- `default` (default): Writes and checks the one-file playground, `playground.html` (tools/lib/oneFile.ts; ADR-0023 amendment 5): the playground as one self-contained HTML page, the file the engine is distributed and tested as.
+
 ### [`tools/cmd/inspect.ts`](../tools/cmd/inspect.ts)
 
 - `callSession` (function): Sends `op` with `body` to the session; resolves with its JSON reply, or rejects with its error's message.
@@ -10111,6 +10116,15 @@ For the agents who maintain the engine.
 - `leanImports` (function): The import map a page needs, by specifier: the engine, and three.js and Rapier at the versions package.json pins.
 - `withBlock` (function): `text` with the block between `<!-- lean:<name>:start -->` and its end marker replaced by `body`.
 - `writeLean` (function): Writes the package's files that differ; returns their paths.
+
+### [`tools/lib/oneFile.ts`](../tools/lib/oneFile.ts)
+
+- `buildOneFile` (function): Builds the one file from the repository at `root` and returns its text (about 7 MB; about 11 s).
+- `externalRefs` (function): The `src` and `href` attributes of `html` that load something other than a data URL (none, in the one file).
+- `inlineBuild` (function): The page `html` with each script and stylesheet it loads put inline, from `files` (by file name; a reference matches the file whose name it ends with), and `ONE_FILE_NOTE` after its charset.
+- `ONE_FILE` (const): The file, from the repository root.
+- `ONE_FILE_NOTE` (const): The note the file opens its head with.
+- `ONE_FILE_PAGE` (const): The page it is built from.
 
 ### [`tools/lib/page.ts`](../tools/lib/page.ts)
 
