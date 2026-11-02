@@ -7,7 +7,8 @@
  * Invariants: WebGPU runs on SwiftShader with shardfall's flags (`WEBGPU_FLAGS`), so pages present to their real
  * canvas. The clock only moves on `__clock.tick(n)`, 1/60 s per frame, and `Math.random` and `__clock.rng(name)`
  * are seeded, so a run repeats exactly. `__gpu` counts what WebGPU really did (adapters, devices, configured
- * canvases, queue submits, lost devices); it is measured, never reported by the page.
+ * canvases, queue submits, lost devices); it is measured, never reported by the page. `__gpuIdle()` resolves once
+ * every queue the page submitted to has finished its work (the e2e harness waits on it at each test's end).
  *
  * @example
  * import { chromium } from '@playwright/test';
@@ -122,6 +123,8 @@ declare global {
     __clock: VirtualClock;
     /** The WebGPU probe's counts, installed by the tools' init script (tools/lib/browser.ts). */
     __gpu: GpuLog;
+    /** Resolves once every queue the page submitted to has finished its work (the probe's; see the file comment). */
+    __gpuIdle: () => Promise<void>;
   }
 }
 
@@ -182,7 +185,10 @@ function installVirtualClock(seed: number, hash: (text: string) => number): void
 /* Counts what WebGPU really does in the page (window.__gpu), by wrapping the prototypes' methods. Runs in the page. */
 function installGpuProbe(): void {
   const log: GpuLog = { adapters: [], devices: 0, contexts: 0, submits: 0, lost: [] };
+  const queues = new Set<GPUQueue>();
   window.__gpu = log;
+  window.__gpuIdle = () =>
+    Promise.all([...queues].map((queue) => queue.onSubmittedWorkDone().catch(() => undefined))).then(() => undefined);
   if (typeof GPU === 'undefined') return;
   const requestAdapter = GPU.prototype.requestAdapter;
   GPU.prototype.requestAdapter = async function (this: GPU, options?: GPURequestAdapterOptions) {
@@ -216,6 +222,7 @@ function installGpuProbe(): void {
   const submit = GPUQueue.prototype.submit;
   GPUQueue.prototype.submit = function (this: GPUQueue, buffers: Iterable<GPUCommandBuffer>) {
     log.submits++;
+    queues.add(this);
     return submit.call(this, buffers);
   };
 }

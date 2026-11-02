@@ -285,6 +285,14 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     go: { query: { 'playground.title': 'on' } },
   },
   {
+    id: 'load-times',
+    kind: 'try',
+    title: 'How long it takes to start and change maps',
+    what: 'Reload the page and note how long until you can play. Then open the block from the spawn picker, and come back to the gym. The block can stall a little after its first frame on its first visit, while the quality settles; later visits start where it settled. The first switch to isometric or top-down also pauses once. Are the waits acceptable now?', // prettier-ignore
+    from: 'docs/PROGRESS.md: real GPUs are not verifiable here (load times, ADR-0008 amendment 11)',
+    go: { query: { scene: 'gym' } },
+  },
+  {
     id: 'tour',
     kind: 'try',
     title: 'Watch the tour',

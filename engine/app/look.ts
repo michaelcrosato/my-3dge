@@ -18,7 +18,9 @@
  * style not yet warmed, adds the set's warm-up entries and key part, which changes the shader key, so the renderer
  * warms up again before the first frame in the new style, never stalling one; from then on, switching between styles
  * asked for re-points materials already compiled and builds nothing. A page opened with a styled look
- * (`?post.look=…`) joins before its first warm-up.
+ * (`?post.look=…`) joins before its first warm-up. With `gfx.warmUp: asked` (`asked`, engine/gfx/warmup.ts) the set
+ * joins with the look's style alone, its own too only if the page drew in it first, and adds its own once a look
+ * in it is asked for: the playground's two looks, both toon, never compile it.
  *
  * Invariants: presentation only: it reads view settings and writes the stage's lights and materials, never the sim;
  * everything it changes before a frame either builds nothing or changes the warm-up's key, so the renderer warms up
@@ -46,6 +48,8 @@ export interface PageLookOptions {
   warmup: Warmup;
   /** The quality tier's budget now. */
   quality: () => Pick<QualityBudget, 'shadowCasters'>;
+  /** Whether warm-ups compile only what the page draws (`gfx.warmUp: asked`, engine/gfx/warmup.ts); false if absent. */
+  asked?: () => boolean;
 }
 
 /** A page's look (see the file comment). */
@@ -61,6 +65,8 @@ export function createPageLook(options: PageLookOptions): PageLook {
   const { post, styles, warmup } = options;
   const own = styles.style;
   let joined: ReturnType<StyleSet['attach']> | null = null;
+  /** Whether a look in the set's own style was drawn before the set joined. */
+  let drewOwn = false;
   return {
     get styled() {
       return joined !== null;
@@ -71,10 +77,13 @@ export function createPageLook(options: PageLookOptions): PageLook {
       stage.sky.budget(options.quality());
       stage.sky.sky?.gradient(look.skyGradient);
       stage.shells.set(look.shells);
-      if (look.style && look.style !== own && !joined?.styles.includes(look.style)) {
+      const owned = !look.style || look.style === own;
+      if (owned && !joined) drewOwn = true;
+      if (!owned && !joined?.styles.includes(look.style)) {
         if (joined) joined.add(look.style);
-        else joined = styles.attach(warmup, stage.scene, [own, look.style]);
+        else joined = styles.attach(warmup, stage.scene, options.asked?.() && !drewOwn ? [look.style] : [own, look.style]); // prettier-ignore
       }
+      if (owned && joined && !joined.styles.includes(own)) joined.add(own); // asked: the set's own once a look asks
       if (joined) styles.apply(stage.scene);
       return view;
     },

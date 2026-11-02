@@ -7,8 +7,9 @@
  * Invariants: a page error the test never read fails the test, naming its file and line; so does an advice code,
  * `console.warn` or three.js deprecation that no file under tests/baselines/advice/ lists and the test never read
  * through `harness.advice()` (the advice trap, tests/setup/adviceTrap.ts); `ready()` turns a startup crash into one
- * line instead of a hang; `readFrame` is a Playwright screenshot of the canvas element (§4.8). The
- * seed is 1 unless a suite sets `test.use({ seed })`.
+ * line instead of a hang; `readFrame` is a Playwright screenshot of the canvas element (§4.8); at a test's end the
+ * harness waits, within the test's own time, for the GPU work its page queued (`drainGpu`), so no test inherits
+ * another's frames. The seed is 1 unless a suite sets `test.use({ seed })`.
  *
  * @example
  * test('draws', async ({ page, harness }) => {
@@ -110,11 +111,40 @@ function readSignals(page: Page): Promise<{ ready: boolean; errors: string[] } |
   });
 }
 
+/** How long the GPU drain may wait for a test with no timeout. */
+const DRAIN_CAP_MS = 120_000;
+
+/** What the drain leaves of a test's time, for the teardown's own checks and the page's close. */
+const DRAIN_MARGIN_MS = 5_000;
+
+/**
+ * Waits, at most `left` ms less the margin, for the page's GPU queues to finish (`__gpuIdle`, tools/lib/browser.ts),
+ * so a test pays for the frames it queued: a burst of virtual frames (`tick(480)`) queues a minute of SwiftShader's
+ * work, which otherwise drains into the next test's browser setup and times it out (crowd-render.spec after
+ * box-fight.spec on db84693). A drain cut short says so; a closed page drains nothing.
+ */
+async function drainGpu(page: Page, left: number): Promise<void> {
+  const wait = left - DRAIN_MARGIN_MS;
+  if (wait <= 0 || page.isClosed()) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const idle = page
+    .evaluate(() => window.__gpuIdle?.())
+    .then(
+      () => true,
+      () => true,
+    );
+  const cut = new Promise<boolean>((resolve) => (timer = setTimeout(() => resolve(false), wait)));
+  const drained = await Promise.race([idle, cut]);
+  clearTimeout(timer);
+  if (!drained) console.log(`harness: the GPU was still busy ${wait} ms after the test; the next test may wait on it`);
+}
+
 /** Playwright's `test` with the `seed` option (default 1) and the `harness` fixture, set up for every test. */
 export const test = base.extend<{ seed: number; harness: Harness }>({
   seed: [1, { option: true }],
   harness: [
-    async ({ page, seed }, use) => {
+    async ({ page, seed }, use, testInfo) => {
+      const started = Date.now();
       const watch = await preparePage(page, { seed });
       let read = 0;
       let adviceRead = 0;
@@ -195,6 +225,7 @@ export const test = base.extend<{ seed: number; harness: Harness }>({
         },
       };
       await use(harness);
+      await drainGpu(page, testInfo.timeout === 0 ? DRAIN_CAP_MS : testInfo.timeout - (Date.now() - started));
       const unread = (await watch.errors()).slice(read);
       if (unread.length > 0) {
         throw new Error(

@@ -14,8 +14,8 @@ import type { LookEntry } from '../gfx/post/looks';
 import type { Warmup } from '../gfx/warmup';
 import { createPageLook } from './look';
 
-/** A page look over fakes that record what it did. */
-function fakes(start: Partial<LookEntry>) {
+/** A page look over fakes that record what it did; `asked` is the warm-up's `gfx.warmUp: asked`. */
+function fakes(start: Partial<LookEntry>, { asked = false } = {}) {
   const calls: string[] = [];
   const plain = { sky: '', style: '', skyGradient: 0, shells: { width: 0, color: '#141018' } };
   let look = { ...plain, ...start } as LookEntry;
@@ -49,6 +49,7 @@ function fakes(start: Partial<LookEntry>) {
     styles,
     warmup: {} as Warmup,
     quality: () => ({ shadowCasters: 1 }),
+    asked: () => asked,
   });
   const use = (next: Partial<LookEntry>) => void (look = { ...plain, ...next } as LookEntry);
   return { calls, page, stage, use };
@@ -87,5 +88,23 @@ describe('the page look', () => {
       page.sync(stage, { scene: stage.scene });
     }
     expect(calls.filter((call) => /^(attach|add)/.test(call))).toEqual(['attach lambert,toon', 'add pbr']);
+  });
+
+  it("warming what is asked, joins with the look's style alone and adds the set's own once a look asks for it", () => {
+    const { calls, page, stage, use } = fakes({ style: 'toon' }, { asked: true });
+    page.sync(stage, { scene: stage.scene });
+    for (const style of ['toon', 'pbr', '', 'lambert', 'toon'] as const) {
+      use({ style });
+      page.sync(stage, { scene: stage.scene });
+    }
+    expect(calls.filter((call) => /^(attach|add)/.test(call))).toEqual(['attach toon', 'add pbr', 'add lambert']);
+  });
+
+  it("warming what is asked, joins with the set's own style too when the page drew in it first", () => {
+    const { calls, page, stage, use } = fakes({ style: '' }, { asked: true });
+    page.sync(stage, { scene: stage.scene });
+    use({ style: 'toon' });
+    page.sync(stage, { scene: stage.scene });
+    expect(calls.filter((call) => /^(attach|add)/.test(call))).toEqual(['attach lambert,toon']);
   });
 });

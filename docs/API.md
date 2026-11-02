@@ -3417,6 +3417,7 @@ For the agents who maintain the engine.
 - `PageDrawing` (interface): The page's drawing (see the file comment).
 - `PageDrawingOptions` (interface): What `createPageDrawing` draws with besides the parts.
 - `PageParts` (interface): What the page has started so far, read at each call: each part is null until the engine starts it.
+- `warmedCameras` (function): The cameras a warm-up compiles for (`gfx.warmUp`, engine/gfx/warmup.ts): every one of the view's in `all`, else those the page has drawn with (`drawn`), in the view's order.
 
 ### [`engine/app/engine.ts`](../engine/app/engine.ts)
 
@@ -4196,11 +4197,14 @@ For the agents who maintain the engine.
 
 ### [`engine/dev/governor.ts`](../engine/dev/governor.ts)
 
-- `createGovernor` (function): Makes a governor; `log` takes its advice (the shared log by default).
+- `createGovernor` (function): Makes a governor; `log` takes its advice (the shared log by default), `memory` keeps where `auto` settled.
 - `Governor` (interface): The governor (see the file comment).
 - `GOVERNOR` (const): The governor's numbers (see the file comment): seconds, milliseconds a frame, and the scale's steps.
 - `GOVERNOR_CODES` (const): Its advice code.
 - `GOVERNOR_SETTINGS` (const): Its view setting: whether it may move `auto`'s tier at all (a page that compares frames turns it off).
+- `GOVERNOR_STORE_KEY` (const): The key of a page's store under which `governorMemory` keeps each scene's tier.
+- `governorMemory` (function): A memory in a page's store (engine/app/store.ts): the tier `auto` settled at, per scene; none without a store.
+- `GovernorMemory` (interface): Where `auto` stood last time: read when it starts (`read`), written at every move (`write`).
 - `GovernorState` (interface): What the governor holds now.
 
 ### [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)
@@ -6001,8 +6005,10 @@ For the agents who maintain the engine.
 ### [`engine/gfx/warmup.ts`](../engine/gfx/warmup.ts)
 
 - `createWarmup` (function): Makes the warm-up registry of `renderer`, counting builds with `counter`.
+- `warmsAsked` (const): Whether `settings` ask a page's warm-ups to compile only what it has drawn (`gfx.warmUp: asked`).
 - `Warmup` (interface): A renderer's warm-up registry.
 - `WARMUP_CODES` (const): The codes this module raises, with their fixes.
+- `WARMUP_SETTINGS` (const): Its view setting `gfx.warmUp` (ADR-0008 amendment 11): what a page's warm-ups compile.
 - `WarmupEntry` (interface): What a pool or batch registers: the objects it may show, each made drawable for the warm-up.
 - `WarmupPass` (interface): One way a frame draws the scene: into a render target, with the renderer set up for it.
 - `WarmupProgress` (interface): Progress, after each step: steps done of the total, and the step just done.

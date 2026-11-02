@@ -107,6 +107,34 @@ describe('the init script', () => {
     expect(page(1).__gpu).toEqual({ adapters: [], devices: 0, contexts: 0, submits: 0, lost: [] });
   });
 
+  it('waits for every queue the page submitted to, and for none before it submits', async () => {
+    const finished: string[] = [];
+    class Queue {
+      readonly name: string;
+      constructor(name: string) {
+        this.name = name;
+      }
+      submit(): void {}
+      onSubmittedWorkDone(): Promise<void> {
+        return new Promise((resolve) => setTimeout(() => resolve(void finished.push(this.name)), 5));
+      }
+    }
+    const fakes = { GPU: class {}, GPUAdapter: class {}, GPUCanvasContext: class {}, GPUQueue: Queue };
+    const context = createContext({ performance: {}, navigator: {}, TextEncoder, ...fakes });
+    runInContext('globalThis.window = globalThis', context);
+    runInContext(initScript(1), context);
+    const scope = context as { __gpu: GpuLog; __gpuIdle(): Promise<void> };
+    await scope.__gpuIdle();
+    expect(finished).toEqual([]);
+    const [a, b] = [new Queue('a'), new Queue('b')];
+    a.submit();
+    b.submit();
+    a.submit();
+    await scope.__gpuIdle();
+    expect(finished.sort()).toEqual(['a', 'b']);
+    expect(scope.__gpu.submits).toBe(3);
+  });
+
   it('refuses a seed that is not a whole number', () => {
     expect(() => initScript(1.5)).toThrow('the seed must be a whole number');
   });

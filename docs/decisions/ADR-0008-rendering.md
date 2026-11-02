@@ -206,3 +206,39 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   `engine/world/level/level{,.test}.ts` and `tests/baselines/thumbs/{box-hall-iso.json,README.md}`.
   The planned `box.json` perf budget becomes `tests/baselines/perf/box-fight-1000.json` and `box-crowd-5000.json`
   (`x perf` names budget files per scene) (accepted).
+
+## Amendment 11 (2026-11-02, the owner's "why does it take so long to load, change maps, change filters?"): a page warms up only what it draws
+
+- **Measured** (SwiftShader, this container): the playground's gym from `playground.html` was ready in 64.7 s with
+  102 pipelines; its CPU profile put 58 of 77 s in three.js's node builder (TSL to WGSL, `NodeBuilder.build` under
+  `compileAsync`) and under 1 s in the engine's own code. r182 builds a shader for each render object whose cache key
+  differs (`RenderObject.getCacheKey`), and the key holds the camera's id, the render context and an instanced mesh's
+  uuid: the gym's warm-up made 3,310 builds for its 102 pipelines. Of them the plain frame's pass took 930, the style
+  set's own style 476 (the playground's looks are both toon) and the orthographic camera's whole warm-up 1,408 (36 s).
+  Changing maps reloads the page, so it costs a start; a look switch builds nothing and never froze (gym and site).
+- **Measured, the site:** ready in 242 s, then two more whole warm-ups (338 s) after the first frame: the performance
+  governor demoted `auto` twice (high to medium to low), and each demotion changes the shadow casters, so the shader
+  key. With `quality=high` held, one warm-up and none after.
+- **`gfx.warmUp`** (engine/gfx/warmup.ts): `all`, the default, compiles what amendments 9 and 10 compile; `asked`
+  only the cameras the page has drawn (engine/app/drawing.ts: a camera's first frame or shot waits for its own
+  warm-up), the plain frame's pass and straight draw once a plain frame is asked for (engine/gfx/post/chain.ts: until
+  then the warm frame draws the scene through the chain, which builds its shadow passes), and the style set's own
+  style once a look in it is asked for, or the page drew in it first (engine/app/look.ts); the chain puts a look's
+  style on the meshes before the warm-up compiles them. Each first use changes nothing in a frame: it warms up before
+  the frame that needs it, so `pipelinesAfterWarmUp` stays 0. The playground asks for it (labs/playground/main.ts).
+- **The governor remembers** (engine/dev/governor.ts, `governorMemory`): the tier `auto` settled at, per scene, in the
+  page's store (`gfx.governor`), where `auto` starts next time (never above its own tier); a demotion on the first
+  visit still costs its warm-up.
+- **Fixed on the way:** `warmBoth` asked for the perspective camera while the renderer's own warm-up for the
+  orthographic one ran, got that one's promise back, and left the perspective camera cold under the new key; the
+  report now names its camera (`WarmupReport.camera`) and `warmCameras` warms each camera not warm under the key now.
+- **Result** (the same probes, same container): the gym ready in 23.7 s (was 64.7) with 50 pipelines (102) and 84
+  shader modules (165), 0 after the warm-up, look switches as before. The site from `playground.html`: its first
+  visit ready in 62.4 s (was 242), its governor's two demotions then cost two warm-ups, the longest 38 s (were 338 s
+  together); a second visit in the same browser started at `low`, was ready in 32.9 s, and drew 972 frames in the
+  next 240 s with no warm-up and no pipeline built (its longest gap between frames 553 ms).
+- Stats: `__engine.stats().warmUps` (the warm-ups run). Owner check `load-times` (labs/playground/ui/checkList.ts).
+- Tests: `tests/e2e/warm-up.spec.ts` (asked starts on fewer pipelines than all; a new camera and a first plain frame
+  warm up before they draw, nothing built in a frame), `engine/app/look.test.ts`, `engine/app/drawing.test.ts`,
+  `engine/dev/governor.test.ts`, `engine/dev/stats.test.ts`, `engine/gfx/warmup.test.ts`.
+- Plan edit: none: the gate's 0-pipelines rule holds; `all` stays the default for every other page.

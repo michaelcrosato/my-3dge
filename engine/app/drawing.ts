@@ -3,10 +3,12 @@
  * renderer is up. `createPageDrawing(parts, options)` gives the page's frame (`frame`: touch mode and the quality
  * tier's pixel caps, the resolution, the view at the clock's alpha drawn through the post chain in the page's look,
  * the camera shake, the damage numbers, the overlay, then the page's own `onFrame`), `settle` (a frame drawn and done
- * on the GPU, warming up again until one is), `warmBoth` (both cameras warmed up through the chain, so switching
- * projection later builds nothing) and the rendering members' `Drawing` (engine/app/headless.ts): `render(n)` draws
- * frames now, `shot` shoots the view (engine/gfx/shot.ts), `draw` draws a frame after each step of a replay (the
- * CPU-only contract's proof, §6.7: `x replay --browser page`), and `counts` reads the renderer's.
+ * on the GPU, warming up again until one is), `warmCameras` (each camera warmed up through the chain under the shader
+ * key now: both of the view's, so switching projection later builds nothing, or, with `gfx.warmUp: asked`, those
+ * drawn so far, a camera's first frame or shot waiting for its own warm-up) and the rendering members' `Drawing`
+ * (engine/app/headless.ts): `render(n)` draws frames now, `shot` shoots the view (engine/gfx/shot.ts), `draw` draws a
+ * frame after each step of a replay (the CPU-only contract's proof, §6.7: `x replay --browser page`), and `counts`
+ * reads the renderer's. A warm-up's report names its camera, so a running one counts for the camera it compiled.
  *
  * Invariants: rendering never writes the sim (doctrine: WebGPU only): the view reads the run, and `setView` changes
  * view settings, which never reach the hash. A replay drawn a frame a step waits for the GPU's queue every
@@ -18,7 +20,7 @@
  * @example
  * // engine/app/engine.ts
  * // const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, governor: null, ready: false };
- * // const { drawing, frame, settle, warmBoth } = createPageDrawing(parts, { chrome, settings, onFrame });
+ * // const { drawing, frame, settle, warmCameras } = createPageDrawing(parts, { chrome, settings, onFrame });
  * @see tests/e2e/box.spec.ts
  */
 import { codeError } from '../core/log';
@@ -28,6 +30,7 @@ import { keepWidth } from '../gfx/resolution';
 import type { Post } from '../gfx/post/chain';
 import type { FrameReport, FrameView, Gfx } from '../gfx/renderer';
 import { shot, shotForJson } from '../gfx/shot';
+import { warmsAsked } from '../gfx/warmup';
 import type { Input } from '../input/input';
 import type { Chrome } from '../ui/chrome';
 import type { Overlay } from '../ui/overlay';
@@ -45,6 +48,14 @@ import type { Governor } from '../dev/governor';
 
 /** GPU frames drawn while a replay plays before the queue is drained (`drain`); frames tried before a warm-up counts as stuck (`tries`). */
 export const DRAWING = { drain: 10, tries: 10 } as const;
+
+/**
+ * The cameras a warm-up compiles for (`gfx.warmUp`, engine/gfx/warmup.ts): every one of the view's in `all`, else
+ * those the page has drawn with (`drawn`), in the view's order.
+ */
+export function warmedCameras<C>(cameras: readonly C[], drawn: ReadonlySet<C>, asked: boolean): readonly C[] {
+  return asked ? cameras.filter((camera) => drawn.has(camera)) : cameras;
+}
 
 /** What the page has started so far, read at each call: each part is null until the engine starts it. */
 export interface PageParts {
@@ -110,8 +121,8 @@ export interface PageDrawing {
   frame(alpha: number, dt: number): FrameReport;
   /** Draws until a frame is drawn and done on the GPU; throws `APP_NO_FRAME` after `DRAWING.tries`. */
   settle(alpha: number, dt: number): Promise<FrameReport>;
-  /** Warms up through both cameras. */
-  warmBoth(): Promise<void>;
+  /** Warms up through each camera `warmedCameras` names that is not warm under the shader key now. */
+  warmCameras(): Promise<void>;
 }
 
 /** The page's drawing over `parts` (see the file comment). */
@@ -137,11 +148,26 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
   /** `view` drawn through the post chain in the page's look (engine/app/look.ts), once there is one. */
   const through = (view: FrameView): FrameView =>
     parts.post ? parts.post.view(parts.look!.sync(viewNow().stage, view)) : view;
-  const warmBoth = async () => {
+  /** The view's cameras the page has drawn with; from the start, the one its camera stands at (`warmedCameras`). */
+  const drawn = new Set<FrameView['camera']>();
+  /** The shader key each camera was last warmed up under. */
+  const warmedAt = new WeakMap<FrameView['camera'], string>();
+  const cameras = () => {
     const view = viewNow();
+    if (drawn.size === 0) drawn.add(view.cameras[view.camera.pose().projection === 'orthographic' ? 1 : 0]);
+    return warmedCameras<FrameView['camera']>(view.cameras, drawn, warmsAsked(settings));
+  };
+  /** Warms each camera that is not warm under the key now, a running warm-up's camera counted as its report says. */
+  const warmCameras = async () => {
+    const view = viewNow();
+    const { scene } = view.stage;
     const particles = view.stage.fx.gpuParticles; // the GPU's, so the warm frame builds what draws them (WP 11.3)
-    for (const camera of view.cameras)
-      await parts.gfx!.warmup.run(through({ scene: view.stage.scene, camera, ...(particles ? { particles } : {}) }));
+    for (let left = view.cameras.length + 1; left > 0; left--) {
+      const camera = cameras().find((one) => warmedAt.get(one) !== parts.gfx!.warmup.key(scene));
+      if (!camera) return;
+      const report = await parts.gfx!.warmup.run(through({ scene, camera, ...(particles ? { particles } : {}) }));
+      warmedAt.set(report.camera, report.key);
+    }
   };
   const frame = (alpha: number, dt: number): FrameReport =>
     parts.run!.meter.time('render', () => {
@@ -154,7 +180,10 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
       keepWidth(view.camera, aspect());
       const { shake } = viewNow().stage.fx.effects;
       shake.apply(view.camera);
-      const report = gfx.frame(through(view));
+      // asked, a camera never warmed waits for its warm-up (the caller runs it, as for a new key): nothing drawn cold
+      const cold = warmsAsked(settings) && !warmedAt.has(view.camera);
+      if (cold) drawn.add(view.camera);
+      const report = cold ? { drawn: false, warming: true, alpha, built: 0 } : gfx.frame(through(view));
       shake.restore(view.camera);
       parts.numbers?.frame(parts.run!.session.world);
       parts.ui?.update(view.camera, dt);
@@ -175,7 +204,7 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
         await parts.gfx!.device.queue.onSubmittedWorkDone();
         return report;
       }
-      await warmBoth().catch(() => undefined);
+      await warmCameras().catch(() => undefined);
     }
     throw codeError('APP_NO_FRAME', { tries: DRAWING.tries });
   };
@@ -200,6 +229,10 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
     async shot(shotOptions) {
       const view = viewNow().frame({ alpha: 1, dt: 0, aspect: aspect() });
       keepWidth(view.camera, aspect());
+      if (warmsAsked(settings) && !warmedAt.has(view.camera)) {
+        drawn.add(view.camera);
+        await warmCameras();
+      }
       return shotForJson(await shot(parts.gfx!, through(view), shotOptions));
     },
     async draw() {
@@ -213,5 +246,5 @@ export function createPageDrawing(parts: PageParts, options: PageDrawingOptions)
     },
     counts: () => parts.gfx?.stats() ?? null,
   };
-  return { drawing, frame, settle, warmBoth };
+  return { drawing, frame, settle, warmCameras };
 }

@@ -49,7 +49,7 @@ import type { ToonLook } from '../materials/toon';
 import { qualityBudget, type QualityBudget, type QualitySetting } from '../quality';
 import type { FrameView } from '../renderer';
 import type { Resolution } from '../resolution';
-import type { Warmup, WarmupPass } from '../warmup';
+import { warmsAsked, type Warmup, type WarmupPass } from '../warmup';
 import { AA_CHOICE, aaKindFor, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { gpuParticlesFor, sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
@@ -117,7 +117,8 @@ export interface Post {
    * passes over an empty scene, so it builds only those passes: on SwiftShader a pipeline's first draw costs time
    * again, and drawing the scene through the chain there too made each Stress Box page (the room, the hall, the fight)
    * about 1 s slower to start, for a picture a clean look never draws (gate G6's review). The first frame of another
-   * look pays that instead, once, building nothing.
+   * look pays that instead, once, building nothing. With `gfx.warmUp: asked` (engine/gfx/warmup.ts) it gives the scene
+   * pass alone, and the warm frame draws the scene through the chain, until a plain frame is first asked for.
    */
   view(frame: FrameView): FrameView;
   /** Draws look `id` from the next frame (sets `post.look`). */
@@ -276,6 +277,14 @@ export function createPost(
     },
     {},
   ];
+  /** Whether a plain frame was asked for (see `plain`): `gfx.warmUp: asked` compiles its pass from then on only. */
+  let plainAsked = false;
+  const warmsPlain = () => {
+    if (!warmsAsked(settings) || plainAsked) return true;
+    const state = resolve((scenePass.camera as PerspectiveCamera).isPerspectiveCamera === true);
+    const style = state.look.style || own?.style;
+    return (plainAsked = isPlain(state.chain) && settings.get<PostShow>('post.show') === POST_SHOW[0] && (!own || style === own.style)); // prettier-ignore
+  };
 
   const size = new Vector2();
   let frames = 0;
@@ -296,7 +305,8 @@ export function createPost(
     // Straight only in the style the warm-up's frame drew: the warm-up compiles every other style for the MRT alone.
     plain = isPlain(chain) && uniforms.frame.value.x === 0 && (!styles || !own || styles.style === own.style);
     const particles = layer?.prepare(renderer, warming) ?? false;
-    if (plain || warming) {
+    const straightToo = warming && warmsPlain(); // else the warm frame draws the scene through the chain alone
+    if (plain || straightToo) {
       SHADOW_GRID.value.set(0, 0, 1);
       clearMrt(renderer);
       straight();
@@ -325,8 +335,8 @@ export function createPost(
     if (missed > 0) log.warnOnce('GFX_POST_FLAG_SLOTS', { missed, slots: FLAG_SLOTS }, 'slots');
     clearMrt(renderer);
     const scene = scenePass.scene;
-    // The warm frame draws the chain's passes over an empty scene: the warm-up's first pass compiled the scene's.
-    if (warming) scenePass.scene = empty;
+    // The warm frame draws the chain's passes over an empty scene once the straight draw built the scene's shadows.
+    if (straightToo) scenePass.scene = empty;
     try {
       processing.render();
     } finally {
@@ -360,7 +370,9 @@ export function createPost(
       scenePass.scene = frame.scene;
       scenePass.camera = frame.camera;
       layer?.view(frame.particles, frame.camera);
-      return { ...frame, draw, passes };
+      const perspective = (frame.camera as PerspectiveCamera).isPerspectiveCamera === true;
+      if (warmsAsked(settings) && resolve(perspective).look !== applied) sync(); // its style on before a warm-up
+      return { ...frame, draw, passes: warmsPlain() ? passes : passes.slice(0, 1) };
     },
     use(id) {
       settings.set('post.look', id);
@@ -369,7 +381,7 @@ export function createPost(
       settings.set('post.filters', filters);
     },
     attach(warmup) {
-      const part = warmup.keyPart(`post#${serial}`, () => `${aaKind}`);
+      const part = warmup.keyPart(`post#${serial}`, () => `${aaKind}${warmsPlain() ? '' : ',chain'}`);
       return { dispose: () => part.dispose() };
     },
     dispose() {

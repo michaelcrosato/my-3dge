@@ -5,11 +5,11 @@
  * scene as a recorded run with its view (engine/app/headless.ts, engine/app/view.ts), publishes the run's inspector
  * as `window.__engine`, starts the renderer (WebGPU or nothing, engine/gfx/renderer.ts) and the post-processing chain
  * every frame and shot is drawn through (engine/gfx/post/chain.ts: the view settings `post.look`, `post.filters` and
- * `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline the view needs through both
- * cameras (perspective and orthographic), draws the first frame, then runs the frame loop (engine/app/loop.ts): the
- * devices sampled into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from
- * the clock, the view drawn at the clock's alpha; the map follows the camera, the look the view settings `input.*`,
- * the aim the view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
+ * `post.show`; the look's sky and style, engine/app/look.ts), warms up every pipeline the view needs (`gfx.warmUp`,
+ * engine/gfx/warmup.ts), draws the first frame, then runs the frame loop (engine/app/loop.ts): the devices sampled
+ * into intents (engine/input/input.ts; `__engine.input` drives the same session), fixed steps from the clock, the
+ * view drawn at the clock's alpha; the map follows the camera, the look the view settings `input.*`, the aim the
+ * view, and a click takes the pointer lock where the map's mouse looks (WP 13.9).
  *
  * Ready or error (§8.3): `__engine.ready` turns true once the first frame is done on the GPU, never after a startup
  * error; every failure (a frame that throws stops the loop) is one record in `__engine.errors` (the log's), shown as
@@ -58,6 +58,7 @@ import type { QualitySetting } from '../gfx/quality';
 import { createPost } from '../gfx/post/chain';
 import { definePostSettings } from '../gfx/post/settings';
 import { createRenderer } from '../gfx/renderer';
+import { warmsAsked } from '../gfx/warmup';
 import type { CameraInput } from '../gfx/cameras/pose';
 import { connectVirtualDevice } from '../input/devices/inspector';
 import { createInput, type CameraLike, type Input } from '../input/input';
@@ -77,7 +78,7 @@ import { textStorage, type Store } from './store';
 import { createPlayback, type Playback } from './playback';
 import { defineLevel } from '../world/level/level';
 import { parseRoutes, type Routes } from './routes';
-import { createGovernor } from '../dev/governor';
+import { createGovernor, governorMemory } from '../dev/governor';
 
 /** The codes this module raises, with their fixes. */
 export const ENGINE_CODES = defineCodes('app', {
@@ -217,7 +218,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
   overlay.status('Loading…');
   let routes: Routes | null = null;
   let loop: Loop | null = null;
-  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, governor: createGovernor({ log }), cameraInput: options.cameraInput, ready: false }; // prettier-ignore
+  const parts: PageParts = { run: null, gfx: null, post: null, look: null, input: null, layer: null, ui: null, numbers: null, governor: createGovernor({ log, memory: governorMemory(options.store, () => routes?.scene) }), cameraInput: options.cameraInput, ready: false }; // prettier-ignore
   const fail = (error: unknown, code = 'APP_START'): ErrorRecord => {
     const record = log.error(...recordOf(error, code), error);
     overlay.error(record);
@@ -262,7 +263,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     gallery?.frame(shown.dt);
     options.onFrame?.(shown);
   };
-  const { drawing, frame, settle, warmBoth } = createPageDrawing(parts, { chrome, settings: settingsNow, onFrame }); // prettier-ignore
+  const { drawing, frame, settle, warmCameras } = createPageDrawing(parts, { chrome, settings: settingsNow, onFrame }); // prettier-ignore
   let warming: Promise<void> | null = null;
   let asked: Asked | null = null;
   let materials: ReturnType<typeof createMaterialLibrary> | null = null;
@@ -339,10 +340,10 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const styles = createStyleSet({ library: materials!, registry });
     const post = (parts.post = createPost(gfx, { settings: currentSettings(() => started), registry, log, styles }));
     const budget = () => parts.governor!.budget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false); // prettier-ignore
-    parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget });
+    parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget, asked: () => warmsAsked(settingsNow) }); // prettier-ignore
     post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup, gfx.features);
-    await warmBoth();
+    await warmCameras();
     await settle(1, 0);
   } catch (error) {
     fail(error);
@@ -366,7 +367,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
       parts.governor!.freeze((playback !== null && !playback.done) || !settingsNow.get<boolean>('gfx.governor'));
       if (warming) return;
       const report = frame(alpha, dt);
-      if (!report.drawn && report.warming) warming = warmBoth().finally(() => (warming = null));
+      if (!report.drawn && report.warming) warming = warmCameras().finally(() => (warming = null));
     },
     hold: () => started.playing,
     cap: () => input.touch?.active ?? false,
