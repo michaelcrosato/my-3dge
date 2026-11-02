@@ -10,7 +10,8 @@
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../app/headless';
 import { qualityBudget } from '../gfx/quality';
-import { createGovernor, GOVERNOR } from './governor';
+import { createStore, memoryBackend } from '../app/store';
+import { createGovernor, GOVERNOR, GOVERNOR_STORE_KEY, governorMemory } from './governor';
 import '../../labs/box/scenes/room';
 
 /** A governor whose advice is kept, and a way to feed it `seconds` at `fps`. */
@@ -118,5 +119,36 @@ describe('the performance governor', () => {
     }
     expect(governor.state().moves).toBeGreaterThan(1);
     expect(governedRun.hash()).toBe(plain.hash());
+  });
+
+  it('starts auto at the tier its memory kept, never above its own, and keeps each move', () => {
+    const kept: string[] = [];
+    let stored: string | null = 'low';
+    const memory = { read: () => stored as never, write: (tier: string) => void kept.push(tier) };
+    const governor = createGovernor({ log: { warnOnce: () => true } as never, memory });
+    expect(governor.budget('auto', false).tier).toBe('low'); // where it settled last time: no slow seconds again
+    for (let i = 0; i < (GOVERNOR.calmStart + 1) * 60; i++) governor.frame(1000 / 60);
+    expect([governor.budget('auto', false).tier, kept]).toEqual(['medium', ['medium']]); // calm seconds still promote
+    governor.budget('high', false); // set by hand: at rest
+    stored = 'high';
+    expect(governor.budget('auto', true).tier).toBe('medium'); // never above auto's own on a touch screen
+    governor.budget('high', false);
+    stored = 'ultra';
+    expect(governor.budget('auto', false).tier).toBe('high'); // a value it does not know: auto's own
+  });
+
+  it("keeps each scene's tier in a page's store, and nothing without one", () => {
+    const store = createStore({ prefix: 'test:', backend: memoryBackend() });
+    let scene = 'playground:site';
+    const memory = governorMemory(store, () => scene)!;
+    expect(memory.read()).toBeNull();
+    memory.write('medium');
+    scene = 'playground:gym';
+    expect(memory.read()).toBeNull();
+    memory.write('low');
+    scene = 'playground:site';
+    expect(memory.read()).toBe('medium');
+    expect(store.get(GOVERNOR_STORE_KEY, null)).toEqual({ 'playground:site': 'medium', 'playground:gym': 'low' });
+    expect(governorMemory(undefined, () => scene)).toBeUndefined();
   });
 });

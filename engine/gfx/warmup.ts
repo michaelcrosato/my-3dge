@@ -25,7 +25,7 @@
  * topmost one made visible is scaled to nothing; an `InstancedMesh` with no instances gets one, at zero scale; every
  * object in the scene is drawn without frustum culling, so what is behind the camera is built too. All of it is put
  * back afterwards, in reverse order. Carried from `my-3d2dge:src/stress-world/50-frame.js:29-47` (`warmUp()`) as the
- * idea for a registry.
+ * idea for a registry. What a page's warm-ups compile is the view setting `gfx.warmUp` (`WARMUP_SETTINGS`).
  *
  * Invariants: one warm-up runs at a time (a second `run` returns the first's promise); entries and key parts are kept
  * in id order; the report counts the pipelines this warm-up built (counted at the device, engine/gfx/pipelines.ts).
@@ -49,6 +49,8 @@ import {
   type WebGPURenderer,
 } from 'three/webgpu';
 import { codeError, defineCodes } from '../core/log';
+import type { Field } from '../core/schema';
+import { defineSettings } from '../core/settings';
 import { advanceFrame, type PipelineCounter } from './pipelines';
 
 /** The codes this module raises, with their fixes. */
@@ -58,6 +60,30 @@ export const WARMUP_CODES = defineCodes('gfx', {
     fix: 'dispose the first registration (register returns { dispose }), or register the second under another id',
   },
 });
+
+/**
+ * Its view setting `gfx.warmUp` (ADR-0008 amendment 11): what a page's warm-ups compile. r182 builds a shader for each
+ * render object whose cache key differs, and the key holds the camera's id, the render target and an instanced mesh's
+ * uuid, so a warm-up builds the same shader many times over (the playground's gym: 3,310 builds for 102 pipelines,
+ * most of its start). `all` compiles both cameras, the plain frame's pass and the style set's own style, so no later
+ * switch warms up; `asked` only what the page has drawn: the page's drawing, the post chain and the page's look
+ * (engine/app/drawing.ts, engine/gfx/post/chain.ts, engine/app/look.ts) warm up a camera, the plain frame or a style
+ * the first time a frame needs it, before that frame, never in it.
+ */
+export const WARMUP_SETTINGS = {
+  'gfx.warmUp': {
+    type: 'string',
+    enum: ['all', 'asked'],
+    default: 'all',
+    view: true,
+    description:
+      "What a page's warm-ups compile: all (both cameras, the plain frame and the style set's own style, so no later switch warms up) or asked (only the cameras, the frame and the styles the page has drawn: a first frame of another warms up first, once; a faster start).",
+  },
+} as const satisfies Record<string, Field>;
+defineSettings(WARMUP_SETTINGS);
+
+/** Whether `settings` ask a page's warm-ups to compile only what it has drawn (`gfx.warmUp: asked`). */
+export const warmsAsked = (settings: { get(path: string): unknown }): boolean => settings.get('gfx.warmUp') === 'asked';
 
 /** What a pool or batch registers: the objects it may show, each made drawable for the warm-up. */
 export interface WarmupEntry {
@@ -103,6 +129,8 @@ export interface WarmupReport {
   key: string;
   /** The registered ids it warmed, in order. */
   entries: string[];
+  /** The camera it compiled for: a `run` given another while this one ran gets this report. */
+  camera: Camera;
   /** Pipelines `compileAsync` built. */
   compiled: number;
   /** Pipelines the warm frame built. */
@@ -314,6 +342,7 @@ export function createWarmup(options: { renderer: WebGPURenderer; counter: Pipel
         count: (last?.count ?? 0) + 1,
         key,
         entries: ids,
+        camera,
         compiled,
         drawn: done - compiled,
         built: done,

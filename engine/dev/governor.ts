@@ -13,6 +13,11 @@
  * screen each bad second also shrinks the drawn pixels' scale by `scale.down` (to `scale.min`), and `scale.calm` good
  * seconds in a row grow it by `scale.up` (to 1), shardfall's dynamic resolution.
  *
+ * A page may give it a memory (`governorMemory`: the tier `auto` settled at for each scene, kept in the page's store):
+ * `auto` then starts there, never above its own tier, so a page started again on a machine that cannot hold `high`
+ * begins where it settled. Each move changes the shadow casters, so the shader key, and costs a whole warm-up
+ * (engine/gfx/warmup.ts): on SwiftShader the playground's site took 338 s more after its first frame for two.
+ *
  * Invariants: presentation only: it reads frame times and hands the view a budget; it never touches the sim, a
  * setting or the hash (the quality's tiers are view settings' effects). A tier set by hand (`quality` other than
  * `auto`) is kept as set, and the governor rests and starts again from `auto`'s tier when `auto` comes back.
@@ -104,8 +109,36 @@ export interface Governor {
   state(): GovernorState;
 }
 
-/** Makes a governor; `log` takes its advice (the shared log by default). */
-export function createGovernor(options: { log?: Pick<Log, 'warnOnce'> } = {}): Governor {
+/** Where `auto` stood last time: read when it starts (`read`), written at every move (`write`). */
+export interface GovernorMemory {
+  read(): QualityTier | null;
+  write(tier: QualityTier): void;
+}
+
+/** The key of a page's store under which `governorMemory` keeps each scene's tier. */
+export const GOVERNOR_STORE_KEY = 'gfx.governor';
+
+/** A memory in a page's store (engine/app/store.ts): the tier `auto` settled at, per scene; none without a store. */
+export function governorMemory(
+  store: { get(key: string, fallback: unknown): unknown; set(key: string, value: unknown): boolean } | undefined,
+  scene: () => string | null | undefined,
+): GovernorMemory | undefined {
+  if (!store) return undefined;
+  const kept = () => (store.get(GOVERNOR_STORE_KEY, {}) ?? {}) as Record<string, unknown>;
+  return {
+    read() {
+      const tier = kept()[scene() ?? ''];
+      return TIERS.includes(tier as QualityTier) ? (tier as QualityTier) : null;
+    },
+    write(tier) {
+      const id = scene();
+      if (id) store.set(GOVERNOR_STORE_KEY, { ...kept(), [id]: tier });
+    },
+  };
+}
+
+/** Makes a governor; `log` takes its advice (the shared log by default), `memory` keeps where `auto` settled. */
+export function createGovernor(options: { log?: Pick<Log, 'warnOnce'>; memory?: GovernorMemory } = {}): Governor {
   const log = options.log ?? sharedLog;
   const s = { tier: null as QualityTier | null, start: 'high' as QualityTier, scale: 1, scaleCalm: 0, calm: GOVERNOR.calmStart as number, bad: 0, good: 0, seconds: 0, moves: 0, frozen: false, promoted: -Infinity }; // prettier-ignore
   let touch = false;
@@ -113,7 +146,13 @@ export function createGovernor(options: { log?: Pick<Log, 'warnOnce'> } = {}): G
   const move = (to: QualityTier, reason: string) => {
     s.tier = to;
     s.moves++;
+    options.memory?.write(to);
     log.warnOnce('GFX_GOVERNOR', { tier: to, reason }, `${to}:${s.moves}`);
+  };
+  /** Where `auto` starts: its own tier, or the lower one the memory kept. */
+  const from = (own: QualityTier): QualityTier => {
+    const kept = options.memory?.read() ?? null;
+    return kept && TIERS.indexOf(kept) > TIERS.indexOf(own) ? kept : own;
   };
   /** Judges one second whose frames averaged `mean` ms. */
   const second = (mean: number) => {
@@ -151,7 +190,7 @@ export function createGovernor(options: { log?: Pick<Log, 'warnOnce'> } = {}): G
         return qualityBudget(setting, onTouch);
       }
       touch = onTouch;
-      if (s.tier === null) [s.tier, s.start, s.bad, s.good] = [resolveQuality('auto', onTouch), resolveQuality('auto', onTouch), 0, 0]; // prettier-ignore
+      if (s.tier === null) [s.tier, s.start, s.bad, s.good] = [from(resolveQuality('auto', onTouch)), resolveQuality('auto', onTouch), 0, 0]; // prettier-ignore
       const budget = qualityBudget(s.tier, onTouch);
       if (!onTouch || s.scale === 1) return budget;
       return {

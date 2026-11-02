@@ -3,9 +3,9 @@
  * module under `labs/playground/scenes/`, `looks/` and `bodies/`, so a scene added there opens at `?scene=<name>`, a
  * look at `?post.look=<id>` and a body draws, with no change here, registers the playground's levels as text, and
  * starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the
- * shooter camera and the cel look unless the query names others, with the playground's replays
- * (tests/replays/playground-*) offered to `?replay=<name>`. Before the engine starts, the menu for humans
- * (labs/playground/menu.ts) lists the scenes, cameras, looks, replays and controls.
+ * shooter camera and the cel look unless the query names others, warming up only what it draws (`gfx.warmUp: asked`),
+ * with the playground's replays (tests/replays/playground-*) offered to `?replay=<name>`. Before the engine starts,
+ * the menu for humans (labs/playground/menu.ts) lists the scenes, cameras, looks, replays and controls.
  *
  * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
  * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
@@ -86,7 +86,9 @@ const replays = Object.fromEntries(
 
 /**
  * The page's query: the player's kept preferences where it names none (labs/playground/ui/prefs.ts; a replay's page
- * keeps nothing, its store in `demo`), then the shooter camera, the cel look and whole-number zooms where it names none.
+ * keeps nothing, its store in `demo`), then the shooter camera, the cel look and whole-number zooms where it names none,
+ * and warm-ups of only what it draws (`gfx.warmUp: asked`, engine/gfx/warmup.ts: a faster start; the other projection
+ * warms up when first shown).
  */
 const search = new URLSearchParams(location.search);
 const store = createStore({ prefix: PREFS_PREFIX, mode: search.has('replay') ? 'demo' : 'play' });
@@ -102,6 +104,7 @@ prefsQuery(
 if (!search.has('cam') && !search.has('cam3')) search.set('cam3', 'shoulder');
 if (!search.has('post.look')) search.set('post.look', PLAYGROUND_LOOKS[0]);
 if (!search.has('cam.wholeZoom')) search.set('cam.wholeZoom', 'true');
+if (!search.has('gfx.warmUp')) search.set('gfx.warmUp', 'asked'); // its looks: the chain in toon, never plain
 createPlaygroundMenu(document, {
   scenes: sceneEntries,
   replays: Object.keys(replays),

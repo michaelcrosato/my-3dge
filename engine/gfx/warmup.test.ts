@@ -124,6 +124,7 @@ describe('run', () => {
       count: 1,
       key,
       entries: ['pool:flags', 'pool:sparks'],
+      camera,
       compiled: 3,
       drawn: 1,
       built: 4,

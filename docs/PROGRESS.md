@@ -15,25 +15,25 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   access for the live evals, the crowd's CPU render, the mutants outside the sample). Their answers come back pasted
   from Copy my answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
-## Where things stand (2026-10-28)
+## Where things stand (2026-11-02)
 
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain, cel and pixel looks); Watch the tour plays it all.
   Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped as playground.html (no Vercel).
-- Tidied after G13 (ADR-0025 amendment 45): lazy floods for the cast, the cap's 15 files split, the box's sounds placed,
-  `x shot`/`x film` on the playground, the box room's budget, the feel kit posing as the page, cascaded shafts tested.
+- Tidied after G13 (ADR-0025 amendment 45). Faster starts (ADR-0008 amendment 11): the playground warms up only what
+  it draws (gym 64.7 → 23.7 s here); the governor keeps each scene's tier (Owner: a move still re-keys lit pipelines).
 
 ## What waits, and the open issues
 
 - Amendment 22 proposes triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Owner:
   top-down's pixel look panned across a whole pixel changes 7–10 pixels of a soft shadow band (amendment 35). Clip
   contacts: hands read as holds in walks, idles and more (WP 8.8's row); no foot lock reads a clip's foot contacts yet.
-  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms), the pixel
-  look's glide, a desktop MCP client.
+  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms; load times),
+  the pixel look's glide, a desktop MCP client.
 - Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
-- Near the size cap (392–394 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
-  tools/cmd/replay.ts; four tests at 399–400.
+- Near the size cap (390–397 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
+  tools/cmd/replay.ts, gfx/post/chain.ts, app/engine.ts; four tests at 399–400.
 - The quick gate is over its 5 min (CI_BUDGET), its long pole the playground's soak and site tests; under load
   `npm test` can fail on RPC timeouts; audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba).
 - The tour's page goldens come from its spec (amendment 41). Random play lost the shooter's chest in 4–5% of frames

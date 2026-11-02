@@ -5,10 +5,10 @@
  * the mean CPU milliseconds of the last 60 drawn frames (`renderMs`), the GPU's (`gpuMs`, where the device has
  * timestamp queries: engine/gfx/enhanced/timing.ts; absent elsewhere), and the renderer's counts: the last frame's
  * draw calls, triangles and compute dispatches, the textures and geometries alive on the GPU, the pipelines built
- * since startup and those built after the warm-up (0, or a frame stalled: §8.7). The split is the prototype
- * benchmark's (physics, logic and drawing): the step's logic is `simMs - physicsMs - animMs`. Means, not medians: a
- * browser's clock reads in steps of 0.1 ms (with jitter), so a cheap step reads 0 most times, and only the mean of
- * the readings comes out right; a pause lifts the mean for one second (60 samples) at most.
+ * since startup and those built after the warm-up (0, or a frame stalled: §8.7), and the warm-ups run. The split is
+ * the prototype benchmark's (physics, logic and drawing): the step's logic is `simMs - physicsMs - animMs`. Means, not
+ * medians: a browser's clock reads in steps of 0.1 ms (with jitter), so a cheap step reads 0 most times, and only the
+ * mean of the readings comes out right; a pause lifts the mean for one second (60 samples) at most.
  *
  * A meter (`createStatsMeter`) collects them. The engine times each step and each frame through it (`time('sim',
  * run)`, `time('render', run)`) and hands the world its `probe`, which runs each system and adds its time to its
@@ -58,6 +58,7 @@ export type RenderCounts = Pick<
   | 'geometries'
   | 'pipelines'
   | 'pipelinesAfterWarmUp'
+  | 'warmUps'
   | 'gpuMs'
 >;
 
@@ -102,6 +103,8 @@ export interface EngineStats {
   pipelines: number | null;
   /** Pipelines built after the warm-up: 0, or a frame stalled (null before the first warm-up). */
   pipelinesAfterWarmUp: number | null;
+  /** Warm-ups run since the engine started, one a camera (engine/gfx/warmup.ts); null without a renderer. */
+  warmUps: number | null;
 }
 
 /** A system as the probe sees it: its phase, of engine/sim/systems.ts's `PHASES`. */
@@ -191,6 +194,7 @@ export function createStatsMeter(options: StatsMeterOptions = {}): StatsMeter {
           EngineStats,
           (typeof COUNT_KEYS)[number]
         >),
+        warmUps: counts ? counts.warmUps : null,
       };
     },
     reset() {
@@ -208,6 +212,6 @@ export function meterOf(host: InspectorHost): StatsMeter {
 }
 
 defineMember('stats', {
-  help: "Performance counters, never fps: mean sim, physics, anim and render ms of the last 60 steps or frames, and the GPU's (gpuMs, with timestamp queries); the last frame's draw calls, triangles and compute calls; textures, geometries and pipelines (after warm-up).",
+  help: "Performance counters, never fps: mean sim, physics, anim and render ms of the last 60 steps or frames, and the GPU's (gpuMs, with timestamp queries); the last frame's draw calls, triangles and compute calls; textures, geometries and pipelines (after warm-up); the warm-ups run.",
   impl: (host) => meterOf(host).read(),
 });

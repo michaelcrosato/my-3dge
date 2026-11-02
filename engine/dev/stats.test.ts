@@ -43,6 +43,7 @@ const COUNTS: RenderCounts = {
   geometries: 9,
   pipelines: 21,
   pipelinesAfterWarmUp: 0,
+  warmUps: 2,
 };
 
 describe('the meter', () => {
@@ -88,6 +89,7 @@ describe('the meter', () => {
       geometries: null,
       pipelines: null,
       pipelinesAfterWarmUp: null,
+      warmUps: null,
     });
     let counts: RenderCounts | null = null;
     const { meter, frame } = clocked(() => counts);
