@@ -1014,6 +1014,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`presets.ts`](../engine/gfx/post/presets.ts): One-filter presets (PLAN.md WP 7.4): looks that set one filter or the shading, seeded from shardfall's tuned `[[preset]]` tables (`shardfall:crates/pav_view/src/looks.toml:13-462`), keys renamed (engine/gfx/post/looks.ts says what was left out), plus three from the prototype's filter panel (`my-3d2dge:src/stress-world/ 45-filters.js:21-24`: its comic cel, its dithered pixel look, FXAA).
   - Exports: `PRESETS`
   - Tests: [`engine/gfx/post/looks.test.ts`](../engine/gfx/post/looks.test.ts)
+- [`resolveLook.ts`](../engine/gfx/post/resolveLook.ts): The look a chain draws (PLAN.md WP 7.4, WP 13.24; split from engine/gfx/post/chain.ts at its size cap): what the view settings name now.
+  - Exports: `createLookResolver`, `ResolvedLook`
+  - Tests: [`engine/gfx/post/resolveLook.test.ts`](../engine/gfx/post/resolveLook.test.ts)
 - [`settings.ts`](../engine/gfx/post/settings.ts): The post chain's codes and settings (PLAN.md WP 7.4, WP 3.12): the advice engine/gfx/post/chain.ts gives (`POST_CODES`: bloom off at a tier, too few levels, the flag table full, a style without a style set) and the view settings it reads (`POST_SETTINGS`: `post.look`, `post.filters`, `post.show`), declared with the setting `quality` by `definePostSettings`.
   - Exports: `definePostSettings`, `POST_CODES`, `POST_SETTINGS`
   - Tests: [`engine/gfx/post/chain.test.ts`](../engine/gfx/post/chain.test.ts)

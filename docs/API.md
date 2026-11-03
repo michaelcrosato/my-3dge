@@ -5342,6 +5342,11 @@ For the agents who maintain the engine.
 
 - `PRESETS` (const): The presets, by id (see the file comment).
 
+### [`engine/gfx/post/resolveLook.ts`](../engine/gfx/post/resolveLook.ts)
+
+- `createLookResolver` (function): Makes the resolver over `settings` and `registry`, its advice to `log` (see the file comment).
+- `ResolvedLook` (type): What the settings name now (see the file comment); `variant` keeps a perspective camera's, once asked for.
+
 ### [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)
 
 - `definePostSettings` (function): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.

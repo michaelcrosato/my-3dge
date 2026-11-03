@@ -242,3 +242,21 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   warm up before they draw, nothing built in a frame), `engine/app/look.test.ts`, `engine/app/drawing.test.ts`,
   `engine/dev/governor.test.ts`, `engine/dev/stats.test.ts`, `engine/gfx/warmup.test.ts`.
 - Plan edit: none: the gate's 0-pipelines rule holds; `all` stays the default for every other page.
+
+## Amendment 12 (2026-11-03, main red on b9d8690): a warm-up's frame draws the camera it warms
+
+- **Found:** main's full run on b9d8690 failed one test, tests/e2e/gallery.spec.ts's looks: `GFX_COLD_PIPELINE`, a
+  pipeline built in its 78th frame, `look:screen/flat-screen` drawn plain in the gallery's isometric camera; here the
+  same frame. Amendment 11's fix was half of it. While the renderer's own warm-up for the orthographic camera awaited
+  its compiles, `warmCameras` made the perspective camera's view through the chain (`post.view`) before asking, and
+  the chain's scene pass, which a warm-up's frame draws through, pointed at the perspective camera from then on. The
+  warm-up's report still named the orthographic camera, so it counted as warm, though its plain frame's straight draw
+  was never built. `warmBoth` had warmed the orthographic camera again whatever the report said, which hid it.
+- **Fixed:** the view `post.view(frame)` gives aims the scene pass and the particles at its frame again as it draws
+  (engine/gfx/post/chain.ts), so a warm-up's frame draws the camera it warms whatever views were made while it
+  awaited; a shot made while a warm-up runs (engine/gfx/shot.ts waits for it) no longer turns that warm-up's frame
+  either.
+- **Split on the way:** the chain's look resolution, whole, to engine/gfx/post/resolveLook.ts (chain.ts stood at its
+  size cap, docs/PROGRESS.md's list), unit-tested there; the chain is 374 lines.
+- **Evidence:** gallery.spec's look test failed here as on GitHub (frame 78) and passes with the fix.
+- Plan edit: none.
