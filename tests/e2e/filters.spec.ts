@@ -7,7 +7,9 @@
  *    flare, streaks, crt, vhs, speedlines, vignette, letterbox) changes the picture; and the ID pass of every frame
  *    is the clean frame's (tests/e2e/filters-cases.ts holds the cases);
  * 2. a filter's `amount`: at 0 the picture is the clean frame's, for a filter that mixes (duotone) and one that moves
- *    where pixels look (lens); at 0.5 a mixing filter's change is half its change at 1;
+ *    where pixels look (lens); at 0.5 a mixing filter's change is half its change at 1; selective colour keeps the
+ *    hue its field names on the colour wheel (the clean frame's commonest, measured in the test as HSV's) and greys
+ *    the same pixels when it names the opposite hue;
  * 3. combining, live: `post.combine` laying a look on the clean look draws what that look draws; `post.strength` 0
  *    draws the clean frame and 0.5 about half the change; changing either builds no pipeline and runs no warm-up.
  *
@@ -63,6 +65,18 @@ function meanChange(a: Uint8Array, b: Uint8Array): number {
   for (let i = 0; i < a.length; i++) if (i % 4 !== 3) sum += Math.abs(a[i] - b[i]);
   return sum / ((a.length / 4) * 3);
 }
+
+/** A pixel's hue on the colour wheel (degrees: 0 red, 120 green, 240 blue) and its saturation and value, HSV's. */
+function hsv(px: Uint8Array, p: number): { h: number; s: number; v: number } {
+  const [r, g, b] = [px[p * 4] / 255, px[p * 4 + 1] / 255, px[p * 4 + 2] / 255];
+  const mx = Math.max(r, g, b);
+  const d = mx - Math.min(r, g, b);
+  const h = d === 0 ? 0 : mx === r ? (g - b) / d : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { h: ((((h / 6) % 1) + 1) % 1) * 360, s: mx > 0 ? d / mx : 0, v: mx };
+}
+
+/** How far apart two hues are round the wheel, in degrees. */
+const hueGap = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
 
 /** Draws the clean look with `filters`, checks the switch built nothing, and returns the frame's pixels. */
 async function draw(page: Page, first: Shown, filters: object, where: string): Promise<Uint8Array> {
@@ -140,6 +154,34 @@ test("a filter's amount: 0 is the clean frame, half is half the change", async (
 
   const still = await draw(page, first, { lens: { scope: 'all', distortion: 0.4, amount: 0 } }, 'lens at 0');
   expect(changedShare(clean, still), 'lens at amount 0 against the clean frame').toBeLessThanOrEqual(0.001);
+});
+
+test('selective colour keeps the hue its field names on the colour wheel, and greys it when named the opposite', async ({
+  page,
+  harness,
+}) => {
+  test.setTimeout(120_000);
+  await open(page, harness);
+  await page.evaluate(() => __postPage.setLook('look:clean'));
+  const clean = rgba(await page.evaluate(() => __postPage.shoot()));
+  await page.evaluate(() => __postPage.parts()); // the first shot through the chain builds its own pipelines
+  const first = await page.evaluate(() => __postPage.setLook('look:clean'));
+  // the most common hue among the clean frame's coloured pixels, by 10° bins
+  const coloured = [...Array(clean.length / 4).keys()].filter((p) => hsv(clean, p).s > 0.4 && hsv(clean, p).v > 0.25);
+  const bins = new Array<number>(36).fill(0);
+  for (const p of coloured) bins[Math.floor(hsv(clean, p).h / 10) % 36]++;
+  const hue = bins.indexOf(Math.max(...bins)) * 10 + 5;
+  const near = coloured.filter((p) => hueGap(hsv(clean, p).h, hue) <= 8);
+  const said = `hue ${hue}°: ${near.length} coloured pixels within 8° of it`;
+  expect(near.length, said).toBeGreaterThan(100);
+  // kept where the filter names their hue (OKLCH's angle for these, about 30° away, would grey them), greyed where it
+  // names the hue opposite: the room has no hue 45° from its commonest to grey, so its own pixels are asked both ways
+  const kept = await draw(page, first, { selective: { scope: 'all', hue, range: 20 } }, `selective at ${hue}°`);
+  const away = await draw(page, first, { selective: { scope: 'all', hue: (hue + 180) % 360, range: 20 } }, 'opposite');
+  const stayed = near.filter((p) => !differs(clean, kept, p)).length / near.length;
+  const greyed = near.filter((p) => hsv(away, p).s < 0.12).length / near.length;
+  expect(stayed, `${said}: the share unchanged when it names their hue`).toBeGreaterThan(0.9);
+  expect(greyed, `${said}: the share grey when it names the opposite hue`).toBeGreaterThan(0.9);
 });
 
 test('post.combine lays a look on live, and post.strength fades the whole of it, building nothing', async ({

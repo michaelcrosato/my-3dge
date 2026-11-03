@@ -11,8 +11,11 @@
  *   at its neutral value, so a grade without them draws as before;
  * - **split toning** (`post_split`): the shadows soft-lit toward one colour and the highlights toward another, the
  *   balance moving where they meet;
- * - **selective colour** (`post_selective`): every hue but one turned grey, the kept hue measured in OKLab so it reads
- *   evenly across colours, near-greys left alone;
+ * - **selective colour** (`post_selective`): every hue but one turned grey, the kept hue on the colour wheel its
+ *   field names (`post_hue`: 0 red, 120 green, 240 blue), where Style Lab took OKLCH's angle (red about 29°), so an
+ *   agent asking for red writes 0. A pixel counts as coloured by its saturation (HSV's, from 0.08 to 0.2), so a warm
+ *   grey stays grey and a dark red keeps its colour; Style Lab gated by OKLab chroma (0.02 to 0.06), which took half
+ *   the colour of the kept hue's dark reds and browns (main at e13452c had both: `look:red-coat` kept no red);
  * - **gradient map** (`post_duotone`): brightness mapped onto dark, mid and light colours.
  *
  * Invariants: pure functions of their arguments; colours are display colours (sRGB) in 0–1, the results clamped by
@@ -73,32 +76,34 @@ fn post_split(c: vec3<f32>, balance: f32, shadows: vec3<f32>, highlights: vec3<f
   [postLuma],
 );
 
-/** `c` in OKLab (L, a, b), from display colours. */
-export const postOklab = wgsl(`
-fn post_oklab(c: vec3<f32>) -> vec3<f32> {
-  let lin = select(c / 12.92, pow((c + 0.055) / 1.055, vec3<f32>(2.4)), c > vec3<f32>(0.04045));
-  let l = 0.4122214708 * lin.r + 0.5363325363 * lin.g + 0.0514459929 * lin.b;
-  let m = 0.2119034982 * lin.r + 0.6806995451 * lin.g + 0.1073969566 * lin.b;
-  let s = 0.0883024619 * lin.r + 0.2817188376 * lin.g + 0.6299787005 * lin.b;
-  let lms = pow(max(vec3<f32>(l, m, s), vec3<f32>(0.0)), vec3<f32>(1.0 / 3.0));
-  return vec3<f32>(
-    0.2104542553 * lms.x + 0.7936177850 * lms.y - 0.0040720468 * lms.z,
-    1.9779984951 * lms.x - 2.4285922050 * lms.y + 0.4505937099 * lms.z,
-    0.0259040371 * lms.x + 0.7827717662 * lms.y - 0.8086757660 * lms.z,
-  );
+/** `c`'s hue on the colour wheel, in degrees: 0 red, 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta. */
+export const postHue = wgsl(`
+fn post_hue(c: vec3<f32>) -> f32 {
+  let mx = max(c.r, max(c.g, c.b));
+  let d = mx - min(c.r, min(c.g, c.b));
+  if (d <= 0.00001) {
+    return 0.0;
+  }
+  var h = (c.r - c.g) / d + 4.0;
+  if (mx == c.r) {
+    h = (c.g - c.b) / d;
+  } else if (mx == c.g) {
+    h = (c.b - c.r) / d + 2.0;
+  }
+  return fract(h / 6.0 + 1.0) * 360.0;
 }`);
 
-/** `c` with every hue but `hue` (degrees, ± `range`) turned grey; near-greys stay as they are. */
+/** `c` with every hue but `hue` (degrees on the colour wheel, ± `range`) turned grey, and every near-grey. */
 export const postSelective = wgsl(
   `
 fn post_selective(c: vec3<f32>, hue: f32, range: f32) -> vec3<f32> {
-  let lab = post_oklab(c);
-  let h = degrees(atan2(lab.z, lab.y));
-  let d = abs(fract((h - hue) / 360.0 + 0.5) - 0.5) * 360.0;
-  let keep = (1.0 - smoothstep(range * 0.6, range, d)) * smoothstep(0.02, 0.06, length(lab.yz));
+  let mx = max(c.r, max(c.g, c.b));
+  let sat = (mx - min(c.r, min(c.g, c.b))) / max(mx, 0.00001);
+  let d = abs(fract((post_hue(c) - hue) / 360.0 + 0.5) - 0.5) * 360.0;
+  let keep = (1.0 - smoothstep(range * 0.6, range, d)) * smoothstep(0.08, 0.2, sat);
   return mix(c, vec3<f32>(post_luma(c)), 1.0 - keep);
 }`,
-  [postOklab, postLuma],
+  [postHue, postLuma],
 );
 
 /** `c`'s brightness mapped onto `dark`, `mid` and `light` (a gradient map). */

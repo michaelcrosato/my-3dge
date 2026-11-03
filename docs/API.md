@@ -5481,8 +5481,8 @@ For the agents who maintain the engine.
 
 - `postDuotone` (const): `c`'s brightness mapped onto `dark`, `mid` and `light` (a gradient map).
 - `postGradeMore` (const): The grade's further steps on `c`: `g3` (lift, gamma, vibrance, hue in degrees), `g4` (sepia, bleach, 0, 0).
-- `postOklab` (const): `c` in OKLab (L, a, b), from display colours.
-- `postSelective` (const): `c` with every hue but `hue` (degrees, ± `range`) turned grey; near-greys stay as they are.
+- `postHue` (const): `c`'s hue on the colour wheel, in degrees: 0 red, 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta.
+- `postSelective` (const): `c` with every hue but `hue` (degrees on the colour wheel, ± `range`) turned grey, and every near-grey.
 - `postSplit` (const): Split toning of `c`: the shadows toward `shadows`, the highlights toward `highlights` (soft light).
 
 ### [`engine/gfx/post/shading.ts`](../engine/gfx/post/shading.ts)
