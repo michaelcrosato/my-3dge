@@ -8545,6 +8545,10 @@ For the agents who maintain the engine.
 
 - `look` (const): The look `look:playground-cel`: three bands and a rim per material, hue-shifted shadows, ink, shells, a gradient sky.
 
+### [`labs/playground/looks/clean.ts`](../labs/playground/looks/clean.ts)
+
+- `look` (const): The look `look:playground-clean`: the scene's own lit materials under the hour's sky, edges smoothed, nothing else.
+
 ### [`labs/playground/looks/pixel.ts`](../labs/playground/looks/pixel.ts)
 
 - `look` (const): The look `look:playground-pixel`: a low-resolution picture, ramps dithered on the world, snapped and gliding.
@@ -8780,7 +8784,7 @@ For the agents who maintain the engine.
 - `nextCamera` (function): The code of the camera mode after the one `code` opens (the first after an unknown code).
 - `nextLook` (function): The look after `id` (the first after an unknown id).
 - `PLAYGROUND_CAMERAS` (const): The five camera modes, in the order T steps through them; the shooter is the page's default.
-- `PLAYGROUND_LOOKS` (const): The two looks, in the order P switches them; the cel look is the page's default.
+- `PLAYGROUND_LOOKS` (const): The three looks, in the order P steps through them; the clean look is the page's default (the owner's direction of 2026-11-03, ADR-0025 amendment 46), the cel and pixel looks the styled ones (WP 13.24).
 - `swapShoulder` (function): The shooter camera's code `code` over the other shoulder (`cam3=shoulder,<yaw>,<pitch>,<distance>[,-1]`); another code as it is.
 - `turnView` (function): A classic view's code `code` turned round its target by `steps` × 90° (`cam=iso,<turn>,<zoom>`); another code as it is.
 

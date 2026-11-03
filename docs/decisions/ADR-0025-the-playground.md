@@ -2331,3 +2331,42 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   keeps its one map.
 - **Left, with why:** audio.spec's one hang in an offline render on GitHub (20 of 20 here; nothing to fix without a
   failure to read).
+
+## Amendment 46 (2026-11-03, WP 13.29): the clean look, the playground's default
+
+- **The owner's direction (2026-11-03):** "the game has a cel and pixel filter, can we add a clean default filter
+  mode?" Decision 3's two looks are three from here: a clean look, the default, then the cel and the pixel looks.
+- **Built:** `look:playground-clean` (labs/playground/looks/clean.ts): every material in the scene's own lit style,
+  under `sky:daylight` (the hour's sun or moon, its ambient and fog, the streetlights after dusk, as the other two have
+  them), the dome as the hour draws it, and the `aa` filter over the whole picture (the engine's edge smoothing, FXAA
+  by `post.aa`'s default); nothing else: no bands, ink, outline shells, pixels or grade. `PLAYGROUND_LOOKS`
+  (labs/playground/views.ts) lists it first, so the page opens in it and P steps clean, cel, pixel; the menu, settings,
+  the HUD (`Look: clean`), the attract mode's look cycle and the tour's film per look follow the list.
+- **Calls:**
+  - The playground's own look, not the engine's `look:clean`: with no sky, that keeps the stage's own lights (a
+    hemisphere and one sun under a plain background, engine/gfx/stageSky.ts), which the hour and the lamps never
+    reach, so the block would lose its day and night.
+  - Its edges smoothed: with every filter off its frames would be plain, drawn straight and not smoothed at all (the
+    canvas has no MSAA). The `aa` filter keeps it in the chain as the other two are, so `gfx.warmUp: asked` still
+    never compiles a plain frame's pass, and a switch among the three changes uniforms and the materials' style only.
+  - Its dome is the hour's, not the cel look's gradient: the clean look is the picture unstyled.
+  - The default, as the owner asked. The page now starts in the style set's own style, so the first switch to cel or
+    pixel warms up the toon style once (`asked`: the set joins then, engine/app/look.ts), where the two toon looks
+    shared their style from the start; switching among the three after that builds nothing.
+  - An owner check, `clean-look` (labs/playground/ui/checkList.ts): whether it is the clean default asked for; the two
+    look checks walk all three.
+  - tests/e2e/playground-looks.spec.ts shoots the cel and pixel looks camera by camera, as before, then the clean
+    look: each shot steps the paused sim, and the clean shots put first moved the toon looks' thumbnails (first
+    person's arms, isometric's shadows) though they drew the same (all ten within the comparison, 0 cells). Its "nothing
+    built through the night" then failed by 3, and measured shot by shot it was neither the hour nor a frame: a shot's
+    ID pass builds a pipeline again after each switch between the toon style and the clean look's (follow and
+    isometric, at noon as at night; three.js copies parts of each object's own material onto the ID override). Its
+    rounds now shoot the same world three times (`capture`, `restore`): noon, noon again and night, the night held to
+    the second noon round's count, so the hour still may build nothing; the rebuild is docs/PROGRESS.md's open issue.
+- **Files outside Owns:** README.md, AGENTS.md, labs/labs.json, docs/PLAYGROUND.md (the opening, §1, §5.2, §9.2 and
+  §9.3's item 10), engine/app/look.ts's comment, tests/baselines/thumbs/README.md.
+- **Evidence:** labs/playground/looks/looks.test.ts and views.test.ts; tests/e2e/playground-looks.spec.ts (every
+  camera in it at noon and at 22:00, within the look bounds, night darker than noon; its five noon thumbnails recorded
+  with UPDATE_THUMBS=1, this amendment their reason, the cel and pixel ones unchanged; no shell shown; the same
+  objects seen as in the cel look); playground.spec.ts, playground-ui.spec.ts, lights.spec.ts, terrain.spec.ts and
+  playground-tour.spec.ts, which step through the three looks: 63 of 63 here (WP 13.29's ledger row has each).

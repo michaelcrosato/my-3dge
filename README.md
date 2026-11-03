@@ -49,7 +49,7 @@ that runs, is measured and is proved. The game that will run on the engine lives
 ## The Playground
 
 The tech demo (Phase 13, [`docs/PLAYGROUND.md`](docs/PLAYGROUND.md)): a house on a block where the player moves as in
-Apex Legends, in five cameras and two looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
+Apex Legends, in five cameras and three looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
 [`playground.html`](playground.html) (below), or run `npm run dev` and open http://127.0.0.1:5173/labs/playground/; `?replay=playground-tour&playground.attract=on` plays
 the tour through every feature. [`labs/playground/README.md`](labs/playground/README.md) says how it plays and what
 each scene shows.

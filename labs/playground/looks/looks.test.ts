@@ -1,9 +1,13 @@
 /**
- * @file Unit tests for the playground's looks (labs/playground/looks/cel.ts, pixel.ts, pixelPerspective.ts): each
- * parses with every filter scoped, posterizes with 0 or 8 and more levels (the pixel looks with 24, as pixel art
- * wants), lights the playground with daylight in the toon style, and `node x set post.look <id>` switches to it; the
- * cel look's ramp, ink, shells and sky gradient (WP 13.24); the pixel look's art block from the lines, its snap and
- * glide, its dithered ramps, and its variant for the perspective cameras, unsnapped, sharing its style and sky.
+ * @file Unit tests for the playground's looks (labs/playground/looks/clean.ts, cel.ts, pixel.ts and
+ * pixelPerspective.ts): the clean look, the default (ADR-0025 amendment 46), parses, switches with `node x set
+ * post.look`, lights the playground with daylight in the scene's own style under the hour's dome, and smooths its edges
+ * with nothing else on; the toon looks each parse with every filter scoped, posterize with 0 or 8 and more levels (the
+ * pixel looks with 24, as pixel art wants), light the playground with daylight in the toon style, and `node x set
+ * post.look <id>` switches to each; the cel look's ramp, ink, shells and sky gradient (WP 13.24); the pixel look's art
+ * block from the lines, its snap and glide, its dithered ramps, and its variant for the perspective cameras, unsnapped,
+ * sharing its style and sky.
+ * @see labs/playground/looks/clean.ts
  * @see labs/playground/looks/cel.ts
  * @see labs/playground/looks/pixel.ts
  * @see labs/playground/looks/pixelPerspective.ts
@@ -13,10 +17,11 @@ import { registry } from '../../../engine/core/registry';
 import '../../../engine/gfx/sky';
 import { checkSetting } from '../../../tools/cmd/set';
 import { look as cel } from './cel';
+import { look as clean } from './clean';
 import { look as pixel } from './pixel';
 import { look as variant } from './pixelPerspective';
 
-describe.each([cel, pixel, variant])('$id', (look) => {
+describe.each([clean, cel, pixel, variant])('$id', (look) => {
   it('parses: its description, and every filter with a scope', () => {
     expect(look.description).not.toBe('');
     for (const [name, filter] of Object.entries(look.filters)) expect(typeof filter.scope, name).toBe('string');
@@ -28,8 +33,8 @@ describe.each([cel, pixel, variant])('$id', (look) => {
     }
   });
 
-  it('lights the playground with daylight, a registered sky, in the toon style', () => {
-    expect([look.sky, look.style]).toEqual(['sky:daylight', 'toon']);
+  it('lights the playground with daylight, a registered sky', () => {
+    expect(look.sky).toBe('sky:daylight');
     expect(registry.has('sky', look.sky)).toBe(true);
   });
 
@@ -37,6 +42,24 @@ describe.each([cel, pixel, variant])('$id', (look) => {
     const change = checkSetting('post.look', look.id);
     expect(change.value).toBe(look.id);
     expect(registry.get('look', String(change.value))).toBe(look);
+  });
+});
+
+describe.each([cel, pixel, variant])('$id', (look) => {
+  it('draws in the toon style', () => {
+    expect(look.style).toBe('toon');
+  });
+});
+
+describe('look:playground-clean', () => {
+  it("draws in the scene's own style, its dome as the hour draws it, with no variant", () => {
+    expect([clean.style, clean.skyGradient, clean.perspective]).toEqual(['', 0, '']);
+  });
+
+  it('smooths its edges over the whole picture and draws nothing else: no bands, ink, shells, pixels or grade', () => {
+    const on = Object.entries(clean.filters).filter(([, filter]) => filter.scope !== 'off');
+    expect(on.map(([name, filter]) => [name, filter.scope])).toEqual([['aa', 'all']]);
+    expect(clean.shells.width).toBe(0);
   });
 });
 

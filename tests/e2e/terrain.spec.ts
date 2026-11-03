@@ -1,13 +1,13 @@
 /**
  * @file T2 for terrain (PLAN.md WP 10.5; engine/gfx/terrain.ts), on the playground's hill (`?scene=hill`,
  * labs/playground/scenes/hill.ts), by `window.__engine`:
- * 1. the hill opens on WebGPU and its frames build 0 pipelines after the warm-up through the five cameras and both
- *    looks while the player runs up the slope; then the ID pass sees the chunk under the player at its finest level in
+ * 1. the hill opens on WebGPU and its frames build 0 pipelines after the warm-up through the five cameras and every
+ *    look while the player runs up the slope; then the ID pass sees the chunk under the player at its finest level in
  *    every one of those views;
  * 2. running down from the hilltop switches the far chunks' levels with 0 pipelines built; from the top looking west,
  *    the near chunk draws at its finest level and the far ones coarser;
  * 3. the hill's replay (tests/replays/terrain-hill.replay.json) keeps its goldens in the page while it renders through
- *    every camera mode and both looks: the terrain's drawing never changes play.
+ *    every camera mode and every look: the terrain's drawing never changes play.
  *
  * Invariants: the sim is stepped with `__engine.step` and frames drawn with `__engine.render`; the page is read through
  * `__engine` only. Pipelines are counted before any ID shot, as tests/e2e/level-meshes.spec.ts counts them: the ID
@@ -54,7 +54,7 @@ async function open(page: Page, harness: { ready(o: { timeout: number }): Promis
 test.describe('terrain, on the playground’s hill', () => {
   test.setTimeout(300_000);
 
-  test('builds 0 pipelines after the warm-up through every camera and both looks, and sees the chunk under the player at its finest', async ({
+  test('builds 0 pipelines after the warm-up through every camera and every look, and sees the chunk under the player at its finest', async ({
     page,
     harness,
   }) => {
@@ -103,7 +103,7 @@ test.describe('terrain, on the playground’s hill', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('keeps the hill replay’s goldens while it renders through every camera mode and both looks', async ({
+  test('keeps the hill replay’s goldens while it renders through every camera mode and every look', async ({
     page,
     harness,
   }) => {
@@ -112,6 +112,7 @@ test.describe('terrain, on the playground’s hill', () => {
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [i * 150, { cam: mode.code }]),
       [400, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],
+      [700, { set: { 'post.look': PLAYGROUND_LOOKS[2] } }],
     ];
     const run = await call<{ hashes: Record<string, string> }>(page, 'replay', HILL, { views });
     const goldens = (JSON.parse(HILL) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];

@@ -1,9 +1,9 @@
 /**
- * @file The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its two looks,
- * in the order the keys step through them: the maps' view actions (labs/playground/controls.ts, WP 13.9) cycle the
- * cameras (T, `nextCamera`), swap the shooter's shoulder (X, `swapShoulder`) and turn isometric by 90° (Q and E,
- * `turnView`), and P (`LOOK_KEY`) switches the looks, live, on the page (labs/playground/main.ts), each camera switch
- * blended; the menu (labs/playground/menu.ts) links each.
+ * @file The playground's views (docs/PLAYGROUND.md §4, §5; PLAN.md WP 13.1): its five camera modes and its three
+ * looks, in the order the keys step through them: the maps' view actions (labs/playground/controls.ts, WP 13.9) cycle
+ * the cameras (T, `nextCamera`), swap the shooter's shoulder (X, `swapShoulder`) and turn isometric by 90° (Q and E,
+ * `turnView`), and P (`LOOK_KEY`) steps through the looks, live, on the page (labs/playground/main.ts), each camera
+ * switch blended; the menu (labs/playground/menu.ts) links each.
  *
  * Each mode is its rig (WP 13.8, engine/gfx/cameras/): the shooter over the shoulder (`cam3=shoulder`), first person
  * at the eye (`cam3=first`), the platformer's orbit and follow (`cam3=follow`), isometric (`cam=iso`) and top-down
@@ -19,7 +19,7 @@
  * @example
  * nextCamera('cam3=shoulder,0,0,3.8'); // 'cam3=first': a code with its numbers opens its mode
  * swapShoulder('cam3=shoulder,0,0,3.8'); // 'cam3=shoulder,0,0,3.8,-1': over the left shoulder
- * nextLook('look:playground-cel'); // 'look:playground-pixel'
+ * nextLook('look:playground-clean'); // 'look:playground-cel'
  * @see labs/playground/views.test.ts
  */
 
@@ -39,8 +39,15 @@ export const PLAYGROUND_CAMERAS: readonly CameraMode[] = [
   { name: 'top-down', code: 'cam=overhead', label: 'Top-down "2D": straight down, north up, whole-number zooms' },
 ];
 
-/** The two looks, in the order P switches them; the cel look is the page's default. */
-export const PLAYGROUND_LOOKS: readonly string[] = ['look:playground-cel', 'look:playground-pixel'];
+/**
+ * The three looks, in the order P steps through them; the clean look is the page's default (the owner's direction of
+ * 2026-11-03, ADR-0025 amendment 46), the cel and pixel looks the styled ones (WP 13.24).
+ */
+export const PLAYGROUND_LOOKS: readonly string[] = [
+  'look:playground-clean',
+  'look:playground-cel',
+  'look:playground-pixel',
+];
 
 /** The key that switches the looks: P, which no action map binds. */
 export const LOOK_KEY = 'KeyP';

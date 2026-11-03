@@ -10,19 +10,19 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   `x mcp` (7.6), the tour with its attract mode and a film per look (13.26). What follows waits: upgrades U-2 to U-7
   from their dates (`node x deps --qualify`), on-demand WPs for their triggers (§9.1), Phase H for a game to ship.
 - The owner's, all in the playground's Owner checks (title screen; WP 13.28), each in plain words with Go there: the
-  playtest (docs/PLAYGROUND.md §9.3), the looks to judge (the accent weak from isometric, the cel look's dark night
-  there, its near-black brick), the sound and a pad, and ESC-0002 to ESC-0006's calls (the Quaternius GLBs, model
-  access for the live evals, the crowd's CPU render, the mutants outside the sample). Their answers come back pasted
-  from Copy my answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
+  playtest (docs/PLAYGROUND.md §9.3), the looks to judge (the clean default, the accent weak from isometric, the cel
+  look's dark night there, its near-black brick), the sound and a pad, and ESC-0002 to ESC-0006's calls (the Quaternius
+  GLBs, model access for the live evals, the crowd's CPU render, the mutants outside the sample), answered from Copy my
+  answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
-## Where things stand (2026-11-02)
+## Where things stand (2026-11-03)
 
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
-  guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain, cel and pixel looks); Watch the tour plays it all.
-  Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped as playground.html (no Vercel).
-- Tidied after G13 (ADR-0025 amendment 45). Faster starts (ADR-0008 amendment 11): the playground warms up only what
-  it draws (gym 64.7 → 23.7 s here); the governor keeps each scene's tier (Owner: a move still re-keys lit pipelines).
+  guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel looks, clean the default since
+  WP 13.29); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
+  as playground.html. Tidied after G13 (amendment 45). Faster starts (ADR-0008 amendments 11, 12): warm-ups of only what
+  is drawn (gym 64.7 → 23.7 s); the governor keeps each scene's tier (Owner: a move still re-keys lit pipelines).
 
 ## What waits, and the open issues
 
@@ -33,8 +33,8 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   the pixel look's glide, a desktop MCP client.
 - Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
 - Near the size cap (390–397 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
-  tools/cmd/replay.ts, gfx/post/chain.ts, app/engine.ts; four tests at 399–400.
+  tools/cmd/replay.ts, app/engine.ts; four tests at 399–400.
 - The quick gate is over its 5 min (CI_BUDGET), its long pole the playground's soak and site tests; under load
   `npm test` can fail on RPC timeouts; audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba).
 - The tour's page goldens come from its spec (amendment 41). Random play lost the shooter's chest in 4–5% of frames
-  (before WP 13.27).
+  (before WP 13.27). A shot's ID pass builds a pipeline again after each lambert–toon style switch (frames never do).

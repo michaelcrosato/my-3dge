@@ -1,18 +1,18 @@
 /**
  * @file T2 for the playground's page (labs/playground/main.ts, PLAN.md WP 13.1), by DOM queries and `window.__engine`:
- * 1. the gym opens on WebGPU in the shooter camera and the cel look, its HUD names them and the keys, and the signs of
- *    the features near the player show while the far ones hide;
- * 2. T cycles the five camera modes and P switches the two looks, live, while the player runs, building 0 pipelines
- *    after the warm-up: in the gym, on the hill, and on the site from each of its areas' spawns (WP 13.18: the site's
- *    scenes are one block, each placing the player at an area's spawn, so one page placing it at each stands for
- *    them all);
- * 3. the gym's replay keeps its goldens in the page while it renders through every camera mode and both looks;
+ * 1. the gym opens on WebGPU in the shooter camera and the clean look, its HUD names them and the keys, and the signs
+ *    of the features near the player show while the far ones hide;
+ * 2. T cycles the five camera modes and P steps through the three looks, live, while the player runs, building 0
+ *    pipelines after the warm-up: in the gym, on the hill, and on the site from each of its areas' spawns (WP 13.18:
+ *    the site's scenes are one block, each placing the player at an area's spawn, so one page placing it at each
+ *    stands for them all);
+ * 3. the gym's replay keeps its goldens in the page while it renders through every camera mode and every look;
  * 4. the player, `body:player` on `build:adult` (WP 13.2), is what the ID pass sees from every camera but first person
- *    in both looks, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
+ *    in every look, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
  *    to 15 px tall), the sky's dome and backdrop left out as background, and the MRT reads the sky as the background
  *    too (the parts view is black where the ID pass finds nothing), so no outline inks the dome's edges;
  * 5. the site's landing page (`index.html`, ADR-0021 amendment 3) opens the page with its query and hash; the menu for
- *    humans (`?playground.menu=on`) lists every scene, the five cameras, the two looks, every replay and the other
+ *    humans (`?playground.menu=on`) lists every scene, the five cameras, the three looks, every replay and the other
  *    pages (the labs index and the Stress Box);
  * 6. the keyboard reaches the player through the playground's action map (WP 13.3): W runs and Shift sprints, the
  *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
@@ -22,7 +22,7 @@
  * 8. the HUD names what the player would use with the key that uses it (WP 13.16): nothing on the front yard's path, 14 m
  *    from the house's front door (WP 13.18), `E: Open` on the porch before it, `E: Close` once it is used;
  * 9. the range's replay (WP 13.20: the pistol and the rifle drawn and fired, the targets down and up again) keeps its
- *    goldens while it renders through every camera mode and both looks, the guns drawn in the hands and in first
+ *    goldens while it renders through every camera mode and every look, the guns drawn in the hands and in first
  *    person's arms, the tracers, flashes, impacts and holes, with 0 pipelines after the warm-up; the HUD counts it.
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
@@ -124,14 +124,16 @@ async function open(page: Page, harness: { ready(o: { timeout: number }): Promis
 }
 
 /**
- * Presses T through the five camera modes in the look on screen, the other and the first again, P between them, the
- * player running a few steps in each.
+ * Presses T through the five camera modes in the look on screen, each look after it in P's order and the first again,
+ * P between them, the player running a few steps in each.
  */
 async function throughEveryView(page: Page): Promise<void> {
   const name = (id: string) => id.replace('look:playground-', '');
-  const first = (await hud(page)).mode.includes(`Look: ${name(PLAYGROUND_LOOKS[0])}`);
-  const [a, b] = first ? PLAYGROUND_LOOKS : [PLAYGROUND_LOOKS[1], PLAYGROUND_LOOKS[0]];
-  for (const look of [a, b, a]) {
+  const shown = (await hud(page)).mode;
+  const at = PLAYGROUND_LOOKS.findIndex((look) => shown.endsWith(`Look: ${name(look)}`));
+  expect(at, shown).toBeGreaterThanOrEqual(0);
+  const looks = [...PLAYGROUND_LOOKS.slice(at), ...PLAYGROUND_LOOKS.slice(0, at)];
+  for (const look of [...looks, looks[0]]) {
     expect((await hud(page)).mode).toContain(`Look: ${name(look)}`);
     for (const mode of [...PLAYGROUND_CAMERAS.slice(1), PLAYGROUND_CAMERAS[0]]) {
       await page.keyboard.press('KeyT');
@@ -155,7 +157,7 @@ async function expectWarm(page: Page, harness: { advice(): unknown[] }): Promise
 test.describe('the playground', () => {
   test.setTimeout(300_000);
 
-  test('opens the gym in the shooter camera and the cel look, with the HUD and the signs near the player', async ({
+  test('opens the gym in the shooter camera and the clean look, with the HUD and the signs near the player', async ({
     page,
     harness,
   }) => {
@@ -163,7 +165,7 @@ test.describe('the playground', () => {
     await harness.assertWebGPU();
     expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=shoulder(,|$)/);
     expect(await hud(page)).toMatchObject({
-      mode: 'Camera: shooter · Look: cel',
+      mode: 'Camera: shooter · Look: clean',
       keys: expect.stringContaining('T: camera · X: shoulder · P: look'),
     });
     expect(await signShown(page, 'mantle-1')).toBe(true); // 12 m south of the spawn, in front of the camera
@@ -171,7 +173,7 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('T cycles the five cameras and P the two looks while the player runs, building 0 pipelines after the warm-up', async ({
+  test('T cycles the five cameras and P the three looks while the player runs, building 0 pipelines after the warm-up', async ({
     page,
     harness,
   }) => {
@@ -194,7 +196,7 @@ test.describe('the playground', () => {
     await expectWarm(page, harness);
   });
 
-  test('keeps the gym replay’s goldens while it renders through every camera mode and both looks', async ({
+  test('keeps the gym replay’s goldens while it renders through every camera mode and every look', async ({
     page,
     harness,
   }) => {
@@ -203,6 +205,7 @@ test.describe('the playground', () => {
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [i * 100, { cam: mode.code }]),
       [250, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],
+      [450, { set: { 'post.look': PLAYGROUND_LOOKS[2] } }],
     ];
     const run = await call<{ hashes: Record<string, string> }>(page, 'replay', GYM, { views });
     const goldens = (JSON.parse(GYM) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
@@ -212,7 +215,7 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('plays the range in every camera and both looks: its goldens kept, the HUD counting, 0 pipelines after the warm-up', async ({
+  test('plays the range in every camera and every look: its goldens kept, the HUD counting, 0 pipelines after the warm-up', async ({
     page,
     harness,
   }) => {
@@ -221,6 +224,7 @@ test.describe('the playground', () => {
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [20 + i * 160, { cam: mode.code }]), // the shooter first
       [100, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],
+      [260, { set: { 'post.look': PLAYGROUND_LOOKS[2] } }],
       [420, { set: { 'post.look': PLAYGROUND_LOOKS[0] } }],
     ];
     views.sort(([a], [b]) => a - b);
@@ -299,7 +303,7 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('shows the menu for humans when asked: every scene, five cameras, two looks, every replay and the other pages', async ({
+  test('shows the menu for humans when asked: every scene, five cameras, three looks, every replay and the other pages', async ({
     page,
     harness,
   }) => {
@@ -316,7 +320,7 @@ test.describe('the playground', () => {
     );
     expect(await links('scenes')).toEqual(['gym', ...scenes.filter((name) => name !== 'gym').sort()]);
     expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
-    expect(await links('looks')).toEqual(['cel', 'pixel']);
+    expect(await links('looks')).toEqual(['clean', 'cel', 'pixel']);
     expect(await links('replays')).toEqual(replays.map((file) => file.replace(/^playground-|\.replay\.json$/g, '')).sort()); // prettier-ignore
     expect(await links('pages')).toEqual(['all pages', 'stress box']);
     const hrefs = await page.locator('#playground-menu [data-menu=pages] a').evaluateAll((all) => all.map((a) => new URL((a as HTMLAnchorElement).href).pathname)); // prettier-ignore

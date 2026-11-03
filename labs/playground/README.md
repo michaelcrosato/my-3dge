@@ -6,8 +6,8 @@ in the engine is shown. It grows in four stages, each ending at a gate: the gym 
 (G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
 north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
 stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
-redeploy balloon and launchers, five camera modes and two looks, cel-shaded and pixel art; the hill, the block's
-ground as terrain (WP 10.5); and the block (WP 13.18): the house of four storeys with its garage, the yards, the street,
+redeploy balloon and launchers, five camera modes and three looks, clean, cel-shaded and pixel art; the hill, the
+block's ground as terrain (WP 10.5); and the block (WP 13.18): the house of four storeys with its garage, the yards, the street,
 the gym in its place, the hill, the range and the ring on one site, furnished and lit, its doors, windows, switches and
 chairs to use (WP 13.16), its ring's dummies to strike (WP 13.19) and the pistol and the rifle the player carries, with
 the range's pop-up and moving targets to shoot (WP 13.20). Every claim below
@@ -49,7 +49,7 @@ pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run 
 `?replay=playground-melee` the shed's door kicked in and the ring's dummies punched and kicked, `?replay=playground-range`
 the range's targets shot down with the pistol and the rifle), then hands you the controls.
 `labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`): those runs in
-turn on the block, from the street's dog to the range, with the view stepping through the five cameras and both looks;
+turn on the block, from the street's dog to the range, with the view stepping through the five cameras and the looks;
 the title screen's Watch the tour opens it, and an idle title screen does after a minute.
 
 ## The demo index
@@ -86,7 +86,7 @@ and a sprint of 6.60 m/s with a weapon out, 1.15 times faster empty-handed, as t
 `body:player` (`labs/playground/bodies/player.ts`) on `build:adult`: 1.80 m standing, an adult's proportions, its
 gait planting each sole at full stride. The body is a teal jacket with dark upper sleeves and collar, charcoal cargo
 trousers with knee pads and a belt, boots, gloves, short hair, a face and an olive pack, every garment in two tones, so
-both looks read it, and one orange accent (the yoke and its shoulder caps, the pack's top flap, the cuffs) that marks
+every look reads it, and one orange accent (the yoke and its shoulder caps, the pack's top flap, the cuffs) that marks
 the player from every camera, top-down too. Its slots are what the neighbours will vary.
 
 ## Cameras and looks
@@ -104,12 +104,13 @@ T steps through them in this order, each switch blended over 0.35 s; `labs/playg
 and never stand in a wall, and what stands between them and the player fades (WP 13.8, docs/PLAYGROUND.md §4); the field of view
 is the view setting `cam.fov` (Apex's degrees, 90).
 
-The looks (`labs/playground/looks/`, WP 13.24): `look:playground-cel` (the default: each material a ramp of three bands
-and a rim, its shadows shifted in hue, ink and outline shells round the props and bodies scaled to the picture, a
-gradient sky) and `look:playground-pixel` (a picture of 240 to 360 lines, 1-pixel ink, each material a ramp of four
-shades dithered on the world, isometric and top-down snapped to the pixels and gliding, so a pan never shimmers; the
-perspective cameras draw its variant, `look:playground-pixel-perspective`). P switches them;
-`?post.look=look:playground-pixel` opens one. Looks and cameras are view settings: they never change play or a hash.
+The looks (`labs/playground/looks/`): `look:playground-clean` (the default since the owner's direction of 2026-11-03,
+ADR-0025 amendment 46: the scene's own lit materials under the hour's sky, edges smoothed, nothing else),
+`look:playground-cel` (WP 13.24: each material a ramp of three bands and a rim, its shadows shifted in hue, ink and
+outline shells round the props and bodies scaled to the picture, a gradient sky) and `look:playground-pixel` (WP 13.24:
+a picture of 240 to 360 lines, 1-pixel ink, each material a ramp of four shades dithered on the world, isometric and
+top-down snapped to the pixels and gliding, so a pan never shimmers; the perspective cameras draw its variant,
+`look:playground-pixel-perspective`). P steps through them in that order; `?post.look=look:playground-pixel` opens one. Looks and cameras are view settings: they never change play or a hash.
 
 ## Controls
 
@@ -128,7 +129,7 @@ perspective cameras draw its variant, `look:playground-pixel-perspective`). P sw
 | Camera mode | T | view button |
 | Swap the shoulder (shooter) | X | d-pad left |
 | Turn the view (isometric) | Q, E | d-pad right |
-| Cel or pixel look | P | |
+| The look: clean, cel or pixel | P | |
 | Zoom | the wheel | |
 | The feel panel | F | |
 | The menu | M | |
@@ -164,7 +165,7 @@ gets no menu, so no test's screenshot holds it; `?playground.menu=on` shows it t
 | `input.sprint` | The sprint button: `toggle` (Apex's: a press keeps the sprint while the player moves on) or `hold`. Changes play: recorded in replays. |
 | `input.crouch` | The crouch button: `hold` or `toggle` (a press crouches until pressed again). Changes play: recorded in replays. |
 | `input.sensitivity` | Mouse look in Apex's units (5: 0.11° a count); `input.adsSensitivity`, `input.invert` and the stick's `input.stickSensitivity`, `input.stickAdsSensitivity` and `input.stickInvert` beside it. View settings. |
-| `post.look` | The look drawn (`look:playground-cel` by default). A view setting: never in the hash. |
+| `post.look` | The look drawn (`look:playground-clean` by default). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto`, `high`, `medium` or `low`. A view setting. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
 

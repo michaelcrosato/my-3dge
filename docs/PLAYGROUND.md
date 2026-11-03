@@ -1,7 +1,7 @@
 # The Playground
 
 The engine's second integration target (PLAN.md Phase 13; the owner's direction of 2026-10-17, ADR-0025):
-`labs/playground/`, a house on a block where the player moves as in Apex Legends, in five cameras and two looks. This
+`labs/playground/`, a house on a block where the player moves as in Apex Legends, in five cameras and three looks. This
 page is its design: the site, the move set with its reference values, the cameras, the looks, what a player can do
 there, and how agents and the owner know it feels and looks right. The work packages that build it are PLAN.md
 Phase 13 and the on-demand WPs it fires; their **Done when** lists take their numbers from here.
@@ -17,9 +17,9 @@ the command when another server holds 5173.
 - **The character first.** Movement, cameras and animation decide whether a game feels good; if the core character
   does not feel and look right, nothing built on it matters. Stage 1 (G10) is the character alone, in a gym of
   calibrated features, before the house exists.
-- **What we compete on.** Gameplay, features and content, where agents excel; not graphics. Two looks done properly,
-  cel-shaded and pixel art, and the simple asset system (procedural first, then text: doctrine principle 4) are the
-  advantage: an agent writes a chair, a room or a move as data.
+- **What we compete on.** Gameplay, features and content, where agents excel; not graphics. Looks done properly, a
+  clean default, cel-shaded and pixel art, and the simple asset system (procedural first, then text: doctrine
+  principle 4) are the advantage: an agent writes a chair, a room or a move as data.
 - **The long aim.** The engine grows to play like Red Dead Redemption 2, GTA V, Apex Legends and Cyberpunk 2077
   (their gameplay, not their graphics; §11). The playground is the first slice on that road.
 
@@ -272,10 +272,14 @@ amendment 6); a hand stays within 3 cm of its contact; no point pops (the anim Q
 against its neighbours, engine/anim/motionMetrics.ts); the muzzle
 points within 2° of the aim.
 
-### 5.2 The two looks
+### 5.2 The three looks
 
-Both are tuned for each of the five cameras, by day and by night (WP 13.24).
+Each draws in each of the five cameras, by day and by night, the cel and pixel looks tuned for each (WP 13.24); P
+steps through them, the clean look first.
 
+- **Clean, the default** (the owner's direction of 2026-11-03, ADR-0025 amendment 46): the picture unstyled, the
+  scene's own lit materials under the hour's sky (its sun or moon, its ambient, the streetlights after dusk), the
+  sky's dome as the hour draws it, edges smoothed (the engine's FXAA); no bands, ink, outline shells, pixels or grade.
 - **Cel-shaded:** a light ramp per material (three bands and a rim), shadows shifted in hue rather than darkened, ink
   from depth and normals at a width scaled to the resolution, the outline shell on props and bodies (skinned bodies
   included), a sky gradient. Ink never comes from texture brightness.
@@ -417,7 +421,7 @@ kept across sessions by the store; the HUD for each camera (crosshair, prompts, 
 The moves and the rides have replays with golden hashes in Node and in the rendering page
 (tests/replays/playground-*.replay.json), as each interaction will from WP 13.16; a course is judged by its numbers and
 reports its final hash, which no golden holds. The
-tour (WP 13.26) is one replay through every feature in every camera and both looks: the attract mode, a film per look,
+tour (WP 13.26) is one replay through every feature in every camera and every look: the attract mode, a film per look,
 and a check in T2.
 
 ### 9.3 The owner's playtest
@@ -437,7 +441,7 @@ in plain words what to try and judge, opens the place it is judged in, and keeps
    clips a wall.
 8. In the platformer camera: run and jump around the yard; does the recentring help or fight?
 9. In isometric and top-down: walk every storey; the right floors cut away; aim with the pointer.
-10. Everything in both looks, at noon and at night.
+10. Everything in each look, clean, cel and pixel, at noon and at night.
 11. A downpour (`?playground.rain=1`) on the street, and the dust indoors (`playground.dust=1`): does the frame rate
     hold? `__engine.stats().gpuMs` should rise by under 1 ms (`GPU_RING.budgetMs`, WP 11.3).
 12. The labs index at /labs/index/ (WP 10.8): the Animation Lab's row, scrubbing a move, the bones; the Library

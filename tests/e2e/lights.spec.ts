@@ -10,11 +10,11 @@
  * - Switching presets while a replay steps, frames drawn as it goes and the flicker drawn from the world's visual
  *   stream, never changes the hash: the kernel replay gives its goldens.
  * - The playground's block by the hour (WP 13.23: the scene's clock, engine/sim/lights.ts, and the sky it shows,
- *   engine/gfx/daylight.ts), from the street at noon, dusk and night in both its looks: neither blank, dark nor blown
- *   out, night darker than dusk and dusk than noon, building nothing as the hours pass (a shot in each look first, to
- *   build the shot's own passes); the street's four lamps shine in the light pool at dusk and night and not at noon,
- *   the moon casts at night through its cascades and the nearest lamp casts too; and its group switched off by hand
- *   (the scene's dev action `lights`) puts them out.
+ *   engine/gfx/daylight.ts), from the street at noon, dusk and night in each of its looks: neither blank, dark nor
+ *   blown out, night darker than dusk and dusk than noon, building nothing as the hours pass (a shot in each look
+ *   first, to build the shot's own passes); the street's four lamps shine in the light pool at dusk and night and not
+ *   at noon, the moon casts at night through its cascades and the nearest lamp casts too; and its group switched off
+ *   by hand (the scene's dev action `lights`) puts them out.
  *
  * Invariants: the level's and replay's text are read in Node and passed to the lights page, which fetches nothing;
  * goldens come from the replay file, never from this run.
@@ -28,6 +28,7 @@ import { judgeLook, LOOK_LIMITS, lookMetrics } from '../../engine/gfx/lookMetric
 import { defineSkies } from '../../engine/gfx/sky';
 import type { Replay } from '../../engine/sim/replay';
 import { compileLevel } from '../../engine/world/level/compile';
+import { PLAYGROUND_LOOKS } from '../../labs/playground/views';
 import type { HashRunOptions, LookOptions, Looked } from '../pages/lights';
 import { expect, test, type Harness } from './fixtures';
 
@@ -183,10 +184,9 @@ test('switching presets while a replay steps never changes the hash', async ({ p
   expect(hashes).toEqual((JSON.parse(REPLAY) as Replay).hashes['linux-x64']);
 });
 
-/** The playground's street (WP 13.23), its four streetlights' heads (where their lamps shine), its looks and hours. */
+/** The playground's street (WP 13.23), its four streetlights' heads (where their lamps shine), and its hours. */
 const STREET = 'labs/playground/?scene=site-street&cam=iso';
 const STREET_LAMPS = [45, 59, 73, 87].map((x) => [x, 4.35, 85.3] as const);
-const PLAYGROUND_LOOKS = ['look:playground-cel', 'look:playground-pixel'];
 const HOURS = { noon: 12, dusk: 18.75, night: 22 } as const;
 
 /** The pool's lights the page's dump shows shining at a streetlight's head, and the dump's casting lines. */
@@ -199,7 +199,7 @@ async function streetLamps(page: Page): Promise<{ shining: number; casting: stri
   return { shining, casting: lines.filter((line) => / shadow/.test(line)).map((line) => line.trim().split(' ')[0]) };
 }
 
-test("the block by the hour: noon, dusk and night in both looks, the street's lamps lit after dusk", async ({
+test("the block by the hour: noon, dusk and night in each look, the street's lamps lit after dusk", async ({
   page,
   harness,
 }) => {

@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for the playground's views (labs/playground/views.ts): every mode's code is a camera code the page's
- * cameras read, the five modes are the five of docs/PLAYGROUND.md §4, every look is registered, P is bound by no action
- * map and kept from the page's own (the camera keys are their view actions, labs/playground/controls.test.ts), T and P
- * step round in order from any camera code or look id, X swaps the shooter's shoulder and Q and E turn isometric.
+ * cameras read, the five modes are the five of docs/PLAYGROUND.md §4, the three looks those of §5.2, the clean one first
+ * and every one registered, P is bound by no action map and kept from the page's own (the camera keys are their view
+ * actions, labs/playground/controls.test.ts), T and P step round in order from any camera code or look id, X swaps the
+ * shooter's shoulder and Q and E turn isometric.
  * @see labs/playground/views.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -10,12 +11,13 @@ import { getActionMap, listActionMaps, RESERVED_CODES, SYSTEM_ACTIONS } from '..
 import { PLAYGROUND_MAPS } from './controls';
 import { registry } from '../../engine/core/registry';
 import { readCameraCode } from '../../engine/gfx/cameras/place';
+import './looks/clean';
 import './looks/cel';
 import './looks/pixel';
 import { LOOK_KEY, PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views'; // prettier-ignore
 
 describe('the playground views', () => {
-  it('opens each of the five modes with a camera code, and every look is registered', () => {
+  it('opens each of the five modes with a camera code, and the three looks, the clean one first, are registered', () => {
     expect(PLAYGROUND_CAMERAS.map((mode) => mode.name)).toEqual([
       'shooter',
       'first',
@@ -24,6 +26,7 @@ describe('the playground views', () => {
       'top-down',
     ]);
     for (const mode of PLAYGROUND_CAMERAS) expect(() => readCameraCode(mode.code), mode.code).not.toThrow();
+    expect(PLAYGROUND_LOOKS).toEqual(['look:playground-clean', 'look:playground-cel', 'look:playground-pixel']);
     for (const id of PLAYGROUND_LOOKS) expect(registry.has('look', id), id).toBe(true);
   });
 
@@ -58,8 +61,7 @@ describe('the playground views', () => {
     expect(cameraMode('cam3=shoulder,0,0,3.8')?.name).toBe('shooter');
     expect(nextCamera('cam3=first,90,-10,70')).toBe('cam3=follow');
     expect(nextCamera('cam3=fly')).toBe(codes[0]);
-    expect(nextLook(PLAYGROUND_LOOKS[0])).toBe(PLAYGROUND_LOOKS[1]);
-    expect(nextLook(PLAYGROUND_LOOKS[1])).toBe(PLAYGROUND_LOOKS[0]);
+    expect(PLAYGROUND_LOOKS.map(nextLook)).toEqual([...PLAYGROUND_LOOKS.slice(1), PLAYGROUND_LOOKS[0]]);
     expect(nextLook('look:clean')).toBe(PLAYGROUND_LOOKS[0]);
   });
 });

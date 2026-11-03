@@ -130,7 +130,7 @@ export function controlRows(layout?: ReadonlyMap<string, string>, id: string = P
     ...actions,
     look,
     ...views.map(([action, words]) => row(words, action)),
-    ['Cel or pixel look', label(LOOK_KEY), ''],
+    ['The look: clean, cel or pixel', label(LOOK_KEY), ''],
     ['Zoom', 'Wheel', ''],
     ['The feel panel: the numbers, live', label(FEEL_KEY), ''],
     ['This menu', label(MENU_KEY), ''],
