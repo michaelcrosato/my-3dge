@@ -103,3 +103,35 @@ for a shell, npm and the engine's checks.
 
 Enforced by tools/lib/lean.ts and its test, tools/cmd/docs.ts (`x docs --write` and `--check`), tests/e2e/lean.spec.ts,
 and tools/game/files.mjs (lean/ is the engine repository's own: a game made by new-game.mjs does not get it).
+
+## Amendment 2 (2026-11-03, the owner's goal; the calls are mine): one link, and the looks in the lean file
+
+The owner: "make sure the repo is setup properly if I need to hand off the game engine to another agent, the easiest
+way for me is to provide a url to the github repo or a subdirectory". Checked first on main (1eba983): jsDelivr's
+copies of everything lean/game.html loads were byte for byte the repository's and node_modules' (lean/my3dge.js,
+my3dge.css, three.webgpu.js, three.tsl.js, rapier.mjs), tests/e2e/lean.spec.ts plays the page from those bytes, and
+`node x engine --test` made a game that passed its whole gate (install, check, test, sim, replay, shot, qa, help).
+What was missing:
+
+- **The looks.** lean/README.md named the post-processing exports and nothing more: an agent given only that file could
+  not find a look's id, a filter's fields or where a scope applies, though the owner's north star for WP 13.31 is
+  agents improving how a scene looks. It now has "Make it look different" (picking a look, `post.combine`,
+  `post.filters`, `post.strength`, scopes, `defineLook`, `__engine.look()`) and a generated block, `lean:looks`
+  (tools/lib/docsLooks.ts): every built-in look (30 whole looks with their descriptions, 107 one-filter presets by
+  group) and every filter with its numbers' defaults and ranges, from the registry, so `x docs --check` fails while
+  it is stale. tests/e2e/lean.spec.ts's second test opens the starter with a look, a layer and a filter's change in
+  its URL and reads them back through `__engine.look()`. docs/GAME-GUIDE.md's looks row names the same settings.
+- **A budget for the lean file**: it is read whole by every lean agent, and with the catalogue it weighs 67.5 KB, so
+  `LEAN_README_BUDGET_BYTES` (72,000 bytes, about 18,000 tokens) fails `x docs --check` past it, as the guide's does.
+  The docs cite the budgets instead of sizes measured once (amendment 1's "about 10,000 tokens" had become 14,000).
+- **The link is the raw file**, https://raw.githubusercontent.com/michaelcrosato/my-3dge/main/lean/README.md, not the
+  GitHub page around it (about ten times its size), and the prompt asks for the whole file, downloaded where the agent
+  can: an agent's web tool may summarize a long page, and the game's head has to be copied exactly.
+- **Handing over the engine itself** has its prompt in docs/HANDOFF.md, and GEMINI.md imports AGENTS.md beside
+  CLAUDE.md, so Gemini CLI loads the engine's rules as Claude Code and AGENTS.md readers do (engine-only in
+  tools/game/files.mjs: a game writes its own).
+- **The browser's cache**: jsDelivr serves `@main` with a 7-day browser cache, so lean/README.md says so beside its
+  12-hour refresh; a commit in place of `main` is the sure pin.
+
+Enforced by tools/lib/docsLooks.ts and its test, tools/lib/lean.ts (`LEAN_README_BUDGET_BYTES`) and its test,
+tests/e2e/lean.spec.ts, and tools/game/files.mjs.

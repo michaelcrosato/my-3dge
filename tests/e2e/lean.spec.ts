@@ -1,7 +1,8 @@
 /**
  * @file T2 for the lean package (lean/, tools/lib/lean.ts; ADR-0024 amendment 1): lean/game.html, opened as a file, as
  * a double-click opens it, loads the engine, three.js and Rapier through its import map's jsDelivr URLs, starts on
- * WebGPU, shows the round in its HUD, and ends it when the clock runs out. This spec serves those URLs from lean/ and
+ * WebGPU, shows the round in its HUD, and ends it when the clock runs out; and it takes a look, a look laid on and a
+ * filter's change from its URL, as lean/README.md's "Make it look different" says. This spec serves those URLs from lean/ and
  * node_modules, so it needs no network: the bytes are the ones the CDN serves, since the URLs name the versions
  * package.json pins (tools/lib/lean.test.ts checks that each mapped file is there at that version).
  *
@@ -16,7 +17,12 @@ import { LEAN_URL } from '../../tools/lib/lean';
 import { expect, test } from './fixtures';
 
 /** The page's engine, inside `evaluate`. */
-declare const __engine: { step(n: number): number; seed(n?: number): number; camera: { get(): { code: string } } };
+declare const __engine: {
+  step(n: number): number;
+  seed(n?: number): number;
+  camera: { get(): { code: string } };
+  look(): { look: string; filters: Record<string, Record<string, unknown>> };
+};
 
 /** The repository root: Playwright runs from it. */
 const ROOT = process.cwd();
@@ -70,5 +76,31 @@ test('the lean package: game.html, opened as a file, plays from its CDN URLs', a
   await page.keyboard.press('Enter');
   await harness.tick(1);
   expect(await page.evaluate(() => __engine.seed())).toBe(2);
+  expect(strays).toEqual([]);
+});
+
+test("a lean game takes a look, a layer and a filter's change from its URL, as lean/README.md says", async ({
+  page,
+  harness,
+}) => {
+  test.setTimeout(180_000);
+  const strays: string[] = [];
+  await serveCdn(page, strays);
+  const query = new URLSearchParams({
+    'post.look': 'look:storybook',
+    'post.combine': JSON.stringify([{ look: 'look:vignette/soft', amount: 0.6 }]),
+    'post.filters': JSON.stringify({ grade: { scope: 'characters', saturation: 0 } }),
+  });
+  await page.goto(`${pathToFileURL(join(ROOT, 'lean/game.html')).href}?${query}`);
+  await harness.ready({ timeout: 60_000 });
+  await harness.assertWebGPU();
+  await harness.tick(2);
+  const look = await page.evaluate(() => __engine.look());
+  expect(look.look).toBe('look:storybook');
+  expect(look.filters.watercolor).toMatchObject({ scope: 'all', amount: 1 });
+  expect(look.filters.paper).toMatchObject({ scope: 'all', kind: 'coldpress' });
+  // the layer fades in where the look has no vignette: its preset's numbers at 0.6 of its amount
+  expect(look.filters.vignette).toMatchObject({ scope: 'all', amount: 0.6, strength: 0.35, softness: 0.7 });
+  expect(look.filters.grade).toMatchObject({ scope: 'characters', saturation: 0 });
   expect(strays).toEqual([]);
 });

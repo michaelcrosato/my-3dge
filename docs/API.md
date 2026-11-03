@@ -10135,6 +10135,11 @@ For the agents who maintain the engine.
 - `KindDoc` (interface): One kind declared with `defineKind`.
 - `kindsOf` (function): The kinds declared by the `defineKind(…)` calls in a parsed module.
 
+### [`tools/lib/docsLooks.ts`](../tools/lib/docsLooks.ts)
+
+- `fieldText` (function): A field's default and what it may be, compactly: `0.45 (0–1)`, `8 (1–24 px)`, `'#000000'`, `'kraft' (newsprint|…)`.
+- `looksCatalog` (function): The `lean:looks` block (see the file comment).
+
 ### [`tools/lib/docsPaths.ts`](../tools/lib/docsPaths.ts)
 
 - `checkable` (function): The part of a path to check: the whole path, or the directory above its first placeholder segment.
@@ -10238,10 +10243,11 @@ For the agents who maintain the engine.
 
 - `EXTERNAL` (const): The imports the bundle leaves to the page's import map: three.js and Rapier, by their npm names.
 - `LEAN` (const): The package's folder.
+- `LEAN_README_BUDGET_BYTES` (const): The most lean/README.md may weigh, in bytes (about 18,000 tokens): every lean agent reads it whole, often in a chat, and docs/HANDOFF.md cites the budget.
 - `LEAN_URL` (const): Where pages load the package from: jsDelivr's copy of this repository's main branch.
 - `leanBundle` (function): The engine as one ES module, with its banner: Vite's library mode on engine/index.ts, in memory.
 - `leanFiles` (function): Every file of the package as `x docs --write` leaves it, by repository path.
-- `leanFindings` (function): The package's stale files, as findings; none when this checkout has no lean/ (a game made from the engine).
+- `leanFindings` (function): The package's stale files, and its README over its budget, as findings; none in a game made from the engine.
 - `leanHead` (function): game.html's generated head: the engine's CSS and the import map, indented as the page's head is.
 - `leanImports` (function): The import map a page needs, by specifier: the engine, and three.js and Rapier at the versions package.json pins.
 - `withBlock` (function): `text` with the block between `<!-- lean:<name>:start -->` and its end marker replaced by `body`.

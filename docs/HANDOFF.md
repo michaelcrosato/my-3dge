@@ -8,16 +8,22 @@ decision behind this page is ADR-0024.
 **The prompt, lean (the default).** Give every agent, from any lab, the same lines, with the game changed:
 
 ```text
-Make <the game> with the my-3dge game engine. Read this first:
-https://github.com/michaelcrosato/my-3dge/blob/main/lean/README.md
+Make <the game> with the my-3dge game engine. First read this whole file (plain Markdown; download it if you can):
+https://raw.githubusercontent.com/michaelcrosato/my-3dge/main/lean/README.md
 ```
 
-That is all, for a chat in a browser as much as for a coding agent. lean/README.md is one file of about 10,000 tokens
-(ADR-0024 amendment 1): the model, the rules worth keeping, every public name by area, and game.html, a small game
-that plays. The agent writes the game as one HTML page that loads the engine (lean/my3dge.js) from jsDelivr, as a page
-loads three.js; the page runs when it is opened in a browser with WebGPU. Nothing is installed, built or tested: the
-engine's repository tests the package before every merge, so a game does not have to. An agent that cannot open
-links gets the same file attached (lean/README.md).
+That is all, for a chat in a browser as much as for a coding agent. lean/README.md is one file, under 18,000 tokens by
+its budget (`LEAN_README_BUDGET_BYTES`, tools/lib/lean.ts; ADR-0024 amendments 1 and 2): the model, the rules worth
+keeping, game.html (a small game that plays), every look and filter, and every public name by area. The agent writes
+the game as one HTML page that loads the engine (lean/my3dge.js) from jsDelivr, as a page loads three.js; the page runs
+when it is opened in a browser with WebGPU. Nothing is installed, built or tested: the engine's repository tests the
+package before every merge, so a game does not have to. An agent that cannot open links gets the same file attached
+(lean/README.md).
+
+The link is the raw file, not its GitHub page (https://github.com/michaelcrosato/my-3dge/blob/main/lean/README.md,
+for a person): the raw file is the Markdown alone, while the page wraps it in about ten times as much site, and an
+agent's web tool may hand it a summary of a long page instead of every line. The game's head, with its import map,
+has to be copied exactly, so "download it if you can" lets an agent with a shell take the file with `curl`.
 
 **The prompt, full workspace.** For a coding agent in a sandbox that should check its work as the engine does
 (headless tests, replays, renders read as numbers):
@@ -33,13 +39,14 @@ clone of the engine into a temporary folder, then tools/game/new-game.mjs, which
 - the engine, copied byte for byte and pinned by `engine-lock.json` (the commit and every file's SHA-256);
 - the starter game, labs/game/: a small game that plays, is won by its bot on 10 seeds and passes its tests;
 - the game's own AGENTS.md (CLAUDE.md and GEMINI.md import it): about 50 lines on making this game, which every
-  coding agent loads by itself; docs/GAME-GUIDE.md, the engine for game makers, read once (about 11,000 tokens);
+  coding agent loads by itself; docs/GAME-GUIDE.md, the engine for game makers, read once (under 15,000 tokens by
+  its budget, `GUIDE_BUDGET_BYTES`);
 - ENGINE-FEEDBACK.md, where the agent writes what it needed from the engine and did not get.
 
 Then the agent sets up (`bash scripts/setup.sh`, or `npm ci`), runs `npm test`, and grows the game from the starter,
 checking its work with `npm run check`, `npm test`, `node x sim` and `node x shot`. The engine is read-only in a game:
 `npm run check` fails when an engine file changes without a declared patch. An agent that cannot reach GitHub but can
-take a file: the ZIP of main (about 7 MB), https://github.com/michaelcrosato/my-3dge/archive/refs/heads/main.zip, and
+take a file: the ZIP of main (about 13 MB), https://github.com/michaelcrosato/my-3dge/archive/refs/heads/main.zip, and
 "run `node <unzipped folder>/tools/game/new-game.mjs <dir>`"; installing still needs npm's registry.
 
 **Many games at once.**
@@ -48,7 +55,7 @@ take a file: the ZIP of main (about 7 MB), https://github.com/michaelcrosato/my-
   engine at `@main`; a game pins today's engine by putting a commit in place of `main` in its two engine URLs.
 - One repository per game in the full workspace. Agents in cloud sandboxes need somewhere to push, and this repository
   takes no games: its AGENTS.md sends a game agent to the README.
-- Games share nothing while they run (a workspace carries its own pinned engine, about 15 MB), so ten or a hundred
+- Games share nothing while they run (a workspace carries its own pinned engine, about 20 MB), so ten or a hundred
   agents work in parallel without touching each other.
 - A workspace agent's sandbox must reach github.com once (the clone) and npm's registry (the install); most coding-agent
   sandboxes allow both. scripts/setup.sh also downloads, only when missing, Node 24 from nodejs.org and Chromium (Chrome
@@ -69,11 +76,12 @@ pinned versions; and nothing that loads by itself and misleads.
 
 An agent pays for what it reads, not for what is on disk: a repository's size costs nothing, while every line that
 loads each session, and every file opened while finding its way, costs tokens and attention. So a game loads about
-50 lines of rules and reads one guide once; docs/API.md (704 KB) and the engine's file comments are there to grep.
+50 lines of rules and reads one guide once; docs/API.md (about 1.2 MB) and the engine's file comments are there to
+grep.
 
 Why not the engine's own repository, with the game inside it: a game agent there would load the engine's rules (work
 packages, the ledger, escalation records), a setup hook that clones the projects the engine was ported from, an
-hour-long CI and 3,380 engine tests, and ten agents pushing games into one repository would collide.
+hour-long CI and over 5,000 engine tests, and ten agents pushing games into one repository would collide.
 
 Why lean is the default (the owner's call of 2026-10-16, after a dozen trials): a library ships as three.js, Rapier
 or Babylon.js do, as code and docs, without its tests and checks; and a model building in a chat answers in minutes,
@@ -88,6 +96,19 @@ complete one.
 
 Why the engine is copied into each game, not linked: it works offline, with no submodule for a cloud agent to trip
 on, and it stays searchable (agents' search tools skip node_modules). The lock does what a pin would.
+
+## Handing over the engine itself
+
+For an agent that is to keep building the engine, not a game, give the repository:
+
+```text
+Continue developing the my-3dge game engine: https://github.com/michaelcrosato/my-3dge
+Clone it, run `bash scripts/setup.sh`, then follow its AGENTS.md; docs/PROGRESS.md says where things stand.
+```
+
+AGENTS.md holds the engine's rules and loads by itself in most coding agents; CLAUDE.md (Claude Code) and GEMINI.md
+(Gemini CLI) import it, and Claude Code's SessionStart hook runs the setup. Every step below runs in a fresh clone:
+GitHub's full run does exactly that after each merge.
 
 ## Starting in a new environment
 
@@ -109,5 +130,5 @@ box shows: the hall, the hero's moves, the walker, slime and wisp crowd with flo
 pixel, bloom and FXAA filters, 5,000 bodies. It is the better demo for a person: a full panel with presets, live fps
 and a bottleneck readout, a benchmark button, monster skins, waves, the card characters and a WebGL fallback. What
 my-3dge adds is underneath: audio, the 1,218-clip animation library with reactions, replays with the same golden
-hashes in Node and Chromium, about 3,400 tests, and a documented public API for game code. That only pays off once
+hashes in Node and Chromium, over 5,000 tests, and a documented public API for game code. That only pays off once
 agents build games on it. The box's menu (labs/box/menu.ts) is the first step toward the panel.

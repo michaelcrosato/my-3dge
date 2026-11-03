@@ -2569,6 +2569,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docsKinds.ts`](../tools/lib/docsKinds.ts): Reads the registry kinds a module declares with `defineKind` (PLAN.md §6.6, WP 1.2): `x docs` gives each kind its row in `docs/INDEX.md` (kind, description, declaring module) and fails a declaration it cannot read, so the index of kinds is never written by hand.
   - Exports: `KindDoc`, `kindsOf`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsLooks.ts`](../tools/lib/docsLooks.ts): The looks and filters a game can use, as Markdown: lean/README.md's `lean:looks` block (tools/lib/lean.ts), so an agent handed only that file can change how its game looks (the owner's handoff goal of 2026-11-03; ADR-0024 amendment 2).
+  - Exports: `fieldText`, `looksCatalog`
+  - Tests: [`tools/lib/docsLooks.test.ts`](../tools/lib/docsLooks.test.ts)
 - [`docsPaths.ts`](../tools/lib/docsPaths.ts): The path checks of `x docs` (PLAN.md §8.12, WP 0.6): every path, source citation and name that the file and export comments, AGENTS.md, README.md and the Markdown under `docs/` mention must exist.
   - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `GENERATED_DIRS`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
@@ -2591,7 +2594,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `fnv1a`, `fnv1aHex`
   - Tests: [`tools/lib/hash.test.ts`](../tools/lib/hash.test.ts)
 - [`lean.ts`](../tools/lib/lean.ts): The lean package, lean/ (ADR-0024 amendment 1, the owner's call of 2026-10-16): the engine shipped the way three.js, Rapier or Babylon.js ship, as a library and nothing else, with no tests, checks, tools or install.
-  - Exports: `EXTERNAL`, `LEAN`, `LEAN_URL`, `leanBundle`, `leanFiles`, `leanFindings`, `leanHead`, `leanImports`, `withBlock`, `writeLean`
+  - Exports: `EXTERNAL`, `LEAN`, `LEAN_README_BUDGET_BYTES`, `LEAN_URL`, `leanBundle`, `leanFiles`, `leanFindings`, `leanHead`, `leanImports`, `withBlock`, `writeLean`
   - Tests: [`tools/lib/lean.test.ts`](../tools/lib/lean.test.ts)
 - [`oneFile.ts`](../tools/lib/oneFile.ts): The one-file playground, `playground.html` at the root (ADR-0023 amendment 5, the owner's call of 2026-11-02): the playground (labs/playground/) built as one self-contained HTML page, its script and styles inline and nothing fetched, so it opens from disk (file://) in a WebGPU browser, sent as one file.
   - Exports: `buildOneFile`, `externalRefs`, `inlineBuild`, `ONE_FILE`, `ONE_FILE_NOTE`, `ONE_FILE_PAGE`

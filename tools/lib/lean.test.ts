@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ROOT } from '../x';
-import { EXTERNAL, LEAN_URL, leanHead, leanImports, withBlock } from './lean';
+import { EXTERNAL, LEAN_README_BUDGET_BYTES, LEAN_URL, leanHead, leanImports, withBlock } from './lean';
 
 /** The modules lean/my3dge.js imports: each import statement's specifier (at a line's start), and `import("…")`'s. */
 function bundleImports(): string[] {
@@ -49,5 +49,10 @@ describe('the lean package', () => {
     expect(leanHead(ROOT)).toContain('<script type="importmap">');
     expect(withBlock('a\n<!-- lean:x:start -->\nold\n<!-- lean:x:end -->\nb', 'x', 'new')).toBe('a\n<!-- lean:x:start -->\nnew\n<!-- lean:x:end -->\nb'); // prettier-ignore
     expect(() => withBlock('no markers', 'x', 'new')).toThrow(/lean:x:start .* are missing/);
+  });
+
+  it('keeps the README, read whole by every lean agent, within its budget', () => {
+    const bytes = Buffer.byteLength(readFileSync(join(ROOT, 'lean/README.md'), 'utf8'));
+    expect(bytes, 'cut prose rather than raise the budget').toBeLessThanOrEqual(LEAN_README_BUDGET_BYTES);
   });
 });

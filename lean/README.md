@@ -67,6 +67,37 @@ the sim (a scene's `setup`, `step` and systems) and replays, `__engine.hash()` a
 - Presentation never writes the sim: the camera, looks, particles, sound and the HUD change nothing a hash sees.
 - Units: metres, seconds, radians; +Y up, x east, z south; characters face +Z.
 
+## Make it look different
+
+How a game looks is data, apart from how it plays: a _look_ is a material style, a chain of filters and a sky. The
+same game can be a storybook, a film or pixel art with nothing else changed, and no look changes a replay or a hash.
+
+- **Pick a look:** `?post.look=look:storybook` in the URL. To make it the game's own, set it where game.html sets its
+  camera: `if (!search.has('post.look')) search.set('post.look', 'look:storybook');`. Live, from the console:
+  `__engine.set('post.look', 'look:cinematic')`.
+- **Lay looks on and tune them:** `post.combine` lays looks over the one drawn, each `{ look, amount, only, filters }`
+  (`amount` 0 to 1, `only` some of its filters, `filters` changes to them); `post.filters` changes filters field by
+  field; `post.strength` (0 to 1) fades the whole result. In a URL their values are JSON:
+  `?post.combine=[{"look":"look:vignette/soft","amount":0.6}]&post.filters={"grade":{"scope":"all","saturation":1.3}}`.
+- **Where a filter applies:** its `scope`: `'all'`, `'characters'` (the actors' and crowds' bodies), `'objects'`
+  (props), `'environment'` (the rest: the level, the terrain, stand-in boxes, the sky), two joined by `+`
+  (`'characters+objects'`), or `'off'`. Every filter has an `amount`, 0 (as if it were off) to 1.
+- **Make your own:** `defineLook` before `createEngine`, then pick it like any look:
+
+  ```js
+  defineLook('look:warm-tale', {
+    description: 'A storybook with soft corners and inked heroes.',
+    combine: [{ look: 'look:storybook' }, { look: 'look:vignette/soft', amount: 0.6 }],
+    filters: { outline: { scope: 'characters', width: 2 }, grade: { scope: 'all', temperature: 0.2 } },
+  });
+  ```
+
+- **Read it back:** `__engine.look()` gives the look drawn now: its id, the looks laid on, the strength, and every
+  filter that is on with its scope, amount and numbers; its `filters` pasted into a `defineLook` keeps the picture.
+
+Changing a filter's numbers, scope or amount, or the looks laid on, builds no shader. Every look and filter is listed
+under [Looks and filters](#looks-and-filters), below game.html.
+
 ## Look inside a running game
 
 The browser console has `__engine`: `__engine.help()` lists it all; `step(n)`, `hash()`, `state('round')`,
@@ -75,9 +106,10 @@ Errors name their fix, and docs/ERRORS.md in the engine's repository lists every
 
 ## Versions
 
-The head's URLs pin three.js and Rapier, and take the engine at `@main`, its latest (jsDelivr refreshes it within 12
-hours). To freeze a game on today's engine, replace `main` with a commit of
-https://github.com/michaelcrosato/my-3dge in its two engine URLs (`my3dge.js`, `my3dge.css`).
+The head's URLs pin three.js and Rapier, and take the engine at `@main`, its latest: jsDelivr serves a new commit
+within 12 hours, and a browser may keep the copy it loaded for up to 7 days (jsDelivr's cache header). To freeze a
+game on one engine, replace `main` with a commit of https://github.com/michaelcrosato/my-3dge in its two engine URLs
+(`my3dge.js`, `my3dge.css`).
 
 More: the engine's repository has the full guide (docs/GAME-GUIDE.md), every export (docs/API.md) and the source. An
 agent that can run commands and wants the engine's checks too can start from the repository's README instead.
@@ -345,6 +377,119 @@ description: The arena. 18 × 14 m inside walls, two pillars, two low walls to j
 </html>
 ```
 <!-- lean:game:end -->
+
+## Looks and filters
+
+<!-- lean:looks:start -->
+**Whole looks**, each a style, filters and sky together:
+
+- `look:16-bit`: The whole scene as 16-bit pixel art with a slightly vivid grade.
+- `look:anime-action`: An action frame: comic cel bands, bold lines and speed lines.
+- `look:arcade-cabinet`: An arcade cabinet: a curved tube's grille, glow and lines.
+- `look:arcade-crt`: Low resolution on a curved tube with scanlines, glow and colour fringes.
+- `look:cartoon`: Toon shading everywhere, bold ink outlines and vivid colour.
+- `look:cinematic`: A film: teal and orange, anamorphic streaks, soft corners and widescreen bars.
+- `look:clean`: No filter: the picture as the scene draws it, in its own style.
+- `look:comic-book`: Printed dots on the world, inked heroes, punchy colour.
+- `look:comic-noir`: A black-and-white world; the characters and objects keep their colour, inked.
+- `look:flat-paper`: Flat colours, thin outlines and a faded grade, like a printed page.
+- `look:game-boy`: Everything in four greens, pixelated and dithered.
+- `look:game-boy-world`: The environment in four Game Boy greens; the characters and objects in full colour with ink outlines.
+- `look:hacker-terminal`: The game as green characters on a curved, scanlined screen.
+- `look:hd-2d`: Pixel-art characters and objects in a soft, glowing 3D world with dark corners.
+- `look:hologram-heroes`: Characters and objects flicker like holograms: cool, scanlined and fringed. The world stays clean.
+- `look:lamplit-fog`: A foggy night where every lamp glows in the air.
+- `look:miniature`: A model railway: tilt-shift blur, crisp and bright colours.
+- `look:newspaper`: Black dots on cream paper, everything.
+- `look:oil-painting`: The whole scene in oil paint: flat strokes, brush streaks, canvas.
+- `look:painted-world`: A painted backdrop; the characters and objects stay sharp and inked on top of it.
+- `look:pixel-heroes`: A clean, sharp world; the characters and objects are outlined pixel art.
+- `look:pixel-world`: The environment is pixel art; the characters and objects stay sharp and inked.
+- `look:posterized-world`: The environment in a few flat shades; the characters and objects in full colour.
+- `look:red-coat`: A grey film where only red keeps its colour, grainy and dark at the edges.
+- `look:riso-print`: A risograph print: ember duotone, plates out of register, newsprint.
+- `look:sketchbook`: Pencil hatching and contours on paper.
+- `look:sketched-world`: A coloured-pencil world; the characters and objects inked on top of it.
+- `look:storybook`: A storybook: watercolour on cold-pressed paper with a thin ink line.
+- `look:sunbeams`: Dusty air, sunlight streaming through the gaps, a soft glow.
+- `look:vhs-tape`: A home video: worn tape, soft scanlines, noise and dark corners.
+
+**One-filter presets**, `look:<group>/<name>`: each turns its one filter on over everything, to draw alone or lay
+on with `combine` (the `shading` group sets the material style instead, and `screen` the screen's own glass):
+
+- `aa`: smooth
+- `air`: clear-air, dusty-sunbeams, lamplight, light-haze, morning-mist, pea-soup, smoky-hall
+- `ao`: corners
+- `bloom`: dreamy, neon, no-glow, soft
+- `cel`: comic
+- `crt`: arcade-tube
+- `dof`: portrait
+- `duotone`: dusk, ember, ocean
+- `flare`: sun
+- `gi`: bounce-light
+- `grade`: bleach-bypass, cool, faded, lifted, neutral, night, noir, sepia, vivid, warm
+- `grain`: clean, film, glitch, vhs
+- `lens`: barrel, fisheye
+- `letterbox`: film, widescreen
+- `misregister`: risograph
+- `outline`: bold, hand-drawn, heavy-ink, ink, none, thin
+- `palette`: 1-bit, 512-colours, amber, cga, full-colour, game-boy, pico-8, posterize
+- `paper`: canvas, kraft, newsprint, watercolour-paper
+- `pixel`: 16-bit, 8-bit, bold, chunky, classic, dithered, fine, giant
+- `scanlines`: arcade, fine, heavy, soft
+- `screen`: crt, flat-screen, low-res, old-tv, soft-vignette
+- `selective`: green, red
+- `shading`: as-authored, cartoon, flat-2d, smooth-lit, toon-3-band
+- `sharpen`: crisp
+- `speedlines`: action
+- `split`: moonlight, teal-orange
+- `ssr`: metal
+- `streaks`: anamorphic
+- `stylize`: colour-ascii, coloured-pencil, comic-print, fine-print, gouache, loose-sketch, newsprint, off, oil-paint, pencil, terminal, thick-impasto, underpainting
+- `tiltshift`: miniature
+- `vhs`: worn-tape
+- `vignette`: heavy, soft
+- `watercolor`: wash, wet
+
+**The filters**, in the order the chain draws them, each `{ scope, amount, … }` in a look's `filters` or in
+`post.filters`, with each field's default and range; colours are `'#rrggbb'`. A filter marked (the whole picture)
+takes only `'all'` or `'off'`; the rest also take `'characters'`, `'objects'`, `'environment'` or two joined by
+`+`.
+
+- `ao` (the whole picture): Ambient occlusion (GTAO, engine/gfx/post/shading.ts): creases and corners darken; never scoped. `strength` 1 (0–2), `radius` 0.6 (0.05–4 m).
+- `gi` (the whole picture): Bounce light (12 taps a pixel): lit surfaces colour their neighbours, with soft occlusion; never scoped. `strength` 1 (0–4), `radius` 1.6 (0.1–6 m).
+- `ssr` (the whole picture): Screen-space reflections on metal surfaces (SSRNode), blurred on rough ones; never scoped. `strength` 1 (0–1), `distance` 6 (0.5–50 m), `thickness` 0.15 (0.01–2 m).
+- `air` (the whole picture): Hazy air with light shafts where the sun breaks through, and halos round lamps; never scoped. `haze` 0.35 (0–3), `height` 4 (0.2–20 m), `shafts` 1 (0–3), `forward` 0.4 (-0.9–0.95), `halos` 0.3 (0–3).
+- `bloom` (the whole picture): Bright parts glow (three.js's BloomNode), before the composite, never scoped. `strength` 0.6 (0–3), `threshold` 0.9 (0–4), `radius` 0.4 (0–1).
+- `aa` (the whole picture): Edge smoothing over the picture before the filters (engine/gfx/post/aa.ts).
+- `lens` (the whole picture): Lens distortion: barrel (above 0) or pincushion (below), zoomed so the corners stay filled. `distortion` 0.12 (-0.5–0.5).
+- `dof` (the whole picture): Depth of field: sharp round the focus, blurred nearer and farther, as a camera lens draws it. `focus` 0 (0–500 m), `range` 8 (0.5–60 m), `blur` 6 (0–24 px).
+- `tiltshift` (the whole picture): Tilt-shift: a sharp horizontal band, the rest blurred, so the scene looks like a miniature. `center` 0.55 (0–1), `width` 0.18 (0.02–0.8), `blur` 8 (0–24 px).
+- `flare` (the whole picture): Lens flare: ghosts of the brightest parts mirrored through the centre of the screen. `intensity` 0.6 (0–3), `threshold` 0.8 (0–1), `spacing` 0.25 (0.05–0.6).
+- `streaks` (the whole picture): Anamorphic streaks: bright parts drawn out sideways in a tinted line. `intensity` 0.6 (0–3), `threshold` 0.75 (0–1), `length` 48 (4–160 px), `tint` '#5f8dff'.
+- `sharpen`: Sharpen: an unsharp mask that crisps edges and texture. `strength` 0.5 (0–2), `radius` 1 (0.5–4 px).
+- `misregister`: Print misregistration: the red and blue plates offset, as on a cheap print. `offset` 1.2 (0–8 px), `angle` 30 (-180–180 °).
+- `cel`: Comic cel: light in flat bands keeping each colour hue, pushed colour, ink at sharp changes. `bands` 4 (2–8), `punch` 1.3 (0–3), `ink` 0.9 (0–1), `inkWidth` 1.5 (0.5–4 px).
+- `pixel`: Pixel art: whole blocks on the scoped parts and on objects tagged pixel art. `size` 4 (0–32 px), `levels` 0 (0–64), `outline` true, `snap` true, `smooth` false.
+- `palette`: Colour reduction: levels per channel or a fixed palette, with ordered (Bayer) dithering. `palette` 'none' (none|gameboy|pico8|cga|1bit|amber), `levels` 8 (0–64), `dither` 0 (0–1).
+- `watercolor`: Watercolour: colour bleeds, darkens where washes meet, granulates in the paper and wobbles. `wobble` 2.5 (0–8 px), `bleed` 0.3 (0–1), `edges` 0.45 (0–1), `granulation` 0.35 (0–1).
+- `outline`: Outlines where depth jumps, surfaces crease or outline groups meet. `width` 1 (1–4 px), `lines` 0 (0–2160), `darken` 0.35 (0–1), `color` '', `depth` 0.02 (0.001–1), `crease` 0.6 (-1–1), `fade` 0 (0–1), `fadeStart` 25 (0–500 m), `fadeEnd` 120 (1–2000 m), `wobble` 0 (0–4 px), `boil` 0 (0–24).
+- `stylize`: Painterly and print styles: oil paint, CMYK halftone, ASCII and pencil. `style` 'paint' (paint|halftone|ascii|sketch), `size` 4 (1–24 px), `mix` 1 (0–1), `color` 1 (0–1).
+- `paper`: Paper or canvas under the picture: it tints and textures the light areas, ink stays dark. `kind` 'newsprint' (newsprint|coldpress|canvas|kraft), `scale` 1 (0.25–4 ×), `strength` 0.4 (0–1), `color` '#f3ead3'.
+- `grade`: Colour grading. `temperature` 0 (-1–1), `tint` 0 (-1–1), `contrast` 1 (0–3), `brightness` 1 (0–3), `saturation` 1 (0–3), `lift` 0 (-0.3–0.3), `gamma` 1 (0.5–2), `vibrance` 0 (-1–1), `hue` 0 (-180–180 °), `sepia` 0 (0–1), `bleach` 0 (0–1).
+- `split`: Split toning: the shadows toward one colour and the highlights toward another. `shadows` '#2e5f8a', `highlights` '#ffb46b', `balance` 0 (-1–1).
+- `selective`: Selective colour: every colour but one turned grey (a red coat in a grey film). `hue` 0 (0–360 °), `range` 35 (5–120 °).
+- `duotone`: Gradient map: brightness mapped onto a dark, a middle and a light colour (duotone, tritone). `dark` '#1b1442', `mid` '#b04a6f', `light` '#fff1c9'.
+- `scanlines`: Dark lines across the screen, as on a tube. `strength` 0.5 (0–1), `period` 3 (1–16 px).
+- `crt` (the whole picture): A CRT's glass: phosphor glow, an aperture grille and a flicker (curvature: screen; lines: scanlines). `mask` 0.25 (0–1), `glow` 0.25 (0–1), `flicker` 0.1 (0–1).
+- `vhs` (the whole picture): VHS tape: rows slipping sideways, colour bleeding to the right, snow in a rolling band. `jitter` 0.5 (0–1), `bleed` 0.5 (0–1), `noise` 0.3 (0–1).
+- `speedlines` (the whole picture): Speed lines: comic-book streaks round a clear centre, redrawn 12 times a second. `density` 0.6 (0–1), `clear` 0.35 (0–0.9), `x` 0.5 (0–1), `y` 0.5 (0–1), `color` '#ffffff'.
+- `vignette` (the whole picture): A vignette: the corners toward a colour, round or following the screen, soft or hard. `strength` 0.45 (0–1), `softness` 0.5 (0.05–1), `roundness` 1 (0–1), `color` '#000000'.
+- `grain`: Film grain that changes every frame. `amount` 0.35 (0–1).
+- `chroma`: Colour fringes: red and blue pulled apart toward the screen edges. `amount` 0.5 (0–1).
+- `letterbox` (the whole picture): Letterbox bars that crop the picture to a film aspect ratio. `aspect` 2.39 (1.2–2.8), `color` '#000000'.
+- `screen` (the whole picture): The screen itself: CRT curvature, a vignette, low resolution. `curvature` 0 (0–0.5), `vignette` 0 (0–1), `pixelate` 1 (1–16 px).
+<!-- lean:looks:end -->
 
 ## The API by area
 
