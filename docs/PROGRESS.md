@@ -20,7 +20,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel looks, clean the default since
-  WP 13.29, clean and cel at full resolution since WP 13.30); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
+  WP 13.29); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
   as playground.html. Tidied after G13 (amendment 45). Faster starts (ADR-0008 amendments 11, 12): warm-ups of only what
   is drawn (gym 64.7 → 23.7 s); the governor keeps each scene's tier (Owner: a move still re-keys lit pipelines).
 
