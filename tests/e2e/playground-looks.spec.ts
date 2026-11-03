@@ -31,6 +31,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import type { LookMetrics, LookNote } from '../../engine/gfx/lookMetrics';
+import { PIXEL_LINES } from '../../engine/gfx/resolution';
 import { compareThumbnails, type Thumbnail } from '../../engine/gfx/thumbnail';
 import { PLAYGROUND_LOOKS } from '../../labs/playground/views';
 import { expect, test, type Harness } from './fixtures';
@@ -51,7 +52,10 @@ const VIEWS = [
   ...CAMERAS.flatMap((camera) => LOOKS.slice(1).map((look) => ({ camera, look }))),
   ...CAMERAS.map((camera) => ({ camera, look: LOOKS[0] })),
 ];
-/** The resolution each look is drawn at (its `resolution`, WP 13.30): the clean and cel looks full, the pixel look chunky. */
+/**
+ * The resolution each look is drawn at (its `resolution`, WP 13.30): the clean and cel looks full (every screen line
+ * drawn, smoothly enlarged), the pixel look the engine's pixels (at most `PIXEL_LINES` lines, enlarged unsmoothed).
+ */
 const DRAWN_AT: Record<string, string> = {
   'look:playground-clean': 'full',
   'look:playground-cel': 'full',
@@ -80,7 +84,7 @@ declare const __engine: {
   step(n: number): unknown;
   set(key: string, value: unknown): unknown;
   render(frames: number): Promise<unknown>;
-  stats(): { pipelines: number; mode: string | null; height: number };
+  stats(): { pipelines: number };
   shot(options: object): Promise<Shot>;
   get(id: number): { actor: { x: number; y: number; z: number } };
   camera: { set(code: string): { code: string; pose: unknown }; get(): { code: string } };
@@ -148,6 +152,18 @@ function differs(a: Buffer, b: Buffer, width: number, height: number, dx = 0, dy
   return { share: changed / seen, changed };
 }
 
+/**
+ * The page's drawing buffer now: its lines (the canvas's height), the screen's lines under the canvas (its CSS height
+ * at the device pixel ratio) and whether the browser enlarges it unsmoothed (engine/gfx/resolution.ts).
+ */
+function drawingBuffer(page: Page): Promise<{ lines: number; screen: number; pixelated: boolean }> {
+  return page.evaluate(() => {
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+    const screen = Math.round(canvas.clientHeight * devicePixelRatio);
+    return { lines: canvas.height, screen, pixelated: canvas.style.imageRendering === 'pixelated' };
+  });
+}
+
 /** The page's glide, in drawn pixels (right, down): the canvas's CSS transform over one drawn pixel's CSS size. */
 function glide(page: Page): Promise<[number, number]> {
   return page.evaluate(() => {
@@ -197,8 +213,10 @@ test('every look from every camera, by day and by night: within its bounds, its 
     const start = (await page.evaluate(() => __engine.stats())).pipelines;
     for (const { camera, look } of VIEWS) {
       const shot = await shoot(page, look, camera, hour, { ids: true, metrics: true, thumbnail: true });
-      const drawn = await page.evaluate(() => __engine.stats());
-      expect([drawn.mode, shot.height], `${look} from ${camera}: shot at its resolution`).toEqual([DRAWN_AT[look], drawn.height]); // prettier-ignore
+      const buffer = await drawingBuffer(page);
+      const full = buffer.lines === buffer.screen && !buffer.pixelated;
+      const chunky = buffer.lines <= PIXEL_LINES && buffer.pixelated;
+      expect({ full, chunky, shot: shot.height }, `${look} from ${camera}: shot at its resolution`).toEqual({ full: DRAWN_AT[look] === 'full', chunky: DRAWN_AT[look] === 'pixels', shot: buffer.lines }); // prettier-ignore
       if (round === 1) continue; // the noon views again: only what they build counts
       const name = `playground-${look.replace('look:playground-', '')}-${camera.replace(/^cam3?=/, '')}`;
       const where = `${name} at ${hour}:00`;
