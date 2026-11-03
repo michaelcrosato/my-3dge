@@ -1,5 +1,5 @@
 /**
- * @file Unit tests for engine/core/fdlibm/ (PLAN.md §6.5, WP U-8): every port gives Node 24.22.1's native bits, the
+ * @file Unit tests for engine/core/fdlibm/ (PLAN.md §6.5, WP U-8): every port gives Node 24.22.2's native bits, the
  * runtime the goldens were recorded on, on seeded inputs over each function's domains, on random bit patterns and on
  * the edge values; so swapping them into `Math` (engine/core/simMath.ts) changed no golden in Node, and Chromium,
  * running the same JavaScript, gives the same bits. The reduction's tables are recomputed from π with BigInt. A

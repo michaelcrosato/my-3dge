@@ -9,7 +9,7 @@
  * business. Permission to use, copy, modify, and distribute this software is freely granted, provided that this
  * notice is preserved.
  *
- * Invariants: each returns what Node 24.22.1's `Math` function of the same name returns, bit for bit
+ * Invariants: each returns what Node 24.22.2's `Math` function of the same name returns, bit for bit
  * (engine/core/fdlibm/fdlibm.test.ts). x = 2^k·(1 + f) with √2/2 < 1 + f < √2, and log(1 + f) comes from a minimax
  * polynomial in s = f/(2 + f); subnormals are scaled by 2^54 first.
  *

@@ -8,7 +8,7 @@
  * Inc. business. Permission to use, copy, modify, and distribute this software is freely granted, provided that this
  * notice is preserved.
  *
- * Invariants: each returns what Node 24.22.1's `Math.exp` and `Math.expm1` return, bit for bit
+ * Invariants: each returns what Node 24.22.2's `Math.exp` and `Math.expm1` return, bit for bit
  * (engine/core/fdlibm/fdlibm.test.ts): `exp` reduces x to r = x − k·ln2 with |r| ≤ ln2/2 and evaluates a rational
  * approximation of exp(r), and `exp(1)` is `Math.E`, as V8 special-cases it; `expm1` keeps the subtraction of 1
  * exact near 0.

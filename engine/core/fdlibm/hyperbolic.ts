@@ -10,7 +10,7 @@
  * business. Permission to use, copy, modify, and distribute this software is freely granted, provided that this
  * notice is preserved.
  *
- * Invariants: each returns what Node 24.22.1's `Math` function of the same name returns, bit for bit
+ * Invariants: each returns what Node 24.22.2's `Math` function of the same name returns, bit for bit
  * (engine/core/fdlibm/fdlibm.test.ts); tiny arguments come back unchanged (cosh's as 1), and the overflow thresholds
  * are fdlibm's.
  *
