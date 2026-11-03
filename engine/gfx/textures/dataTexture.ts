@@ -2,9 +2,12 @@
  * @file A bake as three.js textures (PLAN.md WP 2.3, §6.7): `toDataTextures` turns a CPU bake
  * (engine/gfx/textures/bake.ts) into `DataTexture`s for a material's slots, `map`, `normalMap`, `roughnessMap` and
  * `emissiveMap`, each with its full mip chain computed on the CPU (engine/gfx/textures/mips.ts), repeating, and
- * filtered for the look: `pixel` magnifies with nearest (crisp texels) and minifies with nearest texels blended
- * between levels (no shimmer at a distance), `smooth` filters linearly on both, with 4× anisotropy for floors seen
- * at a grazing angle.
+ * filtered for the look (`filterTexture`): `pixel` magnifies and minifies with nearest (crisp texels; r182's WebGPU
+ * backend takes the mipmap filter from the minification filter, so it also reads the nearest level, not a blend),
+ * `smooth` filters linearly on all three, with 4× anisotropy for floors seen at a grazing angle. `filterTexture`
+ * also re-filters a texture made here for another look (a look's `textures`, engine/gfx/materials/library.ts
+ * `filter`): both looks sample it filtered (`textureSample`, as only nearest on both counts as unfilterable in r182),
+ * so the shader stays the same and r182 swaps its sampler and uploads its levels again, building no pipeline.
  *
  * Repeat: the bake's density (texels per metre) on geometry whose UVs are in metres (WP 2.4's builders) makes the
  * texture repeat every size / density metres; `repeat` overrides it, in repeats per UV unit, for geometry whose UVs
@@ -34,6 +37,7 @@ import {
   SRGBColorSpace,
   UnsignedByteType,
   type ColorSpace,
+  type Texture,
 } from 'three/webgpu';
 import type { TextureBake } from './bake';
 import { mipChain, type MipEncoding } from './mips';
@@ -66,6 +70,23 @@ function roughnessBytes(values: Float32Array): Uint8Array {
   return out;
 }
 
+/**
+ * Filters `texture` for `look` (see the file comment): its magnification and minification filters and anisotropy.
+ * Returns whether any changed, and marks the texture for upload when one did, so the renderer swaps its sampler.
+ */
+export function filterTexture(texture: Texture, look: TextureLook): boolean {
+  const pixel = look === 'pixel';
+  const [mag, min, anisotropy] = pixel
+    ? [NearestFilter, NearestMipmapLinearFilter, 1]
+    : [LinearFilter, LinearMipmapLinearFilter, 4];
+  if (texture.magFilter === mag && texture.minFilter === min && texture.anisotropy === anisotropy) return false;
+  texture.magFilter = mag;
+  texture.minFilter = min;
+  texture.anisotropy = anisotropy;
+  texture.needsUpdate = true;
+  return true;
+}
+
 /** One `DataTexture` of RGBA bytes with its mip chain, repeating, filtered for `look`. */
 function dataTexture(
   data: Uint8Array,
@@ -81,10 +102,7 @@ function dataTexture(
   texture.generateMipmaps = false;
   texture.wrapS = texture.wrapT = RepeatWrapping;
   texture.colorSpace = colorSpace;
-  const pixel = options.look === 'pixel';
-  texture.magFilter = pixel ? NearestFilter : LinearFilter;
-  texture.minFilter = pixel ? NearestMipmapLinearFilter : LinearMipmapLinearFilter;
-  texture.anisotropy = pixel ? 1 : 4;
+  filterTexture(texture, options.look);
   texture.repeat.set(options.repeat[0], options.repeat[1]);
   texture.name = `${bake.texture}#${bake.key}:${name}`;
   texture.needsUpdate = true;

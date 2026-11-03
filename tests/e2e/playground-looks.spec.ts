@@ -1,10 +1,12 @@
 /**
- * @file T2 for the playground's three looks (PLAN.md WP 13.24, WP 13.29; docs/PLAYGROUND.md §5.2 and §9.1's look
- * metrics), on its street (labs/playground/?scene=site-street), the sim paused:
+ * @file T2 for the playground's three looks (PLAN.md WP 13.24, WP 13.29, WP 13.30; docs/PLAYGROUND.md §5.2 and §9.1's
+ * look metrics), on its street (labs/playground/?scene=site-street), the sim paused:
  * - Look metrics and thumbnails per look and camera: each of the five cameras in each look, at noon and at 22:00,
- *   shot with its look metrics: never blank or empty, the player in view in the four that show him, night darker than
- *   noon; the noon shots' text thumbnails as recorded (tests/baselines/thumbs/playground-<look>-<camera>.json, written
- *   with UPDATE_THUMBS=1); every metric, note and thumbnail in out/e2e/playground-looks/report.json; the night round
+ *   shot at the look's resolution (`DRAWN_AT`, `gfx.resolution` left at `auto`: each shot after a switch drawn at the
+ *   size its look asks for) with its look metrics: never blank or empty, the player in view in the four that show
+ *   him, night darker than noon; the noon shots' text thumbnails as recorded
+ *   (tests/baselines/thumbs/playground-<look>-<camera>.json, written with UPDATE_THUMBS=1); every metric, note and
+ *   thumbnail in out/e2e/playground-looks/report.json; the night round
  *   builds nothing more than the same round shot again at noon (`ROUNDS`, each from the noon round's world through
  *   `capture` and `restore`, so only the hour differs): a shot builds its own passes once from each camera, and its ID
  *   pass a pipeline again after a switch between the toon looks and the clean look (docs/PROGRESS.md), so the second
@@ -49,6 +51,12 @@ const VIEWS = [
   ...CAMERAS.flatMap((camera) => LOOKS.slice(1).map((look) => ({ camera, look }))),
   ...CAMERAS.map((camera) => ({ camera, look: LOOKS[0] })),
 ];
+/** The resolution each look is drawn at (its `resolution`, WP 13.30): the clean and cel looks full, the pixel look chunky. */
+const DRAWN_AT: Record<string, string> = {
+  'look:playground-clean': 'full',
+  'look:playground-cel': 'full',
+  'look:playground-pixel': 'pixels',
+};
 /** The rounds' hours: noon, noon again (what the views build when shot again) and night, each from the same world. */
 const ROUNDS = [HOURS[0], HOURS[0], HOURS[1]] as const;
 /**
@@ -72,7 +80,7 @@ declare const __engine: {
   step(n: number): unknown;
   set(key: string, value: unknown): unknown;
   render(frames: number): Promise<unknown>;
-  stats(): { pipelines: number };
+  stats(): { pipelines: number; mode: string | null; height: number };
   shot(options: object): Promise<Shot>;
   get(id: number): { actor: { x: number; y: number; z: number } };
   camera: { set(code: string): { code: string; pose: unknown }; get(): { code: string } };
@@ -189,6 +197,8 @@ test('every look from every camera, by day and by night: within its bounds, its 
     const start = (await page.evaluate(() => __engine.stats())).pipelines;
     for (const { camera, look } of VIEWS) {
       const shot = await shoot(page, look, camera, hour, { ids: true, metrics: true, thumbnail: true });
+      const drawn = await page.evaluate(() => __engine.stats());
+      expect([drawn.mode, shot.height], `${look} from ${camera}: shot at its resolution`).toEqual([DRAWN_AT[look], drawn.height]); // prettier-ignore
       if (round === 1) continue; // the noon views again: only what they build counts
       const name = `playground-${look.replace('look:playground-', '')}-${camera.replace(/^cam3?=/, '')}`;
       const where = `${name} at ${hour}:00`;
@@ -303,10 +313,11 @@ test("the cel look's shells round the props and bodies, none in the others, the 
   const inCel = await shells();
   const pixel = await shoot(page, 'look:playground-pixel', 'cam=iso', null, options);
   const inPixel = await shells();
+  // the pixel look's own lines, read while it is drawn: the clean and cel looks draw at full resolution (WP 13.30)
+  const lines = await page.evaluate(() => (document.querySelector('canvas') as HTMLCanvasElement).height);
   const clean = await shoot(page, 'look:playground-clean', 'cam=iso', null, options);
   const inClean = await shells();
   expect(await glide(page), 'the clean look never glides').toEqual([0, 0]);
-  const lines = await page.evaluate(() => (document.querySelector('canvas') as HTMLCanvasElement).height);
   console.log(`shells: cel ${JSON.stringify(inCel)}, pixel ${JSON.stringify(inPixel)}, clean ${JSON.stringify(inClean)}, lines ${lines}`); // prettier-ignore
   expect(inCel.shown, 'the cel look shows its shells').toBeGreaterThan(10);
   expect([inPixel.shown, inPixel.all]).toEqual([0, inCel.all]);

@@ -10,17 +10,17 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   `x mcp` (7.6), the tour with its attract mode and a film per look (13.26). What follows waits: upgrades U-2 to U-7
   from their dates (`node x deps --qualify`), on-demand WPs for their triggers (§9.1), Phase H for a game to ship.
 - The owner's, all in the playground's Owner checks (title screen; WP 13.28), each in plain words with Go there: the
-  playtest (docs/PLAYGROUND.md §9.3), the looks to judge (the clean default, the accent weak from isometric, the cel
-  look's dark night there, its near-black brick), the sound and a pad, and ESC-0002 to ESC-0006's calls (the Quaternius
-  GLBs, model access for the live evals, the crowd's CPU render, the mutants outside the sample), answered from Copy my
-  answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
+  playtest (docs/PLAYGROUND.md §9.3), the looks to judge (the clean default, clean and cel at full resolution, the
+  accent weak from isometric, the cel look's dark night there, its near-black brick), the sound and a pad, and ESC-0002
+  to ESC-0006's calls (the Quaternius GLBs, model access for the live evals, the crowd's CPU render, the mutants outside
+  the sample), answered from Copy my answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
 ## Where things stand (2026-11-03)
 
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel looks, clean the default since
-  WP 13.29); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
+  WP 13.29, clean and cel at full resolution since WP 13.30); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
   as playground.html. Tidied after G13 (amendment 45). Faster starts (ADR-0008 amendments 11, 12): warm-ups of only what
   is drawn (gym 64.7 → 23.7 s); the governor keeps each scene's tier (Owner: a move still re-keys lit pipelines).
 

@@ -31,7 +31,7 @@ import { codeError } from '../../core/log';
 import { registry as sharedRegistry, type Entry, type Registry } from '../../core/registry';
 import { checkField, isPlainObject, parse, type Schema } from '../../core/schema';
 import './codes';
-import type { TextureSpec } from './types';
+import { TEXTURE_LOOKS, type TextureSpec } from './types';
 import { V1_TEXTURES } from './v1';
 import { V2_TEXTURES } from './v2';
 import { V3_TEXTURES } from './v3';
@@ -66,7 +66,7 @@ export const TEXTURE_FIELDS = {
   },
   look: {
     type: 'string',
-    enum: ['pixel', 'smooth'],
+    enum: TEXTURE_LOOKS,
     default: 'pixel',
     description: "How it is magnified: 'pixel' keeps texels crisp (nearest), 'smooth' blends them (linear).",
   },

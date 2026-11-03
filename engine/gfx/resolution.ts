@@ -3,7 +3,9 @@
  * the view setting `gfx.resolution`. `pixels` draws the engine's own chunky pixels, at most 330 lines and a whole
  * number of screen pixels each (2 at 540 screen lines, 3 at 720, 4 at 1080), so the picture is crisp and cheap;
  * `balanced` draws half the screen's resolution; `full` all of it. Both reduced modes are shown with
- * `image-rendering: pixelated`, so the browser enlarges them without blurring.
+ * `image-rendering: pixelated`, so the browser enlarges them without blurring. `auto`, the default (WP 13.30), draws
+ * the mode the page's look asks for (its `resolution`, engine/gfx/post/looks.ts), given by `prefer(mode)`
+ * (engine/app/look.ts), and `pixels` while the look names none; the other three hold whatever the look asks.
  *
  * `fitResolution` is the arithmetic, pure and tested in Node; `createResolution` applies it to a renderer and its
  * canvas: `update()` measures the canvas's CSS size and the device pixel ratio (capped at `MAX_PIXEL_RATIO`) and,
@@ -30,6 +32,7 @@
  * fitResolution({ width: 1280, height: 720 }, 1, 'pixels'); // { width: 427, height: 240, scale: 3, … }
  * fitResolution({ width: 1280, height: 720 }, 1, 'balanced').width; // 640
  * fitResolution({ width: 1280, height: 720 }, 2, 'full').height; // 1440
+ * // resolution.prefer('full'); // the look's mode, drawn while gfx.resolution is 'auto'
  * @see engine/gfx/resolution.test.ts
  */
 import type { Camera, PerspectiveCamera, WebGPURenderer } from 'three/webgpu';
@@ -42,6 +45,9 @@ export const RESOLUTION_MODES = ['pixels', 'balanced', 'full'] as const;
 /** A resolution mode: the engine's pixels, half the screen's, or all of it. */
 export type ResolutionMode = (typeof RESOLUTION_MODES)[number];
 
+/** What `gfx.resolution` takes: `auto` (the look's mode, else `pixels`), or a mode held whatever the look asks. */
+export type ResolutionSetting = 'auto' | ResolutionMode;
+
 /** The most lines the `pixels` mode draws. */
 export const PIXEL_LINES = 330;
 
@@ -52,11 +58,11 @@ export const MAX_PIXEL_RATIO = 3;
 export const RESOLUTION_SETTINGS = {
   'gfx.resolution': {
     type: 'string',
-    enum: RESOLUTION_MODES,
-    default: 'pixels',
+    enum: ['auto', ...RESOLUTION_MODES],
+    default: 'auto',
     view: true,
     description:
-      "How many pixels are drawn: 'pixels' (the engine's chunky pixels, at most 330 lines, each a whole number of screen pixels), 'balanced' (half the screen's resolution) or 'full'.",
+      "How many pixels are drawn: 'auto' (the mode the look asks for, its resolution; 'pixels' if it names none), or one held whatever the look asks: 'pixels' (the engine's chunky pixels, at most 330 lines, each a whole number of screen pixels), 'balanced' (half the screen's resolution) or 'full'.",
   },
 } as const satisfies Record<string, Field>;
 defineSettings(RESOLUTION_SETTINGS);
@@ -136,6 +142,11 @@ export interface Resolution {
   update(): boolean;
   /** Caps the buffer from the next `update()` on (the quality tier's budget, engine/gfx/quality.ts). */
   cap(cap: PixelCap): void;
+  /**
+   * The mode the look asks for (null: none), drawn while `gfx.resolution` is `auto`; applied at once (`update()`),
+   * so a shot after a look's switch is drawn at its size.
+   */
+  prefer(mode: ResolutionMode | null): void;
   /** The picture's offset now, in drawn pixels, right and down (see the file comment). */
   readonly offset: readonly [number, number];
   /** Moves the whole picture by (`x`, `y`) drawn pixels, right and down; (0, 0) puts it back. */
@@ -160,10 +171,11 @@ export function createResolution(options: ResolutionOptions): Resolution {
   let current: Fit | null = null;
   let key = '';
   let limit: PixelCap = {};
+  let preferred: ResolutionMode | null = null;
   let offset: [number, number] = [0, 0];
   /** CSS pixels per drawn pixel. */
   const cssPixel = () => (current && current.width > 0 ? current.css.width / current.width : 1);
-  return {
+  const resolution: Resolution = {
     get current() {
       return current;
     },
@@ -178,7 +190,8 @@ export function createResolution(options: ResolutionOptions): Resolution {
     },
     update() {
       const css = { width: canvas.clientWidth, height: canvas.clientHeight };
-      const mode = settings.get<ResolutionMode>('gfx.resolution');
+      const asked = settings.get<ResolutionSetting>('gfx.resolution');
+      const mode = asked === 'auto' ? (preferred ?? 'pixels') : asked;
       const ratio = pixelRatio();
       const next = `${css.width}x${css.height}@${ratio}:${mode}<${limit.maxPixels ?? ''},${limit.maxPixelRatio ?? ''}`;
       if (next === key) return false;
@@ -193,7 +206,13 @@ export function createResolution(options: ResolutionOptions): Resolution {
     cap(next) {
       limit = { maxPixels: next.maxPixels ?? null, maxPixelRatio: next.maxPixelRatio ?? null };
     },
+    prefer(mode) {
+      if (mode === preferred) return;
+      preferred = mode;
+      resolution.update();
+    },
   };
+  return resolution;
 }
 
 /** The widest vertical field of view a portrait picture gets, in degrees. */

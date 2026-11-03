@@ -7,7 +7,9 @@
  * orthographic cameras (isometric, top-down, at whole-number zooms: `cam.wholeZoom`) are snapped to the pixel grid in
  * translation, the remainder carried as a smooth offset of the upscaled picture (`smooth`; the page's canvas has a
  * margin of two drawn pixels for it), so a pan never shimmers; the sky a clean gradient. The perspective cameras, where
- * snapping cannot hold, draw its variant (labs/playground/looks/pixelPerspective.ts).
+ * snapping cannot hold, draw its variant (labs/playground/looks/pixelPerspective.ts). It names the engine's `pixels`
+ * resolution (`resolution`, drawn while `gfx.resolution` is `auto`; the clean and cel looks draw at full, WP 13.30),
+ * the snap's and the glide's drawn pixel.
  *
  * Invariants: data only, the kind's fields (`node x describe look`); the sky `sky:daylight`; levels 0 or at least 24,
  * so pixel art keeps its hues (engine/gfx/post/filters.ts); every filter it leaves out off.
@@ -27,6 +29,7 @@ export const look = defineLook('look:playground-pixel', {
     'The playground as pixel art: 240 to 360 lines, 1-pixel ink, a ramp of four shades per material dithered on the world, the camera snapped to the pixels and gliding.',
   sky: 'sky:daylight',
   style: 'toon',
+  resolution: 'pixels',
   toon: PIXEL_TOON,
   perspective: 'look:playground-pixel-perspective',
   skyGradient: 1,

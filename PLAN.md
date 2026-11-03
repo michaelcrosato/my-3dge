@@ -3852,6 +3852,14 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Done when:** the page opens in it, and P, the menu, settings and the attract mode step through the three looks; every camera in it by day and by night within the look bounds, its thumbnails recorded; 0 pipelines after the warm-up through the three looks; every replay the playground's specs play through the looks keeps its goldens.
 - **Verify:** `npm test -- labs/playground && npm run e2e -- tests/e2e/playground-looks.spec.ts tests/e2e/playground.spec.ts tests/e2e/playground-ui.spec.ts`
 
+#### WP-13.30 A look's resolution and textures
+- **Owns:** extends `engine/gfx/resolution.ts`, `engine/gfx/post/looks.ts`, `engine/gfx/textures/{dataTexture,types,texture}.ts`, `engine/gfx/materials/library.ts`, `engine/app/{look,engine}.ts`, `labs/playground/looks/{clean,cel,pixel}.ts`, `labs/playground/ui/checkList.ts`, `tests/baselines/thumbs/playground-{clean,cel}-*.json` and the playground's specs (ADR-0008 amendment 13, ADR-0025 amendment 47)
+- **Needs:** WP 13.29
+- **Size:** S
+- **Build** (the owner's direction of 2026-11-03: "yes, full res for clean and cel, and smooth textures too"; docs/PLAYGROUND.md §5.2): a look names the resolution it is drawn at and how every material's textures are filtered; the playground's clean and cel looks at the screen's full resolution, the clean look's textures smooth, the pixel look at the engine's pixels.
+- **Done when:** `gfx.resolution: auto`, the default, draws the look's resolution (`pixels` for a look naming none) and the other values hold for every look; a look's `textures` filters every material's maps, those made later too, and a look naming none puts back each map's own; the clean and cel looks are shot at full resolution and the pixel look at its pixels, each right after a switch; 0 pipelines after the warm-up through the three looks; the pixel look's thumbnails unchanged; every page whose looks name no resolution draws as before.
+- **Verify:** `npm test -- engine/gfx/resolution engine/gfx/materials/library engine/gfx/textures/dataTexture engine/app/look labs/playground && npm run e2e -- tests/e2e/playground-looks.spec.ts tests/e2e/playground.spec.ts`
+
 ### Phase H: Production hardening (not scheduled)
 
 Doctrine: Discovery first. Cross-platform compatibility and hardening happen when a game goes to production. When that happens, these become work packages:
