@@ -34,4 +34,5 @@ Golden references for how a frame looks, as text instead of images (PLAN.md §8.
   three looks from each of its five cameras (WP 13.24; the clean look's since ADR-0025 amendment 46), compared by
   tests/e2e/playground-looks.spec.ts (`UPDATE_THUMBS=1` records them). The pixel look's are 484 × 274 with the
   canvas's margin; the clean and cel looks' 964 × 544, re-recorded when those looks moved to full resolution (WP
-  13.30, ADR-0025 amendment 47: their old ones still compared at 0 cells, one channel moving by up to 24).
+  13.30, ADR-0025 amendment 47: their old ones still compared at 0 cells, one channel moving by up to 24), and the cel
+  look's again when its textures were smoothed (amendment 49).

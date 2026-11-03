@@ -256,7 +256,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'full-resolution',
     kind: 'try',
     title: 'Full resolution for clean and cel',
-    what: 'The clean and cel looks now draw at your screen’s full resolution; only the pixel look keeps its big pixels. P steps through the three: do they look different enough now? The cel look keeps crisp textures: should they be smooth like the clean look’s? And does the game stay smooth on your device?', // prettier-ignore
+    what: 'The clean and cel looks now draw at your screen’s full resolution with smooth textures; only the pixel look keeps its big pixels and crisp texels. P steps through the three: do they look different enough now? And does the game stay smooth on your device?', // prettier-ignore
     from: item(10),
     go: { query: { scene: 'site', 'playground.hour': '12' } },
   },
