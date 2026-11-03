@@ -25,6 +25,11 @@
  *    goldens while it renders through every camera mode and every look, the guns drawn in the hands and in first
  *    person's arms, the tracers, flashes, impacts and holes, with 0 pipelines after the warm-up; the HUD counts it.
  *
+ * The long walks and replays (2's hill and site, 3's gym, 9's range) draw at the engine's pixels
+ * (`gfx.resolution=pixels`, WP 13.30): their goldens, HUD and pipelines are the same at any size, and with the clean
+ * and cel looks at full resolution they ran past or near their timeouts on GitHub's runner at c02ee10. 2's gym
+ * switches the looks' resolutions live.
+ *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
  */
@@ -184,10 +189,13 @@ test.describe('the playground', () => {
 
   test('does the same on the hill, and on the site from each area’s spawn (WP 13.18)', async ({ page, harness }) => {
     test.setTimeout(1_500_000);
-    await open(page, harness, '?scene=hill');
+    // at the engine's pixels (WP 13.30, ADR-0025 amendment 48): the gym's test above switches the looks' resolutions
+    // live; here, through the hill's and the site's views, full resolution took 20 of these 25 minutes on GitHub's
+    // runner at c02ee10, and the pipelines are the same at any size
+    await open(page, harness, '?scene=hill&gfx.resolution=pixels');
     await throughEveryView(page);
     await expectWarm(page, harness);
-    await open(page, harness, '?scene=site');
+    await open(page, harness, '?scene=site&gfx.resolution=pixels');
     for (const area of Object.keys(SITE_AREAS) as SiteArea[]) {
       await call(page, 'actions.run', 'place', { at: areaStart(area), speed: 0, yaw: SITE_AREAS[area].yaw });
       await throughEveryView(page);
@@ -201,7 +209,9 @@ test.describe('the playground', () => {
     harness,
   }) => {
     test.setTimeout(900_000); // a frame drawn every step: 4.7 of the describe's 5 minutes on GitHub's runner at 7a5acaa
-    await open(page, harness);
+    // at the engine's pixels (WP 13.30, ADR-0025 amendment 48): with the clean and cel looks at full resolution it took
+    // 12 of these 15 minutes on GitHub's runner at c02ee10; its goldens and pipelines are the same at any size
+    await open(page, harness, '?gfx.resolution=pixels');
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [i * 100, { cam: mode.code }]),
       [250, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],
@@ -220,7 +230,10 @@ test.describe('the playground', () => {
     harness,
   }) => {
     test.setTimeout(1_500_000);
-    await open(page, harness, '?scene=site-range');
+    // at the engine's pixels (WP 13.30, ADR-0025 amendment 48): with the clean and cel looks at full resolution it ran
+    // past these 25 minutes on GitHub's runner at c02ee10 (7.5 at ba0049a); its goldens, HUD and pipelines are the
+    // same at any size
+    await open(page, harness, '?scene=site-range&gfx.resolution=pixels');
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [20 + i * 160, { cam: mode.code }]), // the shooter first
       [100, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],

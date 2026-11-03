@@ -44,8 +44,8 @@ async function terrainSeen(page: Page): Promise<string[]> {
 }
 
 /** Opens the hill and waits for it. */
-async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }) {
-  await page.goto('labs/playground/?scene=hill');
+async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }, query = '') {
+  await page.goto(`labs/playground/?scene=hill${query}`);
   await harness.ready({ timeout: 120_000 });
   await call(page, 'pause');
   await call(page, 'render', 2);
@@ -108,7 +108,9 @@ test.describe('terrain, on the playground’s hill', () => {
     harness,
   }) => {
     test.setTimeout(600_000); // 900 frames drawn, one a step, on SwiftShader
-    await open(page, harness);
+    // at the engine's pixels (WP 13.30, ADR-0025 amendment 48): with the clean and cel looks at full resolution it ran
+    // past these 10 minutes on GitHub's runner at c02ee10; its goldens and pipelines are the same at any size
+    await open(page, harness, '&gfx.resolution=pixels');
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [i * 150, { cam: mode.code }]),
       [400, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],

@@ -140,7 +140,9 @@ test.describe('the playground’s cameras', () => {
   });
 
   test('keep the rides replay’s goldens while blending through every mode', async ({ page, harness }) => {
-    await open(page, harness);
+    // at the engine's pixels (WP 13.30, ADR-0025 amendment 48): its goldens are the same at any size, and with the
+    // clean look at full resolution it took 7.1 of its 10 minutes on GitHub's runner at c02ee10
+    await open(page, harness, '?gfx.resolution=pixels');
     const views = PLAYGROUND_CAMERAS.map((mode, i) => [100 + i * 250, { cam: mode.code, blend: true }] as const);
     const run = await call<{ hashes: Record<string, string> }>(page, 'replay', RIDES, { views, draw: 5 });
     const goldens = (JSON.parse(RIDES) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];

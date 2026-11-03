@@ -114,6 +114,9 @@ test.describe('the playground’s front end', () => {
     await slide(page, 'volume:music', 0.25);
     await page.locator('[data-ui=setting][data-id="post.look"] select').selectOption('look:playground-pixel');
     await harness.tick(2);
+    // the first toon look warms up the toon style, and a key pressed while a warm-up runs never reaches the front end,
+    // which reads keys on drawn frames (docs/PROGRESS.md): a frame drawn after it, so the keys below are read
+    await call(page, 'render', 1);
     const rebind = async (action: string, code: string) => {
       await page.locator(`[data-ui=item][data-id="rebind:${action}"]`).click();
       await page.keyboard.press(code);

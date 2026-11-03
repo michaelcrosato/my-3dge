@@ -30,7 +30,7 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   top-down's pixel look panned across a whole pixel changes 7–10 pixels of a soft shadow band (amendment 35). Clip
   contacts: hands read as holds in walks, idles and more (WP 8.8's row); no foot lock reads a clip's foot contacts yet.
   Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms; load times),
-  the pixel look's glide, a desktop MCP client.
+  the pixel look's glide, a desktop MCP client. A key pressed in a warm-up is lost (amendment 48).
 - Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
 - Near the size cap (390–397 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
   tools/cmd/replay.ts, app/engine.ts; four tests at 399–400.
