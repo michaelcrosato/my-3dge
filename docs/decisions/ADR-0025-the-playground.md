@@ -2412,3 +2412,30 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   1.68 s at ba0049a, 1.57 to 1.78 s with this change, 71 then 83 pipelines in both), and full resolution costs about
   1.6 times that (the clean look 2.6 s, the pixel look 1.6 s). On GitHub's runner the test took 7.5 minutes at
   ba0049a, so it is left as shipped, for main's full run to check.
+
+## Amendment 48 (2026-11-03, main red on c02ee10): the long replays at the engine's pixels; the settings test waits out a warm-up
+
+- **Found:** main's full run on c02ee10 (amendment 47's merge) failed three tests: terrain.spec's hill replay ran
+  past its 10 minutes, playground.spec's range replay past its 25, and playground-ui.spec's settings test found the
+  settings still open after an Escape. GitHub's runners ran about twice as slow as at ba0049a in specs this change
+  does not touch (parity 2.1 times, enhanced 2.1, box-fight 1.9), and the playground's specs 3.5 to 4.6 times: full
+  resolution costs about 1.6 times a frame on top.
+- **The replays and walks:** those that draw through every look draw at the engine's pixels (`gfx.resolution=pixels`):
+  terrain.spec's hill replay, playground.spec's range and gym replays and its hill-and-site walk, and
+  playground-cameras.spec's rides replay. Their goldens, HUD and pipelines are the same at any size. The looks at
+  their resolutions stay as shipped where they are the check: playground-looks.spec, playground.spec's gym walk
+  (which switches the looks' resolutions live), lights.spec and the tour's films. This reverses amendment 47's call
+  that no spec is pinned, which held on ba0049a's timings but not on runners twice as slow.
+- **The settings test:** the front end reads keys on drawn frames, and a warm-up draws none, so a key pressed while
+  one runs is lost. At ba0049a the test's third rebind waited out the first toon look's warm-up (its click waited 19 s
+  while the page was busy), so its Escape came after it. With the clean look at full resolution, the warm-up's busy
+  part starts after the rebinds and the Escape is lost, here as on GitHub. The test now draws a frame (`render(1)`)
+  after the switch, before its keys. The lost key is docs/PROGRESS.md's open issue.
+- **Evidence:** reproduced here: playground-ui.spec's settings test failed at the same line, and a probe of its steps
+  showed the frames held at 6 from the switch through the rebinds and the Escape at this change, and the third
+  rebind waiting out the warm-up at ba0049a; both ran the same warm-ups (1 to 3) and pipelines (46, 51, 54). After
+  the fix, here, 5 of 5: the settings test (2.9 minutes), terrain.spec's hill replay (5.4 of its 10),
+  playground.spec's gym replay (6.4 of 15) and hill-and-site walk (16.4 of 25), and playground-cameras.spec's rides
+  replay (3.8 of 10). The range replay runs past its 25 minutes on this container at any resolution (amendment 47),
+  so main's full run checks it, as at ba0049a (7.5 minutes there at the engine's pixels).
+- Plan edit: none (WP 13.30's ledger row names the fix).
