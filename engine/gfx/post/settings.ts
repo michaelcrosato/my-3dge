@@ -1,8 +1,9 @@
 /**
  * @file The post chain's codes and settings (PLAN.md WP 7.4, WP 3.12): the advice engine/gfx/post/chain.ts gives
- * (`POST_CODES`: bloom off at a tier, too few levels, the flag table full, a style without a style set) and the view
- * settings it reads (`POST_SETTINGS`: `post.look`, `post.filters`, `post.show`), declared with the setting `quality`
- * by `definePostSettings`. Split from chain.ts to keep each under 400 lines (ADR-0014 amendment 16).
+ * (`POST_CODES`: bloom off at a tier, too few levels, a colour that is none, the flag table full, a style without a
+ * style set, a look laid on itself) and the view settings it reads (`POST_SETTINGS`: `post.look`, `post.combine`,
+ * `post.filters`, `post.strength`, `post.show`, `post.aa`), declared with the setting `quality` by
+ * `definePostSettings`. Split from chain.ts to keep each under 400 lines (ADR-0014 amendment 16).
  *
  * Invariants: the settings are view settings (`view: true`), so they never reach the hash; declaring them twice on a
  * registry is a no-op.
@@ -20,6 +21,7 @@ import type { Field } from '../../core/schema';
 import { defineSettings } from '../../core/settings';
 import { QUALITY_SETTINGS } from '../quality';
 import { AA_CHOICE, AA_KINDS } from './aa';
+import { COMBINE_FIELD, STRENGTH_FIELD } from './combine';
 import { POST_SHOW } from './composite';
 import { FILTER_FIELDS, partialSchema } from './filters';
 
@@ -36,9 +38,14 @@ export const POST_CODES = defineCodes('gfx', {
     doc: 'Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.',
   },
   GFX_POST_BAD_COLOR: {
-    template: 'post.filters.outline.color is {color}, which is no colour: the outline darkens the surface instead',
-    fix: "give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface",
-    doc: 'Advice from the post chain when `post.filters` sets an outline colour that is none; looks are checked when they are defined.',
+    template: 'post.filters.{where} is {color}, which is no colour: the filter keeps its own (the outline darkens the surface)',
+    fix: "give hex ('#1a1a2e') or a CSS colour name ('black'); the outline's colour also takes '' to darken the surface",
+    doc: 'Advice from the post chain when `post.filters` sets a colour that is none; looks are checked when they are defined.',
+  },
+  GFX_LOOK_COMBINE_LOOP: {
+    template: '{look} is laid on itself ({through}): that layer is skipped',
+    fix: "take the layer that leads back out of the looks' combine lists (engine/gfx/post/combine.ts)",
+    doc: 'Advice from combining looks: a look whose layers lead back to it; the layer that would loop is left out.',
   },
   GFX_POST_FLAG_SLOTS: {
     template: '{missed} objects draw as the environment: the flag table has {slots} slots, all taken',
@@ -54,8 +61,9 @@ export const POST_CODES = defineCodes('gfx', {
 
 /**
  * The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id,
- * engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by
- * field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+ * engine/gfx/post/looks.ts), `post.combine` (looks laid over it, engine/gfx/post/combine.ts), `post.filters` (part of
+ * a filter chain laid over those, filter by filter and field by field), `post.strength` (how much of it all shows) and
+ * `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
  */
 export const POST_SETTINGS = {
   'post.look': {
@@ -70,6 +78,17 @@ export const POST_SETTINGS = {
     view: true,
     properties: partialSchema(FILTER_FIELDS),
     description: 'Filters laid over the look, field by field: { "pixel": { "scope": "environment", "size": 6 } }.',
+  },
+  'post.combine': {
+    ...COMBINE_FIELD,
+    view: true,
+    description:
+      'Looks laid over the look, in order, before post.filters: [{ "look": "look:noir", "amount": 0.5, "only": ["grade"] }].',
+  },
+  'post.strength': {
+    ...STRENGTH_FIELD,
+    view: true,
+    description: "How much of the look shows, 0 to 1, post.combine and post.filters included: 0 draws the scene clean.",
   },
   'post.show': {
     type: 'string',

@@ -41,7 +41,7 @@ export { SCOPES, SCREEN_SCOPES, scopeMask, COLOR_UNIT, type Scope } from './filt
 export { PALETTES, STYLIZE_KINDS } from './filterFields';
 export { PAPER_KINDS } from './filterFieldsMore';
 export { AMOUNT_SLOTS, createFilterUniforms, writeFilters, type FilterUniforms } from './filterUniforms';
-export { colorProblem, fixColor, fixLevels, levelsProblem } from './filterChecks';
+export { colorFields, colorProblem, fixColor, fixLevels, levelsProblem } from './filterChecks';
 
 /** Every filter, in the composite's order (the shading's, bloom and aa run before it; see the file comment). */
 export const FILTER_NAMES = [

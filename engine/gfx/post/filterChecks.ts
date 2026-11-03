@@ -26,42 +26,47 @@ export function levelsProblem(levels: number, where: string): string | null {
 }
 
 /**
- * Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js
- * knows (`Color.NAMES`). `new Color` also reads `rgb()` and `hsl()`; a look writes those as hex, so data keeps one form
- * of each colour, and they are refused too.
+ * Checks a colour: hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`), or '' where `empty`
+ * allows it (the outline's colour, whose '' darkens the surface instead). `new Color` also reads `rgb()` and `hsl()`;
+ * a look writes those as hex, so data keeps one form of each colour, and they are refused too.
  */
-export function colorProblem(color: string, where: string): string | null {
+export function colorProblem(color: string, where: string, empty = true): string | null {
   const known =
-    color === '' || /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(color) || Object.hasOwn(Color.NAMES, color.toLowerCase());
-  return known
-    ? null
-    : `${where} is ${JSON.stringify(color)}, which is no colour: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface`;
+    (empty && color === '') ||
+    /^#(?:[\da-f]{3}|[\da-f]{6})$/i.test(color) ||
+    Object.hasOwn(Color.NAMES, color.toLowerCase());
+  if (known) return null;
+  const give = empty ? " or '' to darken the surface" : '';
+  return `${where} is ${JSON.stringify(color)}, which is no colour: give hex ('#1a1a2e') or a CSS colour name ('black')${give}`;
 }
 
-/** Every colour field of the filters, as `[filter, field]` (the fields whose unit is `COLOR_UNIT`). */
-export function colorFields(): readonly (readonly [string, string])[] {
+/**
+ * Every colour field of the filters (the fields whose unit is `COLOR_UNIT`), as `[filter, field, empty]`: `empty`
+ * when its default is '', so '' is a choice of its own (the outline's).
+ */
+export function colorFields(): readonly (readonly [string, string, boolean])[] {
   return Object.entries(FILTER_FIELDS).flatMap(([name, field]) =>
-    Object.entries(field.properties)
-      .filter(([, f]) => (f as { unit?: string }).unit === COLOR_UNIT)
-      .map(([key]) => [name, key] as const),
+    Object.entries(field.properties as Record<string, { unit?: string; default?: unknown }>)
+      .filter(([, f]) => f.unit === COLOR_UNIT)
+      .map(([key, f]) => [name, key, f.default === ''] as const),
   );
 }
 
 /**
  * `spec` with every colour `colorProblem` refuses left out (so the outline darkens the surface, any other takes its
- * default), and the first such colour (null when there was none): a layer over a look (the setting `post.filters`)
- * is fixed and reported this way.
+ * default), and the first such colour and where it was (null when there was none): a layer over a look (the setting
+ * `post.filters`) is fixed and reported this way.
  */
-export function fixColor(spec: FilterSpec): { spec: FilterSpec; dropped: string | null } {
+export function fixColor(spec: FilterSpec): { spec: FilterSpec; dropped: { where: string; color: string } | null } {
   let out = spec;
-  let dropped: string | null = null;
-  for (const [name, key] of colorFields()) {
+  let dropped: { where: string; color: string } | null = null;
+  for (const [name, key, empty] of colorFields()) {
     const filter = (out as Record<string, Record<string, unknown> | undefined>)[name];
     const value = filter?.[key];
-    if (typeof value !== 'string' || !colorProblem(value, key)) continue;
+    if (typeof value !== 'string' || !colorProblem(value, key, empty)) continue;
     const { [key]: _gone, ...kept } = filter ?? {};
     out = { ...out, [name]: kept };
-    dropped ??= value;
+    dropped ??= { where: `${name}.${key}`, color: value };
   }
   return { spec: out, dropped };
 }

@@ -1,8 +1,8 @@
 /**
  * @file Unit tests for the look a chain draws (engine/gfx/post/resolveLook.ts): the look `post.look` names with
- * `post.filters` laid over its filters, the same objects while the settings stay and new ones once they change; a
- * perspective camera's variant, its filters and toon numbers under the same layer, the look staying the look; and a
- * layer's levels raised to 8, its advice given once.
+ * `post.filters` laid over its filters (`post.combine`'s looks under them, `post.strength` over it all), the same
+ * objects while the settings stay and new ones once they change; a perspective camera's variant, its filters and toon
+ * numbers under the same layers, the look staying the look; and a layer's levels raised to 8, its advice given once.
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
@@ -48,6 +48,20 @@ describe('the look a chain draws', () => {
     expect(resolve(true)).toBe(deep);
     settings.set('post.look', 'look:game-boy'); // no variant: a perspective camera draws the look
     expect(resolve(true)).toBe(resolve(false));
+  });
+
+  it('lays post.combine over the look, then post.filters field by field, then scales it all by post.strength', () => {
+    const { settings, resolve } = setup();
+    settings.set('post.combine', [{ look: 'look:test-main', amount: 0.5 }]);
+    const combined = resolve();
+    expect([combined.look.id, combined.chain.pixel.scope, combined.chain.pixel.amount]).toEqual(['look:clean', 'all', 0.5]); // prettier-ignore
+    expect(resolve()).toBe(combined);
+    settings.set('post.filters', { pixel: { size: 6 } });
+    settings.set('post.strength', 0.5);
+    const layered = resolve();
+    expect([layered.chain.pixel.size, layered.chain.pixel.amount]).toEqual([6, 0.25]);
+    settings.set('post.look', 'look:test-main'); // a perspective camera's variant takes the same layers
+    expect([resolve(true).chain.pixel.size, resolve(true).chain.pixel.amount]).toEqual([6, 0.5]);
   });
 
   it("raises a layer's levels under 8 to 8, its advice given once", () => {

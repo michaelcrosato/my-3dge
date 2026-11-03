@@ -24,11 +24,16 @@ describe('the chain’s settings', () => {
     expect(settings.get('quality')).toBeDefined();
   });
 
-  it('are view settings: a look id, part of a filter chain, what to show, the edge smoothing', () => {
+  it('are view settings: a look id, looks laid over it, part of a filter chain, a strength, what to show, the edge smoothing', () => {
     const registry = createRegistry();
     definePostSettings(registry);
     const settings = createSettings({ registry });
-    expect(Object.keys(POST_SETTINGS)).toEqual(['post.look', 'post.filters', 'post.show', 'post.aa']);
+    expect(Object.keys(POST_SETTINGS)).toEqual(['post.look', 'post.filters', 'post.combine', 'post.strength', 'post.show', 'post.aa']); // prettier-ignore
+    expect(settings.setText('post.combine', '[{"look":"look:hd-2d","only":["grade"]}]').value).toEqual([
+      { look: 'look:hd-2d', amount: 1, only: ['grade'], filters: {} },
+    ]);
+    expect(() => settings.set('post.combine', [{ look: 'look:hd-2d', only: ['grde'] }])).toThrow(/grade/);
+    expect(() => settings.set('post.strength', 2)).toThrow(/maximum 1/);
     expect(() => settings.set('post.aa', 'msaa')).toThrow(/traa/);
     settings.set('post.aa', 'traa');
     expect(settings.setText('post.filters', '{"pixel":{"scope":"environment","size":6}}').value).toEqual({

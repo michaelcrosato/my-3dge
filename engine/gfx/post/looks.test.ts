@@ -1,12 +1,14 @@
 /**
- * @file Unit tests for looks (engine/gfx/post/looks.ts, presets.ts): the kind and its data, seeded from shardfall's
- * presets; the posterize rule; the fallback; and that every preset sets only its own filter (or the style).
+ * @file Unit tests for looks (engine/gfx/post/looks.ts, presets.ts, presetsMore.ts): the kind and its data, seeded
+ * from shardfall's presets and Style Lab's; the posterize rule; every colour checked; the fallback; that every preset
+ * sets only its own filter (or the style), and every look made by combining names looks that exist.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { createRegistry } from '../../core/registry';
 import { FILTER_NAMES } from './filters';
 import { defineLook, defineLooks, LOOKS, type LookEntry } from './looks';
 import { PRESETS } from './presets';
+import { COMBINED_LOOKS, STYLE_PRESETS } from './presetsMore';
 
 /** A fresh registry with the looks. */
 function looks() {
@@ -16,11 +18,12 @@ function looks() {
 }
 
 describe('the look kind', () => {
-  it('holds the clean look, 21 of shardfall’s whole looks and 76 presets', () => {
+  it('holds the clean look, 21 of shardfall’s whole looks and 76 presets, Style Lab’s 31 and 8 looks combined', () => {
     const registry = looks();
     expect(Object.keys(LOOKS)).toHaveLength(22);
     expect(Object.keys(PRESETS)).toHaveLength(76);
-    expect(registry.list('look')).toHaveLength(98);
+    expect([Object.keys(STYLE_PRESETS).length, Object.keys(COMBINED_LOOKS).length]).toEqual([31, 8]);
+    expect(registry.list('look')).toHaveLength(137);
     const clean = registry.get('look', 'look:clean') as LookEntry;
     expect([clean.style, clean.sky]).toEqual(['', '']);
     for (const name of FILTER_NAMES) expect(clean.filters[name].scope, name).toBe('off');
@@ -37,7 +40,7 @@ describe('the look kind', () => {
 
   it('turns on in each preset only the filters of its group (grain with chroma), or only the style', () => {
     const registry = looks();
-    for (const id of Object.keys(PRESETS)) {
+    for (const id of [...Object.keys(PRESETS), ...Object.keys(STYLE_PRESETS)]) {
       const look = registry.get('look', id) as LookEntry;
       const on = FILTER_NAMES.filter((name) => look.filters[name].scope !== 'off');
       const allowed = look.group === 'grain' ? ['grain', 'chroma'] : look.group === 'pixel' ? ['pixel', 'palette'] : [look.group]; // prettier-ignore
@@ -58,6 +61,20 @@ describe('the look kind', () => {
       /8 levels and more/,
     );
     expect(defineLook('look:fine', { filters: { pixel: { scope: 'all', levels: 24 } } }, registry).filters.pixel.levels).toBe(24); // prettier-ignore
+  });
+
+  it('combines only looks that exist, each turning on filters, none laid on itself', () => {
+    const registry = looks();
+    for (const [id, spec] of Object.entries(COMBINED_LOOKS)) {
+      for (const layer of spec.combine ?? []) expect(registry.has('look', layer.look), `${id} lays ${layer.look}`).toBe(true); // prettier-ignore
+      expect((registry.get('look', id) as LookEntry).combine.length, id).toBeGreaterThan(1);
+    }
+  });
+
+  it('refuses a colour that is none in any filter, naming the forms it takes (GFX_POST_BAD_COLOR in a layer)', () => {
+    expect(() => defineLook('look:dusky', { filters: { duotone: { scope: 'all', dark: '' } } }, looks())).toThrow(
+      /filters\.duotone\.dark is "", which is no colour: give hex/,
+    );
   });
 
   it('refuses an outline colour that is none, naming the forms it takes (GFX_POST_BAD_COLOR in a layer)', () => {

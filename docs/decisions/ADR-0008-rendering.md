@@ -293,3 +293,62 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
 - **Evidence:** unit tests (engine/gfx/resolution.test.ts, materials/library.test.ts, textures/dataTexture.test.ts,
   engine/app/look.test.ts); the playground's specs (ADR-0025 amendment 47).
 - Plan edit: WP 13.30.
+
+## Amendment 14 (2026-11-03, WP-13.31, WP-13.32): Style Lab's filters, every filter's amount, combining looks
+
+- **Found:** the owner asked whether this engine could adopt the filters of Style Lab
+  (michaelcrosato/my-ai-3d-demo@34c6fa1), and the ability to tune and combine them, then directed: "make this your
+  own, inspect each filter, decide which ones to bring over … we just want the filters, tuning, and ability to
+  combine filters and where the filters are applied (objects, environment, characters, etc)", "I am not asking you
+  to adjust your rendering pipeline". Style Lab has 85 effects in twelve families (its `src/runtime/registry/`); it
+  compiles only the effects a look turns on and rebuilds its graph when one is switched on, the pause this engine's
+  single composite (WP 7.4) and warm-up (amendment 11) were made to avoid.
+- **Decided, effect by effect** (Style Lab's ids by family; the composite's stages are engine/gfx/post/filters.ts's):
+  - *Ported, as filters of the one composite, each switched by uniforms:* lens `distortion` (`lens`), `dof`,
+    `tiltShift` (`tiltshift`), `flare`, `anamorphic` (`streaks`), `letterbox`, `vignette` with its softness, roundness
+    and colour (`vignette`; `screen`'s plain one stays); grade `split`, `selective`, `gradientMap` (`duotone`, three
+    stops), `lift`, `gamma`, `vibrance`, `hue`, `sepia`, `bleach` (`grade`'s new numbers); media `watercolor`,
+    `misregistration` (`misregister`), `paper` (four kinds, procedural), `sharpen`; retro `crt`'s mask, glow and
+    flicker (`crt`; its scanlines and curvature were `scanlines` and `screen`), `vhs`; motion `speedLines`
+    (`speedlines`) and `boil` (`outline.boil`); lines `wobble`, `fade`, `fadeStart`, `fadeEnd` (`outline`'s).
+  - *Already here, kept as they are:* bloom, colour fringes (`chroma`), edge smoothing (`aa`), the resolution and
+    texture filtering (amendment 13), tone mapping and exposure (the renderer's), temperature, tint, contrast,
+    saturation and gain (`grade`), film grain, Kuwahara (`stylize`'s `paint`, a generalized Kuwahara), halftone and
+    hatching (`stylize`), pixelation, quantizing, dithering and palettes (`pixel`, `palette`), the inverted-hull and
+    screen lines (shells, `outline` with its creases), Sobel edges (`outline`'s depth and normal edges), ambient
+    occlusion, bounce light, reflections, god rays and fog (`ao`, `gi`, `ssr`, `air`), the sky (engine/gfx/sky.ts) and
+    the toon, flat and lit surfaces (the material styles, WP 7.2).
+  - *Left out, not filters:* the lighting family (key, ambient, shadows, time of day, practicals, blob and contact
+    shadows, vertex AO: the stage's and the sky's), the atmosphere's clouds and particles (scene content), the
+    surface family's material effects (object-space halftone, hatching and dither, colour variation, gradients, toon
+    water, wind, Gooch, matcaps, toon specular: each a shader variant, so switching one would build pipelines), the
+    retro vertex snap and affine textures (vertex shaders), `lens.fovScale` (the camera's), `lines.highlight` (a
+    gameplay selection, not a look) and the frame-rate effects `stepped` and `lowFps` (presentation timing).
+  - *Left out, needing more than the composite:* motion blur and afterimage (a history target, a new pass), the
+    anisotropic Kuwahara (a structure-tensor pass), LUTs (`.cube` files, data the owner would supply; `grade`, `split`,
+    `selective` and `duotone` cover the grades they are used for), and a line's texture and light weighting.
+- **Every filter's `amount`** (0 to 1, engine/gfx/post/filterSchema.ts): the composite mixes each filter's result with
+  its input by it (`am0`–`am6`, engine/gfx/post/filterUniforms.ts); the filters that move where a pixel looks scale
+  their size by it, the blocks are off below half, and the passes before the composite take it in their strengths
+  (`foldAmounts`). At 1 nothing changes, so every look drew as before; `grain` and `chroma` had an `amount` of their
+  own, their strength, which serves.
+- **Sizes in pixels at 1080 lines:** the new filters' blurs, offsets and lengths scale with the drawing buffer's
+  height (`unit`, engine/gfx/post/composite.ts), so a look reads the same at the engine's pixels and at full
+  resolution (amendment 13).
+- **Combining** (engine/gfx/post/combine.ts): Style Lab's recipes (a source look per family, blends, a strength,
+  overrides) become a look's `combine` (layers, each a look, an `amount`, `only` some of its filters, and `filters`
+  changing them first) and `strength`, and the view settings `post.combine` and `post.strength` over the page's look,
+  with `post.filters` between them. A layer fades a filter in where the chain has it off; where both have it on, its
+  numbers lerp (whole numbers round), its colours mix in linear light and its choices switch at half: Style Lab's
+  blend rules. A cycle is skipped with advice `GFX_LOOK_COMBINE_LOOP`. Its graph rebuilds were not adopted: every
+  blend resolves to one chain, written as uniforms, so tuning and combining build nothing.
+- **Where filters apply:** Style Lab's sixteen part kinds map onto this engine's three (characters, objects, the
+  environment) and their pairs, the scope every filter already had; a filter keeps one set of numbers for all the
+  parts it covers. Different numbers per part (an outline thinner on the scenery than on the characters) would need a
+  filter's uniforms per part: left until a game asks for it.
+- **Not verified here:** how the new filters read to the owner (the playground's Tune panel and its try check,
+  ADR-0025 amendment 50), and their cost on a real GPU; on SwiftShader each adds its taps only while it is on.
+- **Evidence:** engine/gfx/post/filters.test.ts, combine.test.ts, resolveLook.test.ts, looks.test.ts and
+  chain.test.ts; tests/e2e/filters.spec.ts (each new filter in each scope, amounts, combining live, 0 pipelines);
+  tests/e2e/post.spec.ts (every look, the new ones among them, switched with 0 pipelines).
+- Plan edits: WP 13.31, WP 13.32.

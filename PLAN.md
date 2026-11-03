@@ -3860,6 +3860,22 @@ The stress test had no sound. The engine's sound data and synth design come over
 - **Done when:** `gfx.resolution: auto`, the default, draws the look's resolution (`pixels` for a look naming none) and the other values hold for every look; a look's `textures` filters every material's maps, those made later too, and a look naming none puts back each map's own; the clean and cel looks are shot at full resolution and the pixel look at its pixels, each right after a switch; 0 pipelines after the warm-up through the three looks; the pixel look's thumbnails unchanged; every page whose looks name no resolution draws as before.
 - **Verify:** `npm test -- engine/gfx/resolution engine/gfx/materials/library engine/gfx/textures/dataTexture engine/app/look labs/playground && npm run e2e -- tests/e2e/playground-looks.spec.ts tests/e2e/playground.spec.ts`
 
+#### WP-13.31 Style Lab's filters, each with an amount
+- **Owns:** `engine/gfx/post/{filterSchema,filterFields,filterFieldsMore,filterUniforms,presetsMore}.ts` and `engine/gfx/post/shaders/{lens,media,tone,display}.ts` (new), extends `engine/gfx/post/{filters,filterChecks,composite,chain,looks}.ts`, `tests/e2e/filters.spec.ts` and `tests/e2e/filters-cases.ts` (new) (ADR-0008 amendment 14)
+- **Needs:** WP 13.30
+- **Size:** M
+- **Build** (the owner's direction of 2026-11-03, after a review of michaelcrosato/my-ai-3d-demo@34c6fa1, Style Lab: "make this your own, inspect each filter, decide which ones to bring over … we just want the filters, tuning, and ability to combine filters and where the filters are applied (objects, environment, characters, etc)", and "I am not asking you to adjust your rendering pipeline"): Style Lab's effects inspected one by one (ADR-0008 amendment 14 lists each with its call); the ones that are filters and that this engine lacked ported into the one composite pass as new filters, each with its scope by part or over the screen, and grade's and outline's new numbers; every filter given an `amount`, 0 to 1, that fades it; one-filter presets for them, and whole looks made only by combining presets (WP 13.32).
+- **Done when:** every new scoped filter changes the parts its scope names and leaves the rest alone, for the scopes all, characters, objects and environment; every new camera and screen filter changes the picture; the ID pass of every frame is the clean frame's; a filter at amount 0 draws the clean frame and at 0.5 half its change; switching any filter, scope, amount or look builds 0 pipelines and runs no warm-up; every filter's numbers have their ranges and every colour its check; files under their caps.
+- **Verify:** `npm test -- engine/gfx/post && npm run e2e -- tests/e2e/filters.spec.ts tests/e2e/post.spec.ts`
+
+#### WP-13.32 Tuning and combining looks
+- **Owns:** `engine/gfx/post/combine.ts` (new), extends `engine/gfx/post/{looks,resolveLook,settings}.ts`, `engine/index.ts`, `labs/playground/ui/tune.ts` (new) and the playground's front end and checks (ADR-0008 amendment 14, ADR-0025 amendment 50)
+- **Needs:** WP 13.31
+- **Size:** M
+- **Build** (the same direction): a look lays other looks on (`combine`: each a look, how much of it, which of its filters, changes to them first) and has a `strength`; the view settings `post.combine` and `post.strength` do the same over the look a page draws, live, beside `post.filters`, so an agent tunes and combines with `x shot --set` and `x set` as a person does in the playground's Tune panel, generated from the filters' own schema, which copies what it made as a look.
+- **Done when:** a layer fades a filter in where the chain has it off and blends its numbers, colours and choices where it is on (Style Lab's rules); a cycle is skipped with advice `GFX_LOOK_COMBINE_LOOP`; `post.combine` laying a look on the clean look draws what that look draws, `post.strength` 0 the clean frame; changing either builds no pipeline; the Tune panel lists every filter with its scope, amount and numbers, writes the settings and copies a `defineLook` the kind's check accepts; an owner check asks how it feels to use.
+- **Verify:** `npm test -- engine/gfx/post labs/playground && npm run e2e -- tests/e2e/filters.spec.ts tests/e2e/playground-ui.spec.ts`
+
 ### Phase H: Production hardening (not scheduled)
 
 Doctrine: Discovery first. Cross-platform compatibility and hardening happen when a game goes to production. When that happens, these become work packages:
