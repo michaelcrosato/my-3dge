@@ -2431,5 +2431,11 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   while the page was busy), so its Escape came after it. With the clean look at full resolution, the warm-up's busy
   part starts after the rebinds and the Escape is lost, here as on GitHub. The test now draws a frame (`render(1)`)
   after the switch, before its keys. The lost key is docs/PROGRESS.md's open issue.
-- **Evidence:** EVIDENCE48
+- **Evidence:** reproduced here: playground-ui.spec's settings test failed at the same line, and a probe of its steps
+  showed the frames held at 6 from the switch through the rebinds and the Escape at this change, and the third
+  rebind waiting out the warm-up at ba0049a; both ran the same warm-ups (1 to 3) and pipelines (46, 51, 54). After
+  the fix, here, 5 of 5: the settings test (2.9 minutes), terrain.spec's hill replay (5.4 of its 10),
+  playground.spec's gym replay (6.4 of 15) and hill-and-site walk (16.4 of 25), and playground-cameras.spec's rides
+  replay (3.8 of 10). The range replay runs past its 25 minutes on this container at any resolution (amendment 47),
+  so main's full run checks it, as at ba0049a (7.5 minutes there at the engine's pixels).
 - Plan edit: none (WP 13.30's ledger row names the fix).
