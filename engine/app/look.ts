@@ -6,6 +6,9 @@
  *   quality tier's shadow budget (engine/gfx/quality.ts), its dome as the look's gradient asks (`skyGradient`);
  * - **its shells:** the outline shells round the stage's props and bodies, as the look's `shells` ask (WP 13.24,
  *   engine/gfx/stageShells.ts);
+ * - **its resolution and textures** (WP 13.30): the mode its `resolution` asks for, drawn while `gfx.resolution` is
+ *   `auto` (engine/gfx/resolution.ts `prefer`), and every material's maps filtered as its `textures` ask
+ *   (engine/gfx/materials/library.ts `filter`), each changed only when the look's differs from the last;
  * - **its material style:** the page's style set (engine/gfx/materials/styles.ts), which the chain switches, joins the
  *   warm-up the first time a look asks for a style other than the set's own, so every warm-up from then on compiles
  *   the drawn meshes in the set's own style and in each style a look has asked for; and while it is joined, meshes
@@ -28,14 +31,17 @@
  * first (engine/gfx/warmup.ts); the style set joins the warm-up once and stays.
  *
  * @example
- * // const look = createPageLook({ post, styles, warmup: gfx.warmup, quality: () => qualityBudget('auto', false) });
+ * // const look = createPageLook({ post, styles, warmup: gfx.warmup, resolution: gfx.resolution, library: styles.library,
+ * //   quality: () => qualityBudget('auto', false) });
  * // gfx.frame(post.view(look.sync(stage, frameView))); // before each frame, warm-up and shot
  * @see tests/e2e/box-look.spec.ts
  */
+import type { MaterialLibrary } from '../gfx/materials/library';
 import type { StyleSet } from '../gfx/materials/styles';
 import type { Post } from '../gfx/post/chain';
 import type { QualityBudget } from '../gfx/quality';
 import type { FrameView } from '../gfx/renderer';
+import type { Resolution } from '../gfx/resolution';
 import type { Stage } from '../gfx/stage';
 import type { Warmup } from '../gfx/warmup';
 
@@ -51,6 +57,10 @@ export interface PageLookOptions {
   quality: () => Pick<QualityBudget, 'shadowCasters'>;
   /** Whether warm-ups compile only what the page draws (`gfx.warmUp: asked`, engine/gfx/warmup.ts); false if absent. */
   asked?: () => boolean;
+  /** The drawing buffer the look's `resolution` is asked of (engine/gfx/resolution.ts); none if absent. */
+  resolution?: Pick<Resolution, 'prefer'>;
+  /** The material library whose maps the look's `textures` filter (engine/gfx/materials/library.ts); none if absent. */
+  library?: Pick<MaterialLibrary, 'filter'>;
 }
 
 /** A page's look (see the file comment). */
@@ -78,6 +88,8 @@ export function createPageLook(options: PageLookOptions): PageLook {
       stage.sky.budget(options.quality());
       stage.sky.sky?.gradient(look.skyGradient);
       stage.shells.set(look.shells);
+      options.resolution?.prefer(look.resolution || null);
+      options.library?.filter(look.textures || null);
       const owned = !look.style || look.style === own;
       if (owned && !joined) drewOwn = true;
       if (!owned && !joined?.styles.includes(look.style)) {

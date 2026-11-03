@@ -49,8 +49,11 @@ export interface TextureContext<P = Record<string, unknown>> {
 /** Writes texel (x, y). */
 export type TexelFn = (x: number, y: number, texel: Texel) => void;
 
+/** How a texture is magnified, crispest first: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear). */
+export const TEXTURE_LOOKS = ['pixel', 'smooth'] as const;
+
 /** How a texture is magnified: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear). */
-export type TextureLook = 'pixel' | 'smooth';
+export type TextureLook = (typeof TEXTURE_LOOKS)[number];
 
 /** A generator: its parameters, the size and look it bakes at, and the function that writes its texels. */
 export interface TextureSpec<S extends Schema = Schema> {

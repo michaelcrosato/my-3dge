@@ -340,7 +340,7 @@ export async function createEngine(options: EngineOptions): Promise<Engine> {
     const styles = createStyleSet({ library: materials!, registry });
     const post = (parts.post = createPost(gfx, { settings: currentSettings(() => started), registry, log, styles }));
     const budget = () => parts.governor!.budget(settingsNow.get<QualitySetting>('quality'), input.touch?.active ?? false); // prettier-ignore
-    parts.look = createPageLook({ post, styles, warmup: gfx.warmup, quality: budget, asked: () => warmsAsked(settingsNow) }); // prettier-ignore
+    parts.look = createPageLook({ post, styles, warmup: gfx.warmup, resolution: gfx.resolution, library: materials!, quality: budget, asked: () => warmsAsked(settingsNow) }); // prettier-ignore
     post.attach(gfx.warmup);
     viewNow().stage.register(gfx.warmup, gfx.features);
     await warmCameras();

@@ -116,9 +116,39 @@ describe('createResolution', () => {
     expect(canvas.style.transform).toBe('');
   });
 
+  it("draws the look's mode under auto, the default, and pixels while the look names none", () => {
+    const { calls, renderer, canvas } = harness();
+    const settings = createSettings();
+    const resolution = createResolution({ renderer, canvas, settings, pixelRatio: () => 1 });
+    resolution.update();
+    expect(resolution.current).toMatchObject({ mode: 'pixels', width: 427, height: 240 });
+    resolution.prefer('full');
+    expect(calls.at(-1), "applied at once, so a shot after a look's switch is drawn at its size").toEqual(['size', 1280, 720, false]); // prettier-ignore
+    expect(resolution.current).toMatchObject({ mode: 'full', pixelated: false });
+    resolution.prefer('full');
+    expect(resolution.update(), 'the same mode again changes nothing').toBe(false);
+    resolution.prefer(null);
+    expect(resolution.current).toMatchObject({ mode: 'pixels', width: 427, height: 240 });
+  });
+
+  it('holds a mode the setting names, whatever the look asks', () => {
+    const { renderer, canvas } = harness();
+    const settings = createSettings();
+    const resolution = createResolution({ renderer, canvas, settings, pixelRatio: () => 1 });
+    settings.set('gfx.resolution', 'pixels');
+    resolution.prefer('full');
+    expect(resolution.current).toMatchObject({ mode: 'pixels', height: 240 });
+    settings.set('gfx.resolution', 'balanced');
+    resolution.update();
+    expect(resolution.current).toMatchObject({ mode: 'balanced', height: 360 });
+    settings.set('gfx.resolution', 'auto');
+    resolution.update();
+    expect(resolution.current, "back to the look's").toMatchObject({ mode: 'full', height: 720 });
+  });
+
   it('reads gfx.resolution, a view setting kept out of the hash', () => {
     const settings = createSettings();
-    expect(settings.get('gfx.resolution')).toBe('pixels');
+    expect(settings.get('gfx.resolution'), "the look's mode, else pixels (WP 13.30)").toBe('auto');
     expect(settings.values({ view: false })).not.toHaveProperty('gfx.resolution');
     expect(() => settings.set('gfx.resolution', 'huge')).toThrow(/CORE_BAD_SETTING|gfx\.resolution/);
   });

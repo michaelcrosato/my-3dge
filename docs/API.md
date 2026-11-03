@@ -5602,6 +5602,7 @@ For the agents who maintain the engine.
 - `RESOLUTION_SETTINGS` (const): The resolution settings: view settings, never in the hash.
 - `ResolutionMode` (type): A resolution mode: the engine's pixels, half the screen's, or all of it.
 - `ResolutionOptions` (interface): How `createResolution` measures: the canvas's CSS size and the device pixel ratio (the browser's by default).
+- `ResolutionSetting` (type): What `gfx.resolution` takes: `auto` (the look's mode, else `pixels`), or a mode held whatever the look asks.
 - `Size` (interface): A size in CSS or device pixels.
 
 ### [`engine/gfx/sceneDump.ts`](../engine/gfx/sceneDump.ts)
@@ -5787,6 +5788,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/textures/dataTexture.ts`](../engine/gfx/textures/dataTexture.ts)
 
 - `DataTextureOptions` (interface): How the textures are made: the look (the bake's own by default) and a repeat overriding the density.
+- `filterTexture` (function): Filters `texture` for `look` (see the file comment): its magnification and minification filters and anisotropy.
 - `TextureMaps` (interface): A bake's textures, by the material slot each fills.
 - `toDataTextures` (function): The textures of `bake` for a material's slots (see the file comment).
 
@@ -5941,6 +5943,7 @@ For the agents who maintain the engine.
 
 - `Texel` (interface): One texel as a generator writes it.
 - `TexelFn` (type): Writes texel (x, y).
+- `TEXTURE_LOOKS` (const): How a texture is magnified, crispest first: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear).
 - `TextureContext` (interface): What `create` is given: the parameters (defaults filled), the seed, and the size the texture bakes at.
 - `TextureLook` (type): How a texture is magnified: `pixel` keeps texels crisp (nearest), `smooth` blends them (linear).
 - `textureSpec` (function): Returns `spec` unchanged, typed: `create` sees the parameters as the schema `params` declares them.
@@ -8547,7 +8550,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/looks/clean.ts`](../labs/playground/looks/clean.ts)
 
-- `look` (const): The look `look:playground-clean`: the scene's own lit materials under the hour's sky, edges smoothed, nothing else.
+- `look` (const): The look `look:playground-clean`: the scene's own lit materials under the hour's sky at full resolution, smoothed.
 
 ### [`labs/playground/looks/pixel.ts`](../labs/playground/looks/pixel.ts)
 

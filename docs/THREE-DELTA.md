@@ -57,6 +57,14 @@ rewrites this page (PLAN.md §9, Upgrade work packages); `node x deps --check` f
 - **Uniform groups.** A TSL `uniform()` is in the object group by default, and r182 refreshes that group only when its
   object or material changes, so a value shared by still objects keeps its first draw's value. Put per-frame values
   in `renderGroup` (`uniform(v).setGroup(renderGroup)`), as three.js's own fog does.
+- **A texture's filters** reach the GPU with its next upload: after changing `magFilter`, `minFilter` or
+  `anisotropy`, set `needsUpdate`, and r182 uploads its levels again and swaps its sampler by the sampler key
+  (`WebGPUTextureUtils.updateSampler`), rebinding what samples it. On WebGPU the filters are also part of each
+  material's cache key (`RenderObject.getMaterialCacheKey`), so a render object made after the change is keyed anew.
+  Its shader, and so its pipeline, stays the same unless the texture turns unfilterable: nearest magnification with
+  `NearestFilter` minification is read with `textureLoad`, not `textureSample`. `NearestMipmapLinearFilter` reads the
+  nearest mip level: the WebGPU backend takes the mipmap filter from the minification filter (`_convertFilterMode`).
+  engine/gfx/textures/dataTexture.ts `filterTexture` does this for a look's `textures` (ADR-0008 amendment 13).
 
 ## 2. For agents who know older releases (r180 and before)
 

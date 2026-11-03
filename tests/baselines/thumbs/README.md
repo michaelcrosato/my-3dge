@@ -30,6 +30,8 @@ Golden references for how a frame looks, as text instead of images (PLAN.md §8.
   (`compare('bands')`, `compare('gradient')`, 480 × 270), the toon bands and the gradient-map baseline (WP 7.2),
   compared by tests/e2e/materials-v2.spec.ts (`UPDATE_THUMBS=1` records them).
 - `playground-<look>-<camera>` (`clean`, `cel` and `pixel`, each of `first`, `shoulder`, `follow`, `iso` and
-  `overhead`): the playground's street (labs/playground, scene `site-street`, 484 × 274 with its canvas's margin) at
-  noon, the sim paused, in each of its three looks from each of its five cameras (WP 13.24; the clean look's since
-  ADR-0025 amendment 46), compared by tests/e2e/playground-looks.spec.ts (`UPDATE_THUMBS=1` records them).
+  `overhead`): the playground's street (labs/playground, scene `site-street`) at noon, the sim paused, in each of its
+  three looks from each of its five cameras (WP 13.24; the clean look's since ADR-0025 amendment 46), compared by
+  tests/e2e/playground-looks.spec.ts (`UPDATE_THUMBS=1` records them). The pixel look's are 484 × 274 with the
+  canvas's margin; the clean and cel looks' 964 × 544, re-recorded when those looks moved to full resolution (WP
+  13.30, ADR-0025 amendment 47: their old ones still compared at 0 cells, one channel moving by up to 24).

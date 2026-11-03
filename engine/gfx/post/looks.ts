@@ -8,7 +8,10 @@
  * to it (engine/gfx/stageSky.ts), which changes the shader key, so a look with another sky warms up before it draws.
  * WP 13.24 adds the toon style's `shade` and `dither`, what a look asks of the stage (`shells`, outline shells round
  * its props and bodies, engine/gfx/stageShells.ts; `skyGradient`, the dome as a clean gradient) and its variant for
- * perspective cameras (`perspective`, a look id whose filters and toon numbers the chain draws there).
+ * perspective cameras (`perspective`, a look id whose filters and toon numbers the chain draws there). WP 13.30 adds
+ * what it asks of the whole picture: `resolution`, the mode drawn while `gfx.resolution` is `auto`
+ * (engine/gfx/resolution.ts), and `textures`, every material's maps filtered `smooth` or `pixel`
+ * (engine/gfx/materials/library.ts `filter`); the page's look applies both (engine/app/look.ts), building nothing.
  *
  * The entries are seeded from shardfall's tuned presets (`shardfall:crates/pav_view/src/looks.toml`, with
  * `look.rs:100-353`), keys renamed: its whole looks are here (`look:hd-2d`, `look:game-boy`…), and its one-section
@@ -38,6 +41,8 @@ import { registry as sharedRegistry, type Entry, type Registry } from '../../cor
 import type { EntryOf, Schema } from '../../core/schema';
 import { MATERIAL_STYLES } from '../materials/styles';
 import { TOON_LOOK } from '../materials/toon';
+import { RESOLUTION_MODES } from '../resolution';
+import { TEXTURE_LOOKS } from '../textures/types';
 import { colorProblem, FILTER_FIELDS, FILTER_NAMES, levelsProblem, type FilterSpec } from './filters';
 import { PRESETS } from './presets';
 
@@ -118,7 +123,21 @@ export const LOOK_FIELDS = {
     type: 'string',
     default: '',
     description:
-      "The look drawn instead while the camera is a perspective one (its variant: same style and sky); '' keeps this.",
+      "The look drawn instead while the camera is a perspective one (its variant: same style, sky, resolution and textures); '' keeps this.",
+  },
+  resolution: {
+    type: 'string',
+    enum: ['', ...RESOLUTION_MODES],
+    default: '',
+    description:
+      "The resolution mode it is drawn at while gfx.resolution is 'auto' (pixels, balanced or full); '' keeps the engine's pixels.",
+  },
+  textures: {
+    type: 'string',
+    enum: ['', ...TEXTURE_LOOKS],
+    default: '',
+    description:
+      "How every material's textures are filtered: 'smooth' blends their texels, 'pixel' keeps them crisp; '' keeps each texture's own.",
   },
   filters: {
     type: 'object',

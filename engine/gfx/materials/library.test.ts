@@ -3,17 +3,19 @@
  * a material compiles once; materials naming the same bake share its textures; `all()` compiles the registry's
  * materials; a missing id gets `material:default`'s material; `attach` puts a hidden probe per compiled material into
  * the scene, registers them as the warm-up entry `materials` and keys the shader key by the compiled ids (a material
- * compiled later changes the key); `dispose` detaches and frees what it made. The GPU half (0 pipelines built after
- * the warm-up) is proven by tests/e2e/materials.spec.ts.
+ * compiled later changes the key); `filter` re-filters every map for a look and puts back each one's own; `dispose`
+ * detaches and frees what it made. The GPU half (0 pipelines built after the warm-up) is proven by
+ * tests/e2e/materials.spec.ts, and a look's textures switched with none by tests/e2e/playground-looks.spec.ts.
  * @see engine/gfx/materials/library.ts
  */
-import { Scene, type Object3D } from 'three/webgpu';
+import { LinearFilter, NearestFilter, Scene, type Object3D } from 'three/webgpu';
 import { describe, expect, it, vi } from 'vitest';
 import { createLog } from '../../core/log';
 import { createRegistry } from '../../core/registry';
+import type { TextureMaps } from '../textures/dataTexture';
 import type { Warmup } from '../warmup';
 import { createMaterialLibrary } from './library';
-import { defineMaterial } from './material';
+import { defineMaterial, getMaterial, textureRefOf } from './material';
 
 /** A stand-in warm-up recording what is registered and keyed. */
 function fakeWarmup() {
@@ -89,6 +91,29 @@ describe('createMaterialLibrary', () => {
     expect(parts.get('materials')!()).toBe('material:glow,material:stone');
     attached.dispose();
     expect([entries.size, parts.size, scene.children.length]).toEqual([0, 0, 0]);
+    library.dispose();
+  });
+
+  it("filters every map for a look, those made after too, and puts back each one's own, baking nothing again", () => {
+    const reg = createRegistry();
+    defineMaterial('material:soft-brick', { map: { texture: 'texture:brick', look: 'smooth' } }, reg);
+    const library = createMaterialLibrary({ registry: reg });
+    const mapsOf = (id: string) => (library.get(id), library.maps(textureRefOf(getMaterial(id, reg).map)!));
+    const filters = (maps: TextureMaps) => [maps.map, maps.normalMap, maps.roughnessMap].map((one) => one.magFilter);
+    const [crisp, soft] = [mapsOf('material:brick'), mapsOf('material:soft-brick')];
+    expect([filters(crisp), filters(soft)]).toEqual([Array(3).fill(NearestFilter), Array(3).fill(LinearFilter)]);
+    expect(library.filter('smooth'), "the crisp map's three textures").toBe(3);
+    expect(filters(crisp)).toEqual(Array(3).fill(LinearFilter));
+    expect(library.filter('smooth'), 'the same look again').toBe(0);
+    const later = mapsOf('material:planks');
+    expect(filters(later), 'made after: filtered for the look').toEqual(Array(3).fill(LinearFilter));
+    expect(library.filter(null), "the brick's and the planks' back to crisp").toBe(6);
+    expect([filters(crisp), filters(soft), filters(later)]).toEqual([
+      Array(3).fill(NearestFilter),
+      Array(3).fill(LinearFilter),
+      Array(3).fill(NearestFilter),
+    ]);
+    expect(mapsOf('material:brick'), 'the same textures, baked once').toBe(crisp);
     library.dispose();
   });
 

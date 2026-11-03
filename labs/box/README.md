@@ -134,7 +134,7 @@ Chromium (`tests/e2e/box-audio.spec.ts`).
 | `post.look` | The look drawn (`look:clean`, the scene's own; the box's looks above). A view setting: never in the hash. |
 | `quality` | The quality tier: `auto` (`high` on a desktop), `high`, `medium` or `low`: shadow casters, bloom, pixel caps. A view setting. |
 | `gfx.effects` | Whether the fight's effects draw (true): bolts, telegraphs, trails, bursts. A view setting. |
-| `gfx.resolution` | The resolution mode: `pixels`, `balanced` or `full`. A view setting: never in the hash. |
+| `gfx.resolution` | The resolution mode: `auto` (the default: the look's `resolution`, `pixels` for a look naming none, as every box look does), `pixels`, `balanced` or `full`. A view setting: never in the hash. |
 | `time.scale` | Sim seconds per real second (1). A view setting. |
 | `touch` | The touch controls: `auto`, `on` or `off`. A view setting (below). |
 | `box.menu` | The page's menu for humans (below): `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |

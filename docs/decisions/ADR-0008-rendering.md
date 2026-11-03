@@ -260,3 +260,36 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   size cap, docs/PROGRESS.md's list), unit-tested there; the chain is 374 lines.
 - **Evidence:** gallery.spec's look test failed here as on GitHub (frame 78) and passes with the fix.
 - Plan edit: none.
+
+## Amendment 13 (2026-11-03, WP-13.30): a look's resolution and textures
+
+- **Found:** asked why the playground's clean look looked as blocky as the pixel look ("this is clean, with no
+  filter? also cel and pixel kinda look the same?"), every page drew at `gfx.resolution: pixels`, its default since
+  WP 2.1 (at most 330 lines, enlarged in whole screen pixels: my-3d2dge's stress world's `fit()`), and every
+  procedural texture was magnified nearest at 16 texels a metre, so every look was drawn as chunky as the pixel one.
+  The owner chose: "yes, full res for clean and cel, and smooth textures too".
+- **Decided:**
+  - `gfx.resolution` takes `auto`, its new default: the mode the page's look asks for, `pixels` while it names none;
+    `pixels`, `balanced` and `full` hold whatever the look asks (a page or a test pins one). Every engine look names
+    none, so every page but the playground draws as before. `RESOLUTION_MODES` stays the three modes, and `Fit.mode`
+    and `stats().mode` the one drawn.
+  - Two look fields (engine/gfx/post/looks.ts): `resolution` (`''`, `pixels`, `balanced` or `full`) and `textures`
+    (`''`, `pixel` or `smooth`: every material's maps filtered crisp or blended, `''` each map's own). The page's look
+    applies both before each frame, warm-up and shot (engine/app/look.ts): `resolution.prefer(mode)`
+    (engine/gfx/resolution.ts), applied at once so a shot after a switch is drawn at the look's size, and
+    `library.filter(look)` (engine/gfx/materials/library.ts), which re-filters every map made and filters every one
+    made later, null putting back each map's own look; neither does anything while the look's value is the last one's.
+  - A perspective variant is drawn at its base look's resolution and textures, as with its style and sky.
+- **Why neither builds a pipeline:** changing the drawing buffer's size never did (WP 2.1, measured). A texture's
+  filters reach r182's shader only through `isUnfilterable` (nearest magnification and `NearestFilter`
+  minification together read it with `textureLoad`, WGSLNodeBuilder.js); a `pixel` map minifies with
+  `NearestMipmapLinearFilter`, so both looks read it with `textureSample` through the same shader. A changed filter
+  bumps the texture's version (`filterTexture`, engine/gfx/textures/dataTexture.ts): r182 uploads its levels again
+  and swaps its sampler by the sampler key (Bindings.js, WebGPUTextureUtils.js `updateSampler`), rebinding its bind
+  group. The toon ramp (nearest both ways, engine/gfx/materials/toon.ts) is never touched.
+- **Corrected on the way:** dataTexture.ts said a `pixel` map minified with "nearest texels blended between levels";
+  r182's WebGPU backend takes the mipmap filter from the minification filter (`_convertFilterMode`), so
+  `NearestMipmapLinearFilter` reads the nearest level. Its comment says so now; nothing drawn changed.
+- **Evidence:** unit tests (engine/gfx/resolution.test.ts, materials/library.test.ts, textures/dataTexture.test.ts,
+  engine/app/look.test.ts); the playground's specs (ADR-0025 amendment 47).
+- Plan edit: WP 13.30.

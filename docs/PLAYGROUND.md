@@ -280,9 +280,11 @@ steps through them, the clean look first.
 - **Clean, the default** (the owner's direction of 2026-11-03, ADR-0025 amendment 46): the picture unstyled, the
   scene's own lit materials under the hour's sky (its sun or moon, its ambient, the streetlights after dusk), the
   sky's dome as the hour draws it, edges smoothed (the engine's FXAA); no bands, ink, outline shells, pixels or grade.
+  Drawn at the screen's full resolution with every texture blended (linear filtering; ADR-0025 amendment 47).
 - **Cel-shaded:** a light ramp per material (three bands and a rim), shadows shifted in hue rather than darkened, ink
   from depth and normals at a width scaled to the resolution, the outline shell on props and bodies (skinned bodies
-  included), a sky gradient. Ink never comes from texture brightness.
+  included), a sky gradient, at the screen's full resolution (amendment 47), its textures crisp. Ink never comes from
+  texture brightness.
 - **Pixel art:** a low-resolution render at a whole-number scale (the largest scale that gives 240 to 360 lines), 1-pixel
   ink from depth and normals, palette ramps per material with an ordered dither fixed to the world, the orthographic
   cameras snapped to the pixel grid in translation with the sub-pixel remainder carried as a smooth offset of the
@@ -293,7 +295,9 @@ steps through them, the clean look first.
 
 As built (WP 13.24, ADR-0025 amendment 33): each material's ramp is its own colour, lit, down to its shade (the colour
 shifted toward violet and saturated, the toon style's `shade`), so a ramp per material needs no data per material.
-The pixel look draws the engine's own pixels (270 lines on a 1080 or 540-line screen), the pixel filter's `size` 0
+Each look names its resolution (WP 13.30: a look's `resolution`, drawn while the view setting `gfx.resolution` is
+`auto`, its default; another value holds for every look). The pixel look draws the engine's own pixels (270 lines
+on a 1080 or 540-line screen), the pixel filter's `size` 0
 taking whatever whole block keeps 240 to 360 lines in another resolution mode; the glide moves the whole canvas by
 the remainder (the page's canvas has a margin of two drawn pixels); its perspective variant serves the platformer too.
 Night has a key: the ambient lower by night and higher at dusk (engine/gfx/daylight.ts), the streetlights' light

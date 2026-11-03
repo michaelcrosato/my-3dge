@@ -2370,3 +2370,45 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   with UPDATE_THUMBS=1, this amendment their reason, the cel and pixel ones unchanged; no shell shown; the same
   objects seen as in the cel look); playground.spec.ts, playground-ui.spec.ts, lights.spec.ts, terrain.spec.ts and
   playground-tour.spec.ts, which step through the three looks: 63 of 63 here (WP 13.29's ledger row has each).
+
+## Amendment 47 (2026-11-03, WP 13.30): the clean and cel looks at full resolution, the clean look's textures smooth
+
+- **The owner's direction (2026-11-03):** shown the clean look in the gym, they asked "ok can you explain to me why
+  the game looks like this? this is clean, with no filter? also cel and pixel kinda look the same?", then why the
+  engine renders everything like that. Told why (every look drawn at the engine's `pixels` resolution, carried over
+  from my-3d2dge's stress world, and every texture magnified nearest), they chose "yes, full res for clean and cel,
+  and smooth textures too". The offer was full resolution for the clean and cel looks, the pixel look keeping its
+  pixels, and the clean look's textures blended.
+- **Built:** the engine's half is ADR-0008 amendment 13 (`gfx.resolution: auto`, a look's `resolution` and
+  `textures`). `look:playground-clean` names `resolution: 'full'` and `textures: 'smooth'`, and
+  `look:playground-cel` names `resolution: 'full'`. `look:playground-pixel` names `resolution: 'pixels'` (the drawn
+  pixel its snap and glide work in), rather than leaving it to `auto`'s fallback. Its variant for the perspective
+  cameras is drawn at its base look's resolution.
+- **Calls:**
+  - The cel look keeps crisp texels: the offer smoothed only the clean look's textures. If the owner wants them
+    smooth too, it is one field of cel.ts (`textures: 'smooth'`). The new owner check `full-resolution` asks that,
+    whether the three looks now read apart, and whether the game stays smooth on their device. Full resolution is
+    the heaviest mode; the quality tier's pixel caps still apply (engine/gfx/quality.ts).
+  - The ink and the shells keep their thickness on screen: their widths are in pixels at 270 lines, scaled to the
+    picture's lines in whole pixels (WP 13.24), so they are three pixels wide at full resolution on a 720-line screen.
+  - The owner check `clean-look` now says full resolution and smooth textures.
+  - The specs keep testing the looks as shipped, at full resolution, with none pinned to `pixels`. On GitHub's last
+    full run (ba0049a) the playground's specs took 2 to 18 minutes a file against a shard's 120.
+  - tests/e2e/playground-looks.spec.ts shoots each look at its resolution, read from the page's canvas right after
+    each switch, since `__engine.stats()` carries no mode. Its shells test now reads the pixel look's lines while the
+    pixel look is drawn: it had read them after the clean shot, which was the same buffer while every look drew at
+    the engine's pixels.
+- **Files outside Owns:** docs/PLAYGROUND.md §5.2, labs/box/README.md (the `gfx.resolution` row),
+  tests/baselines/thumbs/README.md, docs/PROGRESS.md.
+- **Evidence:** labs/playground/looks/looks.test.ts. tests/e2e/playground-looks.spec.ts 3 of 3: each look shot at
+  its resolution right after its switch (the clean and cel looks at the screen's 544 lines, the pixel look at 274);
+  its rounds built 58, 3 and 3 pipelines, as before the change. The clean and cel looks' ten noon thumbnails were
+  re-recorded at 964 × 544 with UPDATE_THUMBS=1, this amendment their reason (their old ones still compared at 0
+  cells, one channel moving by up to 24). The pixel look's five are kept as recorded and compare at 0 cells. At noon
+  from isometric, the clean look draws 18,617 colours, the cel 1,212 and the pixel 345; from the follow camera,
+  44,223, 9,439 and 945. The playground's other specs that step through the looks: WP 13.30's ledger row. Here,
+  playground.spec's range test runs past its 25 minutes at either resolution: the range scene's frames cost about
+  1.6 s at the engine's pixels on this container, the same at the base commit (a probe of 30 frames a look: 1.55 to
+  1.68 s at ba0049a, 1.57 to 1.78 s with this change, 71 then 83 pipelines in both), and full resolution costs about
+  1.6 times that (the clean look 2.6 s, the pixel look 1.6 s). On GitHub's runner the test took 7.5 minutes at
+  ba0049a, so it is left as shipped, for main's full run to check.

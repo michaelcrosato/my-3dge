@@ -1,10 +1,10 @@
 /**
  * @file Unit tests for engine/app/look.ts (T1, PLAN.md WP 7.8, WP 13.18): before each frame the page's look shows the
- * look's sky on the stage with the quality budget, its dome's gradient and its outline shells (WP 13.24); the style
- * set joins the warm-up once, at the first look whose style
- * is not the set's own, with that style and its own, adds each later look's new style, and from then on re-points
- * what shows to the style drawn; a look in the set's own style, or none, never joins it; the view comes back as it
- * was given.
+ * look's sky on the stage with the quality budget, its dome's gradient and its outline shells (WP 13.24), and asks
+ * the drawing buffer for its resolution and the material library for its textures' filtering (WP 13.30); the style
+ * set joins the warm-up once, at the first look whose style is not the set's own, with that style and its own, adds
+ * each later look's new style, and from then on re-points what shows to the style drawn; a look in the set's own
+ * style, or none, never joins it; the view comes back as it was given.
  * @see engine/app/look.ts
  */
 import { Scene } from 'three/webgpu';
@@ -17,7 +17,9 @@ import { createPageLook } from './look';
 /** A page look over fakes that record what it did; `asked` is the warm-up's `gfx.warmUp: asked`. */
 function fakes(start: Partial<LookEntry>, { asked = false } = {}) {
   const calls: string[] = [];
-  const plain = { sky: '', style: '', skyGradient: 0, shells: { width: 0, color: '#141018' } };
+  /** What the look asked of the drawing buffer and the material library. */
+  const asks: string[] = [];
+  const plain = { sky: '', style: '', skyGradient: 0, shells: { width: 0, color: '#141018' }, resolution: '', textures: '' }; // prettier-ignore
   let look = { ...plain, ...start } as LookEntry;
   const warmed: MaterialStyle[] = [];
   const styles = {
@@ -50,9 +52,11 @@ function fakes(start: Partial<LookEntry>, { asked = false } = {}) {
     warmup: {} as Warmup,
     quality: () => ({ shadowCasters: 1 }),
     asked: () => asked,
+    resolution: { prefer: (mode) => void asks.push(`resolution ${mode}`) },
+    library: { filter: (textures) => (asks.push(`textures ${textures}`), 0) },
   });
   const use = (next: Partial<LookEntry>) => void (look = { ...plain, ...next } as LookEntry);
-  return { calls, page, stage, use };
+  return { calls, asks, page, stage, use };
 }
 
 describe('the page look', () => {
@@ -62,6 +66,16 @@ describe('the page look', () => {
     expect(page.sync(stage, view)).toBe(view);
     expect(calls).toEqual(['show sky:hall', 'budget 1', 'gradient 1', 'shells 1 #1a1420']);
     expect(page.styled).toBe(false);
+  });
+
+  it("asks for the look's resolution and textures, and for none of either when it names none", () => {
+    const { asks, page, stage, use } = fakes({ resolution: 'full', textures: 'smooth' });
+    page.sync(stage, { scene: stage.scene });
+    use({ resolution: 'pixels' });
+    page.sync(stage, { scene: stage.scene });
+    use({});
+    page.sync(stage, { scene: stage.scene });
+    expect(asks).toEqual(['resolution full', 'textures smooth', 'resolution pixels', 'textures null', 'resolution null', 'textures null']); // prettier-ignore
   });
 
   it('joins the style set to the warm-up once, at the first look in another style, then keeps re-pointing', () => {

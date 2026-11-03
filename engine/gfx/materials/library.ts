@@ -12,8 +12,13 @@
  * first time builds no pipeline (the budget is 0 after the warm-up). Meshes with other attributes or instancing
  * register their own objects (WP 2.4's level meshes, WP 3.8's instancing service).
  *
+ * A look's textures (`filter(look)`, the page's look, engine/app/look.ts, WP 13.30): every map made, and every one
+ * made after, is filtered for the look, `smooth` blending its texels and `pixel` keeping them crisp, and null puts
+ * back each map's own look (engine/gfx/textures/dataTexture.ts `filterTexture`). Nothing is baked again and no
+ * pipeline is built: the materials keep their maps, whose samplers r182 swaps.
+ *
  * Invariants: one compiled material per entry id (a missing id gets `material:default`'s, after its warning); maps
- * are keyed by their bake key, look and repeat; `dispose()` frees every material, texture and probe it made and
+ * are keyed by their bake key, own look and repeat; `dispose()` frees every material, texture and probe it made and
  * detaches from the warm-up. Nothing here reaches the sim.
  *
  * @example
@@ -27,7 +32,8 @@
 import { BoxGeometry, Group, Mesh, type Material, type Object3D } from 'three/webgpu';
 import { registry as sharedRegistry, type Registry } from '../../core/registry';
 import { bakeKey, bakeTexture, textureSampler } from '../textures/bake';
-import { toDataTextures, type TextureMaps } from '../textures/dataTexture';
+import { filterTexture, toDataTextures, type TextureMaps } from '../textures/dataTexture';
+import type { TextureLook } from '../textures/types';
 import type { Warmup } from '../warmup';
 import { compileMaterial } from './compile';
 import { bakeRefOf, getMaterial, materialKind, textureRefOf, type MapRef, type MaterialEntry } from './material';
@@ -40,6 +46,11 @@ export interface MaterialLibrary {
   all(): Material[];
   /** The baked maps of a material's map (shared by every material naming the same bake, look and repeat). */
   maps(map: MapRef): TextureMaps;
+  /**
+   * Filters every map made, and every one made after, for `look`; null puts back each map's own look (see the file
+   * comment). Returns how many textures changed.
+   */
+  filter(look: TextureLook | null): number;
   /** The ids compiled so far, sorted. */
   readonly ids: readonly string[];
   /** Puts the probes into `scene` and registers them with `warmup` (see the file comment); `dispose()` undoes it. */
@@ -53,7 +64,10 @@ export function createMaterialLibrary(options: { registry?: Registry } = {}): Ma
   const registry = options.registry ?? sharedRegistry;
   materialKind(registry);
   const materials = new Map<string, Material>();
-  const textures = new Map<string, TextureMaps>();
+  /** The maps made, each with its own look. */
+  const textures = new Map<string, { maps: TextureMaps; own: TextureLook }>();
+  /** The look every map is filtered for, or null for each one's own. */
+  let filtered: TextureLook | null = null;
   const probes = new Group();
   probes.name = 'materials:probes';
   probes.visible = false;
@@ -81,13 +95,23 @@ export function createMaterialLibrary(options: { registry?: Registry } = {}): Ma
     maps(map) {
       const ref = bakeRefOf(map);
       const key = JSON.stringify([bakeKey(textureSampler(ref, registry)), map.look, map.repeat]);
-      let maps = textures.get(key);
-      if (!maps) {
+      let made = textures.get(key);
+      if (!made) {
         const bake = bakeTexture(ref, registry);
-        maps = toDataTextures(bake, { look: map.look ?? undefined, repeat: map.repeat ?? undefined });
-        textures.set(key, maps);
+        const own = map.look ?? bake.look;
+        made = { maps: toDataTextures(bake, { look: filtered ?? own, repeat: map.repeat ?? undefined }), own };
+        textures.set(key, made);
       }
-      return maps;
+      return made.maps;
+    },
+    filter(look) {
+      if (look === filtered) return 0;
+      filtered = look;
+      let changed = 0;
+      for (const { maps, own } of textures.values()) {
+        for (const texture of Object.values(maps)) if (texture && filterTexture(texture, look ?? own)) changed++;
+      }
+      return changed;
     },
     get ids() {
       return [...materials.keys()].sort();
@@ -112,7 +136,7 @@ export function createMaterialLibrary(options: { registry?: Registry } = {}): Ma
     dispose() {
       for (const undo of detach.splice(0)) undo();
       for (const material of materials.values()) material.dispose();
-      for (const maps of textures.values()) {
+      for (const { maps } of textures.values()) {
         for (const texture of Object.values(maps)) texture?.dispose();
       }
       materials.clear();

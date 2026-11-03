@@ -1,8 +1,8 @@
 /**
  * @file Unit tests for the bake's three.js textures (engine/gfx/textures/dataTexture.ts), in Node: each slot is an
  * RGBA byte `DataTexture` with its full mip chain and no GPU mipmap generation, repeating by density on UVs in metres
- * (or the repeat given), sRGB for colour and data for normals and roughness, filtered as the look says; there is an
- * emissive texture only for a texture that glows.
+ * (or the repeat given), sRGB for colour and data for normals and roughness, filtered as the look says and
+ * re-filtered for another (`filterTexture`); there is an emissive texture only for a texture that glows.
  * @see engine/gfx/textures/dataTexture.ts
  */
 import {
@@ -19,7 +19,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../core/registry';
 import { bakeTexture } from './bake';
-import { toDataTextures } from './dataTexture';
+import { filterTexture, toDataTextures } from './dataTexture';
 import { defineTexture } from './texture';
 
 describe('toDataTextures', () => {
@@ -75,6 +75,18 @@ describe('toDataTextures', () => {
       minFilter: LinearMipmapLinearFilter,
       anisotropy: 4,
     });
+  });
+
+  it('re-filters a texture for another look, marking it for upload only when a filter changed', () => {
+    const { map } = toDataTextures(bakeTexture('texture:brick'));
+    const made = map.version;
+    expect(filterTexture(map, 'smooth')).toBe(true);
+    expect(map).toMatchObject({ magFilter: LinearFilter, minFilter: LinearMipmapLinearFilter, anisotropy: 4 });
+    expect(map.version, 'marked: the renderer swaps its sampler').toBe(made + 1);
+    expect(filterTexture(map, 'smooth'), 'already smooth').toBe(false);
+    expect(map.version).toBe(made + 1);
+    expect(filterTexture(map, 'pixel')).toBe(true);
+    expect(map).toMatchObject({ magFilter: NearestFilter, minFilter: NearestMipmapLinearFilter, anisotropy: 1 });
   });
 
   it('takes a repeat per UV unit for geometry whose UVs run 0 to 1', () => {

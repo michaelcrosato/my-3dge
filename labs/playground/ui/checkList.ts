@@ -248,9 +248,17 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'clean-look',
     kind: 'try',
     title: 'The clean look, the default',
-    what: 'The playground now opens in the clean look you asked for: the plain materials in the hour’s light, the edges smoothed, no outlines, bands or pixels. Walk the block and the house in it. Is it the clean default you wanted, or should it change (crisper, softer, more colour)?', // prettier-ignore
+    what: 'The playground now opens in the clean look you asked for: the plain materials in the hour’s light, drawn at your screen’s full resolution with smooth textures and smoothed edges, no outlines, bands or pixels. Walk the block and the house in it. Is it the clean default you wanted, or should it change (crisper, softer, more colour)?', // prettier-ignore
     from: item(10),
     go: { query: { scene: 'site', 'post.look': 'look:playground-clean', 'playground.hour': '12' } },
+  },
+  {
+    id: 'full-resolution',
+    kind: 'try',
+    title: 'Full resolution for clean and cel',
+    what: 'The clean and cel looks now draw at your screen’s full resolution; only the pixel look keeps its big pixels. P steps through the three: do they look different enough now? The cel look keeps crisp textures: should they be smooth like the clean look’s? And does the game stay smooth on your device?', // prettier-ignore
+    from: item(10),
+    go: { query: { scene: 'site', 'playground.hour': '12' } },
   },
   {
     id: 'cel-brick',

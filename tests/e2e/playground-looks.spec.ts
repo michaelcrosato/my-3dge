@@ -1,10 +1,12 @@
 /**
- * @file T2 for the playground's three looks (PLAN.md WP 13.24, WP 13.29; docs/PLAYGROUND.md §5.2 and §9.1's look
- * metrics), on its street (labs/playground/?scene=site-street), the sim paused:
+ * @file T2 for the playground's three looks (PLAN.md WP 13.24, WP 13.29, WP 13.30; docs/PLAYGROUND.md §5.2 and §9.1's
+ * look metrics), on its street (labs/playground/?scene=site-street), the sim paused:
  * - Look metrics and thumbnails per look and camera: each of the five cameras in each look, at noon and at 22:00,
- *   shot with its look metrics: never blank or empty, the player in view in the four that show him, night darker than
- *   noon; the noon shots' text thumbnails as recorded (tests/baselines/thumbs/playground-<look>-<camera>.json, written
- *   with UPDATE_THUMBS=1); every metric, note and thumbnail in out/e2e/playground-looks/report.json; the night round
+ *   shot at the look's resolution (`DRAWN_AT`, `gfx.resolution` left at `auto`: each shot after a switch drawn at the
+ *   size its look asks for) with its look metrics: never blank or empty, the player in view in the four that show
+ *   him, night darker than noon; the noon shots' text thumbnails as recorded
+ *   (tests/baselines/thumbs/playground-<look>-<camera>.json, written with UPDATE_THUMBS=1); every metric, note and
+ *   thumbnail in out/e2e/playground-looks/report.json; the night round
  *   builds nothing more than the same round shot again at noon (`ROUNDS`, each from the noon round's world through
  *   `capture` and `restore`, so only the hour differs): a shot builds its own passes once from each camera, and its ID
  *   pass a pipeline again after a switch between the toon looks and the clean look (docs/PROGRESS.md), so the second
@@ -29,6 +31,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import type { LookMetrics, LookNote } from '../../engine/gfx/lookMetrics';
+import { PIXEL_LINES } from '../../engine/gfx/resolution';
 import { compareThumbnails, type Thumbnail } from '../../engine/gfx/thumbnail';
 import { PLAYGROUND_LOOKS } from '../../labs/playground/views';
 import { expect, test, type Harness } from './fixtures';
@@ -49,6 +52,15 @@ const VIEWS = [
   ...CAMERAS.flatMap((camera) => LOOKS.slice(1).map((look) => ({ camera, look }))),
   ...CAMERAS.map((camera) => ({ camera, look: LOOKS[0] })),
 ];
+/**
+ * The resolution each look is drawn at (its `resolution`, WP 13.30): the clean and cel looks full (every screen line
+ * drawn, smoothly enlarged), the pixel look the engine's pixels (at most `PIXEL_LINES` lines, enlarged unsmoothed).
+ */
+const DRAWN_AT: Record<string, string> = {
+  'look:playground-clean': 'full',
+  'look:playground-cel': 'full',
+  'look:playground-pixel': 'pixels',
+};
 /** The rounds' hours: noon, noon again (what the views build when shot again) and night, each from the same world. */
 const ROUNDS = [HOURS[0], HOURS[0], HOURS[1]] as const;
 /**
@@ -140,6 +152,18 @@ function differs(a: Buffer, b: Buffer, width: number, height: number, dx = 0, dy
   return { share: changed / seen, changed };
 }
 
+/**
+ * The page's drawing buffer now: its lines (the canvas's height), the screen's lines under the canvas (its CSS height
+ * at the device pixel ratio) and whether the browser enlarges it unsmoothed (engine/gfx/resolution.ts).
+ */
+function drawingBuffer(page: Page): Promise<{ lines: number; screen: number; pixelated: boolean }> {
+  return page.evaluate(() => {
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+    const screen = Math.round(canvas.clientHeight * devicePixelRatio);
+    return { lines: canvas.height, screen, pixelated: canvas.style.imageRendering === 'pixelated' };
+  });
+}
+
 /** The page's glide, in drawn pixels (right, down): the canvas's CSS transform over one drawn pixel's CSS size. */
 function glide(page: Page): Promise<[number, number]> {
   return page.evaluate(() => {
@@ -189,6 +213,10 @@ test('every look from every camera, by day and by night: within its bounds, its 
     const start = (await page.evaluate(() => __engine.stats())).pipelines;
     for (const { camera, look } of VIEWS) {
       const shot = await shoot(page, look, camera, hour, { ids: true, metrics: true, thumbnail: true });
+      const buffer = await drawingBuffer(page);
+      const full = buffer.lines === buffer.screen && !buffer.pixelated;
+      const chunky = buffer.lines <= PIXEL_LINES && buffer.pixelated;
+      expect({ full, chunky, shot: shot.height }, `${look} from ${camera}: shot at its resolution`).toEqual({ full: DRAWN_AT[look] === 'full', chunky: DRAWN_AT[look] === 'pixels', shot: buffer.lines }); // prettier-ignore
       if (round === 1) continue; // the noon views again: only what they build counts
       const name = `playground-${look.replace('look:playground-', '')}-${camera.replace(/^cam3?=/, '')}`;
       const where = `${name} at ${hour}:00`;
@@ -303,10 +331,11 @@ test("the cel look's shells round the props and bodies, none in the others, the 
   const inCel = await shells();
   const pixel = await shoot(page, 'look:playground-pixel', 'cam=iso', null, options);
   const inPixel = await shells();
+  // the pixel look's own lines, read while it is drawn: the clean and cel looks draw at full resolution (WP 13.30)
+  const lines = await page.evaluate(() => (document.querySelector('canvas') as HTMLCanvasElement).height);
   const clean = await shoot(page, 'look:playground-clean', 'cam=iso', null, options);
   const inClean = await shells();
   expect(await glide(page), 'the clean look never glides').toEqual([0, 0]);
-  const lines = await page.evaluate(() => (document.querySelector('canvas') as HTMLCanvasElement).height);
   console.log(`shells: cel ${JSON.stringify(inCel)}, pixel ${JSON.stringify(inPixel)}, clean ${JSON.stringify(inClean)}, lines ${lines}`); // prettier-ignore
   expect(inCel.shown, 'the cel look shows its shells').toBeGreaterThan(10);
   expect([inPixel.shown, inPixel.all]).toEqual([0, inCel.all]);
