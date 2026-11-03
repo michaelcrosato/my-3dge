@@ -29,10 +29,12 @@ page reads the sim and never writes it.
 
 **The world, `w`,** is what systems get:
 
-- `defineComponent('gem', { description, fields })` declares a component: typed fields with defaults. `w.spawn({ gem:
-  { x, z } })` returns an id; `w.query('gem')` returns the entities holding it, in id order; `w.get`, `w.add`,
-  `w.remove` and `w.despawn` do the rest. A component with `x` and `z` in metres is drawn as a stand-in box, which
-  also reads `y` (its bottom), `yaw`, `size` (its side, 0.5 m) and `material` (an id) when the component has them.
+- `defineComponent('gem', { description, fields })` declares a component: typed fields (`number`, `integer`,
+  `string`, `boolean`) with defaults. `w.spawn({ gem: { x, z } })` returns an id; `w.query('gem')` returns the
+  entities holding it, in id order; `w.get(id)` the entity (`.gem`), `w.add(id, 'gem', values)`, `w.remove(id,
+  'gem')` and `w.despawn(id)` do the rest. A component with `x` and `z` in metres is drawn as a stand-in box, which
+  also reads `y` (its bottom), `yaw`, `size` (its side, 0.5 m) and `material` (an id): name a place you only keep
+  otherwise.
 - Systems run in phases, in order: `intents`, `ai`, `anim`, `physics`, `readback`, `rules`:
   `w.systems.add('game.collect', collect, { phase: 'rules' })` runs after the physics moved the bodies.
 - `w.emit('gem', payload)` delivers at the end of the step to `w.events.on('gem', …)`; a page reads
@@ -50,8 +52,25 @@ Space jumps, Shift dashes.
 **The HUD** is the page's: `engine.ui.hud(id, text, { at })` sets a line at one of six places (`top-left`, `top`,
 `top-right`, `bottom-left`, `bottom`, `bottom-right`), and `null` as its text removes it.
 
+**Particles, sound and lights.** The sim says what happened with events; the page turns them into particles and
+sound, so play stays reproducible:
+
+- A sim event bursts every emitter whose `events` names its type, where its payload says (`position`, or `x`, `y`,
+  `z`): `w.emit('hit', { x, y: 1, z })` throws sparks. To burst others on your own event, lay them into an emitter:
+  `defineEmitter('emitter:lit', { events: ['lit'], layers: [{ emitter: 'emitter:fireflies', count: 24 }] })`, then
+  `w.emit('lit', { x, y: 1.2, z })`.
+- Sound plays in the page: `const audio = createAudio();` once (it starts at the player's first key or click), then
+  `audio.play('sfx:coin')`, or in `onFrame` each new event whose payload names one, `w.emit('lit', { sfx:
+  'sfx:powerup', x, z })` in the sim: `for (const e of frame.world.events.trace()) if (e.seq > heard) { heard =
+  e.seq; audio.event(e.type, e.payload); }`.
+- A prop with a light (`prop:lantern`, `prop:lamp`, …) is switchable when spawned with `{ on }` or `{ group }`:
+  `const id = spawnProp(w, { prop: 'prop:lantern', at: [x, 0, z], yaw: 0 }, { on: false })`, then
+  `w.get(id).propLight.on = true` lights it, and `switchGroup(w, group, true)` a group.
+
 **Characters, physics and the rest** are in the API below, area by area, and every built-in id under [Built-in ids
-and the level legend](#built-in-ids-and-the-level-legend): levels as text (`compileLevel`) and sites of buildings on a terrain (`defineSite`),
+and the level legend](#built-in-ids-and-the-level-legend): levels as text (`compileLevel`: a tile at column c and
+row r is at x = (c + 0.5) × tile, z = (r + 0.5) × tile; `level.spawns` are `{ name, position }`, `'hero'` and `'1'`
+to `'9'`) and sites of buildings on a terrain (`defineSite`),
 characters (`createCharacter`, Apex Legends' movement with `{ movement: 'movement:apex' }`: sprint, slide, mantle,
 climb; `spawnActor`), physics (`physicsOf(w)` and its `.raycast`, `.overlap`), props, ladders, ziplines, doors,
 windows and switches, crowds and steering, combat, melee and firearms (`addMelee`, `defineWeapon`), materials and
@@ -99,9 +118,11 @@ same game can be a storybook, a film or pixel art with nothing else changed, and
 - **Read it back:** `__engine.look()` gives the look drawn now: its id, the looks laid on, the strength, and every
   filter that is on with its scope, amount and numbers; its `filters` pasted into a `defineLook` keeps the picture.
 
-How they combine: a look's `combine` goes on first, layer by layer, then its own `filters`, which win where they set a
-filter (so `look:warm-tale` inks only the characters, though `look:storybook` inks everything). Laying at an `amount`
-below 1 moves numbers that far, mixes colours, and switches choices (a scope, a kind) from 0.5. A filter stays off
+How they combine: a look's `combine` goes on first, layer by layer, then its own `filters`, each of which replaces a
+layer's filter of its name whole, its unwritten fields at their defaults (so `look:warm-tale` inks only the
+characters, though `look:storybook` inks everything). A layer at an `amount` below 1 fades in a filter the chain lacks
+(its `amount` scaled) and moves one the chain has that far: numbers move, colours mix, and choices (a scope, a kind)
+switch from 0.5. A filter stays off
 until something gives it a scope: `grade: { temperature: 0.2 }` alone does nothing. A layer never turns a filter off,
 nor does `scope: 'off'` in a look's own `filters`: leave a layer's filter out with `only`, or set its scope to `'off'`
 in that layer's `filters`; `post.filters`, applied last, turns one off outright. Only filters are laid on: the style,
@@ -528,7 +549,7 @@ at: [x, 0, z], yaw: 0 })`); `__engine.describe('<kind>')` in a running page list
 - `geometry:` box, frustum, limb, pillar, ramp, ring, roundedBox. Shapes props, levels and bodies name by id.
 - `prop:` banner, barrel, bench, brazier, chair, chest, crate, door, garageDoor, lamp, lantern, pane, pillar, sconce, statue, switch, table. Props: things that stand in a level, as data: meshes (geometry and material by id), a body, an optional light spot, where a level places them, and interaction hooks.
 - `light:` torch. What a level's light spot shines with.
-- `emitter:` bits, block, bubbles, confetti, destroyed, dust, embers, explosion, fire, fireflies, fountain, glass, glints, hit, impact, land, magic, rain, shatter, shot, slain, slam, smoke, snow, sparks, splinters, steam. Emitters.
+- `emitter:` bits, block, bubbles, confetti, destroyed, dust, embers, explosion, fire, fireflies, fountain, glass, glints, hit, impact, land, magic, rain, shatter, shot, slain, slam, smoke, snow, sparks, splinters, steam. Emitters. Burst by a sim event of the type: block, destroyed, explosion, glass, hit, land, shatter, shot, slain, slam, splinters. Running at a rate (lay them into your own): bubbles, confetti, dust, embers, fire, fireflies, fountain, magic, rain, smoke, snow, sparks, steam.
 - `telegraph:` arc, cone, line, ring. Telegraphs.
 - `sfx:` blip, bodyFall, boom, bump, cancel, charge, climbGrip, coin, confirm, crouchCloth, die, door, doorBreak, doorClose, doorLocked, doorOpen, drawGun, drumCrash, drumHat, drumKick, drumOpenHat, drumSnare, drumTom, dryFire, explode, glassBreak, grab, heal, hit, holsterGun, hurt, impactBody, impactConcrete, impactDirt, impactGlass, impactMetal, impactWood, jump, jump2, key, kick, kickHit, ladderRung, land, landBody, laser, launch, mantle, oneup, pause, pickup, pistolShot, powerup, punch, punchHit, reload, rifleShot, secret, select, shoot, slide, step, stepCarpet, stepConcrete, stepGrass, stepGravel, stepMetal, stepTile, stepWood, stomp, swing, swish, switchClick, text, warp, whoosh, wind, windowSlide, zipAttach, zipRun. A sound effect.
 - `song:` adventure, boss, dungeon, title, victory. A looping tune in tracker notation.

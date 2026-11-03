@@ -144,6 +144,15 @@ fields, and `events.trace`, written as a property though it is a function. What 
 - **The browser's cache**: jsDelivr serves `@main` with a 7-day browser cache, so lean/README.md says so beside its
   12-hour refresh; a commit in place of `main` is the sure pin.
 
+A second fresh agent, barred from the engine's source and given the file as it then stood, wrote a lantern-lighting
+game that ran at the first try too (its HUD, clock and look as asked), but it had to guess the three calls at its
+heart: bursting particles on an event, playing a sound, switching a prop's light. The file now says how ("Particles,
+sound and lights": an emitter's `events` and `layers`, `createAudio` with `audio.event` on the trace, `spawnProp`'s
+`{ on }` and `propLight.on`), which emitters burst on events and which run at a rate, `w.get`/`w.add`/`w.remove`, a
+level's coordinates and spawns, and that a look's own filter replaces a layer's whole. tests/e2e/lean.spec.ts's third
+test writes those recipes into a copy of game.html and checks that the event bursts 24 fireflies and the lantern
+lights.
+
 Not taken: each kind's fields in the file (materials alone have dozens; `__engine.describe` answers in a page) and a
 way to test a lean game without a browser (the lean promise is nothing to install; the full workspace has the checks).
 

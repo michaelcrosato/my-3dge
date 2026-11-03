@@ -54,10 +54,19 @@ async function engineRegistry(): Promise<Registry> {
   return (await import('../../engine/core/registry')).registry;
 }
 
-/** The block's line for `kind`: its ids without their prefix, then what the kind is. */
+/** The block's line for `kind`: its ids without their prefix, then what the kind is (and how emitters run). */
 function kindLine(registry: Registry, kind: string): string {
   const ids = registry.list(kind).map((entry) => entry.id.slice(kind.length + 1));
-  return `- \`${kind}:\` ${ids.join(', ')}. ${firstClause(String(registry.describe(kind).description ?? ''))}`;
+  const line = `- \`${kind}:\` ${ids.join(', ')}. ${firstClause(String(registry.describe(kind).description ?? ''))}`;
+  return kind === 'emitter' ? `${line} ${emitterUse(registry)}` : line;
+}
+
+/** Which emitters a sim event bursts (by its type) and which run continuously: the entries' `events` and `rate`. */
+function emitterUse(registry: Registry): string {
+  const emitters = registry.list('emitter') as unknown as { id: string; events: string[]; rate: number }[];
+  const burst = emitters.flatMap((emitter) => emitter.events).sort();
+  const running = emitters.filter((emitter) => emitter.rate > 0).map((emitter) => emitter.id.slice('emitter:'.length));
+  return `Burst by a sim event of the type: ${burst.join(', ')}. Running at a rate (lay them into your own): ${running.join(', ')}.`; // prettier-ignore
 }
 
 /** The level legend, a line a glyph, the spawn markers on one line. */
