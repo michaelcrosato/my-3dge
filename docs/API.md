@@ -257,6 +257,7 @@ game agent's manual.
 - `ColliderSpec` (interface from [`engine/physics/world.ts`](../engine/physics/world.ts)): One collider of a body: a shape where the body puts it, and its material.
 - `COLLISION_GROUPS` (const from [`engine/physics/groups.ts`](../engine/physics/groups.ts)): The collision groups: each one's membership bit and the groups it touches.
 - `Color` (re-export from `three/webgpu`): three.js's colour (linear RGB floats inside; a hex given to it is sRGB).
+- `CombineLayer` (interface from [`engine/gfx/post/combine.ts`](../engine/gfx/post/combine.ts)): One layer of a combination (see the file comment).
 - `Combo` (class from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A chain of attacks (a 3-hit punch string, a sword combo): `press` during one hit's recover, or within `window` seconds after it ends, flows into the next; otherwise the chain starts over.
 - `ComboState` (interface from [`engine/anim/attack.ts`](../engine/anim/attack.ts)): A combo as plain data: the hit playing (−1 none), seconds since the last hit ended, the hit's own state.
 - `compileBody` (function from [`engine/gfx/puppets/compile.ts`](../engine/gfx/puppets/compile.ts)): Compiles `body` (or its id) for `build` (a skeleton, a build or a build id; `build:chibi` by default).
@@ -458,8 +459,9 @@ game agent's manual.
 - `FeelReport` (interface from [`engine/physics/feel.ts`](../engine/physics/feel.ts)): What `measureFeel` reports.
 - `FeelRow` (interface from [`engine/dev/feel/panel.ts`](../engine/dev/feel/panel.ts)): A row of the panel: a setting's path, value and declared range, as `__engine.tune.settings()` reads it.
 - `Field` (interface from [`engine/core/schema.ts`](../engine/core/schema.ts)): One field: what its values are, documented.
-- `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (the shading's, bloom and aa run before it).
-- `FilterChain` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter chain: every filter with its scope and numbers.
+- `FILTER_FIELDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The filters of a chain, in `FILTER_NAMES`' order; see the file comment.
+- `FILTER_NAMES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Every filter, in the composite's order (the shading's, bloom and aa run before it; see the file comment).
+- `FilterChain` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter chain: every filter with its scope, its amount and its numbers.
 - `FilterName` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's name.
 - `FilterSpec` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
 - `FLICKER` (const from [`engine/gfx/props.ts`](../engine/gfx/props.ts)): A flame's flicker at time `t` (s): about 0.77 to 1.03, the 2D hall's (my-3d2dge's `FLICKER`).
@@ -790,7 +792,7 @@ game agent's manual.
 - `OverlayOptions` (interface from [`engine/ui/overlay.ts`](../engine/ui/overlay.ts)): How an overlay is made.
 - `PadCursor` (interface from [`engine/ui/widgets.ts`](../engine/ui/widgets.ts)): A gamepad's cursor over a page (see the file comment).
 - `palette` (function from [`engine/gfx/textures/tile.ts`](../engine/gfx/textures/tile.ts)): A palette's hex colours as sRGB bytes; throws `GFX_EMPTY_PALETTE` naming `what` when it has none.
-- `PALETTES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
+- `PALETTES` (const from [`engine/gfx/post/filterFields.ts`](../engine/gfx/post/filterFields.ts)): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
 - `parseClip` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a clip of format 1 or 2 from its text (`//` comment lines allowed) or an object, which is not changed: the result is a copy, its keys sorted by time and `dur` filled in.
 - `parseClipSet` (function from [`engine/anim/clip/validate.ts`](../engine/anim/clip/validate.ts)): Reads a set of clips (a set file's text or object): its header, then every clip by `parseClip`.
 - `parseRoutes` (function from [`engine/app/routes.ts`](../engine/app/routes.ts)): Reads a page's query (see the file comment).
@@ -843,7 +845,7 @@ game agent's manual.
 - `poseTarget` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The point the camera looks at: `distance` along its view direction.
 - `poseUp` (function from [`engine/gfx/cameras/pose.ts`](../engine/gfx/cameras/pose.ts)): The unit up direction on screen: right × forward (the heading when the camera looks straight down), tipped right by a `roll`.
 - `Post` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): A post-processing chain (see the file comment).
-- `POST_SETTINGS` (const from [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+- `POST_SETTINGS` (const from [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.combine` (looks laid over it, engine/gfx/post/combine.ts), `post.filters` (part of a filter chain laid over those, filter by filter and field by field), `post.strength` (how much of it all shows) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
 - `PostOptions` (interface from [`engine/gfx/post/chain.ts`](../engine/gfx/post/chain.ts)): How `createPost` makes a chain.
 - `PostShow` (type from [`engine/gfx/post/composite.ts`](../engine/gfx/post/composite.ts)): What the composite draws.
 - `PostTag` (interface from [`engine/gfx/post/mrt.ts`](../engine/gfx/post/mrt.ts)): What `setPart` records on an object (`userData.post`).
@@ -1008,8 +1010,8 @@ game agent's manual.
 - `SceneSound` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): A sound a sim event plays: an `sfx` entry, its gain (1 by default) and its variant (the effect's next by default).
 - `SceneSpec` (interface from [`engine/sim/scene.ts`](../engine/sim/scene.ts)): How a scene is written: `defineScene(id, spec)`.
 - `Schema` (type from [`engine/core/schema.ts`](../engine/core/schema.ts)): A schema: field name → field.
-- `Scope` (type from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): A filter's scope.
-- `SCOPES` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
+- `Scope` (type from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): A filter's scope.
+- `SCOPES` (const from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
 - `screenRay` (function from [`engine/input/aim.ts`](../engine/input/aim.ts)): The ray through the point `at` of the picture (`[x, y]`, −1 to 1, +y up), in true heights (see the file comment).
 - `ScreenShake` (class from [`engine/gfx/fx/shake.ts`](../engine/gfx/fx/shake.ts)): Camera shake: see the file comment.
 - `ScriptedGamepad` (interface from [`engine/input/devices/padScript.ts`](../engine/input/devices/padScript.ts)): A pad that a script moves frame by frame.
@@ -1153,7 +1155,7 @@ game agent's manual.
 - `StructureSpec` (interface from [`engine/world/site.ts`](../engine/world/site.ts)): A structure as a site's spec places it.
 - `StyleSet` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): A page's materials in every style (see the file comment).
 - `StyleSetOptions` (interface from [`engine/gfx/materials/styles.ts`](../engine/gfx/materials/styles.ts)): How `createStyleSet` makes a set.
-- `STYLIZE_KINDS` (const from [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)): The painterly and print styles.
+- `STYLIZE_KINDS` (const from [`engine/gfx/post/filterFields.ts`](../engine/gfx/post/filterFields.ts)): The painterly and print styles.
 - `SURFACE_STEPS` (const from [`engine/world/footsteps.ts`](../engine/world/footsteps.ts)): Surface tag → the step it plays (see the file comment); `'*'` for any other tag.
 - `surfaceAt` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag underfoot at (x, z): a dais's where it stands highest, else its tile's glyph's; '' outside the map.
 - `surfaceBelow` (function from [`engine/world/level/heights.ts`](../engine/world/level/heights.ts)): The surface tag of `floorBelow`'s surface at (x, y, z): '' on the ground slab or where nothing is.
@@ -3451,6 +3453,11 @@ For the agents who maintain the engine.
 - `PageLook` (interface): A page's look (see the file comment).
 - `PageLookOptions` (interface): What a page's look works with.
 
+### [`engine/app/lookMember.ts`](../engine/app/lookMember.ts)
+
+- `lookNow` (function): The look drawn now on `host` (see the file comment).
+- `LookNow` (interface): What `look()` answers (see the file comment).
+
 ### [`engine/app/loop.ts`](../engine/app/loop.ts)
 
 - `createLoop` (function): Makes a frame loop (see the file comment).
@@ -5250,6 +5257,18 @@ For the agents who maintain the engine.
 - `Post` (interface): A post-processing chain (see the file comment).
 - `PostOptions` (interface): How `createPost` makes a chain.
 
+### [`engine/gfx/post/combine.ts`](../engine/gfx/post/combine.ts)
+
+- `COMBINE_FIELD` (const): The field a look's `combine` and the setting `post.combine` share: the layers, in order.
+- `combineChain` (function): A look's whole chain: its `combine` layers, then its own filters that are on, then its `strength`.
+- `CombineLayer` (interface): One layer of a combination (see the file comment).
+- `CombineWarn` (type): How combining reports a cycle: `log.warnOnce`'s form.
+- `layChain` (function): `layer` laid on `chain` at `t`, only the filters `only` names (all of them when empty).
+- `layFilter` (function): Filter `name` of a layer laid on the chain's at `t` (see the file comment).
+- `layLooks` (function): `layers` laid in order on `chain`, each layer's look combined first; `seen` holds the looks being combined.
+- `STRENGTH_FIELD` (const): The field a look's `strength` and the setting `post.strength` share.
+- `strengthen` (function): `chain` with every filter's amount scaled by `strength` (0 to 1); at 1, `chain` itself.
+
 ### [`engine/gfx/post/composite.ts`](../engine/gfx/post/composite.ts)
 
 - `CompositeInputs` (interface): What the composite reads.
@@ -5259,35 +5278,74 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)
 
-- `colorProblem` (function): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
-- `fixColor` (function): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
+- `colorFields` (function): Every colour field of the filters (the fields whose unit is `COLOR_UNIT`), as `[filter, field, empty]`: `empty` when its default is '', so '' is a choice of its own (the outline's).
+- `colorProblem` (function): Checks a colour: hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`), or '' where `empty` allows it (the outline's colour, whose '' darkens the surface instead).
+- `fixColor` (function): `spec` with every colour `colorProblem` refuses left out (so the outline darkens the surface, any other takes its default), and the first such colour and where it was (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
 - `fixLevels` (function): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
 - `levelsProblem` (function): Checks a level count: 0, or 8 and more (see the file comment).
 
-### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
+### [`engine/gfx/post/filterFields.ts`](../engine/gfx/post/filterFields.ts)
 
-- `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
-- `colorProblem` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Checks an outline colour: '' (the line darkens the surface), hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`).
-- `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
-- `FILTER_FIELDS` (const): The filters of a chain; see the file comment.
-- `FILTER_NAMES` (const): Every filter, in the composite's order (the shading's, bloom and aa run before it).
-- `FilterChain` (type): A filter chain: every filter with its scope and numbers.
-- `FilterName` (type): A filter's name.
-- `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
-- `FilterUniforms` (interface): The composite's uniforms: one vec4 per filter (and a second for the long ones), render-group, set up once.
-- `fixColor` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): `spec` with an outline colour `colorProblem` refuses left out, so the line darkens the surface, and that colour (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
-- `fixLevels` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
-- `isPlain` (function): Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`).
-- `layerChain` (function): `chain` with `over` laid on it, filter by filter and field by field.
-- `levelsProblem` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Checks a level count: 0, or 8 and more (see the file comment).
+- `CORE_FILTER_FIELDS` (const): The first sixteen filters (see the file comment); engine/gfx/post/filters.ts orders them with the rest.
 - `PALETTES` (const): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
-- `partialSchema` (function): `schema` with every default left out, so a value holds only what was given (`post.filters` layers it).
+- `STYLIZE_KINDS` (const): The painterly and print styles.
+
+### [`engine/gfx/post/filterFieldsMore.ts`](../engine/gfx/post/filterFieldsMore.ts)
+
+- `MORE_FILTER_FIELDS` (const): The filters Style Lab brought (see the file comment), in no order: engine/gfx/post/filters.ts orders them.
+- `PAPER_KINDS` (const): The paper kinds, in the composite's order (engine/gfx/post/shaders/media.ts `post_paper`).
+
+### [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)
+
+- `AMOUNT` (const): Every filter's `amount` (see the file comment).
+- `color` (const): A colour field: a `#rrggbb` hex string, sRGB.
+- `COLOR_UNIT` (const): The unit a colour field carries: how the docs and the checks know it (engine/gfx/post/filterChecks.ts).
+- `filter` (const): A filter: an object field whose default holds every property's default, its `amount` added after its scope.
+- `int` (const): An integer field.
+- `num` (const): A number field.
+- `scope` (const): A filter's scope field: by part, or (`screen`) only on or off over the whole screen.
 - `Scope` (type): A filter's scope.
 - `scopeMask` (function): The bits of a scope: characters 1, objects 2, environment 4; `off` 0.
 - `SCOPES` (const): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
 - `SCREEN_SCOPES` (const): The scopes of the filters that cover the whole screen.
-- `STYLIZE_KINDS` (const): The painterly and print styles.
-- `writeFilters` (function): Writes `chain` into `uniforms`: a uniform write per filter, nothing more.
+
+### [`engine/gfx/post/filterUniforms.ts`](../engine/gfx/post/filterUniforms.ts)
+
+- `AMOUNT_SLOTS` (const): The composite filters' amount slots: `am<i>` and its component, four to a vector (see the file comment).
+- `createFilterUniforms` (function): Makes the composite's uniforms, every filter off.
+- `FILTER_UNIFORMS` (const): The uniform names, in the composite's argument order (engine/gfx/post/composite.ts).
+- `FilterUniforms` (type): The composite's uniforms (see the file comment).
+- `writeFilters` (function): Writes `chain` into `uniforms` (null: every filter off): a uniform write per filter, nothing more.
+
+### [`engine/gfx/post/filters.ts`](../engine/gfx/post/filters.ts)
+
+- `AMOUNT_SLOTS` (const from [`engine/gfx/post/filterUniforms.ts`](../engine/gfx/post/filterUniforms.ts)): The composite filters' amount slots: `am<i>` and its component, four to a vector (see the file comment).
+- `chainOf` (function): A whole chain from part of one: every filter and field `spec` leaves out at its default (off).
+- `COLOR_UNIT` (const from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): The unit a colour field carries: how the docs and the checks know it (engine/gfx/post/filterChecks.ts).
+- `colorFields` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Every colour field of the filters (the fields whose unit is `COLOR_UNIT`), as `[filter, field, empty]`: `empty` when its default is '', so '' is a choice of its own (the outline's).
+- `colorProblem` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Checks a colour: hex (`#rgb`, `#rrggbb`) or a CSS colour name three.js knows (`Color.NAMES`), or '' where `empty` allows it (the outline's colour, whose '' darkens the surface instead).
+- `createFilterUniforms` (function from [`engine/gfx/post/filterUniforms.ts`](../engine/gfx/post/filterUniforms.ts)): Makes the composite's uniforms, every filter off.
+- `FILTER_FIELDS` (const): The filters of a chain, in `FILTER_NAMES`' order; see the file comment.
+- `FILTER_NAMES` (const): Every filter, in the composite's order (the shading's, bloom and aa run before it; see the file comment).
+- `FilterChain` (type): A filter chain: every filter with its scope, its amount and its numbers.
+- `FilterName` (type): A filter's name.
+- `FilterSpec` (type): Part of a chain: some filters, each with some of its fields (a look's `filters`, the setting `post.filters`).
+- `FilterUniforms` (type from [`engine/gfx/post/filterUniforms.ts`](../engine/gfx/post/filterUniforms.ts)): The composite's uniforms (see the file comment).
+- `fixColor` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): `spec` with every colour `colorProblem` refuses left out (so the outline darkens the surface, any other takes its default), and the first such colour and where it was (null when there was none): a layer over a look (the setting `post.filters`) is fixed and reported this way.
+- `fixLevels` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): `spec` with every level count of 1–7 raised to 8 (see the file comment), and what was raised: a layer over a look (the setting `post.filters`) is fixed and reported this way; looks are checked when they are defined.
+- `foldAmounts` (function): `chain` with the amounts of the filters that run before the composite folded into their strengths (the shading's, `bloom`'s; `aa` off under half its amount), as the chain hands them to their passes (engine/gfx/post/chain.ts): the composite mixes its own filters by their amounts (engine/gfx/post/filterUniforms.ts).
+- `isPlain` (function): Whether `chain` has every filter off, so it would leave the picture as the scene draws it (`look:clean`).
+- `layerChain` (function): `chain` with `over` laid on it, filter by filter and field by field.
+- `levelsProblem` (function from [`engine/gfx/post/filterChecks.ts`](../engine/gfx/post/filterChecks.ts)): Checks a level count: 0, or 8 and more (see the file comment).
+- `PALETTES` (const from [`engine/gfx/post/filterFields.ts`](../engine/gfx/post/filterFields.ts)): The fixed palettes (sRGB): Game Boy greens, PICO-8's sixteen, CGA, 1-bit, an amber terminal.
+- `PAPER_KINDS` (const from [`engine/gfx/post/filterFieldsMore.ts`](../engine/gfx/post/filterFieldsMore.ts)): The paper kinds, in the composite's order (engine/gfx/post/shaders/media.ts `post_paper`).
+- `partialSchema` (function): `schema` with every default left out, so a value holds only what was given (`post.filters` layers it).
+- `Scope` (type from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): A filter's scope.
+- `scopeMask` (function from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): The bits of a scope: characters 1, objects 2, environment 4; `off` 0.
+- `SCOPES` (const from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): Where a filter applies: nowhere, everywhere, or one or two parts of the scene (engine/gfx/post/mrt.ts).
+- `SCREEN_SCOPES` (const from [`engine/gfx/post/filterSchema.ts`](../engine/gfx/post/filterSchema.ts)): The scopes of the filters that cover the whole screen.
+- `STYLIZE_KINDS` (const from [`engine/gfx/post/filterFields.ts`](../engine/gfx/post/filterFields.ts)): The painterly and print styles.
+- `writeFilters` (function from [`engine/gfx/post/filterUniforms.ts`](../engine/gfx/post/filterUniforms.ts)): Writes `chain` into `uniforms` (null: every filter off): a uniform write per filter, nothing more.
 
 ### [`engine/gfx/post/grid.ts`](../engine/gfx/post/grid.ts)
 
@@ -5342,6 +5400,11 @@ For the agents who maintain the engine.
 
 - `PRESETS` (const): The presets, by id (see the file comment).
 
+### [`engine/gfx/post/presetsMore.ts`](../engine/gfx/post/presetsMore.ts)
+
+- `COMBINED_LOOKS` (const): The whole looks made by combining presets (see the file comment).
+- `STYLE_PRESETS` (const): The one-filter presets (see the file comment).
+
 ### [`engine/gfx/post/resolveLook.ts`](../engine/gfx/post/resolveLook.ts)
 
 - `createLookResolver` (function): Makes the resolver over `settings` and `registry`, its advice to `log` (see the file comment).
@@ -5351,7 +5414,7 @@ For the agents who maintain the engine.
 
 - `definePostSettings` (function): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
 - `POST_CODES` (const): The codes this module raises, with their fixes.
-- `POST_SETTINGS` (const): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.filters` (part of a filter chain laid over the look's, filter by filter and field by field) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
+- `POST_SETTINGS` (const): The view settings the chain reads, declared by `definePostSettings`: `post.look` (a `look` id, engine/gfx/post/looks.ts), `post.combine` (looks laid over it, engine/gfx/post/combine.ts), `post.filters` (part of a filter chain laid over those, filter by filter and field by field), `post.strength` (how much of it all shows) and `post.show` (`picture`, or what the MRT holds: `parts`, `normals`, `groups`).
 
 ### [`engine/gfx/post/shaders/common.ts`](../engine/gfx/post/shaders/common.ts)
 
@@ -5369,11 +5432,39 @@ For the agents who maintain the engine.
 - `wgsl` (function): A WGSL function for TSL (`wgslFn`); `includes` are the functions it calls.
 - `WgslFunction` (type): A WGSL function as TSL calls it: with its arguments by name, `fn({ c: colour })`.
 
+### [`engine/gfx/post/shaders/display.ts`](../engine/gfx/post/shaders/display.ts)
+
+- `postCrt` (const): A CRT over `s` at `p` (see the file comment): `crt` (on, mask, glow, flicker), at time `t`.
+- `postLetterbox` (const): 1 on the letterbox bars that crop a picture `screen_aspect` wide to `aspect` at `uv`, else 0.
+- `postSpeedlines` (const): How much of a speed line covers `uv` (see the file comment): `density`, a `clear` middle round `centre`, time `t`.
+- `postVhsBleed` (const): `s` with VHS colour bleed `bleed` at `p`: brightness kept, colour smeared to the right over about 10 px.
+- `postVhsSlip` (const): Where VHS tracking moves the pixel at `uv`: rows slip by `jitter`, most in a tear near the bottom, at time `t`.
+- `postVhsSnow` (const): VHS snow at pixel `frag` and height `y` (0 the top), `noise` strong, at time `t`.
+- `postVignette` (const): `s` vignetted at `uv`: toward `color` by `strength`, `softness` 0 hard to 1 soft, `roundness` 1 round.
+
 ### [`engine/gfx/post/shaders/edges.ts`](../engine/gfx/post/shaders/edges.ts)
 
 - `postArtRim` (const): Whether the block centred on `c` (block size `art`) gets pixel art's dark rim; `mask` is the pixel filter's scope.
 - `postCel` (const): Comic cel over the picture `s` at `p`: `bands`, colour `punch`, `ink` strength and `ink_w` (px); see above.
 - `postEdge` (const): 1 where pixel `px` is on an outline `t` px wide (see the file comment), else 0.
+
+### [`engine/gfx/post/shaders/lens.ts`](../engine/gfx/post/shaders/lens.ts)
+
+- `postAt` (const): The picture at `p` (pixels), read between texels.
+- `postCoc` (const): How far out of focus a point `d` metres away is, in pixels up to `blur`.
+- `postDistort` (const): Where lens distortion `k` (barrel above 0) looks for the pixel at `uv`, on a picture `aspect` wide.
+- `postDof` (const): Depth of field at `p`: see the file comment.
+- `postFlare` (const): Lens-flare ghosts at `uv`: the parts brighter than `threshold`, mirrored through the centre, `spacing` apart.
+- `postStreaks` (const): Anamorphic streaks at `p`: the parts brighter than `threshold` drawn out `reach` px each side, tinted.
+- `postTilt` (const): Tilt-shift at `p`: sharp in a band `width` high round `center` (0 the bottom, 1 the top), blurred away from it.
+
+### [`engine/gfx/post/shaders/media.ts`](../engine/gfx/post/shaders/media.ts)
+
+- `postMisregister` (const): `s` with its red plate `offset` px one way along `angle` (degrees) and its blue plate the other.
+- `postPaper` (const): Paper of `kind` (0 newsprint, 1 cold-pressed, 2 canvas, 3 kraft) under `s`, `q` the 1080-line position.
+- `postSharpen` (const): `s` sharpened at `p`: plus `strength` times the picture minus its four diagonal taps `radius` px away.
+- `postWatercolor` (const): Watercolour over `s` at `p` (see the file comment): `wc` (bleed, edges, granulation), `q` the 1080-line position.
+- `postWobble` (const): Where a hand wobble `wobble` px (at 1080 lines) moves the pixel at `p`, the noise at 1080-line `q`.
 
 ### [`engine/gfx/post/shaders/stylize.ts`](../engine/gfx/post/shaders/stylize.ts)
 
@@ -5385,6 +5476,14 @@ For the agents who maintain the engine.
 - `postPaint` (const): Oil paint at pixel `c` (see the file comment); `mask` is the filter's scope mask (7 lets every sample in).
 - `postSketch` (const): Pencil on paper over the picture `s` at `p`; `bp` is the picture there before the outline; `time` in seconds.
 - `postStylize` (const): A style (1 paint, 2 halftone, 3 ASCII, 4 pencil) over the picture `s` at `p`; `size` in px, `keep` the colour kept, `mask` the scope mask, `time` in seconds.
+
+### [`engine/gfx/post/shaders/tone.ts`](../engine/gfx/post/shaders/tone.ts)
+
+- `postDuotone` (const): `c`'s brightness mapped onto `dark`, `mid` and `light` (a gradient map).
+- `postGradeMore` (const): The grade's further steps on `c`: `g3` (lift, gamma, vibrance, hue in degrees), `g4` (sepia, bleach, 0, 0).
+- `postOklab` (const): `c` in OKLab (L, a, b), from display colours.
+- `postSelective` (const): `c` with every hue but `hue` (degrees, ± `range`) turned grey; near-greys stay as they are.
+- `postSplit` (const): Split toning of `c`: the shadows toward `shadows`, the highlights toward `highlights` (soft light).
 
 ### [`engine/gfx/post/shading.ts`](../engine/gfx/post/shading.ts)
 
@@ -8779,6 +8878,14 @@ For the agents who maintain the engine.
 - `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
 - `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.
 
+### [`labs/playground/ui/tune.ts`](../labs/playground/ui/tune.ts)
+
+- `createTune` (function): Makes the Tune panel in `parent` (see the file comment).
+- `LookNow` (interface): The look drawn now, as the inspector's `look` gives it.
+- `lookText` (function): The filters drawn now as a `defineLook` to paste (see the file comment): each filter that is on with its scope and the fields off their defaults, so the look draws the same picture.
+- `TuneOptions` (interface): How the panel is made.
+- `TunePanel` (interface): The Tune panel.
+
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
 - `cameraMode` (function): The camera mode a code opens, by its type and view (`cam3=chase` of `cam3=chase,0,-20.63,5.5`); else undefined.
@@ -8824,6 +8931,11 @@ For the agents who maintain the engine.
 ### [`playwright.config.ts`](../playwright.config.ts)
 
 - `default` (default): Playwright Test's settings for T2 (PLAN.md §6.10, §8.8): one project, `webgpu`, on the platform's Chromium with shardfall's WebGPU flags, against a Vite dev server it starts itself.
+
+### [`tests/e2e/filters-cases.ts`](../tests/e2e/filters-cases.ts)
+
+- `SCOPED_MORE` (const): The scoped filters (see the file comment).
+- `SCREEN_MORE` (const): The camera and screen filters (see the file comment).
 
 ### [`tests/e2e/fixtures.ts`](../tests/e2e/fixtures.ts)
 

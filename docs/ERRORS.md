@@ -299,13 +299,13 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `headlessHost was given {value}, not a headless engine`
 - Fix: pass the object createHeadless resolved to
-- Registered in: [`engine/app/headless.ts` line 70](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 71](../engine/app/headless.ts)
 
 ### APP_OTHER_SCENE
 
 - Message: `this engine draws {shown}, so it cannot start {scene}`
 - Fix: play {scene} in its own page (labs/<name>/?scene=<name>), or headless: createHeadless({ scene: '{scene}' })
-- Registered in: [`engine/app/headless.ts` line 74](../engine/app/headless.ts)
+- Registered in: [`engine/app/headless.ts` line 75](../engine/app/headless.ts)
 
 ### APP_PLAY_SETTING
 
@@ -835,6 +835,14 @@ Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
+### GFX_LOOK_COMBINE_LOOP
+
+- Message: `{look} is laid on itself ({through}): that layer is skipped`
+- Fix: take the layer that leads back out of the looks' combine lists (engine/gfx/post/combine.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 46](../engine/gfx/post/settings.ts)
+
+Advice from combining looks: a look whose layers lead back to it; the layer that would loop is left out.
+
 ### GFX_NO_AIR
 
 - Message: `{feature} is off: {reason}; {downgrade}`
@@ -973,17 +981,17 @@ Advice from the pipeline counter (engine/gfx/pipelines.ts) when `renderer._pipel
 
 ### GFX_POST_BAD_COLOR
 
-- Message: `post.filters.outline.color is {color}, which is no colour: the outline darkens the surface instead`
-- Fix: give hex ('#1a1a2e'), a CSS colour name ('black') or '' to darken the surface
-- Registered in: [`engine/gfx/post/settings.ts` line 38](../engine/gfx/post/settings.ts)
+- Message: `post.filters.{where} is {color}, which is no colour: the filter keeps its own (the outline darkens the surface)`
+- Fix: give hex ('#1a1a2e') or a CSS colour name ('black'); the outline's colour also takes '' to darken the surface
+- Registered in: [`engine/gfx/post/settings.ts` line 40](../engine/gfx/post/settings.ts)
 
-Advice from the post chain when `post.filters` sets an outline colour that is none; looks are checked when they are defined.
+Advice from the post chain when `post.filters` sets a colour that is none; looks are checked when they are defined.
 
 ### GFX_POST_FEW_LEVELS
 
 - Message: `{where} asks for {levels} levels per channel; the chain draws 8`
 - Fix: posterize with 0 (off) or 8 levels and more: fewer shift the hue of dull colours (shardfall measured a grey floor turning pink)
-- Registered in: [`engine/gfx/post/settings.ts` line 33](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 35](../engine/gfx/post/settings.ts)
 
 Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.
 
@@ -991,7 +999,7 @@ Advice from the post chain when `post.filters` sets 1–7 levels; looks are chec
 
 - Message: `{missed} objects draw as the environment: the flag table has {slots} slots, all taken`
 - Fix: draw fewer separate objects (instance or merge them); slots come back as their objects are collected
-- Registered in: [`engine/gfx/post/settings.ts` line 43](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 51](../engine/gfx/post/settings.ts)
 
 Advice from the post chain: more live drawable objects than the fixed MRT’s flag table holds (engine/gfx/post/mrt.ts).
 
@@ -999,7 +1007,7 @@ Advice from the post chain: more live drawable objects than the fixed MRT’s fl
 
 - Message: `bloom is off at the {tier} quality tier: {look} draws without its glow`
 - Fix: raise the view setting quality to 'medium' or 'high' to see the glow; nothing else about the look changes
-- Registered in: [`engine/gfx/post/settings.ts` line 28](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 30](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, which the quality tier turns off (WP 3.12).
 
@@ -1007,7 +1015,7 @@ Advice from the post chain (engine/gfx/post/chain.ts): the look asks for bloom, 
 
 - Message: `{look} asks for the material style {style}, but the chain has no style set: it draws only its filters`
 - Fix: give createPost a style set (createStyleSet, WP 7.2) as options.styles, attached to the warm-up, so looks change the materials too
-- Registered in: [`engine/gfx/post/settings.ts` line 48](../engine/gfx/post/settings.ts)
+- Registered in: [`engine/gfx/post/settings.ts` line 56](../engine/gfx/post/settings.ts)
 
 Advice from the post chain (engine/gfx/post/chain.ts): a look with a material style, drawn by a chain made without `styles`.
 

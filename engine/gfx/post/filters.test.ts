@@ -140,7 +140,18 @@ describe('writeFilters', () => {
 describe('the filters Style Lab brought', () => {
   it('take their scopes: the camera and screen ones only off and all, the rest by part; every amount is 1', () => {
     const own = ['grain', 'chroma']; // their amount is their strength (engine/gfx/post/filterUniforms.ts)
-    const screen = ['lens', 'dof', 'tiltshift', 'flare', 'streaks', 'crt', 'vhs', 'speedlines', 'vignette', 'letterbox'];
+    const screen = [
+      'lens',
+      'dof',
+      'tiltshift',
+      'flare',
+      'streaks',
+      'crt',
+      'vhs',
+      'speedlines',
+      'vignette',
+      'letterbox',
+    ];
     for (const name of FILTER_NAMES) {
       const scopes = FILTER_FIELDS[name].properties.scope.enum as readonly string[];
       if (screen.includes(name)) expect(scopes, name).toEqual(SCREEN_SCOPES);
@@ -167,7 +178,9 @@ describe('the filters Style Lab brought', () => {
     expect(uniforms.dof.value.toArray()).toEqual([7, 4, 3, 5]);
     expect(uniforms.paper.value.toArray()).toEqual([4, 2, 2, 0.3]);
     expect(uniforms.paper2.value.toArray().map((v) => Math.round(v * 1000) / 1000)).toEqual([1, 1, 1, 0]);
-    expect([uniforms.duo1.value.w, Math.round(uniforms.duo2.value.x * 1000) / 1000, uniforms.am5.value.x]).toEqual([2, 1, 0.25]);
+    expect([uniforms.duo1.value.w, Math.round(uniforms.duo2.value.x * 1000) / 1000, uniforms.am5.value.x]).toEqual([
+      2, 1, 0.25,
+    ]);
     expect(uniforms.letterbox.value.toArray().map((v) => Math.round(v * 1000) / 1000)).toEqual([2, 1, 0, 0]);
     expect(uniforms.pixel.value.x, 'blocks off under half their amount').toBe(0);
     writeFilters(uniforms, chainOf());
@@ -183,7 +196,7 @@ describe('the filters Style Lab brought', () => {
 });
 
 describe('foldAmounts', () => {
-  it("folds the amounts of the passes before the composite into their strengths, and is the chain itself at 1", () => {
+  it('folds the amounts of the passes before the composite into their strengths, and is the chain itself at 1', () => {
     const chain = chainOf({ bloom: { scope: 'all', strength: 0.8 }, ao: { scope: 'all' } });
     expect(foldAmounts(chain)).toBe(chain);
     const half = foldAmounts(chainOf({ bloom: { scope: 'all', strength: 0.8, amount: 0.5 }, aa: { scope: 'all', amount: 0.4 } })); // prettier-ignore

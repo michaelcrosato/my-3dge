@@ -1,15 +1,16 @@
 /**
  * @file The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): its screens over the game, the engine's
  * menus (engine/ui/menu.ts) and the playground's panels, on a stack (closing one shows the one under it again):
- * - the title screen (`title`: Play, Owner checks, Spawn, Settings, Photo mode, Watch the tour), shown as the page
- *   opens while the view setting `playground.title` says so (`auto`: unless a replay plays or automation drives the
- *   browser, as the menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle` seconds, it opens the
- *   attract mode (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no automation drives the
- *   browser;
- * - pause (`pause`: Resume, Answer this check while one is under way, Spawn, Settings, Photo mode, Owner checks,
- *   Restart, Title screen), opened by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let
- *   go while the map wants it (a browser spends the first Escape on the lock);
+ * - the title screen (`title`: Play, Owner checks, Spawn, Settings, Tune the look, Photo mode, Watch the tour),
+ *   shown as the page opens while the view setting `playground.title` says so (`auto`: unless a replay plays or
+ *   automation drives the browser, as the menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle`
+ *   seconds, it opens the attract mode (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no
+ *   automation drives the browser;
+ * - pause (`pause`: Resume, Answer this check while one is under way, Spawn, Settings, Tune the look, Photo mode,
+ *   Owner checks, Restart, Title screen), opened by the system layer's `pause` (Escape, the pad's Start) or by the
+ *   pointer lock let go while the map wants it (a browser spends the first Escape on the lock);
  * - the spawn picker (`spawns`, labs/playground/ui/spawns.ts), settings (`settings`, labs/playground/ui/settings.ts),
+ *   the Tune panel (`tune`, labs/playground/ui/tune.ts: the look's filters tuned and combined live, WP 13.32),
  *   photo mode (`photo`, labs/playground/ui/photo.ts) and the owner's checks (`checks`, opened on the list; `check`,
  *   on the check under way: labs/playground/ui/checkPanel.ts), whose answers go to `checkStore` and whose Go there
  *   opens the check's link (labs/playground/ui/checks.ts `checkUrl`; another page in a new tab).
@@ -42,6 +43,7 @@ import { answered, answersText, checkUrl, OWNER_CHECKS, readAnswers, saveAnswer,
 import { createPhoto, type PhotoCamera } from './photo';
 import { PREF_BUSES, savePrefs, type Prefs } from './prefs';
 import { createSettings, type RowSchema, type SettingRow } from './settings';
+import { createTune, type LookNow } from './tune';
 import { spawnPlace, spawnPlaces } from './spawns';
 
 /** The title screen's view setting (see the file comment). */
@@ -58,7 +60,7 @@ export const FRONT_END_SETTINGS = defineSettings({
 });
 
 /** The screens. */
-export type ScreenName = 'title' | 'pause' | 'spawns' | 'settings' | 'photo' | 'checks' | 'check';
+export type ScreenName = 'title' | 'pause' | 'spawns' | 'settings' | 'tune' | 'photo' | 'checks' | 'check';
 
 /** What the front end needs of the page. */
 export interface FrontEndOptions {
@@ -221,6 +223,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         ...(name === 'pause' && options.check ? [{ label: 'Answer this check…', id: 'check' }] : []),
         { label: 'Spawn…', id: 'spawns' },
         { label: 'Settings…', id: 'settings' },
+        { label: 'Tune the look…', id: 'tune' },
         { label: 'Photo mode', id: 'photo' },
         ...(name === 'title' ? [{ label: 'Watch the tour', id: 'tour' }] : []),
         ...(name === 'pause' ? [checksItem(), { label: 'Restart', id: 'restart' }, { label: 'Title screen', id: 'title' }] : []), // prettier-ignore
@@ -265,6 +268,15 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     }
     if (name === 'settings') {
       const panel = createSettings(root, { values: values(), schema, input, onChange: change, onBack: back });
+      return {
+        update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && back()),
+        remove: () => panel.remove(),
+      };
+    }
+    if (name === 'tune') {
+      const look = () => (inspector as unknown as { look(): LookNow }).look();
+      const looks = (inspector.describe('look') as { ids: string[] }).ids;
+      const panel = createTune(root, { now: look, looks, get: options.setting, set: (path, value) => void inspector.set(path, value), onBack: back }); // prettier-ignore
       return {
         update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && back()),
         remove: () => panel.remove(),

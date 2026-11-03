@@ -16,8 +16,9 @@
  *
  * @example
  * const uniforms = createFilterUniforms();
- * writeFilters(uniforms, chainOf({ pixel: { scope: 'environment', size: 6 } }));
- * uniforms.pixel.value.toArray(); // [4, 6, 0, 1]: environment, 6 px blocks, full colour, a rim
+ * uniforms.pixel.value.toArray(); // [0, 4, 0, 1]: off (the mask 0), 4 px blocks, full colour, a rim
+ * writeFilters(uniforms, null);
+ * uniforms.am0.value.toArray(); // [1, 1, 1, 1]: every amount 1
  * @see engine/gfx/post/filters.test.ts
  * @see engine/gfx/post/composite.ts
  */

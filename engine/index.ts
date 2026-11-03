@@ -225,9 +225,8 @@ export type { Outline } from './gfx/materials/outline';
 export type { OutlineMode } from './gfx/materials/outline';
 export type { OutlineOptions } from './gfx/materials/outline';
 export type { OutlineShells } from './gfx/materials/outline';
-// Post-processing (WP 7.4): one chain every frame draws through, every filter a uniform (scoped to the characters,
-// the objects or the environment), looks as data (a material style plus a filter chain, and the sky that lights it,
-// WP 7.8), objects tagged by part.
+// Post-processing (WP 7.4, 13.32): one chain every frame draws through, every filter a uniform with an amount, scoped
+// by part; looks as data (a material style, a filter chain, the sky, WP 7.8) that combine looks; objects tagged by part.
 export { createPost } from './gfx/post/chain';
 export { POST_SETTINGS } from './gfx/post/settings';
 export { definePostSettings } from './gfx/post/settings';
@@ -240,6 +239,7 @@ export type { PostTag } from './gfx/post/mrt';
 export { defineLook } from './gfx/post/looks';
 export type { LookEntry } from './gfx/post/looks';
 export type { LookSpec } from './gfx/post/looks';
+export { FILTER_FIELDS } from './gfx/post/filters';
 export { FILTER_NAMES } from './gfx/post/filters';
 export { SCOPES } from './gfx/post/filters';
 export { PALETTES } from './gfx/post/filters';
@@ -248,6 +248,7 @@ export type { FilterName } from './gfx/post/filters';
 export type { Scope } from './gfx/post/filters';
 export type { FilterChain } from './gfx/post/filters';
 export type { FilterSpec } from './gfx/post/filters';
+export type { CombineLayer } from './gfx/post/combine';
 export type { PostShow } from './gfx/post/composite';
 // Props drawn (WP 4.5): every prop part a batch of the instancing service, posed by its body, the flames dancing on
 // the visual streams, the light spots flickering, for the light pool; a part's geometry and where it stands (its

@@ -38,7 +38,8 @@ export const POST_CODES = defineCodes('gfx', {
     doc: 'Advice from the post chain when `post.filters` sets 1–7 levels; looks are checked when they are defined.',
   },
   GFX_POST_BAD_COLOR: {
-    template: 'post.filters.{where} is {color}, which is no colour: the filter keeps its own (the outline darkens the surface)',
+    template:
+      'post.filters.{where} is {color}, which is no colour: the filter keeps its own (the outline darkens the surface)',
     fix: "give hex ('#1a1a2e') or a CSS colour name ('black'); the outline's colour also takes '' to darken the surface",
     doc: 'Advice from the post chain when `post.filters` sets a colour that is none; looks are checked when they are defined.',
   },
@@ -88,7 +89,7 @@ export const POST_SETTINGS = {
   'post.strength': {
     ...STRENGTH_FIELD,
     view: true,
-    description: "How much of the look shows, 0 to 1, post.combine and post.filters included: 0 draws the scene clean.",
+    description: 'How much of the look shows, 0 to 1, post.combine and post.filters included: 0 draws the scene clean.',
   },
   'post.show': {
     type: 'string',

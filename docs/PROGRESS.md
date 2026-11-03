@@ -21,16 +21,16 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
   guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel looks, clean the default since
   WP 13.29); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
-  as playground.html. Tidied after G13 (amendment 45). Faster starts (ADR-0008 amendments 11, 12): warm-ups of only what
-  is drawn (gym 64.7 → 23.7 s); the governor keeps each scene's tier (Owner: a move still re-keys lit pipelines).
+  as playground.html. Faster starts (ADR-0008 amendments 11, 12; Owner: a move still re-keys lit pipelines). Style Lab's
+  filters, amounts and combining looks, tuned live in Tune the look (ADR-0008 amendment 14; WP 13.31, 13.32).
 
 ## What waits, and the open issues
 
 - Amendment 22 proposes triangle-mesh terrain. QA baselines: the timelines' knockdown slide, WP 8.8's. Owner:
   top-down's pixel look panned across a whole pixel changes 7–10 pixels of a soft shadow band (amendment 35). Clip
   contacts: hands read as holds in walks, idles and more (WP 8.8's row); no foot lock reads a clip's foot contacts yet.
-  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms; load times),
-  the pixel look's glide, a desktop MCP client. A key pressed in a warm-up is lost (amendment 48).
+  Not verifiable here: speakers, touch (ADR-0021), pads, real GPUs (`stats().gpuMs`: the rain's 1 ms; load times), the
+  pixel look's glide, how the filters read, a desktop MCP client. A key pressed in a warm-up is lost (amendment 48).
 - Mutation (WP 12.2, ESC-0006): the run's tenth catches 94.40%, the rest 74.3%; rotate its seed and redraw each gate.
 - Near the size cap (390–397 lines), split on the next change: sim/world.ts, anim/{quadruped,clip/validate}.ts,
   tools/cmd/replay.ts, app/engine.ts; four tests at 399–400.

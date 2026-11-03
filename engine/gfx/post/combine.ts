@@ -19,7 +19,7 @@
  * present; a look with no layers at strength 1 gives its own chain, the same object; nothing here touches the GPU.
  *
  * @example
- * layFilter('grade', chainOf().grade, chainOf({ grade: { scope: 'all' } }).grade, 0.25).amount; // 0.25
+ * layFilter('vignette', { scope: 'off', amount: 1 }, { scope: 'all', amount: 1 }, 0.25).amount; // 0.25: fading in
  * // combineChain(registry.get('look', 'look:mine') as LookEntry, registry, warn).grade.contrast;
  * @see engine/gfx/post/combine.test.ts
  */
