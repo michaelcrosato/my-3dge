@@ -2439,3 +2439,19 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   replay (3.8 of 10). The range replay runs past its 25 minutes on this container at any resolution (amendment 47),
   so main's full run checks it, as at ba0049a (7.5 minutes there at the engine's pixels).
 - Plan edit: none (WP 13.30's ledger row names the fix).
+
+## Amendment 49 (2026-11-03, WP 13.30): the cel look's textures smooth too
+
+- **The owner's direction (2026-11-03):** amendment 47 left the cel look's texels crisp, the offer having smoothed
+  only the clean look's; asked whether the cel look's should be smooth too, the owner answered "yes, smooth
+  textures for cel too".
+- **Built:** `look:playground-cel` names `textures: 'smooth'`, and its description says so. The clean and cel looks
+  now both draw at full resolution with every texture blended; the pixel look alone keeps the engine's pixels and
+  crisp texels. The owner check `full-resolution` drops its question about the cel look's textures.
+- **Evidence:** labs/playground/looks/looks.test.ts. tests/e2e/playground-looks.spec.ts: its rounds built 58, 3 and 3
+  pipelines, as before. The cel look's five noon thumbnails were re-recorded with UPDATE_THUMBS=1, this amendment
+  their reason (each cell's colour moving by up to 16 of 255; the old ones still compared at 0 cells). The clean
+  look's came out unchanged, and the pixel look's are kept as recorded (0 cells, at most 14). At noon the cel look
+  draws 7,311 colours from isometric (1,212 with crisp texels), 20,653 from the follow camera (9,439) and 15,789 in
+  first person (6,554), its isometric edge share 0.10 (0.27): the texels' hard borders no longer read as edges.
+- Plan edit: WP 13.30's build and ledger row.

@@ -2,12 +2,12 @@
  * @file Unit tests for the playground's looks (labs/playground/looks/clean.ts, cel.ts, pixel.ts and
  * pixelPerspective.ts): the clean look, the default (ADR-0025 amendment 46), parses, switches with `node x set
  * post.look`, lights the playground with daylight in the scene's own style under the hour's dome, and smooths its edges
- * and textures with nothing else on, at full resolution; the cel look at full resolution too, the pixel look at the
- * engine's pixels (WP 13.30); the toon looks each parse with every filter scoped, posterize with 0 or 8 and more levels (the
- * pixel looks with 24, as pixel art wants), light the playground with daylight in the toon style, and `node x set
- * post.look <id>` switches to each; the cel look's ramp, ink, shells and sky gradient (WP 13.24); the pixel look's art
- * block from the lines, its snap and glide, its dithered ramps, and its variant for the perspective cameras, unsnapped,
- * sharing its style and sky.
+ * and textures with nothing else on, at full resolution; the cel look at full resolution with smooth textures too, the
+ * pixel look at the engine's pixels, crisp (WP 13.30); the toon looks each parse with every filter scoped, posterize
+ * with 0 or 8 and more levels (the pixel looks with 24, as pixel art wants), light the playground with daylight in the
+ * toon style, and `node x set post.look <id>` switches to each; the cel look's ramp, ink, shells and sky gradient (WP
+ * 13.24); the pixel look's art block from the lines, its snap and glide, its dithered ramps, and its variant for the
+ * perspective cameras, unsnapped, sharing its style and sky.
  * @see labs/playground/looks/clean.ts
  * @see labs/playground/looks/cel.ts
  * @see labs/playground/looks/pixel.ts
@@ -69,9 +69,9 @@ describe('look:playground-clean', () => {
 });
 
 describe('the resolution and textures of the toon looks', () => {
-  it("draws the cel look at full resolution and the pixel look at the engine's pixels, their textures crisp", () => {
+  it("draws the cel look at full resolution with smooth textures, the pixel look at the engine's pixels, crisp", () => {
     expect([cel.resolution, pixel.resolution]).toEqual(['full', 'pixels']);
-    expect([cel.textures, pixel.textures], "each texture's own: crisp").toEqual(['', '']);
+    expect([cel.textures, pixel.textures], "the pixel look keeps each texture's own: crisp").toEqual(['smooth', '']);
   });
 });
 

@@ -283,8 +283,8 @@ steps through them, the clean look first.
   Drawn at the screen's full resolution with every texture blended (linear filtering; ADR-0025 amendment 47).
 - **Cel-shaded:** a light ramp per material (three bands and a rim), shadows shifted in hue rather than darkened, ink
   from depth and normals at a width scaled to the resolution, the outline shell on props and bodies (skinned bodies
-  included), a sky gradient, at the screen's full resolution (amendment 47), its textures crisp. Ink never comes from
-  texture brightness.
+  included), a sky gradient, at the screen's full resolution with every texture blended (amendments 47, 49). Ink
+  never comes from texture brightness.
 - **Pixel art:** a low-resolution render at a whole-number scale (the largest scale that gives 240 to 360 lines), 1-pixel
   ink from depth and normals, palette ramps per material with an ordered dither fixed to the world, the orthographic
   cameras snapped to the pixel grid in translation with the sub-pixel remainder carried as a smooth offset of the
