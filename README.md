@@ -49,7 +49,7 @@ that runs, is measured and is proved. The game that will run on the engine lives
 ## The Playground
 
 The tech demo (Phase 13, [`docs/PLAYGROUND.md`](docs/PLAYGROUND.md)): a house on a block where the player moves as in
-Apex Legends, in five cameras and two looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
+Apex Legends, in five cameras and three looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
 [`playground.html`](playground.html) (below), or run `npm run dev` and open http://127.0.0.1:5173/labs/playground/; `?replay=playground-tour&playground.attract=on` plays
 the tour through every feature. [`labs/playground/README.md`](labs/playground/README.md) says how it plays and what
 each scene shows.
@@ -57,14 +57,14 @@ each scene shows.
 ## How to start
 
 ```sh
-bash scripts/setup.sh           # Node 24.22.1 if missing (SHA-256 checked), the read-only sources, then npm ci
+bash scripts/setup.sh           # Node 24.22.2 if missing (SHA-256 checked), the read-only sources, then npm ci
 npm run typecheck               # tsc -b over tsconfig.check.json's projects (incremental), on the pinned types
 npm test                        # vitest run
 node x ci --local               # the merge gate: every tier, summary in out/ci/summary.md
 ```
 
 `scripts/setup.sh` is idempotent and prints the `export` lines for `PATH`, `MY3D2DGE_SRC` and `SHARDFALL_SRC` (it
-appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is Linux x64 with Node 24.22.1 and
+appends them to `$CLAUDE_ENV_FILE` in Claude Code). The development platform is Linux x64 with Node 24.22.2 and
 Chromium 153 (WebGPU on SwiftShader). The rest of the toolchain is `npm run check` (types, lint, format and the
 repository checks), `npm run e2e` (the browser suites) and the `node x` command line (`node x help`).
 

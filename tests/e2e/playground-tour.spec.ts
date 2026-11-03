@@ -38,7 +38,7 @@ const SITE_READY = 420_000;
 const DRAW = 60;
 /** The frames each look's film shoots, evenly over the tour, and how (the pixels and the look metrics, no ID pass). */
 const [SHOTS, SHOT] = [12, { pixels: true, ids: false, metrics: true, thumbnail: false }];
-/** The look metrics film.json keeps of each frame: what sets the two looks apart (engine/gfx/lookMetrics.ts). */
+/** The look metrics film.json keeps of each frame: what sets the looks apart (engine/gfx/lookMetrics.ts). */
 const KEPT = ['colors', 'palette', 'checker', 'edges', 'flat', 'spread', 'lumaMean', 'dark', 'blown'] as const;
 
 /** Calls the `__engine` member at `path` with `args`. */
@@ -83,7 +83,7 @@ test.describe('the playground’s tour', () => {
       expect((await cold()) - shot, 'pipelines built over the tour').toBe(0);
       expect(harness.advice()).toEqual([]);
       // the look's film: the shots at their size on a contact sheet, labelled with their step and camera; halved, the
-      // pixel look's 1-pixel ink and dither would average away, and the two looks read alike
+      // pixel look's 1-pixel ink and dither would average away, and the looks read alike
       const camera = (step: number) => views.filter(([at, v]) => at <= step && v.cam).at(-1)?.[1].cam as string;
       const frames = run.shots.map(({ step, shot }, n) => ({ n, tick: step, label: `${step} ${camera(step).split(',')[0]}`, width: shot.width, height: shot.height, rgba: new Uint8Array(Buffer.from(shot.pixels, 'base64')), visible: [], metrics: Object.fromEntries(KEPT.map((key) => [key, shot.metrics[key]])) })); // prettier-ignore
       expect(frames).toHaveLength(SHOTS);

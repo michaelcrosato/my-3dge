@@ -8,7 +8,7 @@
  * business. Permission to use, copy, modify, and distribute this software is freely granted, provided that this
  * notice is preserved. Optimized by Bruce D. Evans.
  *
- * Invariants: it returns what Node 24.22.1's `Math.cbrt` returns, bit for bit (engine/core/fdlibm/fdlibm.test.ts): a
+ * Invariants: it returns what Node 24.22.2's `Math.cbrt` returns, bit for bit (engine/core/fdlibm/fdlibm.test.ts): a
  * 5-bit guess from the exponent, a polynomial to 23 bits, rounding away from zero to 23 bits, then one Newton step.
  *
  * @example

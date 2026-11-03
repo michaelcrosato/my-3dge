@@ -273,7 +273,7 @@ test.describe('the playground’s front end', () => {
     await panel.locator('[data-ui=item][data-id="verdict:needs-work"]').click();
     await panel.locator('[data-ui=check-note]').pressSequentially('pause'); // P, the look's key, reaches nothing
     await harness.tick(2);
-    expect((await hud(page)).mode).toBe('Camera: shooter · Look: cel'); // the look kept
+    expect((await hud(page)).mode).toBe('Camera: shooter · Look: clean'); // the look kept
     expect(await page.evaluate(() => __playgroundUi.checks().find((check) => check.id === 'mantle'))).toMatchObject({ verdict: 'needs-work', note: 'pause' }); // prettier-ignore
     await panel.locator('[data-ui=item][data-id=back]').click();
     await expect(panel.locator('[data-ui=item][data-id="check:mantle"]')).toHaveAttribute('data-value', 'needs-work');

@@ -13,14 +13,15 @@
  *
  * Why the style set joins the warm-up on demand, and only with the styles asked for: compiling a style multiplies
  * the pipelines a warm-up builds, which every page would pay at start and at every later warm-up, though most never
- * leave the scene's own style and a game's looks share one or two (the playground's both draw toon: on its site,
- * WP 13.18, the other two styles cost about 130 of its 330 s warm-up on SwiftShader). Joining, or a look asking for a
- * style not yet warmed, adds the set's warm-up entries and key part, which changes the shader key, so the renderer
- * warms up again before the first frame in the new style, never stalling one; from then on, switching between styles
- * asked for re-points materials already compiled and builds nothing. A page opened with a styled look
+ * leave the scene's own style and a game's looks share one or two (the playground's cel and pixel looks both draw
+ * toon: on its site, WP 13.18, the other two styles cost about 130 of its 330 s warm-up on SwiftShader). Joining, or
+ * a look asking for a style not yet warmed, adds the set's warm-up entries and key part, which changes the shader key,
+ * so the renderer warms up again before the first frame in the new style, never stalling one; from then on, switching
+ * between styles asked for re-points materials already compiled and builds nothing. A page opened with a styled look
  * (`?post.look=…`) joins before its first warm-up. With `gfx.warmUp: asked` (`asked`, engine/gfx/warmup.ts) the set
  * joins with the look's style alone, its own too only if the page drew in it first, and adds its own once a look
- * in it is asked for: the playground's two looks, both toon, never compile it.
+ * in it is asked for: the playground, opened in its clean look (the set's own style), compiles toon the first time
+ * its cel or pixel look is asked for, and a page kept in toon looks never compiles its own.
  *
  * Invariants: presentation only: it reads view settings and writes the stage's lights and materials, never the sim;
  * everything it changes before a frame either builds nothing or changes the warm-up's key, so the renderer warms up

@@ -5342,6 +5342,11 @@ For the agents who maintain the engine.
 
 - `PRESETS` (const): The presets, by id (see the file comment).
 
+### [`engine/gfx/post/resolveLook.ts`](../engine/gfx/post/resolveLook.ts)
+
+- `createLookResolver` (function): Makes the resolver over `settings` and `registry`, its advice to `log` (see the file comment).
+- `ResolvedLook` (type): What the settings name now (see the file comment); `variant` keeps a perspective camera's, once asked for.
+
 ### [`engine/gfx/post/settings.ts`](../engine/gfx/post/settings.ts)
 
 - `definePostSettings` (function): Declares the chain's settings (`POST_SETTINGS`) and the setting `quality` it reads on `registry` (the shared one by default), unless it has them: on the shared one when this module loads, so `node x set post.look look:game-boy` knows them in Node (tools/cmd/set.ts imports the modules that declare settings), and on any other when `createPost` or `createEngine` runs.
@@ -8540,6 +8545,10 @@ For the agents who maintain the engine.
 
 - `look` (const): The look `look:playground-cel`: three bands and a rim per material, hue-shifted shadows, ink, shells, a gradient sky.
 
+### [`labs/playground/looks/clean.ts`](../labs/playground/looks/clean.ts)
+
+- `look` (const): The look `look:playground-clean`: the scene's own lit materials under the hour's sky, edges smoothed, nothing else.
+
 ### [`labs/playground/looks/pixel.ts`](../labs/playground/looks/pixel.ts)
 
 - `look` (const): The look `look:playground-pixel`: a low-resolution picture, ramps dithered on the world, snapped and gliding.
@@ -8775,7 +8784,7 @@ For the agents who maintain the engine.
 - `nextCamera` (function): The code of the camera mode after the one `code` opens (the first after an unknown code).
 - `nextLook` (function): The look after `id` (the first after an unknown id).
 - `PLAYGROUND_CAMERAS` (const): The five camera modes, in the order T steps through them; the shooter is the page's default.
-- `PLAYGROUND_LOOKS` (const): The two looks, in the order P switches them; the cel look is the page's default.
+- `PLAYGROUND_LOOKS` (const): The three looks, in the order P steps through them; the clean look is the page's default (the owner's direction of 2026-11-03, ADR-0025 amendment 46), the cel and pixel looks the styled ones (WP 13.24).
 - `swapShoulder` (function): The shooter camera's code `code` over the other shoulder (`cam3=shoulder,<yaw>,<pitch>,<distance>[,-1]`); another code as it is.
 - `turnView` (function): A classic view's code `code` turned round its target by `steps` × 90° (`cam=iso,<turn>,<zoom>`); another code as it is.
 
@@ -10223,7 +10232,7 @@ For the agents who maintain the engine.
 - `packageVersion` (function): Reads the engine's version from `package.json` under `root`.
 - `Report` (interface): The fixed schema of `out/<cmd>/<target>/report.json`.
 - `reportPath` (function): The repository-relative path of a command's report: `out/<cmd>/<target>/report.json`.
-- `runtime` (function): Names the platform: `linux-x64 node24.22.1`, followed by `browser` (such as `chromium141`) when one was used.
+- `runtime` (function): Names the platform: `linux-x64 node24.22.2`, followed by `browser` (such as `chromium141`) when one was used.
 - `targetSlug` (function): Turns a command's target (a page, a scene, a file) into one safe directory name; no target gives `all`.
 - `validateReport` (function): Checks a parsed report against the schema; returns one sentence per problem, or an empty list.
 - `writeReport` (function): Validates `report`, writes it to `out/<cmd>/<target>/report.json` under `root`, copies it to `out/latest.json` (with its `report` path) and returns the repository-relative path.

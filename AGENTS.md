@@ -14,7 +14,7 @@ waiting on it. Unclear after a cheap test means no proven benefit: stop, record 
 and move on.
 
 ## Setup
-bash scripts/setup.sh (idempotent; the SessionStart hook runs it) installs Node 24.22.1 (.nvmrc), resolves the
+bash scripts/setup.sh (idempotent; the SessionStart hook runs it) installs Node 24.22.2 (.nvmrc), resolves the
 read-only sources, $MY3D2DGE_SRC (my-3d2dge@e37e4ee) and $SHARDFALL_SRC (shardfall@fa2dab6), cloning them into
 .cache/src-* when unset, and runs npm ci. Never edit the sources. Offline it keeps Node 22: everything runs, but Node
 goldens are recorded on 24. npm's warning that an .npmrc allow-scripts setting is ignored is expected.
@@ -97,7 +97,7 @@ Task guides (docs/INDEX.md opens with them), each read when the task needs it:
 - docs/PROGRESS.md: read first, every session: where things stand, what is next, the open issues.
 - docs/TESTING.md: the tiers, and which unit tests and specs a change selects.
 - docs/PLAYGROUND.md: the playground (Phase 13): the site, the move set and its reference values, the five cameras,
-  the two looks, and how feel and looks are checked.
+  the three looks, and how feel and looks are checked.
 - docs/HANDOFF.md: handing the engine to game agents (the prompt, many games at once), starting in a new environment,
   and the box against my-3d2dge's stress-world.
 - lean/: the default handoff, the engine as a library (ADR-0024 amendment 1); docs/GAME-GUIDE.md and labs/game/, the

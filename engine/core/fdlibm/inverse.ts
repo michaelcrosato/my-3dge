@@ -8,7 +8,7 @@
  * business. Permission to use, copy, modify, and distribute this software is freely granted, provided that this
  * notice is preserved.
  *
- * Invariants: each returns what Node 24.22.1's `Math` function of the same name returns, bit for bit
+ * Invariants: each returns what Node 24.22.2's `Math` function of the same name returns, bit for bit
  * (engine/core/fdlibm/fdlibm.test.ts). `asin` and `acos` evaluate one rational approximation R(x²) for |x| < 0.5 and
  * R((1 − |x|)/2) beyond, with √ splitting near ±1; `atan` reduces |x| to one of five intervals around 0, 0.5, 1, 1.5
  * and ∞; `atan2` handles the signed zeros and infinities, then calls `atan(|y/x|)`.

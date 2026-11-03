@@ -8,7 +8,7 @@
  * Copyright 2004 Sun Microsystems, Inc. All Rights Reserved. Permission to use, copy, modify, and distribute this
  * software is freely granted, provided that this notice is preserved.
  *
- * Invariants: it returns what Node 24.22.1's `Math.tan` returns, bit for bit (engine/core/fdlibm/fdlibm.test.ts):
+ * Invariants: it returns what Node 24.22.2's `Math.tan` returns, bit for bit (engine/core/fdlibm/fdlibm.test.ts):
  * x = n·π/2 + r, and tan(x) is the kernel's odd polynomial of r for even n, −1/tan(r), computed with care, for odd n.
  *
  * @example

@@ -20,7 +20,7 @@
         {
           "page": "playground",
           "title": "The playground",
-          "what": "The third-person playground: the gym, the house and the town, its five cameras and two looks.",
+          "what": "The third-person playground: the gym, the house and the town, its five cameras and three looks.",
           "command": "node x feel · node x shot labs/playground",
           "links": [["Open", ""]]
         },

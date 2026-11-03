@@ -53,19 +53,11 @@ import { warmsAsked, type Warmup, type WarmupPass } from '../warmup';
 import { AA_CHOICE, aaKindFor, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { gpuParticlesFor, sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
-import {
-  createFilterUniforms,
-  fixColor,
-  fixLevels,
-  isPlain,
-  layerChain,
-  writeFilters,
-  type FilterChain,
-  type FilterSpec,
-} from './filters';
+import { createFilterUniforms, isPlain, writeFilters, type FilterChain, type FilterSpec } from './filters';
 import { defineLooks, type LookEntry } from './looks';
 import { clearMrt, createScenePass, FLAG_SLOTS, useSceneMrt, writeFlags } from './mrt';
 import { createParticleLayer } from './particles';
+import { createLookResolver } from './resolveLook';
 import { definePostSettings } from './settings';
 import { createShading } from './shading';
 import { SHADOW_GRID } from '../shadows';
@@ -118,7 +110,10 @@ export interface Post {
    * again, and drawing the scene through the chain there too made each Stress Box page (the room, the hall, the fight)
    * about 1 s slower to start, for a picture a clean look never draws (gate G6's review). The first frame of another
    * look pays that instead, once, building nothing. With `gfx.warmUp: asked` (engine/gfx/warmup.ts) it gives the scene
-   * pass alone, and the warm frame draws the scene through the chain, until a plain frame is first asked for.
+   * pass alone, and the warm frame draws the scene through the chain, until a plain frame is first asked for. The view
+   * draws `frame`'s scene, camera and particles whatever views were made since: a warm-up draws its frame after its
+   * awaits, while engine/app/drawing.ts makes the next camera's view (drawn with that camera, the warmed one's plain
+   * frame came cold: main's full run on b9d8690).
    */
   view(frame: FrameView): FrameView;
   /** Draws look `id` from the next frame (sets `post.look`). */
@@ -198,34 +193,8 @@ export function createPost(
     builds++;
   };
 
-  type Resolved = { id: string; over: unknown; look: LookEntry; chain: FilterChain; toon: ToonLook; variant?: Resolved }; // prettier-ignore
-  let resolved: Resolved | null = null;
-  /**
-   * The look and chain the settings name now (the last ones while the settings are unchanged); for a `perspective`
-   * camera, the look's variant's filters and toon numbers when it names one.
-   */
-  const resolve = (perspective = false): Resolved => {
-    const base = resolveBase();
-    if (!perspective || !base.look.perspective) return base;
-    if (base.variant) return base.variant;
-    const variant = registry.get('look', base.look.perspective) as LookEntry;
-    base.variant = { ...base, chain: layerChain(variant.filters, fixColor(fixLevels(base.over as FilterSpec).spec).spec), toon: variant.toon }; // prettier-ignore
-    return base.variant;
-  };
-  const resolveBase = (): Resolved => {
-    const id = settings.get<string>('post.look');
-    const over = settings.get('post.filters');
-    if (resolved && resolved.id === id && resolved.over === over) return resolved;
-    const look = registry.get('look', id) as LookEntry;
-    const { spec: levelled, raised } = fixLevels(over as FilterSpec);
-    for (const { name, levels } of raised) {
-      log.warnOnce('GFX_POST_FEW_LEVELS', { where: `post.filters.${name}.levels`, levels }, name);
-    }
-    const { spec, dropped } = fixColor(levelled);
-    if (dropped !== null) log.warnOnce('GFX_POST_BAD_COLOR', { color: JSON.stringify(dropped) }, dropped);
-    resolved = { id, over, look, chain: layerChain(look.filters, spec), toon: look.toon };
-    return resolved;
-  };
+  /** The look and chain the settings name now; for a perspective camera, its variant's (engine/gfx/post/resolveLook.ts). */
+  const resolve = createLookResolver({ settings, registry, log });
 
   let applied: LookEntry | null = null;
   let appliedChain: FilterChain | null = null;
@@ -367,12 +336,20 @@ export function createPost(
     },
     aa: aaKind,
     view(frame) {
-      scenePass.scene = frame.scene;
-      scenePass.camera = frame.camera;
-      layer?.view(frame.particles, frame.camera);
+      const aim = () => {
+        scenePass.scene = frame.scene;
+        scenePass.camera = frame.camera;
+        layer?.view(frame.particles, frame.camera);
+      };
+      aim();
       const perspective = (frame.camera as PerspectiveCamera).isPerspectiveCamera === true;
       if (warmsAsked(settings) && resolve(perspective).look !== applied) sync(); // its style on before a warm-up
-      return { ...frame, draw, passes: warmsPlain() ? passes : passes.slice(0, 1) };
+      // aimed again as it draws: a warm-up draws its frame after its awaits, other views perhaps made meanwhile
+      const drawFrame = () => {
+        aim();
+        draw();
+      };
+      return { ...frame, draw: drawFrame, passes: warmsPlain() ? passes : passes.slice(0, 1) };
     },
     use(id) {
       settings.set('post.look', id);

@@ -231,18 +231,26 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
   {
     id: 'looks-noon',
     kind: 'try',
-    title: 'Both looks at noon',
-    what: 'Walk around the block at noon. P switches between the cel look and the pixel look, {camera} the camera. Anything ugly, hard to read or broken?', // prettier-ignore
+    title: 'The three looks at noon',
+    what: 'Walk around the block at noon. P steps through the clean, cel and pixel looks, {camera} the camera. Anything ugly, hard to read or broken?', // prettier-ignore
     from: item(10),
     go: { query: { scene: 'site', 'playground.hour': '12' } },
   },
   {
     id: 'looks-night',
     kind: 'try',
-    title: 'Both looks at night',
-    what: 'The same at 10 at night, in isometric; P switches the looks. Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
+    title: 'The three looks at night',
+    what: 'The same at 10 at night, in isometric; P steps through the looks. Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
     from: item(10),
     go: { query: { scene: 'site', cam: 'iso', 'playground.hour': '22' } },
+  },
+  {
+    id: 'clean-look',
+    kind: 'try',
+    title: 'The clean look, the default',
+    what: 'The playground now opens in the clean look you asked for: the plain materials in the hour’s light, the edges smoothed, no outlines, bands or pixels. Walk the block and the house in it. Is it the clean default you wanted, or should it change (crisper, softer, more colour)?', // prettier-ignore
+    from: item(10),
+    go: { query: { scene: 'site', 'post.look': 'look:playground-clean', 'playground.hour': '12' } },
   },
   {
     id: 'cel-brick',
