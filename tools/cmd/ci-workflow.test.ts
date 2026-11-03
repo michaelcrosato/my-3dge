@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { CHROMIUM_VERSION } from '../lib/browser';
+import { CI_SHARDS } from '../lib/ciShards';
 import { sourceSpecs } from '../lib/source';
 import { ROOT } from '../x';
 import { CI_STEPS } from './ci';
@@ -55,7 +56,7 @@ describe('the GitHub Actions workflow', () => {
 
   it('runs the full run, node x ci --local --full, split over its shards, so its commands are CI_STEPS', () => {
     const shards = /^ {8}shard: \[([\d, ]+)\]$/m.exec(text)?.[1].split(',').map(Number);
-    expect(shards?.length, 'a matrix of shards').toBeGreaterThan(1);
+    expect(shards?.length, 'a matrix of CI_SHARDS shards (tools/lib/ciShards.ts)').toBe(CI_SHARDS);
     expect(shards).toEqual(shards?.map((_, i) => i + 1));
     const commands = runs();
     expect(commands.filter((command) => command.startsWith('node x ci'))).toEqual([

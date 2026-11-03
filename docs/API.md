@@ -9979,10 +9979,12 @@ For the agents who maintain the engine.
 
 ### [`tools/lib/ciShards.ts`](../tools/lib/ciShards.ts)
 
+- `CI_SHARDS` (const): The workflow's machines: .github/workflows/ci.yml's matrix, held equal by tools/cmd/ci-workflow.test.ts.
 - `E2eReport` (interface): The parts of Playwright's JSON report it reads: each suite's file and its tests' results' durations (ms).
 - `E2eSuite` (interface): A suite of a Playwright JSON report, as far as `minutesFromReports` reads it.
 - `minutesFromReports` (function): Each spec file's minutes over `reports` (the shards'), to a tenth, by name.
 - `minutesOf` (const): What `spec` weighs in `table`.
+- `PLAN_CAP_MINUTES` (const): The most a machine's plan may weigh, in the table's minutes: half the job's 120, since GitHub's runners ran the same spec file up to about twice as long from one run to the next (ADR-0023 amendment 7).
 - `planShards` (function): Deals `specs` out to `total` machines by their minutes (see the file comment); each machine's files by name.
 - `readT2Minutes` (function): The table under `root`; empty when there is none.
 - `SPEC_DIR` (const): Where the spec files are (playwright.config.ts's `testDir`).
