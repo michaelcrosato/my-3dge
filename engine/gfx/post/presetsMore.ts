@@ -78,9 +78,13 @@ export const COMBINED_LOOKS: Record<string, LookSpec> = {
   },
   'look:storybook': {
     description: 'A storybook: watercolour on cold-pressed paper with a thin ink line.',
+    // the wash wetter and the paper stronger than their presets, so it reads at the engine's lines (WP 13.31's review)
     combine: [
-      { look: 'look:watercolor/wash' },
-      { look: 'look:paper/watercolour-paper' },
+      {
+        look: 'look:watercolor/wash',
+        filters: { watercolor: { wobble: 4, bleed: 0.7, edges: 0.8, granulation: 0.7 } },
+      },
+      { look: 'look:paper/watercolour-paper', filters: { paper: { strength: 0.7 } } },
       { look: 'look:outline/thin' },
     ],
   },

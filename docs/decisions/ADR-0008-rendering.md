@@ -348,6 +348,17 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   filter's uniforms per part: left until a game asks for it.
 - **Not verified here:** how the new filters read to the owner (the playground's Tune panel and its try check,
   ADR-0025 amendment 50), and their cost on a real GPU; on SwiftShader each adds its taps only while it is on.
+- **Corrected after the merge (#48), from a visual review of the combined looks on the playground's street:**
+  `look:red-coat` kept no red. The selective colour filter measured the kept hue as OKLCH's angle (Style Lab's: red
+  about 29°) while its field and presets give the colour wheel's (0 red, 120 green), and it also greyed what OKLab
+  finds dull (chroma under 0.06), taking half the colour of dark reds and browns of the kept hue. It now measures the
+  wheel's hue (`post_hue`, engine/gfx/post/shaders/tone.ts) and counts a pixel as coloured by its saturation (HSV's,
+  0.08 to 0.2), so a warm grey pavement stays grey and a dark red keeps its colour; the field's default is red, 0.
+  Measured on the street from isometric: all 7,225 red pixels of the clean frame keep their colour (755 did), all
+  187,442 coloured pixels of other hues turn grey, and 269 of the 512,957 others keep a trace of tint (saturation
+  over 0.06). `look:storybook` lays its wash wetter and its paper stronger (its change from the clean frame 14.9
+  levels a channel, now 25.5), the review's pick of three. A test holds the hue: tests/e2e/filters.spec.ts keeps the room's commonest hue as its
+  field names it and greys it when named the opposite.
 - **Evidence:** engine/gfx/post/filters.test.ts, combine.test.ts, resolveLook.test.ts, looks.test.ts and
   chain.test.ts; tests/e2e/filters.spec.ts (each new filter in each scope, amounts, combining live, 0 pipelines);
   tests/e2e/post.spec.ts (every look, the new ones among them, switched with 0 pipelines).

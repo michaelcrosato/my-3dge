@@ -1069,7 +1069,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `postAscii`, `postBrush`, `postDots`, `postHalftone`, `postHatch`, `postPaint`, `postSketch`, `postStylize`
   - Tests: [`tests/e2e/post.spec.ts`](../tests/e2e/post.spec.ts)
 - [`tone.ts`](../engine/gfx/post/shaders/tone.ts): The composite's colour and tone filters (PLAN.md WP 13.31): the grade's further steps, split toning, selective colour and the gradient map, as WGSL through TSL's `wgslFn`.
-  - Exports: `postDuotone`, `postGradeMore`, `postOklab`, `postSelective`, `postSplit`
+  - Exports: `postDuotone`, `postGradeMore`, `postHue`, `postSelective`, `postSplit`
   - Tests: [`tests/e2e/filters.spec.ts`](../tests/e2e/filters.spec.ts)
 
 ## engine/gfx/puppets

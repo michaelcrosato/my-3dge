@@ -88,7 +88,7 @@ export const MORE_FILTER_FIELDS = {
   }),
   selective: filter('Selective colour: every colour but one turned grey (a red coat in a grey film).', {
     scope: scope(),
-    hue: num('The hue kept: 0 red, 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta.', 25, 0, 360, '°'),
+    hue: num('The hue kept, on the colour wheel: 0 red, 60 yellow, 120 green, 180 cyan, 240 blue, 300 magenta.', 0, 0, 360, '°'), // prettier-ignore
     range: num('How far round the kept hue still counts as it.', 35, 5, 120, '°'),
   }),
   duotone: filter('Gradient map: brightness mapped onto a dark, a middle and a light colour (duotone, tritone).', {
