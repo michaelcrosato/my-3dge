@@ -139,3 +139,13 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
      stay, for `npx vite preview`. Disconnecting the Vercel project from the repository is the owner's, in Vercel's
      settings (an outward action); until then Vercel may still try to build pushes with its defaults, which agents
      ignore.
+6. **2026-11-03: the shards' minutes re-measured** (my call, found reporting main's run after PR #47). Main's full
+   run on e13452c (#47) was cancelled: its fourth job hit the 120 minutes inside T2. On 618507c (#48) the same plan
+   ran T2 for 95 min 53 s on the fourth job against 42 to 65 on the others (the first's 15 minutes of other steps
+   aside). Amendment 3's table, measured on d1d707b, had gone stale: the eight spec files added since weighed 5
+   minutes each, playground-tour.spec.ts among them at 29.2, and the runner's times had moved
+   (playground-cameras.spec.ts 23.9 to 35.7, parity.spec.ts 49 to 55). filters.spec.ts's arrival (WP 13.31) re-dealt
+   the files and put the tour, the cameras and the looks on one job. `node x ci --minutes` rewrote the table from
+   618507c's four `out-<i>` reports (57 spec files, 246 minutes of T2). On those minutes the old plan's fourth job
+   comes to 95.6, as it ran; the new plan puts about 65 on each job, the first's other steps included. Alternative
+   not taken: a fifth shard; at 65 minutes a job, four have room under the 120.
