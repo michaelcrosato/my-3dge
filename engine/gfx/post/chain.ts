@@ -53,7 +53,7 @@ import { warmsAsked, type Warmup, type WarmupPass } from '../warmup';
 import { AA_CHOICE, aaKindFor, createAa, gateUpdates, type Aa, type AaKind } from './aa';
 import { gpuParticlesFor, sceneTargetsFor, temporalAaFor, type FeatureReport, type TemporalAa } from '../features';
 import { createComposite, POST_SHOW, type PostShow } from './composite';
-import { createFilterUniforms, isPlain, writeFilters, type FilterChain, type FilterSpec } from './filters';
+import { createFilterUniforms, foldAmounts, isPlain, writeFilters, type FilterChain, type FilterSpec } from './filters';
 import { defineLooks, type LookEntry } from './looks';
 import { clearMrt, createScenePass, FLAG_SLOTS, useSceneMrt, writeFlags } from './mrt';
 import { createParticleLayer } from './particles';
@@ -214,7 +214,7 @@ export function createPost(
     }
     applied = state.look;
     appliedToon = state.toon;
-    const chain = state.chain;
+    const chain = foldAmounts(state.chain); // the passes before the composite take their amounts in their strengths
     uniforms.frame.value.x = POST_SHOW.indexOf(settings.get<PostShow>('post.show'));
     const budget = quality();
     const wantsBloom = chain.bloom.scope === 'all' && chain.bloom.strength > 0;
