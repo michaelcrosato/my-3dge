@@ -354,7 +354,10 @@ ESLint's layer rules; `tests/e2e/parity.spec.ts` (rendering never changes the ha
   finds dull (chroma under 0.06), taking half the colour of dark reds and browns of the kept hue. It now measures the
   wheel's hue (`post_hue`, engine/gfx/post/shaders/tone.ts) and counts a pixel as coloured by its saturation (HSV's,
   0.08 to 0.2), so a warm grey pavement stays grey and a dark red keeps its colour; the field's default is red, 0.
-  Measured on the street: RESULTS. A test holds it: tests/e2e/filters.spec.ts keeps the room's commonest hue as its
+  Measured on the street from isometric: all 7,225 red pixels of the clean frame keep their colour (755 did), all
+  187,442 coloured pixels of other hues turn grey, and 269 of the 512,957 others keep a trace of tint (saturation
+  over 0.06). `look:storybook` lays its wash wetter and its paper stronger (its change from the clean frame 14.9
+  levels a channel, now 25.5), the review's pick of three. A test holds the hue: tests/e2e/filters.spec.ts keeps the room's commonest hue as its
   field names it and greys it when named the opposite.
 - **Evidence:** engine/gfx/post/filters.test.ts, combine.test.ts, resolveLook.test.ts, looks.test.ts and
   chain.test.ts; tests/e2e/filters.spec.ts (each new filter in each scope, amounts, combining live, 0 pipelines);
