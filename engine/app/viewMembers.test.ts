@@ -59,6 +59,14 @@ const CALLS: Record<string, Call> = {
   'get()': (e) => expect(e.get(1)).toMatchObject({ id: 1, pathMover: { x: 3.5, z: 4.5 } }),
   'hash()': (e) => expect(e.hash()).toMatch(/^[0-9a-f]{16}$/),
   'help()': (e) => expect(e.help('scene.dump')).toContain('options'),
+  'look()': (e, call) => {
+    expect(call('look')).toEqual({ look: 'look:clean', combine: [], strength: 1, filters: {} });
+    e.set('post.combine', '[{"look":"look:cinematic"}]');
+    e.set('post.strength', '0.5');
+    const now = call('look') as { filters: Record<string, { scope: string; amount: number; aspect?: number }> };
+    expect(Object.keys(now.filters)).toEqual(['streaks', 'grade', 'split', 'vignette', 'letterbox']);
+    expect(now.filters.letterbox).toMatchObject({ scope: 'all', amount: 0.5, aspect: 2.39 });
+  },
   'fx.stats()': (_e, call) => expect(call('fx.stats')).toMatchObject({ particles: { live: 0, capacity: 4096 }, gpuParticles: null }), // prettier-ignore
   'gallery.frames()': (_e, call) => expect(call('gallery.frames', 'prop', 'prop:crate')).toHaveLength(4),
   'gallery.list()': (_e, call) => {

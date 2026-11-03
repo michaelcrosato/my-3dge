@@ -2455,3 +2455,26 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   draws 7,311 colours from isometric (1,212 with crisp texels), 20,653 from the follow camera (9,439) and 15,789 in
   first person (6,554), its isometric edge share 0.10 (0.27): the texels' hard borders no longer read as edges.
 - Plan edit: WP 13.30's build and ledger row.
+
+## Amendment 50 (2026-11-03, WP 13.32): the Tune panel
+
+- **The owner's direction (2026-11-03):** after a review of Style Lab (michaelcrosato/my-ai-3d-demo@34c6fa1), "we
+  just want the filters, tuning, and ability to combine filters and where the filters are applied (objects,
+  environment, characters, etc)", the engine's side of it in ADR-0008 amendment 14.
+- **Decided:** the playground's front end gains Tune the look (`tune`, labs/playground/ui/tune.ts), on the title
+  screen and pause after Settings: a panel on the right of the picture, made from the filters' own schema
+  (`FILTER_FIELDS`, now public), with every filter's scope, amount and numbers, the looks laid on and the strength,
+  each change a write of `post.filters`, `post.combine` or `post.strength` (a uniform write: no pipeline after the
+  first frame through the chain), its values read back from the inspector's new `look` member (engine/app/
+  lookMember.ts), which agents read headless as in a page. Copy as look gives the filters drawn as a `defineLook`
+  (the fields off their defaults; labs/playground/ui/tune.test.ts defines it and draws the same filters). The panel's
+  changes are not kept across reloads: a tuned look is kept by pasting it into a look's file, as an agent keeps one.
+- **Not built:** Style Lab's undo, search and per-value lock, and a menu of looks to compare: a filter's fold, Reset
+  and the copy cover a first try; the owner's check `tune` asks how it reads before more is built.
+- **Owner check:** `tune` (try): lay looks on, slide amounts and the strength, set a filter's scope and numbers, and
+  judge whether the block looks different and better (docs/PROGRESS.md: how the filters read is not verifiable here).
+- **Evidence:** labs/playground/ui/tune.test.ts; tests/e2e/playground-ui.spec.ts (the panel lists every filter;
+  a filter, a look laid on and the strength reach `__engine.look()`, no pipeline built; Copy as look; Reset), and the
+  title and pause menus' new item there; engine/app/viewMembers.test.ts and tests/e2e/box-members.spec.ts (`look`).
+- Plan edit: WP 13.32.
+

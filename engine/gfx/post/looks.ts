@@ -21,7 +21,9 @@
  * Lamplit fog, and their presets. Left out: styles that differ by part and the knobs WP 7.2's styles lack
  * (`flat_shadow`, `specular`, `exposure`), so four looks keep the scene's style where shardfall styled the parts
  * apart. One rename for the lesson: "64 colours" posterized to 4 levels, which shifts the hue of dull colours, so it
- * is `look:palette/512-colours`, at 8.
+ * is `look:palette/512-colours`, at 8. WP 13.31 and 13.32 add Style Lab's presets and looks made by combining them
+ * (engine/gfx/post/presetsMore.ts), and every look's `combine` and `strength` (engine/gfx/post/combine.ts): the looks
+ * it lays on, how much of each and which of its filters, and how much of the whole look shows.
  *
  * Invariants: every look's levels are 0 or 8 and more (the kind's check); a missing id falls back to `look:clean`
  * with a warning naming the closest ids; looks read their fields, never their ids. A game's own look is scaffolded by
@@ -32,7 +34,7 @@
  * const registry = createRegistry();
  * defineLooks(registry);
  * registry.get('look', 'look:game-boy').filters.palette.palette; // 'gameboy'
- * registry.list('look').length; // 98
+ * registry.list('look').length; // 137
  * @see engine/gfx/post/looks.test.ts
  * @see tests/e2e/post.spec.ts
  */
@@ -43,8 +45,10 @@ import { MATERIAL_STYLES } from '../materials/styles';
 import { TOON_LOOK } from '../materials/toon';
 import { RESOLUTION_MODES } from '../resolution';
 import { TEXTURE_LOOKS } from '../textures/types';
-import { colorProblem, FILTER_FIELDS, FILTER_NAMES, levelsProblem, type FilterSpec } from './filters';
+import { COMBINE_FIELD, STRENGTH_FIELD, type CombineLayer } from './combine';
+import { colorFields, colorProblem, FILTER_FIELDS, FILTER_NAMES, levelsProblem, type FilterSpec } from './filters';
 import { PRESETS } from './presets';
+import { COMBINED_LOOKS, STYLE_PRESETS } from './presetsMore';
 
 /** Where a menu lists a look: `look` for a whole look, else the filter it presets, or `shading` for a style. */
 export const LOOK_GROUPS = ['look', 'shading', ...FILTER_NAMES] as const;
@@ -145,6 +149,8 @@ export const LOOK_FIELDS = {
     description: 'The filter chain: each filter it names, with its scope and numbers; the rest are off.',
     properties: FILTER_FIELDS,
   },
+  combine: COMBINE_FIELD,
+  strength: STRENGTH_FIELD,
   gallery: galleryField({ camera: 'cam=iso' }),
 } as const satisfies Schema;
 
@@ -152,10 +158,11 @@ export const LOOK_FIELDS = {
 export type LookEntry = Entry<typeof LOOK_FIELDS>;
 
 /** What `defineLook` takes: any of the fields, the filters as part of a chain. */
-export type LookSpec = Partial<Omit<EntryOf<typeof LOOK_FIELDS>, 'filters' | 'toon' | 'shells'>> & {
+export type LookSpec = Partial<Omit<EntryOf<typeof LOOK_FIELDS>, 'filters' | 'toon' | 'shells' | 'combine'>> & {
   toon?: Partial<LookEntry['toon']>;
   shells?: Partial<LookEntry['shells']>;
   filters?: FilterSpec;
+  combine?: readonly CombineLayer[];
 };
 
 /** The whole looks, from shardfall's `[[look]]` tables (see the file comment), and the clean picture. */
@@ -313,14 +320,21 @@ export const LOOKS: Record<string, LookSpec> = {
   },
 };
 
-/** The levels a look sets that break the posterize rule, and an outline colour that is none, as problems. */
+/**
+ * The levels a look sets that break the posterize rule, a colour that is none, and a layer that lays the look on
+ * itself, as problems (a longer cycle is skipped where it is drawn, engine/gfx/post/combine.ts).
+ */
 function checkLook(entry: LookEntry): string[] {
-  const { pixel, palette, outline } = entry.filters;
+  const { pixel, palette } = entry.filters;
+  const filters = entry.filters as Record<string, Record<string, unknown>>;
   return [
     levelsProblem(pixel.levels, 'filters.pixel.levels'),
     levelsProblem(palette.levels, 'filters.palette.levels'),
-    colorProblem(outline.color, 'filters.outline.color'),
+    ...colorFields().map(([name, key, empty]) => colorProblem(filters[name][key] as string, `filters.${name}.${key}`, empty)), // prettier-ignore
     entry.shells.color ? colorProblem(entry.shells.color, 'shells.color') : 'shells.color is empty: give hex',
+    ...entry.combine.map((layer, i) =>
+      layer.look === entry.id ? `combine[${i}] lays ${entry.id} on itself: name another look` : null,
+    ),
   ].filter((problem): problem is string => problem !== null);
 }
 
@@ -337,7 +351,7 @@ export function defineLooks(registry: Registry = sharedRegistry): void {
         "defineLook('look:<name>', { description, style, toon, sky, filters: { pixel: { scope, size }, … } })",
     });
   }
-  for (const [id, spec] of Object.entries({ ...LOOKS, ...PRESETS })) {
+  for (const [id, spec] of Object.entries({ ...LOOKS, ...PRESETS, ...STYLE_PRESETS, ...COMBINED_LOOKS })) {
     if (!registry.has('look', id)) registry.def('look', id, spec as Record<string, unknown>);
   }
 }

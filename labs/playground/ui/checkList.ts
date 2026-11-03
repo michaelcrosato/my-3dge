@@ -333,6 +333,14 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     go: { query: { scene: 'site', cam: 'overhead', 'post.look': 'look:playground-pixel' } },
   },
   {
+    id: 'tune',
+    kind: 'try',
+    title: 'Tune the look with the new filters',
+    what: 'Press Esc and open Tune the look. Lay a look on (try cinematic, storybook, miniature or VHS tape), slide its amount and the strength, then open a filter, set its scope (everything, the characters, the objects or the scenery) and its numbers. Is it easy to make the block look different, and better? Copy as look gives text to send back: does it?', // prettier-ignore
+    from: 'docs/PROGRESS.md: how the filters read is not verifiable here (ADR-0008 amendment 14)',
+    go: { query: { scene: 'site' } },
+  },
+  {
     id: 'gamepad',
     kind: 'try',
     title: 'A gamepad, if you have one',

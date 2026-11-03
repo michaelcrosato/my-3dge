@@ -262,10 +262,11 @@ test('every look builds 0 pipelines after the warm-up and recompiles nothing, an
   page,
   harness,
 }) => {
-  test.setTimeout(400_000);
+  // 400 s for 98 looks; 137 since WP 13.31 walked in 303.7 s here, so the budget grew with the looks
+  test.setTimeout(560_000);
   await open(page, harness);
   const looks = await page.evaluate(() => __postPage.looks());
-  expect(looks.length).toBe(98);
+  expect(looks.length).toBe(137); // shardfall's 98, then Style Lab's 31 presets and 8 combined looks (WP 13.31, 13.32)
   await page.evaluate(() => __postPage.setLook('look:clean'));
   const ids = idsOf(await page.evaluate(() => __postPage.shoot({ ids: true, pixels: false })));
   // A shot draws into a target of its own: its first frame straight (above) and through the chain (the parts view)

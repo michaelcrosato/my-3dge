@@ -61,6 +61,7 @@ import { createRunView, type RunView } from './view';
 import type { AppHost } from './viewMembers';
 import './animMember';
 import './feelMember';
+import './lookMember';
 import './viewMembers';
 import '../dev/eye'; // the agent eye's member: __engine.eye in a page and headless alike
 import '../dev/galleryShoot'; // the gallery's members: __engine.gallery in a page and headless alike

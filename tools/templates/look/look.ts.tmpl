@@ -7,7 +7,9 @@
  * (all, characters, objects, environment, or two joined by '+') and numbers, every filter left out off; and a
  * material style (`style`: lambert, toon, flat, pbr), which only a page whose chain has a style set applies (advice
  * `GFX_POST_NO_STYLES` otherwise; '' keeps the scene's own). Levels are 0 (off) or 8 and more (24 suits pixel art),
- * so dull colours keep their hue. A page draws it when its setting `post.look` names it.
+ * so dull colours keep their hue. It may lay other looks on first (`combine`: each a look, an `amount` and `only` some
+ * of its filters; its own filters that are on go over them) and fade the whole (`strength`). A page draws it when its
+ * setting `post.look` names it; `__engine.look()` there gives the filters it draws.
  *
  * @example
  * look.id; // 'look:{{name}}'
@@ -24,5 +26,7 @@ export const look = defineLook('look:{{name}}', {
     palette: { scope: 'environment', levels: 24, dither: 0.3 },
     grade: { scope: 'all', temperature: 0.2, saturation: 1.1 },
   },
+  combine: [{ look: 'look:vignette/soft', amount: 0.8 }], // looks laid on under its own filters
+  strength: 1, // how much of the whole look shows
   gallery: { camera: 'front', duration: 0, states: [] }, // node x gallery: the gallery's set in it
 });

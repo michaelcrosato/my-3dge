@@ -6,12 +6,15 @@
  *    camera's map and refuses one another action holds, naming it; Play resumes; Escape pauses, and a key the menu reads
  *    reaches no intent (Space picks Resume and the player never jumps); photo mode flies the free camera on the move
  *    keys with the HUD hidden and puts the camera back on leaving; after a reload the settings and the rebind are kept;
- * 2. the movement profile from settings starts the scene again on it, and the run's replay holds it and plays back to
+ * 2. the Tune panel (WP 13.32) lists every filter; turning one on, sliding its numbers, laying a look on and sliding the
+ *    strength reach the look drawn (`__engine.look()`) with no pipeline built after the first frame through the chain;
+ *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back;
+ * 3. the movement profile from settings starts the scene again on it, and the run's replay holds it and plays back to
  *    its hash in Node; Restart starts it again on its seed;
- * 3. the spawn picker, from the gym, opens the block at the area picked; on the block it puts the player in the room
+ * 4. the spawn picker, from the gym, opens the block at the area picked; on the block it puts the player in the room
  *    picked through the recorded dev action `place`, the HUD naming the room; the run replays to its hash in Node; the
  *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
- * 4. the owner's checks (WP 13.28): the title lists them with how many are left; the keys work the panel as a menu; a
+ * 5. the owner's checks (WP 13.28): the title lists them with how many are left; the keys work the panel as a menu; a
  *    check's view names the player's keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps
  *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place`, the
  *    HUD naming the check, and pause answers it.
@@ -20,6 +23,7 @@
  * the virtual clock (`harness.tick`), so the front end reads each key at a frame as the page's loop samples it.
  */
 import type { Page } from '@playwright/test';
+import { FILTER_NAMES } from '../../engine/gfx/post/filters';
 import { playReplay, type Replay } from '../../engine/sim/replay';
 import '../../labs/playground/cast/player';
 import '../../labs/playground/scenes/gym';
@@ -101,7 +105,7 @@ test.describe('the playground’s front end', () => {
     expect(await screens(page)).toEqual({ screens: ['title'], paused: true });
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
-    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', checksItem(OWNER_CHECKS.length), 'Spawn…', 'Settings…', 'Photo mode', 'Watch the tour']); // prettier-ignore
+    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', checksItem(OWNER_CHECKS.length), 'Spawn…', 'Settings…', 'Tune the look…', 'Photo mode', 'Watch the tour']); // prettier-ignore
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -140,7 +144,7 @@ test.describe('the playground’s front end', () => {
     await page.keyboard.press('Escape');
     await harness.tick(2);
     expect((await screens(page)).screens).toEqual(['pause']);
-    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Spawn…', 'Settings…', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Restart', 'Title screen']); // prettier-ignore
+    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Spawn…', 'Settings…', 'Tune the look…', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Restart', 'Title screen']); // prettier-ignore
     const before = await player(page);
     await page.keyboard.press('Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
     await harness.tick(2);
@@ -174,6 +178,61 @@ test.describe('the playground’s front end', () => {
     await pick(page, harness, 'title', 'settings');
     expect([await shown(page, 'cam.fov'), await shown(page, 'post.look'), await shown(page, 'volume:music')]).toEqual(['104', 'look:playground-pixel', '0.25']); // prettier-ignore
     await expect(page.locator('[data-ui=binding][data-id=jump]')).toHaveAttribute('data-value', /KeyK/);
+    expect(harness.advice()).toEqual([]);
+  });
+
+  test('the Tune panel tunes the look live: a filter, a look laid on, the strength, Copy as look, Reset', async ({
+    page,
+    harness,
+  }) => {
+    await page.goto('labs/playground/?playground.title=on');
+    await harness.ready({ timeout: READY });
+    await harness.tick(2);
+    await pick(page, harness, 'title', 'tune');
+    expect((await screens(page)).screens).toEqual(['title', 'tune']);
+    const panel = page.locator('[data-ui=tune]');
+    await expect(panel).toBeVisible();
+    const folds = await panel.locator('[data-ui=tune-filter]').evaluateAll((all) => all.map((one) => one.getAttribute('data-id'))); // prettier-ignore
+    expect(folds).toEqual([...FILTER_NAMES]);
+    type Look = {
+      look: string;
+      combine: unknown[];
+      strength: number;
+      filters: Record<string, Record<string, unknown>>;
+    };
+    const look = () => call<Look>(page, 'look');
+    const pipelines = async () => (await call(page, 'render', 2), (await call<{ pipelinesAfterWarmUp: number }>(page, 'stats')).pipelinesAfterWarmUp); // prettier-ignore
+    const range = (at: ReturnType<Page['locator']>, value: number) =>
+      at.evaluate((input: HTMLInputElement, v) => ((input.value = String(v)), input.dispatchEvent(new Event('input'))), value); // prettier-ignore
+    const before = await look();
+
+    const vignette = panel.locator('[data-ui=tune-filter][data-id=vignette]');
+    await vignette.locator('summary').click();
+    await vignette.locator('[data-field=scope]').selectOption('all');
+    const built = await pipelines(); // the first frame through the chain; every change after it is a uniform write
+    await range(vignette.locator('[data-field=strength]'), 0.8);
+    expect((await look()).filters.vignette).toMatchObject({ scope: 'all', amount: 1, strength: 0.8 });
+    await expect(vignette).toHaveAttribute('data-on', 'true');
+    await panel.locator('[data-ui=tune-add]').selectOption('look:cinematic');
+    await expect(panel.locator('[data-ui=tune-layer]')).toHaveCount(1);
+    expect((await look()).combine).toEqual([{ look: 'look:cinematic', amount: 1, only: [], filters: {} }]);
+    expect((await look()).filters.letterbox).toMatchObject({ scope: 'all', aspect: 2.39 });
+    await range(panel.locator('[data-ui=tune-strength] input'), 0.5);
+    const tuned = await look();
+    expect([tuned.strength, tuned.filters.letterbox.amount, tuned.filters.vignette.strength]).toEqual([0.5, 0.5, 0.8]);
+    expect(await pipelines(), 'pipelines built by the changes').toBe(built);
+
+    await panel.locator('[data-ui=item][data-id=copy]').click();
+    const text = await panel.locator('[data-ui=tune-copy]').inputValue();
+    expect(text.startsWith("defineLook('look:my-look', {")).toBe(true);
+    expect(Object.keys(JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)).filters)).toEqual(Object.keys(tuned.filters)); // prettier-ignore
+    await panel.locator('[data-ui=item][data-id=remove]').click();
+    await expect(panel.locator('[data-ui=tune-layer]')).toHaveCount(0);
+    await panel.locator('[data-ui=item][data-id=reset]').click();
+    expect(await look()).toEqual(before);
+    await page.keyboard.press('Escape');
+    await harness.tick(2);
+    expect((await screens(page)).screens).toEqual(['title']);
     expect(harness.advice()).toEqual([]);
   });
 

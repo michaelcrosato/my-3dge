@@ -96,6 +96,7 @@ test.describe('the box’s inspector', () => {
       out.eye = await Promise.resolve()
         .then(() => e.eye())
         .catch((error: Error) => error.message.split(':')[0]); // the room has no physics
+      out.look = Object.keys(e.look()).join(); // the room's look, its filters as the chain draws them
       out['tune.settings'] = e.tune.settings().some((row: { path: string }) => row.path === 'movement.gaits.sprint');
       out['tune.profile'] = e.tune.profile().startsWith('defineMovement("movement:playtest", {');
       out.render = (await e.render(1)).drawn;
@@ -145,6 +146,7 @@ test.describe('the box’s inspector', () => {
       'gallery.frames': 4,
       'gallery.shoot': '[DEV_GALLERY_CLOSED] gallery.shoot films the gallery scene, but the page shows box', // box:room
       eye: '[SIM_BAD_ARGUMENT] __engine.eye() got a scene without physics',
+      look: 'look,combine,strength,filters',
       'tune.settings': true, // the feel panel's rows: every number of the shooter model, even with no actor on it
       'tune.profile': true,
       render: true,

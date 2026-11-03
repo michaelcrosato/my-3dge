@@ -585,8 +585,8 @@ types `EngineFrame`, `FrameWorld`, `CameraPose`.
 **Materials v2 (WP 7.2)**: the same material data drawn in four styles (lambert, toon, flat, pbr), switched at run time with every style warmed; the toon look (bands and rim) as uniforms; outline shells for meshes and instanced batches.
 `createStyleSet`, `MATERIAL_STYLES`, `TOON_LOOK`, `createOutline`, `OUTLINE_MODES`; types `MaterialStyle`, `StyleSet`, `StyleSetOptions`, `ToonLook`, `ToonUniforms`, `Outline`, `OutlineMode`, `OutlineOptions`, `OutlineShells`.
 
-**Post-processing (WP 7.4)**: one chain every frame draws through, every filter a uniform (scoped to the characters, the objects or the environment), looks as data (a material style plus a filter chain, and the sky that lights it, WP 7.8), objects tagged by part.
-`createPost`, `POST_SETTINGS`, `definePostSettings`, `setPart`, `PARTS`, `defineLook`, `FILTER_NAMES`, `SCOPES`, `PALETTES`, `STYLIZE_KINDS`; types `Post`, `PostOptions`, `Part`, `PostTag`, `LookEntry`, `LookSpec`, `FilterName`, `Scope`, `FilterChain`, `FilterSpec`, `PostShow`.
+**Post-processing (WP 7.4, 13.32)**: one chain every frame draws through, every filter a uniform with an amount, scoped by part; looks as data (a material style, a filter chain, the sky, WP 7.8) that combine looks; objects tagged by part.
+`createPost`, `POST_SETTINGS`, `definePostSettings`, `setPart`, `PARTS`, `defineLook`, `FILTER_FIELDS`, `FILTER_NAMES`, `SCOPES`, `PALETTES`, `STYLIZE_KINDS`; types `Post`, `PostOptions`, `Part`, `PostTag`, `LookEntry`, `LookSpec`, `FilterName`, `Scope`, `FilterChain`, `FilterSpec`, `CombineLayer`, `PostShow`.
 
 **Props drawn (WP 4.5)**: every prop part a batch of the instancing service, posed by its body, the flames dancing on the visual streams, the light spots flickering, for the light pool; a part's geometry and where it stands (its matrix in the prop's frame), for a prop's tests.
 `createPropMeshes`, `FLICKER`, `buildPropPart`, `partMatrix`; types `PropMeshes`, `PropMeshesOptions`, `PropMeshPose`, `PropLight`.

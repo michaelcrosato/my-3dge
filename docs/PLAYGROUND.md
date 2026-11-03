@@ -406,6 +406,15 @@ field of view, controls and rebinding, sensitivity, the movement profile, the lo
 kept across sessions by the store; the HUD for each camera (crosshair, prompts, ammo, the feel readout); photo mode
 (the free camera and the looks); the owner's checks (WP 13.28, §9.3).
 
+### 8.4 Tuning the look
+
+(WP 13.31, WP 13.32; ADR-0008 amendment 14, ADR-0025 amendment 50.) Tune the look, from the title screen and pause,
+puts every filter beside the picture: its scope (everything, the characters, the objects, the scenery, or two of
+them), its amount and its numbers; the looks laid on, each with its amount; the whole look's strength; and Copy as
+look, which gives the result as a `defineLook` to keep. It writes the same view settings an agent sets with `x set`
+or `x shot --set` (`post.filters`, `post.combine`, `post.strength`) and reads what is drawn as `__engine.look()` does,
+so whatever the owner tunes an agent can reproduce, and the other way round. labs/playground/ui/tune.ts says how.
+
 ## 9. How we know it feels and looks right
 
 ### 9.1 Numbers agents check
