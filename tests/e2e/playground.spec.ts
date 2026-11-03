@@ -24,7 +24,6 @@
  * 9. the range's replay (WP 13.20: the pistol and the rifle drawn and fired, the targets down and up again) keeps its
  *    goldens while it renders through every camera mode and every look, the guns drawn in the hands and in first
  *    person's arms, the tracers, flashes, impacts and holes, with 0 pipelines after the warm-up; the HUD counts it.
- *    It draws a frame every step at the engine's pixels (`gfx.resolution=pixels`, WP 13.30), every look included.
  *
  * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
@@ -221,10 +220,7 @@ test.describe('the playground', () => {
     harness,
   }) => {
     test.setTimeout(1_500_000);
-    // drawn at the engine's pixels (WP 13.30): a frame every step with the clean and cel looks at full resolution ran
-    // past these 25 minutes here; its goldens, HUD and pipelines are the same at any size (ADR-0008 amendment 13), and
-    // the gym's replay above plays through every look as shipped
-    await open(page, harness, '?scene=site-range&gfx.resolution=pixels');
+    await open(page, harness, '?scene=site-range');
     const views: [number, { cam?: string; set?: Record<string, string> }][] = [
       ...PLAYGROUND_CAMERAS.map((mode, i): [number, { cam: string }] => [20 + i * 160, { cam: mode.code }]), // the shooter first
       [100, { set: { 'post.look': PLAYGROUND_LOOKS[1] } }],

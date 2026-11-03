@@ -2406,4 +2406,9 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   re-recorded at 964 × 544 with UPDATE_THUMBS=1, this amendment their reason (their old ones still compared at 0
   cells, one channel moving by up to 24). The pixel look's five are kept as recorded and compare at 0 cells. At noon
   from isometric, the clean look draws 18,617 colours, the cel 1,212 and the pixel 345; from the follow camera,
-  44,223, 9,439 and 945. The playground's other specs that step through the looks: WP 13.30's ledger row.
+  44,223, 9,439 and 945. The playground's other specs that step through the looks: WP 13.30's ledger row. Here,
+  playground.spec's range test runs past its 25 minutes at either resolution: the range scene's frames cost about
+  1.6 s at the engine's pixels on this container, the same at the base commit (a probe of 30 frames a look: 1.55 to
+  1.68 s at ba0049a, 1.57 to 1.78 s with this change, 71 then 83 pipelines in both), and full resolution costs about
+  1.6 times that (the clean look 2.6 s, the pixel look 1.6 s). On GitHub's runner the test took 7.5 minutes at
+  ba0049a, so it is left as shipped, for main's full run to check.
