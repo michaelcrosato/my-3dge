@@ -1,13 +1,13 @@
 /**
  * @file The looks catalogue (tools/lib/docsLooks.ts): every built-in look and every filter is listed once, the whole
- * looks with their descriptions, a field's default and range read compactly, and the shared `amount` left to the
- * block's header but for the filters whose amount is their strength.
+ * looks with their descriptions and what they draw, a field's default and range read compactly, the shared `amount`
+ * left to the block's header but for the filters whose amount is their strength, and a look's other fields.
  */
 import { describe, expect, it } from 'vitest';
 import { createRegistry } from '../../engine/core/registry';
 import { FILTER_NAMES } from '../../engine/gfx/post/filters';
 import { defineLooks, type LookEntry } from '../../engine/gfx/post/looks';
-import { fieldText, looksCatalog } from './docsLooks';
+import { fieldText, looksCatalog, makeup } from './docsLooks';
 
 const catalog = looksCatalog();
 const lines = catalog.split('\n');
@@ -16,11 +16,29 @@ defineLooks(registry);
 const looks = registry.list('look') as LookEntry[];
 
 describe('looksCatalog', () => {
-  it('lists every whole look once, with its description', () => {
+  it('lists every whole look once, with its description and what it draws', () => {
     const whole = looks.filter((look) => look.group === 'look');
     expect(whole.length).toBeGreaterThan(20);
     for (const look of whole) {
-      expect(lines.filter((line) => line.startsWith(`- \`${look.id}\`: `))).toEqual([`- \`${look.id}\`: ${look.description}`]); // prettier-ignore
+      expect(lines.filter((line) => line.startsWith(`- \`${look.id}\`: `))).toEqual([`- \`${look.id}\`: ${look.description} _${makeup(look, registry) || 'nothing'}._`]); // prettier-ignore
+    }
+  });
+
+  it("tells what a whole look draws, its own layers resolved, scopes shown where they are not 'all'", () => {
+    const get = (id: string) => registry.get('look', id) as LookEntry;
+    // storybook's ink is on everything: laying it on brings that along (the lean README's rule)
+    expect(makeup(get('look:storybook'), registry)).toBe('filters watercolor, outline, paper');
+    expect(makeup(get('look:cartoon'), registry)).toMatch(/^style toon; filters /);
+    expect(makeup(get('look:clean'), registry)).toBe('');
+    expect(makeup(get('look:comic-noir'), registry)).toMatch(/\((characters\+objects|environment)\)/);
+  });
+
+  it("lists a look's other fields with their first sentences", () => {
+    for (const key of ['style', 'sky', 'toon', 'resolution', 'textures', 'strength']) {
+      expect(
+        lines.some((line) => line.startsWith(`- \`${key}\`: `)),
+        key,
+      ).toBe(true);
     }
   });
 
@@ -34,7 +52,9 @@ describe('looksCatalog', () => {
   });
 
   it('lists every filter once, in the chain order, the screen ones marked', () => {
-    const filters = lines.filter((line) => /^- `[a-z]+`( \(the whole picture\))?: [A-Z]/.test(line));
+    // the filters' section runs from its header to the look fields' header
+    const section = lines.slice(lines.findIndex((line) => line.startsWith('**The filters**')), lines.findIndex((line) => line.startsWith("**A look's other fields**"))); // prettier-ignore
+    const filters = section.filter((line) => /^- `[a-z]+`( \(the whole picture\))?: [A-Z]/.test(line));
     expect(filters.map((line) => /^- `([a-z]+)`/.exec(line)![1])).toEqual([...FILTER_NAMES]);
     expect(filters.find((line) => line.startsWith('- `vignette`'))).toMatch(/^- `vignette` \(the whole picture\): /);
     expect(filters.find((line) => line.startsWith('- `grade`'))).toMatch(/^- `grade`: Colour grading\. /);

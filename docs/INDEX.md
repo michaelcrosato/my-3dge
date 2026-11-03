@@ -2566,11 +2566,14 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`docsHelp.ts`](../tools/lib/docsHelp.ts): The `help()` drift check (PLAN.md §8.12, §8.3, WP 1.6; doctrine: Agent-operable): `x docs --check` fails when the inspector's `help()` differs from its real API, the members the object actually has.
   - Exports: `apiOf`, `checkHelp`, `helpDrift`, `helpNames`, `memberModules`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
+- [`docsIds.ts`](../tools/lib/docsIds.ts): The built-in entries a game names by id, as Markdown: lean/README.md's `lean:ids` block (tools/lib/lean.ts), so an agent handed only that file can name a sky, a material, a prop or a sound without reading the engine's source (ADR-0024 amendment 2, after a fresh agent's trial needed the bundle's source for each).
+  - Exports: `firstClause`, `firstSentence`, `ID_KINDS`, `idsCatalog`
+  - Tests: [`tools/lib/docsIds.test.ts`](../tools/lib/docsIds.test.ts)
 - [`docsKinds.ts`](../tools/lib/docsKinds.ts): Reads the registry kinds a module declares with `defineKind` (PLAN.md §6.6, WP 1.2): `x docs` gives each kind its row in `docs/INDEX.md` (kind, description, declaring module) and fails a declaration it cannot read, so the index of kinds is never written by hand.
   - Exports: `KindDoc`, `kindsOf`
   - Tests: [`tools/cmd/docs.test.ts`](../tools/cmd/docs.test.ts)
 - [`docsLooks.ts`](../tools/lib/docsLooks.ts): The looks and filters a game can use, as Markdown: lean/README.md's `lean:looks` block (tools/lib/lean.ts), so an agent handed only that file can change how its game looks (the owner's handoff goal of 2026-11-03; ADR-0024 amendment 2).
-  - Exports: `fieldText`, `looksCatalog`
+  - Exports: `fieldText`, `looksCatalog`, `makeup`
   - Tests: [`tools/lib/docsLooks.test.ts`](../tools/lib/docsLooks.test.ts)
 - [`docsPaths.ts`](../tools/lib/docsPaths.ts): The path checks of `x docs` (PLAN.md §8.12, WP 0.6): every path, source citation and name that the file and export comments, AGENTS.md, README.md and the Markdown under `docs/` mention must exist.
   - Exports: `checkable`, `checkPaths`, `coveredDocs`, `expand`, `GENERATED_DIRS`, `isPlanned`, `PathOptions`, `Planned`, `readPlanned`

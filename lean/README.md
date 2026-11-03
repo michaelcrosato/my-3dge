@@ -31,11 +31,12 @@ page reads the sim and never writes it.
 
 - `defineComponent('gem', { description, fields })` declares a component: typed fields with defaults. `w.spawn({ gem:
   { x, z } })` returns an id; `w.query('gem')` returns the entities holding it, in id order; `w.get`, `w.add`,
-  `w.remove` and `w.despawn` do the rest. A component with `x` and `z` in metres is drawn as a stand-in box.
+  `w.remove` and `w.despawn` do the rest. A component with `x` and `z` in metres is drawn as a stand-in box, which
+  also reads `y` (its bottom), `yaw`, `size` (its side, 0.5 m) and `material` (an id) when the component has them.
 - Systems run in phases, in order: `intents`, `ai`, `anim`, `physics`, `readback`, `rules`:
   `w.systems.add('game.collect', collect, { phase: 'rules' })` runs after the physics moved the bodies.
 - `w.emit('gem', payload)` delivers at the end of the step to `w.events.on('gem', …)`; a page reads
-  `frame.world.events.trace`.
+  `frame.world.events.trace()`.
 - Time is steps: `w.tick`, `w.dt` (1/60 s), `w.hz`. Count a duration in whole steps (30 s is 1,800).
 - Randomness comes from named streams: `w.rng('gems').int(0, 9)`, `.range(a, b)`, `.chance(p)`.
 - Settings are the game's tunable numbers: `defineSettings({ 'game.gems': { type, default, minimum, maximum, when:
@@ -46,8 +47,11 @@ pressed, and the game's own keys. A player actor (`spawnActor(w, { player: true,
 get them as their second argument (`held(intents, 'jump')`, `pressed(intents, 'attack')`). WASD or the arrows run,
 Space jumps, Shift dashes.
 
-**Characters, physics and the rest** are in the API below, area by area: levels as text (`compileLevel`, glyphs `#`
-wall, `.` floor, `@` spawn, `w` low wall, `P` pillar, `^` stairs) and sites of buildings on a terrain (`defineSite`),
+**The HUD** is the page's: `engine.ui.hud(id, text, { at })` sets a line at one of six places (`top-left`, `top`,
+`top-right`, `bottom-left`, `bottom`, `bottom-right`), and `null` as its text removes it.
+
+**Characters, physics and the rest** are in the API below, area by area, and every built-in id under [Built-in ids
+and the level legend](#built-in-ids-and-the-level-legend): levels as text (`compileLevel`) and sites of buildings on a terrain (`defineSite`),
 characters (`createCharacter`, Apex Legends' movement with `{ movement: 'movement:apex' }`: sprint, slide, mantle,
 climb; `spawnActor`), physics (`physicsOf(w)` and its `.raycast`, `.overlap`), props, ladders, ziplines, doors,
 windows and switches, crowds and steering, combat, melee and firearms (`addMelee`, `defineWeapon`), materials and
@@ -95,13 +99,21 @@ same game can be a storybook, a film or pixel art with nothing else changed, and
 - **Read it back:** `__engine.look()` gives the look drawn now: its id, the looks laid on, the strength, and every
   filter that is on with its scope, amount and numbers; its `filters` pasted into a `defineLook` keeps the picture.
 
-Changing a filter's numbers, scope or amount, or the looks laid on, builds no shader. Every look and filter is listed
-under [Looks and filters](#looks-and-filters), below game.html.
+How they combine: a look's `combine` goes on first, layer by layer, then its own `filters`, which win where they set a
+filter (so `look:warm-tale` inks only the characters, though `look:storybook` inks everything). Laying at an `amount`
+below 1 moves numbers that far, mixes colours, and switches choices (a scope, a kind) from 0.5. A filter stays off
+until something gives it a scope: `grade: { temperature: 0.2 }` alone does nothing. A layer never turns a filter off,
+nor does `scope: 'off'` in a look's own `filters`: leave a layer's filter out with `only`, or set its scope to `'off'`
+in that layer's `filters`; `post.filters`, applied last, turns one off outright. Only filters are laid on: the style,
+the sky and the rest come from the look `post.look` names. Changing a filter's numbers, scope or amount, or the looks
+laid on, builds no shader. Every look, what it draws, and every filter are under [Looks and
+filters](#looks-and-filters), below game.html.
 
 ## Look inside a running game
 
 The browser console has `__engine`: `__engine.help()` lists it all; `step(n)`, `hash()`, `state('round')`,
-`set('game.gems', 20)`, `seed(7)`, `camera.set('cam=iso')`. The URL takes the same: `?seed=7&game.gems=20&cam=iso`.
+`set('game.gems', 20)`, `seed(7)`, `camera.set('cam=iso')`, `look()`, and `describe('material')`, a kind's fields and
+ids. The URL takes the same: `?seed=7&game.gems=20&cam=iso`.
 Errors name their fix, and docs/ERRORS.md in the engine's repository lists every code.
 
 ## Versions
@@ -381,38 +393,38 @@ description: The arena. 18 × 14 m inside walls, two pillars, two low walls to j
 ## Looks and filters
 
 <!-- lean:looks:start -->
-**Whole looks**, each a style, filters and sky together:
+**Whole looks**, each with what it draws (its style and sky where it names them, its filters and their scopes):
 
-- `look:16-bit`: The whole scene as 16-bit pixel art with a slightly vivid grade.
-- `look:anime-action`: An action frame: comic cel bands, bold lines and speed lines.
-- `look:arcade-cabinet`: An arcade cabinet: a curved tube's grille, glow and lines.
-- `look:arcade-crt`: Low resolution on a curved tube with scanlines, glow and colour fringes.
-- `look:cartoon`: Toon shading everywhere, bold ink outlines and vivid colour.
-- `look:cinematic`: A film: teal and orange, anamorphic streaks, soft corners and widescreen bars.
-- `look:clean`: No filter: the picture as the scene draws it, in its own style.
-- `look:comic-book`: Printed dots on the world, inked heroes, punchy colour.
-- `look:comic-noir`: A black-and-white world; the characters and objects keep their colour, inked.
-- `look:flat-paper`: Flat colours, thin outlines and a faded grade, like a printed page.
-- `look:game-boy`: Everything in four greens, pixelated and dithered.
-- `look:game-boy-world`: The environment in four Game Boy greens; the characters and objects in full colour with ink outlines.
-- `look:hacker-terminal`: The game as green characters on a curved, scanlined screen.
-- `look:hd-2d`: Pixel-art characters and objects in a soft, glowing 3D world with dark corners.
-- `look:hologram-heroes`: Characters and objects flicker like holograms: cool, scanlined and fringed. The world stays clean.
-- `look:lamplit-fog`: A foggy night where every lamp glows in the air.
-- `look:miniature`: A model railway: tilt-shift blur, crisp and bright colours.
-- `look:newspaper`: Black dots on cream paper, everything.
-- `look:oil-painting`: The whole scene in oil paint: flat strokes, brush streaks, canvas.
-- `look:painted-world`: A painted backdrop; the characters and objects stay sharp and inked on top of it.
-- `look:pixel-heroes`: A clean, sharp world; the characters and objects are outlined pixel art.
-- `look:pixel-world`: The environment is pixel art; the characters and objects stay sharp and inked.
-- `look:posterized-world`: The environment in a few flat shades; the characters and objects in full colour.
-- `look:red-coat`: A grey film where only red keeps its colour, grainy and dark at the edges.
-- `look:riso-print`: A risograph print: ember duotone, plates out of register, newsprint.
-- `look:sketchbook`: Pencil hatching and contours on paper.
-- `look:sketched-world`: A coloured-pencil world; the characters and objects inked on top of it.
-- `look:storybook`: A storybook: watercolour on cold-pressed paper with a thin ink line.
-- `look:sunbeams`: Dusty air, sunlight streaming through the gaps, a soft glow.
-- `look:vhs-tape`: A home video: worn tape, soft scanlines, noise and dark corners.
+- `look:16-bit`: The whole scene as 16-bit pixel art with a slightly vivid grade. _filters pixel, grade._
+- `look:anime-action`: An action frame: comic cel bands, bold lines and speed lines. _filters cel, outline, speedlines._
+- `look:arcade-cabinet`: An arcade cabinet: a curved tube's grille, glow and lines. _filters bloom, scanlines, crt, screen._
+- `look:arcade-crt`: Low resolution on a curved tube with scanlines, glow and colour fringes. _filters bloom, scanlines, chroma, screen._
+- `look:cartoon`: Toon shading everywhere, bold ink outlines and vivid colour. _style toon; filters outline, grade._
+- `look:cinematic`: A film: teal and orange, anamorphic streaks, soft corners and widescreen bars. _filters streaks, grade, split, vignette, letterbox._
+- `look:clean`: No filter: the picture as the scene draws it, in its own style. _nothing._
+- `look:comic-book`: Printed dots on the world, inked heroes, punchy colour. _filters outline, stylize (environment), grade (characters+objects)._
+- `look:comic-noir`: A black-and-white world; the characters and objects keep their colour, inked. _filters outline, grade (environment), screen._
+- `look:flat-paper`: Flat colours, thin outlines and a faded grade, like a printed page. _style flat; filters outline, grade, grain._
+- `look:game-boy`: Everything in four greens, pixelated and dithered. _filters pixel, palette._
+- `look:game-boy-world`: The environment in four Game Boy greens; the characters and objects in full colour with ink outlines. _filters palette (environment), outline (characters+objects)._
+- `look:hacker-terminal`: The game as green characters on a curved, scanlined screen. _filters stylize, scanlines, screen._
+- `look:hd-2d`: Pixel-art characters and objects in a soft, glowing 3D world with dark corners. _filters bloom, pixel (characters+objects), grade (environment), screen._
+- `look:hologram-heroes`: Characters and objects flicker like holograms: cool, scanlined and fringed. The world stays clean. _filters bloom, grade (characters+objects), scanlines (characters+objects), grain (characters+objects), chroma (characters+objects)._
+- `look:lamplit-fog`: A foggy night where every lamp glows in the air. _filters air, grade._
+- `look:miniature`: A model railway: tilt-shift blur, crisp and bright colours. _filters tiltshift, sharpen, grade._
+- `look:newspaper`: Black dots on cream paper, everything. _filters stylize._
+- `look:oil-painting`: The whole scene in oil paint: flat strokes, brush streaks, canvas. _filters stylize, grade._
+- `look:painted-world`: A painted backdrop; the characters and objects stay sharp and inked on top of it. _filters outline (characters+objects), stylize (environment)._
+- `look:pixel-heroes`: A clean, sharp world; the characters and objects are outlined pixel art. _filters pixel (characters+objects)._
+- `look:pixel-world`: The environment is pixel art; the characters and objects stay sharp and inked. _filters pixel (environment), outline (characters+objects)._
+- `look:posterized-world`: The environment in a few flat shades; the characters and objects in full colour. _filters palette (environment)._
+- `look:red-coat`: A grey film where only red keeps its colour, grainy and dark at the edges. _filters grade, selective, vignette, grain._
+- `look:riso-print`: A risograph print: ember duotone, plates out of register, newsprint. _filters misregister, paper, duotone._
+- `look:sketchbook`: Pencil hatching and contours on paper. _filters stylize._
+- `look:sketched-world`: A coloured-pencil world; the characters and objects inked on top of it. _filters outline (characters+objects), stylize (environment)._
+- `look:storybook`: A storybook: watercolour on cold-pressed paper with a thin ink line. _filters watercolor, outline, paper._
+- `look:sunbeams`: Dusty air, sunlight streaming through the gaps, a soft glow. _filters air, bloom._
+- `look:vhs-tape`: A home video: worn tape, soft scanlines, noise and dark corners. _filters scanlines, vhs, vignette, grain, chroma._
 
 **One-filter presets**, `look:<group>/<name>`: each turns its one filter on over everything, to draw alone or lay
 on with `combine` (the `shading` group sets the material style instead, and `screen` the screen's own glass):
@@ -489,7 +501,65 @@ takes only `'all'` or `'off'`; the rest also take `'characters'`, `'objects'`, `
 - `chroma`: Colour fringes: red and blue pulled apart toward the screen edges. `amount` 0.5 (0–1).
 - `letterbox` (the whole picture): Letterbox bars that crop the picture to a film aspect ratio. `aspect` 2.39 (1.2–2.8), `color` '#000000'.
 - `screen` (the whole picture): The screen itself: CRT curvature, a vignette, low resolution. `curvature` 0 (0–0.5), `vignette` 0 (0–1), `pixelate` 1 (1–16 px).
+
+**A look's other fields** (`defineLook(id, { description, filters, combine, … })`):
+
+- `style`: The material style everything is drawn in (lambert, toon, flat, pbr); '' keeps the scene's own.
+- `sky`: The sky preset that lights the scene (a 'sky' id: sky:hall, the torch-lit hall); '' keeps the scene's own lights.
+- `skyGradient`: How much of the sky's dome is a clean gradient, horizon haze to zenith, instead of daylight's model.
+- `toon`: The toon style's bands, rim, shade and dither, used when the style is 'toon'.
+- `shells`: Outline shells round the props and bodies (engine/gfx/stageShells.ts), drawn in front of the sky.
+- `resolution`: The resolution mode it is drawn at while gfx.resolution is 'auto' (pixels, balanced or full); '' keeps the engine's pixels.
+- `textures`: How every material's textures are filtered: 'smooth' blends their texels, 'pixel' keeps them crisp; '' keeps each texture's own.
+- `perspective`: The look drawn instead while the camera is a perspective one (its variant: same style, sky, resolution and textures); '' keeps this.
+- `strength`: How much of the whole look shows, 0 to 1: every filter's amount is scaled by it, so 0 draws the scene clean.
 <!-- lean:looks:end -->
+
+## Built-in ids and the level legend
+
+<!-- lean:ids:start -->
+**Built-in ids**, by kind, as a scene names them (`material: 'material:glow'`, `spawnProp(w, { prop: 'prop:bench',
+at: [x, 0, z], yaw: 0 })`); `__engine.describe('<kind>')` in a running page lists a kind's fields, and
+`define<Kind>` adds your own.
+
+- `sky:` dawn, daylight, dusk, hall, night, noon. Sky presets.
+- `material:` asphalt, barrel, barrelLid, barrelStaves, blobShadow, brick, carpet, checker, cloth, concrete, crate, default, flagstone, flame, glass, glow, iron, paint, planks, puppet, puppetGlow, puppetHalo, shingles, siding, stone, tiles, wallpaper, wood. Materials as data with three.js's classic parameters.
+- `texture:` asphalt, brick, carpet, checker, concrete, crate, dirt, flagstone, glass, grass, metal, moss, planks, plaster, runes, shingles, siding, staves, stone, tiles, wallpaper, water, wood. Seeded, periodic texture generators.
+- `geometry:` box, frustum, limb, pillar, ramp, ring, roundedBox. Shapes props, levels and bodies name by id.
+- `prop:` banner, barrel, bench, brazier, chair, chest, crate, door, garageDoor, lamp, lantern, pane, pillar, sconce, statue, switch, table. Props: things that stand in a level, as data: meshes (geometry and material by id), a body, an optional light spot, where a level places them, and interaction hooks.
+- `light:` torch. What a level's light spot shines with.
+- `emitter:` bits, block, bubbles, confetti, destroyed, dust, embers, explosion, fire, fireflies, fountain, glass, glints, hit, impact, land, magic, rain, shatter, shot, slain, slam, smoke, snow, sparks, splinters, steam. Emitters.
+- `telegraph:` arc, cone, line, ring. Telegraphs.
+- `sfx:` blip, bodyFall, boom, bump, cancel, charge, climbGrip, coin, confirm, crouchCloth, die, door, doorBreak, doorClose, doorLocked, doorOpen, drawGun, drumCrash, drumHat, drumKick, drumOpenHat, drumSnare, drumTom, dryFire, explode, glassBreak, grab, heal, hit, holsterGun, hurt, impactBody, impactConcrete, impactDirt, impactGlass, impactMetal, impactWood, jump, jump2, key, kick, kickHit, ladderRung, land, landBody, laser, launch, mantle, oneup, pause, pickup, pistolShot, powerup, punch, punchHit, reload, rifleShot, secret, select, shoot, slide, step, stepCarpet, stepConcrete, stepGrass, stepGravel, stepMetal, stepTile, stepWood, stomp, swing, swish, switchClick, text, warp, whoosh, wind, windowSlide, zipAttach, zipRun. A sound effect.
+- `song:` adventure, boss, dungeon, title, victory. A looping tune in tracker notation.
+- `body:` humanoid. Puppet bodies.
+- `build:` adult, bulky, chibi, heroic, skeleton. Body proportions for the humanoid skeleton, in metres before size.
+- `movement:` apex, platformer. How a character moves.
+- `move:` axekick, backslash, bash, breach, cast, claw, cross, elbow, flyingkick, haymaker, hook, jab, kick, knee, overhead, plunge, rising, roundhouse, slash, spin, sweep, throw, thrust, twohand, uppercut. A named strike.
+- `weapon:` gun. Firearms.
+- `thing:` target. Things that can be hit.
+- `actionMap:` firstPerson, platformer, shmup, thirdPerson. Named actions and the physical codes bound to each.
+
+**The level legend**, a character a tile (`compileLevel`; `defineGlyph` adds one):
+
+- `t`: A brazier: an iron bowl on a stone foot, 0.75 m high (a cylinder collider, 0.3125 m in radius), with a torch spot 1 m up.
+- `o`: The dais: an octagonal platform 0.5 m up (a hull frustum), its edge a 1.5 m slope all round.
+- `+`: A doorway in a wall, 2.1 m high: walk through; the wall stands over its head.
+- `<`: A flight of stairs up to the storey above: a ramp (a hull wedge) from this floor to that one, rising toward the one side that floor meets.
+- `.`: Open floor at ground level: walkable.
+- `=`: A gallery: a walkway 1 m up, a block from the ground (a box collider).
+- `@`: Floor with the hero's spawn point (spawn:hero).
+- `|`: A ladder: open floor with a ladder against the neighbouring tile that stands highest (a wall, a tower), up to its top.
+- `_`: Floor under a low ceiling 1.4 m up (a crawlspace): crouch or slide under it.
+- `w`: A low wall (0.75 m): solid at ground level, but a body may jump onto it and stand on its top.
+- `P`: A pillar (3.5 m), 2 × 2 tiles: write it PP over PP.
+- `!`: A railing 1 m high round a landing, a deck or a stairwell: solid at ground level, a box collider.
+- `^`: Stairs: a ramp from the ground up to 1 m (a hull wedge), rising toward the one side that meets a gallery.
+- `~`: Void: no floor on this storey (a stairwell, a double height, the air beside a building).
+- `#`: A full-height wall (3 m): solid, a box collider, nobody walks or stands on it.
+- `:`: A window in a wall: solid to its sill 0.9 m up, open to its head 2.1 m up, the wall over it.
+- `1` to `9`: Floor with the spawn marker n (spawn:n): where a scene places what it numbers n, such as a mover's start.
+<!-- lean:ids:end -->
 
 ## The API by area
 

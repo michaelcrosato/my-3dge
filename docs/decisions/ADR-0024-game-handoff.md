@@ -104,34 +104,48 @@ for a shell, npm and the engine's checks.
 Enforced by tools/lib/lean.ts and its test, tools/cmd/docs.ts (`x docs --write` and `--check`), tests/e2e/lean.spec.ts,
 and tools/game/files.mjs (lean/ is the engine repository's own: a game made by new-game.mjs does not get it).
 
-## Amendment 2 (2026-11-03, the owner's goal; the calls are mine): one link, and the looks in the lean file
+## Amendment 2 (2026-11-03, the owner's goal; the calls are mine): one link, and a lean file that is all you need
 
 The owner: "make sure the repo is setup properly if I need to hand off the game engine to another agent, the easiest
 way for me is to provide a url to the github repo or a subdirectory". Checked first on main (1eba983): jsDelivr's
 copies of everything lean/game.html loads were byte for byte the repository's and node_modules' (lean/my3dge.js,
 my3dge.css, three.webgpu.js, three.tsl.js, rapier.mjs), tests/e2e/lean.spec.ts plays the page from those bytes, and
 `node x engine --test` made a game that passed its whole gate (install, check, test, sim, replay, shot, qa, help).
-What was missing:
 
-- **The looks.** lean/README.md named the post-processing exports and nothing more: an agent given only that file could
-  not find a look's id, a filter's fields or where a scope applies, though the owner's north star for WP 13.31 is
-  agents improving how a scene looks. It now has "Make it look different" (picking a look, `post.combine`,
-  `post.filters`, `post.strength`, scopes, `defineLook`, `__engine.look()`) and a generated block, `lean:looks`
-  (tools/lib/docsLooks.ts): every built-in look (30 whole looks with their descriptions, 107 one-filter presets by
-  group) and every filter with its numbers' defaults and ranges, from the registry, so `x docs --check` fails while
-  it is stale. tests/e2e/lean.spec.ts's second test opens the starter with a look, a layer and a filter's change in
-  its URL and reads them back through `__engine.look()`. docs/GAME-GUIDE.md's looks row names the same settings.
-- **A budget for the lean file**: it is read whole by every lean agent, and with the catalogue it weighs 67.5 KB, so
-  `LEAN_README_BUDGET_BYTES` (72,000 bytes, about 18,000 tokens) fails `x docs --check` past it, as the guide's does.
-  The docs cite the budgets instead of sizes measured once (amendment 1's "about 10,000 tokens" had become 14,000).
+Then a trial: a fresh agent given only the prompt below (with the branch's link) wrote a night-garden game with a look
+of its own, and the page ran on WebGPU at the first try (its HUD, its clock, its look as `__engine.look()` read it,
+no page error, no request outside its CDN URLs). But it had settled 18 points by reading the bundle's source, which a
+chat cannot: looks' rules, the sky, material, prop and other ids, the legend's markers, the HUD's places, a stand-in's
+fields, and `events.trace`, written as a property though it is a function. What changed:
+
 - **The link is the raw file**, https://raw.githubusercontent.com/michaelcrosato/my-3dge/main/lean/README.md, not the
   GitHub page around it (about ten times its size), and the prompt asks for the whole file, downloaded where the agent
-  can: an agent's web tool may summarize a long page, and the game's head has to be copied exactly.
+  can: an agent's web tool may summarize a long page, and the game's head has to be copied exactly. The trial agent
+  downloaded it with curl and read every line.
+- **Looks in the lean file**: "Make it look different" (picking a look, `post.combine`, `post.filters`,
+  `post.strength`, scopes, `defineLook`, `__engine.look()`, and how they combine: layers first, then the look's own
+  filters, which win; no filter without a scope; a layer never turns one off, `only` or the layer's own `filters` do,
+  `post.filters` outright; only filters are laid on) and a generated block, `lean:looks` (tools/lib/docsLooks.ts):
+  every built-in look, the 30 whole looks with what each draws (style, sky, filters and their scopes, as its own
+  layers resolve), the 107 one-filter presets by group, the 33 filters with each field's default and range, and a
+  look's other fields. tests/e2e/lean.spec.ts's second test opens the starter with a look, a layer and a filter's
+  change in its URL and reads them back through `__engine.look()`.
+- **Built-in ids and the legend**, generated too (`lean:ids`, tools/lib/docsIds.ts): the ids of the 17 kinds a game
+  names (skies, materials, textures, geometries, props, lights, emitters, telegraphs, sounds, songs, bodies, builds,
+  movements, moves, weapons, things, action maps) and every glyph of the level legend; `__engine.describe('<kind>')`
+  gives a kind's fields. The prose names the HUD's six places, a stand-in's fields, and `events.trace()`, corrected in
+  docs/GAME-GUIDE.md too, whose looks row now names the look settings.
+- **A budget for the lean file**: every lean agent reads it whole, so `LEAN_README_BUDGET_BYTES` (80,000 bytes, about
+  20,000 tokens; 76 KB with the catalogues) fails `x docs --check` past it, as the guide's does. The docs cite the
+  budgets instead of sizes measured once (amendment 1's "about 10,000 tokens" had become 14,000).
 - **Handing over the engine itself** has its prompt in docs/HANDOFF.md, and GEMINI.md imports AGENTS.md beside
   CLAUDE.md, so Gemini CLI loads the engine's rules as Claude Code and AGENTS.md readers do (engine-only in
   tools/game/files.mjs: a game writes its own).
 - **The browser's cache**: jsDelivr serves `@main` with a 7-day browser cache, so lean/README.md says so beside its
   12-hour refresh; a commit in place of `main` is the sure pin.
 
-Enforced by tools/lib/docsLooks.ts and its test, tools/lib/lean.ts (`LEAN_README_BUDGET_BYTES`) and its test,
-tests/e2e/lean.spec.ts, and tools/game/files.mjs.
+Not taken: each kind's fields in the file (materials alone have dozens; `__engine.describe` answers in a page) and a
+way to test a lean game without a browser (the lean promise is nothing to install; the full workspace has the checks).
+
+Enforced by tools/lib/docsLooks.ts, tools/lib/docsIds.ts and their tests, tools/lib/lean.ts
+(`LEAN_README_BUDGET_BYTES`) and its test, tests/e2e/lean.spec.ts, and tools/game/files.mjs.

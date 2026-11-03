@@ -10,9 +10,9 @@
  * - lean/my3dge.css: the touch controls' styles (engine/ui/touch.css).
  * - lean/game.html: the starter game (labs/game/) as one page, hand-written but for its head's CSS link and import map
  *   (`leanHead`), which this module writes between the `lean:head` markers.
- * - lean/README.md: the one file an agent reads, hand-written but for three blocks this module writes: game.html whole
- *   (`lean:game`), the looks and filters (`lean:looks`, tools/lib/docsLooks.ts) and the public API by area
- *   (`lean:api`, tools/lib/docsGameApi.ts's map).
+ * - lean/README.md: the one file an agent reads, hand-written but for four blocks this module writes: game.html whole
+ *   (`lean:game`), the looks and filters (`lean:looks`, tools/lib/docsLooks.ts), the built-in ids and the level
+ *   legend (`lean:ids`, tools/lib/docsIds.ts) and the public API by area (`lean:api`, tools/lib/docsGameApi.ts's map).
  * - lean/LICENSE: the engine's license, then the notice and license of the @stdlib functions the bundle carries and
  *   the notice of its movement model's port of er-apex (MIT).
  *
@@ -35,6 +35,7 @@ import { join } from 'node:path';
 import type { Rollup } from 'vite';
 import { ENGINE_REPOSITORY } from '../game/files.mjs';
 import { apiMap } from './docsGameApi';
+import { idsCatalog } from './docsIds';
 import { looksCatalog } from './docsLooks';
 import type { Finding } from './report';
 
@@ -152,7 +153,12 @@ function leanLicense(root: string): string {
 export async function leanFiles(root: string): Promise<Record<string, string>> {
   const read = (file: string) => readFileSync(join(root, LEAN, file), 'utf8');
   const game = withBlock(read('game.html'), 'head', leanHead(root));
-  const blocks = { game: `\`\`\`html\n${game.trimEnd()}\n\`\`\``, looks: looksCatalog(), api: apiMap(root, API_WORDS) };
+  const blocks = {
+    game: `\`\`\`html\n${game.trimEnd()}\n\`\`\``,
+    looks: looksCatalog(),
+    ids: await idsCatalog(),
+    api: apiMap(root, API_WORDS),
+  };
   const readme = Object.entries(blocks).reduce((text, [name, body]) => withBlock(text, name, body), read('README.md'));
   return {
     [`${LEAN}/my3dge.js`]: await leanBundle(root),
@@ -164,11 +170,11 @@ export async function leanFiles(root: string): Promise<Record<string, string>> {
 }
 
 /**
- * The most lean/README.md may weigh, in bytes (about 18,000 tokens): every lean agent reads it whole, often in a chat,
- * and docs/HANDOFF.md cites the budget. It weighed 67.5 KB when budgeted, with the looks catalogue (ADR-0024
- * amendment 2).
+ * The most lean/README.md may weigh, in bytes (about 20,000 tokens): every lean agent reads it whole, often in a chat,
+ * and docs/HANDOFF.md cites the budget. It weighed about 76 KB when budgeted, with the catalogues of looks and built-in
+ * ids that a fresh agent's trial needed (ADR-0024 amendment 2).
  */
-export const LEAN_README_BUDGET_BYTES = 72_000;
+export const LEAN_README_BUDGET_BYTES = 80_000;
 
 /** The package's stale files, and its README over its budget, as findings; none in a game made from the engine. */
 export async function leanFindings(root: string): Promise<Finding[]> {

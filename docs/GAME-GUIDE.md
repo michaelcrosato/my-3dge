@@ -56,7 +56,7 @@ so a level select reloads the page with another `?scene`.
   `w.systems.add('game.collect', collect, { phase: 'rules' })` puts a rule after the physics moved the bodies and the
   readback copied their places into components.
 - **Events.** `w.emit('gem', payload)` delivers at the end of the step to `w.events.on('gem', …)` listeners. A page
-  reads them from `frame.world.events.trace` (sounds, effects); emitters burst on them; tests count them.
+  reads them from `frame.world.events.trace()` (sounds, effects); emitters burst on them; tests count them.
 - **Time** is steps: `w.tick`, `w.dt` (1/60 s), `w.hz`. Count a duration in whole steps (30 s is 1,800), never by
   adding up `w.dt`: floating-point sums drift. `w.timers` schedule in sim seconds.
 - **Randomness** comes from named streams seeded by the run: `w.rng('gems').int(0, 9)`, `.range(a, b)`, `.chance(p)`.

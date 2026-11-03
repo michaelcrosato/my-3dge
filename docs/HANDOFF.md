@@ -12,9 +12,10 @@ Make <the game> with the my-3dge game engine. First read this whole file (plain 
 https://raw.githubusercontent.com/michaelcrosato/my-3dge/main/lean/README.md
 ```
 
-That is all, for a chat in a browser as much as for a coding agent. lean/README.md is one file, under 18,000 tokens by
+That is all, for a chat in a browser as much as for a coding agent. lean/README.md is one file, under 20,000 tokens by
 its budget (`LEAN_README_BUDGET_BYTES`, tools/lib/lean.ts; ADR-0024 amendments 1 and 2): the model, the rules worth
-keeping, game.html (a small game that plays), every look and filter, and every public name by area. The agent writes
+keeping, game.html (a small game that plays), every look and filter, every built-in id, and every public name by
+area. The agent writes
 the game as one HTML page that loads the engine (lean/my3dge.js) from jsDelivr, as a page loads three.js; the page runs
 when it is opened in a browser with WebGPU. Nothing is installed, built or tested: the engine's repository tests the
 package before every merge, so a game does not have to. An agent that cannot open links gets the same file attached

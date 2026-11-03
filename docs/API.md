@@ -10130,6 +10130,13 @@ For the agents who maintain the engine.
 - `helpNames` (function): The members a `help()` text lists, sorted: each line's signature, `name()` for a call, `name` for a property.
 - `memberModules` (function): The modules under `engine/` and `labs/` (tests aside) that register inspector members, sorted.
 
+### [`tools/lib/docsIds.ts`](../tools/lib/docsIds.ts)
+
+- `firstClause` (function): The first clause of `text`, before a colon, a bracket or a semicolon: what a kind is, without the detail.
+- `firstSentence` (const): The first sentence of `text`.
+- `ID_KINDS` (const): The kinds whose built-in entries a game names by id, in the block's order.
+- `idsCatalog` (function): The `lean:ids` block (see the file comment).
+
 ### [`tools/lib/docsKinds.ts`](../tools/lib/docsKinds.ts)
 
 - `KindDoc` (interface): One kind declared with `defineKind`.
@@ -10139,6 +10146,7 @@ For the agents who maintain the engine.
 
 - `fieldText` (function): A field's default and what it may be, compactly: `0.45 (0–1)`, `8 (1–24 px)`, `'#000000'`, `'kraft' (newsprint|…)`.
 - `looksCatalog` (function): The `lean:looks` block (see the file comment).
+- `makeup` (function): What a whole look is made of, as it draws: its style and sky when it names them, and its filters, scoped.
 
 ### [`tools/lib/docsPaths.ts`](../tools/lib/docsPaths.ts)
 
@@ -10243,7 +10251,7 @@ For the agents who maintain the engine.
 
 - `EXTERNAL` (const): The imports the bundle leaves to the page's import map: three.js and Rapier, by their npm names.
 - `LEAN` (const): The package's folder.
-- `LEAN_README_BUDGET_BYTES` (const): The most lean/README.md may weigh, in bytes (about 18,000 tokens): every lean agent reads it whole, often in a chat, and docs/HANDOFF.md cites the budget.
+- `LEAN_README_BUDGET_BYTES` (const): The most lean/README.md may weigh, in bytes (about 20,000 tokens): every lean agent reads it whole, often in a chat, and docs/HANDOFF.md cites the budget.
 - `LEAN_URL` (const): Where pages load the package from: jsDelivr's copy of this repository's main branch.
 - `leanBundle` (function): The engine as one ES module, with its banner: Vite's library mode on engine/index.ts, in memory.
 - `leanFiles` (function): Every file of the package as `x docs --write` leaves it, by repository path.
