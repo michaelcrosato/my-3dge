@@ -4,7 +4,7 @@
  * machine, held to one budget for them together
  * (tools/lib/tierBudgets.ts, five minutes). `x ci --local --full` is the full run: every step, T2 in full. Nobody waits
  * on it: the GitHub workflow (.github/workflows/ci.yml) runs it after each merge to main and by hand, and an agent at
- * the end of a goal or a stage. `--shard <i>/<n>` splits the full run over n machines, as the workflow does on four
+ * the end of a goal or a stage. `--shard <i>/<n>` splits the full run over n machines, as the workflow does on five
  * (ADR-0023 amendments 1 and 3): shard i runs the spec files tools/lib/ciShards.ts deals it by their minutes, shard 1
  * every other step too, and the rest only `npm ci`; `x ci --minutes <report.json…>` rewrites those minutes from a full
  * run's reports. `x ci --status` says how main's last full run went (tools/lib/ciStatus.ts). Each run

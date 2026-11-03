@@ -27,6 +27,15 @@ export const SPEC_DIR = 'tests/e2e';
 /** What a spec file the table does not list weighs, until a full run measures it. */
 export const UNMEASURED_MINUTES = 5;
 
+/** The workflow's machines: .github/workflows/ci.yml's matrix, held equal by tools/cmd/ci-workflow.test.ts. */
+export const CI_SHARDS = 5;
+
+/**
+ * The most a machine's plan may weigh, in the table's minutes: half the job's 120, since GitHub's runners ran the same
+ * spec file up to about twice as long from one run to the next (ADR-0023 amendment 7). Past it, add a shard.
+ */
+export const PLAN_CAP_MINUTES = 60;
+
 /** The table: which run measured it, the first machine's other steps, and each spec file's minutes. */
 export interface T2Minutes {
   measured: string;

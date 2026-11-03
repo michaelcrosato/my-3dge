@@ -56,7 +56,7 @@ so a level select reloads the page with another `?scene`.
   `w.systems.add('game.collect', collect, { phase: 'rules' })` puts a rule after the physics moved the bodies and the
   readback copied their places into components.
 - **Events.** `w.emit('gem', payload)` delivers at the end of the step to `w.events.on('gem', …)` listeners. A page
-  reads them from `frame.world.events.trace` (sounds, effects); emitters burst on them; tests count them.
+  reads them from `frame.world.events.trace()` (sounds, effects); emitters burst on them; tests count them.
 - **Time** is steps: `w.tick`, `w.dt` (1/60 s), `w.hz`. Count a duration in whole steps (30 s is 1,800), never by
   adding up `w.dt`: floating-point sums drift. `w.timers` schedule in sim seconds.
 - **Randomness** comes from named streams seeded by the run: `w.rng('gems').int(0, 9)`, `.range(a, b)`, `.chance(p)`.
@@ -110,7 +110,7 @@ The box (labs/box/, its README says which scene shows what) has a working use of
 | Melee, guns and targets        | `addMelee` (punches, kicks, the door kick), `defineWeapon`, `weaponsFor` and `addWeapons` (hip fire, the sights, a climbing recoil, reloads; `node x new weapon`), `defineThing` and `spawnThing` (targets that fall at a hit and stand again; `node x new thing`) | labs/playground/weapons/, labs/playground/cast/dummies.ts |
 | Ragdolls and joints            | `addJoint` (fixed, ball, hinge, slider, rope, spring, as data), `addRagdolls` and `handOff` (a hard blow or a death gives a person's body to physics; it gets up the way it lies), `standUp` | labs/box/scenes/ragdoll.ts, labs/playground/cast/partners.ts |
 | Animation                      | Actors animate themselves (`spawnActor({ anim: { build } })`); builds, bodies, the animator's body states, actions (`defineAction`, played on an actor with `actOn`), clips from the library (`playClip`) | labs/box/scenes/clips.ts, `node x anim find` |
-| How it looks                   | Materials and textures as data (`defineMaterial`, `defineTexture`), looks (`?post.look=look:cartoon`; `defineLook`), skies, lights | labs/box/looks/torch-lit.ts, `node x describe look` |
+| How it looks                   | Materials and textures as data (`defineMaterial`, `defineTexture`), looks (`?post.look=look:storybook`, `post.combine`, `post.filters`, `defineLook`; `__engine.look()`), skies, lights | labs/box/looks/torch-lit.ts, `node x describe look` |
 | Effects                        | Emitters as data, bursting on sim events (`defineEmitter`); telegraphs; screen shake      | labs/box/scenes/fight.ts           |
 | UI                             | `engine.ui`: `hud(id, text, { at })`, `label`, `damage`, `crosshair`; screens and menus: `createMenu`, `createEngine({ store, modal })` (rebinds kept, a menu's keys out of play), `input.bindingsFor`, `rebind`, `listen` (a controls screen); the rest plain HTML/CSS | labs/game/main.ts (its pause), labs/playground/ui/, labs/box/menu.ts |
 | Sound                          | Effects and songs as data (`defineSfx`, `defineSong`), the page's `createAudio`; a scene's `sounds` maps events to sounds | labs/box/sounds/effects.ts, labs/box/sounds/page.ts |

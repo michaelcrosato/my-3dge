@@ -10,8 +10,11 @@ best approach its builders can execute well.
 ## Make a game with my-3dge
 
 **Lean, the default, for any agent (a chat in a browser too):** read [`lean/README.md`](lean/README.md), one file
-of about 10,000 tokens holding a small game that already plays. A game is one HTML page that loads the engine from a
-CDN, the way three.js or Rapier load: nothing to install, build or test. Open the page in a browser with WebGPU.
+(under 20,000 tokens) holding a small game that already plays, every look, filter and built-in id, and the whole
+API. A game is
+one HTML page that loads the engine from a CDN, the way three.js or Rapier load: nothing to install, build or test.
+Open the page in a browser with WebGPU. To hand it to an agent, give it the raw file,
+https://raw.githubusercontent.com/michaelcrosato/my-3dge/main/lean/README.md (docs/HANDOFF.md has the prompt).
 
 **The full workspace, for a coding agent that also wants the engine's checks** (headless tests, replays, renders read
 as numbers): a game lives in a repository of its own, never in this one. In the empty folder or fresh repository where

@@ -10,8 +10,9 @@
  * - lean/my3dge.css: the touch controls' styles (engine/ui/touch.css).
  * - lean/game.html: the starter game (labs/game/) as one page, hand-written but for its head's CSS link and import map
  *   (`leanHead`), which this module writes between the `lean:head` markers.
- * - lean/README.md: the one file an agent reads, hand-written but for two blocks this module writes: game.html whole
- *   (`lean:game`) and the public API by area (`lean:api`, tools/lib/docsGameApi.ts's map).
+ * - lean/README.md: the one file an agent reads, hand-written but for four blocks this module writes: game.html whole
+ *   (`lean:game`), the looks and filters (`lean:looks`, tools/lib/docsLooks.ts), the built-in ids and the level
+ *   legend (`lean:ids`, tools/lib/docsIds.ts) and the public API by area (`lean:api`, tools/lib/docsGameApi.ts's map).
  * - lean/LICENSE: the engine's license, then the notice and license of the @stdlib functions the bundle carries and
  *   the notice of its movement model's port of er-apex (MIT).
  *
@@ -34,6 +35,8 @@ import { join } from 'node:path';
 import type { Rollup } from 'vite';
 import { ENGINE_REPOSITORY } from '../game/files.mjs';
 import { apiMap } from './docsGameApi';
+import { idsCatalog } from './docsIds';
+import { looksCatalog } from './docsLooks';
 import type { Finding } from './report';
 
 /** The package's folder. */
@@ -150,7 +153,13 @@ function leanLicense(root: string): string {
 export async function leanFiles(root: string): Promise<Record<string, string>> {
   const read = (file: string) => readFileSync(join(root, LEAN, file), 'utf8');
   const game = withBlock(read('game.html'), 'head', leanHead(root));
-  const readme = withBlock(withBlock(read('README.md'), 'game', `\`\`\`html\n${game.trimEnd()}\n\`\`\``), 'api', apiMap(root, API_WORDS)); // prettier-ignore
+  const blocks = {
+    game: `\`\`\`html\n${game.trimEnd()}\n\`\`\``,
+    looks: looksCatalog(),
+    ids: await idsCatalog(),
+    api: apiMap(root, API_WORDS),
+  };
+  const readme = Object.entries(blocks).reduce((text, [name, body]) => withBlock(text, name, body), read('README.md'));
   return {
     [`${LEAN}/my3dge.js`]: await leanBundle(root),
     [`${LEAN}/my3dge.css`]: readFileSync(join(root, 'engine/ui/touch.css'), 'utf8'),
@@ -160,14 +169,28 @@ export async function leanFiles(root: string): Promise<Record<string, string>> {
   };
 }
 
-/** The package's stale files, as findings; none when this checkout has no lean/ (a game made from the engine). */
+/**
+ * The most lean/README.md may weigh, in bytes (about 20,000 tokens): every lean agent reads it whole, often in a chat,
+ * and docs/HANDOFF.md cites the budget. It weighed about 76 KB when budgeted, with the catalogues of looks and built-in
+ * ids that a fresh agent's trial needed (ADR-0024 amendment 2).
+ */
+export const LEAN_README_BUDGET_BYTES = 80_000;
+
+/** The package's stale files, and its README over its budget, as findings; none in a game made from the engine. */
 export async function leanFindings(root: string): Promise<Finding[]> {
   if (!existsSync(join(root, LEAN, 'README.md'))) return [];
   try {
     const files = await leanFiles(root);
-    return Object.entries(files)
+    const readme = `${LEAN}/README.md`;
+    const bytes = Buffer.byteLength(files[readme]);
+    const over: Finding[] =
+      bytes > LEAN_README_BUDGET_BYTES
+        ? [{ id: 'DOCS_LEAN', message: `${readme} weighs ${bytes} bytes, over its ${LEAN_README_BUDGET_BYTES}: every lean agent reads it whole, so cut prose rather than raise the budget`, file: readme }] // prettier-ignore
+        : [];
+    const stale = Object.entries(files)
       .filter(([path, text]) => !existsSync(join(root, path)) || readFileSync(join(root, path), 'utf8') !== text)
       .map(([path]) => ({ id: 'DOCS_STALE', message: `${path} is stale: run node x docs --write (tools/lib/lean.ts writes it)`, file: path })); // prettier-ignore
+    return [...over, ...stale];
   } catch (error) {
     return [{ id: 'DOCS_LEAN', message: `the lean package failed to build: ${(error as Error).message}`, file: LEAN }];
   }

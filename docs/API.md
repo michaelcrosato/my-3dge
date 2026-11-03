@@ -9979,10 +9979,12 @@ For the agents who maintain the engine.
 
 ### [`tools/lib/ciShards.ts`](../tools/lib/ciShards.ts)
 
+- `CI_SHARDS` (const): The workflow's machines: .github/workflows/ci.yml's matrix, held equal by tools/cmd/ci-workflow.test.ts.
 - `E2eReport` (interface): The parts of Playwright's JSON report it reads: each suite's file and its tests' results' durations (ms).
 - `E2eSuite` (interface): A suite of a Playwright JSON report, as far as `minutesFromReports` reads it.
 - `minutesFromReports` (function): Each spec file's minutes over `reports` (the shards'), to a tenth, by name.
 - `minutesOf` (const): What `spec` weighs in `table`.
+- `PLAN_CAP_MINUTES` (const): The most a machine's plan may weigh, in the table's minutes: half the job's 120, since GitHub's runners ran the same spec file up to about twice as long from one run to the next (ADR-0023 amendment 7).
 - `planShards` (function): Deals `specs` out to `total` machines by their minutes (see the file comment); each machine's files by name.
 - `readT2Minutes` (function): The table under `root`; empty when there is none.
 - `SPEC_DIR` (const): Where the spec files are (playwright.config.ts's `testDir`).
@@ -10130,10 +10132,23 @@ For the agents who maintain the engine.
 - `helpNames` (function): The members a `help()` text lists, sorted: each line's signature, `name()` for a call, `name` for a property.
 - `memberModules` (function): The modules under `engine/` and `labs/` (tests aside) that register inspector members, sorted.
 
+### [`tools/lib/docsIds.ts`](../tools/lib/docsIds.ts)
+
+- `firstClause` (function): The first clause of `text`, before a colon, a bracket or a semicolon: what a kind is, without the detail.
+- `firstSentence` (const): The first sentence of `text`.
+- `ID_KINDS` (const): The kinds whose built-in entries a game names by id, in the block's order.
+- `idsCatalog` (function): The `lean:ids` block (see the file comment).
+
 ### [`tools/lib/docsKinds.ts`](../tools/lib/docsKinds.ts)
 
 - `KindDoc` (interface): One kind declared with `defineKind`.
 - `kindsOf` (function): The kinds declared by the `defineKind(…)` calls in a parsed module.
+
+### [`tools/lib/docsLooks.ts`](../tools/lib/docsLooks.ts)
+
+- `fieldText` (function): A field's default and what it may be, compactly: `0.45 (0–1)`, `8 (1–24 px)`, `'#000000'`, `'kraft' (newsprint|…)`.
+- `looksCatalog` (function): The `lean:looks` block (see the file comment).
+- `makeup` (function): What a whole look is made of, as it draws: its style and sky when it names them, and its filters, scoped.
 
 ### [`tools/lib/docsPaths.ts`](../tools/lib/docsPaths.ts)
 
@@ -10238,10 +10253,11 @@ For the agents who maintain the engine.
 
 - `EXTERNAL` (const): The imports the bundle leaves to the page's import map: three.js and Rapier, by their npm names.
 - `LEAN` (const): The package's folder.
+- `LEAN_README_BUDGET_BYTES` (const): The most lean/README.md may weigh, in bytes (about 20,000 tokens): every lean agent reads it whole, often in a chat, and docs/HANDOFF.md cites the budget.
 - `LEAN_URL` (const): Where pages load the package from: jsDelivr's copy of this repository's main branch.
 - `leanBundle` (function): The engine as one ES module, with its banner: Vite's library mode on engine/index.ts, in memory.
 - `leanFiles` (function): Every file of the package as `x docs --write` leaves it, by repository path.
-- `leanFindings` (function): The package's stale files, as findings; none when this checkout has no lean/ (a game made from the engine).
+- `leanFindings` (function): The package's stale files, and its README over its budget, as findings; none in a game made from the engine.
 - `leanHead` (function): game.html's generated head: the engine's CSS and the import map, indented as the page's head is.
 - `leanImports` (function): The import map a page needs, by specifier: the engine, and three.js and Rapier at the versions package.json pins.
 - `withBlock` (function): `text` with the block between `<!-- lean:<name>:start -->` and its end marker replaced by `body`.

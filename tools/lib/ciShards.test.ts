@@ -3,15 +3,17 @@
  * with the fewest minutes, the first carrying the other steps, ties to the lower machine and equal minutes in name
  * order, every file dealt once; an unmeasured file's weight; the minutes summed from Playwright's reports, nested
  * suites included; the table `x ci --minutes` writes, keeping its steps. And the repository's own table: it names no
- * spec file that is gone, and its plan keeps each of the workflow's four machines well inside the job's 120 minutes.
+ * spec file that is gone, and its plan keeps each of the workflow's machines under half the job's 120 minutes.
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  CI_SHARDS,
   minutesFromReports,
   minutesOf,
+  PLAN_CAP_MINUTES,
   planShards,
   readT2Minutes,
   specFiles,
@@ -110,9 +112,9 @@ describe('the repository’s table', () => {
     expect(Object.keys(own.minutes).filter((spec) => !specs.includes(spec))).toEqual([]);
   });
 
-  it('keeps each of the workflow’s four machines under 100 of the job’s 120 minutes (add a shard when not)', () => {
-    const plan = planShards(specs, own, 4);
+  it('plans each of the workflow’s machines under half the job’s 120 minutes (add a shard when not)', () => {
+    const plan = planShards(specs, own, CI_SHARDS);
     const loads = plan.map((bin, i) => bin.reduce((sum, spec) => sum + minutesOf(own, spec), i === 0 ? own.steps : 0));
-    for (const [i, load] of loads.entries()) expect(load, `shard ${i + 1}: ${plan[i].join(' ')}`).toBeLessThan(100);
+    for (const [i, load] of loads.entries()) expect(load, `shard ${i + 1}: ${plan[i].join(' ')}`).toBeLessThan(PLAN_CAP_MINUTES); // prettier-ignore
   });
 });

@@ -77,7 +77,7 @@ export const RENAMED = Object.freeze({ LICENSE: 'engine/LICENSE' });
 
 /** The engine's own: plan, records, CI, the one-file playground, suites, fixtures, evals and mutation runs, playground and lean. */
 const ENGINE_ONLY =
-  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|stryker\.config\.json|playground\.html|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|evals\/|labs\/hello\/|labs\/playground\/|labs\/labs\.json|labs\/(anim|cameras|fx|index|library|materials|physics|props)\/|lean\/)/;
+  /^(PLAN\.md|AGENTS\.md|CLAUDE\.md|GEMINI\.md|README\.md|index\.html|package(-lock)?\.json|playwright\.config\.ts|stryker\.config\.json|playground\.html|\.gitignore|\.gitattributes|\.github\/|\.claude\/|fixtures\/|tests\/|docs\/|scripts\/|evals\/|labs\/hello\/|labs\/playground\/|labs\/labs\.json|labs\/(anim|cameras|fx|index|library|materials|physics|props)\/|lean\/)/;
 
 /** Which source files a game gets, and as whose: the first rule whose `test` matches a path decides (`ownerOf`). */
 export const RULES = Object.freeze([

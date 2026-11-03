@@ -149,3 +149,13 @@ tools/game/imports.test.ts, .claude/hooks/session-start.sh, AGENTS.md (the loop,
    618507c's four `out-<i>` reports (57 spec files, 246 minutes of T2). On those minutes the old plan's fourth job
    comes to 95.6, as it ran; the new plan puts about 65 on each job, the first's other steps included. Alternative
    not taken: a fifth shard; at 65 minutes a job, four have room under the 120.
+7. **2026-11-03: a fifth shard, each planned under half the limit** (my call, from main's run after PR #49). The
+   re-measured plan (amendment 6) ran on 1eba983 at 88.6, 36.4, 52.9 and 42.2 minutes a job, not about 65 each: the
+   same spec files took from about half to about twice their table minutes from one run to the next
+   (playground.spec.ts 23.9 to 42.7, every one of its tests 1.7 to 2.2 times slower; parity.spec.ts 55 to 29.1). In
+   both runs the first job's files ran slower than they did elsewhere, and its log showed no orphan process; why is
+   not known. A plan at 65 minutes a job leaves no room for a run twice as slow, so the workflow runs five jobs
+   (`CI_SHARDS`, tools/lib/ciShards.ts, held equal to the matrix by tools/cmd/ci-workflow.test.ts), and T1 fails when
+   a machine's plan passes `PLAN_CAP_MINUTES`, 60, half the job's 120: on today's table the five plan 51 to 55
+   minutes. Alternative not taken: a longer job limit, which would let a slow run grow unseen. The runner minutes
+   cost nothing on a public repository.
