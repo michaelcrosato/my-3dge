@@ -8450,7 +8450,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/controls.ts`](../labs/playground/controls.ts)
 
-- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the controls' order (settings, the controls sheet); the rest are bound for later WPs.
+- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the settings' order (ui/settings.ts; the controls sheet groups its own, ui/help.ts); the rest are bound for later WPs.
 - `PLAYGROUND_MAPS` (const): The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names).
 - `playgroundMap` (function): The action map for the camera `code` (`cam3=first,…`): its mode's, the shooter's for a camera no mode opens.
 
@@ -8759,6 +8759,10 @@ For the agents who maintain the engine.
 - `WIND` (const): The wind past his ears: none below `from` m/s, full (`vol`) at `full`, in twentieths, eased over `ease` s.
 - `ZIP` (const): The zipline's hum while he rides, its level.
 
+### [`labs/playground/touch.ts`](../labs/playground/touch.ts)
+
+- `PLAYGROUND_TOUCH` (const): The playground's touch layout's id.
+
 ### [`labs/playground/tour.ts`](../labs/playground/tour.ts)
 
 - `buildTour` (function): The tour (see the file comment) from `replays`, by name, over `segments` (the whole tour by default).
@@ -8771,13 +8775,16 @@ For the agents who maintain the engine.
 
 - `AREA_OF_STRUCTURE` (const): The area of the structures that name one (a structure's name is its level's).
 - `AREA_RECTS` (const): The block's map outdoors (docs/PLAYGROUND.md §2), [area, x0, z0, x1, z1] in metres, the first match winning.
-- `areaAt` (function): The area the point (x, z) of the block is in, a structure there naming its own first (see the file comment).
+- `areaAt` (function): The area the point (x, z) of the block is in, by the structure and room there (see the file comment).
 - `AreaCard` (interface): An area's card: its name, what kind of place it is, what it shows, and what to try ({action} is that action's key).
 - `AreaCardView` (interface): The area card (see the file comment).
 - `AREAS` (const): Each area's card (see the file comment).
 - `CARD_SECONDS` (const): How long a card shows when the player walks into its area (s).
 - `createAreaCard` (function): Makes the area card in `parent`, its keys read through `key` (the input's prompt for an action).
+- `HOUSE_WALLS` (const): The house's walls on the block, [x0, z0, x1, z1] in metres: labs/playground/levels/house.ts's `HOUSE_RECTS.house` and `.garage` at the house's place (levels/site.ts `SITE_STRUCTURES.house`), as areas.test.ts checks.
 - `locationLine` (function): The HUD's location line: the area's name, and the room's when there is one.
+- `ROOM_NAMES` (const): Rooms whose level id is not the name a player reads (`living` is the living room); the others read as their id.
+- `roomName` (const): A room's name as a player reads it, from its level id.
 
 ### [`labs/playground/ui/attract.ts`](../labs/playground/ui/attract.ts)
 
@@ -8830,9 +8837,11 @@ For the agents who maintain the engine.
 - `FRONT_END_SETTINGS` (const): The start menu's view setting (see the file comment).
 - `FrontEnd` (interface): The front end (see the file comment).
 - `FrontEndOptions` (interface): What the front end needs of the page.
+- `pageLink` (function): The page at `now` (a `location`) with the query `changes`, keeping of its query only the `kept` keys.
 - `ScreenName` (type): The screens.
 - `spawnOnOpen` (function): Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran.
 - `titleOnOpen` (function): Whether the start menu opens with the page (see the file comment).
+- `VIEW_KEYS` (const): The query keys of the view a player chose, which a link to another page keeps (the scene, a replay, a check or a spawn never carry over: a replay plays its own scene, and a check's spot belongs to its own page).
 
 ### [`labs/playground/ui/help.ts`](../labs/playground/ui/help.ts)
 
@@ -8840,8 +8849,9 @@ For the agents who maintain the engine.
 - `GOTO_KEY` (const): The page's key for Go to, kept from rebinding as the sheet's.
 - `HELP_GROUPS` (const): The sheet's groups, in order (see the file comment).
 - `HELP_KEY` (const): The page's key for the controls sheet (labs/playground/main.ts), kept from rebinding (controls.ts).
-- `HelpLine` (interface): One line of the sheet: an action of the map (its key from the input) or a page key (its key as written).
-- `HelpOptions` (interface): What the sheet needs: the key of an action, and what Back does.
+- `HelpInput` (type): What the sheet reads of the input: the prompts on the device used last, and the map in use.
+- `HelpLine` (interface): One line of the sheet: an action of the map, a key worked out from the input, or a page key as written.
+- `HelpOptions` (interface): What the sheet needs: the input it names the keys from, and what Back does.
 
 ### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
 
@@ -8886,7 +8896,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/ui/spawns.ts`](../labs/playground/ui/spawns.ts)
 
-- `SPAWN_SETTINGS` (const): The spawn picker's view setting (see the file comment): a place's id, or none.
+- `SPAWN_SETTINGS` (const): Go to's view setting (see the file comment): a place's id, or none.
 - `spawnPlace` (function): The place `id` names, or undefined.
 - `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
 - `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.

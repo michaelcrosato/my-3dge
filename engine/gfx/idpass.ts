@@ -7,9 +7,9 @@
  * on it or an ancestor, or the name `options.protagonist`), its ID colour, and why it cannot be seen when that is
  * known before drawing: `hidden` (it or an ancestor is invisible, its layers miss the camera's, an instanced mesh
  * with no instances), `background` (it or an ancestor carries `userData.background`: the sky's dome and backdrop,
- * which the frame draws at the far plane, behind everything, so the pass leaves them out as it leaves out the scene's
- * background; it would draw their real shapes, a 100 m box and a cylinder round the camera, over whatever lies
- * beyond them) or `outside` (its bounds miss the view frustum). A look's outline shells (`userData.outline`,
+ * which the frame draws first, writing no depth, so they lie behind everything: the pass leaves them out as it leaves
+ * out the scene's background, since it would draw their real shapes, a sphere 50 m round and a cylinder 100 m round
+ * the camera, over whatever lies beyond them) or `outside` (its bounds miss the view frustum). A look's outline shells (`userData.outline`,
  * engine/gfx/stageShells.ts) are neither listed nor drawn: a shot's objects are the same in every look. `withIdScene(renderer, scene, table, draw)`
  * hands `draw` a stand-in scene sharing the scene's children, with no background and the ID material as its
  * override material, and the clear colour transparent black; the scene itself is never touched. `decodeIds` turns

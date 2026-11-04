@@ -14,15 +14,16 @@
  *   settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks
  *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
  *   checks.ts `checkUrl`), and Tools (`tools`): the Tune panel (`tune`, tune.ts: the look's filters live, WP 13.32),
- *   the recorded runs (`replays`, each opened as `?replay=<name>`) and the feel panel. Each item says what it does
- *   under the menu as the cursor rests on it (frame.ts `ABOUT`).
+ *   the recorded runs (`replays`, each opened as `?replay=<name>`, the view kept: `VIEW_KEYS`) and the feel panel.
+ *   Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`).
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one.
  *
  * Picks that change play are the run's recorded operations, so a replay of the run holds them: a Go to place is the
  * block's dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
- * (`?scene=site&playground.spawn=<id>`, run as its first operation: `spawnOnOpen`); Restart starts the scene again on
- * its seed (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again.
+ * (`?scene=site&playground.spawn=<id>`, the view and `playground.title` kept, run as its first operation:
+ * `spawnOnOpen`); Restart starts the scene again on its seed (`seed`); the movement profile is the sim setting
+ * `playground.movement`, set, then the scene started again.
  * The camera mode, the view settings and the audio levels change the view alone; the store keeps them (prefs.ts).
  * `state()`, `window.__playgroundUi.state()` in the page, names the open screens for the tests;
  * `__playgroundUi.checks()` lists the owner's checks with their answers, and `__playgroundUi.answers()` gives them as
@@ -115,6 +116,24 @@ interface Screen {
 /** Whether the start menu opens with the page (see the file comment). */
 export function titleOnOpen(setting: string, search: URLSearchParams, webdriver: boolean): boolean {
   return setting === 'on' || (setting === 'auto' && !webdriver && !search.has('replay'));
+}
+
+/** The query keys of the view a player chose, which a link to another page keeps (the scene, a replay, a check or a
+ * spawn never carry over: a replay plays its own scene, and a check's spot belongs to its own page). */
+export const VIEW_KEYS: readonly string[] = ['post.look', 'cam', 'cam3', 'cam.wholeZoom'];
+
+/** The page at `now` (a `location`) with the query `changes`, keeping of its query only the `kept` keys. */
+export function pageLink(
+  now: Pick<Location, 'pathname' | 'search'>,
+  changes: Record<string, string>,
+  kept: readonly string[],
+): string {
+  // prettier-ignore
+  const query = new URLSearchParams(now.search);
+  const next = new URLSearchParams();
+  for (const key of kept) if (query.has(key)) next.set(key, query.get(key)!);
+  for (const [key, value] of Object.entries(changes)) next.set(key, value);
+  return `${now.pathname}?${next}`;
 }
 
 /** Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran. */
@@ -287,9 +306,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
       const about = (id: string) => (id === 'back' ? '' : `Plays tests/replays/${id}.replay.json, then hands you the controls.`); // prettier-ignore
       return menuScreen('replays', 'Recorded runs', items, (id) => {
         if (id === 'back') return back();
-        const search = new URLSearchParams(location.search);
-        search.set('replay', id);
-        location.assign(`${location.pathname}?${search}`);
+        location.assign(pageLink(location, { replay: id }, VIEW_KEYS));
       }, about, 'list'); // prettier-ignore
     }
     if (name === 'spawns') {
@@ -315,10 +332,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
           (inspector.actions as { run(name: string, args: unknown): unknown }).run('place', place.args);
           return closeAll();
         }
-        const search = new URLSearchParams(location.search);
-        search.set('scene', 'site');
-        search.set('playground.spawn', place.id);
-        location.assign(`${location.pathname}?${search}`);
+        location.assign(pageLink(location, { scene: 'site', 'playground.spawn': place.id }, [...VIEW_KEYS, 'playground.title'])); // prettier-ignore
       }, about, 'list'); // prettier-ignore
     }
     if (name === 'checks' || name === 'check') {
@@ -340,7 +354,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     if (name === 'settings') {
       return panelScreen('panel', (parent) => createSettings(parent, { values: values(), schema, input, onChange: change, onBack: back })); // prettier-ignore
     }
-    if (name === 'help') return panelScreen('panel', (parent) => createHelp(parent, { prompt: (action) => input.prompt(action), onBack: back })); // prettier-ignore
+    if (name === 'help') return panelScreen('panel', (parent) => createHelp(parent, { input, onBack: back }));
     if (name === 'tune') {
       const look = () => (inspector as unknown as { look(): LookNow }).look();
       const looks = (inspector.describe('look') as { ids: string[] }).ids;
@@ -359,10 +373,11 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     const playing = !stack.length && options.setting('time.paused') !== true && input.bindings.map.lock;
     if (!document.pointerLockElement && playing) show('pause');
   });
-  // an idle start menu opens the attract mode: any key, click or move of the pointer counts as a player there
+  // an idle start menu opens the attract mode: any key, click or move of the pointer counts as a player there, heard
+  // in the capture phase before the splash's (made later), which keeps the key that starts from the page
   let idle = 0;
   const awake = () => void (idle = 0);
-  for (const type of ['keydown', 'pointerdown', 'pointermove']) addEventListener(type, awake);
+  for (const type of ['keydown', 'pointerdown', 'pointermove']) addEventListener(type, awake, true);
   const state = () => ({ screens: [...stack], paused });
   const checks = () => {
     const answers = readAnswers(options.checkStore);

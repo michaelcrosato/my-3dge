@@ -1,5 +1,5 @@
 /**
- * @file Unit tests for labs/playground/ui/spawns.ts (WP 13.25): the spawn picker lists the block's 8 areas, each at its
+ * @file Unit tests for labs/playground/ui/spawns.ts (WP 13.25): Go to lists the block's 8 areas, each at its
  * spawn, and the house's 17 rooms, the crawlspace ducked; and a pick is the block's recorded dev action `place`: the
  * player stands in the room picked, and the run's replay holds the pick and plays back to the same hash.
  * @see labs/playground/ui/spawns.ts
@@ -12,7 +12,7 @@ import { SITE, SITE_AREAS } from '../levels/site';
 import { areaStart, SITE_SCENES } from '../scenes/site';
 import { spawnPlace, spawnPlaces } from './spawns';
 
-describe('the spawn picker’s places', () => {
+describe('Go to’s places', () => {
   it('lists each area at its spawn, then each of the house’s rooms, the crawlspace ducked', () => {
     const places = spawnPlaces();
     expect(places.map((place) => place.group).filter((group) => group === 'area')).toHaveLength(Object.keys(SITE_AREAS).length); // prettier-ignore

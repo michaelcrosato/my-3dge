@@ -17,7 +17,7 @@
  * under pointer lock; the platformer moves relative to the camera, the mouse turning it, and faces its move;
  * isometric and top-down move relative to the screen and aim with the free pointer onto the player's floor (the right
  * stick on a pad). The camera keys are view actions (`view`): rebound like the others, never in the intents, and the
- * page hears them (`onView`, labs/playground/main.ts). The page keeps P, F and M for itself (`reserved`).
+ * page hears them (`onView`, labs/playground/main.ts). The page keeps P, F, M and H for itself (`reserved`).
  *
  * Invariants: data only; the buttons the intents carry are the actions the shooter model reads (`jump`, `sprint`,
  * `walk`, `crouch`, `interact`, engine/sim/actors.ts; `melee`, the strike, engine/sim/melee.ts), and the firearms'
@@ -44,7 +44,7 @@ export const PLAYGROUND_MAPS = {
   'top-down': 'actionMap:playground-top-down',
 } as const;
 
-/** The actions the player answers, with what each does, in the controls' order (settings, the controls sheet); the rest are bound for later WPs. */
+/** The actions the player answers, with what each does, in the settings' order (ui/settings.ts; the controls sheet groups its own, ui/help.ts); the rest are bound for later WPs. */
 export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   jump: 'Jump',
   sprint: 'Sprint: hold, or press once to keep it',

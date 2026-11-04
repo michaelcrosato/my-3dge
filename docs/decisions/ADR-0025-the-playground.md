@@ -2487,30 +2487,39 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
 - **Decided:** the block is the game. The page opens on `playground:site` behind a splash screen, at a start menu; a
   player moves round the block by walking or by Go to (its areas and the house's rooms), never by picking a scene. The
   gym and the hill stay scenes of their own, and the block's per-area scenes stay, because the courses, the replays'
-  goldens and the specs open them; no menu lists them. The page's menu of scenes, cameras, looks and replays
-  (the playground's old `menu.ts` and its setting `playground.menu`) is removed: Go to, the controls sheet, Settings and Tools hold what a
-  person needs of it, and links and `x` commands open the rest. The engine's labs (the box, the Animation, Materials,
-  Props, Effects, Cameras, Physics and Library Labs) stay as they are: they are the engine's own tools, reached from
-  the labs index, not part of the game.
+  goldens and the specs open them; no menu lists them. The page's menu of scenes, cameras, looks and replays (the
+  playground's old `menu.ts` and its setting `playground.menu`) is removed: Go to, the controls sheet, Settings and
+  Tools hold what a person needs of it, and links and `x` commands open the rest. Its links to the labs index and the
+  Stress Box (ADR-0021 amendment 3) go with it: the engine's labs (the box, the Animation, Materials, Props, Effects,
+  Cameras, Physics and Library Labs) are the engine's own tools, opened at their paths from the labs index, not part
+  of the game.
 - **The front end:** one theme (labs/playground/ui/theme.ts) over every screen, panel, the HUD and the signs, kept in
   the playground: the engine's widgets keep their plain stylesheet for every other page. Each menu says under it what
-  the item at the cursor does. The HUD keeps to the edges: where the player is (top left), the camera and look for 3 s
-  after either changes (then faded; its text stays for the tests), the prompt, the ammo, and a hint of the menus'
-  keys; every other key is on the controls sheet (H). A card names an area and what to try there as the player walks
-  in. Under a screen the HUD, the card and the signs hide.
+  the item at the cursor does; a screen too tall for the window scrolls. The HUD keeps to the edges: where the player
+  is (top left), the camera and look for 3 s after either changes (then faded; its text stays for the tests), the
+  prompt, the ammo, and a hint of the menus' keys; every other key is on the controls sheet (H), read from the map in
+  use on the device used last. A card names an area and what to try there as the player walks in, its seconds counted
+  only while it can show. Under a screen the HUD (the crosshair too), the card, the signs and the feel panel hide. A
+  link to another page (a recorded run, Go to from off the block) keeps only the view, never the scene, a replay or a
+  check. A pad starts from the splash as a key does; a failed start shows its error at once. On a touch screen the
+  playground's touch layout (labs/playground/touch.ts, untested as ADR-0021 has it) carries the menu button.
 - **The glitches:** from the yard the house stood open because the cutaway cut every structure's walls facing a camera
-  outside it: a site now cuts only the structure the player stands in, and the others only fade what hides him. The
-  ground's colour crossing the sky was the daylight model reading SkyMesh's box corners near the camera: the dome is a
-  sphere of small triangles, it and the backdrop kept short of the far plane without moving the near plane. The gym's
-  signs, drawn over everything, showed through the house's walls: on the block they show only in the gym.
+  outside it: a site now cuts only the structure the player is in, a building (rooms or a roof) only while he is
+  indoors, since its map holds its patio, porch and apron too; in a classic view its storeys likewise. The others only
+  fade what hides him. The ground's colour crossing the sky was the daylight model reading SkyMesh's box corners near
+  the camera: the dome is a sphere of small triangles, it and the backdrop kept short of the far plane without moving
+  the near plane. The gym's signs, drawn over everything, showed through the house's walls: on the block they show
+  only in the gym.
 - **Tests:** the specs that open the playground for its menus or its gym open `?scene=gym` (the block warms up for
-  minutes on SwiftShader); the block's own tests open `?scene=site` as before.
+  minutes on SwiftShader); the block's own tests open `?scene=site` as before. An adversarial review (six readings,
+  each finding put to three skeptics) confirmed 35 findings in the first cut, about 24 faults once the ones found
+  twice are merged, all fixed in this WP with unit tests where a
+  number shows them (labs/playground/scenes/site-cut.test.ts: 180 wall tiles cut from the patio before, 0 after).
 - **Baselines:** seven of the street's look thumbnails in tests/baselines/thumbs/ (the cel and pixel looks from first
   person, the shoulder and the follow camera, and the clean look from the follow camera) are recorded again: they held
-  the bug, the gym's wall on the left
-  horizon cut down to show the sky and the house's front cut open to show its lit rooms, from a camera on the street.
-  Every changed cell (31 to 82 a view) lies in those two places; the views looking down at the ground and from above
-  stayed within the tolerance and keep their files.
+  the bug, the gym's wall on the left horizon cut down to show the sky and the house's front cut open to show its lit
+  rooms, from a camera on the street. Every changed cell (31 to 82 a view) lies in those two places; the views looking
+  down at the ground and from above stayed within the tolerance and keep their files.
 - **Owner checks:** `front-end` (the splash, the start menu, pause and settings: do they look good and read clearly),
   `house-views` (the house from every camera: anything seen through or wrong as you move), `load-times`.
 - Plan edit: WP 13.33.

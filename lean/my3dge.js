@@ -31394,11 +31394,11 @@ function Xce(e, t) {
       c && (r ??= Vv({ root: n, parts: [] }, { objects: c }));
     },
     update(c, l, { fade: u = !1, view: d = !1 } = {}) {
-      const h = a(l), f = d ? h : null;
-      i = f ? { structure: f.structure, storey: f.storey } : null, r?.update(c, l, { fade: u });
-      for (const p of o) {
-        const m = h?.structure === p.structure;
-        p.cutaway?.update(Kce(p.structure, c), ob(p.structure, l), { fade: u, cut: m }), f?.structure === p.structure ? p.storeys.set(f.storey, f.indoors, f.low) : p.storeys.clear();
+      const h = a(l), { rooms: f, roofs: p } = h?.structure.level ?? {}, m = h && (h.indoors || !(f?.length || p?.length)) ? h : null, g = d ? m : null;
+      i = g ? { structure: g.structure, storey: g.storey } : null, r?.update(c, l, { fade: u });
+      for (const y of o) {
+        const w = m?.structure === y.structure;
+        y.cutaway?.update(Kce(y.structure, c), ob(y.structure, l), { fade: u, cut: w }), g?.structure === y.structure ? y.storeys.set(g.storey, g.indoors, g.low) : y.storeys.clear();
       }
     },
     where: a,

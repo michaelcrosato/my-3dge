@@ -3,9 +3,11 @@
  * moment the page's script runs, over everything, while the engine loads and warms up; the playground's name, a bar
  * that moves while it loads, and then "Press any key to start". `createSplash(doc)` shows it; `ready(waitForPlayer)`
  * says the engine is up: with `waitForPlayer` (a person at the page) it waits for a key, a click or a touch, which it
- * keeps from the game (the key that starts never reaches a menu or the run), then fades away; without (automation:
- * the tests and the x commands), it fades away at once. The start menu opens under it first (labs/playground/main.ts),
- * so the fade shows it. The first key also wakes the page's sound, which waits for one (labs/playground/sounds/page.ts).
+ * keeps from the game (the key that starts never reaches a menu or the run), or for the page to call `start()` (a
+ * pad's A or Start, which fire no event: labs/playground/main.ts polls them while `waiting()`, the start menu under
+ * it reading nothing until then), then fades away; without (automation: the tests and the x commands), it fades away
+ * at once. A failed start removes it (`remove`), so the page's error shows. The start menu opens under it first, so
+ * the fade shows it. The first key also wakes the page's sound, which waits for one (labs/playground/sounds/page.ts).
  *
  * Elements: `[data-ui=splash]`, `data-value` `loading`, `ready` or `gone`. Invariants: presentation only; `ready`
  * resolves once, `remove` is safe at any time.
@@ -27,6 +29,10 @@ const FADE_MS = 420;
 export interface Splash {
   /** The engine is up: waits for a player when asked, then fades the splash away. */
   ready(waitForPlayer: boolean): Promise<void>;
+  /** Whether it waits for a player (`ready(true)` called, nothing pressed yet). */
+  waiting(): boolean;
+  /** Starts as a key would (a pad's press); nothing unless it waits. */
+  start(): void;
   remove(): void;
 }
 
@@ -47,6 +53,7 @@ export function createSplash(doc: Document): Splash {
   el.append(brand, text('pg-splash-bar', ''), status, text('pg-splash-foot', 'WebGPU · three.js · Rapier'));
   doc.body.append(el);
   let done: Promise<void> | null = null;
+  let start = () => {};
   const fade = () =>
     new Promise<void>((resolve) => {
       el.dataset.value = 'gone';
@@ -60,16 +67,22 @@ export function createSplash(doc: Document): Splash {
       status.textContent = 'Press any key to start';
       const view = doc.defaultView!;
       done = new Promise<void>((resolve) => {
-        const start = (event: Event) => {
+        const heard = (event: Event) => {
           event.preventDefault();
           event.stopImmediatePropagation(); // the key that starts reaches neither a menu nor the run
-          for (const type of ['keydown', 'pointerdown', 'touchend']) view.removeEventListener(type, start, true);
+          start();
+        };
+        start = () => {
+          start = () => {};
+          for (const type of ['keydown', 'pointerdown', 'touchend']) view.removeEventListener(type, heard, true);
           void fade().then(resolve);
         };
-        for (const type of ['keydown', 'pointerdown', 'touchend']) view.addEventListener(type, start, true);
+        for (const type of ['keydown', 'pointerdown', 'touchend']) view.addEventListener(type, heard, true);
       });
       return done;
     },
+    waiting: () => el.dataset.value === 'ready',
+    start: () => start(),
     remove: () => el.remove(),
   };
 }

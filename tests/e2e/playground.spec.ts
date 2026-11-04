@@ -202,8 +202,11 @@ test.describe('the playground', () => {
     await open(page, harness, '?scene=site&gfx.resolution=pixels');
     for (const area of Object.keys(SITE_AREAS) as SiteArea[]) {
       await call(page, 'actions.run', 'place', { at: areaStart(area), speed: 0, yaw: SITE_AREAS[area].yaw });
+      await call(page, 'step', 1, {}); // the dev action applies with the next step
+      await call(page, 'render', 2);
+      // the area, and indoors the room, read at the spawn: the views run the player on about 10 m
+      expect((await hud(page)).room, area).toMatch(new RegExp(`^${AREAS[area].name}( · |$)`));
       await throughEveryView(page);
-      expect((await hud(page)).room, area).toMatch(new RegExp(`^${AREAS[area].name}( · |$)`)); // the area, and indoors the room
     }
     await expectWarm(page, harness);
   });
@@ -330,9 +333,10 @@ test.describe('the playground', () => {
     await harness.tick(2);
     expect(await page.evaluate(() => __playgroundUi.state().screens)).toEqual(['help']);
     const keys = await page.locator('[data-ui=help] [data-ui=key]').evaluateAll((all) => all.map((row) => [row.getAttribute('data-id'), row.querySelector('kbd')?.textContent ?? ''])); // prettier-ignore
-    expect(keys.map(([id]) => id)).toEqual(HELP_GROUPS.flatMap((group) => group.lines.map((line) => line.action ?? line.key ?? line.label))); // prettier-ignore
+    const lines = HELP_GROUPS.flatMap((group) => group.lines).filter((line) => line.label !== 'Turn the view'); // the shooter's map turns nothing
+    expect(keys.map(([id]) => id)).toEqual(lines.map((line) => line.action ?? line.page ?? line.label));
     for (const [id, key] of keys) expect(key, id ?? '').not.toBe('');
-    expect(Object.fromEntries(keys)).toMatchObject({ jump: 'Space', interact: 'E' });
+    expect(Object.fromEntries(keys)).toMatchObject({ Move: 'W A S D', 'Look around': 'Click, then mouse', jump: 'Space', interact: 'E' }); // prettier-ignore
     await page.keyboard.press('Escape');
     await harness.tick(2);
     expect(await page.evaluate(() => __playgroundUi.state())).toEqual({ screens: [], paused: false });

@@ -2,13 +2,14 @@
  * @file A site drawn (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): `createStageSite(site, options)` draws each of a
  * site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in its level entry's looks (`registry`'s:
  * its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about
- * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts). Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player
- * stands on the stage: `follow`) and its cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame; the
- * cutaway cuts only the structure the player stands in (`where`), so a house he walks past keeps its walls, every
- * other structure only fading what stands between the camera and him:
- * `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's frame
- * (`toLocal`, the yaw less its turns), cuts and fades there, and in a classic view (`view`) hides, in the structure
- * the player stands in, the storeys above the player's and the roof while indoors (`cutPlace`): the others stay whole.
+ * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
+ * Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player stands on the stage: `follow`) and its
+ * cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame. Both cut only the structure the player is in
+ * (`where`; a building, one with rooms or a roof, only while he is indoors: its map's patio, porch or apron is not
+ * inside it), so a house he walks past or up to keeps its walls, every other structure only fading what stands between
+ * the camera and him: `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each
+ * structure's frame (`toLocal`, the yaw less its turns), cuts and fades there, and in a classic view (`view`) hides, in
+ * the structure he is in, the storeys above his and the roof while indoors (`cutPlace`): the others stay whole.
  * The objects `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
  *
  * Names: a structure's group `site:<site>/<index>` holding its level's meshes (`level:<name>/…`, so the ID pass shows
@@ -119,12 +120,14 @@ export function createStageSite(
       if (objects) rides ??= createCutaway({ root, parts: [] }, { objects });
     },
     update(pose, feet, { fade = false, view = false } = {}) {
-      const at = where(feet);
+      const found = where(feet);
+      const { rooms, roofs } = found?.structure.level ?? {};
+      const at = found && (found.indoors || !(rooms?.length || roofs?.length)) ? found : null; // see the file comment
       const inside = view ? at : null;
       cut = inside ? { structure: inside.structure, storey: inside.storey } : null;
       rides?.update(pose, feet, { fade });
       for (const each of drawn) {
-        // only the structure he stands in is cut: another's walls facing the camera hide nothing of his
+        // only the structure he is in is cut: another's walls facing the camera hide nothing of his
         const own = at?.structure === each.structure;
         each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade, cut: own });
         if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors, inside.low);

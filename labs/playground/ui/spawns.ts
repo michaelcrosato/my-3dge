@@ -1,9 +1,10 @@
 /**
- * @file The spawn picker's places (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): each area of the block (`SITE_AREAS`:
- * its spawn, facing as it faces) and each room of its structures (`roomPlace`, labs/playground/scenes/site.ts: at the
- * room's marker, ducked under a low ceiling), each as the arguments of the block's dev action `place`, so a pick is a
- * recorded operation of the run and its replay holds it. `spawnPlaces()` lists them, areas first, then the rooms in
- * the order their level lists them; `spawnPlace(id)` finds one.
+ * @file Go to's places (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25; the spawn picker before WP 13.33): each area of
+ * the block (`SITE_AREAS`: its spawn, facing as it faces) and each room of its structures (`roomPlace`,
+ * labs/playground/scenes/site.ts: at the room's marker, ducked under a low ceiling), each as the arguments of the
+ * block's dev action `place`, so a pick is a recorded operation of the run and its replay holds it. `spawnPlaces()`
+ * lists them, areas first, then the rooms in the order their level lists them, each named as a player reads it
+ * (areas.ts `roomName`); `spawnPlace(id)` finds one.
  *
  * On a scene of the block (`site: 'site:block'`) the front end (labs/playground/ui/frontEnd.ts) runs a pick's action
  * at once; on another scene it opens the block (`?scene=site`) with the pick's id in the view setting
@@ -21,8 +22,9 @@
 import { defineSettings } from '../../../engine/sim-api';
 import { SITE, SITE_AREAS, type SiteArea } from '../levels/site';
 import { areaStart, roomPlace } from '../scenes/site';
+import { roomName } from './areas';
 
-/** The spawn picker's view setting (see the file comment): a place's id, or none. */
+/** Go to's view setting (see the file comment): a place's id, or none. */
 export const SPAWN_SETTINGS = defineSettings({
   'playground.spawn': {
     type: 'string',
@@ -30,7 +32,7 @@ export const SPAWN_SETTINGS = defineSettings({
     view: true,
     when: 'scene',
     description:
-      "Where the playground page puts the player once a scene of the block is up (labs/playground/ui/spawns.ts): a spawn picker's place, `area:<area>` or `room:<structure>/<room>`; the page runs it as the block's dev action place, so the run records it. Empty: the scene's own spawn.",
+      "Where the playground page puts the player once a scene of the block is up (labs/playground/ui/spawns.ts): a place of Go to, `area:<area>` or `room:<structure>/<room>`; the page runs it as the block's dev action place, so the run records it. Empty: the scene's own spawn.",
   },
 });
 
@@ -63,7 +65,7 @@ export function spawnPlaces(): readonly SpawnPlace[] {
   const rooms = SITE.structures.flatMap((structure) =>
     (structure.level.rooms ?? []).map((room): SpawnPlace => {
       const { at, crouch } = roomPlace(structure, room);
-      const label = `${capital(structure.name)}: ${room.name}`;
+      const label = `${capital(structure.name)}: ${roomName(room.name)}`;
       return { id: `room:${structure.name}/${room.name}`, label, group: 'room', args: { at, yaw: 0, crouch } };
     }),
   );

@@ -204,7 +204,7 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
   const ramp = mix(horizon, zenith, smoothstep(0, 0.45, positionWorld.sub(cameraPosition).normalize().y));
   dome.material.colorNode = vec4(mix((dome.material.colorNode as Node).rgb.mul(exposure), ramp, gradient), 1);
   Object.assign(dome, { frustumCulled: false, renderOrder: -2 });
-  dome.userData.background = true; // drawn at the far plane, behind everything: the ID pass's empty space (idpass.ts)
+  dome.userData.background = true; // drawn first, writing no depth: behind everything, the ID pass's empty space (idpass.ts)
   const strip = new DataTexture(bakeBackdrop({ haze: '#000000', layers: [] }), BACKDROP.width, BACKDROP.height);
   Object.assign(strip, { format: RGBAFormat, type: UnsignedByteType, colorSpace: SRGBColorSpace });
   Object.assign(strip, { wrapS: RepeatWrapping, wrapT: ClampToEdgeWrapping, magFilter: LinearFilter });

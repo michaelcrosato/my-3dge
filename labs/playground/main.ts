@@ -16,9 +16,9 @@
  * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
  * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
  * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P steps through the looks; H opens the controls
- * sheet, M Go to, Esc pause; F shows and hides the feel panel (labs/playground/feel.ts, WP 13.4). A click takes the
- * pointer for mouse look in the three perspective cameras (isometric and top-down keep the cursor to aim). They are
- * view state, so no camera, look or switch changes the hash.
+ * sheet, M Go to, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F shows and hides the feel panel
+ * (labs/playground/feel.ts, WP 13.4). A click takes the pointer for mouse look in the three perspective cameras
+ * (isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
  *
  * Each drawn frame (`onFrame`) it runs the front end (pause on Escape; the attract mode, the tour with the view
  * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where
@@ -47,6 +47,7 @@ import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { SITE, SITE_STRUCTURES } from './levels/site';
 import { gym } from './scenes/gym';
 import { site } from './scenes/site';
+import { PLAYGROUND_TOUCH } from './touch';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
 import { createPlaygroundSound } from './sounds/page';
 import { runWeather } from './weather';
@@ -156,7 +157,7 @@ function placeAt(scene: EngineFrame['scene'], at: { x: number; y: number; z: num
 function whereOn(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }) {
   const found = placeAt(scene, at);
   if (found === undefined) return { area: null, line: null };
-  const area = areaAt(at.x, at.z, found?.structure.name);
+  const area = areaAt(at.x, at.z, found?.structure.name, found?.room?.name);
   return { area, line: locationLine(area, found?.room?.name) };
 }
 
@@ -253,13 +254,18 @@ engine = await createEngine({
   store,
   modal: () => frontEnd?.modal() ?? false,
   cameraInput: () => frontEnd?.cameraInput(),
+  touchLayout: PLAYGROUND_TOUCH, // labs/playground/touch.ts: its menu button pauses, then opens pause here
+  onMenu: () => void (frontEnd && !frontEnd.modal() && frontEnd.open('pause')),
   onFrame: (frame) => {
     last = frame;
     if (opening && frontEnd) {
       opening = false;
       if (!spawnOnOpen(engine!, search, frame.scene)) placeOnOpen(engine!, check, frame.scene);
     }
-    frontEnd?.frame(frame.dt);
+    // the splash waits for a player: a pad's A or Start starts as a key does, and the start menu under it reads nothing
+    const input = engine?.input;
+    if (splash?.waiting()) void ((input?.pressed('uiAccept') || input?.pressed('pause')) && splash.start());
+    else frontEnd?.frame(frame.dt);
     attract?.frame(frame.dt, frame.world.tick);
     showFrame(frame);
     sound.frame(frame);
@@ -291,7 +297,8 @@ if (engine.inspector && engine.ui && engine.input) {
   }
   if (showsTitle) frontEnd.open('title'); // under the splash, which fades to show it
 }
-await splash?.ready(!navigator.webdriver);
+if (engine.ready) await splash?.ready(!navigator.webdriver);
+else splash?.remove(); // a failed start: its error and fix show at once (the page's #msg)
 
 addEventListener('keydown', (event) => {
   const inspector = engine?.inspector;

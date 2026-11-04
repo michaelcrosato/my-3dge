@@ -1,7 +1,7 @@
 /**
  * @file T2 for the playground's front end (labs/playground/ui/, PLAN.md WP 13.25), by DOM queries, `window.__engine`
  * and `window.__playgroundUi`:
- * 1. the title screen opens with the page when asked (`?playground.title=on`) over a paused run; settings lists every
+ * 1. the start menu opens with the page when asked (`?playground.title=on`) over a paused run; settings lists every
  *    row and every action's key; a slider, a list and a level change the view, a rebind takes a free key in every
  *    camera's map and refuses one another action holds, naming it; Play resumes; Escape pauses, and a key the menu reads
  *    reaches no intent (Space picks Resume and the player never jumps); photo mode flies the free camera on the move
@@ -11,10 +11,10 @@
  *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back;
  * 3. the movement profile from settings starts the scene again on it, and the run's replay holds it and plays back to
  *    its hash in Node; Restart starts it again on its seed;
- * 4. the spawn picker, from the gym, opens the block at the area picked; on the block it puts the player in the room
+ * 4. Go to, from the gym, opens the block at the area picked; on the block it puts the player in the room
  *    picked through the recorded dev action `place`, the HUD naming the room; the run replays to its hash in Node; the
  *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
- * 5. the owner's checks (WP 13.28): the title lists them with how many are left; the keys work the panel as a menu; a
+ * 5. the owner's checks (WP 13.28): the start menu lists them with how many are left; the keys work the panel as a menu; a
  *    check's view names the player's keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps
  *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place`, the
  *    HUD naming the check, and pause answers it.
@@ -267,7 +267,7 @@ test.describe('the playground’s front end', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('the spawn picker opens the block at an area from the gym, and puts the player in a room on it, recorded', async ({
+  test('Go to opens the block at an area from the gym, and puts the player in a room on it, recorded', async ({
     page,
     harness,
   }) => {
@@ -288,7 +288,7 @@ test.describe('the playground’s front end', () => {
     const at = (await player(page)).actor;
     expect(Math.hypot(at.x - range.args.at[0], at.z - range.args.at[2])).toBeLessThan(0.5);
 
-    await pick(page, harness, 'title', 'spawns'); // the block's page opens on the title screen too
+    await pick(page, harness, 'title', 'spawns'); // the block's page opens on the start menu too (`playground.title` kept)
     await pick(page, harness, 'spawns', 'room:house/kitchen');
     expect(await screens(page)).toEqual({ screens: [], paused: false });
     await call(page, 'pause');
@@ -354,7 +354,7 @@ test.describe('the playground’s front end', () => {
     await page.waitForURL(/playground\.check=mantle/);
     await harness.ready({ timeout: READY });
     await harness.tick(2);
-    expect(await screens(page)).toEqual({ screens: [], paused: false }); // no title screen on a check's page
+    expect(await screens(page)).toEqual({ screens: [], paused: false }); // no start menu on a check's page
     await call(page, 'pause');
     const spot = ownerCheck('mantle')!.go!.place!.at;
     const at = (await player(page)).actor;

@@ -8,10 +8,14 @@
  *
  * The look: dark glass panels over the world (a blurred, dimmed backdrop), one warm accent (`--pg-accent`) for what is
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
- * browser. Layers, low to high: the world's labels (the gym's signs), the HUD and the area card, a screen and its
- * panels, the splash. Every colour and size is a custom property on `.pg-ui`, so a page could re-theme it.
+ * browser. Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
+ * too), the area card and the feel panel, all hidden under a screen; a screen and its panels, scrolling where the
+ * window is too short for them; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`,
+ * `--pg-accent`, `--pg-good`), the radius, the shadow and the font are custom properties on `.pg-ui` and
+ * `.pg-splash`; the type sizes and the backdrops' shades are written where they are used.
  *
- * Invariants: presentation only; it adds one `<style id="pg-theme">` however often it is called; it names no element
+ * Invariants: presentation only; one `<style id="pg-theme">` in the page however often it is called, moved after the
+ * engine's sheets each time (so it wins their ties whether the splash or the engine came first); it names no element
  * the tests read (they read `[data-ui]`, never classes).
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's own files.
@@ -37,10 +41,11 @@ export const THEME_CSS = `
 
 /* ---- screens: a frame over the world, its menu or panel inside ---- */
 .pg-screen { position: absolute; inset: 0; z-index: 100; pointer-events: auto; display: flex; flex-direction: column;
-  justify-content: center; padding: 6vh 7vw; box-sizing: border-box; overflow: hidden;
+  justify-content: safe center; padding: 6vh 7vw; box-sizing: border-box; overflow: hidden auto;
+  overscroll-behavior: contain; touch-action: pan-y;
   background: rgba(7, 9, 13, 0.5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
   animation: pg-in 180ms ease-out both; }
-.pg-screen[data-kind=title] { justify-content: flex-end; padding-bottom: 9vh; -webkit-backdrop-filter: none; backdrop-filter: none;
+.pg-screen[data-kind=title] { justify-content: safe flex-end; padding-bottom: 9vh; -webkit-backdrop-filter: none; backdrop-filter: none;
   background: linear-gradient(90deg, rgba(6, 8, 12, 0.9) 0%, rgba(6, 8, 12, 0.62) 38%, rgba(6, 8, 12, 0) 72%),
     linear-gradient(0deg, rgba(6, 8, 12, 0.55) 0%, rgba(6, 8, 12, 0) 40%); }
 .pg-screen[data-kind=panel] { align-items: center; padding: 3vh 3vw; }
@@ -60,6 +65,7 @@ export const THEME_CSS = `
 .pg-screen[data-kind=title] .pg-footer, .pg-screen[data-kind=menu] .pg-footer { justify-content: flex-start; }
 .pg-detail { max-width: 34em; min-height: 3.2em; margin-top: 1.2em; color: var(--pg-dim); font-size: 15px; }
 .pg-detail b { color: var(--pg-text); }
+.pg-screen:is([data-kind=panel], [data-kind=side]) > .pg-detail { display: none; }
 
 /* ---- menus (the engine's createMenu, restyled): a column of large rows ---- */
 .pg-ui .pg-screen .ui-menu { position: static; transform: none; background: none; border: none; box-shadow: none;
@@ -74,8 +80,7 @@ export const THEME_CSS = `
   bottom: 18%; width: 4px; margin: 0; border-radius: 4px; background: var(--pg-accent); }
 .pg-ui .pg-screen .ui-menu-item[data-value=disabled] { font-size: 12px; font-weight: 800; letter-spacing: 0.24em;
   text-transform: uppercase; color: var(--pg-accent); padding-top: 1em; cursor: default; }
-.pg-ui .pg-screen[data-kind=list] .ui-menu { max-height: 72vh; overflow-y: auto; columns: 3 11em; column-gap: 1.6em;
-  max-width: 46em; }
+.pg-ui .pg-screen[data-kind=list] .ui-menu { columns: 3 11em; column-gap: 1.6em; max-width: 46em; }
 .pg-ui .pg-screen[data-kind=list] .ui-menu-item { font-size: 17px; padding-top: 0.32em; padding-bottom: 0.32em;
   break-inside: avoid; }
 .pg-ui .pg-screen[data-kind=list] .ui-menu-item[data-value=disabled],
@@ -112,8 +117,9 @@ export const THEME_CSS = `
 .pg-ui .pg-tune summary { font-weight: 650; padding: 0.2em 0; }
 .pg-ui .pg-tune textarea, .pg-ui .pg-checks textarea { width: 100%; box-sizing: border-box; }
 .pg-ui .pg-back { margin-top: 1.4em; }
-.pg-ui [data-ui=photo] { position: absolute; left: 50%; bottom: 3vh; transform: translateX(-50%); padding: 10px 18px;
-  border-radius: 999px; font-size: 14px; color: var(--pg-dim); }
+.pg-ui [data-ui=photo] { position: absolute; left: 50%; top: auto; bottom: 3vh; transform: translateX(-50%);
+  padding: 10px 18px; border-radius: 999px; font-size: 14px; color: var(--pg-dim); white-space: nowrap;
+  pointer-events: none; }
 
 /* ---- the controls sheet ---- */
 .pg-ui .pg-screen .pg-help { width: min(880px, 94vw); }
@@ -128,7 +134,9 @@ export const THEME_CSS = `
   border: 1px solid rgba(255, 255, 255, 0.18); border-bottom-width: 2px; white-space: nowrap; }
 
 /* ---- the HUD (labs/playground/ui/hud.ts): small, at the edges, readable on sky and on stone; hidden under a screen ---- */
-.pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .pg-card, .ui-label) { visibility: hidden; }
+.pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .ui-crosshair, .ui-damage, .pg-card, .ui-label) {
+  visibility: hidden; }
+body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel { display: none; }
 .pg-ui .ui-hud-block { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); }
 .pg-ui .ui-hud[data-id=room] { font-size: 13px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--pg-text); background: rgba(10, 12, 18, 0.45); padding: 0.35em 0.75em; border-radius: 8px; }
@@ -178,10 +186,25 @@ export const THEME_CSS = `
 .pg-splash-foot { position: absolute; bottom: 3.5vh; font-size: 12px; letter-spacing: 0.08em; color: rgba(155, 164, 180, 0.7); }
 @media (prefers-reduced-motion: reduce) { .pg-screen, .pg-splash-bar::after, .pg-splash-status { animation: none !important; } }
 @media (max-width: 720px) { .pg-screen { padding: 4vh 5vw; } .pg-ui .pg-screen .ui-menu-item { font-size: 18px; } }
+@media (max-height: 720px) {
+  .pg-screen { padding-top: 3vh; padding-bottom: 3vh; }
+  .pg-screen[data-kind=title] { padding-bottom: 5vh; }
+  .pg-brand { margin-bottom: 1.5vh; } .pg-brand-sub { display: none; }
+  .pg-brand-title { font-size: clamp(30px, min(7vw, 10vh), 84px); }
+  .pg-ui .pg-screen .ui-menu-item { font-size: 18px; padding-top: 0.3em; padding-bottom: 0.3em; margin: 0.06em 0; }
+  .pg-detail { min-height: 2.6em; margin-top: 0.6em; }
+  .pg-footer { position: static; margin-top: 1.5vh; }
+}
+@media (max-height: 460px) {
+  .pg-ui .pg-screen .ui-menu-item { font-size: 15px; padding-top: 0.2em; padding-bottom: 0.2em; }
+  .pg-brand-kicker, .pg-detail { display: none; }
+}
 `;
 
 /** Adds the theme's stylesheet to `doc` once (see the file comment). */
 export function installTheme(doc: Document): void {
-  if (doc.getElementById(THEME_ID)) return;
-  doc.head.append(Object.assign(doc.createElement('style'), { id: THEME_ID, textContent: THEME_CSS }));
+  const had = doc.getElementById(THEME_ID);
+  if (had)
+    doc.head.append(had); // after the engine's sheets added since (the overlay's, which ties with `.pg-ui`)
+  else doc.head.append(Object.assign(doc.createElement('style'), { id: THEME_ID, textContent: THEME_CSS }));
 }
