@@ -401,14 +401,19 @@ yard, ambient occlusion the rooms; rain and dust are GPU particles (WP 11.3).
 
 ### 8.3 The front end
 
-(WP 10.6, WP 10.9, WP 13.25.) A title screen; the spawn picker (each area and room); pause; settings (camera mode and
-field of view, controls and rebinding, sensitivity, the movement profile, the look, audio levels, graphics and quality),
-kept across sessions by the store; the HUD for each camera (crosshair, prompts, ammo, the feel readout); photo mode
-(the free camera and the looks); the owner's checks (WP 13.28, §9.3).
+(WP 10.6, WP 10.9, WP 13.25, WP 13.33.) The block is the game: the page opens on it (§2), behind a splash screen while
+it loads, then the start menu; Go to (each area of the block and each room of the house); pause; settings (camera mode
+and field of view, controls and rebinding, sensitivity, the movement profile, the look, audio levels, graphics and
+quality), kept across sessions by the store; the controls sheet (every action with its key); the HUD for each camera
+(where the player is, crosshair, prompts, ammo, the feel readout) and a card naming each area and what to try there as
+the player walks in; photo mode (the free camera and the looks); the owner's checks (WP 13.28, §9.3); and the tools for
+tuning and testing (Tune the look, §8.4; the recorded runs; the feel panel). One theme dresses every screen
+(labs/playground/ui/theme.ts). The gym and the hill stay scenes of their own, as calibrated courses for the tests and
+the replays; the menus never list scenes.
 
 ### 8.4 Tuning the look
 
-(WP 13.31, WP 13.32; ADR-0008 amendment 14, ADR-0025 amendment 50.) Tune the look, from the title screen and pause,
+(WP 13.31, WP 13.32; ADR-0008 amendment 14, ADR-0025 amendment 50.) Tune the look, under Tools in the start menu and pause,
 puts every filter beside the picture: its scope (everything, the characters, the objects, the scenery, or two of
 them), its amount and its numbers; the looks laid on, each with its amount; the whole look's strength; and Copy as
 look, which gives the result as a `defineLook` to keep. It writes the same view settings an agent sets with `x set`
@@ -441,7 +446,7 @@ and a check in T2.
 
 At each gate the stage's PR carries this checklist; the owner plays, and notes come back as tuning (the feel panel's
 profile and its saved replay), never as a blocker. The playground lists it in the game as the owner's checks (WP 13.28:
-the title screen's Owner checks, labs/playground/ui/checks.ts), with the calls awaiting the owner's review: each says
+the start menu's Owner checks, labs/playground/ui/checks.ts), with the calls awaiting the owner's review: each says
 in plain words what to try and judge, opens the place it is judged in, and keeps the answer to paste back. The checklist:
 
 1. Sprint the strip in first person: speed, the sprint's field of view, the stop.
@@ -459,9 +464,10 @@ in plain words what to try and judge, opens the place it is judged in, and keeps
     hold? `__engine.stats().gpuMs` should rise by under 1 ms (`GPU_RING.budgetMs`, WP 11.3).
 12. The labs index at /labs/index/ (WP 10.8): the Animation Lab's row, scrubbing a move, the bones; the Library
     Lab's search and Apply.
-13. The front end (WP 13.25): the title screen, pause (Esc), the spawn picker, settings (rebind a key, the field of
-    view, the movement profile, the volumes) and photo mode; reload: are the settings and the key kept?
-14. Watch the tour from the title screen (WP 13.26): the camera steps every 8 s and the look every 16 s; does any key
+13. The front end (WP 13.25, WP 13.33): the splash, the start menu, pause (Esc), Go to, settings (rebind a key, the
+    field of view, the movement profile, the volumes), the controls sheet and photo mode; do they look good and read
+    clearly? Reload: are the settings and the key kept?
+14. Watch the tour from the start menu (WP 13.26): the camera steps every 8 s and the look every 16 s; does any key
     give the playground back?
 
 ## 10. The work

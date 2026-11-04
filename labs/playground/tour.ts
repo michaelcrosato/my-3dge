@@ -11,7 +11,7 @@
  * `buildTour(segments)` makes the replay, without goldens (`node x replay <file> --browser sim --update` records
  * them), from the segments' replays, read by the caller (labs/playground/tour.test.ts reads them from tests/replays/
  * and holds the committed tests/replays/playground-tour.replay.json to what this builds). The page plays it as
- * `?replay=playground-tour`, the attract mode behind the title screen (labs/playground/ui/frontEnd.ts).
+ * `?replay=playground-tour`, the attract mode behind the start menu (labs/playground/ui/frontEnd.ts).
  *
  * Invariants: pure: data in, data out; a segment's inputs are its replay's, moved and shifted, never edited, so what a
  * segment shows on its own scene it shows on the block, but for what the block adds (the dog beside the player, the

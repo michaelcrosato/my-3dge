@@ -204,9 +204,11 @@ export interface Cutaway {
   readonly twins: readonly InstancedMesh[];
   /**
    * Cuts what `pose` needs cut to see `focus` (the pose's target by default), and with `fade` takes out of the picture
-   * what still stands between them (see the file comment); says what is cut and faded.
+   * what still stands between them (see the file comment); says what is cut and faded. With `cut: false` it cuts
+   * nothing and only fades: a site's structure the player stands outside of (engine/gfx/stageSite.ts), whose walls
+   * facing the camera hide nothing of his.
    */
-  update(pose: CameraPose, focus?: Vec3, options?: { fade?: boolean }): CutawayReport;
+  update(pose: CameraPose, focus?: Vec3, options?: { fade?: boolean; cut?: boolean }): CutawayReport;
   /** Puts every piece back whole. */
   clear(): CutawayReport;
   /** The tiles of each part's cut pieces, by part name. */
@@ -322,8 +324,8 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
   };
   return {
     twins: cutting.map(({ twin }) => twin!),
-    update(pose, focus = poseTarget(pose), { fade = false } = {}) {
-      const cuts = planCutaway(targets, pose, focus);
+    update(pose, focus = poseTarget(pose), { fade = false, cut = true } = {}) {
+      const cuts = cut ? planCutaway(targets, pose, focus) : targets.map(({ cells }) => cells.map(() => false));
       if (!fade) return apply(cuts, none(), new Set());
       return apply(
         cuts,

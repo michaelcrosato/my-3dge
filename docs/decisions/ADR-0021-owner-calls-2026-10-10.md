@@ -52,7 +52,8 @@ URL's query and hash as before, and the playground's menu for humans links the o
 (`labs/index/`, every page and lab) and the Stress Box (`labs/box/`). The box's own routes (`labs/box/?scene=…`) are
 unchanged; `/?scene=…` now names a playground scene. tests/e2e/playground.spec.ts checks the landing page and the
 menu's links; the box's spec opens the box at its own path. PLAN.md's WP 0.12 bullet, its layout and I-53 are edited
-to match.
+to match. The menu's links went with the menu (ADR-0025 amendment 51, 2026-11-04): the labs index and the box open at
+their own paths, the game reaching them only from the owner checks `labs` and `esc-0005`.
 
 ## Amendment 4 (2026-11-02): no deployment
 

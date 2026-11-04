@@ -1,7 +1,7 @@
 /**
  * @file T2 for the playground's front end (labs/playground/ui/, PLAN.md WP 13.25), by DOM queries, `window.__engine`
  * and `window.__playgroundUi`:
- * 1. the title screen opens with the page when asked (`?playground.title=on`) over a paused run; settings lists every
+ * 1. the start menu opens with the page when asked (`?playground.title=on`) over a paused run; settings lists every
  *    row and every action's key; a slider, a list and a level change the view, a rebind takes a free key in every
  *    camera's map and refuses one another action holds, naming it; Play resumes; Escape pauses, and a key the menu reads
  *    reaches no intent (Space picks Resume and the player never jumps); photo mode flies the free camera on the move
@@ -11,10 +11,10 @@
  *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back;
  * 3. the movement profile from settings starts the scene again on it, and the run's replay holds it and plays back to
  *    its hash in Node; Restart starts it again on its seed;
- * 4. the spawn picker, from the gym, opens the block at the area picked; on the block it puts the player in the room
+ * 4. Go to, from the gym, opens the block at the area picked; on the block it puts the player in the room
  *    picked through the recorded dev action `place`, the HUD naming the room; the run replays to its hash in Node; the
  *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
- * 5. the owner's checks (WP 13.28): the title lists them with how many are left; the keys work the panel as a menu; a
+ * 5. the owner's checks (WP 13.28): the start menu lists them with how many are left; the keys work the panel as a menu; a
  *    check's view names the player's keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps
  *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place`, the
  *    HUD naming the check, and pause answers it.
@@ -31,6 +31,8 @@ import '../../labs/playground/scenes/site';
 import { CONTROL_ACTIONS, SETTING_ROWS } from '../../labs/playground/ui/settings';
 import { spawnPlaces } from '../../labs/playground/ui/spawns';
 import { OWNER_CHECKS, ownerCheck } from '../../labs/playground/ui/checks';
+import { AREAS } from '../../labs/playground/ui/areas';
+import type { SiteArea } from '../../labs/playground/levels/site';
 import { expect, test } from './fixtures';
 
 /** The page's engine and front end, inside `evaluate`. */
@@ -68,7 +70,7 @@ async function pick(page: Page, harness: { tick(n?: number): Promise<void> }, me
 }
 
 /** The owner's checks item, with `left` of them to do. */
-const checksItem = (left: number) => `Owner checks… (${left} to do)`;
+const checksItem = (left: number) => `Owner checks (${left} to do)…`;
 
 /** A setting row's value as the screen shows it. */
 const shown = (page: Page, id: string) => page.locator(`[data-ui=setting][data-id="${id}"]`).getAttribute('data-value');
@@ -99,13 +101,13 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     expect(await screens(page)).toEqual({ screens: ['title'], paused: true });
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
-    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', checksItem(OWNER_CHECKS.length), 'Spawn…', 'Settings…', 'Tune the look…', 'Photo mode', 'Watch the tour']); // prettier-ignore
+    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Go to…', 'Settings', 'Controls', 'Photo mode', 'Watch the tour', checksItem(OWNER_CHECKS.length), 'Tools…']); // prettier-ignore
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -144,7 +146,7 @@ test.describe('the playground’s front end', () => {
     await page.keyboard.press('Escape');
     await harness.tick(2);
     expect((await screens(page)).screens).toEqual(['pause']);
-    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Spawn…', 'Settings…', 'Tune the look…', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Restart', 'Title screen']); // prettier-ignore
+    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Go to…', 'Settings', 'Controls', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Tools…', 'Restart', 'Main menu']); // prettier-ignore
     const before = await player(page);
     await page.keyboard.press('Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
     await harness.tick(2);
@@ -185,11 +187,12 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
-    await pick(page, harness, 'title', 'tune');
-    expect((await screens(page)).screens).toEqual(['title', 'tune']);
+    await pick(page, harness, 'title', 'tools');
+    await pick(page, harness, 'tools', 'tune');
+    expect((await screens(page)).screens).toEqual(['title', 'tools', 'tune']);
     const panel = page.locator('[data-ui=tune]');
     await expect(panel).toBeVisible();
     const folds = await panel.locator('[data-ui=tune-filter]').evaluateAll((all) => all.map((one) => one.getAttribute('data-id'))); // prettier-ignore
@@ -232,7 +235,7 @@ test.describe('the playground’s front end', () => {
     expect(await look()).toEqual(before);
     await page.keyboard.press('Escape');
     await harness.tick(2);
-    expect((await screens(page)).screens).toEqual(['title']);
+    expect((await screens(page)).screens).toEqual(['title', 'tools']);
     expect(harness.advice()).toEqual([]);
   });
 
@@ -240,7 +243,7 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'settings');
@@ -264,17 +267,19 @@ test.describe('the playground’s front end', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('the spawn picker opens the block at an area from the gym, and puts the player in a room on it, recorded', async ({
+  test('Go to opens the block at an area from the gym, and puts the player in a room on it, recorded', async ({
     page,
     harness,
   }) => {
     test.setTimeout(1_500_000);
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'spawns');
     const items = await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item]').allTextContents();
-    expect(items).toEqual([...spawnPlaces().map((place) => place.label), 'Back']);
+    const [areas, rooms] = ['area', 'room'].map((group) => spawnPlaces().filter((place) => place.group === group));
+    const roomName = (label: string) => label.replace(/^\w+: (\w)/, (_all, first: string) => first.toUpperCase());
+    expect(items).toEqual(['Areas of the block', ...areas.map((place) => AREAS[place.id.slice(5) as SiteArea].name), 'Rooms of the house', ...rooms.map((place) => roomName(place.label)), 'Back']); // prettier-ignore
     await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item][data-id="area:range"]').click();
     await page.waitForURL(/scene=site/);
     await harness.ready({ timeout: SITE_READY });
@@ -283,13 +288,13 @@ test.describe('the playground’s front end', () => {
     const at = (await player(page)).actor;
     expect(Math.hypot(at.x - range.args.at[0], at.z - range.args.at[2])).toBeLessThan(0.5);
 
-    await pick(page, harness, 'title', 'spawns'); // the block's page opens on the title screen too
+    await pick(page, harness, 'title', 'spawns'); // the block's page opens on the start menu too (`playground.title` kept)
     await pick(page, harness, 'spawns', 'room:house/kitchen');
     expect(await screens(page)).toEqual({ screens: [], paused: false });
     await call(page, 'pause');
     await call(page, 'step', 30);
     await call(page, 'render', 2);
-    expect((await hud(page)).room).toBe('Room: kitchen');
+    expect((await hud(page)).room).toBe('House · kitchen');
     const { replay, hash } = await recording(page);
     expect(replay.inputs[0]).toMatchObject([0, { dev: 'place', args: range.args }]); // the pick on opening, under the title: recorded at step 0, held until a step follows (engine/sim/session.ts)
     expect(replay.inputs.filter(([, change]) => JSON.stringify(change).includes('"place"'))).toHaveLength(2);
@@ -313,7 +318,7 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'checks');
@@ -349,7 +354,7 @@ test.describe('the playground’s front end', () => {
     await page.waitForURL(/playground\.check=mantle/);
     await harness.ready({ timeout: READY });
     await harness.tick(2);
-    expect(await screens(page)).toEqual({ screens: [], paused: false }); // no title screen on a check's page
+    expect(await screens(page)).toEqual({ screens: [], paused: false }); // no start menu on a check's page
     await call(page, 'pause');
     const spot = ownerCheck('mantle')!.go!.place!.at;
     const at = (await player(page)).actor;

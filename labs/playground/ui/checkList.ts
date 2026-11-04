@@ -295,18 +295,33 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
   {
     id: 'front-end',
     kind: 'try',
-    title: 'The title screen, pause and settings',
-    what: 'Try the title screen, pause (Esc), the spawn picker, settings (rebind a key; the field of view, the movement profile, the volumes) and photo mode. Then reload the page: are your settings and your key kept?', // prettier-ignore
+    title: 'The splash, the start menu, pause and settings',
+    what: 'Open the page: the splash screen, then the start menu. Try Go to, Settings (rebind a key; the field of view, the movement profile, the volumes), Controls, Photo mode and Tools, and pause (Esc). Do the screens look good and read clearly? Then reload the page: are your settings and your key kept?', // prettier-ignore
     from: item(13),
     go: { query: { 'playground.title': 'on' } },
+  },
+  {
+    id: 'touch',
+    kind: 'try',
+    title: 'On a phone or a tablet',
+    what: 'Open playground.html on a phone or a tablet, held sideways. Tap to start, then Play. Does the stick walk the player where your thumb lands, do Jump, Use, Crouch and Strike work, and does the menu button open pause (and Resume carry on)? Do the screens fit and read?', // prettier-ignore
+    from: 'ADR-0021: the touch controls are built, never tested, and checked by your reports',
+  },
+  {
+    id: 'house-views',
+    kind: 'try',
+    title: 'The house from every camera',
+    what: 'Walk through the house and round it in each camera ({camera}), turning on the spot and backing into walls. Can you ever see through a wall you should not, or does the ground or the sky look wrong as you move?', // prettier-ignore
+    from: "The owner's report of 2026-11-03: walls seen through and the ground looking wrong round the house",
+    go: { query: { 'playground.spawn': 'area:house' } },
   },
   {
     id: 'load-times',
     kind: 'try',
     title: 'How long it takes to start and change maps',
-    what: 'Reload the page and note how long until you can play. Then open the block from the spawn picker, and come back to the gym. The block can stall a little after its first frame on its first visit, while the quality settles; later visits start where it settled. The first switch to isometric or top-down also pauses once. Are the waits acceptable now?', // prettier-ignore
+    what: 'Reload the page and note how long until the splash says to press a key. Then use Go to (M) to jump round the block and into the house. The block can stall a little after its first frame on its first visit, while the quality settles; later visits start where it settled. The first switch to isometric or top-down also pauses once. Are the waits acceptable now?', // prettier-ignore
     from: 'docs/PROGRESS.md: real GPUs are not verifiable here (load times, ADR-0008 amendment 11)',
-    go: { query: { scene: 'gym' } },
+    go: { query: { 'playground.title': 'on' } },
   },
   {
     id: 'tour',

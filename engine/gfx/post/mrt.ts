@@ -205,8 +205,8 @@ function behindEverything(object: Object3D | undefined): boolean {
  * Lines and points have no normals: they read as facing the camera, and keep their flags. What the frame draws behind
  * everything (`behindEverything`: engine/gfx/sky.ts's dome and backdrop) writes the cleared background's (0, 0, 0, 1),
  * so no filter finds an edge in it: the outline inked the dome's box edges across the sky (WP 13.2's review). That is
- * decided as the object's program is built, which holds because such an object's material is its own (it draws it at
- * the far plane) and r182 keys a program by material and geometry, never by object.
+ * decided as the object's program is built, which holds because such an object's material is its own (it draws it
+ * first, writing no depth, short of the far plane) and r182 keys a program by material and geometry, never by object.
  */
 function sceneMrt(table: FlagTable, extra: SceneTargets): Node {
   const slot = uniform(0);

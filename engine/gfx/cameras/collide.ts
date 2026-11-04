@@ -3,9 +3,9 @@
  * camera (the chase, the shoulder, the platformer's) out of the level, as Unreal's spring arm and Cinemachine's
  * deoccluder do. Through the sim's read-only `QueryView` (gfx never imports physics/), a ball of `COLLIDE_RADIUS`,
  * wider than the near plane's corners, is cast against the groups `walls.groups` names (`world`, the level, by
- * default; `walls.exclude` skips a body, the hero's own), their fixed bodies only (`walls.fixed`): a door that swings,
- * a lift, a prop that moves pass through the camera, faded when they stand between it and the player, as a game's
- * camera channel ignores its doors, never pushing it nor cutting it:
+ * default; `walls.exclude` skips a body, the hero's own), their fixed bodies only (`walls.fixed`): a door, a lift, a
+ * moving prop pass through the camera, as a game's camera channel ignores its doors (and no fade takes them: one can
+ * fill the picture, docs/PROGRESS.md):
  * - `reach`: how far the ball gets from a point along a direction, `COLLIDE_SKIN` short of the first surface;
  * - `sweep`: where the ball gets from one point toward another, stopped twice the skin short of a surface, so a cast
  *   that starts there starts clear (a pivot's lag never takes it through a wall);

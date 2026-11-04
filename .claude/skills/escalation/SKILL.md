@@ -30,7 +30,7 @@ branches. Everything else is your call, recorded as an ADR amendment (PLAN.md §
    check-in for the deadline (`send_later`) and end the turn; an answer resumes the session.
    In the same commit as the record, add its decide check to labs/playground/ui/checkList.ts: the question and the
    choices as a player would say them, the call you take first, each choice naming its option. The owner answers it
-   in the game (the title screen's Owner checks) and pastes the answers back; `npm test` holds the list to the records
+   in the game (the start menu's Owner checks) and pastes the answers back; `npm test` holds the list to the records
    awaiting review (labs/playground/ui/checks.test.ts).
 3. Never perform the action while waiting. Take the doctrine's preferred alternative instead: procedural or text
    instead of binary, the free path, a stub behind the feature registry.

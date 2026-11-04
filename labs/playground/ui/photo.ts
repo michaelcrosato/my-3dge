@@ -50,7 +50,6 @@ export function createPhoto(
 ): Photo {
   const hint = Object.assign(parent.ownerDocument.createElement('div'), { className: 'ui-panel ui-box', hidden: true });
   hint.dataset.ui = 'photo';
-  Object.assign(hint.style, { left: '50%', top: '8px', transform: 'translateX(-50%)', padding: '4px 10px' });
   parent.append(hint);
   let previous: string | null = null;
   let dragging = false;

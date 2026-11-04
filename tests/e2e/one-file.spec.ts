@@ -23,7 +23,7 @@ test('the one-file playground: opened from disk, it starts on WebGPU and fetches
   page.on('request', (request) => {
     if (!/^(data|file):/.test(request.url())) strays.push(request.url());
   });
-  await page.goto(`${pathToFileURL(join(process.cwd(), ONE_FILE)).href}?playground.title=off`);
+  await page.goto(`${pathToFileURL(join(process.cwd(), ONE_FILE)).href}?scene=gym&playground.title=off`); // the gym: the block, the default, warms up for minutes on SwiftShader (playground.spec.ts opens it)
   await harness.ready({ timeout: 90_000 });
   await harness.assertWebGPU();
   const before = await page.evaluate(() => __engine.hash());

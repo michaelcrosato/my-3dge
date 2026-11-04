@@ -1,18 +1,18 @@
 /**
  * @file Unit tests for the playground's controls (labs/playground/controls.ts, WP 13.9): every camera mode's map passes
  * the bindings tests (no code on two actions, no reserved or system code, nothing on Ctrl, which with W closes the tab,
- * the page's P, F and M refused by rebinding, view actions rebound like the others), each binds Apex's default keys
+ * the page's P, F, M and H refused by rebinding, view actions rebound like the others), each binds Apex's default keys
  * where the browser allows, and each mode's own rules: the view sent and the centre aimed in first person and the
  * shooter, the platformer facing its move, isometric and top-down aiming with the pointer, Q and E turning isometric
- * (so G uses there). `playgroundMap` picks a camera's map, the HUD's line and the menu's rows follow the map in use.
+ * (so G uses there). `playgroundMap` picks a camera's map.
  * WP 13.20: the firearms' keys (1, 2, R, 3) and the pad's, Y to swap and X and Y held to reload and holster.
  * @see labs/playground/controls.ts
  */
 import { describe, expect, it } from 'vitest';
-import { createBindings, createInput, getActionMap, RESERVED_CODES } from '../../engine';
-import { keysLine, PLAYGROUND_ACTIONS, PLAYGROUND_MAPS, playgroundMap } from './controls';
+import { createBindings, getActionMap, RESERVED_CODES } from '../../engine';
+import { PLAYGROUND_ACTIONS, PLAYGROUND_MAPS, playgroundMap } from './controls';
 import { FEEL_KEY } from './feel';
-import { controlRows, MENU_KEY } from './menu';
+import { GOTO_KEY, HELP_KEY } from './ui/help';
 import { LOOK_KEY, PLAYGROUND_CAMERAS } from './views';
 
 /** Every mode's map, by mode. */
@@ -28,7 +28,7 @@ describe('the playground’s action maps', () => {
         all.filter((code) => RESERVED_CODES.includes(code) || code.startsWith('Control')),
         id,
       ).toEqual([]);
-      expect(map.reserved, id).toEqual([LOOK_KEY, FEEL_KEY, MENU_KEY]); // the page's own keys
+      expect(map.reserved, id).toEqual([LOOK_KEY, FEEL_KEY, GOTO_KEY, HELP_KEY]); // the page's own keys
       expect(Object.keys(map.actions), id).toEqual(expect.arrayContaining([...map.move, ...map.view]));
       const bindings = createBindings(id);
       expect(bindings.rebind('jump', LOOK_KEY), id).toMatchObject({ ok: false, reason: 'reserved' });
@@ -80,22 +80,5 @@ describe('the playground’s action maps', () => {
     expect(playgroundMap('cam3=first,90,-10,70')).toBe(PLAYGROUND_MAPS.first);
     expect(playgroundMap('cam=iso,90,2')).toBe(PLAYGROUND_MAPS.isometric);
     expect(playgroundMap('cam3=fly')).toBe(PLAYGROUND_MAPS.shooter);
-  });
-
-  it('show the map in use on the HUD and in the menu, as rebound and on a pad', () => {
-    const shooter = createInput({ map: PLAYGROUND_MAPS.shooter });
-    expect(keysLine(shooter)).toMatch(/^WASD: move · Space: jump · .*Shift: sprint · .*: use · V: strike · 1 2: guns · R: reload · Click: mouse look · T: camera · X: shoulder · P: look · F: feel · M: menu$/); // prettier-ignore
-    shooter.bindings.rebind('camera', 'KeyY');
-    expect(keysLine(shooter)).toContain('Y: camera');
-    const iso = createInput({ map: PLAYGROUND_MAPS.isometric });
-    expect(keysLine(iso)).toContain('G: use · V: strike · 1 2: guns · R: reload · Mouse: aim · T: camera · Q E: turn');
-    const pad = { prompt: () => 'A', bindings: iso.bindings, lastDevice: 'gamepad' as const };
-    expect(keysLine(pad)).toMatch(/^L Stick: move · .*R Stick: look/);
-    const rows = (id: string) => Object.fromEntries(controlRows(undefined, id).map(([what, keys]) => [what, keys]));
-    expect(rows(PLAYGROUND_MAPS.shooter)).toMatchObject({ 'Swap the shoulder': 'X', 'Camera mode': 'T' });
-    expect(rows(PLAYGROUND_MAPS.isometric)).toMatchObject({ 'Use: a door, a switch, a chair to carry and throw, a zipline, a ladder': 'G', Aim: 'The pointer, onto the floor', 'Turn the view left': 'Q', 'Turn the view right': 'E' }); // prettier-ignore
-    expect(rows(PLAYGROUND_MAPS.first)['Swap the shoulder']).toBeUndefined();
-    const held = Object.fromEntries(controlRows(undefined, PLAYGROUND_MAPS.shooter).map(([what, keys, pad]) => [what, [keys, pad]])); // prettier-ignore
-    expect([held.Reload, held['Holster, or draw again'], held['Swap weapons']]).toEqual([['R', 'Hold X'], ['3', 'Hold Y'], ['', 'Y']]); // prettier-ignore
   });
 });

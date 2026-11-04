@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { registry } from '../../engine/core/registry';
 import { ROOT } from '../../tools/x';
-import '../../labs/playground/menu';
+import '../../labs/playground/ui/frontEnd';
 import '../../labs/playground/looks/cel';
 import '../../labs/playground/looks/pixel';
 import { missingProblems, readmeProblems } from './readmeClaims';

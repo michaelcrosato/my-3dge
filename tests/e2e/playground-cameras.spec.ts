@@ -28,6 +28,7 @@ import { playgroundMap } from '../../labs/playground/controls';
 import '../../labs/playground/scenes/gym';
 import { SITE, SITE_STRUCTURES } from '../../labs/playground/levels/site';
 import { areaStart, roomPlace } from '../../labs/playground/scenes/site';
+import { locationLine } from '../../labs/playground/ui/areas';
 import { toWorld } from '../../engine/world/site';
 import { PLAYGROUND_CAMERAS } from '../../labs/playground/views';
 import { expect, test } from './fixtures';
@@ -67,14 +68,14 @@ const far = (a: readonly number[], b: readonly number[]) => Math.hypot(...a.map(
 const [HOUSE, SHED] = (['house', 'shed'] as const).map((name) => SITE.structures[Object.keys(SITE_STRUCTURES).indexOf(name)]); // prettier-ignore
 const YARD = areaStart('frontyard');
 const PLACES = [
-  ...HOUSE.level.rooms!.map((room) => ({ name: room.name, ...roomPlace(HOUSE, room), storey: room.storey, in: 'house', hud: `Room: ${room.name}` })), // prettier-ignore
-  { name: 'shed', at: [toWorld(SHED, 1.5, 2)[0], 0, toWorld(SHED, 1.5, 2)[1]], crouch: false, storey: 0, in: 'shed', hud: 'Indoors' }, // prettier-ignore
-  { name: 'front yard', at: YARD, crouch: false, storey: -1, in: '', hud: 'Outdoors' },
+  ...HOUSE.level.rooms!.map((room) => ({ name: room.name, ...roomPlace(HOUSE, room), storey: room.storey, in: 'house', hud: locationLine('house', room.name) })), // prettier-ignore
+  { name: 'shed', at: [toWorld(SHED, 1.5, 2)[0], 0, toWorld(SHED, 1.5, 2)[1]], crouch: false, storey: 0, in: 'shed', hud: locationLine('backyard') }, // prettier-ignore
+  { name: 'front yard', at: YARD, crouch: false, storey: -1, in: '', hud: locationLine('frontyard') },
 ];
 
 /** Opens the playground at `query` and waits for it, paused: the site warms up in about 215 s on SwiftShader. */
 async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }, query = '') {
-  await page.goto(`labs/playground/${query}`);
+  await page.goto(`labs/playground/${query.includes('scene=') ? query : `?scene=gym${query.replace(/^\?/, '&')}`}`); // the gym unless asked: the block opens by default
   await harness.ready({ timeout: query.includes('scene=site') ? 420_000 : 120_000 });
   await call(page, 'pause');
   await call(page, 'render', 2);

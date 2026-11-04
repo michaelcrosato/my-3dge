@@ -87,6 +87,18 @@ describe('a site drawn', () => {
     drawn.dispose();
   });
 
+  it('cuts only the structure the player stands in: one he walks past keeps its walls facing the camera', () => {
+    const drawn = createStageSite(site, { materials });
+    drawn.follow();
+    const cutTiles = (s: (typeof drawn.structures)[number]) => Object.values(s.cutaway!.cut()).flat().length;
+    const low = makePose({ position: [14, 2, 34], pitch: -0.1 }); // south of the lot, low, facing the house's south walls
+    drawn.update(low, hall);
+    const inside = drawn.structures.map(cutTiles);
+    drawn.update(low, [14, 0.2, 26]); // the player in the yard, south of the house, between it and the camera
+    expect([inside[0] > 0, drawn.structures.map(cutTiles)]).toEqual([true, [0, 0]]);
+    drawn.dispose();
+  });
+
   it('makes each structure’s cutaway once a player stands, and registers their twins with the warm-up', () => {
     const drawn = createStageSite(site, { materials });
     const registered: string[] = [];

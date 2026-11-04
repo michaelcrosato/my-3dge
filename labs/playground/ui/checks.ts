@@ -11,7 +11,7 @@
  * setting) and a spot to stand (`place`, the block's and the gym's dev action, run as the page's first operation, so
  * the run records it), or another page of the repository, opened in a new tab. `checkUrl` builds the link: on the
  * playground it adds the view setting `playground.check`, which names the check under way (the HUD's line, pause's
- * Answer item), and leaves the title screen off unless the check is about it. A check's text names keys as
+ * Answer item), and leaves the start menu off unless the check is about it. A check's text names keys as
  * `{action}`, which the panel shows as the player's own binding (`input.prompt`).
  *
  * The answers stay in the page's store under `CHECKS_KEY` (`readAnswers`, `saveAnswer`), never in the run; the panel

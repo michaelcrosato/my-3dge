@@ -3,11 +3,11 @@
  * tests/replays/playground-tour.replay.json) playing in the page as `?replay=playground-tour` plays it, in real time
  * from step 0, the view stepping through the five cameras every `ATTRACT.cycle` seconds (blended, as T does) and
  * switching the look every second step, a banner (`[data-ui=attract]`) saying any key plays. A key, a click or a pad
- * button, or the tour's end, gives the page back: the playground again, on its title screen.
+ * button, or the tour's end, gives the page back: the playground again, on its start menu.
  *
  * The view setting `playground.attract`: `on` is the tour's page itself (`attractPage()` writes its address); `auto`
- * (the default) opens it after `ATTRACT.idle` seconds on the title screen with nothing pressed, unless automation
- * drives the browser (labs/playground/ui/frontEnd.ts); `off` never. The title screen's "Watch the tour" opens it too.
+ * (the default) opens it after `ATTRACT.idle` seconds on the start menu with nothing pressed, unless automation
+ * drives the browser (labs/playground/ui/frontEnd.ts); `off` never. The start menu's "Watch the tour" opens it too.
  *
  * Invariants: presentation only: the replay plays the run, and the cameras and looks are view state, so the tour's
  * goldens hold under every view the cycle shows (tests/e2e/playground-tour.spec.ts).
@@ -23,7 +23,7 @@ import type { Engine } from '../../../engine';
 import { defineSettings } from '../../../engine/sim-api';
 import { cameraMode, nextCamera, nextLook } from '../views';
 
-/** The attract mode's numbers: seconds on an idle title screen before it starts, and seconds a view shows. */
+/** The attract mode's numbers: seconds on an idle start menu before it starts, and seconds a view shows. */
 export const ATTRACT = Object.freeze({ idle: 60, cycle: 8 });
 
 /** The tour's replay, as the page offers it (`?replay=<name>`). */
@@ -38,11 +38,11 @@ export const ATTRACT_SETTINGS = defineSettings({
     view: true,
     when: 'scene',
     description:
-      "The playground's attract mode, the tour playing with the view cycling (labs/playground/ui/attract.ts): 'on' is the tour's page itself, 'auto' opens it after a minute on the title screen with nothing pressed unless automation drives the browser, 'off' never.",
+      "The playground's attract mode, the tour playing with the view cycling (labs/playground/ui/attract.ts): 'on' is the tour's page itself, 'auto' opens it after a minute on the start menu with nothing pressed unless automation drives the browser, 'off' never.",
   },
 });
 
-/** The tour's page at `path` (the playground's): its replay, the attract mode on, no title screen over it. */
+/** The tour's page at `path` (the playground's): its replay, the attract mode on, no start menu over it. */
 export function attractPage(path: string): string {
   return `${path}?${new URLSearchParams({ replay: TOUR_REPLAY, 'playground.attract': 'on', 'playground.title': 'off' })}`; // prettier-ignore
 }
