@@ -6975,6 +6975,7 @@ For the agents who maintain the engine.
 - `DOOR_TILT` (const): An up-and-over door's turn open (rad): a quarter turn, from upright to flat under its head.
 - `DoorComponent` (interface): The component `door`.
 - `DoorSpec` (interface): What `addDoor` takes (see the file comment).
+- `shutDoors` (function): The bodies of the doors standing shut, in id order: what stops a camera as a wall does (engine/app/view.ts hands them to engine/gfx/cameras/collide.ts as `also`); one opening, closing, open or broken passes through it.
 - `strikeDoor` (function): A strike on `id` from `from`: the first bursts it open, the second breaks it; a shot or a blast breaks it at once.
 - `useDoor` (function): Opens `id` away from `from` (m), or closes it; a locked door stays.
 

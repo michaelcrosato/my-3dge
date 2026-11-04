@@ -18,10 +18,11 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
 ## Where things stand (2026-11-04)
 
 - Phases 0–9 and 13 are done (G10–G13: PR #22 to #34). The playground (`npm run dev`) is one map, the block, behind a
-  splash and a start menu (WP 13.33); the player moves as Apex in five cameras (doors, pickups, melee, guns, ragdolls,
-  neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel looks); Watch the tour plays it all. Agents
-  drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped as playground.html. Faster starts (ADR-0008
-  amendments 11, 12; Owner: a move still re-keys lit pipelines); Style Lab's filters in Tune the look.
+  splash and a start menu (WP 13.33), shut doors walls to its cameras (13.34); the player moves as Apex in five cameras
+  (doors, pickups, melee, guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel
+  looks); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
+  as playground.html. Faster starts (ADR-0008 amendments 11, 12; Owner: a move still re-keys lit pipelines); Style
+  Lab's filters in Tune the look.
 
 ## What waits, and the open issues
 
@@ -35,6 +36,5 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   tools/cmd/replay.ts, app/engine.ts; four tests at 399–400.
 - The quick gate is over its 5 min (CI_BUDGET), its long pole the playground's soak and site tests; under load
   `npm test` can fail on RPC timeouts; audio.spec's spatial test hung once in an offline render on GitHub (e6f38ba).
-- Owner: the platformer can end behind the house's shut back door (site-eye.test.ts): cameras skip doors (WP 13.33).
 - The tour's page goldens come from its spec (amendment 41). Random play lost the shooter's chest in 4–5% of frames
   (before WP 13.27). A shot's ID pass builds a pipeline again after each lambert–toon style switch (frames never do).

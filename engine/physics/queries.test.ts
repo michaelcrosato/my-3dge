@@ -1,7 +1,8 @@
 /**
  * @file Tests for the queries (engine/physics/queries.ts) on a physics world: raycasts report the body, distance in
  * metres, point and normal, and honour groups, `exclude`, `maxDistance` and sensors; shape casts stop where the shape
- * touches; overlaps list body ids in order; `probe(x, z)` finds the ground's height and slope; queries see bodies from
+ * touches; overlaps list body ids in order; `fixed` passes what moves and `also` meets the bodies it names;
+ * `probe(x, z)` finds the ground's height and slope; queries see bodies from
  * the first step after they are added, and never change the hashed state.
  */
 import { describe, expect, it } from 'vitest';
@@ -97,6 +98,23 @@ describe('shape casts and overlaps', () => {
     expect(p.overlap({ type: 'ball', radius: 0.3 }, [0, 0.5, 3], { groups: ['prop'] })).toEqual([crate]);
     expect(p.overlap({ type: 'cylinder', radius: 0.3, height: 0.5 }, [0, 0.2, -3])).toEqual([floor]);
     expect(p.overlap({ type: 'ball', radius: 0.3 }, [0, 8, 0])).toEqual([]);
+    p.dispose();
+  });
+
+  it('meet fixed bodies only with `fixed`, and the bodies `also` names whatever the groups and `fixed` say', () => {
+    const { p, floor, crate } = scene();
+    const ball = { type: 'ball', radius: 0.3 } as const;
+    expect(p.raycast([0, 5, 3], [0, -1, 0], { fixed: true })?.body).toBe(floor); // the crate moves: passed
+    expect(p.raycast([0, 5, 3], [0, -1, 0], { fixed: true, also: [crate] })?.body).toBe(crate);
+    expect(p.raycast([0, 5, 3], [0, -1, 0], { groups: 'world', also: [crate] })?.body).toBe(crate);
+    expect(p.raycast([0, 5, 0], [0, -1, 0], { fixed: true, also: [crate] })?.body).toBe(floor); // the rest as before
+    expect(p.shapeCast(ball, [0, 0.5, 6], [0, 0, -1], { maxDistance: 5, fixed: true })).toBeNull();
+    const met = p.shapeCast(ball, [0, 0.5, 6], [0, 0, -1], { maxDistance: 5, fixed: true, also: [crate] });
+    expect([met?.body, Number(met?.distance.toFixed(4))]).toEqual([crate, 2.2]); // 6 − 3.5 − the ball's 0.3
+    expect(p.overlap(ball, [0, 0.5, 3], { fixed: true })).toEqual([]);
+    expect(p.overlap(ball, [0, 0.5, 3], { fixed: true, also: [crate] })).toEqual([crate]);
+    expect(p.overlap(ball, [0, 0.5, 3], { fixed: true, also: [] })).toEqual([]);
+    expect(() => p.raycast([0, 5, 0], [0, -1, 0], { also: [-1] })).toThrow(/PHYSICS_BAD_ARGUMENT.*also/);
     p.dispose();
   });
 });

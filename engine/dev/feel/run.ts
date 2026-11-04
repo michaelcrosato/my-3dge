@@ -27,6 +27,7 @@ import type { EntityData } from '../../sim/state';
 import { cameraPlayer, type EffectsFrame } from '../../gfx/cameras/effects';
 import type { CameraPose } from '../../gfx/cameras/pose';
 import { rigOptions } from '../../gfx/cameras/rig';
+import { shutDoors } from '../../sim/doors';
 import { queryViewOf } from '../../sim/queryView';
 import { createSession } from '../../sim/session';
 import type { BodyView, MotionView } from '../../anim/locomotion/motion';
@@ -146,6 +147,7 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
     const doing = cameras.length ? cameraPlayer(e as unknown as EntityData, (intents.b ?? []).includes('aim')) : null;
     const [x, y, z] = sample.feet;
     const eye = doing?.eye !== undefined ? ([x, y + doing.eye, z] as const) : anim?.eye(k);
+    const shut = cameras.length ? shutDoors(world) : []; // which stop the cameras as walls do, as in the page
     for (const c of cameras) {
       if (k < c.m.from || k > (c.m.to ?? course.steps)) continue;
       if (c.track) for (const [step, code] of course.views) if (step === k) c.track.set(code);
@@ -158,7 +160,7 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
         c.arms.update(pose, input, world.dt);
         return { hands: c.arms.hands.map(vec3Of), points: c.arms.points(), fov };
       };
-      c.track.frame(sample.feet, { queries, dt: world.dt, player: doing, look: intents.look, arms: posed, ...(eye ? { eye } : {}) }); // prettier-ignore
+      c.track.frame(sample.feet, { queries, also: shut, dt: world.dt, player: doing, look: intents.look, arms: posed, ...(eye ? { eye } : {}) }); // prettier-ignore
     }
     return sample;
   };

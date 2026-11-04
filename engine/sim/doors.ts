@@ -18,6 +18,9 @@
  * structure: `place`, its `at` and quarter turns): one as wide as the leaf to 0.2 m wider and as tall, 5 cm a side in
  * the door glyph's 1 m; a wider or a lower one (a garage's, a crawlspace's) is the scene's.
  *
+ * `shutDoors(w)` lists the bodies of the doors standing shut, which stop the cameras as walls do (a door that moves,
+ * stands open or lies broken passes through them).
+ *
  * Events: `door` `{ id, open, locked }`, `splinters` `{ id, prop, position, ground }`.
  * Invariants: a leaf's pose is a pure function of its hinge, yaw and angle (or its offset and amount), driven exactly
  * there each step (`driveBody`); everything a door is lives in its components.
@@ -203,6 +206,15 @@ function swingDoors(w: World): void {
     const at = leafPose(door, sceneProp.prop, door.angle);
     driveBody(physics, sceneProp.body, at.position, at.rotation, w.dt);
   }
+}
+
+/**
+ * The bodies of the doors standing shut, in id order: what stops a camera as a wall does (engine/app/view.ts hands them
+ * to engine/gfx/cameras/collide.ts as `also`); one opening, closing, open or broken passes through it.
+ */
+export function shutDoors<C extends object, E extends EventMap>(world: World<C, E>): number[] {
+  const doors = (world as unknown as World).query('door' as never) as unknown as DoorEntity[];
+  return doors.filter(({ door }) => !door.broken && door.angle === 0 && door.target === 0).map((e) => e.sceneProp.body);
 }
 
 /** How much wider than its leaf an opening a door hangs in may be (m). */

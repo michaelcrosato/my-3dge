@@ -3,9 +3,9 @@
  * camera (the chase, the shoulder, the platformer's) out of the level, as Unreal's spring arm and Cinemachine's
  * deoccluder do. Through the sim's read-only `QueryView` (gfx never imports physics/), a ball of `COLLIDE_RADIUS`,
  * wider than the near plane's corners, is cast against the groups `walls.groups` names (`world`, the level, by
- * default; `walls.exclude` skips a body, the hero's own), their fixed bodies only (`walls.fixed`): a door, a lift, a
- * moving prop pass through the camera, as a game's camera channel ignores its doors (and no fade takes them: one can
- * fill the picture, docs/PROGRESS.md):
+ * default; `walls.exclude` skips a body, the hero's own), their fixed bodies only (`walls.fixed`), and the bodies
+ * `walls.also` names, the doors standing shut (engine/sim/doors.ts `shutDoors`): a door that swings or stands open, a
+ * lift, a moving prop pass through the camera, as a game's camera channel ignores what moves:
  * - `reach`: how far the ball gets from a point along a direction, `COLLIDE_SKIN` short of the first surface;
  * - `sweep`: where the ball gets from one point toward another, stopped twice the skin short of a surface, so a cast
  *   that starts there starts clear (a pivot's lag never takes it through a wall);
@@ -67,14 +67,23 @@ export interface Walls {
   readonly exclude?: number;
   /** Whether only fixed bodies stop it (true by default): what moves, a door swinging, a lift, passes through it. */
   readonly fixed?: boolean;
+  /** Bodies that stop it though they can move, by id: the doors standing shut (engine/sim/doors.ts `shutDoors`). */
+  readonly also?: readonly number[];
 }
 
 /** How far a ball of `COLLIDE_RADIUS` gets from `from` along the unit `dir`, up to `max`: `COLLIDE_SKIN` short of a hit. */
 export function reach(walls: Walls, from: Vec3, dir: Vec3, max: number): number {
-  const { queries, groups = 'world', exclude, fixed = true } = walls;
+  const { queries, groups = 'world', exclude, fixed = true, also } = walls;
   if (!queries || max < 1e-6) return max;
   const ball = { type: 'ball', radius: COLLIDE_RADIUS } as const;
-  const hit = queries.shapeCast(ball, from, dir, { maxDistance: max, margin: COLLIDE_SKIN, groups, exclude, fixed });
+  const hit = queries.shapeCast(ball, from, dir, {
+    maxDistance: max,
+    margin: COLLIDE_SKIN,
+    groups,
+    exclude,
+    fixed,
+    also,
+  });
   return hit ? hit.distance : max;
 }
 
@@ -99,7 +108,7 @@ const KEEP_SHARE = 0.25;
  * least `KEEP_SHARE` of it runs along the surface (a camera working its way round a wall, not one pressed into it).
  */
 export function slide(walls: Walls, from: Vec3, to: Vec3, keep = false): Vec3 {
-  const { queries, groups = 'world', exclude, fixed = true } = walls;
+  const { queries, groups = 'world', exclude, fixed = true, also } = walls;
   if (!queries) return to;
   const ball = { type: 'ball', radius: COLLIDE_RADIUS } as const;
   let at = from;
@@ -108,7 +117,14 @@ export function slide(walls: Walls, from: Vec3, to: Vec3, keep = false): Vec3 {
     const length = Math.hypot(...move);
     if (length < 1e-6) break;
     const dir: Vec3 = [move[0] / length, move[1] / length, move[2] / length];
-    const hit = queries.shapeCast(ball, at, dir, { maxDistance: length, margin: COLLIDE_SKIN, groups, exclude, fixed });
+    const hit = queries.shapeCast(ball, at, dir, {
+      maxDistance: length,
+      margin: COLLIDE_SKIN,
+      groups,
+      exclude,
+      fixed,
+      also,
+    });
     if (!hit) return [at[0] + move[0], at[1] + move[1], at[2] + move[2]];
     const n = hit.normal;
     const went = Math.max(0, hit.distance - COLLIDE_SKIN);
@@ -213,11 +229,11 @@ export function moveCamera(
 ): CameraBall {
   const { room = SIGHT_ROOM, trail: near = TRAIL_KEEP } = keep;
   const clear = sweep(walls, base, want);
-  const { queries, groups = 'world', exclude, fixed = true } = walls;
+  const { queries, groups = 'world', exclude, fixed = true, also } = walls;
   if (!queries || !ball) return { at: clear, stuck: 0, trail: [base] };
   const fit = { type: 'ball', radius: COLLIDE_RADIUS - COLLIDE_SKIN } as const;
   if (
-    queries.overlap(fit, ball.at, { groups, exclude, fixed }).length > 0 ||
+    queries.overlap(fit, ball.at, { groups, exclude, fixed, also }).length > 0 ||
     far(carried, ball.at) > COLLIDE_TELEPORT
   ) {
     return { at: clear, stuck: 0, trail: [base] };
@@ -241,7 +257,14 @@ export function moveCamera(
     if (gap <= room) return true;
     const ball = { type: 'ball', radius: COLLIDE_RADIUS + room } as const;
     const dir: Vec3 = [d[0] / gap, d[1] / gap, d[2] / gap];
-    const hit = queries.shapeCast(ball, base, dir, { maxDistance: gap, margin: COLLIDE_SKIN, groups, exclude, fixed });
+    const hit = queries.shapeCast(ball, base, dir, {
+      maxDistance: gap,
+      margin: COLLIDE_SKIN,
+      groups,
+      exclude,
+      fixed,
+      also,
+    });
     if (!hit || hit.distance >= gap - room - 2 * COLLIDE_SKIN) return true;
     return Math.abs(hit.normal.y) > LEVEL_NORMAL && sees(at);
   };
@@ -273,7 +296,14 @@ export function moveCamera(
     if (gap < 1e-6) return false;
     const ball = { type: 'ball', radius: COLLIDE_RADIUS } as const;
     const dir: Vec3 = [d[0] / gap, d[1] / gap, d[2] / gap];
-    const hit = queries.shapeCast(ball, base, dir, { maxDistance: gap, margin: COLLIDE_SKIN, groups, exclude, fixed });
+    const hit = queries.shapeCast(ball, base, dir, {
+      maxDistance: gap,
+      margin: COLLIDE_SKIN,
+      groups,
+      exclude,
+      fixed,
+      also,
+    });
     return hit !== null && Math.abs(hit.normal.y) > LEVEL_NORMAL;
   };
   const moved = leg(ball.at, carried);
@@ -292,7 +322,7 @@ export function moveCamera(
     const at = leg(moved, aim(moved, home), true);
     return { at, stuck: far(clear, at) > 1 ? ball.stuck + dt : 0, trail };
   }
-  const target = queries.overlap(fit, want, { groups, exclude, fixed }).length > 0 || level(want) ? clear : want;
+  const target = queries.overlap(fit, want, { groups, exclude, fixed, also }).length > 0 || level(want) ? clear : want;
   const at = leg(moved, aim(moved, target), far(target, moved) > 1); // far behind: round what it meets at its pace
   return { at, stuck: far(target, at) > 1 ? ball.stuck + dt : 0, trail };
 }

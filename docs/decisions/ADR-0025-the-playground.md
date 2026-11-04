@@ -1178,8 +1178,9 @@ and the playground's README test (WP 13.1); the verifier at each of G10 to G13.
 - **Never cut by what moves** (engine/physics/queries.ts `fixed`, Rapier's `ONLY_FIXED`): the cameras' casts, sweeps and
   overlaps meet the level's fixed bodies only (engine/gfx/cameras/collide.ts `Walls.fixed`, true by default), so a door
   that swings, a lift or a prop that moves passes through the camera, faded where it stands between it and the player,
-  as a game's camera channel ignores its doors; the feel check's `inside` counts the same bodies
-  (engine/dev/feel/camera.ts). The 3.45 m cut by the living room's swinging door (amendment 20) is gone.
+  as a game's camera channel ignores its doors (a door standing shut stops it: amendment 52); the feel check's
+  `inside` counts the same bodies (engine/dev/feel/camera.ts). The 3.45 m cut by the living room's swinging door
+  (amendment 20) is gone.
 - **The shooter** (shoulder.ts): its arm reads the room it will need before it needs it: toward each side, as far as a
   turn of the view at a body's 720°/s could take it before the arm, coming in, got there (`SHOULDER_ROOM.sides`), and
   back from where the shoulder point is going, by his velocity, its bend and the pitch turning on, over the next half
@@ -2516,13 +2517,13 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   from afar, cuts it on its whole map as before (its walls facing the camera, the storeys above him and the roof),
   which would hide him on the porch or the patio. The shooter's and the platformer's cameras fade the level's pieces
   and the rides that stand between them and him; the classic views fade nothing. Amendment 22's "faded where it stands
-  between it and the player" never held for a door or a prop, which no fade takes: the platformer can end behind the
-  house's shut back door on the patio (docs/PROGRESS.md's open issue). The area a point reads as follows the same map:
-  the house's walls and rooms, and its map above the ground floor (the roof to its eaves, the porch roof, the deck),
-  are the house; its patio, porch and apron the yards. The ground's colour crossing the sky was the daylight model
-  reading SkyMesh's box corners near the camera: the dome is a sphere of small triangles, it and the backdrop kept
-  short of the far plane without moving the near plane. The gym's signs, drawn over everything, showed through the
-  house's walls: on the block they show only in the gym.
+  between it and the player" never held for a door or a prop, which no fade takes: the platformer could end behind the
+  house's shut back door on the patio, until shut doors stopped the cameras (amendment 52). The area a point reads as
+  follows the same map: the house's walls and rooms, and its map above the ground floor (the roof to its eaves, the
+  porch roof, the deck), are the house; its patio, porch and apron the yards. The ground's colour crossing the sky was
+  the daylight model reading SkyMesh's box corners near the camera: the dome is a sphere of small triangles, it and
+  the backdrop kept short of the far plane without moving the near plane. The gym's signs, drawn over everything,
+  showed through the house's walls: on the block they show only in the gym.
 - **Tests:** the specs that open the playground for its menus or its gym open `?scene=gym` (the block warms up for
   minutes on SwiftShader); the block's own tests open `?scene=site` as before. An adversarial review (six readings,
   each finding put to three skeptics) confirmed 35 findings in the first cut, about 24 faults once the ones found
@@ -2543,3 +2544,19 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   tablet: the stick, the buttons and the menu button), `load-times`.
 - Plan edit: WP 13.33.
 
+
+## Amendment 52 (2026-11-04, WP 13.34): shut doors stop the cameras
+
+- **The fault (amendment 51's open issue):** the follow cameras keep out of the level's fixed bodies alone (amendment
+  22), so the platformer, come round to the house's patio from the front yard, ended 1.9 m behind the player in the
+  back doorway, the shut back door filling its picture (labs/playground/scenes/site-eye.test.ts lost him there).
+- **Decided:** a door standing shut is a wall to the cameras. A query meets the bodies `also` names whatever its
+  `groups` and `fixed` say (engine/physics/queries.ts, through Rapier's filter predicate); the sim lists the doors
+  standing shut, neither moving, open nor broken (engine/sim/doors.ts `shutDoors`), after each step; the page's view
+  (engine/app/view.ts) and the courses' cameras (engine/dev/feel/run.ts) hand them to every camera's walls
+  (engine/gfx/cameras/collide.ts `Walls.also`). Amendment 22 stands for what moves: a door that swings, stands open
+  or lies broken, a lift and a prop pass through the camera, so no swing cuts it (amendment 20's 3.45 m); a door that
+  shuts on a camera standing in its leaf moves it to the clear point, as a wall it was moved into does. No sim query
+  passes `also`, so no hash changes.
+- **Measured:** the agent eye sees the player from every camera on the patio and the porch, the platformer's too.
+- Plan edit: WP 13.34.

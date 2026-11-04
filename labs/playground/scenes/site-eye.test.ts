@@ -6,8 +6,8 @@
  * its map: WP 13.33), and each camera is set and moved on by a second of
  * frames (`camera.advance`), as a page's frames would have placed it and run its cutaways: isometric and top-down see
  * him everywhere (the storeys above cut, a low ceiling lifted, a wall between them cut, the props on cut storeys gone),
- * the shooter and the platformer too once they have settled (but the platformer on the patio, behind the back door: an
- * open issue), and first person sees the room past his body.
+ * the shooter and the platformer too once they have settled (a shut door stopping them as a wall does: the platformer
+ * once ended behind the back door from the patio), and first person sees the room past his body.
  * @see engine/dev/eye.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -57,10 +57,9 @@ describe('the agent eye in the house', () => {
       }
     }
     expect(PLACES.length).toBe(HOUSE.level.rooms!.length + 4);
-    // the platformer, come from the front yard, ends 1.9 m behind him in the back doorway, the closed back door filling
-    // its picture: the cameras keep out of fixed bodies alone (a door swings through them) and the fade takes no door
-    // (docs/PROGRESS.md's open issue); the others see him there
-    expect(lost).toEqual({ shooter: [], first: PLACES.map((place) => place.name), platformer: ['patio'], isometric: [], 'top-down': [] }); // prettier-ignore
+    // the platformer, come from the front yard, ended 1.9 m behind him in the back doorway before a shut door stopped
+    // the cameras (engine/sim/doors.ts `shutDoors`), the closed back door filling its picture
+    expect(lost).toEqual({ shooter: [], first: PLACES.map((place) => place.name), platformer: [], isometric: [], 'top-down': [] }); // prettier-ignore
     expect(level).toHaveLength(PLACES.length); // first person: the room, past his body, which his eye stands in
   }, 600_000);
 });
