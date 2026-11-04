@@ -7,7 +7,9 @@
  * views) by what it frames, as far as a 50° lens stands to frame as much (`levelDistance`). The finest mesh is the
  * collider's surface, each cell split as Rapier splits it; coarser ones skip corners, and every mesh hangs a skirt
  * `SKIRT` metres down round its edges, so where neighbours of different detail meet no gap shows the sky. A site's cut
- * (`cut`, WP 13.15) leaves its cells out, and a chunk holding one keeps only its finest level, so the hole is exact.
+ * (`cut`, WP 13.15) leaves its cells out, and a chunk holding one keeps only its finest level, so the hole is exact;
+ * no skirt hangs where the cells on both sides of a chunk's edge are cut (a floor covers the line there, and the
+ * skirt's top in its plane drew a grass hairline across it, WP 13.37), and the terrain's own border keeps its skirt.
  * Normals are the full grid's at every level (central differences of the heights), so the light holds still as the
  * levels switch; UVs are world metres (x, z).
  *
@@ -113,7 +115,9 @@ export function terrainNormals(terrain: Pick<Terrain, 'cols' | 'rows' | 'cell' |
 
 /**
  * One level of a chunk: cells `c0`… and `r0`… of `terrain`, `cols` × `rows` of them, taking every `step`-th corner,
- * positions from `middle` (m), with its skirt (see the file comment).
+ * positions from `middle` (m), with its skirt (see the file comment). `cut`, a flag per cell of `terrain`, leaves out
+ * its cells at `step` 1 (`createTerrainMeshes` builds only that level of a chunk holding one), and at any step the
+ * skirt where the cells on both sides of the chunk's edge are cut.
  */
 export function chunkGeometry(
   terrain: Terrain,
@@ -144,19 +148,30 @@ export function chunkGeometry(
       writer.triangle(index(i + 1, j), index(i, j + 1), index(i + 1, j + 1));
     }
   }
-  // The skirt: each edge's corners clockwise seen from above, then the same dropped, joined facing out of the chunk.
-  const edges: [number, number][][] = [
-    Array.from({ length: across + 1 }, (_, i) => [i, 0]), // north, west to east
-    Array.from({ length: down + 1 }, (_, j) => [across, j]), // east, north to south
-    Array.from({ length: across + 1 }, (_, i) => [across - i, down]), // south, east to west
-    Array.from({ length: down + 1 }, (_, j) => [0, down - j]), // west, south to north
+  // The skirt: each edge's corners clockwise seen from above, then the same dropped, joined facing out of the chunk;
+  // with the way out of it, a cell's step across the edge, to the cell over the line.
+  const edges: [corners: [number, number][], out: [number, number]][] = [
+    [Array.from({ length: across + 1 }, (_, i) => [i, 0]), [0, -1]], // north, west to east
+    [Array.from({ length: down + 1 }, (_, j) => [across, j]), [1, 0]], // east, north to south
+    [Array.from({ length: across + 1 }, (_, i) => [across - i, down]), [0, 1]], // south, east to west
+    [Array.from({ length: down + 1 }, (_, j) => [0, down - j]), [-1, 0]], // west, south to north
   ];
-  for (const edge of edges) {
-    const top = edge.map(([i, j]) => corner(i, j));
-    const bottom = edge.map(([i, j]) => corner(i, j, SKIRT));
+  const cutAt = (c: number, r: number) => c >= 0 && r >= 0 && c < terrain.cols && r < terrain.rows && !!cut?.[r * terrain.cols + c]; // prettier-ignore
+  for (const [edge, [dc, dr]] of edges) {
+    const [top, bottom] = [new Map<number, number>(), new Map<number, number>()]; // written as a segment needs them
+    const at = (map: Map<number, number>, k: number, drop: number) => {
+      if (!map.has(k)) map.set(k, corner(edge[k][0], edge[k][1], drop));
+      return map.get(k)!;
+    };
     for (let k = 0; k + 1 < edge.length; k++) {
-      writer.triangle(top[k], top[k + 1], bottom[k]);
-      writer.triangle(top[k + 1], bottom[k + 1], bottom[k]);
+      // The cells along the segment, inside the chunk: where they and the cells over the line are all cut, a floor
+      // covers the line and the skirt's top would lie in its plane (a grass hairline across it), so none hangs there.
+      const [i, j] = [Math.min(edge[k][0], edge[k + 1][0]), Math.min(edge[k][1], edge[k + 1][1])];
+      const [c, r] = [c0 + i * step - Math.max(dc, 0), r0 + j * step - Math.max(dr, 0)]; // the last row or column in
+      const cells = Array.from({ length: step }, (_, n) => (dc ? [c, r + n] : [c + n, r]));
+      if (cells.every(([cc, rr]) => cutAt(cc, rr) && cutAt(cc + dc, rr + dr))) continue;
+      writer.triangle(at(top, k, 0), at(top, k + 1, 0), at(bottom, k, SKIRT));
+      writer.triangle(at(top, k + 1, 0), at(bottom, k + 1, SKIRT), at(bottom, k, SKIRT));
     }
   }
   return writer.build();

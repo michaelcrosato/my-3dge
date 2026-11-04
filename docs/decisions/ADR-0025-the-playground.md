@@ -2646,3 +2646,20 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   stays over the scrim, and the selected row no longer shifts 6 px.
 - Not changed: the shooter camera's readout stays off (WP 13.25's `auto`).
 - Plan edit: WP 13.36.
+
+## Amendment 55 (2026-11-04, WP 13.37): no terrain skirt in a floor's plane
+
+- **Found:** WP 13.36's before-and-after visual review saw a 1 px grass-green line across the stone path in front of
+  the porch, in the shooter camera; two investigators traced it, each checked by a skeptic. Every terrain chunk
+  (`CHUNK`, 32 m) hangs a skirt `SKIRT` metres down round its edges, so that levels of different detail meet with no
+  gap, and it hung there even where a site's cut had taken the ground out under a structure's floor. On the chunk line
+  z = 64 under the path both chunks' skirts stood with their tops at y = 0, in the plane of the path's floor, and on
+  an exact depth tie the skirt, drawn after the floor, won a whole pixel row: a line that came and went as the camera
+  moved, the owner's "the ground looks funny when you move certain ways". 1,168 such skirt triangles hung on 274 m of
+  the block's chunk lines: under the path, the driveway, the house's ground storey, the road and the gym's floor.
+- **Decided:** a chunk hangs no skirt where the cells on both sides of its edge are cut (engine/gfx/terrain.ts
+  `chunkGeometry`): a floor covers the line there, and with no ground on either side there is no gap for a skirt to
+  seal. Where only one side is cut, and along the terrain's border (where the block's cut floors meet the ground frame
+  2 cm below them), the skirt stays. Drawing only; the colliders and the hashes are unchanged.
+- **Evidence:** engine/gfx/terrain.test.ts and labs/playground/scenes/site-cut.test.ts, each failing without the fix.
+- Plan edit: WP 13.37.
