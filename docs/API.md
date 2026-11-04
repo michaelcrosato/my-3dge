@@ -8450,8 +8450,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/controls.ts`](../labs/playground/controls.ts)
 
-- `keysLine` (function): The HUD's keys: the map in use's, as its prompts label them (rebound, or on a pad), then the page's own.
-- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the menu's order; the rest are bound for later WPs.
+- `PLAYGROUND_ACTIONS` (const): The actions the player answers, with what each does, in the controls' order (settings, the controls sheet); the rest are bound for later WPs.
 - `PLAYGROUND_MAPS` (const): The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names).
 - `playgroundMap` (function): The action map for the camera `code` (`cam3=first,…`): its mode's, the shooter's for a camera no mode opens.
 
@@ -8661,19 +8660,6 @@ For the agents who maintain the engine.
 - `PIXEL_FILTERS` (const): The pixel looks' filters: the art block from the lines, 1-pixel ink, 24 shades a channel.
 - `PIXEL_TOON` (const): The pixel looks' toon numbers: four bands and a rim, shadows shifted in hue, the steps dithered.
 
-### [`labs/playground/menu.ts`](../labs/playground/menu.ts)
-
-- `controlRows` (function): The controls' rows, [what, keys, pad], of the map `id` (the shooter's by default): moving, the player's actions, the look or the aim, the map's view actions, the page's keys.
-- `createPlaygroundMenu` (function): Builds the menu in `document` when `playground.menu` shows it, and returns its panel; null when it stays out.
-- `linkQuery` (function): A link's query: `changes` (null removes a key) over `search`, or over only its `keep` keys; `:` and `,` readable.
-- `MENU_KEY` (const): The key that shows and hides the menu: M, which no action map binds.
-- `MENU_STORAGE_KEY` (const): The `localStorage` key that remembers whether the reader left the menu `open` or `closed`.
-- `MenuEntry` (interface): A listed scene, as its module exports it.
-- `menuShown` (function): Whether `setting` (the query's `playground.menu`) shows the menu in a browser automation does or does not drive.
-- `PAGES` (const): The other pages the menu links, [path from this page, name, hover text] each.
-- `PLAYGROUND_MENU_SETTINGS` (const): The menu's view setting (see the file comment).
-- `PlaygroundMenuOptions` (interface): What the menu lists.
-
 ### [`labs/playground/props/house.ts`](../labs/playground/props/house.ts)
 
 - `fixed` (const): A fixed box body of `size` (m).
@@ -8781,12 +8767,24 @@ For the agents who maintain the engine.
 - `TourReplay` (interface): A replay as the tour reads and writes it (engine/sim/replay.ts's format, goldens aside).
 - `TourSegment` (interface): A segment: the replay it plays, and where its player starts when the replay does not `place` him at step 0.
 
+### [`labs/playground/ui/areas.ts`](../labs/playground/ui/areas.ts)
+
+- `AREA_OF_STRUCTURE` (const): The area of the structures that name one (a structure's name is its level's).
+- `AREA_RECTS` (const): The block's map outdoors (docs/PLAYGROUND.md §2), [area, x0, z0, x1, z1] in metres, the first match winning.
+- `areaAt` (function): The area the point (x, z) of the block is in, a structure there naming its own first (see the file comment).
+- `AreaCard` (interface): An area's card: its name, what kind of place it is, what it shows, and what to try ({action} is that action's key).
+- `AreaCardView` (interface): The area card (see the file comment).
+- `AREAS` (const): Each area's card (see the file comment).
+- `CARD_SECONDS` (const): How long a card shows when the player walks into its area (s).
+- `createAreaCard` (function): Makes the area card in `parent`, its keys read through `key` (the input's prompt for an action).
+- `locationLine` (function): The HUD's location line: the area's name, and the room's when there is one.
+
 ### [`labs/playground/ui/attract.ts`](../labs/playground/ui/attract.ts)
 
 - `Attract` (interface): The attract mode on a page (see the file comment).
-- `ATTRACT` (const): The attract mode's numbers: seconds on an idle title screen before it starts, and seconds a view shows.
+- `ATTRACT` (const): The attract mode's numbers: seconds on an idle start menu before it starts, and seconds a view shows.
 - `ATTRACT_SETTINGS` (const): The attract mode's view setting (see the file comment).
-- `attractPage` (function): The tour's page at `path` (the playground's): its replay, the attract mode on, no title screen over it.
+- `attractPage` (function): The tour's page at `path` (the playground's): its replay, the attract mode on, no start menu over it.
 - `createAttract` (function): Starts the attract mode in a page whose engine plays the tour: the banner in `root`, the view cycling from the look `look`, until a key, a click, a pad button or the tour's `steps` call `leave` (the playground again, by default).
 - `TOUR_REPLAY` (const): The tour's replay, as the page offers it (`?replay=<name>`).
 
@@ -8821,19 +8819,34 @@ For the agents who maintain the engine.
 - `TRY_VERDICTS` (const): A try check's verdicts.
 - `verdictLabel` (function): The words of `check`'s verdict `verdict`, its option named for a decide check.
 
+### [`labs/playground/ui/frame.ts`](../labs/playground/ui/frame.ts)
+
+- `ABOUT` (const): What each menu item is for, shown under the menu as the cursor rests on it.
+- `createFrame` (function): A screen's frame, made in `root` (see the file comment).
+
 ### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
 
 - `createFrontEnd` (function): Makes the front end, nothing open (see the file comment).
-- `FRONT_END_SETTINGS` (const): The title screen's view setting (see the file comment).
+- `FRONT_END_SETTINGS` (const): The start menu's view setting (see the file comment).
 - `FrontEnd` (interface): The front end (see the file comment).
 - `FrontEndOptions` (interface): What the front end needs of the page.
 - `ScreenName` (type): The screens.
 - `spawnOnOpen` (function): Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran.
-- `titleOnOpen` (function): Whether the title screen opens with the page (see the file comment).
+- `titleOnOpen` (function): Whether the start menu opens with the page (see the file comment).
+
+### [`labs/playground/ui/help.ts`](../labs/playground/ui/help.ts)
+
+- `createHelp` (function): Makes the controls sheet in `parent` (see the file comment).
+- `GOTO_KEY` (const): The page's key for Go to, kept from rebinding as the sheet's.
+- `HELP_GROUPS` (const): The sheet's groups, in order (see the file comment).
+- `HELP_KEY` (const): The page's key for the controls sheet (labs/playground/main.ts), kept from rebinding (controls.ts).
+- `HelpLine` (interface): One line of the sheet: an action of the map (its key from the input) or a page key (its key as written).
+- `HelpOptions` (interface): What the sheet needs: the key of an action, and what Back does.
 
 ### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
 
 - `feelLine` (function): The feel readout's line: speed over the ground, m/s, and the mode (or, on the ground, the gait).
+- `HINT_LINE` (const): The HUD's hint, bottom left: the keys of the menus (the controls sheet holds the rest, labs/playground/ui/help.ts).
 - `HUD_MODES` (const): Each camera mode's HUD, by the mode's name (labs/playground/views.ts).
 - `HUD_SETTINGS` (const): The readout's view setting (see the file comment).
 - `HudFrame` (interface): What one frame's HUD shows: the mode's name, the look, the room line, the player, and the readout setting.
@@ -8877,6 +8890,16 @@ For the agents who maintain the engine.
 - `spawnPlace` (function): The place `id` names, or undefined.
 - `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
 - `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.
+
+### [`labs/playground/ui/splash.ts`](../labs/playground/ui/splash.ts)
+
+- `createSplash` (function): Shows the splash in `doc` (see the file comment).
+- `Splash` (interface): The splash (see the file comment).
+
+### [`labs/playground/ui/theme.ts`](../labs/playground/ui/theme.ts)
+
+- `installTheme` (function): Adds the theme's stylesheet to `doc` once (see the file comment).
+- `THEME_CSS` (const): The theme's stylesheet (see the file comment).
 
 ### [`labs/playground/ui/tune.ts`](../labs/playground/ui/tune.ts)
 

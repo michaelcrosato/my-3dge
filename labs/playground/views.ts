@@ -3,7 +3,7 @@
  * looks, in the order the keys step through them: the maps' view actions (labs/playground/controls.ts, WP 13.9) cycle
  * the cameras (T, `nextCamera`), swap the shooter's shoulder (X, `swapShoulder`) and turn isometric by 90° (Q and E,
  * `turnView`), and P (`LOOK_KEY`) steps through the looks, live, on the page (labs/playground/main.ts), each camera
- * switch blended; the menu (labs/playground/menu.ts) links each.
+ * switch blended; the start menu's Settings sets the camera (labs/playground/ui/frontEnd.ts).
  *
  * Each mode is its rig (WP 13.8, engine/gfx/cameras/): the shooter over the shoulder (`cam3=shoulder`), first person
  * at the eye (`cam3=first`), the platformer's orbit and follow (`cam3=follow`), isometric (`cam=iso`) and top-down

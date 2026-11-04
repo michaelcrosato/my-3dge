@@ -1,12 +1,13 @@
 /**
  * @file The playground's HUD by camera mode (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what each of the five modes
  * shows over the game (`HUD_MODES`), and `showHud`, which the page (labs/playground/main.ts) runs each drawn frame:
- * - the camera and the look in use, top right, and the room the player is in on a scene's site, top left;
+ * - the camera and the look in use, top right, shown for a few seconds after either changes and all through the tour,
+ *   then faded (`modeShown`; `data-value` `shown` or `faded`, its text kept for the tests), and where the player is on the block, top left (labs/playground/ui/areas.ts `locationLine`);
  * - the crosshair where the screen's centre aims a gun (first person and the shooter: `showsCrosshair`,
  *   labs/playground/weapons/hud.ts), never in the views that aim with the pointer;
  * - the prompts: what using the thing in reach does, with the key that uses it on the device used last (WP 13.16);
  * - the ammo: the weapon out and its rounds, the range's count (`weaponLine`, WP 13.20);
- * - the keys of the map in use, as its prompts give them (`keysLine`, labs/playground/controls.ts);
+ * - a hint, bottom left, of the menus' keys (`HINT_LINE`): the controls sheet (H) holds every other key;
  * - the feel readout (`feelLine`): the player's speed over the ground and how he moves (the movement model's mode or
  *   gait), which the platformer, isometric and top-down show (where the view gives speed away least), and every mode
  *   with the view setting `playground.readout` at `on` (`off` hides it everywhere).
@@ -25,7 +26,6 @@
  */
 import type { Input, Overlay } from '../../../engine';
 import { defineSettings } from '../../../engine/sim-api';
-import { keysLine } from '../controls';
 import { showsCrosshair, weaponLine, type WeaponsView } from '../weapons/hud';
 
 /** The readout's view setting (see the file comment). */
@@ -39,6 +39,9 @@ export const HUD_SETTINGS = defineSettings({
       "The playground HUD's feel readout, the player's speed and how he moves (labs/playground/ui/hud.ts): 'auto' shows it in the platformer, isometric and top-down cameras, 'on' in every camera, 'off' in none.",
   },
 });
+
+/** The HUD's hint, bottom left: the keys of the menus (the controls sheet holds the rest, labs/playground/ui/help.ts). */
+export const HINT_LINE = 'H: controls · M: go to · Esc: menu';
 
 /** What a camera mode's HUD shows (see the file comment). */
 export interface HudMode {
@@ -80,6 +83,8 @@ export interface HudFrame {
   readonly where: string | null;
   readonly player: HudPlayer | undefined;
   readonly readout: string;
+  /** Whether the camera and look line shows (else it fades): a few seconds after either changes, and in the tour. */
+  readonly modeShown?: boolean;
 }
 
 /** Shows `frame`'s HUD on `ui`, the prompts read from `input` (see the file comment); `hidden` clears it. */
@@ -87,7 +92,10 @@ export function showHud(ui: Overlay, input: Input | null, frame: HudFrame, hidde
   const hud = HUD_MODES[frame.mode] ?? HUD_MODES.shooter;
   const line = (id: string, text: string | null | undefined, at: Parameters<Overlay['hud']>[2]) =>
     ui.hud(id, hidden ? null : (text ?? null), at);
-  line('mode', `Camera: ${frame.mode} · Look: ${frame.look.replace(/^look:playground-/, '')}`, { at: 'top-right' });
+  const mode = `Camera: ${frame.mode} · Look: ${frame.look.replace(/^look:playground-/, '')}`;
+  line('mode', mode, { at: 'top-right' });
+  const modeLine = ui.root?.querySelector<HTMLElement>('[data-ui=hud][data-id=mode]');
+  if (modeLine) modeLine.dataset.value = frame.modeShown === false ? 'faded' : 'shown'; // faded, still read as text
   line('room', frame.where, { at: 'top-left' });
   const readout = frame.readout === 'on' || (frame.readout === 'auto' && hud.readout);
   line('readout', readout && frame.player ? feelLine(frame.player) : null, { at: 'top' });
@@ -98,5 +106,5 @@ export function showHud(ui: Overlay, input: Input | null, frame: HudFrame, hidde
   line('weapon', hud.ammo && frame.player?.weapons ? weaponLine(frame.player.weapons, draw) : null, { at: 'bottom-right' }); // prettier-ignore
   const centre = input.bindings.map.aimWith === 'centre';
   ui.crosshair(!hidden && hud.crosshair && showsCrosshair(frame.player?.weapons, centre));
-  line('keys', hud.keys ? keysLine(input) : null, { at: 'bottom', keys: true });
+  line('keys', hud.keys ? HINT_LINE : null, { at: 'bottom-left', keys: true });
 }

@@ -32,7 +32,7 @@
  * getActionMap(PLAYGROUND_MAPS.isometric).actions.interact; // ['KeyG', 'PadWest']: Q and E turn the view there
  * @see labs/playground/controls.test.ts
  */
-import { defineActionMap, type ActionMapSpec, type Input } from '../../engine';
+import { defineActionMap, type ActionMapSpec } from '../../engine';
 import { cameraMode } from './views';
 
 /** The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names). */
@@ -44,7 +44,7 @@ export const PLAYGROUND_MAPS = {
   'top-down': 'actionMap:playground-top-down',
 } as const;
 
-/** The actions the player answers, with what each does, in the menu's order; the rest are bound for later WPs. */
+/** The actions the player answers, with what each does, in the controls' order (settings, the controls sheet); the rest are bound for later WPs. */
 export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   jump: 'Jump',
   sprint: 'Sprint: hold, or press once to keep it',
@@ -61,8 +61,8 @@ export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   holster: 'Holster, or draw again',
 };
 
-/** The keys the page keeps for itself: the look (P), the feel panel (F) and the menu (M). */
-const PAGE_KEYS = ['KeyP', 'KeyF', 'KeyM'];
+/** The keys the page keeps for itself: the look (P), the feel panel (F), Go to (M) and the controls sheet (H). */
+const PAGE_KEYS = ['KeyP', 'KeyF', 'KeyM', 'KeyH'];
 
 /** Every mode's bindings (see the file comment). */
 const ACTIONS: Readonly<Record<string, readonly string[]>> = {
@@ -132,20 +132,4 @@ for (const [mode, spec] of Object.entries(SPECS)) {
 export function playgroundMap(code: string): string {
   const mode = cameraMode(code)?.name as keyof typeof PLAYGROUND_MAPS | undefined;
   return PLAYGROUND_MAPS[mode ?? 'shooter'];
-}
-
-/** The HUD's keys: the map in use's, as its prompts label them (rebound, or on a pad), then the page's own. */
-export function keysLine(input: Pick<Input, 'prompt' | 'bindings' | 'lastDevice'>): string {
-  const key = (action: string) => input.prompt(action);
-  const { lock, view } = input.bindings.map;
-  const pad = input.lastDevice === 'gamepad';
-  const move = pad ? 'L Stick' : ['forward', 'left', 'back', 'right'].map(key).join('');
-  const lines = [`${move}: move`, ...['jump', 'sprint', 'walk', 'crouch'].map((action) => `${key(action)}: ${action}`)];
-  lines.push(`${key('interact')}: use`, `${key('melee')}: strike`);
-  lines.push(pad ? `${key('swap')}: swap · ${key('reload')}: reload` : `${key('weapon1')} ${key('weapon2')}: guns · ${key('reload')}: reload`); // prettier-ignore
-  lines.push(pad ? 'R Stick: look' : lock ? 'Click: mouse look' : 'Mouse: aim');
-  lines.push(`${key('camera')}: camera`);
-  if (view.includes('shoulder')) lines.push(`${key('shoulder')}: shoulder`);
-  if (view.includes('turnLeft')) lines.push(`${key('turnLeft')} ${key('turnRight')}: turn`);
-  return [...lines, 'P: look', 'F: feel', 'M: menu'].join(' · ');
 }

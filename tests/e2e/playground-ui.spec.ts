@@ -31,6 +31,8 @@ import '../../labs/playground/scenes/site';
 import { CONTROL_ACTIONS, SETTING_ROWS } from '../../labs/playground/ui/settings';
 import { spawnPlaces } from '../../labs/playground/ui/spawns';
 import { OWNER_CHECKS, ownerCheck } from '../../labs/playground/ui/checks';
+import { AREAS } from '../../labs/playground/ui/areas';
+import type { SiteArea } from '../../labs/playground/levels/site';
 import { expect, test } from './fixtures';
 
 /** The page's engine and front end, inside `evaluate`. */
@@ -68,7 +70,7 @@ async function pick(page: Page, harness: { tick(n?: number): Promise<void> }, me
 }
 
 /** The owner's checks item, with `left` of them to do. */
-const checksItem = (left: number) => `Owner checks… (${left} to do)`;
+const checksItem = (left: number) => `Owner checks (${left} to do)…`;
 
 /** A setting row's value as the screen shows it. */
 const shown = (page: Page, id: string) => page.locator(`[data-ui=setting][data-id="${id}"]`).getAttribute('data-value');
@@ -99,13 +101,13 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     expect(await screens(page)).toEqual({ screens: ['title'], paused: true });
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
-    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', checksItem(OWNER_CHECKS.length), 'Spawn…', 'Settings…', 'Tune the look…', 'Photo mode', 'Watch the tour']); // prettier-ignore
+    expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Go to…', 'Settings', 'Controls', 'Photo mode', 'Watch the tour', checksItem(OWNER_CHECKS.length), 'Tools…']); // prettier-ignore
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -144,7 +146,7 @@ test.describe('the playground’s front end', () => {
     await page.keyboard.press('Escape');
     await harness.tick(2);
     expect((await screens(page)).screens).toEqual(['pause']);
-    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Spawn…', 'Settings…', 'Tune the look…', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Restart', 'Title screen']); // prettier-ignore
+    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Go to…', 'Settings', 'Controls', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Tools…', 'Restart', 'Main menu']); // prettier-ignore
     const before = await player(page);
     await page.keyboard.press('Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
     await harness.tick(2);
@@ -185,11 +187,12 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
-    await pick(page, harness, 'title', 'tune');
-    expect((await screens(page)).screens).toEqual(['title', 'tune']);
+    await pick(page, harness, 'title', 'tools');
+    await pick(page, harness, 'tools', 'tune');
+    expect((await screens(page)).screens).toEqual(['title', 'tools', 'tune']);
     const panel = page.locator('[data-ui=tune]');
     await expect(panel).toBeVisible();
     const folds = await panel.locator('[data-ui=tune-filter]').evaluateAll((all) => all.map((one) => one.getAttribute('data-id'))); // prettier-ignore
@@ -232,7 +235,7 @@ test.describe('the playground’s front end', () => {
     expect(await look()).toEqual(before);
     await page.keyboard.press('Escape');
     await harness.tick(2);
-    expect((await screens(page)).screens).toEqual(['title']);
+    expect((await screens(page)).screens).toEqual(['title', 'tools']);
     expect(harness.advice()).toEqual([]);
   });
 
@@ -240,7 +243,7 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'settings');
@@ -269,12 +272,14 @@ test.describe('the playground’s front end', () => {
     harness,
   }) => {
     test.setTimeout(1_500_000);
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'spawns');
     const items = await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item]').allTextContents();
-    expect(items).toEqual([...spawnPlaces().map((place) => place.label), 'Back']);
+    const [areas, rooms] = ['area', 'room'].map((group) => spawnPlaces().filter((place) => place.group === group));
+    const roomName = (label: string) => label.replace(/^\w+: (\w)/, (_all, first: string) => first.toUpperCase());
+    expect(items).toEqual(['Areas of the block', ...areas.map((place) => AREAS[place.id.slice(5) as SiteArea].name), 'Rooms of the house', ...rooms.map((place) => roomName(place.label)), 'Back']); // prettier-ignore
     await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item][data-id="area:range"]').click();
     await page.waitForURL(/scene=site/);
     await harness.ready({ timeout: SITE_READY });
@@ -289,7 +294,7 @@ test.describe('the playground’s front end', () => {
     await call(page, 'pause');
     await call(page, 'step', 30);
     await call(page, 'render', 2);
-    expect((await hud(page)).room).toBe('Room: kitchen');
+    expect((await hud(page)).room).toBe('House · kitchen');
     const { replay, hash } = await recording(page);
     expect(replay.inputs[0]).toMatchObject([0, { dev: 'place', args: range.args }]); // the pick on opening, under the title: recorded at step 0, held until a step follows (engine/sim/session.ts)
     expect(replay.inputs.filter(([, change]) => JSON.stringify(change).includes('"place"'))).toHaveLength(2);
@@ -313,7 +318,7 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
-    await page.goto('labs/playground/?playground.title=on');
+    await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'checks');

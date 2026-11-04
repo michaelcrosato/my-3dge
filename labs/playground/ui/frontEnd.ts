@@ -1,24 +1,26 @@
 /**
- * @file The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): its screens over the game, the engine's
- * menus (engine/ui/menu.ts) and the playground's panels, on a stack (closing one shows the one under it again):
- * - the title screen (`title`: Play, Owner checks, Spawn, Settings, Tune the look, Photo mode, Watch the tour),
- *   shown as the page opens while the view setting `playground.title` says so (`auto`: unless a replay plays or
- *   automation drives the browser, as the menu for humans; `on`, `off`); Escape plays; left idle there `ATTRACT.idle`
- *   seconds, it opens the attract mode (labs/playground/ui/attract.ts) while `playground.attract` is `auto` and no
- *   automation drives the browser;
- * - pause (`pause`: Resume, Answer this check while one is under way, Spawn, Settings, Tune the look, Photo mode,
- *   Owner checks, Restart, Title screen), opened by the system layer's `pause` (Escape, the pad's Start) or by the
+ * @file The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25; reworked at the owner's call of
+ * 2026-11-03, "a UI that looks decent"): its screens over the game, each in a frame (labs/playground/ui/frame.ts) worn
+ * by the theme (theme.ts), the engine's menus (engine/ui/menu.ts) and the playground's panels on a stack (closing one
+ * shows the one under it again):
+ * - the start menu (`title`: Play, Go to, Settings, Controls, Photo mode, Watch the tour, Owner checks, Tools), shown
+ *   under the splash screen (splash.ts) as the page opens while `playground.title` says so (`auto`: unless a replay
+ *   plays or automation drives the browser; `on`, `off`); Escape plays; left idle `ATTRACT.idle` seconds, it opens
+ *   the attract mode (attract.ts) while `playground.attract` is `auto` and no automation drives the browser;
+ * - pause (`pause`: Resume, Answer this check while one is under way, Go to, Settings, Controls, Photo mode, Owner
+ *   checks, Tools, Restart, Main menu), opened by the system layer's `pause` (Escape, the pad's Start) or by the
  *   pointer lock let go while the map wants it (a browser spends the first Escape on the lock);
- * - the spawn picker (`spawns`, labs/playground/ui/spawns.ts), settings (`settings`, labs/playground/ui/settings.ts),
- *   the Tune panel (`tune`, labs/playground/ui/tune.ts: the look's filters tuned and combined live, WP 13.32),
- *   photo mode (`photo`, labs/playground/ui/photo.ts) and the owner's checks (`checks`, opened on the list; `check`,
- *   on the check under way: labs/playground/ui/checkPanel.ts), whose answers go to `checkStore` and whose Go there
- *   opens the check's link (labs/playground/ui/checks.ts `checkUrl`; another page in a new tab).
+ * - Go to (`spawns`: the block's areas and the house's rooms, spawns.ts; M opens it in play), settings (`settings`,
+ *   settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks
+ *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
+ *   checks.ts `checkUrl`), and Tools (`tools`): the Tune panel (`tune`, tune.ts: the look's filters live, WP 13.32),
+ *   the recorded runs (`replays`, each opened as `?replay=<name>`) and the feel panel. Each item says what it does
+ *   under the menu as the cursor rests on it (frame.ts `ABOUT`).
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one.
  *
- * Picks that change play are the run's recorded operations, so a replay of the run holds them: a spawn is the block's
- * dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
+ * Picks that change play are the run's recorded operations, so a replay of the run holds them: a Go to place is the
+ * block's dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
  * (`?scene=site&playground.spawn=<id>`, run as its first operation: `spawnOnOpen`); Restart starts the scene again on
  * its seed (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again.
  * The camera mode, the view settings and the audio levels change the view alone; the store keeps them (prefs.ts).
@@ -32,7 +34,7 @@
  * // labs/playground/main.ts, once the engine is up:
  * // const ui = createFrontEnd({ engine, canvas, store, prefs, audio: sound.audio, scene: () => last?.scene ?? null, … });
  * // ui.open('title'); // and each drawn frame: ui.frame(dt)
- * @see tests/e2e/playground.spec.ts
+ * @see tests/e2e/playground-ui.spec.ts
  */
 import { createMenu, type CameraInput, type Engine, type EngineFrame, type Menu, type MenuItem, type Store } from '../../../engine'; // prettier-ignore
 import { defineSettings } from '../../../engine/sim-api';
@@ -45,8 +47,12 @@ import { PREF_BUSES, savePrefs, type Prefs } from './prefs';
 import { createSettings, type RowSchema, type SettingRow } from './settings';
 import { createTune, type LookNow } from './tune';
 import { spawnPlace, spawnPlaces } from './spawns';
+import { AREAS } from './areas';
+import { ABOUT, createFrame } from './frame';
+import { createHelp } from './help';
+import type { SiteArea } from '../levels/site';
 
-/** The title screen's view setting (see the file comment). */
+/** The start menu's view setting (see the file comment). */
 export const FRONT_END_SETTINGS = defineSettings({
   'playground.title': {
     type: 'string',
@@ -55,12 +61,13 @@ export const FRONT_END_SETTINGS = defineSettings({
     view: true,
     when: 'scene',
     description:
-      "The playground page's title screen (labs/playground/ui/frontEnd.ts): 'auto' shows it as the page opens unless a replay plays or automation drives the browser (navigator.webdriver: the tests, the x commands); 'on' and 'off' force it.",
+      "The playground page's start menu, under the splash screen (labs/playground/ui/frontEnd.ts): 'auto' shows it as the page opens unless a replay plays or automation drives the browser (navigator.webdriver: the tests, the x commands); 'on' and 'off' force it.",
   },
 });
 
 /** The screens. */
-export type ScreenName = 'title' | 'pause' | 'spawns' | 'settings' | 'tune' | 'photo' | 'checks' | 'check';
+export type ScreenName =
+  'title' | 'pause' | 'spawns' | 'settings' | 'help' | 'tools' | 'replays' | 'tune' | 'photo' | 'checks' | 'check';
 
 /** What the front end needs of the page. */
 export interface FrontEndOptions {
@@ -77,12 +84,16 @@ export interface FrontEndOptions {
   setting(path: string): unknown;
   /** The camera mode or the look changed here, for the page's HUD. */
   onView(change: { camera?: string; look?: string }): void;
-  /** Whether an idle title screen opens the attract mode (`playground.attract` `auto`, no automation). */
+  /** Whether an idle start menu opens the attract mode (`playground.attract` `auto`, no automation). */
   attract?: boolean;
   /** Where the owner's answers are kept: a store that keeps them while a replay plays too. */
   checkStore: Store;
   /** The owner's check under way (`playground.check`); none without one. */
   check?: OwnerCheck;
+  /** The recorded runs the page plays (`?replay=<name>`). */
+  replays?: readonly string[];
+  /** Shows or hides the feel panel (labs/playground/feel.ts). */
+  toggleFeel?: () => void;
 }
 
 /** The front end (see the file comment). */
@@ -101,7 +112,7 @@ interface Screen {
   remove(): void;
 }
 
-/** Whether the title screen opens with the page (see the file comment). */
+/** Whether the start menu opens with the page (see the file comment). */
 export function titleOnOpen(setting: string, search: URLSearchParams, webdriver: boolean): boolean {
   return setting === 'on' || (setting === 'auto' && !webdriver && !search.has('replay'));
 }
@@ -157,15 +168,30 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     pauseRun(false);
   };
 
-  /** A menu screen of `items`, each picked item's id run by `pick`. */
+  /** A menu screen of `items` in a frame, each picked item's id run by `pick`; `about` says what an item does. */
   const menuScreen = (
     name: ScreenName,
-    title: string,
+    title: string | null,
     items: readonly MenuItem[],
     pick: (id: string) => void,
+    about: (id: string) => string = (id) => ABOUT[id] ?? '',
+    kind = name === 'title' ? 'title' : 'menu',
   ): Screen => {
-    const menu: Menu = createMenu(root, items, { input, id: name, title, onPick: (_i, item) => typeof item === 'object' && item.id && pick(item.id), onCancel: () => (name === 'title' ? closeAll() : back()) }); // prettier-ignore
-    return { update: (dt) => void menu.update(dt), remove: () => menu.remove() };
+    const { el, body, detail } = createFrame(root, kind, title);
+    const say = (item: MenuItem | undefined) => void (detail.textContent = typeof item === 'object' && item.id ? about(item.id) : ''); // prettier-ignore
+    const menu: Menu = createMenu(body, items, { input, id: name, title: title ?? 'The Playground', onMove: (_i, item) => say(item), onPick: (_i, item) => typeof item === 'object' && item.id && pick(item.id), onCancel: () => (name === 'title' ? closeAll() : back()) }); // prettier-ignore
+    say(items.find((item) => typeof item === 'object' && !item.disabled));
+    return { update: (dt) => void menu.update(dt), remove: () => (menu.remove(), el.remove()) };
+  };
+
+  /** A panel screen: `make` builds the panel in a frame of `kind`; Esc (or the pad's Start) goes back. */
+  const panelScreen = (kind: string, make: (parent: HTMLElement) => { remove(): void }): Screen => {
+    const { el, body } = createFrame(root, kind, '', kind === 'side' ? '' : 'Esc: back');
+    const panel = make(body);
+    return {
+      update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && back()),
+      remove: () => (panel.remove(), el.remove()),
+    };
   };
 
   /** Applies a setting's row (see labs/playground/ui/settings.ts) and keeps it. */
@@ -205,7 +231,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
   const checksItem = (): MenuItem => {
     const answers = readAnswers(options.checkStore);
     const left = OWNER_CHECKS.filter((check) => !answered(answers[check.id])).length;
-    return { label: `Owner checks… (${left ? `${left} to do` : 'all answered'})`, id: 'checks' };
+    return { label: `Owner checks${left ? ` (${left} to do)` : ''}…`, id: 'checks' };
   };
   /** Opens `check` where it is judged: this page at its link, or another page in a new tab. */
   const go = (check: OwnerCheck) => {
@@ -217,18 +243,25 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
   /** Makes screen `name`. */
   function make(name: ScreenName): Screen {
     if (name === 'title' || name === 'pause') {
+      const title = name === 'title';
       const items: MenuItem[] = [
-        { label: name === 'title' ? 'Play' : 'Resume', id: 'play' },
-        ...(name === 'title' ? [checksItem()] : []),
-        ...(name === 'pause' && options.check ? [{ label: 'Answer this check…', id: 'check' }] : []),
-        { label: 'Spawn…', id: 'spawns' },
-        { label: 'Settings…', id: 'settings' },
-        { label: 'Tune the look…', id: 'tune' },
+        { label: title ? 'Play' : 'Resume', id: 'play' },
+        ...(!title && options.check ? [{ label: 'Answer this check…', id: 'check' }] : []),
+        { label: 'Go to…', id: 'spawns' },
+        { label: 'Settings', id: 'settings' },
+        { label: 'Controls', id: 'help' },
         { label: 'Photo mode', id: 'photo' },
-        ...(name === 'title' ? [{ label: 'Watch the tour', id: 'tour' }] : []),
-        ...(name === 'pause' ? [checksItem(), { label: 'Restart', id: 'restart' }, { label: 'Title screen', id: 'title' }] : []), // prettier-ignore
+        ...(title ? [{ label: 'Watch the tour', id: 'tour' }] : []),
+        checksItem(),
+        { label: 'Tools…', id: 'tools' },
+        ...(!title
+          ? [
+              { label: 'Restart', id: 'restart' },
+              { label: 'Main menu', id: 'title' },
+            ]
+          : []),
       ];
-      return menuScreen(name, name === 'title' ? 'The Playground' : 'Paused', items, (id) => {
+      return menuScreen(name, title ? null : 'Paused', items, (id) => {
         if (id === 'tour') return location.assign(attractPage(location.pathname));
         if (id === 'restart') restart();
         if (id === 'play' || id === 'restart' || id === 'title') closeAll();
@@ -236,9 +269,46 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         else if (id !== 'play' && id !== 'restart') show(id as ScreenName);
       });
     }
+    if (name === 'tools') {
+      const items: MenuItem[] = [
+        { label: 'Tune the look…', id: 'tune' },
+        { label: 'Recorded runs…', id: 'replays', disabled: !options.replays?.length },
+        { label: 'Feel panel', id: 'feel', disabled: !options.toggleFeel },
+        { label: 'Back', id: 'back' },
+      ];
+      return menuScreen('tools', 'Tools', items, (id) => {
+        if (id === 'back') return back();
+        if (id === 'feel') return (options.toggleFeel?.(), closeAll());
+        show(id as ScreenName);
+      });
+    }
+    if (name === 'replays') {
+      const items: MenuItem[] = [...(options.replays ?? []).map((run) => ({ label: run.replace(/^playground-/, ''), id: run })), { label: 'Back', id: 'back' }]; // prettier-ignore
+      const about = (id: string) => (id === 'back' ? '' : `Plays tests/replays/${id}.replay.json, then hands you the controls.`); // prettier-ignore
+      return menuScreen('replays', 'Recorded runs', items, (id) => {
+        if (id === 'back') return back();
+        const search = new URLSearchParams(location.search);
+        search.set('replay', id);
+        location.assign(`${location.pathname}?${search}`);
+      }, about, 'list'); // prettier-ignore
+    }
     if (name === 'spawns') {
-      const items: MenuItem[] = [...spawnPlaces().map((place) => ({ label: place.label, id: place.id })), { label: 'Back', id: 'back' }]; // prettier-ignore
-      return menuScreen('spawns', 'Spawn', items, (id) => {
+      const places = spawnPlaces();
+      const room = (label: string) => label.replace(/^\w+: (\w)/, (_all, first: string) => first.toUpperCase());
+      const items: MenuItem[] = [
+        { label: 'Areas of the block', disabled: true },
+        ...places.filter((place) => place.group === 'area').map((place) => ({ label: AREAS[place.id.slice(5) as SiteArea]?.name ?? place.label, id: place.id })), // prettier-ignore
+        { label: 'Rooms of the house', disabled: true },
+        ...places
+          .filter((place) => place.group === 'room')
+          .map((place) => ({ label: room(place.label), id: place.id })),
+        { label: 'Back', id: 'back' },
+      ];
+      const about = (id: string) => {
+        const area = AREAS[id.slice(5) as SiteArea];
+        return area && id.startsWith('area:') ? area.text : id.startsWith('room:') ? `Start in the house's ${room(spawnPlace(id)?.label ?? '').toLowerCase()}.` : ''; // prettier-ignore
+      };
+      return menuScreen('spawns', 'Go to', items, (id) => {
         const place = spawnPlace(id);
         if (!place) return back();
         if (options.scene()?.site === 'site:block') {
@@ -249,10 +319,11 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         search.set('scene', 'site');
         search.set('playground.spawn', place.id);
         location.assign(`${location.pathname}?${search}`);
-      });
+      }, about, 'list'); // prettier-ignore
     }
     if (name === 'checks' || name === 'check') {
-      const panel = createChecksPanel(root, {
+      const { el, body } = createFrame(root, 'panel', '', '');
+      const panel = createChecksPanel(body, {
         answers: () => readAnswers(options.checkStore),
         key: (action) => input.prompt(action),
         today: () => new Date().toISOString().slice(0, 10),
@@ -263,24 +334,17 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
       });
       return {
         update: () => (input.pressed('uiCancel') || input.pressed('pause') ? panel.back() : panel.update(input)),
-        remove: () => panel.remove(),
+        remove: () => (panel.remove(), el.remove()),
       };
     }
     if (name === 'settings') {
-      const panel = createSettings(root, { values: values(), schema, input, onChange: change, onBack: back });
-      return {
-        update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && back()),
-        remove: () => panel.remove(),
-      };
+      return panelScreen('panel', (parent) => createSettings(parent, { values: values(), schema, input, onChange: change, onBack: back })); // prettier-ignore
     }
+    if (name === 'help') return panelScreen('panel', (parent) => createHelp(parent, { prompt: (action) => input.prompt(action), onBack: back })); // prettier-ignore
     if (name === 'tune') {
       const look = () => (inspector as unknown as { look(): LookNow }).look();
       const looks = (inspector.describe('look') as { ids: string[] }).ids;
-      const panel = createTune(root, { now: look, looks, get: options.setting, set: (path, value) => void inspector.set(path, value), onBack: back }); // prettier-ignore
-      return {
-        update: () => void ((input.pressed('uiCancel') || input.pressed('pause')) && back()),
-        remove: () => panel.remove(),
-      };
+      return panelScreen('side', (parent) => createTune(parent, { now: look, looks, get: options.setting, set: (path, value) => void inspector.set(path, value), onBack: back })); // prettier-ignore
     }
     photo.enter();
     return {
@@ -295,7 +359,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     const playing = !stack.length && options.setting('time.paused') !== true && input.bindings.map.lock;
     if (!document.pointerLockElement && playing) show('pause');
   });
-  // an idle title screen opens the attract mode: any key, click or move of the pointer counts as a player there
+  // an idle start menu opens the attract mode: any key, click or move of the pointer counts as a player there
   let idle = 0;
   const awake = () => void (idle = 0);
   for (const type of ['keydown', 'pointerdown', 'pointermove']) addEventListener(type, awake);

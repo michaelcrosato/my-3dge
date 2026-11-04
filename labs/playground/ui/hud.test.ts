@@ -8,14 +8,16 @@ import { describe, expect, it } from 'vitest';
 import type { Input, Overlay } from '../../../engine';
 import { PLAYGROUND_CAMERAS } from '../views';
 import { PISTOL } from '../weapons/guns';
-import { feelLine, HUD_MODES, showHud } from './hud';
+import { feelLine, HINT_LINE, HUD_MODES, showHud } from './hud';
 
 /** An overlay that keeps its lines and its crosshair. */
 function lines() {
   const shown: Record<string, string | null> = {};
   let crosshair = false;
-  const ui = { hud: (id: string, text: string | null) => void (shown[id] = text), crosshair: (on: boolean) => void (crosshair = on) }; // prettier-ignore
-  return { ui: ui as unknown as Overlay, shown, crosshair: () => crosshair };
+  const modeLine = { dataset: {} as Record<string, string> };
+  const root = { querySelector: (query: string) => (query.includes('data-id=mode') ? modeLine : null) };
+  const ui = { root, hud: (id: string, text: string | null) => void (shown[id] = text), crosshair: (on: boolean) => void (crosshair = on) }; // prettier-ignore
+  return { ui: ui as unknown as Overlay, shown, crosshair: () => crosshair, faded: () => modeLine.dataset.value === 'faded' }; // prettier-ignore
 }
 
 /** The input as the HUD reads it: prompts by action, a map that aims with the centre or the pointer. */
@@ -43,10 +45,10 @@ describe('the playground’s HUD', () => {
   });
 
   it('shows the lines of the mode, the readout as the setting says, and clears all of it when hidden', () => {
-    const frame = { mode: 'shooter', look: 'look:playground-cel', where: 'Room: hall', player, readout: 'auto' };
+    const frame = { mode: 'shooter', look: 'look:playground-cel', where: 'House · hall', player, readout: 'auto' };
     const shooter = lines();
     showHud(shooter.ui, input('centre'), frame);
-    expect(shooter.shown).toMatchObject({ mode: 'Camera: shooter · Look: cel', room: 'Room: hall', readout: null, use: 'INTERACT: Open' }); // prettier-ignore
+    expect(shooter.shown).toMatchObject({ mode: 'Camera: shooter · Look: cel', room: 'House · hall', readout: null, use: 'INTERACT: Open', keys: HINT_LINE }); // prettier-ignore
     expect([shooter.shown.weapon?.startsWith('Pistol'), shooter.crosshair()]).toEqual([true, true]);
     const iso = lines();
     showHud(iso.ui, input('pointer'), { ...frame, mode: 'isometric' });
@@ -54,6 +56,10 @@ describe('the playground’s HUD', () => {
     const forced = lines();
     showHud(forced.ui, input('centre'), { ...frame, readout: 'on' });
     expect(forced.shown.readout).toBe('6.0 m/s · sprint');
+    showHud(forced.ui, input('centre'), { ...frame, modeShown: false });
+    expect([forced.shown.mode, forced.faded()]).toEqual(['Camera: shooter · Look: cel', true]); // shown a while after a switch
+    showHud(forced.ui, input('centre'), frame);
+    expect(forced.faded()).toBe(false);
     showHud(forced.ui, input('centre'), frame, true);
     expect([Object.values(forced.shown).every((text) => text === null), forced.crosshair()]).toEqual([true, false]);
   });

@@ -76,7 +76,9 @@ describe('the owner’s checks', () => {
       expect(url.pathname, check.id).toBe('/labs/playground/');
       const routes = parseRoutes(url.search, { scenes: SCENES.map((scene) => scene.id) });
       expect(routes.settings['playground.check'], check.id).toBe(check.id);
-      expect(routes.settings['playground.title'], check.id).toBe(check.id === 'front-end' ? 'on' : 'off');
+      expect(routes.settings['playground.title'], check.id).toBe(
+        ['front-end', 'load-times'].includes(check.id) ? 'on' : 'off',
+      ); // the start menu: the two that judge it
       if (check.go?.place) expect(SCENES.find((scene) => scene.id === `playground:${check.go?.query?.scene}`)?.actions?.place, check.id).toBeDefined(); // prettier-ignore
     }
     expect(checkUrl(ownerCheck('labs')!, `${HERE}?scene=site#x`)).toBe('http://127.0.0.1:5173/labs/index/');

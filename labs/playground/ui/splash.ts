@@ -1,0 +1,75 @@
+/**
+ * @file The splash screen (the owner's call of 2026-11-03: "a proper splash screen, start menu, etc."): shown the
+ * moment the page's script runs, over everything, while the engine loads and warms up; the playground's name, a bar
+ * that moves while it loads, and then "Press any key to start". `createSplash(doc)` shows it; `ready(waitForPlayer)`
+ * says the engine is up: with `waitForPlayer` (a person at the page) it waits for a key, a click or a touch, which it
+ * keeps from the game (the key that starts never reaches a menu or the run), then fades away; without (automation:
+ * the tests and the x commands), it fades away at once. The start menu opens under it first (labs/playground/main.ts),
+ * so the fade shows it. The first key also wakes the page's sound, which waits for one (labs/playground/sounds/page.ts).
+ *
+ * Elements: `[data-ui=splash]`, `data-value` `loading`, `ready` or `gone`. Invariants: presentation only; `ready`
+ * resolves once, `remove` is safe at any time.
+ *
+ * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's own files.
+ *
+ * @example
+ * // const splash = createSplash(document);
+ * // …the engine starts…
+ * // await splash.ready(!navigator.webdriver); // resolves on the first key, click or touch
+ * @see tests/e2e/playground-ui.spec.ts
+ */
+import { installTheme } from './theme';
+
+/** How long the splash takes to fade (ms), as the theme's transition. */
+const FADE_MS = 420;
+
+/** The splash (see the file comment). */
+export interface Splash {
+  /** The engine is up: waits for a player when asked, then fades the splash away. */
+  ready(waitForPlayer: boolean): Promise<void>;
+  remove(): void;
+}
+
+/** Shows the splash in `doc` (see the file comment). */
+export function createSplash(doc: Document): Splash {
+  installTheme(doc);
+  const el = Object.assign(doc.createElement('div'), { className: 'pg-splash' });
+  el.dataset.ui = 'splash';
+  el.dataset.value = 'loading';
+  const text = (className: string, textContent: string) => Object.assign(doc.createElement('div'), { className, textContent }); // prettier-ignore
+  const brand = Object.assign(doc.createElement('div'), { className: 'pg-brand' });
+  brand.append(
+    text('pg-brand-kicker', 'my-3dge'),
+    text('pg-brand-title', 'The Playground'),
+    text('pg-brand-sub', 'A block of everything the engine does: walk in, try it, tune it.'),
+  );
+  const status = text('pg-splash-status', 'Loading the block…');
+  el.append(brand, text('pg-splash-bar', ''), status, text('pg-splash-foot', 'WebGPU · three.js · Rapier'));
+  doc.body.append(el);
+  let done: Promise<void> | null = null;
+  const fade = () =>
+    new Promise<void>((resolve) => {
+      el.dataset.value = 'gone';
+      setTimeout(() => (el.remove(), resolve()), FADE_MS);
+    });
+  return {
+    ready(waitForPlayer) {
+      if (done) return done;
+      if (!waitForPlayer) return (done = fade());
+      el.dataset.value = 'ready';
+      status.textContent = 'Press any key to start';
+      const view = doc.defaultView!;
+      done = new Promise<void>((resolve) => {
+        const start = (event: Event) => {
+          event.preventDefault();
+          event.stopImmediatePropagation(); // the key that starts reaches neither a menu nor the run
+          for (const type of ['keydown', 'pointerdown', 'touchend']) view.removeEventListener(type, start, true);
+          void fade().then(resolve);
+        };
+        for (const type of ['keydown', 'pointerdown', 'touchend']) view.addEventListener(type, start, true);
+      });
+      return done;
+    },
+    remove: () => el.remove(),
+  };
+}

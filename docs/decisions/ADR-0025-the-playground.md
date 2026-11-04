@@ -2478,3 +2478,34 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   title and pause menus' new item there; engine/app/viewMembers.test.ts and tests/e2e/box-members.spec.ts (`look`).
 - Plan edit: WP 13.32.
 
+## Amendment 51 (2026-11-04, WP 13.33): one map, and a front end that looks decent
+
+- **The owner's direction (2026-11-03):** "update the game so the game has a UI that looks decent … A proper splash
+  screen, start menu, etc. I want all the demo stuff unified into a single map experience … I just want to have a
+  clear way to test the game without it feeling mangled", and "a lot of graphical glitches around the house, you can
+  see through walls, when you move certain ways, the ground looks funny".
+- **Decided:** the block is the game. The page opens on `playground:site` behind a splash screen, at a start menu; a
+  player moves round the block by walking or by Go to (its areas and the house's rooms), never by picking a scene. The
+  gym and the hill stay scenes of their own, and the block's per-area scenes stay, because the courses, the replays'
+  goldens and the specs open them; no menu lists them. The page's menu of scenes, cameras, looks and replays
+  (the playground's old `menu.ts` and its setting `playground.menu`) is removed: Go to, the controls sheet, Settings and Tools hold what a
+  person needs of it, and links and `x` commands open the rest. The engine's labs (the box, the Animation, Materials,
+  Props, Effects, Cameras, Physics and Library Labs) stay as they are: they are the engine's own tools, reached from
+  the labs index, not part of the game.
+- **The front end:** one theme (labs/playground/ui/theme.ts) over every screen, panel, the HUD and the signs, kept in
+  the playground: the engine's widgets keep their plain stylesheet for every other page. Each menu says under it what
+  the item at the cursor does. The HUD keeps to the edges: where the player is (top left), the camera and look for 3 s
+  after either changes (then faded; its text stays for the tests), the prompt, the ammo, and a hint of the menus'
+  keys; every other key is on the controls sheet (H). A card names an area and what to try there as the player walks
+  in. Under a screen the HUD, the card and the signs hide.
+- **The glitches:** from the yard the house stood open because the cutaway cut every structure's walls facing a camera
+  outside it: a site now cuts only the structure the player stands in, and the others only fade what hides him. The
+  ground's colour crossing the sky was the daylight model reading SkyMesh's box corners near the camera: the dome is a
+  sphere of small triangles, it and the backdrop kept short of the far plane without moving the near plane. The gym's
+  signs, drawn over everything, showed through the house's walls: on the block they show only in the gym.
+- **Tests:** the specs that open the playground for its menus or its gym open `?scene=gym` (the block warms up for
+  minutes on SwiftShader); the block's own tests open `?scene=site` as before.
+- **Owner checks:** `front-end` (the splash, the start menu, pause and settings: do they look good and read clearly),
+  `house-views` (the house from every camera: anything seen through or wrong as you move), `load-times`.
+- Plan edit: WP 13.33.
+

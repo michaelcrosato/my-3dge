@@ -11,9 +11,9 @@
  *    in every look, its accent showing on it in each (`accentOnPlayer`: the isometric and top-down cameras draw it 11
  *    to 15 px tall), the sky's dome and backdrop left out as background, and the MRT reads the sky as the background
  *    too (the parts view is black where the ID pass finds nothing), so no outline inks the dome's edges;
- * 5. the site's landing page (`index.html`, ADR-0021 amendment 3) opens the page with its query and hash; the menu for
- *    humans (`?playground.menu=on`) lists every scene, the five cameras, the three looks, every replay and the other
- *    pages (the labs index and the Stress Box);
+ * 5. the site's landing page (`index.html`, ADR-0021 amendment 3) opens the page with its query and hash; H opens the
+ *    controls sheet (labs/playground/ui/help.ts), every action with its key, and M the Go to list, each closed with
+ *    Escape;
  * 6. the keyboard reaches the player through the playground's action map (WP 13.3): W runs and Shift sprints, the
  *    shooter model's gaits read off the player's `motion`, the page's frame loop sampling the keys on the virtual
  *    clock's frames (`harness.tick`);
@@ -30,19 +30,23 @@
  * and cel looks at full resolution they ran past or near their timeouts on GitHub's runner at c02ee10. 2's gym
  * switches the looks' resolutions live.
  *
- * Invariants: the page is read through `[data-ui]` elements, the menu's links and `__engine` only; the sim is stepped
+ * Invariants: the page is read through `[data-ui]` elements, `__engine` and `__playgroundUi` only; the sim is stepped
  * with `__engine.step`, then frames are drawn (`__engine.render`), so the HUD and the signs show what the run holds.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { SITE_AREAS, type SiteArea } from '../../labs/playground/levels/site';
 import { areaStart } from '../../labs/playground/scenes/site';
+import { AREAS } from '../../labs/playground/ui/areas';
+import { HELP_GROUPS } from '../../labs/playground/ui/help';
+import { HINT_LINE } from '../../labs/playground/ui/hud';
 import { PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from '../../labs/playground/views';
 import { expect, test } from './fixtures';
 
 /** The page's engine, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
+declare const __playgroundUi: { state(): { screens: string[]; paused: boolean } };
 
 /** The gym's replay, and the range's (WP 13.20). */
 const GYM = readFileSync(join(import.meta.dirname, '../replays/playground-gym.replay.json'), 'utf8');
@@ -122,7 +126,7 @@ const [READY, SITE_READY] = [120_000, 420_000];
 
 /** Opens the playground at `query` and waits for it. */
 async function open(page: Page, harness: { ready(o: { timeout: number }): Promise<unknown> }, query = '') {
-  await page.goto(`labs/playground/${query}`);
+  await page.goto(`labs/playground/${query.includes('scene=') ? query : `?scene=gym${query.replace(/^\?/, '&')}`}`); // the gym unless asked: the block opens by default
   await harness.ready({ timeout: query.includes('scene=site') ? SITE_READY : READY });
   await call(page, 'pause');
   await call(page, 'render', 2);
@@ -171,7 +175,7 @@ test.describe('the playground', () => {
     expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=shoulder(,|$)/);
     expect(await hud(page)).toMatchObject({
       mode: 'Camera: shooter · Look: clean',
-      keys: expect.stringContaining('T: camera · X: shoulder · P: look'),
+      keys: HINT_LINE,
     });
     expect(await signShown(page, 'mantle-1')).toBe(true); // 12 m south of the spawn, in front of the camera
     expect(await signShown(page, 'tower-6')).toBe(false); // 59 m away
@@ -199,7 +203,7 @@ test.describe('the playground', () => {
     for (const area of Object.keys(SITE_AREAS) as SiteArea[]) {
       await call(page, 'actions.run', 'place', { at: areaStart(area), speed: 0, yaw: SITE_AREAS[area].yaw });
       await throughEveryView(page);
-      expect((await hud(page)).room, area).toMatch(/^(Room: |Indoors|Outdoors)/);
+      expect((await hud(page)).room, area).toMatch(new RegExp(`^${AREAS[area].name}( · |$)`)); // the area, and indoors the room
     }
     await expectWarm(page, harness);
   });
@@ -316,31 +320,29 @@ test.describe('the playground', () => {
     expect(harness.advice()).toEqual([]);
   });
 
-  test('shows the menu for humans when asked: every scene, five cameras, three looks, every replay and the other pages', async ({
+  test('opens the controls sheet on H and Go to on M: every action with its key, each closed with Escape', async ({
     page,
     harness,
   }) => {
-    await open(page, harness, '?playground.menu=on');
-    const links = (section: string) =>
-      page.locator(`#playground-menu [data-menu=${section}] a`).evaluateAll((all) => all.map((a) => a.textContent));
-    // Every scene its modules export (the gym, the default, first) and every playground replay, as the page finds them.
-    const dir = join(import.meta.dirname, '../../labs/playground/scenes');
-    const modules = readdirSync(dir).filter((file) => /^[a-z]+\.ts$/.test(file));
-    const exported = (await Promise.all(modules.map((file) => import(join(dir, file))))).flatMap((module) => Object.values(module as Record<string, { kind?: string; id?: string }>)); // prettier-ignore
-    const scenes = [...new Set(exported.filter((value) => value?.kind === 'scene').map((scene) => scene.id!.replace(/^playground:/, '')))]; // prettier-ignore
-    const replays = readdirSync(join(import.meta.dirname, '../replays')).filter((file) =>
-      file.startsWith('playground-'),
-    );
-    expect(await links('scenes')).toEqual(['gym', ...scenes.filter((name) => name !== 'gym').sort()]);
-    expect(await links('cameras')).toEqual(PLAYGROUND_CAMERAS.map((mode) => mode.name));
-    expect(await links('looks')).toEqual(['clean', 'cel', 'pixel']);
-    expect(await links('replays')).toEqual(replays.map((file) => file.replace(/^playground-|\.replay\.json$/g, '')).sort()); // prettier-ignore
-    expect(await links('pages')).toEqual(['all pages', 'stress box']);
-    const hrefs = await page.locator('#playground-menu [data-menu=pages] a').evaluateAll((all) => all.map((a) => new URL((a as HTMLAnchorElement).href).pathname)); // prettier-ignore
-    expect(hrefs).toEqual(['/labs/index/', '/labs/box/']);
-    expect(await page.locator('#playground-menu [data-menu=controls] tr').count()).toBeGreaterThanOrEqual(8);
+    await open(page, harness);
+    await call(page, 'resume');
+    await page.keyboard.press('KeyH');
+    await harness.tick(2);
+    expect(await page.evaluate(() => __playgroundUi.state().screens)).toEqual(['help']);
+    const keys = await page.locator('[data-ui=help] [data-ui=key]').evaluateAll((all) => all.map((row) => [row.getAttribute('data-id'), row.querySelector('kbd')?.textContent ?? ''])); // prettier-ignore
+    expect(keys.map(([id]) => id)).toEqual(HELP_GROUPS.flatMap((group) => group.lines.map((line) => line.action ?? line.key ?? line.label))); // prettier-ignore
+    for (const [id, key] of keys) expect(key, id ?? '').not.toBe('');
+    expect(Object.fromEntries(keys)).toMatchObject({ jump: 'Space', interact: 'E' });
+    await page.keyboard.press('Escape');
+    await harness.tick(2);
+    expect(await page.evaluate(() => __playgroundUi.state())).toEqual({ screens: [], paused: false });
     await page.keyboard.press('KeyM');
-    expect(await page.locator('#playground-menu').isHidden()).toBe(true);
+    await harness.tick(2);
+    expect(await page.evaluate(() => __playgroundUi.state().screens)).toEqual(['spawns']);
+    await expect(page.locator('[data-ui=menu][data-id=spawns] [data-ui=item][data-id="area:house"]')).toHaveText('House'); // prettier-ignore
+    await page.keyboard.press('Escape');
+    await harness.tick(2);
+    expect(await page.evaluate(() => __playgroundUi.state().screens)).toEqual([]);
     expect(harness.advice()).toEqual([]);
   });
 

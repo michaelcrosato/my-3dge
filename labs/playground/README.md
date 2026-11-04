@@ -1,61 +1,52 @@
 # The Playground
 
-my-3dge's second integration target (PLAN.md Phase 13, ADR-0025), designed in `docs/PLAYGROUND.md`: the place where
-the character, the cameras and the looks are made to move, feel and look right, and where everything a player can do
-in the engine is shown. It grows in four stages, each ending at a gate: the gym (G10), the house (G11), a living site
-(G12) and the tech demo (G13). Today it holds the gym: calibrated features as a physics level, the player at its
-north end moving by Apex Legends' numbers (its run and sprint, air strafing, jump fatigue, the lurch, the fall
-stun, the crouch and the slide, the mantle, the wall-climb and the superglide, on its hull), its ladder, zipline,
-redeploy balloon and launchers, five camera modes and three looks, clean, cel-shaded and pixel art; the hill, the
-block's ground as terrain (WP 10.5); and the block (WP 13.18): the house of four storeys with its garage, the yards, the street,
-the gym in its place, the hill, the range and the ring on one site, furnished and lit, its doors, windows, switches and
-chairs to use (WP 13.16), its ring's dummies to strike (WP 13.19) and the pistol and the rifle the player carries, with
-the range's pop-up and moving targets to shoot (WP 13.20). Every claim below
-is checked by `tests/unit/playground-readme.test.ts`: a setting, file or command named here that does not exist fails
-it.
+my-3dge's game and second integration target (PLAN.md Phase 13, ADR-0025), designed in `docs/PLAYGROUND.md`: one
+block where everything a player can do in the engine is laid out to walk into and try, and where the character, the
+cameras and the looks are made to move, feel and look right. The block (`playground:site`, WP 13.18) is the game: the
+house of four storeys with its garage and yards, the street with its neighbours and the dog, the gym (calibrated
+features: mantle walls, climbs, slides, gaps, a ladder, a zipline, the balloon and the launchers), the hill and its
+lookout, the range with the pistol and the rifle (WP 13.20) and the ring's dummies to strike (WP 13.19), furnished and
+lit, its doors, windows, switches and chairs to use (WP 13.16). The player moves by Apex Legends' numbers (the run and
+sprint, air strafing, the crouch and the slide, the mantle, the wall-climb, the superglide), seen through five camera
+modes and three looks, clean, cel-shaded and pixel art. Every claim below is checked by
+`tests/unit/playground-readme.test.ts`: a setting, file or command named here that does not exist fails it.
 
 ## Play it
 
-1. Run `npm run dev` (on Node 24, which `scripts/setup.sh` installs), then open
-   http://127.0.0.1:5173/labs/playground/. If another program holds port 5173, `PORT=5174 npm run dev` serves it on
-   5174 instead.
-2. Click the game to look around with the mouse (Esc lets go of it); in isometric and top-down the pointer aims
-   instead. WASD or the arrows move, Space jumps, Shift sprints (hold it, or press it once), Left Alt walks and C
-   crouches while held (not Apex's Left Ctrl: Ctrl with W closes the browser's tab); C at a sprint slides, and Space
-   out of a slide slide-jumps. E uses (G in isometric) what the HUD names: it opens or closes a door, flips a light
-   switch, picks up a chair or a crate and throws it, catches a zipline in reach (Space in the air catches one
-   unasked) or takes hold of a ladder (running into one does too). V strikes, Apex's melee: a punch with a lunge at
-   what is in reach, a kick in the air, an uppercut from a slide; a door takes the door kick, the first bursting it
-   open, the second breaking it; the ring's dummies rock away from each blow and spring back. On the site he carries a
-   pistol and a rifle, holstered: 1 and 2 draw them (the left button draws one too), the left button fires, the right
-   raises the sights, R reloads and 3 holsters again (on a pad, Y swaps them and X and Y held reload and holster); the
-   HUD counts the range's hits and the accuracy.
-3. T steps through the five cameras (X swaps the shooter's shoulder, Q and E turn isometric), P switches between the
-   cel and the pixel look, M shows and hides the menu.
-4. The page opens on its title screen (`labs/playground/ui/`, WP 13.25): Play, Spawn (each area of the block and each
-   room of the house), Settings (the camera, the field of view, the mouse, the movement profile, the look, the
-   quality, the volumes, and every action's key, rebound in every camera at once) and Photo mode (the free camera:
-   the move keys fly it, Space and C climb and sink, a drag turns it, Esc leaves). Esc pauses, with the same screens
-   and Restart; the settings and the keys are kept for the next visit.
-5. Owner checks, on the title screen and in pause (`labs/playground/ui/checks.ts`, WP 13.28), list what only the
-   owner can judge: the playtest of `docs/PLAYGROUND.md` §9.3, and the calls agents made in the owner's absence. Each
-   says in plain words what to try and what to judge; Go there opens it with the scene, camera, look and spot it needs
-   (`playground.check`); Esc, then Answer this check, takes a verdict and a note; Copy my answers gives the text to
-   paste back to an agent.
+1. Open `playground.html` (the whole playground in one file: double-click it), or run `npm run dev` (on Node 24,
+   which `scripts/setup.sh` installs) and open http://127.0.0.1:5173/labs/playground/ (`PORT=5174 npm run dev` when
+   5173 is taken).
+2. The splash screen shows while the block loads (`labs/playground/ui/splash.ts`); press any key for the start menu
+   (`labs/playground/ui/frontEnd.ts`): Play, Go to (any area of the block or room of the house), Settings, Controls,
+   Photo mode, Watch the tour, Owner checks and Tools (the Tune panel for the look's filters, the recorded runs, the
+   feel panel). Esc pauses, with the same screens, Restart and Main menu.
+3. Play: click the game to look around with the mouse. As you walk into an area, a card names it and what to try
+   there (`labs/playground/ui/areas.ts`); the top-left names where you are. H shows every control with its key
+   (`labs/playground/ui/help.ts`) and M is Go to. The essentials: WASD moves, Space jumps (and mantles and climbs),
+   Shift sprints, C crouches (a slide at a sprint), E uses what the HUD names (a door, a switch, a zipline, a ladder,
+   a chair to throw), V strikes, 1 and 2 draw the pistol and the rifle, the left button fires and the right aims; T
+   steps through the cameras and P through the looks. Settings rebinds any key in every camera at once; the settings
+   and keys are kept for the next visit.
+4. Owner checks (`labs/playground/ui/checks.ts`, WP 13.28) list what only the owner can judge: the playtest of
+   `docs/PLAYGROUND.md` §9.3, and the calls agents made in the owner's absence. Each says in plain words what to try
+   and what to judge; Go there opens it at its spot (`playground.check`); Esc, then Answer this check, takes a verdict
+   and a note; Copy my answers gives the text to paste back to an agent.
 
 A link can open any of them: `labs/playground/?cam3=first&post.look=look:playground-pixel` is first person in the
-pixel look, and `labs/playground/?replay=playground-gym` plays the recorded run (`?replay=playground-moves` the moves,
+pixel look, `labs/playground/?playground.spawn=area:range` starts at the range, and
+`labs/playground/?replay=playground-gym` plays a recorded run (`?replay=playground-moves` the moves,
 `?replay=playground-rides` the rides, `?replay=playground-site` the house's doors, lights, windows and garage,
 `?replay=playground-melee` the shed's door kicked in and the ring's dummies punched and kicked, `?replay=playground-range`
-the range's targets shot down with the pistol and the rifle), then hands you the controls.
-`labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`): those runs in
-turn on the block, from the street's dog to the range, with the view stepping through the five cameras and the looks;
-the title screen's Watch the tour opens it, and an idle title screen does after a minute.
+the range's targets shot down with the pistol and the rifle), then hands you the controls; Tools, then Recorded runs,
+lists them. `labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`):
+those runs in turn on the block, with the view stepping through the five cameras and the looks; the start menu's Watch
+the tour opens it, and an idle start menu does after a minute.
 
 ## The demo index
 
-Every scene, what it proves, and the command that shows it; each scene opens at `labs/playground/?scene=<name>`. A
-test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playground/scenes/` is missing here, or a
+The block is the game; the scenes below are what the tests, the replays and the x commands open, each at
+`labs/playground/?scene=<name>`: the gym and the hill alone, as calibrated courses, and the block started at each of its
+areas. Every scene, what it proves, and the command that shows it. A test (`tests/unit/playground-readme.test.ts`) fails when a scene of `labs/playground/scenes/` is missing here, or a
 `playground.*` setting from the settings below.
 
 | Scene | What it proves | The command that shows it |
@@ -132,16 +123,14 @@ top-down snapped to the pixels and gliding, so a pan never shimmers; the perspec
 | The look: clean, cel or pixel | P | |
 | Zoom | the wheel | |
 | The feel panel | F | |
-| The menu | M | |
-| Pause (the title screen, spawn, settings, photo mode, restart) | Esc | Start |
+| The controls sheet | H | |
+| Go to another area or room | M | |
+| Pause (Go to, settings, controls, photo mode, tools, restart) | Esc | Start |
 
 Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
 changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
-faces where it moves, and isometric and top-down aim with the pointer. The HUD shows the keys of the map in use; the
-menu for humans (`labs/playground/menu.ts`) lists the scenes, cameras, looks, replays, the other pages (the labs index
-and the Stress Box) and the controls of the camera the page opens in. The site's landing page (`index.html`) opens
-this page (ADR-0021 amendment 3). A browser that automation drives (the tests, every `x` command that opens the page)
-gets no menu, so no test's screenshot holds it; `?playground.menu=on` shows it there.
+faces where it moves, and isometric and top-down aim with the pointer. The controls sheet (H) shows the keys of the
+map in use, rebound or on a pad. The site's landing page (`index.html`) opens this page (ADR-0021 amendment 3).
 
 ## Settings
 
@@ -151,10 +140,9 @@ gets no menu, so no test's screenshot holds it; `?playground.menu=on` shows it t
 | `playground.gym.jump` | How high the player jumps in the gym, m (1.42, Apex's), when the scene starts. Changes play: recorded in replays. |
 | `playground.hour` | The hour the block's scenes start at, 0 to 24 (12, noon; 18.5 dusk, when the street's lamps and the porch's come on; 22 night), when the scene starts: the sky, the sun or the moon and the fog follow it. Changes play: recorded in replays. |
 | `playground.day` | How many minutes of play a day on the block takes (0, the default, holds the hour), when the scene starts. Changes play: recorded in replays. |
-| `playground.menu` | The page's menu for humans: `auto` shows it unless automation drives the browser, `on` and `off` force it, when the page opens. A view setting. |
 | `playground.feel` | The feel panel: `on` shows it when the page opens (F shows and hides it). A view setting. |
-| `playground.title` | The title screen: `auto` shows it as the page opens unless a replay plays or automation drives the browser, `on` and `off` force it. A view setting. |
-| `playground.spawn` | Where the page puts the player once a scene of the block is up: a spawn picker's place, area:range or room:house/kitchen, run as the dev action `place`, so the run records it. A view setting. |
+| `playground.title` | The start menu (after the splash screen): `auto` shows it as the page opens unless a replay plays or automation drives the browser, `on` and `off` force it. A view setting. |
+| `playground.spawn` | Where the page puts the player once a scene of the block is up: a Go to place, area:range or room:house/kitchen, run as the dev action `place`, so the run records it. A view setting. |
 | `playground.check` | The owner's check under way (`labs/playground/ui/checks.ts`): its id, which the HUD names and pause offers to answer; the page puts the player at the check's spot as the scene comes up, through the dev action `place`, so the run records it. Empty: none. A view setting. |
 | `playground.movement` | The profile the player moves by: `movement:apex` (the default) or `movement:platformer`, the Stress Box hero's feel, when the scene starts. Changes play: recorded in replays. |
 | `playground.attract` | The attract mode, the tour playing behind a banner with the view stepping through the cameras and the looks: `on` is the tour's page itself, `auto` opens it after a minute on the title screen with nothing pressed unless automation drives the browser, `off` never; a key gives the page back. A view setting. |

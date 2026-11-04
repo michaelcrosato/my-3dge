@@ -19,8 +19,8 @@
         },
         {
           "page": "playground",
-          "title": "The playground",
-          "what": "The third-person playground: the gym, the house and the town, its five cameras and three looks.",
+          "title": "The Playground",
+          "what": "The game: one block of everything the engine does (the house, the street, the gym, the hill, the range and the ring), behind a splash and a start menu, in five cameras and three looks.",
           "command": "node x feel · node x shot labs/playground",
           "links": [["Open", ""]]
         },

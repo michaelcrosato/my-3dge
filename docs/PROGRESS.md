@@ -9,18 +9,18 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   GPU-driven crowds' stage 1 (11.4), templates and skills (12.1), the usability evals and mutation testing (12.2),
   `x mcp` (7.6), the tour with its attract mode and a film per look (13.26). What follows waits: upgrades U-2 to U-7
   from their dates (`node x deps --qualify`), on-demand WPs for their triggers (§9.1), Phase H for a game to ship.
-- The owner's, all in the playground's Owner checks (title screen; WP 13.28), each in plain words with Go there: the
+- The owner's, all in the playground's Owner checks (start menu; WP 13.28), each in plain words with Go there: the
   playtest (docs/PLAYGROUND.md §9.3), the looks to judge (the clean default, clean and cel at full resolution, the
   accent weak from isometric, the cel look's dark night there, its near-black brick), the sound and a pad, and ESC-0002
   to ESC-0006's calls (the Quaternius GLBs, model access for the live evals, the crowd's CPU render, the mutants outside
   the sample), answered from Copy my answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
-## Where things stand (2026-11-03)
+## Where things stand (2026-11-04)
 
 - Phases 0–9 and 13 are done (G10: PR #22, #26; G11: #27; G12: #28, #33; G13: #34). The playground (`npm run dev`,
-  /labs/playground/) opens on its title screen and moves as Apex in five cameras on the block (doors, pickups, melee,
-  guns, ragdolls, neighbours, a dog, sound, day and night, GPU rain; clean, cel and pixel looks, clean the default since
-  WP 13.29); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
+  /labs/playground/) is one map, the block, behind a splash and a start menu (WP 13.33: Go to, Controls, Tools); the
+  player moves as Apex in five cameras (doors, pickups, melee, guns, ragdolls, neighbours, a dog, sound, day and night,
+  GPU rain; clean, cel and pixel looks, clean the default since WP 13.29); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or `x mcp`. Games: lean/. Shipped
   as playground.html. Faster starts (ADR-0008 amendments 11, 12; Owner: a move still re-keys lit pipelines). Style Lab's
   filters, amounts and combining looks, tuned live in Tune the look (ADR-0008 amendment 14; WP 13.31, 13.32).
 

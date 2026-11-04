@@ -51,10 +51,12 @@ that runs, is measured and is proved. The game that will run on the engine lives
 
 ## The Playground
 
-The tech demo (Phase 13, [`docs/PLAYGROUND.md`](docs/PLAYGROUND.md)): a house on a block where the player moves as in
-Apex Legends, in five cameras and three looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
-[`playground.html`](playground.html) (below), or run `npm run dev` and open http://127.0.0.1:5173/labs/playground/; `?replay=playground-tour&playground.attract=on` plays
-the tour through every feature. [`labs/playground/README.md`](labs/playground/README.md) says how it plays and what
+The game and tech demo (Phase 13, [`docs/PLAYGROUND.md`](docs/PLAYGROUND.md)): one block of everything the engine
+does, a house, a street, a gym, a hill, a range and a ring, where the player moves as in Apex Legends, in five cameras
+and three looks, with doors, melee, guns, neighbours, a dog, sound, day and night. Open
+[`playground.html`](playground.html) (below), or run `npm run dev` and open http://127.0.0.1:5173/labs/playground/: a
+splash screen, then the start menu (Play, Go to, Settings, Controls, Photo mode, Watch the tour, Owner checks, Tools);
+H in play lists every control. [`labs/playground/README.md`](labs/playground/README.md) says how it plays and what
 each scene shows.
 
 ## How to start
@@ -76,8 +78,8 @@ repository checks), `npm run e2e` (the browser suites) and the `node x` command 
 [`playground.html`](playground.html) is the playground as one self-contained HTML page: its script, styles and
 WebAssembly inline, nothing fetched. Download it and open it in a browser with WebGPU (a desktop Chrome or Edge); it is
 how the engine is distributed and tested ([ADR-0023](docs/decisions/ADR-0023-owner-calls-2026-10-15.md) amendment 5,
-in place of the Vercel deployment). Only the playground is in it: its menu's links to the labs index and the Stress
-Box need the dev server (`npm run dev`). It is rebuilt from the sources with every change that alters it, and the merge
+in place of the Vercel deployment). Only the playground is in it: the labs index and the Stress Box need the dev
+server (`npm run dev`). It is rebuilt from the sources with every change that alters it, and the merge
 gate fails while it is stale:
 
 ```sh

@@ -1,40 +1,42 @@
 /**
- * @file The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): it imports every
- * module under `labs/playground/scenes/`, `looks/` and `bodies/`, so a scene added there opens at `?scene=<name>`, a
- * look at `?post.look=<id>` and a body draws, with no change here, registers the playground's levels as text, and
- * starts the engine (`createEngine`, engine/app/engine.ts) on the scene `?scene` names (`gym` by default), in the
- * shooter camera and the clean look unless the query names others, warming up only what it draws (`gfx.warmUp: asked`),
- * with the playground's replays (tests/replays/playground-*) offered to `?replay=<name>`. Before the engine starts,
- * the menu for humans (labs/playground/menu.ts) lists the scenes, cameras, looks, replays and controls.
+ * @file The playground's page (labs/playground/index.html, docs/PLAYGROUND.md, PLAN.md WP 13.1): one map, the block
+ * (`playground:site`), and everything on it to try (the owner's call of 2026-11-03: the demos unified in one place,
+ * as shardfall's Pavilion and riftlight's Engine World unify theirs). It imports every module under
+ * `labs/playground/scenes/`, `looks/` and `bodies/`, registers the playground's levels as text, and starts the engine
+ * (`createEngine`, engine/app/engine.ts) on the block unless `?scene` names another (the gym's and the hill's
+ * calibration scenes, and the block opened at an area, stay for the tests and replays), in the shooter camera and the
+ * clean look unless the query names others, warming up only what it draws (`gfx.warmUp: asked`), with the
+ * playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
+ *
+ * A person opening the page sees the splash screen while it loads (labs/playground/ui/splash.ts), then the start menu
+ * over the block (labs/playground/ui/frontEnd.ts: Play, Go to, Settings, Controls, Photo mode, the tour, the owner's
+ * checks, Tools); automation, a replay and `playground.title=off` go straight to play. The page wears one theme
+ * (labs/playground/ui/theme.ts, the overlay's `pg-ui` class).
  *
  * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
  * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
- * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P steps through the looks. A click on the game
- * takes the pointer for mouse look in the three perspective cameras (the engine's, by the map; Esc gives it back;
- * isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
- * F shows and hides the feel panel (labs/playground/feel.ts, WP 13.4), whose sliders tune the run through recorded
- * settings.
+ * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P steps through the looks; H opens the controls
+ * sheet, M Go to, Esc pause; F shows and hides the feel panel (labs/playground/feel.ts, WP 13.4). A click takes the
+ * pointer for mouse look in the three perspective cameras (isometric and top-down keep the cursor to aim). They are
+ * view state, so no camera, look or switch changes the hash.
  *
- * Each drawn frame (`onFrame`) it runs the front end (labs/playground/ui/frontEnd.ts, WP 13.25: the title screen,
- * pause on Escape, the spawn picker, settings kept by the store with the bindings, photo mode; the attract mode, the
- * tour with the view cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), shows the gym's signs
- * (labs/playground/levels/gym.ts) within `SIGN_RANGE` of the player while he is in the gym (they draw over walls) and the HUD of the camera mode in use
- * (labs/playground/ui/hud.ts: the room on a site's scene, `whereLine`), plays the frame's sound
- * (labs/playground/sounds/page.ts, WP 13.22), silent until the first key, click or touch, and runs the weather
- * (labs/playground/weather.ts, WP 11.3: `playground.rain` and `playground.dust`). It reads the run and changes it only
- * through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's spot: a
- * check opened here (`playground.check`, labs/playground/ui/checks.ts, WP 13.28) puts the player at its spot as the
- * scene comes up, and the HUD's bottom-left line names it; the answers keep in a store that a replay leaves on too.
+ * Each drawn frame (`onFrame`) it runs the front end (pause on Escape; the attract mode, the tour with the view
+ * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where
+ * the player is on the block, `whereOn`; the camera and look for `MODE_SECONDS` after either changes), the area card
+ * as he walks into an area (labs/playground/ui/areas.ts), the gym's signs within `SIGN_RANGE` of him while he is in the
+ * gym and no screen is open (labels draw over walls), the frame's sound (labs/playground/sounds/page.ts, WP 13.22),
+ * silent until the first key, click or touch, and the weather (labs/playground/weather.ts, WP 11.3). It changes the
+ * run only through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's
+ * spot (`playground.check`, labs/playground/ui/checks.ts, WP 13.28), whose answers keep in a store that a replay
+ * leaves on too.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
- * starter game registers its arena's; a level written as a file would come in as `?raw` text, as the box's do. The
- * ground's materials (labs/playground/ground.ts) register when it loads: the hill's terrain draws in them.
+ * starter game registers its arena's. The ground's materials (labs/playground/ground.ts) register when it loads.
  *
  * Game code: it imports only the engine's public API (engine/index.ts) and the playground's own files.
  *
- * Open it at http://127.0.0.1:5173/labs/playground/ (`npm run dev`): `?cam3=first&post.look=look:playground-pixel`
- * starts in first person in the pixel look, `?replay=playground-gym` plays the recorded run. Headless,
- * `node x shot labs/playground --scene gym --cam iso` reports what it draws.
+ * Open it at http://127.0.0.1:5173/labs/playground/ (`npm run dev`) or as playground.html; `?replay=playground-site`
+ * plays a recorded run. Headless, `node x shot labs/playground --cam iso` reports what it draws.
  */
 /// <reference types="vite/client" />
 import { createEngine, createStore, getSite, siteStructureAt, type Engine, type EngineFrame, type Label, type Site } from '../../engine'; // prettier-ignore
@@ -43,28 +45,38 @@ import { mountFeelPanel } from './feel';
 import './ground';
 import { GYM_FEATURES, GYM_TEXT } from './levels/gym';
 import { SITE, SITE_STRUCTURES } from './levels/site';
-import { createPlaygroundMenu, type MenuEntry } from './menu';
 import { gym } from './scenes/gym';
+import { site } from './scenes/site';
 import { LOOK_KEY, PLAYGROUND_LOOKS, cameraMode, nextCamera, nextLook, swapShoulder, turnView } from './views';
 import { createPlaygroundSound } from './sounds/page';
 import { runWeather } from './weather';
+import { areaAt, createAreaCard, locationLine, type AreaCardView } from './ui/areas';
 import { createAttract, TOUR_REPLAY, type Attract } from './ui/attract';
 import { checkLine, ownerCheck, placeOnOpen } from './ui/checks';
 import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
+import { GOTO_KEY, HELP_KEY } from './ui/help';
 import { showHud, type HudPlayer } from './ui/hud';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
+import { createSplash } from './ui/splash';
+import { installTheme } from './ui/theme';
 
 /** How near the player a sign shows (m): the features around him, not the whole gym at once. */
 const SIGN_RANGE = 24;
 
+/** How long the HUD shows the camera and the look after either changes (s). */
+const MODE_SECONDS = 3;
+
 /** The playground's levels, by id, as text: the engine registers them for the view. */
 const levels = { 'level:gym': { text: GYM_TEXT, file: 'labs/playground/levels/gym.ts' } };
 
+/** A scene module's export: its id. */
+type SceneEntry = { id: string };
+
 /** The entries of `kind` that `modules` export (scenes), each once, in module order. */
-function exported(modules: Record<string, Record<string, unknown>>, kind: string): MenuEntry[] {
+function exported(modules: Record<string, Record<string, unknown>>, kind: string): SceneEntry[] {
   return Object.values(modules)
     .flatMap((module) => Object.values(module))
-    .filter((value): value is MenuEntry & { kind: string } => (value as { kind?: unknown })?.kind === kind)
+    .filter((value): value is SceneEntry & { kind: string } => (value as { kind?: unknown })?.kind === kind)
     .filter((entry, i, all) => all.findIndex((other) => other.id === entry.id) === i);
 }
 
@@ -72,9 +84,9 @@ function exported(modules: Record<string, Record<string, unknown>>, kind: string
 // player is drawn as body:player (labs/playground/bodies/player.ts)
 import.meta.glob(['./looks/*.ts', '!./looks/*.test.ts', './bodies/*.ts', '!./bodies/*.test.ts'], { eager: true });
 
-/** Every playground scene module, imported now so each registers its scene; the gym first, the default, the rest by id. */
+/** Every playground scene module, imported now so each registers its scene; the block first, the default, the rest by id. */
 const modules = import.meta.glob<Record<string, unknown>>(['./scenes/*.ts', '!./scenes/*.test.ts'], { eager: true });
-const [first, ...rest] = exported({ gym: { gym }, ...modules }, 'scene');
+const [first, ...rest] = exported({ site: { site }, ...modules }, 'scene');
 const sceneEntries = [first, ...rest.sort((a, b) => (a.id < b.id ? -1 : 1))];
 
 /** The playground's replays, by name (`playground-gym`), as text loaded on demand. */
@@ -105,11 +117,10 @@ if (!search.has('cam') && !search.has('cam3')) search.set('cam3', 'shoulder');
 if (!search.has('post.look')) search.set('post.look', PLAYGROUND_LOOKS[0]);
 if (!search.has('cam.wholeZoom')) search.set('cam.wholeZoom', 'true');
 if (!search.has('gfx.warmUp')) search.set('gfx.warmUp', 'asked'); // its looks draw through the chain, never plain
-createPlaygroundMenu(document, {
-  scenes: sceneEntries,
-  replays: Object.keys(replays),
-  scene: search.get('scene') ?? '',
-});
+/** Whether the page opens on its start menu, behind the splash screen (labs/playground/ui/splash.ts). */
+const showsTitle = titleOnOpen(search.get('playground.title') ?? 'auto', search, navigator.webdriver);
+const splash = showsTitle ? createSplash(document) : null;
+for (const type of ['error', 'unhandledrejection']) addEventListener(type, () => splash?.remove()); // the error shows
 
 /** The camera member of the inspector (engine/app/viewMembers.ts). */
 interface CameraMember {
@@ -141,12 +152,20 @@ function placeAt(scene: EngineFrame['scene'], at: { x: number; y: number; z: num
   return siteStructureAt(placed.site, at.x, at.y + 0.1, at.z); // 10 cm up: resting feet sink a hair into a floor
 }
 
-/** Where the player is on the scene's site, for the HUD: the room's name, indoors, or outdoors; null without a site. */
-function whereLine(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }): string | null {
+/** Where the player is on the block, for the HUD and the area card: the area and its line; nulls off a site. */
+function whereOn(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }) {
   const found = placeAt(scene, at);
-  if (found === undefined) return null;
-  return found?.room ? `Room: ${found.room.name}` : found ? 'Indoors' : 'Outdoors';
+  if (found === undefined) return { area: null, line: null };
+  const area = areaAt(at.x, at.z, found?.structure.name);
+  return { area, line: locationLine(area, found?.room?.name) };
 }
+
+/** The area card (labs/playground/ui/areas.ts), made with the first frame the front end is up. */
+let card: AreaCardView | null = null;
+
+/** Seconds since the camera mode or the look changed, and what they were: the HUD shows them for a while after. */
+let modeAge = 0;
+let modeWas = '';
 
 /** The player's entity as the page reads it: where it is, how it moves and what it would use (labs/playground/ui/hud.ts). */
 type PlayerEntity = HudPlayer & { actor: { player: boolean; x: number; y: number; z: number } };
@@ -158,7 +177,7 @@ let frontEnd: FrontEnd | null = null;
 const camera = () => (engine?.inspector?.camera as CameraMember | undefined) ?? null;
 
 /** Shows the signs near the player and the HUD's lines (labs/playground/ui/hud.ts); none of it in photo mode. */
-function showFrame({ world, scene, setting }: EngineFrame): void {
+function showFrame({ world, scene, setting, dt }: EngineFrame): void {
   const ui = engine?.ui;
   if (!ui) return;
   const origin = signs.length === 0 ? gymAt(scene) : null;
@@ -173,20 +192,27 @@ function showFrame({ world, scene, setting }: EngineFrame): void {
   const entity = players.find((one) => one.actor.player);
   const player = entity?.actor;
   const photo = frontEnd?.state().screens.at(-1) === 'photo';
+  const modal = frontEnd?.modal() ?? false;
   // on the block, only inside the gym: the labels draw over everything, so from the yard or the house they would
   // show through its walls
   const inGym = !player || scene.id === gym.id || `level:${placeAt(scene, player)?.structure.name}` === SITE_STRUCTURES.gym.level; // prettier-ignore
   for (const sign of signs) {
     const near = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
-    sign.label.visible = !photo && inGym && near;
+    sign.label.visible = !photo && !modal && inGym && near; // never over a screen
   }
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
-  const where = player ? whereLine(scene, player) : null;
+  const now = `${showing.camera} ${showing.look}`;
+  modeAge = now === modeWas ? modeAge + dt : 0;
+  modeWas = now;
+  const place = player ? whereOn(scene, player) : { area: null, line: null };
+  const where = place.line;
+  if (frontEnd && engine?.input) card ??= createAreaCard(ui.root, (action) => engine!.input!.prompt(action));
+  card?.update(place.area, dt, photo || modal || !!attract);
   const readout = String(setting('playground.readout'));
   showHud(
     ui,
     engine?.input ?? null,
-    { mode: showing.camera, look: showing.look, where, player: entity, readout },
+    { mode: showing.camera, look: showing.look, where, player: entity, readout, modeShown: !!attract || modeAge < MODE_SECONDS }, // prettier-ignore
     photo,
   );
   ui.hud('check', check && !photo ? checkLine(check) : null, { at: 'bottom-left' });
@@ -240,7 +266,9 @@ engine = await createEngine({
     runWeather(frame, (at) => !!placeAt(frame.scene, at)); // the rain and the dust (labs/playground/weather.ts)
   },
 });
-if (engine.inspector) mountFeelPanel(document, engine.inspector, search);
+const feel = engine.inspector ? mountFeelPanel(document, engine.inspector, search) : null;
+installTheme(document);
+engine.ui?.root.classList.add('pg-ui');
 if (engine.inspector && engine.ui && engine.input) {
   frontEnd = createFrontEnd({
     engine,
@@ -254,17 +282,24 @@ if (engine.inspector && engine.ui && engine.input) {
     attract: (search.get('playground.attract') ?? 'auto') === 'auto' && !navigator.webdriver,
     checkStore,
     check,
+    replays: Object.keys(replays),
+    toggleFeel: feel ? () => feel.toggle() : undefined,
   });
   if (search.get('playground.attract') === 'on' && replays[TOUR_REPLAY]) {
     const { steps } = JSON.parse(await replays[TOUR_REPLAY]()) as { steps: number };
     attract = createAttract(engine, engine.ui.root, { steps, look: showing.look, onView: (change) => void (showing = { ...showing, ...change }) }); // prettier-ignore
   }
-  if (titleOnOpen(search.get('playground.title') ?? 'auto', search, navigator.webdriver)) frontEnd.open('title');
+  if (showsTitle) frontEnd.open('title'); // under the splash, which fades to show it
 }
+await splash?.ready(!navigator.webdriver);
 
 addEventListener('keydown', (event) => {
   const inspector = engine?.inspector;
   if (!inspector || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+  if (frontEnd && !frontEnd.modal() && (event.code === HELP_KEY || event.code === GOTO_KEY)) {
+    frontEnd.open(event.code === HELP_KEY ? 'help' : 'spawns');
+    return;
+  }
   if (event.code === LOOK_KEY) {
     const look = nextLook(showing.look);
     inspector.set('post.look', look);
