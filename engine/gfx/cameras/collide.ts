@@ -3,10 +3,9 @@
  * camera (the chase, the shoulder, the platformer's) out of the level, as Unreal's spring arm and Cinemachine's
  * deoccluder do. Through the sim's read-only `QueryView` (gfx never imports physics/), a ball of `COLLIDE_RADIUS`,
  * wider than the near plane's corners, is cast against the groups `walls.groups` names (`world`, the level, by
- * default; `walls.exclude` skips a body, the hero's own), their fixed bodies only (`walls.fixed`): a door that swings,
- * a lift, a prop that moves pass through the camera, as a game's camera channel ignores its doors, never pushing it
- * nor cutting it; the fade (engine/gfx/cutaway.ts) takes the level's pieces and the stage's rides, not a door or a
- * prop, so one can fill the picture (docs/PROGRESS.md's open issue):
+ * default; `walls.exclude` skips a body, the hero's own), their fixed bodies only (`walls.fixed`): a door, a lift, a
+ * moving prop pass through the camera, as a game's camera channel ignores its doors (and no fade takes them: one can
+ * fill the picture, docs/PROGRESS.md):
  * - `reach`: how far the ball gets from a point along a direction, `COLLIDE_SKIN` short of the first surface;
  * - `sweep`: where the ball gets from one point toward another, stopped twice the skin short of a surface, so a cast
  *   that starts there starts clear (a pivot's lag never takes it through a wall);
@@ -16,8 +15,7 @@
  * - `moveCamera`: a camera that moves on at a pace (the shooter's, the platformer's): carried with its arm (`carry`),
  *   then toward the arm's end where the ball fits there, else as far along the arm as a ball swept from the base
  *   clears, in at up to `COLLIDE_PULL` m/s and out eased over `COLLIDE_RETURN`, each leg slid along the walls: what
- *   crosses the arm is passed over, under or round, never through (one may stand between it and him: the view fades
- *   the level's pieces and the rides).
+ *   crosses the arm is passed over, under or round, never through (one may stand between it and him: the view fades).
  *   A camera the base sees (a ball swept from it gets there) keeps it in sight (`CameraKeep.room` to spare); one that
  *   lost it goes down only to where it sees the base again (never behind a wall's top it rose over), and along the
  *   base's trail (`CameraBall.trail`: round a corner, through a door) to the newest point of it it sees, no nearer the
