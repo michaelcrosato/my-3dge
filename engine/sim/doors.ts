@@ -27,6 +27,7 @@
  * @see engine/sim/doors.test.ts
  */
 import type { EventMap } from '../core/events';
+import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { Quaternion, Vector3 } from '../core/math';
 import { physicsOf } from '../physics/binding';
 import { driveBody, knock } from '../physics/bodies';
@@ -210,9 +211,15 @@ function swingDoors(w: World): void {
 
 /**
  * The bodies of the doors standing shut, in id order: what stops a camera as a wall does (engine/app/view.ts hands them
- * to engine/gfx/cameras/collide.ts as `also`); one opening, closing, open or broken passes through it.
+ * to engine/gfx/cameras/collide.ts as `also`); one opening, closing, open or broken passes through it. None in a world
+ * whose `registry` (the world's, the shared one by default) never declared doors.
  */
-export function shutDoors<C extends object, E extends EventMap>(world: World<C, E>): number[] {
+export function shutDoors<C extends object, E extends EventMap>(
+  world: World<C, E>,
+  registry: Registry = sharedRegistry,
+): number[] {
+  // prettier-ignore
+  if (!registry.kinds().includes('component') || !registry.has('component', 'door')) return [];
   const doors = (world as unknown as World).query('door' as never) as unknown as DoorEntity[];
   return doors.filter(({ door }) => !door.broken && door.angle === 0 && door.target === 0).map((e) => e.sceneProp.body);
 }

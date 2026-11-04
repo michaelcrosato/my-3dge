@@ -147,7 +147,7 @@ export function runCourse(course: Course, options: { registry?: Registry } = {})
     const doing = cameras.length ? cameraPlayer(e as unknown as EntityData, (intents.b ?? []).includes('aim')) : null;
     const [x, y, z] = sample.feet;
     const eye = doing?.eye !== undefined ? ([x, y + doing.eye, z] as const) : anim?.eye(k);
-    const shut = cameras.length ? shutDoors(world) : []; // which stop the cameras as walls do, as in the page
+    const shut = cameras.length ? shutDoors(world, registry) : []; // which stop the cameras as walls do, as in the page
     for (const c of cameras) {
       if (k < c.m.from || k > (c.m.to ?? course.steps)) continue;
       if (c.track) for (const [step, code] of course.views) if (step === k) c.track.set(code);

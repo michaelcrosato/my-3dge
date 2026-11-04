@@ -18705,8 +18705,8 @@ function pQ(e) {
     tk(t, o.body, p.position, p.rotation, e.dt);
   }
 }
-function hL(e) {
-  return e.query("door").filter(({ door: n }) => !n.broken && n.angle === 0 && n.target === 0).map((n) => n.sceneProp.body);
+function hL(e, t = B) {
+  return !t.kinds().includes("component") || !t.has("component", "door") ? [] : e.query("door").filter(({ door: s }) => !s.broken && s.angle === 0 && s.target === 0).map((s) => s.sceneProp.body);
 }
 const mQ = 0.2;
 function gQ(e, t) {
@@ -32059,7 +32059,7 @@ function Mle(e) {
     const j = e.run();
     R && p.step(null);
     const F = j.world.query("actor").find((C) => C.actor.player === !0), N = (j.intents.b ?? []).includes("aim");
-    _ = F ? cP(F, N) : null, M = F ? Number(F.actor.body ?? -1) : -1, S = j.scene.physics ? hL(j.world) : [];
+    _ = F ? cP(F, N) : null, M = F ? Number(F.actor.body ?? -1) : -1, S = j.scene.physics ? hL(j.world, t) : [];
     const P = j.intents.look;
     F && l.actors.look(F.id, P ? { yaw: P[0], pitch: P[1], aiming: _?.aiming ?? N } : null);
     for (const C of j.world.query("actor")) {
@@ -40754,7 +40754,7 @@ function b1e(e, t = {}) {
   const v = (M) => {
     const S = r(), O = R0e(S), $ = w.look ? { yaw: w.look[0], pitch: w.look[1], aiming: (w.b ?? []).includes("aim") } : null, E = { ride: S.motion && S.motion.ride >= 0 ? VP(o.get(S.motion.ride)) : null, hull: WP(S.actor.character, mp), look: $ };
     d && S.animator && d.frame(S.id, S.animator, O.feet, O.yaw, o.dt, S.motion, S.actor, E);
-    const z = h.length ? cP(S, (w.b ?? []).includes("aim")) : null, [T, L, R] = O.feet, j = z?.eye !== void 0 ? [T, L + z.eye, R] : d?.eye(M), F = h.length ? hL(o) : [];
+    const z = h.length ? cP(S, (w.b ?? []).includes("aim")) : null, [T, L, R] = O.feet, j = z?.eye !== void 0 ? [T, L + z.eye, R] : d?.eye(M), F = h.length ? hL(o, n) : [];
     for (const N of h) {
       if (M < N.m.from || M > (N.m.to ?? e.steps)) continue;
       if (N.track)

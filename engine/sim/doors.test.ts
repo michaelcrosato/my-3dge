@@ -9,7 +9,7 @@
  * @see engine/sim/doors.ts
  */
 import { describe, expect, it } from 'vitest';
-import { registry } from '../core/registry';
+import { createRegistry, registry } from '../core/registry';
 import { physicsOf } from '../physics/binding';
 import type { CompiledLevel } from '../world/level/types';
 import { Vector3 } from '../core/math';
@@ -70,6 +70,7 @@ describe('doors', () => {
     expect(shutDoors(world)).toEqual([body]);
     breakDoor(world, 1, [0.45, 0, -1]);
     expect(shutDoors(world)).toEqual([]);
+    expect(shutDoors(world, createRegistry())).toEqual([]); // a registry that never declared doors: none
   });
 
   it('says it is locked and stays shut while it is', () => {

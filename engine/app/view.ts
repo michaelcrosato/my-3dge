@@ -237,7 +237,7 @@ export function createRunView(options: RunViewOptions): RunView {
     const aiming = (run.intents.b ?? []).includes('aim');
     doing = entity ? cameraPlayer(entity, aiming) : null;
     body = entity ? Number((entity.actor as { body?: number }).body ?? -1) : -1;
-    shut = run.scene.physics ? shutDoors(run.world) : [];
+    shut = run.scene.physics ? shutDoors(run.world, registry) : [];
     const look = run.intents.look; // his head, and his gun, along it (WP 13.11); the sights only with one out (WP 13.20)
     if (entity) stage.actors.look(entity.id, look ? { yaw: look[0], pitch: look[1], aiming: doing?.aiming ?? aiming } : null); // prettier-ignore
     for (const other of run.world.query('actor')) {
