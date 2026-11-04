@@ -2314,7 +2314,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tests/unit/ui
 
-- [`fakeDom.ts`](../tests/unit/ui/fakeDom.ts): A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children; `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type)` (every event bubbles) and `click()`; and a canvas whose client rect a test sets.
+- [`fakeDom.ts`](../tests/unit/ui/fakeDom.ts): A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children; `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type, init)` (every event bubbles, `init`'s fields on it) and `click()`; and a canvas whose client rect a test sets.
   - Exports: `asDom`, `CanvasRect`, `FakeDocument`, `FakeElement`, `FakeEvent`, `fakePage`
   - Tests: [`engine/ui/overlay.test.ts`](../engine/ui/overlay.test.ts)
 - [`uiKit.ts`](../tests/unit/ui/uiKit.ts): What the UI widgets' unit tests share (engine/ui/{widgets,dialog,menu}.test.ts): an overlay over a canvas in a fresh stand-in page (tests/unit/ui/fakeDom.ts), and a page input a test drives a frame at a time.

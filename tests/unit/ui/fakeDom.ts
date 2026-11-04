@@ -2,8 +2,8 @@
  * @file A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's
  * widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with
  * attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children;
- * `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type)` (every
- * event bubbles) and `click()`; and a canvas whose client rect a test sets. Nothing lays the page out, so only the canvas has a
+ * `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type, init)`
+ * (every event bubbles, `init`'s fields on it) and `click()`; and a canvas whose client rect a test sets. Nothing lays the page out, so only the canvas has a
  * `getBoundingClientRect`, and `ui.state()` gives null boxes (the browser half is tests/e2e/overlay.spec.ts).
  *
  * Invariants: it models only what those modules use; anything else is missing, so a new DOM call fails loudly.
@@ -167,8 +167,8 @@ export class FakeElement {
     );
   }
   /** Fires `type` at this element and its ancestors in turn (every event bubbles here), as a page's would. */
-  dispatch(type: string): void {
-    const event = { type, target: this as FakeElement };
+  dispatch(type: string, init: Record<string, unknown> = {}): void {
+    const event = { ...init, type, target: this as FakeElement };
     for (const at of this.lineage()) for (const listener of at.listeners.get(type) ?? []) listener(event);
   }
   click(): void {
