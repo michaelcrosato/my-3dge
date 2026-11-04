@@ -6,8 +6,9 @@
  *
  * `uiUp` and `uiDown` (keys, the pad's D-pad and left stick; held, they repeat: engine/ui/widgets.ts `createRepeat`)
  * move the cursor over the items, round the ends, past disabled ones; `uiAccept` picks the item under it, `uiCancel`
- * calls `onCancel` when there is one; a pointer over an item moves the cursor there, a click picks it. A gamepad drives
- * the menu with its buttons, and any other panel through the pad's cursor (`createPadCursor`).
+ * calls `onCancel` when there is one; a pointer moving over an item moves the cursor there (a menu opening under a still
+ * pointer, or rows shifting under it, moves none), a click picks it. A gamepad drives the menu with its buttons, and any
+ * other panel through the pad's cursor (`createPadCursor`).
  *
  * Picks that change play: the system layer never enters the intents (engine/input/actionMaps.ts), so a menu never
  * reaches the sim itself. An item with an `id` is handed to `send(id)` when picked, which the page turns into input
@@ -139,7 +140,10 @@ export function createMenu(parent: HTMLElement, items: readonly MenuItem[], opti
       const row = uiElement(el, 'ui-menu-item', 'item', typeof item === 'object' && item.id !== undefined ? item.id : String(i)); // prettier-ignore
       row.dataset.index = String(i);
       setText(row, labelOf(item));
-      row.addEventListener('pointerenter', () => !off(list[i]) && move(i, 1));
+      row.addEventListener('pointermove', (event) => {
+        const { movementX = 0, movementY = 0 } = event as PointerEvent; // a still pointer the page moved under moves none
+        if ((movementX !== 0 || movementY !== 0) && i !== index && !off(list[i])) move(i, 1);
+      });
       row.addEventListener('click', () => {
         if (off(list[i])) return;
         if (i !== index) move(i, 1);

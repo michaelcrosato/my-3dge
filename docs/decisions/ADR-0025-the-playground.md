@@ -2582,7 +2582,10 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   labs/playground/levels/house.test.ts holds it (it finds all 1,251 without the fix).
 - **The review's other points:** the HUD named the camera the page last switched to, so a camera set another way (the
   tour, `__engine.camera.set`) kept the old name; it now reads the camera in use each frame. Panels that scroll show a
-  thin scrollbar. Not changed: the gym's signs overlap from some angles (depth-ordered pills, the nearer on top); Go
-  to's "double highlight" was the capture's cursor (the pointer moves the cursor, and the old row's 120 ms fade was
-  caught midway); the front yard's spawn faces the street (its replays and the tour start there).
+  thin scrollbar. A menu's cursor followed any `pointerenter`, and Chromium sends one when the page moves rows under a
+  still pointer, so a menu opening where the pointer rests took that row: Go to's "double highlight", and the pause
+  menu opened over Settings, where Space then picked Settings, not Resume (playground-ui.spec caught it). The cursor
+  now follows a pointer only while it moves (engine/ui/menu.ts, its test). Not changed: the gym's signs overlap from
+  some angles (depth-ordered pills, the nearer on top); the front yard's spawn faces the street (its replays and the
+  tour start there).
 - Plan edit: WP 13.35.

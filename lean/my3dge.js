@@ -40283,7 +40283,10 @@ function g1e(e, t, n) {
     for (const g of c) g.remove();
     a = [...m], c = a.map((g, y) => {
       const w = qt(r, "ui-menu-item", "item", typeof g == "object" && g.id !== void 0 ? g.id : String(y));
-      return w.dataset.index = String(y), ad(w, u0e(g)), w.addEventListener("pointerenter", () => !Ll(a[y]) && h(y, 1)), w.addEventListener("click", () => {
+      return w.dataset.index = String(y), ad(w, u0e(g)), w.addEventListener("pointermove", (v) => {
+        const { movementX: b = 0, movementY: x = 0 } = v;
+        (b !== 0 || x !== 0) && y !== l && !Ll(a[y]) && h(y, 1);
+      }), w.addEventListener("click", () => {
         Ll(a[y]) || (y !== l && h(y, 1), f());
       }), r.append(w), w;
     }), l = a.length ? u(Math.min(l, a.length - 1), 1) : 0, d();
