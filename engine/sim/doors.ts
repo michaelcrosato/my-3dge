@@ -16,7 +16,8 @@
  * closed by their switch (engine/sim/switches.ts), never used or struck. `addLevelDoors(w, level, place?)` hangs
  * `prop:door` (0.9 m) in the middle of each door opening of a level written as storeys that it fits (in a site's
  * structure: `place`, its `at` and quarter turns): one as wide as the leaf to 0.2 m wider and as tall, 5 cm a side in
- * the door glyph's 1 m; a wider or a lower one (a garage's, a crawlspace's) is the scene's.
+ * the door glyph's 1 m; a wider or a lower one (a garage's, a crawlspace's) is the scene's (engine/world/level/doorways.ts,
+ * the rule the frames drawn round them meet the leaf by).
  *
  * `shutDoors(w)` lists the bodies of the doors standing shut, which stop the cameras as walls do (a door that moves,
  * stands open or lies broken passes through them).
@@ -31,7 +32,8 @@ import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { Quaternion, Vector3 } from '../core/math';
 import { physicsOf } from '../physics/binding';
 import { driveBody, knock } from '../physics/bodies';
-import type { CompiledLevel, OpeningDescriptor } from '../world/level/types';
+import { LEVEL_DOOR, leafOpenings, leafSide } from '../world/level/doorways';
+import type { CompiledLevel } from '../world/level/types';
 import { propBody } from '../world/props/place';
 import { getProp } from '../world/props/prop';
 import { toWorld, type QuarterTurns } from '../world/site';
@@ -224,16 +226,6 @@ export function shutDoors<C extends object, E extends EventMap>(
   return doors.filter(({ door }) => !door.broken && door.angle === 0 && door.target === 0).map((e) => e.sceneProp.body);
 }
 
-/** How much wider than its leaf an opening a door hangs in may be (m). */
-const PLAY = 0.2;
-
-/** The openings of `level` that `prop`'s leaf hangs in: its door openings it fits (see the file comment), in order. */
-function doorOpenings(level: CompiledLevel, prop: string): OpeningDescriptor[] {
-  const [width, height] = getProp(prop).body.size;
-  const fits = (o: OpeningDescriptor) => o.width >= width && o.width <= width + PLAY && o.top - o.bottom >= height;
-  return (level.openings ?? []).filter((o) => o.kind === 'door' && fits(o));
-}
-
 /**
  * Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`),
  * its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
@@ -244,10 +236,11 @@ export function addLevelDoors<C extends object, E extends EventMap>(
   place?: { at: readonly number[]; turn: QuarterTurns },
 ): number[] {
   // prettier-ignore
-  return doorOpenings(level, 'prop:door').map((opening) => {
+  const size = getProp(LEVEL_DOOR).body.size;
+  return leafOpenings(level, size).map((opening) => {
     const [cx, , cz] = opening.center;
     const along = opening.axis === 'x';
-    const end = Math.max(0, opening.width - getProp('prop:door').body.size[0]) / 2 - opening.width / 2; // the leaf centred
+    const end = leafSide(opening, size) - opening.width / 2; // the leaf centred
     const [lx, lz] = along ? [cx + end, cz] : [cx, cz + end];
     const [x, z] = place ? toWorld({ at: place.at as [number, number, number], turn: place.turn }, lx, lz) : [lx, lz];
     const yaw = (along ? 0 : -Math.PI / 2) + ((place?.turn ?? 0) * Math.PI) / 2;

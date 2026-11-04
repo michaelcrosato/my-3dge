@@ -1,6 +1,7 @@
 /**
- * @file Unit tests for engine/gfx/level/slabs.ts (T1; WP 13.14): a storey's slab draws its underside under its floored
- * tiles (not the lowest storey's) and an edge wherever a floored tile meets void or the map's edge, each facing out.
+ * @file Unit tests for engine/gfx/level/slabs.ts (T1; WP 13.14, WP 13.36): a storey's slab draws its underside under
+ * its floored tiles (not the lowest storey's) and an edge wherever a floored tile meets void or the map's edge, each
+ * facing out, standing back into its tile as far as `back` says (out of the plane of a wall under it).
  * @see engine/gfx/level/slabs.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -44,5 +45,27 @@ describe('ceilingGeometry', () => {
     const [down, out] = faces(ceilingGeometry(LEVEL, storey(0, 0))!);
     expect([down, out]).toEqual([0, 2 * 14]);
     expect(ceilingGeometry(LEVEL, { index: 0, base: 0, slab: 0.3, floored: new Array(12).fill(false) })).toBeNull();
+  });
+
+  it('stands an edge back into its tile as far as `back` says, and only that tile’s', () => {
+    const plain = ceilingGeometry(LEVEL, storey(1, 3))!;
+    const back = ceilingGeometry(LEVEL, storey(1, 3), (c, r) => (c === 0 && r === 0 ? 0.01 : 0))!;
+    /** The edges' x where they face west, and z where they face north, rounded to the millimetre. */
+    const outer = (geometry: typeof plain) => {
+      const [position, normal] = [geometry.getAttribute('position'), geometry.getAttribute('normal')];
+      const xs = new Set<number>();
+      const zs = new Set<number>();
+      for (let i = 0; i < position.count; i++) {
+        if (normal.getX(i) < -0.99) xs.add(Math.round(position.getX(i) * 1000) / 1000);
+        if (normal.getZ(i) < -0.99) zs.add(Math.round(position.getZ(i) * 1000) / 1000);
+      }
+      return [[...xs].sort(), [...zs].sort()];
+    };
+    expect(outer(plain)).toEqual([[0], [0]]);
+    expect(outer(back)).toEqual([
+      [0, 0.01],
+      [0, 0.01],
+    ]); // tile (0, 0)'s west and north edges, 1 cm in; the rest at 0
+    expect(faces(back)).toEqual(faces(plain));
   });
 });

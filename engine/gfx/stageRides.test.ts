@@ -10,7 +10,7 @@
 import { Box3, Group, Vector3, type Mesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { createMaterialLibrary } from './materials/library';
-import { RUNG, createStageRides } from './stageRides';
+import { BALLOON_LINE, RUNG, createStageRides } from './stageRides';
 
 const ZIPLINE = { from: [0, 8, 0], to: [0, 2, 30], balloon: false, poles: true, feet: [6, 0] };
 const BALLOON = { from: [5, 0, 0], to: [5, 60, 0], balloon: true, poles: true, feet: [0, 0] };
@@ -45,6 +45,8 @@ describe('rides on the stage', () => {
     expect(meshes.get('zipline#3/cable')!.userData).toMatchObject({ entity: 3, component: 'zipline' });
     expect([...meshes.keys()].filter((name) => name.startsWith('zipline#4'))).toEqual(['zipline#4/cable', 'zipline#4/balloon']); // prettier-ignore
     expect(box(meshes.get('zipline#4/balloon')!).getCenter(new Vector3()).y).toBeCloseTo(62.5, 6);
+    const line = box(meshes.get('zipline#4/cable')!); // a rope BALLOON_LINE across its corners, where a cable is 4 cm
+    for (const across of [line.max.x - line.min.x, line.max.z - line.min.z]) expect(across > 0.9 * BALLOON_LINE && across <= BALLOON_LINE + 1e-9).toBe(true); // prettier-ignore
   });
 
   it('draw a ladder’s rails and a rung every 0.3 m up to its top, across its face', () => {

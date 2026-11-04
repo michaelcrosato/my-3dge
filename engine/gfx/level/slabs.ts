@@ -7,7 +7,10 @@
  *
  * The underside is the floored tiles merged into few rectangles (engine/world/level/rects.ts), facing down, u along X
  * and v along Z in metres; each edge is a quad from the slab's underside up to the floor, facing out of the tile, u
- * along it and v up in metres (engine/gfx/level/faces.ts). One draw group.
+ * along it and v up in metres (engine/gfx/level/faces.ts), standing `back(col, row)` metres back into its tile: a
+ * wall of the storey below that rises to the slab has its outside face in the edge's plane, and the two fought
+ * (z-fighting: the house's paint band over its siding, WP 13.36), so engine/gfx/level/meshes.ts stands it back
+ * `STOREY_SEAM` there. One draw group.
  *
  * Invariants: pure in the level and the storey; null when the storey draws nothing (the lowest storey with no edge).
  *
@@ -61,10 +64,14 @@ const SIDES = [
   }, // west
 ] as const;
 
-/** The underside and void edges of `storey`'s slab (see the file comment), or null when there is nothing to draw. */
+/**
+ * The underside and void edges of `storey`'s slab (see the file comment), each edge `back(col, row)` metres back into
+ * its tile (0 by default), or null when there is nothing to draw.
+ */
 export function ceilingGeometry(
   level: Pick<CompiledLevel, 'cols' | 'rows' | 'tile'>,
   storey: Pick<StoreyDescriptor, 'index' | 'base' | 'slab' | 'floored'>,
+  back: (col: number, row: number) => number = () => 0,
 ): BufferGeometry | null {
   const { cols, rows, tile: t } = level;
   const writer = createWriter();
@@ -86,10 +93,11 @@ export function ceilingGeometry(
     for (let c = 0; c < cols; c++) {
       if (!floored(c, r)) continue;
       const [x0, z0, x1, z1] = [c * t, r * t, (c + 1) * t, (r + 1) * t];
+      const d = back(c, r);
       for (const { dc, dr, edge } of SIDES) {
         if (floored(c + dc, r + dr)) continue;
         const [a, b] = edge(x0, z0, x1, z1);
-        upright(writer, a, b, bottom, top);
+        upright(writer, [a[0] - dc * d, a[1] - dr * d], [b[0] - dc * d, b[1] - dr * d], bottom, top);
       }
     }
   }

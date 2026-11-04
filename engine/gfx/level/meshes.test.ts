@@ -323,7 +323,7 @@ describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.1
   defineStoreyFixtureGlyphs(registry);
   const house = compileLevel(readFileSync(join(DIR, 'storeys', 'house.txt'), 'utf8'), { file: 'house.txt', registry });
 
-  it("draws each storey's descriptors, then its ceiling, heads and frames, the rooms' own floors and the roof", () => {
+  it("draws each storey's descriptors, then its ceiling, heads and frames, the walls over its openings, the rooms' own floors and the roof", () => {
     const meshes = createLevelMeshes(house, { materials: materials(), rooms: { kitchen: 'material:planks' } });
     const names = meshes.parts.map((part) => part.name.replace('level:house/', ''));
     expect(names).toEqual([
@@ -343,11 +343,11 @@ describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.1
       'attic/wall',
       'cellar/ceiling',
       'ground/ceiling',
-      'ground/heads',
       'ground/frames',
+      'ground/heads:wall', // the wall over each opening drawn as the wall it stands in (WP 13.36): no head left over
       'upper/ceiling',
-      'upper/heads',
       'upper/frames',
+      'upper/heads:wall',
       'attic/ceiling',
       'ground/floor:kitchen',
       'attic/roof',

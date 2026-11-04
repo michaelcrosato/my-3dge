@@ -67,7 +67,7 @@ describe('createStoreyCut on the storey house', () => {
     const cut = createStoreyCut(meshes);
     expect(cut.set(1, true)).toBe(true);
     expect(shown().every((name) => name.startsWith('cellar/') || name.startsWith('ground/'))).toBe(true);
-    expect(shown()).toContain('ground/heads');
+    expect(shown()).toContain('ground/heads:wall'); // the wall over its openings, drawn as its walls (WP 13.36)
     expect(cut.set(1, true)).toBe(false); // nothing changed
     cut.set(3, true);
     expect([shown().includes('attic/roof'), shown().some((name) => name.startsWith('attic/'))]).toEqual([false, true]);

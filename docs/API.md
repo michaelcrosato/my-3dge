@@ -5053,17 +5053,22 @@ For the agents who maintain the engine.
 - `LevelMeshesOptions` (interface): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `meshDrawCalls` (function): The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow map when it casts; none while it is hidden or an instanced mesh with no instances.
-- `STOREY_SEAM` (const): How far a storey's walls, pillars and heads that rise to the storey above stop under its floor, and its walls and pillars reach down into their own floor's slab (m), so no face of one shares a plane with a floor: the house's patio and porch floors fought the basement's walls and heads under them (z-fighting, WP 13.33).
+- `STOREY_SEAM` (const): How far a storey's walls, pillars and heads that rise to the storey above stop under its floor, and its walls and pillars reach down into their own floor's slab (m), so no face of one shares a plane with a floor: the house's patio and porch floors fought the basement's walls and heads under them (z-fighting, WP 13.35); and how far that floor slab's edge stands back from them (`slabBack`, WP 13.36).
 
 ### [`engine/gfx/level/openings.ts`](../engine/gfx/level/openings.ts)
 
 - `boxBetween` (function): A box from `[x0, y0, z0]` to `[x1, y1, z1]` (m), UVs in metres.
 - `FRAME` (const): A frame's width round an opening (m).
-- `framesGeometry` (function): The frame round each of `openings` (see the file comment); null when there are none.
-- `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one; null when it has none.
+- `frameInsets` (function): How far `opening`'s frame stands into it (m): at its `a0` end (where a leaf's hinge is), its `a1` end and down from its head.
+- `framesGeometry` (function): The frame round each of `openings` (see the file comment), meeting `leaf` where it hangs; null when there are none.
+- `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one, leaving out the tiles `except` accepts; null when it has none.
+- `KNUCKLE` (const): How far a hung leaf's barrel stands out of its faces at the hinge (m): a hinge's knuckle, never in their planes.
 - `POST_GAP` (const): How far apart a railing's posts stand, at most (m).
-- `PROUD` (const): How far a frame stands out of the wall's faces (m), so its faces never share the wall's.
+- `PROUD` (const): How far a frame stands out of the wall's faces and into its opening (m), so its faces never share the wall's.
 - `railingGeometry` (function): A railing along each run of `pieces` (tiles `tile` m wide), from `bottom` to `top` (m); null when there are none.
+- `STOP` (const): A hung leaf's hinge stop, through the wall (m): a strip in its middle, which the leaf turning past a quarter clears.
+- `SWING_CLEAR` (const): How far a hung leaf's hinge stop stands clear of its edge's sweep about the hinge (m).
+- `wallHeads` (function): The wall over each of `openings` (on `storey`) that stands in a wall, as that wall (see the file comment): by the recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands), a geometry of a box a tile, sides then tops, its sides' v in metres from `foot`, the wall's own foot; and the tiles drawn.
 
 ### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
 
@@ -5106,7 +5111,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/slabs.ts`](../engine/gfx/level/slabs.ts)
 
-- `ceilingGeometry` (function): The underside and void edges of `storey`'s slab (see the file comment), or null when there is nothing to draw.
+- `ceilingGeometry` (function): The underside and void edges of `storey`'s slab (see the file comment), each edge `back(col, row)` metres back into its tile (0 by default), or null when there is nothing to draw.
 
 ### [`engine/gfx/level/stairs.ts`](../engine/gfx/level/stairs.ts)
 
@@ -5799,6 +5804,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/stageRides.ts`](../engine/gfx/stageRides.ts)
 
+- `BALLOON_LINE` (const): A balloon's line, across (m): a rope seen from far off (see the file comment); a cable is 4 cm.
 - `createStageRides` (function): Makes the rides of a stage (see the file comment).
 - `RIDE_KINDS` (const): The components it draws rides from: the stage reads these entities beside those it places.
 - `RUNG` (const): A rung every this many metres up a ladder.
@@ -7584,6 +7590,14 @@ For the agents who maintain the engine.
 - `CompileOptions` (interface): What `compileLevel` takes beside the text.
 - `levelName` (function): The name of a level file: `fixtures/levels/room.txt` → `room`.
 
+### [`engine/world/level/doorways.ts`](../engine/world/level/doorways.ts)
+
+- `leafFits` (function): Whether a leaf of `size` (`[width, height, depth]`, m) hangs in `opening` (see the file comment).
+- `leafOpenings` (function): The openings of `level` a leaf of `size` hangs in (see the file comment), in order.
+- `leafSide` (function): The clearance (m) at each side of a leaf of `size` hung in `opening`: centred, its hinged edge that far from `a0`.
+- `LEVEL_DOOR` (const): The prop a level's door openings hang (engine/sim/doors.ts `addLevelDoors`).
+- `PLAY` (const): How much wider than its leaf an opening a door hangs in may be (m).
+
 ### [`engine/world/level/glyph.ts`](../engine/world/level/glyph.ts)
 
 - `defineGlyph` (function): Defines a glyph on `registry` (the shared one by default) and returns it.
@@ -8950,7 +8964,7 @@ For the agents who maintain the engine.
 ### [`labs/playground/weapons/hud.ts`](../labs/playground/weapons/hud.ts)
 
 - `showsCrosshair` (function): Whether the crosshair shows: a camera that aims with its centre, a weapon out, its sights not up.
-- `weaponLine` (function): The HUD's line for the player's weapons (see the file comment); `draw` names the keys that draw them.
+- `weaponLine` (function): The HUD's line for the player's weapons (see the file comment); `draw` names the keys that draw them, as `1/2`.
 - `WeaponsView` (type): What the line reads of the component `weapons`.
 
 ### [`labs/playground/weapons/range.ts`](../labs/playground/weapons/range.ts)
