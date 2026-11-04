@@ -307,8 +307,9 @@ test.describe('the site’s cutaway by storey (WP 13.15, WP 13.18)', () => {
         const cut = parts.filter((line) => line[2] === 'hidden').map(([name]) => name);
         const seen = ids.visible.map((entry) => entry.name);
         const storey = (name: string) => (place.in === 'house' ? HOUSE : SHED).level.storeys!.findIndex((s) => s.name === name.split('/')[1]); // prettier-ignore
-        // Ducked under a low ceiling (the crawlspace), his own storey's heads are lifted too (engine/gfx/storeyCut.ts).
-        const lifted = (name: string) => place.crouch && name.endsWith('/heads') && storey(name) === place.storey;
+        // Ducked under a low ceiling (the crawlspace), his own storey's heads are lifted too, and their walls' facings
+        // (`/heads:<recipe>`) with them (engine/gfx/storeyCut.ts).
+        const lifted = (name: string) => place.crouch && /\/heads(:|$)/.test(name) && storey(name) === place.storey;
         const above = (name: string) => name.startsWith(`level:${place.in}/`) && (name.endsWith('/roof') || storey(name) > place.storey || lifted(name)); // prettier-ignore
         const at = `${mode.name}, ${place.name}`;
         const all = parts.map(([name]) => name);
