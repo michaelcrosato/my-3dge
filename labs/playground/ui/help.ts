@@ -6,9 +6,9 @@
  * (isometric, top-down) the mouse's or the right stick's aim; the view's own keys only where the map has them (the
  * shooter's shoulder, isometric's turn, each half the device has); a line the device has no key for is left out (the
  * pad's weapon swap on a keyboard: `UNBOUND`), and a group left with none. The page's own keys (the look, the feel
- * panel, the menus) are as written, on a keyboard only: a pad reaches them through pause. On a touch screen the sheet
- * names the stick, the touch layout's buttons (labs/playground/touch.ts) and the menu button, and leaves out the
- * rest. The front end opens it from H, the start menu and pause (frontEnd.ts).
+ * panel, the menus) are as written, on a keyboard only: a pad reaches them through pause. On a touch screen (`onTouch`:
+ * touch mode on, or a finger used last, and no pad) the sheet names the stick, the touch layout's buttons
+ * (labs/playground/touch.ts) and the menu button, and leaves out the rest. The front end opens it from H, the start menu and pause (frontEnd.ts).
  *
  * Elements: `[data-ui=help]`, a `[data-ui=key]` per line (`data-id` the action, else the page key or the label), and
  * the Back button (`[data-ui=item][data-id=back]`). Invariants: presentation only; it reads the input when made.
@@ -31,8 +31,8 @@ export const GOTO_KEY = 'KeyM';
 /** The input's prompt for an action the device has no key for (engine/input/bindings.ts `pickLabel`). */
 export const UNBOUND = '—';
 
-/** What the sheet reads of the input: the prompts on the device used last, and the map in use. */
-export type HelpInput = Pick<Input, 'prompt' | 'bindings' | 'lastDevice'>;
+/** What the sheet reads of the input: the prompts on the device used last, the map in use, and touch mode. */
+export type HelpInput = Pick<Input, 'prompt' | 'bindings' | 'lastDevice' | 'touch'>;
 
 /** One line of the sheet: an action of the map, a key worked out from the input, or a page key as written. */
 export interface HelpLine {
@@ -49,7 +49,10 @@ export interface HelpLine {
 }
 
 const pad = (input: HelpInput) => input.lastDevice === 'gamepad';
-const touch = (input: HelpInput) => input.lastDevice === 'touch';
+/** On touch: a finger used last, or touch mode on (a coarse pointer, as the engine hides key hints) and no pad used. */
+export const onTouch = (input: Pick<Input, 'lastDevice' | 'touch'>): boolean =>
+  input.lastDevice === 'touch' || (input.lastDevice !== 'gamepad' && input.touch?.active === true);
+const touch = onTouch;
 /** Whether the map aims with the pointer or the right stick, the camera following (isometric, top-down). */
 const aims = (input: HelpInput) => input.bindings.map.aimWith === 'pointer';
 /** The view actions' keys where the map in use has them, the halves the device has none for left out; null if none

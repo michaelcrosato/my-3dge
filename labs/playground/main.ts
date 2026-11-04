@@ -257,7 +257,8 @@ engine = await createEngine({
   modal: () => frontEnd?.modal() ?? false,
   cameraInput: () => frontEnd?.cameraInput(),
   touchLayout: PLAYGROUND_TOUCH, // labs/playground/touch.ts: its menu button pauses, then opens pause here
-  onMenu: () => void (!frontEnd ? (menuAsked = true) : !frontEnd.modal() && frontEnd.open('pause')),
+  // the touch menu button: pause, or back one screen under one, as Escape (photo mode's only way out on touch)
+  onMenu: () => void (!frontEnd ? (menuAsked = true) : frontEnd.modal() ? frontEnd.back() : frontEnd.open('pause')),
   onFrame: (frame) => {
     last = frame;
     if (opening && frontEnd) {

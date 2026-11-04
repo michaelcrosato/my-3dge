@@ -17,7 +17,7 @@ import { HELP_GROUPS, keyOf, UNBOUND, type HelpInput } from './help';
 const mapOf = (id: string) => registry.get('actionMap', id) as unknown as HelpInput['bindings']['map'] & { actions: object }; // prettier-ignore
 
 /** An input on `map`, on `device`, its prompts the action's name or as `prompts` gives them. */
-const inputOn = (map: string, device: HelpInput['lastDevice'], prompts: Record<string, string> = {}) => ({ prompt: (action: string) => prompts[action] ?? action, bindings: { map: mapOf(map) }, lastDevice: device }) as unknown as HelpInput; // prettier-ignore
+const inputOn = (map: string, device: HelpInput['lastDevice'], prompts: Record<string, string> = {}, touch = false) => ({ prompt: (action: string) => prompts[action] ?? action, bindings: { map: mapOf(map) }, lastDevice: device, touch: { active: touch } }) as unknown as HelpInput; // prettier-ignore
 
 /** What the sheet shows on `input`, by line id: [what it does, its key], the lines left out missing. */
 const sheet = (input: HelpInput) =>
@@ -46,7 +46,11 @@ describe('the controls sheet', () => {
   });
 
   it('names the stick, the touch buttons and the menu button on touch, and leaves out the rest', () => {
-    const keys = sheet(inputOn(PLAYGROUND_MAPS.shooter, 'touch'));
-    expect(Object.fromEntries(Object.entries(keys).map(([id, [, key]]) => [id, key]))).toEqual({ Move: 'Stick: touch and drag', jump: 'Jump', crouch: 'Crouch', interact: 'Use', melee: 'Strike', pause: 'Menu button, top right' }); // prettier-ignore
+    const keys = (input: HelpInput) =>
+      Object.fromEntries(Object.entries(sheet(input)).map(([id, [, key]]) => [id, key]));
+    const touch = { Move: 'Stick: touch and drag', jump: 'Jump', crouch: 'Crouch', interact: 'Use', melee: 'Strike', pause: 'Menu button, top right' }; // prettier-ignore
+    expect(keys(inputOn(PLAYGROUND_MAPS.shooter, 'touch'))).toEqual(touch);
+    expect(keys(inputOn(PLAYGROUND_MAPS.shooter, 'keyboard', {}, true))).toEqual(touch); // touch mode, before a finger lands on the game
+    expect(keys(inputOn(PLAYGROUND_MAPS.shooter, 'gamepad', {}, true)).Move).toBe('L Stick'); // a pad used last on a touch screen
   });
 });

@@ -39,8 +39,8 @@ describe('the playground’s HUD', () => {
   });
 
   it('hints at the menus on the device used last: the keys, a pad’s menu button, none on touch', () => {
-    const on = (lastDevice: string) => ({ prompt: (action: string) => (action === 'pause' ? 'Menu' : '?'), lastDevice }) as unknown as Input; // prettier-ignore
-    expect([hintLine(on('keyboard')), hintLine(on('mouse')), hintLine(on('gamepad')), hintLine(on('touch'))]).toEqual([HINT_LINE, HINT_LINE, 'Menu: menu, controls, go to', null]); // prettier-ignore
+    const on = (lastDevice: string, touch = false) => ({ prompt: (action: string) => (action === 'pause' ? 'Menu' : '?'), lastDevice, touch: { active: touch } }) as unknown as Input; // prettier-ignore
+    expect([hintLine(on('keyboard')), hintLine(on('mouse')), hintLine(on('gamepad')), hintLine(on('touch')), hintLine(on('keyboard', true))]).toEqual([HINT_LINE, HINT_LINE, 'Menu: menu, controls, go to', null, null]); // prettier-ignore
   });
 
   it('reads the speed over the ground and how he moves', () => {

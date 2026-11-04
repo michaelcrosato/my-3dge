@@ -8849,10 +8849,11 @@ For the agents who maintain the engine.
 - `GOTO_KEY` (const): The page's key for Go to, kept from rebinding as the sheet's.
 - `HELP_GROUPS` (const): The sheet's groups, in order (see the file comment).
 - `HELP_KEY` (const): The page's key for the controls sheet (labs/playground/main.ts), kept from rebinding (controls.ts).
-- `HelpInput` (type): What the sheet reads of the input: the prompts on the device used last, and the map in use.
+- `HelpInput` (type): What the sheet reads of the input: the prompts on the device used last, the map in use, and touch mode.
 - `HelpLine` (interface): One line of the sheet: an action of the map, a key worked out from the input, or a page key as written.
 - `HelpOptions` (interface): What the sheet needs: the input it names the keys from, and what Back does.
 - `keyOf` (function): The key a line shows on `input` (see the file comment): null or `UNBOUND` leaves the line out.
+- `onTouch` (const): On touch: a finger used last, or touch mode on (a coarse pointer, as the engine hides key hints) and no pad used.
 - `UNBOUND` (const): The input's prompt for an action the device has no key for (engine/input/bindings.ts `pickLabel`).
 
 ### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)

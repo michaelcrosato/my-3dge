@@ -10,11 +10,12 @@
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
  * browser. Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
  * too), the area card and the feel panel, all hidden under a screen (under the Tune panel, at the side so the world
- * shows, only the feel panel); a screen and its panels, scrolling where the window is too short for them (in windows
- * 720 px tall or less the start menu's brand and the items shrink, and at 460 px or less the detail line under a menu
- * goes; the splash keeps its own); the touch buttons, hidden under a screen but for the menu button; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`,
- * `--pg-accent`, `--pg-good`), the radius, the shadow and the font are custom properties on `.pg-ui` and
- * `.pg-splash`; the type sizes and the backdrops' shades are written where they are used.
+ * shows, the HUD with its crosshair and damage numbers stays); a screen and its panels, scrolling where the window is
+ * too short for them (in windows 720 px tall or less the start menu's brand and the items shrink, and at 460 px or less
+ * the detail line under a menu goes; the splash keeps its own); the touch buttons, hidden under a screen or photo mode
+ * but for the menu button; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`, `--pg-accent`,
+ * `--pg-good`), the radius, the shadow and the font are custom properties on `.pg-ui` and `.pg-splash`; the type sizes
+ * and the backdrops' shades are written where they are used.
  *
  * Invariants: presentation only; one `<style id="pg-theme">` in the page however often it is called, moved after the
  * engine's sheets each time (so it wins their ties whether the splash or the engine came first); it names no element
@@ -135,12 +136,12 @@ export const THEME_CSS = `
   font: 700 13px/1.4 Inter, system-ui, sans-serif; color: var(--pg-text); background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18); border-bottom-width: 2px; white-space: nowrap; }
 
-/* ---- the HUD (labs/playground/ui/hud.ts): small, at the edges, readable on sky and on stone; hidden under a screen ---- */
+/* ---- the HUD (labs/playground/ui/hud.ts): small, at the edges, on sky and stone; hidden under a screen but Tune ---- */
 .pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .ui-crosshair, .ui-damage, .pg-card, .ui-label) {
   visibility: hidden; }
 body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel { display: none; }
 /* the touch buttons (engine/ui/touch.css, above the overlay) would take a screen's taps: only the menu button stays */
-body:has(.pg-ui > .pg-screen) .touch-layer .touch-button { visibility: hidden; }
+body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) .touch-layer .touch-button { visibility: hidden; }
 .pg-ui .ui-hud-block { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); }
 .pg-ui .ui-hud[data-id=room] { font-size: 13px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--pg-text); background: rgba(10, 12, 18, 0.45); padding: 0.35em 0.75em; border-radius: 8px; }

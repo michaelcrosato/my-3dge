@@ -15,7 +15,8 @@
  *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
  *   checks.ts `checkUrl`), and Tools (`tools`): the Tune panel (`tune`, tune.ts: the look's filters live, WP 13.32),
  *   the recorded runs (`replays`, each opened as `?replay=<name>`, the view kept: links.ts) and the feel panel.
- *   Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`).
+ *   Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`), but in a window 460 px
+ *   tall or less.
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one.
  *
@@ -100,6 +101,8 @@ export interface FrontEndOptions {
 /** The front end (see the file comment). */
 export interface FrontEnd {
   open(screen: ScreenName): void;
+  /** Goes back one screen, as Escape does (the touch menu button's tap under a screen: labs/playground/main.ts). */
+  back(): void;
   /** Runs one drawn frame of `dt` s: the pause key, the top screen's input. */
   frame(dt: number): void;
   modal(): boolean;
@@ -370,6 +373,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
   Object.assign(window, { __playgroundUi: { state, checks, answers } });
   return {
     open: (name) => show(name),
+    back: () => void (stack.length && back()),
     frame(dt) {
       if (current) current.update(dt);
       else if (input.pressed('pause')) show('pause');

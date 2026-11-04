@@ -2497,37 +2497,42 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
 - **The front end:** one theme (labs/playground/ui/theme.ts) over every screen, panel, the HUD and the signs, kept in
   the playground: the engine's widgets keep their plain stylesheet for every other page. Each menu says under it what
   the item at the cursor does, but in a window 460 px tall or less; a screen too tall for the window scrolls, the
-  cursor's row kept in view. The HUD keeps to the edges: where the player
-  is (top left), the camera and look for 3 s after either changes (then faded; its text stays for the tests), the
-  prompt, the ammo, and a hint of the menus' keys; every other key is on the controls sheet (H), read from the map in
-  use on the device used last (on a pad its sticks and buttons, on touch the stick and the touch buttons, the page's
-  own keys on a keyboard alone). A card names an area and what to try there as the player walks in, its seconds
-  counted only while it can show. Under a screen the HUD (the crosshair too), the card, the signs and the feel panel
-  hide, and F leaves the feel panel be; under the Tune panel, at the side so the world shows, only the feel panel
-  hides. A link to another page (a recorded run, Go to from off the block) keeps only the view, never the scene, a
-  replay or a check. A pad starts from the splash as a key does; a failed start shows its error at once, with no front
-  end over it. On a touch screen the playground's touch layout (labs/playground/touch.ts, untested as ADR-0021 has it)
-  carries the menu button, which alone stays over a screen; a tap on it while the page loads opens pause once it is
-  up.
+  cursor's row kept in view. The HUD keeps to the edges: where the player is (top left), the camera and look for 3 s
+  after either changes (then faded; its text stays for the tests), the prompt, the ammo, and a hint of the menus'
+  keys; every other key is on the controls sheet (H), read from the map in use on the device used last (on a pad its
+  sticks and buttons, on touch the stick and the touch buttons, the page's own keys on a keyboard alone). A card names
+  an area and what to try there as the player walks in, its seconds counted only while it can show. Under a screen the
+  HUD (the crosshair too), the card, the signs and the feel panel hide, and F leaves the feel panel be; under the Tune
+  panel, at the side so the world shows, the HUD (the crosshair and the damage numbers too) stays. A link to another
+  page (a recorded run, Go to from off the block) keeps only the view, never the scene, a replay or a check. A pad
+  starts from the splash as a key does; a failed start shows its error at once, with no front end over it. On a touch
+  screen the playground's touch layout (labs/playground/touch.ts, untested as ADR-0021 has it) carries the menu
+  button, which alone stays over a screen or photo mode: it opens pause, under a screen it goes back one as Escape
+  does (photo mode has no other way out on touch), and a tap while the page loads opens pause once it is up. The
+  controls sheet names the touch controls in touch mode, before a finger has landed on the game too.
 - **The glitches:** from the yard the house stood open because the cutaway cut every structure's walls facing a camera
   outside it: a site now cuts only the structure the player is in, and in a perspective camera a building (rooms or a
   roof) only while he is indoors, since its map holds its patio, porch and apron too; a classic view, looking down
   from afar, cuts it on its whole map as before (its walls facing the camera, the storeys above him and the roof),
-  which would hide him on the porch or the patio. The shooter's and the platformer's cameras fade what stands between
-  them and him; the classic views fade nothing. The area a point reads as follows the same map: the house's walls and
-  rooms, and its map above the ground floor (the roof to its eaves, the porch roof, the deck), are the house; its
-  patio, porch and apron the yards. The ground's colour crossing the sky was the daylight model reading SkyMesh's box corners near
-  the camera: the dome is a sphere of small triangles, it and the backdrop kept short of the far plane without moving
-  the near plane. The gym's signs, drawn over everything, showed through the house's walls: on the block they show
-  only in the gym.
+  which would hide him on the porch or the patio. The shooter's and the platformer's cameras fade the level's pieces
+  and the rides that stand between them and him; the classic views fade nothing. Amendment 22's "faded where it stands
+  between it and the player" never held for a door or a prop, which no fade takes: the platformer can end behind the
+  house's shut back door on the patio (docs/PROGRESS.md's open issue). The area a point reads as follows the same map:
+  the house's walls and rooms, and its map above the ground floor (the roof to its eaves, the porch roof, the deck),
+  are the house; its patio, porch and apron the yards. The ground's colour crossing the sky was the daylight model
+  reading SkyMesh's box corners near the camera: the dome is a sphere of small triangles, it and the backdrop kept
+  short of the far plane without moving the near plane. The gym's signs, drawn over everything, showed through the
+  house's walls: on the block they show only in the gym.
 - **Tests:** the specs that open the playground for its menus or its gym open `?scene=gym` (the block warms up for
   minutes on SwiftShader); the block's own tests open `?scene=site` as before. An adversarial review (six readings,
   each finding put to three skeptics) confirmed 35 findings in the first cut, about 24 faults once the ones found
   twice are merged, all fixed in this WP with unit tests where a number shows them
   (labs/playground/scenes/site-cut.test.ts: 180 wall tiles cut from the patio before, 0 after). A second run checked
-  each fix (six readings, two skeptics a problem): 17 problems in the fixes themselves and 3 fixes partial, all fixed
-  here too (the classic views' cut on the porch and the patio, which the first fix had taken away, now held by
-  site-cut.test.ts and the agent eye's site-eye.test.ts).
+  each fix (six readings, two skeptics a problem): 17 problems in the fixes themselves, two of them fixes left
+  partial, and the page keys still shown on a pad, all fixed here too (the classic views' cut on the porch and the
+  patio, which the first fix had taken away, now held by site-cut.test.ts and the agent eye's site-eye.test.ts). A
+  third reading of those (four readings, two skeptics a problem) found seven more, most of them claims in the docs,
+  and the touch controls in photo mode with no way out; all fixed.
 - **Baselines:** seven of the street's look thumbnails in tests/baselines/thumbs/ (the cel and pixel looks from first
   person, the shoulder and the follow camera, and the clean look from the follow camera) are recorded again: they held
   the bug, the gym's wall on the left horizon cut down to show the sky and the house's front cut open to show its lit

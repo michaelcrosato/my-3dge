@@ -10,7 +10,7 @@
  * fades where the camera asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map,
  * its walls facing the camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch
  * or patio. `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's
- * frame (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures stay whole.
+ * frame (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures are faded, never cut.
  * The objects `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
  *
  * Names: a structure's group `site:<site>/<index>` holding its level's meshes (`level:<name>/…`, so the ID pass shows

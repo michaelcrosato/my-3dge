@@ -28,6 +28,7 @@
 import type { Input, Overlay } from '../../../engine';
 import { defineSettings } from '../../../engine/sim-api';
 import { showsCrosshair, weaponLine, type WeaponsView } from '../weapons/hud';
+import { onTouch } from './help';
 
 /** The readout's view setting (see the file comment). */
 export const HUD_SETTINGS = defineSettings({
@@ -45,8 +46,8 @@ export const HUD_SETTINGS = defineSettings({
 export const HINT_LINE = 'H: controls · M: go to · Esc: menu';
 
 /** The hint on the device used last: the page's keys, a pad's menu button (pause holds the rest), none on touch. */
-export function hintLine(input: Pick<Input, 'prompt' | 'lastDevice'>): string | null {
-  if (input.lastDevice === 'touch') return null; // the menu button shows, top right
+export function hintLine(input: Pick<Input, 'prompt' | 'lastDevice' | 'touch'>): string | null {
+  if (onTouch(input)) return null; // the menu button shows, top right
   return input.lastDevice === 'gamepad' ? `${input.prompt('pause')}: menu, controls, go to` : HINT_LINE;
 }
 
