@@ -32,7 +32,6 @@ import { CONTROL_ACTIONS, SETTING_ROWS } from '../../labs/playground/ui/settings
 import { spawnPlaces } from '../../labs/playground/ui/spawns';
 import { OWNER_CHECKS, ownerCheck } from '../../labs/playground/ui/checks';
 import { AREAS } from '../../labs/playground/ui/areas';
-import type { SiteArea } from '../../labs/playground/levels/site';
 import { expect, test } from './fixtures';
 
 /** The page's engine and front end, inside `evaluate`. */
@@ -277,9 +276,10 @@ test.describe('the playground’s front end', () => {
     await harness.tick(2);
     await pick(page, harness, 'title', 'spawns');
     const items = await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item]').allTextContents();
-    const [areas, rooms] = ['area', 'room'].map((group) => spawnPlaces().filter((place) => place.group === group));
-    const roomName = (label: string) => label.replace(/^\w+: (\w)/, (_all, first: string) => first.toUpperCase());
-    expect(items).toEqual(['Areas of the block', ...areas.map((place) => AREAS[place.id.slice(5) as SiteArea].name), 'Rooms of the house', ...rooms.map((place) => roomName(place.label)), 'Back']); // prettier-ignore
+    const [areas, rooms] = ['area', 'room'].map((group) => spawnPlaces().filter((place) => place.group === group).map((place) => place.label)); // prettier-ignore
+    expect(items).toEqual(['Areas of the block', ...areas, 'Rooms of the house', ...rooms, 'Back']);
+    expect(areas).toEqual(Object.values(AREAS).map((card) => card.name)); // each area by its card's name
+    expect(rooms.filter((name) => !/^[A-Z][a-z]+( [a-z]+)*$/.test(name))).toEqual([]); // each room as a player reads it
     await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item][data-id="area:range"]').click();
     await page.waitForURL(/scene=site/);
     await harness.ready({ timeout: SITE_READY });

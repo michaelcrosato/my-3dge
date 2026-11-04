@@ -318,7 +318,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
   {
     id: 'load-times',
     kind: 'try',
-    title: 'How long it takes to start and change maps',
+    title: 'How long it takes to start and to go round the block',
     what: 'Reload the page and note how long until the splash says to press a key. Then use Go to (M) to jump round the block and into the house. The block can stall a little after its first frame on its first visit, while the quality settles; later visits start where it settled. The first switch to isometric or top-down also pauses once. Are the waits acceptable now?', // prettier-ignore
     from: 'docs/PROGRESS.md: real GPUs are not verifiable here (load times, ADR-0008 amendment 11)',
     go: { query: { 'playground.title': 'on' } },
@@ -351,7 +351,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'tune',
     kind: 'try',
     title: 'Tune the look with the new filters',
-    what: 'Press Esc and open Tune the look. Lay a look on (try cinematic, storybook, miniature or VHS tape), slide its amount and the strength, then open a filter, set its scope (everything, the characters, the objects or the scenery) and its numbers. Is it easy to make the block look different, and better? Copy as look gives text to send back: does it?', // prettier-ignore
+    what: 'Press Esc, open Tools, then Tune the look. Lay a look on (try cinematic, storybook, miniature or VHS tape), slide its amount and the strength, then open a filter, set its scope (everything, the characters, the objects or the scenery) and its numbers. Is it easy to make the block look different, and better? Copy as look gives text to send back: does it?', // prettier-ignore
     from: 'docs/PROGRESS.md: how the filters read is not verifiable here (ADR-0008 amendment 14)',
     go: { query: { scene: 'site' } },
   },

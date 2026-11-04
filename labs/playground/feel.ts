@@ -2,7 +2,8 @@
  * @file The playground's feel panel (docs/PLAYGROUND.md §3.4, PLAN.md WP 13.4): the engine's panel (engine/dev/feel/
  * panel.ts: sliders over the `movement.*` and `cam.*` settings, live, Copy as profile, Save the replay) on the page,
  * shown and hidden with F (`FEEL_KEY`), or open from the start with the view setting `playground.feel=on` (read when
- * the page opens). labs/playground/main.ts mounts it once the engine is up; the menu lists its key.
+ * the page opens). labs/playground/main.ts mounts it once the engine is up; the controls sheet (ui/help.ts) lists its
+ * key, and Tools in the start menu and pause opens it too.
  *
  * Invariants: the panel changes the run only through the inspector's recorded `set`; the view setting never reaches
  * the hash.

@@ -1,8 +1,9 @@
 /**
- * @file Unit tests for labs/playground/ui/prefs.ts (WP 13.25): what is kept comes back, what is not of its shape is
- * dropped; the query takes the kept camera and settings only where it names none, a link winning; a kept value the
- * schema refuses is left out, so the page still starts; and the movement profile is a recorded setting: a run opened
- * with it keeps it in its replay, which plays back to the same hash.
+ * @file Unit tests for labs/playground/ui/prefs.ts (WP 13.25): the store keeps what the settings screen offers
+ * (settings.ts `SETTING_ROWS`); what is kept comes back, what is not of its shape is dropped; the query takes the kept
+ * camera and settings only where it names none, a link winning; a kept value the schema refuses is left out, so the
+ * page still starts; and the movement profile is a recorded setting: a run opened with it keeps it in its replay,
+ * which plays back to the same hash.
  * @see labs/playground/ui/prefs.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -10,12 +11,19 @@ import { createHeadless, createStore, memoryBackend, parseRoutes } from '../../.
 import { playReplay } from '../../../engine/sim/replay';
 import '../cast/player';
 import { gym } from '../scenes/gym';
-import { PREFS_KEY, PREFS_PREFIX, prefsQuery, readPrefs, savePrefs } from './prefs';
+import { PREF_BUSES, PREF_SETTINGS, PREFS_KEY, PREFS_PREFIX, prefsQuery, readPrefs, savePrefs } from './prefs';
+import { SETTING_ROWS } from './settings';
 
 /** A store in memory, under the playground's prefix. */
 const memory = () => createStore({ prefix: PREFS_PREFIX, backend: memoryBackend() });
 
 describe('the playground’s preferences', () => {
+  it('keeps exactly what the settings screen offers: its settings, the camera and the volumes', () => {
+    const rows = (...kinds: string[]) => SETTING_ROWS.filter((row) => kinds.includes(row.kind)).map((row) => row.id);
+    expect(rows('setting', 'look').sort()).toEqual([...PREF_SETTINGS].sort());
+    expect([rows('camera'), rows('volume')]).toEqual([['camera'], PREF_BUSES.map((bus) => `volume:${bus}`)]);
+  });
+
   it('keeps what was changed and reads back only what is of its shape', () => {
     const store = memory();
     expect(readPrefs(store)).toEqual({ settings: {}, volumes: {} }); // a first visit

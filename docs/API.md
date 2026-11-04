@@ -8386,7 +8386,6 @@ For the agents who maintain the engine.
 ### [`labs/playground/bodies/neighbours.ts`](../labs/playground/bodies/neighbours.ts)
 
 - `NEIGHBOUR_BODIES` (const): The four neighbours' bodies, by their index.
-- `NEIGHBOUR_SEED` (const): The first neighbour's seed; the k-th's is this plus k.
 - `neighbourBody` (function): Neighbour `k`'s body: the player's, its slots drawn by its seed (see the file comment).
 
 ### [`labs/playground/bodies/player.ts`](../labs/playground/bodies/player.ts)
@@ -8397,7 +8396,6 @@ For the agents who maintain the engine.
 ### [`labs/playground/cast/dog.ts`](../labs/playground/cast/dog.ts)
 
 - `DOG` (const): How the dog goes about (see the file comment): speeds, distances (m) and times (s).
-- `DOG_FIELDS` (const): The dog's own state (the component `dog`).
 - `DOG_MODES` (const): What the dog does (see the file comment).
 - `standDog` (function): Stands the dog beside the player's spawn `at` (where he faces `yaw`), facing him, its ball before its paws, and adds its systems.
 
@@ -8406,7 +8404,6 @@ For the agents who maintain the engine.
 - `DUMMY_KIND` (const): The ring's dummies' kind (see the file comment).
 - `RING_DUMMIES` (const): Where the ring's dummies stand (m, on its canvas 1 m up) and face: three across its north half, toward its steps.
 - `Sparring` (interface): A dummy's lean and swing (`SPARRING_FIELDS`).
-- `SPARRING_FIELDS` (const): The component `sparring`'s fields: the lean (rad: its head toward +X and +Z), its swing (rad/s) and its turn.
 - `SPRING` (const): A sparring dummy's spring: its frequency (Hz) and damping ratio, a hit's swing (rad/s) and the most it leans (rad).
 - `standDummies` (function): Stands the ring's dummies (`RING_DUMMIES`): their entities, in order.
 - `standDummy` (function): Stands a sparring dummy on its base at `at` (m), facing `yaw` (rad): its entity.
@@ -8419,8 +8416,6 @@ For the agents who maintain the engine.
 ### [`labs/playground/cast/neighbours.ts`](../labs/playground/cast/neighbours.ts)
 
 - `Neighbour` (interface): A neighbour: its name, its body's index (`body:neighbour<k>`) and its route.
-- `NEIGHBOUR` (const): How they go about: a stroll (m/s), how far they see and look (m), how near a shove comes (m) and how fast (m/s), how long a step aside, a flinch's rest and a look at a noise last (s), and the noises' carry (m).
-- `NEIGHBOUR_FIELDS` (const): A neighbour's own state: its index, its step aside (until when, which way), its last flinch, whether it looks.
 - `NEIGHBOURS` (const): The neighbours and their rounds (see the file comment): stops in world metres, stays in seconds.
 - `standNeighbours` (function): Stands the neighbours at their routes' first stops and adds their systems (see the file comment); their ids.
 
@@ -8832,7 +8827,9 @@ For the agents who maintain the engine.
 ### [`labs/playground/ui/frame.ts`](../labs/playground/ui/frame.ts)
 
 - `ABOUT` (const): What each menu item is for, shown under the menu as the cursor rests on it.
+- `brand` (function): The playground's name as the start menu and the splash head it: a kicker, the title and `sub` under it.
 - `createFrame` (function): A screen's frame, made in `root` (see the file comment).
+- `textDiv` (const): A `div` of `className` holding `textContent`, made in `doc`.
 
 ### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
 
@@ -8886,7 +8883,6 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/ui/prefs.ts`](../labs/playground/ui/prefs.ts)
 
-- `NO_PREFS` (const): No preferences: a first visit.
 - `PREF_BUSES` (const): The audio buses the settings screen sets, master first (engine/audio/runtime/mixer.ts's).
 - `PREF_SETTINGS` (const): The settings the settings screen offers and the store keeps, by path.
 - `Prefs` (interface): What is kept (see the file comment).
@@ -8911,7 +8907,7 @@ For the agents who maintain the engine.
 
 - `SPAWN_SETTINGS` (const): Go to's view setting (see the file comment): a place's id, or none.
 - `spawnPlace` (function): The place `id` names, or undefined.
-- `SpawnPlace` (interface): A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments.
+- `SpawnPlace` (interface): A place to spawn: its id, its label and the line under it in Go to, area or room, the `place` action's arguments.
 - `spawnPlaces` (function): The block's places to spawn: its areas, then its structures' rooms.
 
 ### [`labs/playground/ui/splash.ts`](../labs/playground/ui/splash.ts)
@@ -8922,7 +8918,6 @@ For the agents who maintain the engine.
 ### [`labs/playground/ui/theme.ts`](../labs/playground/ui/theme.ts)
 
 - `installTheme` (function): Adds the theme's stylesheet to `doc` once (see the file comment).
-- `THEME_CSS` (const): The theme's stylesheet (see the file comment).
 
 ### [`labs/playground/ui/tune.ts`](../labs/playground/ui/tune.ts)
 
@@ -8963,10 +8958,8 @@ For the agents who maintain the engine.
 - `MOVER` (const): The moving targets: as the pop-ups, sliding 2 m across their lane at 1 m/s while they stand.
 - `POPPER` (const): The pop-up targets: a hit puts one down, up again 2.5 s later.
 - `Popup` (interface): A target's fall (`POPUP_FIELDS`).
-- `POPUP_FIELDS` (const): The component `popup`'s fields: how far the target has fallen back, and its turn as it was stood.
 - `RANGE_TARGETS` (const): Where the range's targets stand (m) and of which kind: down each lane, facing the bench (−X).
 - `standRange` (function): Stands the range's targets (`RANGE_TARGETS`): their entities, in order.
-- `standTarget` (function): Stands a range target of `kind` (its id) on its base at `at` (m), facing `yaw`: its entity.
 
 ### [`labs/playground/weather.ts`](../labs/playground/weather.ts)
 

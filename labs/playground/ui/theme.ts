@@ -2,9 +2,10 @@
  * @file The playground's look for its UI (docs/PLAYGROUND.md §8.3; the owner's call of 2026-11-03, "a UI that looks
  * decent"): one stylesheet, added once (`installTheme`), that every screen of the front end (labs/playground/ui/
  * frontEnd.ts), its panels (settings, Go to, Tune, the owner's checks, photo mode, the controls), the splash screen
- * (splash.ts), the HUD (hud.ts), the area card (areas.ts) and the world's signs wear. The engine's widgets keep their
- * own stylesheet (engine/ui/widgets.ts) for every other page; here everything sits under the overlay's `pg-ui` class,
- * so this sheet wins without touching the engine.
+ * (splash.ts), the HUD (hud.ts), the area card (areas.ts), the tour's banner (attract.ts) and the world's signs wear,
+ * none of them with a sheet of its own. The engine's widgets keep their own stylesheet (engine/ui/widgets.ts) for
+ * every other page; here everything sits under the overlay's `pg-ui` class, so this sheet wins without touching the
+ * engine.
  *
  * The look: dark glass panels over the world (a blurred, dimmed backdrop), one warm accent (`--pg-accent`) for what is
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
@@ -32,7 +33,7 @@
 const THEME_ID = 'pg-theme';
 
 /** The theme's stylesheet (see the file comment). */
-export const THEME_CSS = `
+const THEME_CSS = `
 .pg-ui, .pg-splash {
   --pg-glass: rgba(13, 16, 23, 0.84); --pg-glass-strong: rgba(10, 12, 18, 0.94); --pg-line: rgba(255, 255, 255, 0.1);
   --pg-text: #eef1f6; --pg-dim: #9ba4b4; --pg-accent: #ffb547; --pg-accent-soft: rgba(255, 181, 71, 0.16);
@@ -97,7 +98,8 @@ export const THEME_CSS = `
 .pg-ui .pg-screen .ui-panel.ui-box { position: relative; left: auto; top: auto; right: auto; bottom: auto;
   transform: none; max-height: 88vh; overflow-y: auto; box-sizing: border-box; }
 .pg-ui .pg-screen .pg-settings, .pg-ui .pg-screen .pg-checks { width: min(680px, 94vw); }
-.pg-ui .pg-screen .pg-tune { width: min(420px, 46vw); max-height: 96vh; }
+.pg-ui .pg-screen .pg-tune { width: min(420px, 46vw); }
+.pg-ui .pg-screen .ui-panel.pg-tune { max-height: 96vh; }
 .pg-ui .ui-box h2 { margin: 0 0 0.7em; font-size: 24px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
 .pg-ui .ui-box h3 { margin: 1.3em 0 0.5em; font-size: 12px; font-weight: 800; letter-spacing: 0.24em;
   text-transform: uppercase; color: var(--pg-accent); }
@@ -115,11 +117,20 @@ export const THEME_CSS = `
 .pg-ui .ui-box button[data-value=selected] { border-color: var(--pg-accent); background: var(--pg-accent-soft); outline: none; }
 .pg-ui .ui-box input[type=range] { accent-color: var(--pg-accent); width: 100%; }
 .pg-ui .ui-box input[type=checkbox] { accent-color: var(--pg-accent); width: 18px; height: 18px; }
-.pg-ui .pg-checks button { margin: 0.25em 0; padding: 0.6em 0.8em; }
-.pg-ui .pg-tune details { border-top: 1px solid var(--pg-line); padding: 0.3em 0; }
-.pg-ui .pg-tune summary { font-weight: 650; padding: 0.2em 0; }
+.pg-ui .pg-settings .pg-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.6em; align-items: center; }
+.pg-ui .pg-settings [data-ui=binding-note] { grid-column: 1 / -1; font-size: 0.85em; opacity: 0.8; }
+.pg-ui .pg-checks button { display: block; width: 100%; text-align: left; margin: 0.25em 0; padding: 0.6em 0.8em; }
+.pg-ui .pg-checks p { margin: 0.4em 0; }
+.pg-ui .pg-checks .pg-small { font-size: 0.85em; opacity: 0.8; }
+.pg-ui .pg-tune { font-size: 0.85em; }
+.pg-ui .pg-tune .pg-row { display: grid; grid-template-columns: 1fr 1.4fr 3em; gap: 0.4em; align-items: center; }
+.pg-ui .pg-tune details { border-top: 1px solid var(--pg-line); margin: 0.2em 0; padding: 0.3em 0; }
+.pg-ui .pg-tune summary { cursor: pointer; font-weight: 650; padding: 0.2em 0; }
 .pg-ui .pg-tune textarea, .pg-ui .pg-checks textarea { width: 100%; box-sizing: border-box; }
+.pg-ui .pg-checks textarea { min-height: 4.5em; }
+.pg-ui .pg-tune textarea { height: 9em; font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; }
 .pg-ui .pg-back { margin-top: 1.4em; }
+.pg-ui [data-ui=attract] { left: 50%; top: auto; bottom: 12%; transform: translateX(-50%); padding: 6px 14px; }
 .pg-ui [data-ui=photo] { position: absolute; left: 50%; top: auto; bottom: 3vh; transform: translateX(-50%);
   padding: 10px 18px; border-radius: 999px; font-size: 14px; color: var(--pg-dim); width: max-content;
   max-width: calc(100% - 2em); box-sizing: border-box; text-align: center; pointer-events: none; }

@@ -1924,7 +1924,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## labs/playground/bodies
 
 - [`neighbours.ts`](../labs/playground/bodies/neighbours.ts): The neighbours' bodies, `body:neighbour0` to `body:neighbour3` (docs/PLAYGROUND.md §7.4, §3.1; PLAN.md WP 13.21): the player's body (labs/playground/bodies/player.ts), its parts as they are, in other clothes: each neighbour's slots drawn from the palettes below by a seed of its own (`Rng(NEIGHBOUR_SEED + k)`): a skin and a hair, a jacket and trousers each with its darker tone, boots and their soles, a pack, and an accent of its own (never the player's orange, so he stays the one marked from every camera); bare hands: the gloves its skin, the cuffs its jacket's.
-  - Exports: `NEIGHBOUR_BODIES`, `NEIGHBOUR_SEED`, `neighbourBody`
+  - Exports: `NEIGHBOUR_BODIES`, `neighbourBody`
   - Tests: [`labs/playground/bodies/neighbours.test.ts`](../labs/playground/bodies/neighbours.test.ts)
 - [`player.ts`](../labs/playground/bodies/player.ts): The player's body, `body:player` (docs/PLAYGROUND.md §3.1, PLAN.md WP 13.2), in the body grammar (engine/gfx/puppets/grammar.ts), worn on `build:adult` (engine/anim/builds.ts): a jacket with darker upper sleeves and collar, cargo trousers with knee pads and a belt, boots with dark soles, gloves, short hair and a face, and a small pack on the back.
   - Exports: `PLAYER`, `PLAYER_BODY`
@@ -1933,16 +1933,16 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 ## labs/playground/cast
 
 - [`dog.ts`](../labs/playground/cast/dog.ts): The dog (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): Biscuit, on the quadruped rig (engine/anim/quadruped.ts, WP 10.1's planted gait), drawn as a crowd body (the rig `quadruped`), with an actor's capsule of its own so it meets the world and its props, climbs a kerb and goes where the player goes (actors pass through each other).
-  - Exports: `DOG`, `DOG_FIELDS`, `DOG_MODES`, `standDog`
+  - Exports: `DOG`, `DOG_MODES`, `standDog`
   - Tests: [`labs/playground/cast/dog.test.ts`](../labs/playground/cast/dog.test.ts)
 - [`dummies.ts`](../labs/playground/cast/dummies.ts): The ring's sparring dummies (docs/PLAYGROUND.md §2.2, §7.3; PLAN.md WP 13.19): things (WP 10.4, engine/world/things.ts) standing as `prop:playground-dummy` on the ring's canvas, sprung into their bases.
-  - Exports: `DUMMY_KIND`, `RING_DUMMIES`, `Sparring`, `SPARRING_FIELDS`, `SPRING`, `standDummies`, `standDummy`
+  - Exports: `DUMMY_KIND`, `RING_DUMMIES`, `Sparring`, `SPRING`, `standDummies`, `standDummy`
   - Tests: [`labs/playground/cast/dummies.test.ts`](../labs/playground/cast/dummies.test.ts)
 - [`health.ts`](../labs/playground/cast/health.ts): The cast's hit points (docs/PLAYGROUND.md §7.3, §7.4; PLAN.md WP 10.2, WP 13.21): the component `health` the ring's sparring partners and the neighbours carry, which melee and shots take from (engine/sim/damage.ts).
   - Exports: `CAST_HP`, `castHealth`
   - Tests: [`labs/playground/cast/partners.test.ts`](../labs/playground/cast/partners.test.ts)
 - [`neighbours.ts`](../labs/playground/cast/neighbours.ts): The neighbours (docs/PLAYGROUND.md §7.4; PLAN.md WP 13.21): four people about the block, each on a route of stops kept on a schedule (`NEIGHBOURS`: the north sidewalk end to end, the porch and the front path, the garden bench and the backyard, the bus stop's bench and the south sidewalk; engine/world/aiRoutes.ts `followRoute`), strolling between them over the site's navigation round its props (a flow field a stop: ways.ts beside it).
-  - Exports: `Neighbour`, `NEIGHBOUR`, `NEIGHBOUR_FIELDS`, `NEIGHBOURS`, `standNeighbours`
+  - Exports: `Neighbour`, `NEIGHBOURS`, `standNeighbours`
   - Tests: [`labs/playground/cast/neighbours.test.ts`](../labs/playground/cast/neighbours.test.ts)
 - [`partners.ts`](../labs/playground/cast/partners.ts): The ring's sparring partners (docs/PLAYGROUND.md §2.2, §7.3; PLAN.md WP 10.2): two people on the ring's canvas (`RING_PARTNERS`: actors on `build:adult` in its south corners, either side of the top of its steps, turned toward them) who take the player's blows.
   - Exports: `PARTNER_BLOWS`, `RING_PARTNERS`, `standPartners`
@@ -2123,7 +2123,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `answered`, `answersText`, `CHECK_SETTINGS`, `CheckAnswer`, `checkLine`, `CHECKS_KEY`, `checkUrl`, `OWNER_CHECKS`, `ownerCheck`, `OwnerCheck`, `placeOnOpen`, `readAnswers`, `saveAnswer`, `TRY_VERDICTS`, `verdictLabel`
   - Tests: [`labs/playground/ui/checks.test.ts`](../labs/playground/ui/checks.test.ts)
 - [`frame.ts`](../labs/playground/ui/frame.ts): A screen's frame over the world (labs/playground/ui/frontEnd.ts's screens, labs/playground/ui/theme.ts's look): `createFrame(root, kind, heading, footer)` makes a `.pg-screen` of `kind` (`title`: the start menu's column at the left; `menu`; `list`: a long menu in columns; `panel`: a panel in the middle; `side`: a panel at the side over the open world), headed by the playground's name (`heading` null), a heading, or nothing (''), with a body for the screen's menu or panel, a line under it that says what the selected item does (`detail`, `ABOUT`'s words), and the keys in the footer.
-  - Exports: `ABOUT`, `createFrame`
+  - Exports: `ABOUT`, `brand`, `createFrame`, `textDiv`
   - Tests: [`tests/e2e/playground-ui.spec.ts`](../tests/e2e/playground-ui.spec.ts)
 - [`frontEnd.ts`](../labs/playground/ui/frontEnd.ts): The playground's front end (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25; reworked at the owner's call of 2026-11-03, "a UI that looks decent"): its screens over the game, each in a frame (labs/playground/ui/frame.ts) worn by the theme (theme.ts), the engine's menus (engine/ui/menu.ts) and the playground's panels on a stack (closing one shows the one under it again): - the start menu (`title`: Play, Go to, Settings, Controls, Photo mode, Watch the tour, Owner checks, Tools), shown under the splash screen (splash.ts) as the page opens while `playground.title` says so (`auto`: unless a replay plays or automation drives the browser; `on`, `off`); Escape plays; left idle `ATTRACT.idle` seconds, it opens the attract mode (attract.ts) while `playground.attract` is `auto` and no automation drives the browser; - pause (`pause`: Resume, Answer this check while one is under way, Go to, Settings, Controls, Photo mode, Owner checks, Tools, Restart, Main menu), opened by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a browser spends the first Escape on the lock); - Go to (`spawns`: the block's areas and the house's rooms, spawns.ts; M opens it in play), settings (`settings`, settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening checks.ts `checkUrl`), and Tools (`tools`): the Tune panel (`tune`, tune.ts: the look's filters live, WP 13.32), the recorded runs (`replays`, each opened as `?replay=<name>`, the view kept: links.ts) and the feel panel.
   - Exports: `createFrontEnd`, `FRONT_END_SETTINGS`, `FrontEnd`, `FrontEndOptions`, `ScreenName`, `spawnOnOpen`, `titleOnOpen`
@@ -2141,7 +2141,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createPhoto`, `Photo`, `PHOTO`, `PhotoCamera`
   - Tests: [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
 - [`prefs.ts`](../labs/playground/ui/prefs.ts): The playground's preferences (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what its settings screen changes and the page's store keeps across sessions (`createStore`, engine/app/store.ts, under `PREFS_PREFIX`): the camera mode the page opens in, the settings of `PREF_SETTINGS` by path (the field of view, the mouse, the look, the quality, the movement profile) and the audio buses' levels.
-  - Exports: `NO_PREFS`, `PREF_BUSES`, `PREF_SETTINGS`, `Prefs`, `PREFS_KEY`, `PREFS_PREFIX`, `PrefSetting`, `prefsQuery`, `readPrefs`, `savePrefs`
+  - Exports: `PREF_BUSES`, `PREF_SETTINGS`, `Prefs`, `PREFS_KEY`, `PREFS_PREFIX`, `PrefSetting`, `prefsQuery`, `readPrefs`, `savePrefs`
   - Tests: [`labs/playground/ui/prefs.test.ts`](../labs/playground/ui/prefs.test.ts)
 - [`settings.ts`](../labs/playground/ui/settings.ts): The playground's settings screen (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): a panel over the game, in the look of the engine's menus (engine/ui/widgets.ts's box), with a row for each thing the player sets (`SETTING_ROWS`): the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the look, the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio levels; then the controls: each action the player answers with its key, a button to rebind it, and one to reset them all.
   - Exports: `CONTROL_ACTIONS`, `createSettings`, `RowSchema`, `SETTING_ROWS`, `SettingRow`, `SettingsOptions`, `SettingsScreen`
@@ -2152,8 +2152,8 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`splash.ts`](../labs/playground/ui/splash.ts): The splash screen (the owner's call of 2026-11-03: "a proper splash screen, start menu, etc."): shown the moment the page's script runs, over everything, while the engine loads and warms up; the playground's name, a bar that moves while it loads, and then "Press any key to start".
   - Exports: `createSplash`, `Splash`
   - Tests: [`tests/e2e/playground-ui.spec.ts`](../tests/e2e/playground-ui.spec.ts)
-- [`theme.ts`](../labs/playground/ui/theme.ts): The playground's look for its UI (docs/PLAYGROUND.md §8.3; the owner's call of 2026-11-03, "a UI that looks decent"): one stylesheet, added once (`installTheme`), that every screen of the front end (labs/playground/ui/ frontEnd.ts), its panels (settings, Go to, Tune, the owner's checks, photo mode, the controls), the splash screen (splash.ts), the HUD (hud.ts), the area card (areas.ts) and the world's signs wear.
-  - Exports: `installTheme`, `THEME_CSS`
+- [`theme.ts`](../labs/playground/ui/theme.ts): The playground's look for its UI (docs/PLAYGROUND.md §8.3; the owner's call of 2026-11-03, "a UI that looks decent"): one stylesheet, added once (`installTheme`), that every screen of the front end (labs/playground/ui/ frontEnd.ts), its panels (settings, Go to, Tune, the owner's checks, photo mode, the controls), the splash screen (splash.ts), the HUD (hud.ts), the area card (areas.ts), the tour's banner (attract.ts) and the world's signs wear, none of them with a sheet of its own.
+  - Exports: `installTheme`
   - Tests: [`tests/e2e/playground-ui.spec.ts`](../tests/e2e/playground-ui.spec.ts)
 - [`tune.ts`](../labs/playground/ui/tune.ts): The playground's Tune panel (docs/PLAYGROUND.md §8.4, PLAN.md WP 13.32): the look drawn now, tuned and combined live, as an agent does it with `x set` and `__engine.look()`.
   - Exports: `createTune`, `LookNow`, `lookText`, `TuneOptions`, `TunePanel`
@@ -2168,7 +2168,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `showsCrosshair`, `weaponLine`, `WeaponsView`
   - Tests: [`labs/playground/weapons/range.test.ts`](../labs/playground/weapons/range.test.ts)
 - [`range.ts`](../labs/playground/weapons/range.ts): The range's targets (docs/PLAYGROUND.md §2.2, §7.2; PLAN.md WP 13.20): things (WP 10.4, engine/world/things.ts) standing as `prop:playground-target` down its three lanes (z 3, 6 and 9), facing the bench at x 4 (`RANGE_TARGETS`): pop-up targets at 10 and 25 m (`thing:playground-popper`), and at 50 m moving ones sliding across their lane (`thing:playground-mover`, 2 m to and fro at 1 m/s).
-  - Exports: `FALL`, `MOVER`, `POPPER`, `Popup`, `POPUP_FIELDS`, `RANGE_TARGETS`, `standRange`, `standTarget`
+  - Exports: `FALL`, `MOVER`, `POPPER`, `Popup`, `RANGE_TARGETS`, `standRange`
   - Tests: [`labs/playground/weapons/range.test.ts`](../labs/playground/weapons/range.test.ts)
 
 ## labs/props

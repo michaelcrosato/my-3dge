@@ -22,7 +22,7 @@ import { defineBody, Rng, type BodySpec } from '../../../engine';
 import { PLAYER_BODY } from './player';
 
 /** The first neighbour's seed; the k-th's is this plus k. */
-export const NEIGHBOUR_SEED = 2113;
+const NEIGHBOUR_SEED = 2113;
 
 /** The palettes a neighbour is dressed from: single colours, or a garment's two tones. */
 const PALETTES = {

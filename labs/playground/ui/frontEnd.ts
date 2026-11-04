@@ -44,15 +44,13 @@ import { ATTRACT, attractPage } from './attract';
 import { createChecksPanel } from './checkPanel';
 import { answered, answersText, checkUrl, OWNER_CHECKS, readAnswers, saveAnswer, type OwnerCheck } from './checks';
 import { createPhoto, type PhotoCamera } from './photo';
-import { PREF_BUSES, savePrefs, type Prefs } from './prefs';
+import { PREF_BUSES, PREF_SETTINGS, savePrefs, type Prefs } from './prefs';
 import { createSettings, type RowSchema, type SettingRow } from './settings';
 import { createTune, type LookNow } from './tune';
 import { spawnPlace, spawnPlaces } from './spawns';
-import { AREAS } from './areas';
 import { ABOUT, createFrame } from './frame';
 import { createHelp } from './help';
 import { goToLink, replayLink } from './links';
-import type { SiteArea } from '../levels/site';
 
 /** The start menu's view setting (see the file comment). */
 export const FRONT_END_SETTINGS = defineSettings({
@@ -227,7 +225,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
   const values = (): Record<string, string | number | boolean> => {
     const now = (path: string) => options.setting(path) as string | number | boolean;
     const out: Record<string, string | number | boolean> = { camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'shooter' }; // prettier-ignore
-    for (const path of ['cam.fov', 'input.sensitivity', 'input.invert', 'playground.movement', 'post.look', 'quality', 'gfx.governor']) out[path] = now(path); // prettier-ignore
+    for (const path of PREF_SETTINGS) out[path] = now(path);
     for (const bus of PREF_BUSES) out[`volume:${bus}`] = options.audio?.volume(bus) ?? 1;
     return out;
   };
@@ -297,20 +295,15 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     }
     if (name === 'spawns') {
       const places = spawnPlaces();
-      const room = (label: string) => label.replace(/^\w+: (\w)/, (_all, first: string) => first.toUpperCase());
+      const group = (name: 'area' | 'room') => places.filter((place) => place.group === name).map(({ label, id }) => ({ label, id })); // prettier-ignore
       const items: MenuItem[] = [
         { label: 'Areas of the block', disabled: true },
-        ...places.filter((place) => place.group === 'area').map((place) => ({ label: AREAS[place.id.slice(5) as SiteArea]?.name ?? place.label, id: place.id })), // prettier-ignore
+        ...group('area'),
         { label: 'Rooms of the house', disabled: true },
-        ...places
-          .filter((place) => place.group === 'room')
-          .map((place) => ({ label: room(place.label), id: place.id })),
+        ...group('room'),
         { label: 'Back', id: 'back' },
       ];
-      const about = (id: string) => {
-        const area = AREAS[id.slice(5) as SiteArea];
-        return area && id.startsWith('area:') ? area.text : id.startsWith('room:') ? `Start in the house's ${room(spawnPlace(id)?.label ?? '').toLowerCase()}.` : ''; // prettier-ignore
-      };
+      const about = (id: string) => spawnPlace(id)?.about ?? '';
       return menuScreen('spawns', 'Go to', items, (id) => {
         const place = spawnPlace(id);
         if (!place) return back();

@@ -25,7 +25,7 @@ import '../props/outdoors';
 export const FALL = Object.freeze({ down: 1.45, fall: 7, rise: 4 });
 
 /** The component `popup`'s fields: how far the target has fallen back, and its turn as it was stood. */
-export const POPUP_FIELDS = {
+const POPUP_FIELDS = {
   tilt: { type: 'number', default: 0, minimum: 0, unit: 'rad', description: 'How far it has fallen back from upright.' }, // prettier-ignore
   yaw: { type: 'number', default: 0, unit: 'rad', description: 'Its turn about +Y, as it was stood.' },
 } as const;
@@ -78,7 +78,7 @@ function stepPoppers(w: World): void {
 }
 
 /** Stands a range target of `kind` (its id) on its base at `at` (m), facing `yaw`: its entity. */
-export function standTarget<C extends object>(
+function standTarget<C extends object>(
   w: World<C>,
   kind: string,
   at: readonly [number, number, number],

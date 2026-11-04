@@ -9,7 +9,7 @@
  * area and append-only. Only sim-side modules are re-exported, and each name is documented where it is declared.
  *
  * @example
- * // labs/playground/scenes/range.ts
+ * // labs/playground/weapons/range.ts
  * // import { defineThing, spawnThing, SHOT_EMITTER_FIELDS, loose, sense } from '../../../engine/sim-api';
  * @see engine/sim-api.ts
  */

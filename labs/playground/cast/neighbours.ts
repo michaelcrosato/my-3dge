@@ -60,7 +60,7 @@ export const NEIGHBOURS: readonly Neighbour[] = [
 
 /** How they go about: a stroll (m/s), how far they see and look (m), how near a shove comes (m) and how fast (m/s),
  * how long a step aside, a flinch's rest and a look at a noise last (s), and the noises' carry (m). */
-export const NEIGHBOUR = {
+const NEIGHBOUR = {
   stroll: 1.3,
   sight: 14,
   look: 6,
@@ -89,7 +89,7 @@ defineAction('action:sit', {
 });
 
 /** A neighbour's own state: its index, its step aside (until when, which way), its last flinch, whether it looks. */
-export const NEIGHBOUR_FIELDS = {
+const NEIGHBOUR_FIELDS = {
   index: { type: 'integer', default: 0, minimum: 0, description: 'Its place in NEIGHBOURS.' },
   aside: { type: 'number', default: -1, unit: 's', description: 'Until when it steps aside (−1: it does not).' },
   ax: { type: 'number', default: 0, description: 'The way it steps aside, east.' },

@@ -76,7 +76,6 @@ export function createAttract(
     textContent: 'The tour · press any key to play',
   });
   banner.dataset.ui = 'attract';
-  Object.assign(banner.style, { left: '50%', bottom: '12%', transform: 'translateX(-50%)', padding: '6px 14px' });
   root.append(banner);
   let [shown, cycles, look, left] = [0, 0, options.look, false];
   const go = () => {

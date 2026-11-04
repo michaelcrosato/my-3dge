@@ -71,7 +71,7 @@ export const DOG = {
 export const DOG_MODES = ['follow', 'sit', 'chase', 'carry', 'wait'] as const;
 
 /** The dog's own state (the component `dog`). */
-export const DOG_FIELDS = {
+const DOG_FIELDS = {
   mode: { type: 'string', enum: DOG_MODES, default: 'follow', description: 'What it does now.' },
   ball: { type: 'integer', default: -1, minimum: -1, description: 'Its ball, an entity; −1: none.' },
   since: { type: 'number', default: 0, unit: 's', description: 'When it began what it does.' },

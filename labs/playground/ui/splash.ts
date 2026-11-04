@@ -20,6 +20,7 @@
  * // await splash.ready(!navigator.webdriver); // resolves on the first key, click or touch
  * @see tests/e2e/playground-ui.spec.ts
  */
+import { brand, textDiv } from './frame';
 import { installTheme } from './theme';
 
 /** How long the splash takes to fade (ms), as the theme's transition. */
@@ -42,15 +43,9 @@ export function createSplash(doc: Document): Splash {
   const el = Object.assign(doc.createElement('div'), { className: 'pg-splash' });
   el.dataset.ui = 'splash';
   el.dataset.value = 'loading';
-  const text = (className: string, textContent: string) => Object.assign(doc.createElement('div'), { className, textContent }); // prettier-ignore
-  const brand = Object.assign(doc.createElement('div'), { className: 'pg-brand' });
-  brand.append(
-    text('pg-brand-kicker', 'my-3dge'),
-    text('pg-brand-title', 'The Playground'),
-    text('pg-brand-sub', 'A block of everything the engine does: walk in, try it, tune it.'),
-  );
+  const text = (className: string, textContent: string) => textDiv(doc, className, textContent);
   const status = text('pg-splash-status', 'Loading the block…');
-  el.append(brand, text('pg-splash-bar', ''), status, text('pg-splash-foot', 'WebGPU · three.js · Rapier'));
+  el.append(brand(doc, 'A block of everything the engine does: walk in, try it, tune it.'), text('pg-splash-bar', ''), status, text('pg-splash-foot', 'WebGPU · three.js · Rapier')); // prettier-ignore
   doc.body.append(el);
   let done: Promise<void> | null = null;
   let start = () => {};

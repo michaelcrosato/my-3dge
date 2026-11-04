@@ -25,7 +25,7 @@ import '../props/outdoors';
 export const SPRING = Object.freeze({ frequency: 1.4, damping: 0.22, kick: 2.6, most: 0.5 });
 
 /** The component `sparring`'s fields: the lean (rad: its head toward +X and +Z), its swing (rad/s) and its turn. */
-export const SPARRING_FIELDS = {
+const SPARRING_FIELDS = {
   x: { type: 'number', default: 0, unit: 'rad', description: 'How far it leans toward +X (east).' },
   z: { type: 'number', default: 0, unit: 'rad', description: 'How far it leans toward +Z (south).' },
   vx: { type: 'number', default: 0, unit: 'rad/s', description: 'How fast it swings toward +X.' },
