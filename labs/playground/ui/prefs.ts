@@ -63,9 +63,6 @@ export interface Prefs {
   volumes: Partial<Record<(typeof PREF_BUSES)[number], number>>;
 }
 
-/** No preferences: a first visit. */
-export const NO_PREFS: Prefs = Object.freeze({ settings: {}, volumes: {} }) as Prefs;
-
 /** The preferences `store` keeps, or none; whatever is not of their shape is dropped. */
 export function readPrefs(store: Pick<Store, 'get'>): Prefs {
   const kept = store.get<Partial<Prefs> | null>(PREFS_KEY, null);

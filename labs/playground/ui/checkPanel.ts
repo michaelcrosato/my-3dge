@@ -69,22 +69,9 @@ const SECTIONS = [
 /** The marks of an answer in the list. */
 const MARKS: Readonly<Record<string, string>> = { 'needs-work': '✗', skip: '–' };
 
-/** The panel's stylesheet: one column of buttons, scrolling when taller than the game. */
-const STYLE = `
-.pg-checks { left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: 88%; overflow-y: auto; width: min(640px, 94%); }
-.pg-checks button { font: inherit; display: block; width: 100%; text-align: left; margin: 0.2em 0; }
-.pg-checks button[data-value=selected] { outline: 2px solid currentColor; }
-.pg-checks button:focus { outline: 2px dashed currentColor; outline-offset: 2px; }
-.pg-checks h3 { margin: 0.8em 0 0.3em; font-size: 1em; }
-.pg-checks p { margin: 0.4em 0; line-height: 1.35; }
-.pg-checks .pg-small { font-size: 0.85em; opacity: 0.8; }
-.pg-checks textarea { font: inherit; width: 100%; box-sizing: border-box; min-height: 4.5em; }
-`;
-
 /** Makes the checks screen in `parent` (see the file comment). */
 export function createChecksPanel(parent: HTMLElement, options: ChecksPanelOptions): ChecksPanel {
   const doc = parent.ownerDocument;
-  if (!doc.getElementById('pg-checks-style')) doc.head.append(Object.assign(doc.createElement('style'), { id: 'pg-checks-style', textContent: STYLE })); // prettier-ignore
   const el = Object.assign(doc.createElement('div'), { className: 'ui-panel ui-box pg-checks' });
   el.dataset.ui = 'checks';
   parent.append(el);

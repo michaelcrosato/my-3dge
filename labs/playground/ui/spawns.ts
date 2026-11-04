@@ -3,8 +3,8 @@
  * the block (`SITE_AREAS`: its spawn, facing as it faces) and each room of its structures (`roomPlace`,
  * labs/playground/scenes/site.ts: at the room's marker, ducked under a low ceiling), each as the arguments of the
  * block's dev action `place`, so a pick is a recorded operation of the run and its replay holds it. `spawnPlaces()`
- * lists them, areas first, then the rooms in the order their level lists them, each named as a player reads it
- * (areas.ts `roomName`); `spawnPlace(id)` finds one.
+ * lists them, areas first, then the rooms in the order their level lists them, each named and described as Go to shows
+ * it (an area by its card, areas.ts `AREAS`; a room as a player reads it, `roomName`); `spawnPlace(id)` finds one.
  *
  * On a scene of the block (`site: 'site:block'`) the front end (labs/playground/ui/frontEnd.ts) runs a pick's action
  * at once; on another scene it opens the block (`?scene=site`) with the pick's id in the view setting
@@ -15,14 +15,15 @@
  *
  * @example
  * spawnPlaces().length; // 25: the block's 8 areas and the house's 17 rooms
- * spawnPlace('area:house')?.label; // 'The hall, inside the front door'
+ * spawnPlace('area:house')?.label; // 'The house'
+ * spawnPlace('room:house/master')?.label; // 'Master bedroom'
  * spawnPlace('room:house/kitchen')?.args.crouch; // false
  * @see labs/playground/ui/spawns.test.ts
  */
 import { defineSettings } from '../../../engine/sim-api';
 import { SITE, SITE_AREAS, type SiteArea } from '../levels/site';
 import { areaStart, roomPlace } from '../scenes/site';
-import { roomName } from './areas';
+import { AREAS, roomName } from './areas';
 
 /** Go to's view setting (see the file comment): a place's id, or none. */
 export const SPAWN_SETTINGS = defineSettings({
@@ -36,10 +37,11 @@ export const SPAWN_SETTINGS = defineSettings({
   },
 });
 
-/** A place to spawn: its id, its label, whether an area or a room, and the `place` action's arguments. */
+/** A place to spawn: its id, its label and the line under it in Go to, area or room, the `place` action's arguments. */
 export interface SpawnPlace {
   readonly id: string;
   readonly label: string;
+  readonly about: string;
   readonly group: 'area' | 'room';
   readonly args: { readonly at: readonly [number, number, number]; readonly yaw: number; readonly crouch: boolean };
 }
@@ -54,10 +56,11 @@ let places: readonly SpawnPlace[] | null = null;
 export function spawnPlaces(): readonly SpawnPlace[] {
   if (places) return places;
   const areas = (Object.keys(SITE_AREAS) as SiteArea[]).map((area): SpawnPlace => {
-    const { what, yaw } = SITE_AREAS[area];
+    const { yaw } = SITE_AREAS[area];
     return {
       id: `area:${area}`,
-      label: capital(what),
+      label: AREAS[area].name,
+      about: AREAS[area].text,
       group: 'area',
       args: { at: areaStart(area), yaw, crouch: false },
     };
@@ -65,8 +68,8 @@ export function spawnPlaces(): readonly SpawnPlace[] {
   const rooms = SITE.structures.flatMap((structure) =>
     (structure.level.rooms ?? []).map((room): SpawnPlace => {
       const { at, crouch } = roomPlace(structure, room);
-      const label = `${capital(structure.name)}: ${roomName(room.name)}`;
-      return { id: `room:${structure.name}/${room.name}`, label, group: 'room', args: { at, yaw: 0, crouch } };
+      const [label, about] = [capital(roomName(room.name)), `Start in the ${structure.name}'s ${roomName(room.name)}.`];
+      return { id: `room:${structure.name}/${room.name}`, label, about, group: 'room', args: { at, yaw: 0, crouch } };
     }),
   );
   return (places = Object.freeze([...areas, ...rooms]));

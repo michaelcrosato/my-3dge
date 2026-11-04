@@ -33,7 +33,9 @@
  * @see labs/playground/controls.test.ts
  */
 import { defineActionMap, type ActionMapSpec } from '../../engine';
-import { cameraMode } from './views';
+import { FEEL_KEY } from './feel';
+import { GOTO_KEY, HELP_KEY } from './ui/help';
+import { cameraMode, LOOK_KEY } from './views';
 
 /** The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names). */
 export const PLAYGROUND_MAPS = {
@@ -62,7 +64,7 @@ export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
 };
 
 /** The keys the page keeps for itself: the look (P), the feel panel (F), Go to (M) and the controls sheet (H). */
-const PAGE_KEYS = ['KeyP', 'KeyF', 'KeyM', 'KeyH'];
+const PAGE_KEYS = [LOOK_KEY, FEEL_KEY, GOTO_KEY, HELP_KEY];
 
 /** Every mode's bindings (see the file comment). */
 const ACTIONS: Readonly<Record<string, readonly string[]>> = {

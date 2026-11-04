@@ -61,7 +61,7 @@ something is in view: it agrees with the ID pass on the box's cameras in 280 of 
 
 ## The looks
 
-docs/PLAYGROUND.md §5.2 and §9.1 say how the playground's two looks are held: thumbnails per look and camera
+docs/PLAYGROUND.md §5.2 and §9.1 say how the playground's three looks (clean, cel and pixel) are held: thumbnails per look and camera
 (`playground-<look>-<camera>`), the shimmer metric (pixels a sub-pixel pan of an orthographic camera changes: 0 in
 the pixel look), contrast and palette within each look's bounds; tests/e2e/playground-looks.spec.ts checks them in
 T2 (`npm run e2e -- tests/e2e/playground-looks.spec.ts`, only when you touched a look).

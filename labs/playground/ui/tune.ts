@@ -93,19 +93,9 @@ function pickerColour(value: unknown): string {
   return /^#[\da-f]{3}$/i.test(hex) ? `#${[...hex.slice(1)].map((c) => c + c).join('')}` : '#000000';
 }
 
-/** The panel's stylesheet: on the right of the game, scrolling, compact rows. */
-const STYLE = `
-.pg-tune { right: 1%; top: 2%; bottom: 2%; width: min(400px, 46%); overflow-y: auto; font-size: 0.85em; }
-.pg-tune .pg-row { display: grid; grid-template-columns: 1fr 1.4fr 3em; gap: 0.4em; align-items: center; margin: 0.15em 0; }
-.pg-tune details { margin: 0.2em 0; } .pg-tune summary { cursor: pointer; }
-.pg-tune h3 { margin: 0.6em 0 0.2em; font-size: 1em; } .pg-tune button, .pg-tune select { font: inherit; }
-.pg-tune textarea { width: 100%; height: 9em; font: 0.85em monospace; }
-`;
-
 /** Makes the Tune panel in `parent` (see the file comment). */
 export function createTune(parent: HTMLElement, options: TuneOptions): TunePanel {
   const doc = parent.ownerDocument;
-  if (!doc.getElementById('pg-tune-style')) doc.head.append(Object.assign(doc.createElement('style'), { id: 'pg-tune-style', textContent: STYLE })); // prettier-ignore
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string, unknown> = {}) =>
     Object.assign(doc.createElement(tag), props) as HTMLElementTagNameMap[K];
   const el = make('div', { className: 'ui-panel ui-box pg-tune' });

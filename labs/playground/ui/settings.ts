@@ -89,19 +89,9 @@ export interface SettingsScreen {
   remove(): void;
 }
 
-/** The screen's stylesheet: the rows on a grid, the panel scrolling when it is taller than the game. */
-const STYLE = `
-.pg-settings { left: 50%; top: 50%; transform: translate(-50%, -50%); max-height: 86%; overflow-y: auto; width: min(560px, 92%); }
-.pg-settings .pg-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.6em; align-items: center; margin: 0.25em 0; }
-.pg-settings h3 { margin: 0.8em 0 0.3em; font-size: 1em; }
-.pg-settings button { font: inherit; }
-.pg-settings [data-ui=binding-note] { grid-column: 1 / -1; font-size: 0.85em; opacity: 0.8; }
-`;
-
 /** Makes the settings screen in `parent` (see the file comment). */
 export function createSettings(parent: HTMLElement, options: SettingsOptions): SettingsScreen {
   const doc = parent.ownerDocument;
-  if (!doc.getElementById('pg-settings-style')) doc.head.append(Object.assign(doc.createElement('style'), { id: 'pg-settings-style', textContent: STYLE })); // prettier-ignore
   const el = Object.assign(doc.createElement('div'), { className: 'ui-panel ui-box pg-settings' });
   el.dataset.ui = 'settings';
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, props: Record<string, unknown> = {}) =>

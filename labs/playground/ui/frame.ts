@@ -4,7 +4,7 @@
  * left; `menu`; `list`: a long menu in columns; `panel`: a panel in the middle; `side`: a panel at the side over the
  * open world), headed by the playground's name (`heading` null), a heading, or nothing (''), with a body for the
  * screen's menu or panel, a line under it that says what the selected item does (`detail`, `ABOUT`'s words), and the
- * keys in the footer.
+ * keys in the footer. `brand(doc, sub)` is the playground's name as the start menu and the splash head it.
  *
  * Invariants: presentation only; it reads nothing and the caller removes `el`.
  *
@@ -34,6 +34,17 @@ export const ABOUT: Readonly<Record<string, string>> = {
   check: 'Say how the check under way went.',
 };
 
+/** A `div` of `className` holding `textContent`, made in `doc`. */
+export const textDiv = (doc: Document, className: string, textContent: string): HTMLElement =>
+  Object.assign(doc.createElement('div'), { className, textContent });
+
+/** The playground's name as the start menu and the splash head it: a kicker, the title and `sub` under it. */
+export function brand(doc: Document, sub: string): HTMLElement {
+  const el = textDiv(doc, 'pg-brand', '');
+  el.append(textDiv(doc, 'pg-brand-kicker', 'my-3dge'), textDiv(doc, 'pg-brand-title', 'The Playground'), textDiv(doc, 'pg-brand-sub', sub)); // prettier-ignore
+  return el;
+}
+
 /** A screen's frame, made in `root` (see the file comment). */
 export function createFrame(
   root: HTMLElement,
@@ -44,16 +55,10 @@ export function createFrame(
   const doc = root.ownerDocument;
   const el = Object.assign(doc.createElement('div'), { className: 'pg-screen' });
   el.dataset.kind = kind;
-  const text = (className: string, textContent: string) => Object.assign(doc.createElement('div'), { className, textContent }); // prettier-ignore
-  if (heading === null) {
-    const brand = Object.assign(doc.createElement('div'), { className: 'pg-brand' });
-    brand.append(
-      text('pg-brand-kicker', 'my-3dge'),
-      text('pg-brand-title', 'The Playground'),
-      text('pg-brand-sub', 'One block of everything the engine does: a house, a gym, a range, a ring, a hill and a street to try it in.'), // prettier-ignore
-    );
-    el.append(brand);
-  } else if (heading) el.append(text('pg-heading', heading));
+  const text = (className: string, textContent: string) => textDiv(doc, className, textContent);
+  if (heading === null)
+    el.append(brand(doc, 'One block of everything the engine does: a house, a gym, a range, a ring, a hill and a street to try it in.')); // prettier-ignore
+  else if (heading) el.append(text('pg-heading', heading));
   const body = Object.assign(doc.createElement('div'), { className: 'pg-body' });
   const detail = text('pg-detail', '');
   el.append(body, detail);
