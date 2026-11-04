@@ -2665,7 +2665,8 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
 - **And the facing's skin (amendment 54) shaded as its face.** The visual review of main at 763a0f2 found the light
   pinholes gone, but a dark dotted line up the left edge of two heads in their place: the skin's 3 mm end, facing
   along the wall, shaded darker than the siding beside it. Every part of the skin (its ends and its bevel) now takes
-  the face's normal and its texture's u and v run on (engine/gfx/level/openings.ts `writeSkin`), so its 3 mm read as
-  the wall's siding; the geometry is unchanged, closed as it was. engine/gfx/level/openings.test.ts holds it (64 of the
-  shed's skin vertices were shaded otherwise).
+  the face's normal, an end's leant 3° out of the run's end so it still points to the side its triangle faces (the geo
+  QA's rule: exactly the face's, it read as shaded from behind), and its texture's u and v run on
+  (engine/gfx/level/openings.ts `writeSkin`), so its 3 mm read as the wall's siding; the geometry is unchanged, closed
+  as it was. engine/gfx/level/openings.test.ts holds it (64 of the shed's skin vertices were shaded otherwise).
 - Plan edit: WP 13.37.

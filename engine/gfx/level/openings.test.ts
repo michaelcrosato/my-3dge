@@ -15,6 +15,7 @@ import { compileLevel } from '../../world/level/compile';
 import { DOOR_SWING, leafSide, type DoorLeaf } from '../../world/level/doorways';
 import type { OpeningDescriptor } from '../../world/level/types';
 import { frustumGeometry } from '../geometry/frustum';
+import { inspectGeometry } from '../geometry/inspect';
 import { boxBetween, FACING, FRAME, frameInsets, framesGeometry, headsGeometry, KNUCKLE, LEAST_LINING, POST_GAP, PROUD, railingGeometry, STOP, SWING_CLEAR, wallFacings } from './openings'; // prettier-ignore
 
 const SHED = compileLevel(
@@ -82,9 +83,11 @@ describe('headsGeometry', () => {
       if (Math.abs(new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a)).normalize().y) > 0.99) level.push(f / 3); // prettier-ignore
     }
     expect(level).toEqual([]); // no level face: never in a floor's plane
-    // Shaded as the face it closes: every vertex's normal is its face's, out of the wall (its ends and bevel too).
+    // Shaded as the face it closes: every vertex's normal within 3° of its face's, out of the wall (an end's leant out
+    // of the run's end, so it still points to the side its triangle faces: the geo QA's rule).
     const shade = (i: number) => (window(i) ? [Math.sign(position.getX(i) - 5.5 * t), 0, 0] : [0, 0, Math.sign(position.getZ(i) - 3.5 * t)]); // prettier-ignore
-    expect(used.filter((i) => !near(normal.getX(i) - shade(i)[0], 0) || !near(normal.getY(i), 0) || !near(normal.getZ(i) - shade(i)[2], 0))).toEqual([]); // prettier-ignore
+    expect(used.filter((i) => normal.getX(i) * shade(i)[0] + normal.getZ(i) * shade(i)[2] < Math.cos((3 * Math.PI) / 180))).toEqual([]); // prettier-ignore
+    expect(inspectGeometry(facing).flipped).toBe(0);
     expect(used.filter((i) => uv.getX(i) < -1e-6 || uv.getX(i) > t + 1e-6)).toEqual([]); // its u the face's, a tile wide
     // Closed: an edge only one triangle has lies on the wall's face or at the skin's foot (in the frame's head).
     const key = (i: number) =>

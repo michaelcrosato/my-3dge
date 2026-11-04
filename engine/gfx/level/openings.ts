@@ -62,6 +62,8 @@ export const SWING_CLEAR = 0.001;
 export const STOP = 0.01;
 /** How far a wall's facing over an opening stands out of the head's faces (m). */
 export const FACING = 0.003;
+/** How far a facing's ends lean their shading out of the run's end from the face's (the tangent, about 3°). */
+const END_LEAN = 0.05;
 /** How far apart a railing's posts stand, at most (m). */
 export const POST_GAP = 1;
 /** A railing's post and rails, across (m). */
@@ -143,8 +145,9 @@ export function wallFacings(
  * Writes a facing's skin over the tile `[a0, a1]` along its wall (see the file comment), on the wall's face `b[0]`
  * standing out to `b[1]`, from `y[0]` to `y[1]`: its face, then a bevel back to the wall's face at its top (never level,
  * so never in a floor's plane), and its ends where `ends` (low, high) says the run ends. Every part is shaded as the
- * face (its normal, and its texture's u and v run on), so its 3 mm read as the wall's siding at a grazing look: an
- * end shaded as itself, facing along the wall, drew a dark dotted line up a head's edge. `at(a, y, b)` places a point.
+ * face (its normal, an end's leant 3° out of it, and its texture's u and v run on), so its 3 mm read as the wall's
+ * siding at a grazing look: an end shaded as itself, facing along the wall, drew a dark dotted line up a head's edge.
+ * `at(a, y, b)` places a point.
  */
 function writeSkin(
   writer: Writer,
@@ -160,10 +163,10 @@ function writeSkin(
   const u = cross(up, normal); // the face's u, left to right seen from outside, as box.ts's
   const [left, right] = dot(minus(at(a1, 0, 0), at(a0, 0, 0)), u) > 0 ? [a0, a1] : [a1, a0];
   const u0 = dot(at(left, 0, out), u);
-  // A flat polygon, its corners counter-clockwise seen from outside it, shaded and textured as the face.
-  const polygon = (corners: readonly Vec3[]) => {
+  // A flat polygon, its corners counter-clockwise seen from outside it, shaded (`shade`) and textured as the face.
+  const polygon = (corners: readonly Vec3[], shade: Vec3 = normal) => {
     const first = writer.count;
-    for (const p of corners) writer.vertex(p, normal, [dot(p, u) - u0, p[1] - y0]);
+    for (const p of corners) writer.vertex(p, shade, [dot(p, u) - u0, p[1] - y0]);
     for (let i = 1; i + 1 < corners.length; i++) writer.triangle(first, first + i, first + i + 1);
   };
   const bevel = y1 - Math.abs(out - face);
@@ -176,7 +179,9 @@ function writeSkin(
     if (!end) continue;
     const e = normalize(minus(at(a + side, 0, face), at(a, 0, face))); // out of the run's end
     const corners: [number, number][] = dot(minus(at(a, 0, out), at(a, 0, face)), cross(up, e)) > 0 ? [[face, y0], [out, y0], [out, bevel], [face, y1]] : [[out, y0], [face, y0], [face, y1], [out, bevel]]; // prettier-ignore
-    polygon(corners.map(([b, y]) => at(a, y, b)));
+    // The face's normal leant `END_LEAN` out of the run's end, so it points to the side the end faces (a triangle
+    // shaded from behind would be culled or lit wrong, engine/gfx/geometry/inspect.ts) and shades as the face.
+    polygon(corners.map(([b, y]) => at(a, y, b)), normalize([normal[0] + END_LEAN * e[0], normal[1], normal[2] + END_LEAN * e[2]])); // prettier-ignore
   }
 }
 
