@@ -2559,4 +2559,10 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   shuts on a camera standing in its leaf moves it to the clear point, as a wall it was moved into does. No sim query
   passes `also`, so no hash changes.
 - **Measured:** the agent eye sees the player from every camera on the patio and the porch, the platformer's too.
+- **A third cut (an independent reading of the change, ten findings, two kept by two skeptics each):** a wall never
+  comes between a camera and the player it follows, but a door shut behind him can: the platformer, trailed into the
+  doorway as he walked out, stayed in the room behind the door he shut, losing him for good. A `moveCamera` camera that
+  a sweep from the player reaches only past the doors named in `also` goes to the clear point, as one found inside a
+  wall does (engine/gfx/cameras/collide.ts; collide.test.ts holds it, and a wall between them cuts nothing). The
+  queries' test now holds that what `also` does not name is still filtered by `fixed` and `groups`.
 - Plan edit: WP 13.34.
