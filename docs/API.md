@@ -5068,7 +5068,7 @@ For the agents who maintain the engine.
 - `railingGeometry` (function): A railing along each run of `pieces` (tiles `tile` m wide), from `bottom` to `top` (m); null when there are none.
 - `STOP` (const): A hung leaf's hinge stop, through the wall (m): a strip in its middle, which the leaf turning past a quarter clears.
 - `SWING_CLEAR` (const): How far a hung leaf's hinge stop stands clear of its edge's sweep about the hinge (m).
-- `wallHeads` (function): The wall over each of `openings` (on `storey`) that stands in a wall, as that wall (see the file comment): by the recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands), a geometry of a box a tile, sides then tops, its sides' v in metres from `foot`, the wall's own foot; and the tiles drawn.
+- `wallHeads` (function): The wall over each of `openings` (on `storey`) that stands in a wall, as that wall (see the file comment): by the recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands), a geometry of a box a tile, its sides' v in metres from `foot`, the wall's own foot, in one draw group (its top lies under the floor and its underside in the frame's head: only its sides show); and the tiles drawn.
 
 ### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
 

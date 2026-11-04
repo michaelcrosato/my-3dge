@@ -5,7 +5,8 @@
  * storey's full top, or under a pitched roof up to its underside (engine/gfx/level/walls.ts), as the colliders stand
  * (engine/world/level/storeys.ts); tiles `except` accepts are left to `wallHeads(level, storey, openings, foot,
  * wallAt)`, the wall over an opening in a wall drawn as that wall: a box a tile like its pieces, its sides' v from the
- * wall's `foot`, so a siding's boards and a brick's courses run on over the opening, a geometry per wall recipe.
+ * wall's `foot`, so a siding's boards and a brick's courses run on over the opening, a geometry per wall recipe drawn
+ * in its sides' material (one draw call, as the heads are).
  *
  * `framesGeometry(openings, tile, leaf?)` is the frame round each: two jambs and a head of planks `FRAME` wide on the
  * wall round the opening, and a window's sill, standing `PROUD` out of the wall's faces and lining its reveal `PROUD`
@@ -41,7 +42,7 @@ import type {
 } from '../../world/level/types';
 import { boxGeometry } from '../geometry/box';
 import { frustumGeometry } from '../geometry/frustum';
-import { mergeGeometries, sidesThenTops } from '../geometry/groups';
+import { mergeGeometries } from '../geometry/groups';
 import { createWriter } from '../geometry/writer';
 import { writeHull } from './walls';
 
@@ -109,7 +110,8 @@ export function headsGeometry(
 /**
  * The wall over each of `openings` (on `storey`) that stands in a wall, as that wall (see the file comment): by the
  * recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands), a geometry of a box
- * a tile, sides then tops, its sides' v in metres from `foot`, the wall's own foot; and the tiles drawn.
+ * a tile, its sides' v in metres from `foot`, the wall's own foot, in one draw group (its top lies under the floor and
+ * its underside in the frame's head: only its sides show); and the tiles drawn.
  */
 export function wallHeads(
   level: Pick<CompiledLevel, 'cols' | 'tile'>,
@@ -136,7 +138,11 @@ export function wallHeads(
       }
   }
   const recipes = new Map<string, BufferGeometry>();
-  for (const [recipe, boxes] of [...pieces].sort(([a], [b]) => byText(a, b))) recipes.set(recipe, sidesThenTops(joined(boxes)!)); // prettier-ignore
+  for (const [recipe, boxes] of [...pieces].sort(([a], [b]) => byText(a, b))) {
+    const geometry = joined(boxes)!;
+    geometry.clearGroups(); // one draw group: the boxes' faces all take the wall's sides' material
+    recipes.set(recipe, geometry);
+  }
   return { recipes, tiles };
 }
 

@@ -218,7 +218,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       if (geometry) parts.push(place(single(geometry, recipe), name, recipe, [], heights, k));
     }
     for (const [wall, geometry] of walls.recipes) {
-      const recipe = { ...recipeOf('heads'), materials: recipeOf(wall).materials }; // the wall's sides and tops
+      const recipe = { ...recipeOf('heads'), materials: recipeOf(wall).materials.slice(0, 1) }; // the wall's sides': only they show
       parts.push(place(single(geometry, recipe), `heads:${wall}`, recipe, [], [storey.base, storey.fullTop], k));
     }
   });

@@ -2613,8 +2613,9 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     (engine/gfx/level/openings.test.ts).
   - A slab's edge stands `STOREY_SEAM` back into its tile over a wall or a head of the storey under it
     (engine/gfx/level/slabs.ts, meshes.ts).
-  - The wall over an opening in a wall is that wall: its recipe's sides and tops, a box a tile like its pieces, its
-    boards' v from the wall's foot so they run on (`heads:<recipe>`; meshes.ts). The `heads` part keeps low ceilings,
+  - The wall over an opening in a wall is that wall: a box a tile like its pieces in its recipe's sides' material
+    (only its sides show: one draw call, within the geo QA's 20 a storey), its boards' v from the wall's foot so they
+    run on (`heads:<recipe>`; meshes.ts). The `heads` part keeps low ceilings,
     and openings under a pitched roof, which follow the roof's underside. The storey cut hides only those under a low
     ceiling.
   - labs/playground/levels/house.test.ts holds all three sweeps; they find every pair named above without the fix.

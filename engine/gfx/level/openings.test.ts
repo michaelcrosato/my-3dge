@@ -49,7 +49,7 @@ describe('headsGeometry', () => {
     expect(tiles.size).toBe(2 + 2); // the door's two tiles and the window's two
     const heads = recipes.get('wall')!;
     expect(heads.getAttribute('position').count).toBe(4 * 24); // a box a tile, as the wall's pieces are
-    expect(heads.groups.map((group) => group.materialIndex)).toEqual([0, 1]); // sides, then tops: the wall's slots
+    expect(heads.groups).toEqual([]); // one draw call: only its sides show, under the floor and over the frame's head
     const [position, normal, uv] = ['position', 'normal', 'uv'].map((name) => heads.getAttribute(name));
     for (let i = 0; i < position.count; i++)
       if (Math.abs(normal.getY(i)) < 1e-6) expect(uv.getY(i)).toBeCloseTo(position.getY(i) + 0.01, 6); // v from the foot
