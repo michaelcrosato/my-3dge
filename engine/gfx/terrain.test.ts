@@ -2,10 +2,11 @@
  * @file Unit tests for the terrain drawn (engine/gfx/terrain.ts, terrainSplat.ts), in Node: chunks of at most 32 cells
  * named by their corner cell, each a LOD at its middle with a level per step that divides it; the finest level's
  * surface is the terrain's (terrainHeight at every vertex), faces up, UVs in world metres and unit normals; every level
- * hangs its skirt facing out of the chunk; a draw call a chunk (and one per shadow map); every level registered with
- * the warm-up, and dispose frees and detaches; the splat draws each style's ground material through one copy whose
- * colour mixes the layers, and the style set re-points the chunks through it. The GPU half (the ID pass, 0 pipelines
- * after the warm-up, the levels switching) is tests/e2e/terrain.spec.ts.
+ * hangs its skirt facing out of the chunk, none where both sides of its edge are cut, beside ground and at the
+ * border all; a draw call a chunk (and one per shadow map); every level registered with the warm-up, and dispose
+ * frees and detaches; the splat draws each style's ground material through one copy whose colour mixes the layers,
+ * and the style set re-points the chunks through it. The GPU half (the ID pass, 0 pipelines after the warm-up, the
+ * levels switching) is tests/e2e/terrain.spec.ts.
  * @see engine/gfx/terrain.ts
  */
 import { MeshLambertMaterial, OrthographicCamera, PerspectiveCamera, Scene, Vector3, type BufferGeometry, type Mesh, type Object3D } from 'three/webgpu'; // prettier-ignore
@@ -103,6 +104,27 @@ describe('createTerrainMeshes', () => {
         expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThan(SKIRT - 1e-5); // an edge's corner and its drop
       }
     }
+  });
+
+  it('hangs no skirt where both sides of a chunk’s edge are cut, keeping it beside ground and at the border', () => {
+    // Two chunks of 32 × 4 cells, their edge at x = 32; a floor's cut over cells 30 to 33 of rows 1 and 2, and one
+    // at the terrain's west border, cells 0 and 1 of the same rows.
+    const flat = makeTerrain({ size: [64, 4] });
+    const cut = new Uint8Array(64 * 4);
+    for (const r of [1, 2]) for (const c of [0, 1, 30, 31, 32, 33]) cut[r * 64 + c] = 1;
+    const upright = (geometry: BufferGeometry, at: Vector3) => triangles(geometry, at).filter((tri) => Math.abs(faceNormal(tri).y) < 1e-6); // prettier-ignore
+    const on = (tris: Vector3[][], x: number, z0: number, z1: number) => tris.filter((tri) => tri.every((p) => Math.abs(p.x - x) < 1e-6 && p.z > z0 - 1e-6 && p.z < z1 + 1e-6)).length; // prettier-ignore
+    const meshes = createTerrainMeshes(flat, { materials: library(), cut });
+    const skirts = meshes.chunks.flatMap((lod) => upright((lod.levels[0].object as Mesh).geometry, lod.position));
+    // Over the cut, neither chunk's skirt (its top lay in the floor's plane); beside ground both; the border keeps its.
+    expect([on(skirts, 32, 1, 3), on(skirts, 32, 0, 1), on(skirts, 32, 3, 4), on(skirts, 0, 1, 3)]).toEqual([
+      0, 4, 4, 4,
+    ]);
+    // At a coarser step, each segment reads every cell along it: a cut through all four rows takes the edge's skirt.
+    const through = new Uint8Array(64 * 4);
+    for (let r = 0; r < 4; r++) for (const c of [31, 32]) through[r * 64 + c] = 1;
+    const coarse = upright(chunkGeometry(flat, terrainNormals(flat), [0, 0, 32, 4], 2, [16, 0, 2], through), new Vector3(16, 0, 2)); // prettier-ignore
+    expect([on(coarse, 32, 0, 4), on(coarse, 0, 0, 4)]).toEqual([0, 4]);
   });
 
   it('shows a chunk’s level by its distance from a perspective camera, and by what an orthographic one frames', () => {
