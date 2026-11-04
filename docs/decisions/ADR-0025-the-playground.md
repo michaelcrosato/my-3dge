@@ -2505,8 +2505,9 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   signs, drawn over everything, showed through the house's walls: on the block they show only in the gym.
 - **Tests:** the specs that open the playground for its menus or its gym open `?scene=gym` (the block warms up for
   minutes on SwiftShader); the block's own tests open `?scene=site` as before.
-- **Baselines:** seven of the street's look thumbnails (tests/baselines/thumbs/playground-{cel,pixel}-{first,shoulder,
-  follow}.json and playground-clean-follow.json) are recorded again: they held the bug, the gym's wall on the left
+- **Baselines:** seven of the street's look thumbnails in tests/baselines/thumbs/ (the cel and pixel looks from first
+  person, the shoulder and the follow camera, and the clean look from the follow camera) are recorded again: they held
+  the bug, the gym's wall on the left
   horizon cut down to show the sky and the house's front cut open to show its lit rooms, from a camera on the street.
   Every changed cell (31 to 82 a view) lies in those two places; the views looking down at the ground and from above
   stayed within the tolerance and keep their files.
