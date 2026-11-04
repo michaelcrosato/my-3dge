@@ -18,7 +18,7 @@
  * Each drawn frame (`onFrame`) it runs the front end (labs/playground/ui/frontEnd.ts, WP 13.25: the title screen,
  * pause on Escape, the spawn picker, settings kept by the store with the bindings, photo mode; the attract mode, the
  * tour with the view cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), shows the gym's signs
- * (labs/playground/levels/gym.ts) within `SIGN_RANGE` of the player and the HUD of the camera mode in use
+ * (labs/playground/levels/gym.ts) within `SIGN_RANGE` of the player while he is in the gym (they draw over walls) and the HUD of the camera mode in use
  * (labs/playground/ui/hud.ts: the room on a site's scene, `whereLine`), plays the frame's sound
  * (labs/playground/sounds/page.ts, WP 13.22), silent until the first key, click or touch, and runs the weather
  * (labs/playground/weather.ts, WP 11.3: `playground.rain` and `playground.dust`). It reads the run and changes it only
@@ -173,8 +173,12 @@ function showFrame({ world, scene, setting }: EngineFrame): void {
   const entity = players.find((one) => one.actor.player);
   const player = entity?.actor;
   const photo = frontEnd?.state().screens.at(-1) === 'photo';
+  // on the block, only inside the gym: the labels draw over everything, so from the yard or the house they would
+  // show through its walls
+  const inGym = !player || scene.id === gym.id || `level:${placeAt(scene, player)?.structure.name}` === SITE_STRUCTURES.gym.level; // prettier-ignore
   for (const sign of signs) {
-    sign.label.visible = !photo && (!player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE);
+    const near = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
+    sign.label.visible = !photo && inGym && near;
   }
   if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
   const where = player ? whereLine(scene, player) : null;

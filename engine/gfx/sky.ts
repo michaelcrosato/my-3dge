@@ -1,10 +1,10 @@
 /**
  * @file Skies (PLAN.md WP 7.1, §6.6 kind `sky`): what surrounds and lights a level, as presets of data, and
  * `createSky`, which puts a preset on a scene. A `sky` entry gives the background colour, a sky dome (three.js's
- * `SkyMesh` addon, the Preetham daylight model), a backdrop (silhouette layers round the horizon), a sun (a
- * `DirectionalLight` the dome agrees with), the ambient light and fog (engine/gfx/atmosphere.ts), and how bright the
- * light pool's point lights shine (engine/gfx/lights.ts). The kind, its fields and its presets (`sky:hall`,
- * `sky:daylight`) are engine/gfx/skyKind.ts's.
+ * `SkyMesh` addon, the Preetham daylight model, on a sphere in place of its box: `keepNearPlane`), a backdrop
+ * (silhouette layers round the horizon), a sun (a `DirectionalLight` the dome agrees with), the ambient light and fog
+ * (engine/gfx/atmosphere.ts), and how bright the light pool's point lights shine (engine/gfx/lights.ts). The kind, its
+ * fields and its presets (`sky:hall`, `sky:daylight`) are engine/gfx/skyKind.ts's.
  *
  * Switching presets, or showing the hour's sky (engine/gfx/daylight.ts), changes uniforms, colours and visibility
  * only: the dome and the backdrop stay in the scene, registered with the warm-up, the sun and the pool's lights are
@@ -14,8 +14,8 @@
  * may draw the dome as a clean gradient instead (`gradient`, WP 13.24: the cel look's), a uniform too.
  *
  * The backdrop is baked on the CPU into one strip (engine/gfx/backdrop.ts `bakeBackdrop`), which wraps three times
- * round an open cylinder that follows the camera, its foot just under eye level, drawn at the far plane like the
- * dome, so the level always stands in front of both. With `feature:cascadedShadows` on, the sun casts through
+ * round an open cylinder that follows the camera, its foot just under eye level, drawn first and writing no depth
+ * like the dome (`atFarPlane`), so the level always stands in front of both. With `feature:cascadedShadows` on, the sun casts through
  * cascades that follow the camera (engine/gfx/enhanced/csm.ts, through engine/gfx/features.ts); with tiled lighting,
  * the light pool holds 64 lights (engine/gfx/lights.ts). Both come from the renderer's feature report (`features`).
  *
@@ -50,13 +50,14 @@ import {
   MeshBasicNodeMaterial,
   RepeatWrapping,
   RGBAFormat,
+  SphereGeometry,
   SRGBColorSpace,
   UnsignedByteType,
   type Camera,
   type Node,
   type Scene,
 } from 'three/webgpu';
-import { cameraPosition, Fn, mix, modelViewProjection, positionWorld, renderGroup, smoothstep, uniform, vec4 } from 'three/tsl'; // prettier-ignore
+import { cameraPosition, Fn, min, mix, modelViewProjection, positionWorld, renderGroup, smoothstep, uniform, vec4 } from 'three/tsl'; // prettier-ignore
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
 import { registry as sharedRegistry, type Registry } from '../core/registry';
 import type { Rng } from '../core/rng';
@@ -114,14 +115,36 @@ export interface SkyReport {
   fog: FogReport;
 }
 
-/** Draws `mesh` at the far plane, behind everything, as SkyMesh draws its dome. */
+/**
+ * Keeps `mesh` short of the far plane, as SkyMesh means its dome to be, without moving the near plane: a vertex keeps
+ * its own depth unless it lies past the far plane, which brings it just inside. Setting every depth to the far plane
+ * (z = w), as SkyMesh does, clips the triangles that pass beside the camera at w = 0 instead of the near plane, and
+ * those stretch towards infinity: grey wedges and a bright seam across the sky (the playground's block, 2026-11-03).
+ */
 function atFarPlane(material: MeshBasicNodeMaterial): void {
   material.vertexNode = Fn(() => {
     const position = modelViewProjection.toVar();
-    position.z.assign(position.w);
+    position.z.assign(min(position.z, position.w.mul(FAR_INSIDE)));
     return position;
   })();
 }
+
+/**
+ * SkyMesh's dome as `atFarPlane` draws the backdrop: its vertex node, which also writes the daylight model's varyings,
+ * still runs, but the position it returns, every depth at the far plane, is replaced by the true one brought inside it.
+ */
+function keepNearPlane(dome: SkyMesh): void {
+  const daylight = dome.material.vertexNode as Node;
+  dome.material.vertexNode = Fn(() => {
+    const position = modelViewProjection.toVar();
+    daylight.toVar(); // its varyings, assigned as the dome's own node assigns them
+    position.z.assign(min(position.z, position.w.mul(FAR_INSIDE)));
+    return position;
+  })();
+}
+
+/** The share of the far plane's depth that `atFarPlane` keeps a vertex inside. */
+const FAR_INSIDE = 0.99999;
 
 /** How `createSky` makes a sky. */
 export interface SkyOptions {
@@ -163,6 +186,12 @@ export function createSky(scene: Scene, options: SkyOptions = {}): Sky {
 
   const dome = new SkyMesh();
   dome.name = 'sky/dome';
+  keepNearPlane(dome);
+  // a sphere of small triangles for SkyMesh's box: the box's faces are two triangles each, and those beside the camera,
+  // cut at the near plane, carry the world position the daylight model reads so imprecisely that a wedge of the sky
+  // came out the horizon's colour, edged by a bright seam (the playground, 2026-11-03); the model reads only directions
+  dome.geometry.dispose();
+  (dome as Mesh).geometry = new SphereGeometry(0.5, 48, 24);
   dome.scale.setScalar(BACKDROP.radius);
   dome.material.fog = false;
   // The render group, so a new preset reaches the dome however still the camera stands (see atmosphere.ts).

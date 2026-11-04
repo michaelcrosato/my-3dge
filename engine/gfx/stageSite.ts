@@ -3,7 +3,9 @@
  * site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in its level entry's looks (`registry`'s:
  * its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about
  * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts). Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player
- * stands on the stage: `follow`) and its cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame:
+ * stands on the stage: `follow`) and its cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame; the
+ * cutaway cuts only the structure the player stands in (`where`), so a house he walks past keeps its walls, every
+ * other structure only fading what stands between the camera and him:
  * `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's frame
  * (`toLocal`, the yaw less its turns), cuts and fades there, and in a classic view (`view`) hides, in the structure
  * the player stands in, the storeys above the player's and the roof while indoors (`cutPlace`): the others stay whole.
@@ -117,11 +119,14 @@ export function createStageSite(
       if (objects) rides ??= createCutaway({ root, parts: [] }, { objects });
     },
     update(pose, feet, { fade = false, view = false } = {}) {
-      const inside = view ? where(feet) : null;
+      const at = where(feet);
+      const inside = view ? at : null;
       cut = inside ? { structure: inside.structure, storey: inside.storey } : null;
       rides?.update(pose, feet, { fade });
       for (const each of drawn) {
-        each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade });
+        // only the structure he stands in is cut: another's walls facing the camera hide nothing of his
+        const own = at?.structure === each.structure;
+        each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade, cut: own });
         if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors, inside.low);
         else each.storeys.clear();
       }
