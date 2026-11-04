@@ -102,7 +102,7 @@ describe('shape casts and overlaps', () => {
   });
 
   it('meet fixed bodies only with `fixed`, and the bodies `also` names whatever the groups and `fixed` say', () => {
-    const { p, floor, crate } = scene();
+    const { p, floor, step, crate } = scene();
     const ball = { type: 'ball', radius: 0.3 } as const;
     expect(p.raycast([0, 5, 3], [0, -1, 0], { fixed: true })?.body).toBe(floor); // the crate moves: passed
     expect(p.raycast([0, 5, 3], [0, -1, 0], { fixed: true, also: [crate] })?.body).toBe(crate);
@@ -115,6 +115,14 @@ describe('shape casts and overlaps', () => {
     expect(p.overlap(ball, [0, 0.5, 3], { fixed: true, also: [crate] })).toEqual([crate]);
     expect(p.overlap(ball, [0, 0.5, 3], { fixed: true, also: [] })).toEqual([]);
     expect(() => p.raycast([0, 5, 0], [0, -1, 0], { also: [-1] })).toThrow(/PHYSICS_BAD_ARGUMENT.*also/);
+    // what `also` does not name is still filtered: a moving lid over the crate passed by `fixed`, the floor by `groups`
+    const lid = p.addBody({ position: [0, 2, 3], colliders: [{ shape: { type: 'box', size: [1, 0.2, 1] } }] });
+    p.step(still());
+    expect(p.raycast([0, 5, 3], [0, -1, 0])?.body).toBe(lid);
+    expect(p.raycast([0, 5, 3], [0, -1, 0], { fixed: true, also: [crate] })?.body).toBe(crate);
+    expect(p.overlap({ type: 'box', size: [0.5, 2, 0.5] }, [0, 1.5, 3], { fixed: true, also: [crate] })).toEqual([crate]); // prettier-ignore
+    expect(p.raycast([3, 5, 0], [0, -1, 0], { groups: 'prop', also: [step] })?.body).toBe(step);
+    expect(p.raycast([0, 5, 0], [0, -1, 0], { groups: 'prop', also: [step] })).toBeNull(); // the floor is `world`'s
     p.dispose();
   });
 });

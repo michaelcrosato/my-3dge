@@ -20,9 +20,9 @@
  *   lost it goes down only to where it sees the base again (never behind a wall's top it rose over), and along the
  *   base's trail (`CameraBall.trail`: round a corner, through a door) to the newest point of it it sees, no nearer the
  *   base than `CameraKeep.trail`. One more than a metre from where it wants for `COLLIDE_STUCK` seconds homes to the
- *   clear point, level until over it. Two cuts are left: carried further than `COLLIDE_TELEPORT` in a frame (the
- *   player put elsewhere), or found inside a wall (moved into it), it goes to the clear point.
- *
+ *   clear point, level until over it. Three cuts are left, each to the clear point: carried further than
+ *   `COLLIDE_TELEPORT` in a frame (the player put elsewhere), found inside a wall (moved into it), or cut off from the
+ *   base by a door shut between them (`walls.also`: no wall ever comes between them so).
  * Invariants: pure (equal walls and inputs give equal answers); a ball that starts clear and stops where `reach` or
  * `sweep` says never overlaps the groups cast against (chase.test.ts walks fixtures/scenes/chase-walls/ to prove it);
  * without `walls.queries` nothing is in the way. Carried from engine/gfx/cameras/chase.ts (WP 3.9's arm).
@@ -232,15 +232,18 @@ export function moveCamera(
   const { queries, groups = 'world', exclude, fixed = true, also } = walls;
   if (!queries || !ball) return { at: clear, stuck: 0, trail: [base] };
   const fit = { type: 'ball', radius: COLLIDE_RADIUS - COLLIDE_SKIN } as const;
+  /** Whether a ball swept from the base gets to `at` past `these` walls (within the 2 skins a sweep stops short). */
+  const reaches = (these: Walls, at: Vec3) => far(sweep(these, base, at), at) < 3 * COLLIDE_SKIN;
   if (
     queries.overlap(fit, ball.at, { groups, exclude, fixed, also }).length > 0 ||
-    far(carried, ball.at) > COLLIDE_TELEPORT
+    far(carried, ball.at) > COLLIDE_TELEPORT ||
+    (also !== undefined && also.length > 0 && !reaches(walls, ball.at) && reaches({ ...walls, also: [] }, ball.at)) // a door shut between them
   ) {
     return { at: clear, stuck: 0, trail: [base] };
   }
   const trail = remember(ball.trail ?? [], base);
   /** Whether a ball swept from the base gets to `at` (within the 2 skins a sweep stops short of a face `at` touches). */
-  const sees = (at: Vec3) => far(sweep(walls, base, at), at) < 3 * COLLIDE_SKIN;
+  const sees = (at: Vec3) => reaches(walls, at);
   /** Where a frame's leg from `from` toward `to` aims: in at up to `COLLIDE_PULL` m/s, out eased. */
   const aim = (from: Vec3, to: Vec3) => {
     const gap = far(to, from);

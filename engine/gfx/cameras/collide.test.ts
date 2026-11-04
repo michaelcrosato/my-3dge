@@ -5,7 +5,8 @@
  * place on the arm as the arm moves and turns; and a `moveCamera` camera stands at the arm's end past a pole, closes in
  * on a wall at most `COLLIDE_PULL` a second and never stands in it, goes with a player put elsewhere, homes to the clear
  * point after standing stuck for `COLLIDE_STUCK` without a jump, and keeps the base's sight over a wall's top (never
- * sinking behind one it rose over, the base falling or above it) and when the floor grazes its sight under a tipped look.
+ * sinking behind one it rose over, the base falling or above it) and when the floor grazes its sight under a tipped look;
+ * cut off from the base by a door shut between them, it goes to the clear point (never for a wall).
  * @see engine/gfx/cameras/collide.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -48,6 +49,20 @@ function walls() {
   physics.addBody({ type: 'fixed', position: [0, 2, 2], colliders: [{ shape: { type: 'cylinder', radius: 0.06, height: 4 } }] }); // prettier-ignore
   physics.step({ dt: 1 / 60, settings: createSettings().sim });
   return { queries: queryView(physics) };
+}
+
+/** A floor and a wall along z = 0 (0.2 m thick, 6 m tall) with a doorway 1 m wide and 2.1 m high, a door's leaf in it. */
+function doorway() {
+  const physics = createPhysics();
+  const box = (size: Vec3, at: Vec3, type: 'fixed' | 'kinematic' = 'fixed') =>
+    physics.addBody({ type, colliders: [{ shape: { type: 'box', size }, position: at }] });
+  box([40, 1, 40], [0, -0.5, 0]);
+  box([19.5, 6, 0.2], [-10.25, 3, 0]);
+  box([19.5, 6, 0.2], [10.25, 3, 0]);
+  box([1, 3.9, 0.2], [0, 4.05, 0]);
+  const door = box([0.9, 2.05, 0.05], [0, 1.025, 0], 'kinematic');
+  physics.step({ dt: 1 / 60, settings: createSettings().sim });
+  return { queries: queryView(physics), door };
 }
 
 const far = (a: Vec3, b: Vec3) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
@@ -124,6 +139,24 @@ describe('camera collision', () => {
       ball = next;
     }
     expect(ball.stuck).toBeGreaterThan(COLLIDE_STUCK); // still short of it: homing, never cut there
+  });
+
+  it('goes to the clear point when a door shuts between it and the base, never for a wall between them', () => {
+    const { queries, door } = doorway();
+    const [base, want]: Vec3[] = [
+      [0, 1.5, 1.5],
+      [0, 3, -3],
+    ]; // the player outside the door, his arm's end in the room
+    const ball: CameraBall = { at: [0, 1.9, -0.35], stuck: 0 }; // trailed him to the doorway, clear of the leaf
+    const swinging = moveCamera({ queries }, ball, base, ball.at, want, 1 / 60); // the door moving: no wall to it
+    expect(far(swinging.at, ball.at)).toBeLessThanOrEqual(COLLIDE_PULL / 60 + 2 * COLLIDE_SKIN); // on at its pace
+    const shut = { queries, also: [door] };
+    const cut = moveCamera(shut, ball, base, ball.at, want, 1 / 60);
+    expect(cut).toEqual({ at: sweep(shut, base, want), stuck: 0, trail: [base] }); // the clear point, on his side
+    expect(cut.at[2]).toBeGreaterThan(COLLIDE_RADIUS);
+    const walled: CameraBall = { at: [3, 1.9, -0.35], stuck: 0 }; // behind the wall from him, not the door
+    const kept = moveCamera(shut, walled, [3, 1.5, 1.5], walled.at, [3, 3, -3], 1 / 60);
+    expect(far(kept.at, walled.at)).toBeLessThanOrEqual(COLLIDE_PULL / 60 + 2 * COLLIDE_SKIN); // no cut
   });
 
   it('keeps the base’s sight: over a wall’s top, it never comes down behind it, and comes back over', () => {
