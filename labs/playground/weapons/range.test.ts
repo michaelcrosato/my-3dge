@@ -145,7 +145,7 @@ describe('the range', () => {
     const base = { slots: [PISTOL.id, RIFLE.id], mags: [8, 18], reload: -1, shots: 4, hits: 3, aim: 0 };
     expect(weaponLine({ ...base, slot: 0 })).toBe('Pistol 8/10 · Hits 3 of 4 (75%)');
     expect(weaponLine({ ...base, slot: 1, reload: 2.4 })).toBe('Rifle reloading · Hits 3 of 4 (75%)');
-    expect(weaponLine({ ...base, slot: -1, shots: 0, hits: 0 })).toBe('Holstered: 1 2 draw');
+    expect(weaponLine({ ...base, slot: -1, shots: 0, hits: 0 })).toBe('Holstered · 1/2: draw'); // the HUD's "key: action" (WP 13.36: '1 2 draw' read as garbled)
     expect([showsCrosshair({ ...base, slot: 0 }, true), showsCrosshair({ ...base, slot: 0, aim: 1 }, true)]).toEqual([true, false]); // prettier-ignore
     expect([showsCrosshair({ ...base, slot: -1 }, true), showsCrosshair({ ...base, slot: 0 }, false), showsCrosshair(undefined, true)]).toEqual([false, false, false]); // prettier-ignore
   });

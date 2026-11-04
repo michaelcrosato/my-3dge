@@ -12,7 +12,7 @@
  * @example
  * import { PISTOL } from './guns';
  * weaponLine({ slots: [PISTOL.id], slot: 0, mags: [8], reload: -1, shots: 4, hits: 3, aim: 0 }); // 'Pistol 8/10 · Hits 3 of 4 (75%)'
- * weaponLine({ slots: [PISTOL.id], slot: -1, mags: [10], reload: -1, shots: 0, hits: 0, aim: 0 }); // 'Holstered: 1 2 draw'
+ * weaponLine({ slots: [PISTOL.id], slot: -1, mags: [10], reload: -1, shots: 0, hits: 0, aim: 0 }); // 'Holstered · 1/2: draw'
  * @see labs/playground/weapons/range.test.ts
  */
 import { getWeapon } from '../../../engine/sim-api';
@@ -24,10 +24,10 @@ export type WeaponsView = Readonly<{ slots: readonly string[]; slot: number; mag
 /** The guns' names on the HUD. */
 const NAMES: Readonly<Record<string, string>> = { [PISTOL.id]: 'Pistol', [RIFLE.id]: 'Rifle' };
 
-/** The HUD's line for the player's weapons (see the file comment); `draw` names the keys that draw them. */
-export function weaponLine(weapons: WeaponsView, draw = '1 2'): string {
+/** The HUD's line for the player's weapons (see the file comment); `draw` names the keys that draw them, as `1/2`. */
+export function weaponLine(weapons: WeaponsView, draw = '1/2'): string {
   const count = weapons.shots > 0 ? ` · Hits ${weapons.hits} of ${weapons.shots} (${Math.round((100 * weapons.hits) / weapons.shots)}%)` : ''; // prettier-ignore
-  if (weapons.slot < 0) return `Holstered: ${draw} draw${count}`;
+  if (weapons.slot < 0) return `Holstered · ${draw}: draw${count}`; // the HUD's "key: action", as "E: Open"
   const id = weapons.slots[weapons.slot];
   const name = NAMES[id] ?? id;
   const rounds = weapons.reload >= 0 ? 'reloading' : `${weapons.mags[weapons.slot]}/${getWeapon(id).magazine}`;

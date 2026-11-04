@@ -296,7 +296,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'front-end',
     kind: 'try',
     title: 'The splash, the start menu, pause and settings',
-    what: 'Open the page: the splash screen, then the start menu. Try Go to, Settings (rebind a key; the field of view, the movement profile, the volumes), Controls, Photo mode and Tools, and pause (Esc). Do the screens look good and read clearly? Then reload the page: are your settings and your key kept?', // prettier-ignore
+    what: 'Open the page: the splash screen, then the start menu. Try Go to, Settings (rebind a key; the field of view, the movement profile, the volumes), Controls, Photo mode and Tools, and pause (Esc). Do the screens look good and read clearly? Then play a little: does the HUD read on sky, stone and grass? Reload the page: are your settings and your key kept?', // prettier-ignore
     from: item(13),
     go: { query: { 'playground.title': 'on' } },
   },

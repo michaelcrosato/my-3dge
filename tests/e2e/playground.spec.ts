@@ -252,7 +252,7 @@ test.describe('the playground', () => {
     const goldens = (JSON.parse(RANGE) as { hashes: Record<string, Record<string, string>> }).hashes['linux-x64'];
     expect(run.hashes).toEqual(goldens);
     await call(page, 'render', 2);
-    expect((await hud(page)).weapon).toBe('Holstered: 1 2 draw · Hits 10 of 20 (50%)'); // half its rounds struck
+    expect((await hud(page)).weapon).toBe('Holstered · 1/2: draw · Hits 10 of 20 (50%)'); // half its rounds struck (WP 13.36: the HUD's "key: action")
     await expectWarm(page, harness);
   });
 
