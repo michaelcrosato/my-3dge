@@ -2627,6 +2627,11 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     calls a storey; the storey cut hides it with the heads. Under a pitched roof the heads follow the roof's underside
     and are not faced (the attic's gable window).
   - labs/playground/levels/house.test.ts holds the three sweeps; they find every pair named above without the fix.
+  - The playground looks' noon thumbnails that show the house's ground heads are re-recorded: first person and the
+    shoulder view in the cel and pixel looks (15 cells past the comparison's tolerance, each a head now faced with
+    the wall's siding or the upper floor's slab edge now set back, by the thumbnails' own object maps), and the three
+    follow views, within the tolerance, so their maps name the facings (`heads:wall`). Under a low ceiling the storey
+    cut lifts the facings with their heads, as tests/e2e/playground-cameras.spec.ts now expects.
 - **The rest of the review:** the title backdrop's "hairline in the sky" was the gym's balloon line, a 4 cm cable
   52 m off with its balloon out of the picture. A balloon's line is now a 12 cm rope (engine/gfx/stageRides.ts). The
   HUD's lines are one dark chip each with light text: the hint, the readout and the camera line had read 1.0 to 1.9
