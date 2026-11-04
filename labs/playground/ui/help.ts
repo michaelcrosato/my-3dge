@@ -3,8 +3,9 @@
  * the screen): every action the playground answers, grouped (`HELP_GROUPS`), with its key as the input names it for
  * the map in use on the device used last (rebound or on a pad, through `input.prompt`): the move keys, or the left
  * stick; the mouse's look under the pointer lock, its aim with the pointer free, or the right stick; the view's own
- * keys only where the map has them (the shooter's shoulder, isometric's turn). The page's own keys (the look, the feel
- * panel, the menus) are as written. The front end opens it from H, the start menu and pause (frontEnd.ts).
+ * keys only where the map has them (the shooter's shoulder, isometric's turn); a line the device has no key for is left
+ * out (the pad's weapon swap on a keyboard: `UNBOUND`). The page's own keys (the look, the feel panel, the menus) are
+ * as written. The front end opens it from H, the start menu and pause (frontEnd.ts).
  *
  * Elements: `[data-ui=help]`, a `[data-ui=key]` per line (`data-id` the action, else the page key or the label), and
  * the Back button (`[data-ui=item][data-id=back]`). Invariants: presentation only; it reads the input when made.
@@ -22,6 +23,9 @@ import type { Input } from '../../../engine';
 export const HELP_KEY = 'KeyH';
 /** The page's key for Go to, kept from rebinding as the sheet's. */
 export const GOTO_KEY = 'KeyM';
+
+/** The input's prompt for an action the device has no key for (engine/input/bindings.ts `pickLabel`). */
+export const UNBOUND = '—';
 
 /** What the sheet reads of the input: the prompts on the device used last, and the map in use. */
 export type HelpInput = Pick<Input, 'prompt' | 'bindings' | 'lastDevice'>;
@@ -114,7 +118,7 @@ export function createHelp(parent: HTMLElement, options: HelpOptions): { remove(
     const grid = make('div', { className: 'pg-keys' });
     for (const line of group.lines) {
       const key = line.action ? options.input.prompt(line.action) : line.keys ? line.keys(options.input) : (line.page ?? ''); // prettier-ignore
-      if (key === null) continue;
+      if (key === null || key === UNBOUND) continue; // the map in use, or the device, has none
       const row = make('div', { className: 'pg-key' });
       row.dataset.ui = 'key';
       row.dataset.id = line.action ?? line.page ?? line.label;

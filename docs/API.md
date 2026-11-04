@@ -8852,6 +8852,7 @@ For the agents who maintain the engine.
 - `HelpInput` (type): What the sheet reads of the input: the prompts on the device used last, and the map in use.
 - `HelpLine` (interface): One line of the sheet: an action of the map, a key worked out from the input, or a page key as written.
 - `HelpOptions` (interface): What the sheet needs: the input it names the keys from, and what Back does.
+- `UNBOUND` (const): The input's prompt for an action the device has no key for (engine/input/bindings.ts `pickLabel`).
 
 ### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
 

@@ -2521,6 +2521,7 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   rooms, from a camera on the street. Every changed cell (31 to 82 a view) lies in those two places; the views looking
   down at the ground and from above stayed within the tolerance and keep their files.
 - **Owner checks:** `front-end` (the splash, the start menu, pause and settings: do they look good and read clearly),
-  `house-views` (the house from every camera: anything seen through or wrong as you move), `load-times`.
+  `house-views` (the house from every camera: anything seen through or wrong as you move), `touch` (on a phone or a
+  tablet: the stick, the buttons and the menu button), `load-times`.
 - Plan edit: WP 13.33.
 

@@ -333,7 +333,9 @@ test.describe('the playground', () => {
     await harness.tick(2);
     expect(await page.evaluate(() => __playgroundUi.state().screens)).toEqual(['help']);
     const keys = await page.locator('[data-ui=help] [data-ui=key]').evaluateAll((all) => all.map((row) => [row.getAttribute('data-id'), row.querySelector('kbd')?.textContent ?? ''])); // prettier-ignore
-    const lines = HELP_GROUPS.flatMap((group) => group.lines).filter((line) => line.label !== 'Turn the view'); // the shooter's map turns nothing
+    const lines = HELP_GROUPS.flatMap((group) => group.lines).filter(
+      (line) => line.label !== 'Turn the view' && line.action !== 'swap',
+    ); // the shooter's map turns nothing; the keyboard swaps nothing
     expect(keys.map(([id]) => id)).toEqual(lines.map((line) => line.action ?? line.page ?? line.label));
     for (const [id, key] of keys) expect(key, id ?? '').not.toBe('');
     expect(Object.fromEntries(keys)).toMatchObject({ Move: 'W A S D', 'Look around': 'Click, then mouse', jump: 'Space', interact: 'E' }); // prettier-ignore
