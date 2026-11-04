@@ -14,16 +14,15 @@
  *   settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks
  *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
  *   checks.ts `checkUrl`), and Tools (`tools`): the Tune panel (`tune`, tune.ts: the look's filters live, WP 13.32),
- *   the recorded runs (`replays`, each opened as `?replay=<name>`, the view kept: `VIEW_KEYS`) and the feel panel.
+ *   the recorded runs (`replays`, each opened as `?replay=<name>`, the view kept: links.ts) and the feel panel.
  *   Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`).
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one.
  *
  * Picks that change play are the run's recorded operations, so a replay of the run holds them: a Go to place is the
  * block's dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
- * (`?scene=site&playground.spawn=<id>`, the view and `playground.title` kept, run as its first operation:
- * `spawnOnOpen`); Restart starts the scene again on its seed (`seed`); the movement profile is the sim setting
- * `playground.movement`, set, then the scene started again.
+ * (links.ts `goToLink`, run as its first operation: `spawnOnOpen`); Restart starts the scene again on its seed
+ * (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again.
  * The camera mode, the view settings and the audio levels change the view alone; the store keeps them (prefs.ts).
  * `state()`, `window.__playgroundUi.state()` in the page, names the open screens for the tests;
  * `__playgroundUi.checks()` lists the owner's checks with their answers, and `__playgroundUi.answers()` gives them as
@@ -51,6 +50,7 @@ import { spawnPlace, spawnPlaces } from './spawns';
 import { AREAS } from './areas';
 import { ABOUT, createFrame } from './frame';
 import { createHelp } from './help';
+import { goToLink, replayLink } from './links';
 import type { SiteArea } from '../levels/site';
 
 /** The start menu's view setting (see the file comment). */
@@ -118,24 +118,6 @@ export function titleOnOpen(setting: string, search: URLSearchParams, webdriver:
   return setting === 'on' || (setting === 'auto' && !webdriver && !search.has('replay'));
 }
 
-/** The query keys of the view a player chose, which a link to another page keeps (the scene, a replay, a check or a
- * spawn never carry over: a replay plays its own scene, and a check's spot belongs to its own page). */
-export const VIEW_KEYS: readonly string[] = ['post.look', 'cam', 'cam3', 'cam.wholeZoom'];
-
-/** The page at `now` (a `location`) with the query `changes`, keeping of its query only the `kept` keys. */
-export function pageLink(
-  now: Pick<Location, 'pathname' | 'search'>,
-  changes: Record<string, string>,
-  kept: readonly string[],
-): string {
-  // prettier-ignore
-  const query = new URLSearchParams(now.search);
-  const next = new URLSearchParams();
-  for (const key of kept) if (query.has(key)) next.set(key, query.get(key)!);
-  for (const [key, value] of Object.entries(changes)) next.set(key, value);
-  return `${now.pathname}?${next}`;
-}
-
 /** Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran. */
 export function spawnOnOpen(engine: Engine, search: URLSearchParams, scene: EngineFrame['scene']): boolean {
   const place = spawnPlace(search.get('playground.spawn') ?? '');
@@ -197,8 +179,9 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     kind = name === 'title' ? 'title' : 'menu',
   ): Screen => {
     const { el, body, detail } = createFrame(root, kind, title);
+    // the cursor's row scrolls into a screen taller than the window (keys and a pad move it below the fold)
     const say = (item: MenuItem | undefined) => void (detail.textContent = typeof item === 'object' && item.id ? about(item.id) : ''); // prettier-ignore
-    const menu: Menu = createMenu(body, items, { input, id: name, title: title ?? 'The Playground', onMove: (_i, item) => say(item), onPick: (_i, item) => typeof item === 'object' && item.id && pick(item.id), onCancel: () => (name === 'title' ? closeAll() : back()) }); // prettier-ignore
+    const menu: Menu = createMenu(body, items, { input, id: name, title: title ?? 'The Playground', onMove: (_i, item) => (say(item), body.querySelector<HTMLElement>('[data-ui=item][data-value=selected]')?.scrollIntoView?.({ block: 'nearest' })), onPick: (_i, item) => typeof item === 'object' && item.id && pick(item.id), onCancel: () => (name === 'title' ? closeAll() : back()) }); // prettier-ignore
     say(items.find((item) => typeof item === 'object' && !item.disabled));
     return { update: (dt) => void menu.update(dt), remove: () => (menu.remove(), el.remove()) };
   };
@@ -306,7 +289,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
       const about = (id: string) => (id === 'back' ? '' : `Plays tests/replays/${id}.replay.json, then hands you the controls.`); // prettier-ignore
       return menuScreen('replays', 'Recorded runs', items, (id) => {
         if (id === 'back') return back();
-        location.assign(pageLink(location, { replay: id }, VIEW_KEYS));
+        location.assign(replayLink(location, id));
       }, about, 'list'); // prettier-ignore
     }
     if (name === 'spawns') {
@@ -332,7 +315,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
           (inspector.actions as { run(name: string, args: unknown): unknown }).run('place', place.args);
           return closeAll();
         }
-        location.assign(pageLink(location, { scene: 'site', 'playground.spawn': place.id }, [...VIEW_KEYS, 'playground.title'])); // prettier-ignore
+        location.assign(goToLink(location, place.id));
       }, about, 'list'); // prettier-ignore
     }
     if (name === 'checks' || name === 'check') {

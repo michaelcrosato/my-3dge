@@ -7,7 +7,8 @@
  *   labs/playground/weapons/hud.ts), never in the views that aim with the pointer;
  * - the prompts: what using the thing in reach does, with the key that uses it on the device used last (WP 13.16);
  * - the ammo: the weapon out and its rounds, the range's count (`weaponLine`, WP 13.20);
- * - a hint, bottom left, of the menus' keys (`HINT_LINE`): the controls sheet (H) holds every other key;
+ * - a hint, bottom left, of the menus' keys (`HINT_LINE`; on a pad its menu button, on touch none: `hintLine`): the
+ *   controls sheet (H) holds every other key;
  * - the feel readout (`feelLine`): the player's speed over the ground and how he moves (the movement model's mode or
  *   gait), which the platformer, isometric and top-down show (where the view gives speed away least), and every mode
  *   with the view setting `playground.readout` at `on` (`off` hides it everywhere).
@@ -42,6 +43,12 @@ export const HUD_SETTINGS = defineSettings({
 
 /** The HUD's hint, bottom left: the keys of the menus (the controls sheet holds the rest, labs/playground/ui/help.ts). */
 export const HINT_LINE = 'H: controls · M: go to · Esc: menu';
+
+/** The hint on the device used last: the page's keys, a pad's menu button (pause holds the rest), none on touch. */
+export function hintLine(input: Pick<Input, 'prompt' | 'lastDevice'>): string | null {
+  if (input.lastDevice === 'touch') return null; // the menu button shows, top right
+  return input.lastDevice === 'gamepad' ? `${input.prompt('pause')}: menu, controls, go to` : HINT_LINE;
+}
 
 /** What a camera mode's HUD shows (see the file comment). */
 export interface HudMode {
@@ -106,5 +113,5 @@ export function showHud(ui: Overlay, input: Input | null, frame: HudFrame, hidde
   line('weapon', hud.ammo && frame.player?.weapons ? weaponLine(frame.player.weapons, draw) : null, { at: 'bottom-right' }); // prettier-ignore
   const centre = input.bindings.map.aimWith === 'centre';
   ui.crosshair(!hidden && hud.crosshair && showsCrosshair(frame.player?.weapons, centre));
-  line('keys', hud.keys ? HINT_LINE : null, { at: 'bottom-left', keys: true });
+  line('keys', hud.keys ? hintLine(input) : null, { at: 'bottom-left', keys: true });
 }

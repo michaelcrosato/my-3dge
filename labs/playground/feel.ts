@@ -33,12 +33,21 @@ export const PLAYGROUND_FEEL_SETTINGS = defineSettings({
 /** Whether the query (`?playground.feel=on`) opens the panel. */
 export const feelOpens = (search: URLSearchParams): boolean => search.get('playground.feel') === 'on';
 
-/** Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it. Returns the panel. */
-export function mountFeelPanel(document: Document, inspector: unknown, search: URLSearchParams): FeelPanel {
+/**
+ * Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it unless `held` (a screen
+ * of the page's is open, under which the panel hides: F would toggle it out of sight). Returns the panel.
+ */
+export function mountFeelPanel(
+  document: Document,
+  inspector: unknown,
+  search: URLSearchParams,
+  held: () => boolean = () => false,
+): FeelPanel {
+  // prettier-ignore
   const panel = createFeelPanel(document, inspector as FeelInspector);
   if (feelOpens(search)) panel.show();
   document.defaultView?.addEventListener('keydown', (event) => {
-    if (event.code !== FEEL_KEY || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.code !== FEEL_KEY || event.repeat || event.ctrlKey || event.metaKey || event.altKey || held()) return;
     const target = event.target as { tagName?: string } | null;
     if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return;
     panel.toggle();

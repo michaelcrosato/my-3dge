@@ -31394,7 +31394,7 @@ function Xce(e, t) {
       c && (r ??= Vv({ root: n, parts: [] }, { objects: c }));
     },
     update(c, l, { fade: u = !1, view: d = !1 } = {}) {
-      const h = a(l), { rooms: f, roofs: p } = h?.structure.level ?? {}, m = h && (h.indoors || !(f?.length || p?.length)) ? h : null, g = d ? m : null;
+      const h = a(l), { rooms: f, roofs: p } = h?.structure.level ?? {}, m = h && (d || h.indoors || !(f?.length || p?.length)) ? h : null, g = d ? m : null;
       i = g ? { structure: g.structure, storey: g.storey } : null, r?.update(c, l, { fade: u });
       for (const y of o) {
         const w = m?.structure === y.structure;

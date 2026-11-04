@@ -9,8 +9,10 @@
  * The look: dark glass panels over the world (a blurred, dimmed backdrop), one warm accent (`--pg-accent`) for what is
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
  * browser. Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
- * too), the area card and the feel panel, all hidden under a screen; a screen and its panels, scrolling where the
- * window is too short for them; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`,
+ * too), the area card and the feel panel, all hidden under a screen (under the Tune panel, at the side so the world
+ * shows, only the feel panel); a screen and its panels, scrolling where the window is too short for them (in windows
+ * 720 px tall or less the start menu's brand and the items shrink, and at 460 px or less the detail line under a menu
+ * goes; the splash keeps its own); the touch buttons, hidden under a screen but for the menu button; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`,
  * `--pg-accent`, `--pg-good`), the radius, the shadow and the font are custom properties on `.pg-ui` and
  * `.pg-splash`; the type sizes and the backdrops' shades are written where they are used.
  *
@@ -118,8 +120,8 @@ export const THEME_CSS = `
 .pg-ui .pg-tune textarea, .pg-ui .pg-checks textarea { width: 100%; box-sizing: border-box; }
 .pg-ui .pg-back { margin-top: 1.4em; }
 .pg-ui [data-ui=photo] { position: absolute; left: 50%; top: auto; bottom: 3vh; transform: translateX(-50%);
-  padding: 10px 18px; border-radius: 999px; font-size: 14px; color: var(--pg-dim); white-space: nowrap;
-  pointer-events: none; }
+  padding: 10px 18px; border-radius: 999px; font-size: 14px; color: var(--pg-dim); width: max-content;
+  max-width: calc(100% - 2em); box-sizing: border-box; text-align: center; pointer-events: none; }
 
 /* ---- the controls sheet ---- */
 .pg-ui .pg-screen .pg-help { width: min(880px, 94vw); }
@@ -137,6 +139,8 @@ export const THEME_CSS = `
 .pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .ui-crosshair, .ui-damage, .pg-card, .ui-label) {
   visibility: hidden; }
 body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel { display: none; }
+/* the touch buttons (engine/ui/touch.css, above the overlay) would take a screen's taps: only the menu button stays */
+body:has(.pg-ui > .pg-screen) .touch-layer .touch-button { visibility: hidden; }
 .pg-ui .ui-hud-block { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); }
 .pg-ui .ui-hud[data-id=room] { font-size: 13px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--pg-text); background: rgba(10, 12, 18, 0.45); padding: 0.35em 0.75em; border-radius: 8px; }
@@ -189,15 +193,16 @@ body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-pa
 @media (max-height: 720px) {
   .pg-screen { padding-top: 3vh; padding-bottom: 3vh; }
   .pg-screen[data-kind=title] { padding-bottom: 5vh; }
-  .pg-brand { margin-bottom: 1.5vh; } .pg-brand-sub { display: none; }
-  .pg-brand-title { font-size: clamp(30px, min(7vw, 10vh), 84px); }
+  .pg-screen .pg-brand { margin-bottom: 1.5vh; } .pg-screen .pg-brand-sub { display: none; }
+  .pg-screen .pg-brand-title { font-size: clamp(30px, min(7vw, 10vh), 84px); }
   .pg-ui .pg-screen .ui-menu-item { font-size: 18px; padding-top: 0.3em; padding-bottom: 0.3em; margin: 0.06em 0; }
   .pg-detail { min-height: 2.6em; margin-top: 0.6em; }
   .pg-footer { position: static; margin-top: 1.5vh; }
 }
 @media (max-height: 460px) {
-  .pg-ui .pg-screen .ui-menu-item { font-size: 15px; padding-top: 0.2em; padding-bottom: 0.2em; }
-  .pg-brand-kicker, .pg-detail { display: none; }
+  .pg-ui .pg-screen .ui-menu-item, .pg-ui .pg-screen[data-kind=list] .ui-menu-item { font-size: 15px;
+    padding-top: 0.2em; padding-bottom: 0.2em; }
+  .pg-screen .pg-brand-kicker, .pg-detail { display: none; }
 }
 `;
 

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { Input, Overlay } from '../../../engine';
 import { PLAYGROUND_CAMERAS } from '../views';
 import { PISTOL } from '../weapons/guns';
-import { feelLine, HINT_LINE, HUD_MODES, showHud } from './hud';
+import { feelLine, HINT_LINE, hintLine, HUD_MODES, showHud } from './hud';
 
 /** An overlay that keeps its lines and its crosshair. */
 function lines() {
@@ -36,6 +36,11 @@ describe('the playground’s HUD', () => {
   it('has a HUD for every camera mode, the crosshair only where the centre aims', () => {
     for (const mode of PLAYGROUND_CAMERAS) expect(HUD_MODES[mode.name], mode.name).toBeDefined();
     expect(Object.entries(HUD_MODES).filter(([, hud]) => hud.crosshair).map(([name]) => name)).toEqual(['shooter', 'first']); // prettier-ignore
+  });
+
+  it('hints at the menus on the device used last: the keys, a pad’s menu button, none on touch', () => {
+    const on = (lastDevice: string) => ({ prompt: (action: string) => (action === 'pause' ? 'Menu' : '?'), lastDevice }) as unknown as Input; // prettier-ignore
+    expect([hintLine(on('keyboard')), hintLine(on('mouse')), hintLine(on('gamepad')), hintLine(on('touch'))]).toEqual([HINT_LINE, HINT_LINE, 'Menu: menu, controls, go to', null]); // prettier-ignore
   });
 
   it('reads the speed over the ground and how he moves', () => {

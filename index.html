@@ -8,8 +8,8 @@
     <!--
       The landing page (PLAN.md WP 0.12): it opens the playground (labs/playground/, the game the owner plays and
       checks; ADR-0021 amendment 3), passing on this URL's query and hash, so /?scene=gym&cam3=follow reaches the page
-      that reads it. The labs index (labs/index/) and the Stress Box (labs/box/) open at their own paths: the game links
-      neither (ADR-0025 amendment 51). It serves the dev server and `npx vite preview`; what is distributed is playground.html (ADR-0023 amendment 5).
+      that reads it. The labs index (labs/index/) and the Stress Box (labs/box/) open at their own paths; the game reaches
+      them only from the owner checks `labs` and `esc-0005` (ADR-0025 amendment 51). It serves the dev server and `npx vite preview`; what is distributed is playground.html (ADR-0023 amendment 5).
     -->
     <script>
       location.replace('labs/playground/' + location.search + location.hash);

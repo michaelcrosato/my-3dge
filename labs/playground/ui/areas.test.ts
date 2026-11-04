@@ -2,7 +2,8 @@
  * @file The block's areas (labs/playground/ui/areas.ts): every area's spawn lies in its own area, by its structure or
  * the block's map; every area has a card whose keys are actions; the location line names the room indoors, as a
  * player reads it; the street reads as the street across its whole width, sidewalks and bus stop too, the house over
- * its walls at any height, and the patio and the porch, on the house's map but outside it, as the yards.
+ * its walls at any height and over its map above the ground floor (the roof to its eaves, the porch roof, the deck),
+ * and the patio, the porch and the apron, on the house's map but outside it, as the yards.
  */
 import { describe, expect, it } from 'vitest';
 import { getSite, siteStructureAt } from '../../../engine/sim-api';
@@ -42,12 +43,20 @@ describe('the block’s areas', () => {
   it('reads the street across its width, the house over its walls, and its patio and porch as the yards', () => {
     const at = (x: number, y: number, z: number) => {
       const found = siteStructureAt(site, x, y + 0.1, z);
-      return areaAt(x, z, found?.structure.name, found?.room?.name);
+      return areaAt(x, z, found?.structure.name, found?.room?.name, found?.storey);
     };
     const street = [at(82, 0.15, 94.3), at(85, 0.15, 84), at(85, 0.5, 89)]; // the bus stop, a sidewalk, a jump on the road
     const house = [at(56.75, 11, 54.1), at(52, 0, 54), at(52, -2, 46)]; // the chimney's top, the hall, the crawlspace
-    const yards = [at(52, 0, 46.5), at(52, 0, 61.5)]; // the patio, the porch
-    expect([street, house, yards]).toEqual([['street', 'street', 'street'], ['house', 'house', 'house'], ['backyard', 'frontyard']]); // prettier-ignore
+    const yards = [at(52, 0, 46.5), at(52, 0, 61.5), at(62, 0, 59.5)]; // the patio, the porch, the garage's apron
+    const up = [
+      at(50, 5.79, 47.7),
+      at(50, 5.79, 60.3),
+      at(43.7, 7.4, 58),
+      at(60.2, 6.7, 49),
+      at(50, 3, 61.5),
+      at(62, 3, 54),
+    ]; // the roof's eaves, north, south, west and east; the porch roof; the garage's deck
+    expect([street, house, yards, up]).toEqual([['street', 'street', 'street'], ['house', 'house', 'house'], ['backyard', 'frontyard', 'frontyard'], Array(6).fill('house')]); // prettier-ignore
     const [hx, , hz] = SITE_STRUCTURES.house.at;
     const walls = [HOUSE_RECTS.house, HOUSE_RECTS.garage].map(([x0, z0, x1, z1]) => [
       x0 + hx,

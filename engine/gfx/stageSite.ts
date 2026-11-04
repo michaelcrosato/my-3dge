@@ -5,11 +5,12 @@
  * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
  * Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player stands on the stage: `follow`) and its
  * cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame. Both cut only the structure the player is in
- * (`where`; a building, one with rooms or a roof, only while he is indoors: its map's patio, porch or apron is not
- * inside it), so a house he walks past or up to keeps its walls, every other structure only fading what stands between
- * the camera and him: `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each
- * structure's frame (`toLocal`, the yaw less its turns), cuts and fades there, and in a classic view (`view`) hides, in
- * the structure he is in, the storeys above his and the roof while indoors (`cutPlace`): the others stay whole.
+ * (`where`). A building (one with rooms or a roof) is cut in a perspective camera only while he is indoors, so a house
+ * he walks past or up to (its map's patio, porch or apron) keeps its walls, and what stands between the camera and him
+ * fades where the camera asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map,
+ * its walls facing the camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch
+ * or patio. `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's
+ * frame (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures stay whole.
  * The objects `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
  *
  * Names: a structure's group `site:<site>/<index>` holding its level's meshes (`level:<name>/…`, so the ID pass shows
@@ -122,7 +123,7 @@ export function createStageSite(
     update(pose, feet, { fade = false, view = false } = {}) {
       const found = where(feet);
       const { rooms, roofs } = found?.structure.level ?? {};
-      const at = found && (found.indoors || !(rooms?.length || roofs?.length)) ? found : null; // see the file comment
+      const at = found && (view || found.indoors || !(rooms?.length || roofs?.length)) ? found : null; // see the file comment
       const inside = view ? at : null;
       cut = inside ? { structure: inside.structure, storey: inside.storey } : null;
       rides?.update(pose, feet, { fade });

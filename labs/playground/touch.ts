@@ -15,13 +15,16 @@ import { defineTouchLayout } from '../../engine';
 /** The playground's touch layout's id. */
 export const PLAYGROUND_TOUCH = 'touchlayout:playground';
 
+/** Its buttons, in slot order: the main one first (the controls sheet names them on touch, ui/help.ts). */
+export const PLAYGROUND_TOUCH_BUTTONS = [
+  { action: 'jump', label: 'Jump' },
+  { action: 'interact', label: 'Use' },
+  { action: 'crouch', label: 'Crouch' },
+  { action: 'melee', label: 'Strike' },
+] as const;
+
 defineTouchLayout(PLAYGROUND_TOUCH, {
   description: 'The playground: jump as the main button, then use, crouch and strike, and the menu button (pause).',
-  buttons: [
-    { action: 'jump', label: 'Jump' },
-    { action: 'interact', label: 'Use' },
-    { action: 'crouch', label: 'Crouch' },
-    { action: 'melee', label: 'Strike' },
-  ],
+  buttons: PLAYGROUND_TOUCH_BUTTONS,
   menu: true,
 });

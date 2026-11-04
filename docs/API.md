@@ -8562,7 +8562,7 @@ For the agents who maintain the engine.
 
 - `FEEL_KEY` (const): The key that shows and hides the panel.
 - `feelOpens` (const): Whether the query (`?playground.feel=on`) opens the panel.
-- `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it.
+- `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it unless `held` (a screen of the page's is open, under which the panel hides: F would toggle it out of sight).
 - `PLAYGROUND_FEEL_SETTINGS` (const): The playground's feel setting: whether the panel shows when the page opens.
 
 ### [`labs/playground/furnish.ts`](../labs/playground/furnish.ts)
@@ -8762,6 +8762,7 @@ For the agents who maintain the engine.
 ### [`labs/playground/touch.ts`](../labs/playground/touch.ts)
 
 - `PLAYGROUND_TOUCH` (const): The playground's touch layout's id.
+- `PLAYGROUND_TOUCH_BUTTONS` (const): Its buttons, in slot order: the main one first (the controls sheet names them on touch, ui/help.ts).
 
 ### [`labs/playground/tour.ts`](../labs/playground/tour.ts)
 
@@ -8775,12 +8776,13 @@ For the agents who maintain the engine.
 
 - `AREA_OF_STRUCTURE` (const): The area of the structures that name one (a structure's name is its level's).
 - `AREA_RECTS` (const): The block's map outdoors (docs/PLAYGROUND.md §2), [area, x0, z0, x1, z1] in metres, the first match winning.
-- `areaAt` (function): The area the point (x, z) of the block is in, by the structure and room there (see the file comment).
+- `areaAt` (function): The area the point (x, z) of the block is in, by the structure, room and storey there (see the file comment).
 - `AreaCard` (interface): An area's card: its name, what kind of place it is, what it shows, and what to try ({action} is that action's key).
 - `AreaCardView` (interface): The area card (see the file comment).
 - `AREAS` (const): Each area's card (see the file comment).
 - `CARD_SECONDS` (const): How long a card shows when the player walks into its area (s).
 - `createAreaCard` (function): Makes the area card in `parent`, its keys read through `key` (the input's prompt for an action).
+- `HOUSE_UPPER` (const): The house's storey above its ground floor (house.ts: the basement 0, the ground 1, the upper 2, the roof 3 above).
 - `HOUSE_WALLS` (const): The house's walls on the block, [x0, z0, x1, z1] in metres: labs/playground/levels/house.ts's `HOUSE_RECTS.house` and `.garage` at the house's place (levels/site.ts `SITE_STRUCTURES.house`), as areas.test.ts checks.
 - `locationLine` (function): The HUD's location line: the area's name, and the room's when there is one.
 - `ROOM_NAMES` (const): Rooms whose level id is not the name a player reads (`living` is the living room); the others read as their id.
@@ -8837,11 +8839,9 @@ For the agents who maintain the engine.
 - `FRONT_END_SETTINGS` (const): The start menu's view setting (see the file comment).
 - `FrontEnd` (interface): The front end (see the file comment).
 - `FrontEndOptions` (interface): What the front end needs of the page.
-- `pageLink` (function): The page at `now` (a `location`) with the query `changes`, keeping of its query only the `kept` keys.
 - `ScreenName` (type): The screens.
 - `spawnOnOpen` (function): Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran.
 - `titleOnOpen` (function): Whether the start menu opens with the page (see the file comment).
-- `VIEW_KEYS` (const): The query keys of the view a player chose, which a link to another page keeps (the scene, a replay, a check or a spawn never carry over: a replay plays its own scene, and a check's spot belongs to its own page).
 
 ### [`labs/playground/ui/help.ts`](../labs/playground/ui/help.ts)
 
@@ -8852,18 +8852,28 @@ For the agents who maintain the engine.
 - `HelpInput` (type): What the sheet reads of the input: the prompts on the device used last, and the map in use.
 - `HelpLine` (interface): One line of the sheet: an action of the map, a key worked out from the input, or a page key as written.
 - `HelpOptions` (interface): What the sheet needs: the input it names the keys from, and what Back does.
+- `keyOf` (function): The key a line shows on `input` (see the file comment): null or `UNBOUND` leaves the line out.
 - `UNBOUND` (const): The input's prompt for an action the device has no key for (engine/input/bindings.ts `pickLabel`).
 
 ### [`labs/playground/ui/hud.ts`](../labs/playground/ui/hud.ts)
 
 - `feelLine` (function): The feel readout's line: speed over the ground, m/s, and the mode (or, on the ground, the gait).
 - `HINT_LINE` (const): The HUD's hint, bottom left: the keys of the menus (the controls sheet holds the rest, labs/playground/ui/help.ts).
+- `hintLine` (function): The hint on the device used last: the page's keys, a pad's menu button (pause holds the rest), none on touch.
 - `HUD_MODES` (const): Each camera mode's HUD, by the mode's name (labs/playground/views.ts).
 - `HUD_SETTINGS` (const): The readout's view setting (see the file comment).
 - `HudFrame` (interface): What one frame's HUD shows: the mode's name, the look, the room line, the player, and the readout setting.
 - `HudMode` (interface): What a camera mode's HUD shows (see the file comment).
 - `HudPlayer` (type): The player as the HUD reads him: where he is and how fast, how he moves, what he would use, his weapons.
 - `showHud` (function): Shows `frame`'s HUD on `ui`, the prompts read from `input` (see the file comment); `hidden` clears it.
+
+### [`labs/playground/ui/links.ts`](../labs/playground/ui/links.ts)
+
+- `goToLink` (const): The block's page opened at the Go to place `id` (spawns.ts), the view and the start menu's setting kept.
+- `Here` (type): Where a link starts from: the page's `location`, or its path and query.
+- `pageLink` (function): The page at `now` with the query `changes`, keeping of its query only the `kept` keys.
+- `replayLink` (const): The page playing the recorded run `id`, the view kept.
+- `VIEW_KEYS` (const): The query keys of the view a player chose, which a link to another page keeps (see the file comment).
 
 ### [`labs/playground/ui/photo.ts`](../labs/playground/ui/photo.ts)
 

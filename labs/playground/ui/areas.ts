@@ -7,9 +7,10 @@
  * the card that slides in for a few seconds when the player walks into another area, as a room's card does in
  * riftlight (its seconds count only while it can show).
  *
- * Where: the house's walls hold the house at any height (`HOUSE_WALLS`; above its box too, on the chimney's top), and
- * its rooms wherever they lie (the crawlspace under the patio); the rest of its map is the yards' (the patio, the
- * porch, the garage's apron). Another structure the point stands in names its area (`AREA_OF_STRUCTURE`: the shed and
+ * Where: the house's walls hold the house at any height (`HOUSE_WALLS`; above its box too, on the chimney's top), its
+ * rooms wherever they lie (the crawlspace under the patio), and its map above the ground floor (`HOUSE_UPPER`: the
+ * porch roof, the garage's deck, the roof to its eaves); the rest of its map, at the ground floor, is the yards' (the
+ * patio, the porch, the garage's apron). Another structure the point stands in names its area (`AREA_OF_STRUCTURE`: the shed and
  * the tree house are the backyard, the lookout the hill); outdoors, the block's map of §2 does (`AREA_RECTS`, first
  * match wins: the street's whole width before the hill, its sidewalks and bus stop above the road's box).
  *
@@ -125,10 +126,13 @@ export const HOUSE_WALLS: readonly (readonly [number, number, number, number])[]
 
 const inRect = (x: number, z: number, [x0, z0, x1, z1]: readonly number[]) => x >= x0 && x < x1 && z >= z0 && z < z1;
 
-/** The area the point (x, z) of the block is in, by the structure and room there (see the file comment). */
-export function areaAt(x: number, z: number, structure?: string, room?: string | null): SiteArea {
+/** The house's storey above its ground floor (house.ts: the basement 0, the ground 1, the upper 2, the roof 3 above). */
+export const HOUSE_UPPER = 2;
+
+/** The area the point (x, z) of the block is in, by the structure, room and storey there (see the file comment). */
+export function areaAt(x: number, z: number, structure?: string, room?: string | null, storey = 0): SiteArea {
   const walls = HOUSE_WALLS.some((rect) => inRect(x, z, rect));
-  if (structure === 'house' ? !!room || walls : !structure && walls) return 'house';
+  if (structure === 'house' ? !!room || walls || storey >= HOUSE_UPPER : !structure && walls) return 'house';
   const named = structure && structure !== 'house' ? AREA_OF_STRUCTURE[structure] : undefined;
   if (named) return named;
   const found = AREA_RECTS.find(([, ...rect]) => inRect(x, z, rect));

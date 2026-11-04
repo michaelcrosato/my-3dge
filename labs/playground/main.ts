@@ -157,7 +157,7 @@ function placeAt(scene: EngineFrame['scene'], at: { x: number; y: number; z: num
 function whereOn(scene: EngineFrame['scene'], at: { x: number; y: number; z: number }) {
   const found = placeAt(scene, at);
   if (found === undefined) return { area: null, line: null };
-  const area = areaAt(at.x, at.z, found?.structure.name, found?.room?.name);
+  const area = areaAt(at.x, at.z, found?.structure.name, found?.room?.name, found?.storey);
   return { area, line: locationLine(area, found?.room?.name) };
 }
 
@@ -243,6 +243,8 @@ let last: EngineFrame | null = null;
 let opening = search.has('playground.spawn') || !!check?.go?.place;
 /** The attract mode (labs/playground/ui/attract.ts) while this page plays the tour as one; null otherwise. */
 let attract: Attract | null = null;
+/** Whether the touch menu button was tapped before the front end was up: the engine paused the run, pause opens. */
+let menuAsked = false;
 engine = await createEngine({
   canvas,
   actionMap: playgroundMap,
@@ -255,7 +257,7 @@ engine = await createEngine({
   modal: () => frontEnd?.modal() ?? false,
   cameraInput: () => frontEnd?.cameraInput(),
   touchLayout: PLAYGROUND_TOUCH, // labs/playground/touch.ts: its menu button pauses, then opens pause here
-  onMenu: () => void (frontEnd && !frontEnd.modal() && frontEnd.open('pause')),
+  onMenu: () => void (!frontEnd ? (menuAsked = true) : !frontEnd.modal() && frontEnd.open('pause')),
   onFrame: (frame) => {
     last = frame;
     if (opening && frontEnd) {
@@ -272,10 +274,11 @@ engine = await createEngine({
     runWeather(frame, (at) => !!placeAt(frame.scene, at)); // the rain and the dust (labs/playground/weather.ts)
   },
 });
-const feel = engine.inspector ? mountFeelPanel(document, engine.inspector, search) : null;
+const feel = engine.inspector ? mountFeelPanel(document, engine.inspector, search, () => frontEnd?.modal() ?? false) : null; // prettier-ignore
 installTheme(document);
 engine.ui?.root.classList.add('pg-ui');
-if (engine.inspector && engine.ui && engine.input) {
+if (engine.ready && engine.inspector && engine.ui && engine.input) {
+  // a failed start (its first frame or a warm-up threw) leaves the parts made but no loop: no front end over its error
   frontEnd = createFrontEnd({
     engine,
     canvas,
@@ -295,7 +298,9 @@ if (engine.inspector && engine.ui && engine.input) {
     const { steps } = JSON.parse(await replays[TOUR_REPLAY]()) as { steps: number };
     attract = createAttract(engine, engine.ui.root, { steps, look: showing.look, onView: (change) => void (showing = { ...showing, ...change }) }); // prettier-ignore
   }
-  if (showsTitle) frontEnd.open('title'); // under the splash, which fades to show it
+  if (showsTitle)
+    frontEnd.open('title'); // under the splash, which fades to show it
+  else if (menuAsked) frontEnd.open('pause'); // the menu button, tapped while the page loaded
 }
 if (engine.ready) await splash?.ready(!navigator.webdriver);
 else splash?.remove(); // a failed start: its error and fix show at once (the page's #msg)

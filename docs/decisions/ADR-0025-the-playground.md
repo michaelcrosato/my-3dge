@@ -2490,31 +2490,44 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   goldens and the specs open them; no menu lists them. The page's menu of scenes, cameras, looks and replays (the
   playground's old `menu.ts` and its setting `playground.menu`) is removed: Go to, the controls sheet, Settings and
   Tools hold what a person needs of it, and links and `x` commands open the rest. Its links to the labs index and the
-  Stress Box (ADR-0021 amendment 3) go with it: the engine's labs (the box, the Animation, Materials, Props, Effects,
+  Stress Box (ADR-0021 amendment 3) go with it, only the owner checks `labs` and `esc-0005` still opening them: the
+  engine's labs (the box, the Animation, Materials, Props, Effects,
   Cameras, Physics and Library Labs) are the engine's own tools, opened at their paths from the labs index, not part
   of the game.
 - **The front end:** one theme (labs/playground/ui/theme.ts) over every screen, panel, the HUD and the signs, kept in
   the playground: the engine's widgets keep their plain stylesheet for every other page. Each menu says under it what
-  the item at the cursor does; a screen too tall for the window scrolls. The HUD keeps to the edges: where the player
+  the item at the cursor does, but in a window 460 px tall or less; a screen too tall for the window scrolls, the
+  cursor's row kept in view. The HUD keeps to the edges: where the player
   is (top left), the camera and look for 3 s after either changes (then faded; its text stays for the tests), the
   prompt, the ammo, and a hint of the menus' keys; every other key is on the controls sheet (H), read from the map in
-  use on the device used last. A card names an area and what to try there as the player walks in, its seconds counted
-  only while it can show. Under a screen the HUD (the crosshair too), the card, the signs and the feel panel hide. A
-  link to another page (a recorded run, Go to from off the block) keeps only the view, never the scene, a replay or a
-  check. A pad starts from the splash as a key does; a failed start shows its error at once. On a touch screen the
-  playground's touch layout (labs/playground/touch.ts, untested as ADR-0021 has it) carries the menu button.
+  use on the device used last (on a pad its sticks and buttons, on touch the stick and the touch buttons, the page's
+  own keys on a keyboard alone). A card names an area and what to try there as the player walks in, its seconds
+  counted only while it can show. Under a screen the HUD (the crosshair too), the card, the signs and the feel panel
+  hide, and F leaves the feel panel be; under the Tune panel, at the side so the world shows, only the feel panel
+  hides. A link to another page (a recorded run, Go to from off the block) keeps only the view, never the scene, a
+  replay or a check. A pad starts from the splash as a key does; a failed start shows its error at once, with no front
+  end over it. On a touch screen the playground's touch layout (labs/playground/touch.ts, untested as ADR-0021 has it)
+  carries the menu button, which alone stays over a screen; a tap on it while the page loads opens pause once it is
+  up.
 - **The glitches:** from the yard the house stood open because the cutaway cut every structure's walls facing a camera
-  outside it: a site now cuts only the structure the player is in, a building (rooms or a roof) only while he is
-  indoors, since its map holds its patio, porch and apron too; in a classic view its storeys likewise. The others only
-  fade what hides him. The ground's colour crossing the sky was the daylight model reading SkyMesh's box corners near
+  outside it: a site now cuts only the structure the player is in, and in a perspective camera a building (rooms or a
+  roof) only while he is indoors, since its map holds its patio, porch and apron too; a classic view, looking down
+  from afar, cuts it on its whole map as before (its walls facing the camera, the storeys above him and the roof),
+  which would hide him on the porch or the patio. The shooter's and the platformer's cameras fade what stands between
+  them and him; the classic views fade nothing. The area a point reads as follows the same map: the house's walls and
+  rooms, and its map above the ground floor (the roof to its eaves, the porch roof, the deck), are the house; its
+  patio, porch and apron the yards. The ground's colour crossing the sky was the daylight model reading SkyMesh's box corners near
   the camera: the dome is a sphere of small triangles, it and the backdrop kept short of the far plane without moving
   the near plane. The gym's signs, drawn over everything, showed through the house's walls: on the block they show
   only in the gym.
 - **Tests:** the specs that open the playground for its menus or its gym open `?scene=gym` (the block warms up for
   minutes on SwiftShader); the block's own tests open `?scene=site` as before. An adversarial review (six readings,
   each finding put to three skeptics) confirmed 35 findings in the first cut, about 24 faults once the ones found
-  twice are merged, all fixed in this WP with unit tests where a
-  number shows them (labs/playground/scenes/site-cut.test.ts: 180 wall tiles cut from the patio before, 0 after).
+  twice are merged, all fixed in this WP with unit tests where a number shows them
+  (labs/playground/scenes/site-cut.test.ts: 180 wall tiles cut from the patio before, 0 after). A second run checked
+  each fix (six readings, two skeptics a problem): 17 problems in the fixes themselves and 3 fixes partial, all fixed
+  here too (the classic views' cut on the porch and the patio, which the first fix had taken away, now held by
+  site-cut.test.ts and the agent eye's site-eye.test.ts).
 - **Baselines:** seven of the street's look thumbnails in tests/baselines/thumbs/ (the cel and pixel looks from first
   person, the shoulder and the follow camera, and the clean look from the follow camera) are recorded again: they held
   the bug, the gym's wall on the left horizon cut down to show the sky and the house's front cut open to show its lit
