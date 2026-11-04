@@ -31,7 +31,7 @@ import { instancePath, PAGE_SLOTS } from '../instancing';
 import { createMaterialLibrary } from '../materials/library';
 import type { Warmup } from '../warmup';
 import { defineStoreyFixtureGlyphs } from '../../../fixtures/levels/storeys/glyphs';
-import { createLevelMeshes, type LevelMeshes } from './meshes';
+import { createLevelMeshes, STOREY_SEAM, type LevelMeshes } from './meshes';
 import { LEVEL_RECIPES } from './recipes';
 
 const DIR = join(import.meta.dirname, '..', '..', '..', 'fixtures', 'levels');
@@ -375,11 +375,13 @@ describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.1
     meshes.dispose();
   });
 
-  it("stands each storey's walls on its floor and up to the next, the attic's under the gable, and the roof over all", () => {
+  it("stands each storey's walls on its floor and up to the next, clear of both floors, the attic's under the gable, and the roof over all", () => {
     const meshes = createLevelMeshes(house, { materials: materials() });
     const box = (name: string) => new Box3().setFromObject(meshes.parts.find((part) => part.name === `level:house/${name}`)!.mesh); // prettier-ignore
-    expect([box('ground/wall#2').min.y, box('ground/wall#2').max.y]).toEqual([0, 3]);
-    expect([box('upper/wall#2').min.y, box('upper/wall#2').max.y]).toEqual([3, 6]);
+    const heights = (name: string) => [box(name).min.y, box(name).max.y].map((y) => Math.round(y * 1e4) / 1e4);
+    // `STOREY_SEAM` into the floor's slab and short of the floor above: no face of a wall in a floor's plane
+    expect(heights('ground/wall#2')).toEqual([0 - STOREY_SEAM, 3 - STOREY_SEAM]);
+    expect(heights('upper/wall#2')).toEqual([3 - STOREY_SEAM, 6 - STOREY_SEAM]);
     const attic = box('attic/wall');
     expect(attic.max.y).toBeCloseTo(house.roofs![0].peak - house.roofs![0].thickness, 5);
     const roof = box('attic/roof');

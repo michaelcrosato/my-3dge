@@ -2,11 +2,17 @@
  * @file Tests for the house's plans (labs/playground/levels/plan.ts and house.ts, PLAN.md WP 13.18): a plan paints
  * rectangles in metres, later paint over earlier, and refuses a size or a rectangle off whole tiles or outside its map,
  * naming it and the fix; `levelText` writes the storeys bottom first; the house compiles to its four storeys and its
- * seventeen rooms, one for each marker, each marker inside its own room.
+ * seventeen rooms, one for each marker, each marker inside its own room; and it draws no two surfaces facing up in one
+ * plane (a ray down every 0.25 m: the floors fought the walls and heads of the storey under them, z-fighting, until
+ * engine/gfx/level/meshes.ts's `STOREY_SEAM`, and the window sills the wall under them, WP 13.33).
  * @see labs/playground/levels/plan.ts
  * @see labs/playground/levels/house.ts
  */
+import { MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
+import { registry } from '../../../engine/core/registry';
+import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
+import { levelLooks } from '../../../engine/gfx/level/runs';
 import { getLevel } from '../../../engine/sim-api';
 import { HOUSE_MARKERS } from './house';
 import { levelText, Plan } from './plan';
@@ -41,5 +47,26 @@ describe('the house', () => {
       const [c0, r0, c1, r1] = room.rect;
       expect(col >= c0 && col <= c1 && row >= r0 && row <= r1, room.name).toBe(true);
     }
+  });
+
+  it('draws no two surfaces facing up in one plane: no floor in a wall’s, a head’s or a sill’s (z-fighting)', () => {
+    const level = getLevel('level:house');
+    const { levelRecipes: recipes, levelRooms: rooms } = levelLooks(registry, 'level:house'); // as the stage draws it
+    const meshes = createLevelMeshes(level, { materials: { get: () => new MeshBasicMaterial() }, recipes, rooms });
+    meshes.root.updateMatrixWorld(true);
+    const ray = new Raycaster();
+    const shared: string[] = [];
+    for (let x = 0.125; x < level.cols * level.tile; x += 0.25)
+      for (let z = 0.125; z < level.rows * level.tile; z += 0.25) {
+        ray.set(new Vector3(x, 30, z), new Vector3(0, -1, 0));
+        const hits = ray.intersectObject(meshes.root, true);
+        for (let i = 0; i + 1 < hits.length; i++) {
+          const [a, b] = [hits[i], hits[i + 1]];
+          const other = a.object !== b.object || a.instanceId !== b.instanceId; // a ray along a quad's diagonal meets both its halves
+          if (other && Math.abs(a.point.y - b.point.y) < 0.002) shared.push(`${a.object.name} and ${b.object.name} at (${x}, ${a.point.y.toFixed(2)}, ${z})`); // prettier-ignore
+        }
+      }
+    expect(shared).toEqual([]);
+    meshes.dispose();
   });
 });

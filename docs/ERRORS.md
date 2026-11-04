@@ -1489,7 +1489,7 @@ Raised by the dialog box (engine/ui/dialog.ts) for text that is not a string or 
 
 - Message: `menu: {problem}`
 - Fix: give items as strings or { label, id?, disabled? }, and update(dt) the frame's seconds, 0 or more
-- Registered in: [`engine/ui/menu.ts` line 36](../engine/ui/menu.ts)
+- Registered in: [`engine/ui/menu.ts` line 37](../engine/ui/menu.ts)
 
 Raised by the menu (engine/ui/menu.ts) for an item that is neither a string nor `{ label, id?, disabled? }`, or a frame time that is not a number of seconds from 0.
 

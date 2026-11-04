@@ -922,7 +922,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `flightGeometry`, `RISER`, `risersOf`
   - Tests: [`engine/gfx/level/flights.test.ts`](../engine/gfx/level/flights.test.ts)
 - [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts).
-  - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`
+  - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`, `STOREY_SEAM`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
 - [`openings.ts`](../engine/gfx/level/openings.ts): Openings drawn (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1, §7.1): the parts round a storey's doors and windows, and its railings.
   - Exports: `boxBetween`, `FRAME`, `framesGeometry`, `headsGeometry`, `POST_GAP`, `PROUD`, `railingGeometry`
@@ -2314,7 +2314,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 
 ## tests/unit/ui
 
-- [`fakeDom.ts`](../tests/unit/ui/fakeDom.ts): A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children; `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type)` (every event bubbles) and `click()`; and a canvas whose client rect a test sets.
+- [`fakeDom.ts`](../tests/unit/ui/fakeDom.ts): A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children; `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type, init)` (every event bubbles, `init`'s fields on it) and `click()`; and a canvas whose client rect a test sets.
   - Exports: `asDom`, `CanvasRect`, `FakeDocument`, `FakeElement`, `FakeEvent`, `fakePage`
   - Tests: [`engine/ui/overlay.test.ts`](../engine/ui/overlay.test.ts)
 - [`uiKit.ts`](../tests/unit/ui/uiKit.ts): What the UI widgets' unit tests share (engine/ui/{widgets,dialog,menu}.test.ts): an overlay over a canvas in a fresh stand-in page (tests/unit/ui/fakeDom.ts), and a page input a test drives a frame at a time.

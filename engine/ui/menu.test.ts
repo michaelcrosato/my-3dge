@@ -67,9 +67,11 @@ describe('the menu', () => {
 
   it('follows the pointer and picks what is clicked, never a disabled item', () => {
     const { menu, picked, rows } = setup();
-    rows()[3].dispatch('pointerenter');
+    rows()[3].dispatch('pointermove', { movementX: 4, movementY: 0 });
     expect(menu.index).toBe(3);
-    rows()[1].dispatch('pointerenter');
+    rows()[2].dispatch('pointermove', { movementX: 0, movementY: 0 }); // the page moved under a still pointer: no move
+    expect(menu.index).toBe(3);
+    rows()[1].dispatch('pointermove', { movementX: 0, movementY: 3 });
     rows()[1].click();
     expect([menu.index, picked]).toEqual([3, []]);
     rows()[2].click();
