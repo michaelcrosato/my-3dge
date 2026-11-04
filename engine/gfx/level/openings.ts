@@ -4,8 +4,9 @@
  * glyph with a head, its tiles merged into few rectangles, each a box from the head up to the storey's full top, or
  * under a pitched roof up to its underside (engine/gfx/level/walls.ts), as the colliders stand
  * (engine/world/level/storeys.ts). `framesGeometry(openings)` is the frame round each: two jambs and a head of planks
- * `FRAME` wide, and a window's sill, on the wall round the opening and standing `PROUD` out of its faces, so the opening
- * drawn is the one bodies pass through (WP 13.18: the jambs had stood inside it, 7 cm a side). `railingGeometry(tile,
+ * `FRAME` wide, and a window's sill, on the wall round the opening and standing `PROUD` out of its faces (the sill
+ * `PROUD` over the wall's top, never in its plane), so the opening drawn is the one bodies pass through (WP 13.18: the
+ * jambs had stood inside it, 7 cm a side). `railingGeometry(tile,
  * pieces, bottom, top)` is a railing along each run of tiles: posts at its ends and at most `POST_GAP` apart, and a top
  * and a bottom rail as wide as its tiles, the railing's collider (a box over them), so what stops a body is drawn.
  *
@@ -97,7 +98,7 @@ export function framesGeometry(openings: readonly OpeningDescriptor[], tile: num
       opening.axis === 'x' ? boxBetween(p0, y0, q0, p1, y1, q1) : boxBetween(q0, y0, p0, q1, y1, p1);
     parts.push(box(a0 - FRAME, b0, a0, b1, bottom, top), box(a1, b0, a1 + FRAME, b1, bottom, top));
     parts.push(box(a0 - FRAME, b0, a1 + FRAME, b1, top, top + FRAME));
-    if (opening.kind === 'window') parts.push(box(a0 - FRAME, b0, a1 + FRAME, b1, bottom - FRAME, bottom));
+    if (opening.kind === 'window') parts.push(box(a0 - FRAME, b0, a1 + FRAME, b1, bottom - FRAME, bottom + PROUD)); // over the wall's top, never in its plane
   }
   return joined(parts);
 }

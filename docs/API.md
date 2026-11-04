@@ -5053,6 +5053,7 @@ For the agents who maintain the engine.
 - `LevelMeshesOptions` (interface): What `createLevelMeshes` needs: where materials come from, and optionally more recipes and a log.
 - `LevelMeshPart` (interface): One level mesh: its descriptor's recipe and glyphs, the mesh, and for an instanced shape one cell per instance.
 - `meshDrawCalls` (function): The draw calls `mesh` costs a frame: its groups (one with a single material), once in colour and once per shadow map when it casts; none while it is hidden or an instanced mesh with no instances.
+- `STOREY_SEAM` (const): How far a storey's walls, pillars and heads that rise to the storey above stop under its floor, and its walls and pillars reach down into their own floor's slab (m), so no face of one shares a plane with a floor: the house's patio and porch floors fought the basement's walls and heads under them (z-fighting, WP 13.33).
 
 ### [`engine/gfx/level/openings.ts`](../engine/gfx/level/openings.ts)
 

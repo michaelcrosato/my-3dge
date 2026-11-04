@@ -127,11 +127,11 @@ const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
 /**
  * Draws `level`'s mesh descriptors (see the file comment). A level written as storeys draws each storey's descriptors
  * from its view (engine/world/level/storeys.ts's `storeyView`), bottom first, each part with `userData.storey`: its
- * walls up to the storey above or, under a pitched roof, clipped to the roof's underside in merged runs (walls.ts); its
- * flights of stairs by the riser (flights.ts); its railings as posts and rails (openings.ts). Then each storey's own
- * parts, `ceiling` (its slab's underside and void edges, slabs.ts), `heads` (the wall over its openings and low
- * ceilings) and `frames` (round its doors and windows, openings.ts); the floors of the rooms `options.rooms` gives a
- * material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
+ * walls up to the storey above (short of its floor by `STOREY_SEAM`) or, under a pitched roof, clipped to the roof's
+ * underside in merged runs (walls.ts); its flights of stairs by the riser (flights.ts); its railings as posts and rails
+ * (openings.ts). Then each storey's own parts, `ceiling` (its slab's underside and void edges, slabs.ts), `heads` (the
+ * wall over its openings and low ceilings) and `frames` (round its doors and windows, openings.ts); the floors of the
+ * rooms `options.rooms` gives a material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
  * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts). A part with nothing to draw (a
  * storey's floor whose every piece its rooms' own floors took) keeps its place in `parts`, hidden and out of the root,
  * since an empty mesh in the scene is drawn with no vertices (WP 13.18: Dawn warns of a draw with an index count of 0).
@@ -187,7 +187,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
     for (const descriptor of view.meshes) {
       const recipe = recipeOf(descriptor.recipe);
-      const drawn = storey === undefined ? descriptor : withoutRooms(level, k, descriptor, recipe, options.rooms, roomPieces); // prettier-ignore
+      const drawn = storey === undefined ? descriptor : seamed(level, k, withoutRooms(level, k, descriptor, recipe, options.rooms, roomPieces), recipe); // prettier-ignore
       parts.push(place(buildPart(view, drawn, recipe, materialsOf(recipe), single, roof), descriptor.recipe, recipe, descriptor.glyphs, [descriptor.bottom, descriptor.top], storey)); // prettier-ignore
     }
   });
@@ -195,7 +195,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
     const own: [string, BufferGeometry | null, [number, number]][] = [
       ['ceiling', ceilingGeometry(level, storey), [storey.base - storey.slab, storey.base]],
-      ['heads', headsGeometry(level, storey, roof), [storey.base, storey.fullTop]],
+      ['heads', headsGeometry(level, k + 1 < level.storeys!.length ? { ...storey, fullTop: storey.fullTop - STOREY_SEAM } : storey, roof), [storey.base, storey.fullTop]], // prettier-ignore
       ['frames', framesGeometry((level.openings ?? []).filter((opening) => opening.storey === k), level.tile), [storey.base, storey.fullTop]], // prettier-ignore
     ];
     for (const [name, geometry, heights] of own) {
@@ -274,6 +274,31 @@ function buildPart(
     if (geometry) return single(geometry, recipe);
   }
   return buildShape(view, descriptor, recipe, materials);
+}
+
+/**
+ * How far a storey's walls, pillars and heads that rise to the storey above stop under its floor, and its walls and
+ * pillars reach down into their own floor's slab (m), so no face of one shares a plane with a floor: the house's patio
+ * and porch floors fought the basement's walls and heads under them (z-fighting, WP 13.33). Drawing only: the colliders
+ * keep the compiled heights.
+ */
+export const STOREY_SEAM = 0.01;
+
+/** The shapes `seamed` moves: the solids that stand from a floor to the storey above. */
+const SEAMED: ReadonlySet<LevelShape> = new Set(['block', 'pillar']);
+
+/**
+ * `descriptor` drawn clear of the floors over and under it (see the file comment): a block or a pillar of storey `k`
+ * rising to the storey above stops `STOREY_SEAM` under its floor, and one standing on storey `k`'s own floor, over a
+ * storey below, starts that much under it, inside the slab, so the outside of a wall runs on unbroken.
+ */
+function seamed(level: CompiledLevel, k: number, descriptor: MeshDescriptor, recipe: LevelRecipe): MeshDescriptor {
+  const storeys = level.storeys!;
+  if (!SEAMED.has(recipe.shape)) return descriptor;
+  const under = k + 1 < storeys.length && descriptor.top >= storeys[k].fullTop - 1e-9;
+  const over = k > 0 && descriptor.bottom <= storeys[k].base + 1e-9;
+  if (!under && !over) return descriptor;
+  return { ...descriptor, top: descriptor.top - (under ? STOREY_SEAM : 0), bottom: descriptor.bottom - (over ? STOREY_SEAM : 0) }; // prettier-ignore
 }
 
 /**

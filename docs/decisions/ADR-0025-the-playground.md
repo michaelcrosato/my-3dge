@@ -2566,3 +2566,23 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   wall does (engine/gfx/cameras/collide.ts; collide.test.ts holds it, and a wall between them cuts nothing). The
   queries' test now holds that what `also` does not name is still filtered by `fixed` and `groups`.
 - Plan edit: WP 13.34.
+
+## Amendment 53 (2026-11-04, WP 13.35): no floor in the plane of what stands under it
+
+- **Found:** screenshots of every screen and of the house on main at eae99d8, read by the visual-reviewer: the back
+  patio's concrete streaked in comb-like stripes that move with the camera, and a white sliver at the front door's
+  foot, the owner's "the ground looks funny when you move certain ways". A ray down every 0.25 m over the house's
+  meshes found 1,251 pairs of surfaces facing up in one plane. A storey's walls, partitions and heads rose to the next
+  storey's base (`fullTop`), so their tops lay in that floor's plane: 653 of the pairs were the basement's heads over
+  the crawlspace, under the patio. And each window's sill lay in the plane of the wall under it.
+- **Decided:** drawing only; the colliders keep the compiled heights and no hash changes. A storey's walls, pillars
+  and heads that rise to the storey above stop `STOREY_SEAM` (1 cm) under its floor, and its walls and pillars reach
+  that far down into their own floor's slab, so a wall's outside runs on unbroken (engine/gfx/level/meshes.ts). A
+  window's sill stands `PROUD` over the wall under it (openings.ts). The same sweep finds no such pair, and
+  labs/playground/levels/house.test.ts holds it (it finds all 1,251 without the fix).
+- **The review's other points:** the HUD named the camera the page last switched to, so a camera set another way (the
+  tour, `__engine.camera.set`) kept the old name; it now reads the camera in use each frame. Panels that scroll show a
+  thin scrollbar. Not changed: the gym's signs overlap from some angles (depth-ordered pills, the nearer on top); Go
+  to's "double highlight" was the capture's cursor (the pointer moves the cursor, and the old row's 120 ms fade was
+  caught midway); the front yard's spawn faces the street (its replays and the tour start there).
+- Plan edit: WP 13.35.

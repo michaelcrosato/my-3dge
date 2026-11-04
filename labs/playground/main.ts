@@ -201,7 +201,8 @@ function showFrame({ world, scene, setting, dt }: EngineFrame): void {
     const near = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
     sign.label.visible = !photo && !modal && inGym && near; // never over a screen
   }
-  if (!showing.camera) showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? 'custom' };
+  // the camera in use, however it changed (T, settings, the tour, `__engine.camera.set`), so the HUD never names another
+  showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? (showing.camera || 'custom') };
   const now = `${showing.camera} ${showing.look}`;
   modeAge = now === modeWas ? modeAge + dt : 0;
   modeWas = now;

@@ -96,7 +96,8 @@ const THEME_CSS = `
 .pg-ui .ui-box { background: var(--pg-glass); border: 1px solid var(--pg-line); border-radius: var(--pg-radius);
   box-shadow: var(--pg-shadow); color: var(--pg-text); padding: 22px 26px; }
 .pg-ui .pg-screen .ui-panel.ui-box { position: relative; left: auto; top: auto; right: auto; bottom: auto;
-  transform: none; max-height: 88vh; overflow-y: auto; box-sizing: border-box; }
+  transform: none; max-height: 88vh; overflow-y: auto; box-sizing: border-box; scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent; scrollbar-gutter: stable; }
 .pg-ui .pg-screen .pg-settings, .pg-ui .pg-screen .pg-checks { width: min(680px, 94vw); }
 .pg-ui .pg-screen .pg-tune { width: min(420px, 46vw); }
 .pg-ui .pg-screen .ui-panel.pg-tune { max-height: 96vh; }

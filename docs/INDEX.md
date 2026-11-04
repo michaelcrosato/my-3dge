@@ -922,7 +922,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `flightGeometry`, `RISER`, `risersOf`
   - Tests: [`engine/gfx/level/flights.test.ts`](../engine/gfx/level/flights.test.ts)
 - [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts).
-  - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`
+  - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`, `STOREY_SEAM`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
 - [`openings.ts`](../engine/gfx/level/openings.ts): Openings drawn (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1, §7.1): the parts round a storey's doors and windows, and its railings.
   - Exports: `boxBetween`, `FRAME`, `framesGeometry`, `headsGeometry`, `POST_GAP`, `PROUD`, `railingGeometry`
