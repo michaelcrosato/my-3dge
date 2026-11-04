@@ -1,16 +1,17 @@
 /**
  * @file Unit tests for rides on the stage (engine/gfx/stageRides.ts), built in Node with no GPU: a zipline is its
  * cable from anchor to anchor, a pole and a pulley under each anchor above its foot, and a balloon over a balloon's
- * upper anchor; a ladder its two rails and a rung every 0.3 m to its top, across its face; a pad a disc at its top, a
- * trampoline a mat, a rim and four legs; each mesh named `<component>#<id>/<part>` with its entity; a ride is built
- * once, again when its component changes, and removed with its entity; they join the scene with the first ride; the
- * warm-up sees every mesh and the drawn parts' looks in the shader key.
+ * upper anchor, its line a rope beaded up to it (a marker every 6 m, in the balloon's mesh); a ladder its two rails
+ * and a rung every 0.3 m to its top, across its face; a pad a disc at its top, a trampoline a mat, a rim and four
+ * legs; each mesh named `<component>#<id>/<part>` with its entity; a ride is built once, again when its component
+ * changes, and removed with its entity; they join the scene with the first ride; the warm-up sees every mesh and the
+ * drawn parts' looks in the shader key.
  * @see engine/gfx/stageRides.ts
  */
 import { Box3, Group, Vector3, type Mesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { createMaterialLibrary } from './materials/library';
-import { BALLOON_LINE, RUNG, createStageRides } from './stageRides';
+import { BALLOON_LINE, BEAD, RUNG, createStageRides } from './stageRides';
 
 const ZIPLINE = { from: [0, 8, 0], to: [0, 2, 30], balloon: false, poles: true, feet: [6, 0] };
 const BALLOON = { from: [5, 0, 0], to: [5, 60, 0], balloon: true, poles: true, feet: [0, 0] };
@@ -44,7 +45,12 @@ describe('rides on the stage', () => {
     expect([pole.min.y, pole.max.y]).toEqual([expect.closeTo(6, 6), expect.closeTo(8, 6)]); // on the tower it stands on
     expect(meshes.get('zipline#3/cable')!.userData).toMatchObject({ entity: 3, component: 'zipline' });
     expect([...meshes.keys()].filter((name) => name.startsWith('zipline#4'))).toEqual(['zipline#4/cable', 'zipline#4/balloon']); // prettier-ignore
-    expect(box(meshes.get('zipline#4/balloon')!).getCenter(new Vector3()).y).toBeCloseTo(62.5, 6);
+    const balloon = meshes.get('zipline#4/balloon')!; // 2.5 m round over the line's top, a bead every 6 m up the line
+    expect([balloon.position.y, box(balloon).max.y, box(balloon).min.y]).toEqual([expect.closeTo(62.5, 6), expect.closeTo(65, 6), expect.closeTo(BEAD.gap - BEAD.radius, 4)]); // prettier-ignore
+    const position = balloon.geometry.getAttribute('position');
+    expect(position.count).toBe(17 * 13 + 9 * (9 * 7)); // the balloon and 9 beads, at 6 to 54 m of the line's 60
+    const beads = Array.from({ length: position.count }, (_, i) => new Vector3().fromBufferAttribute(position, i).add(balloon.position)).filter((p) => p.y < 59); // prettier-ignore
+    expect(beads.every((p) => Math.hypot(p.x - 5, p.z) <= BEAD.radius + 1e-6)).toBe(true); // on the line
     const line = box(meshes.get('zipline#4/cable')!); // a rope BALLOON_LINE across its corners, where a cable is 4 cm
     for (const across of [line.max.x - line.min.x, line.max.z - line.min.z]) expect(across > 0.9 * BALLOON_LINE && across <= BALLOON_LINE + 1e-9).toBe(true); // prettier-ignore
   });

@@ -4,9 +4,10 @@
  * for every glyph with a head, its tiles merged into few rectangles, each a box from the head up to the storey's full
  * top, or under a pitched roof up to its underside (engine/gfx/level/walls.ts), as the colliders stand
  * (engine/world/level/storeys.ts). `wallFacings(level, storey, openings, foot, wallAt)` faces the wall over an opening
- * in a wall with that wall's look: its two faces through the wall, a tile at a time as the wall's pieces are, `FACING`
- * out of the head's (never in their plane), their v from the wall's `foot`, so a siding's boards and a brick's courses
- * run on over the opening while the head keeps its top, its underside and its shadow.
+ * in a wall with that wall's look: on each of the wall's two faces a skin `FACING` out of the head's (never in their
+ * plane), a tile at a time as the wall's pieces are, closed at its top and at the run's ends (open, its 3 mm step
+ * showed the head's paint behind it as pinholes at a grazing look), its v from the wall's `foot`, so a siding's boards
+ * and a brick's courses run on over the opening while the head keeps its top, its underside and its shadow.
  *
  * `framesGeometry(openings, tile, leaf?)` is the frame round each: two jambs and a head of planks `FRAME` wide on the
  * wall round the opening, and a window's sill, standing `PROUD` out of the wall's faces and lining its reveal `PROUD`
@@ -44,7 +45,7 @@ import type {
 import { boxGeometry } from '../geometry/box';
 import { frustumGeometry } from '../geometry/frustum';
 import { mergeGeometries } from '../geometry/groups';
-import { createWriter } from '../geometry/writer';
+import { createWriter, cross, dot, normalize, type Vec3, type Writer } from '../geometry/writer';
 import { writeHull } from './walls';
 
 /** A frame's width round an opening (m). */
@@ -121,23 +122,58 @@ export function wallFacings(
     const ends: [number, number][] = axis === 'x' ? [[c0 - 1, r0], [c1 + 1, r0]] : [[c0, r0 - 1], [c0, r1 + 1]]; // prettier-ignore
     const recipe = ends.map(([c, r]) => wallAt(c, r)).find((name) => name !== undefined);
     if (recipe === undefined || storey.fullTop <= top) continue;
-    for (let r = r0; r <= r1; r++)
-      for (let c = c0; c <= c1; c++) {
-        const [width, depth] = axis === 'x' ? [t, t + 2 * FACING] : [t + 2 * FACING, t];
-        const piece = boxGeometry({ width, height: storey.fullTop - top, depth }).translate((c + 0.5) * t, top, (r + 0.5) * t); // prettier-ignore
-        const uv = piece.getAttribute('uv');
-        for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) + top - foot); // its boards run on from the wall's foot
-        // Its faces through the wall alone (box.ts's order: +X, -X, +Y, -Y, +Z, -Z), as the wall's pieces show theirs.
-        const kept = axis === 'x' ? [4, 5] : [0, 1];
-        const index = piece.getIndex()!;
-        piece.setIndex(piece.groups.filter((_, k) => kept.includes(k)).flatMap(({ start, count }) => Array.from({ length: count }, (_, i) => index.getX(start + i)))); // prettier-ignore
-        piece.clearGroups();
-        pieces.set(recipe, [...(pieces.get(recipe) ?? []), piece]);
-      }
+    const [lo, hi] = axis === 'x' ? [c0, c1] : [r0, r1]; // its tiles along the wall
+    const faces = axis === 'x' ? [r0 * t, (r1 + 1) * t] : [c0 * t, (c1 + 1) * t]; // the wall's two faces
+    const at = (a: number, y: number, b: number): Vec3 => (axis === 'x' ? [a, y, b] : [b, y, a]);
+    const writer = createWriter();
+    for (let i = lo; i <= hi; i++)
+      for (const [s, face] of [[-1, faces[0]], [1, faces[1]]] as const)
+        writeSkin(writer, at, [i * t, (i + 1) * t], [face, face + s * FACING], [top, storey.fullTop], [i === lo, i === hi]); // prettier-ignore
+    const piece = writer.build();
+    const uv = piece.getAttribute('uv');
+    for (let v = 0; v < uv.count; v++) uv.setY(v, uv.getY(v) + top - foot); // its boards run on from the wall's foot
+    pieces.set(recipe, [...(pieces.get(recipe) ?? []), piece]);
   }
   const facings = new Map<string, BufferGeometry>();
   for (const [recipe, faces] of [...pieces].sort(([a], [b]) => byText(a, b))) facings.set(recipe, joined(faces)!);
   return facings;
+}
+
+/**
+ * Writes a facing's skin over the tile `[a0, a1]` along its wall (see the file comment), on the wall's face `b[0]`
+ * standing out to `b[1]`, from `y[0]` to `y[1]`: its face, then a bevel back to the wall's face at its top (never level,
+ * so never in a floor's plane), and its ends where `ends` (low, high) says the run ends. `at(a, y, b)` places a point.
+ */
+function writeSkin(
+  writer: Writer,
+  at: (a: number, y: number, b: number) => Vec3,
+  [a0, a1]: readonly [number, number],
+  [face, out]: readonly [number, number],
+  [y0, y1]: readonly [number, number],
+  ends: readonly [boolean, boolean],
+): void {
+  const up: Vec3 = [0, 1, 0];
+  const minus = (p: Vec3, q: Vec3): Vec3 => [p[0] - q[0], p[1] - q[1], p[2] - q[2]];
+  const normal = normalize(minus(at(a0, 0, out), at(a0, 0, face)));
+  const u = cross(up, normal); // the face's u, left to right seen from outside, as box.ts's
+  const [left, right] = dot(minus(at(a1, 0, 0), at(a0, 0, 0)), u) > 0 ? [a0, a1] : [a1, a0];
+  const bevel = y1 - Math.abs(out - face);
+  writer.face([at(left, y0, out), at(right, y0, out), at(right, bevel, out), at(left, bevel, out)], u, up);
+  writer.face([at(left, bevel, out), at(right, bevel, out), at(right, y1, face), at(left, y1, face)], u, normalize(minus(up, normal))); // prettier-ignore
+  for (const [a, end, side] of [
+    [a0, ends[0], -1],
+    [a1, ends[1], 1],
+  ] as const) {
+    if (!end) continue;
+    const e = normalize(minus(at(a + side, 0, face), at(a, 0, face)));
+    const ue = cross(up, e);
+    const corners: [number, number][] = dot(minus(at(a, 0, out), at(a, 0, face)), ue) > 0 ? [[face, y0], [out, y0], [out, bevel], [face, y1]] : [[out, y0], [face, y0], [face, y1], [out, bevel]]; // prettier-ignore
+    writer.face(
+      corners.map(([b, y]) => at(a, y, b)),
+      ue,
+      up,
+    );
+  }
 }
 
 /**

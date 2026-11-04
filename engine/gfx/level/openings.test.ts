@@ -1,11 +1,12 @@
 /**
  * @file Unit tests for engine/gfx/level/openings.ts (T1; WP 13.14, WP 13.36): the wall over a storey's doors, windows
  * and low ceilings stands from each head to the full top, clipped under a pitched roof, and over an opening in a wall
- * its faces are faced with that wall's, tile by tile, their boards running on from the wall's foot; each door gets two
- * jambs and a head, each window a sill too, round the opening and out of the wall, lining its reveal `PROUD` and no
- * further, or, where a door's leaf hangs and there is room, meeting the leaf, a barrel and a stop at its hinge, so no
- * ray passes round it shut and its swing clears the frame, its fittings too; a railing gets posts at most 1 m apart and
- * two rails as wide as its tiles.
+ * its faces are faced with that wall's, tile by tile, their boards running on from the wall's foot, in a skin out of
+ * the head's faces, closed at its ends and its bevelled top (no edge open but on the wall or in the frame, no face
+ * level); each door gets two jambs and a head, each window a sill too, round the opening and out of the wall, lining
+ * its reveal `PROUD` and no further, or, where a door's leaf hangs and there is room, meeting the leaf, a barrel and a
+ * stop at its hinge, so no ray passes round it shut and its swing clears the frame, its fittings too; a railing gets
+ * posts at most 1 m apart and two rails as wide as its tiles.
  * @see engine/gfx/level/openings.ts
  */
 import { Mesh, MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
@@ -57,21 +58,42 @@ describe('headsGeometry', () => {
     expect(heads.getAttribute('position').count).toBe(2 * 24); // two boxes: the door's run and the window's
   });
 
-  it("faces the wall over an opening in a wall with the wall's sides, out of the head's, its boards running on", () => {
+  it("faces the wall over an opening with the wall's sides: a skin out of the head's, closed, its boards running on", () => {
     const wallAt = (c: number, r: number) => (SHED.legend[GROUND.tiles[r * SHED.cols + c]]?.solid ? 'wall' : undefined);
     const facings = wallFacings(SHED, GROUND, SHED.openings!, -0.01, wallAt);
     expect([...facings.keys()]).toEqual(['wall']);
     const facing = facings.get('wall')!;
-    expect([facing.getIndex()!.count, facing.groups]).toEqual([4 * 2 * 6, []]); // two faces a tile, one draw group
-    const [position, uv] = ['position', 'uv'].map((name) => facing.getAttribute(name));
+    // the door's two tiles and the window's two, on each face of the wall: a face and a bevel a tile, an end each end
+    expect([facing.getIndex()!.count, facing.groups]).toEqual([2 * 2 * (2 * 2 + 2) * 6, []]);
+    const [position, normal, uv] = ['position', 'normal', 'uv'].map((name) => facing.getAttribute(name));
     const index = facing.getIndex()!;
     const used = [...new Set(Array.from({ length: index.count }, (_, i) => index.getX(i)))];
     const t = SHED.tile;
     const near = (v: number, ...at: number[]) => at.some((face) => Math.abs(v - face) < 1e-5); // float32 positions
-    // FACING out of the head's faces: the door's (row 3, along x) and the window's (column 5, along z)
-    const off = used.filter((i) => !near(position.getZ(i), 3 * t - FACING, 4 * t + FACING) && !near(position.getX(i), 5 * t - FACING, 6 * t + FACING)); // prettier-ignore
-    expect(off.map((i) => [position.getX(i), position.getY(i), position.getZ(i)])).toEqual([]);
-    for (const i of used) expect(uv.getY(i)).toBeCloseTo(position.getY(i) + 0.01, 6); // v from the wall's foot
+    // From the head's faces to FACING out, never inside the wall: the door's (row 3, along x), the window's (column 5)
+    const door = (i: number) => near(position.getZ(i), 3 * t - FACING, 3 * t, 4 * t, 4 * t + FACING);
+    const window = (i: number) => near(position.getX(i), 5 * t - FACING, 5 * t, 6 * t, 6 * t + FACING);
+    expect(used.filter((i) => !door(i) && !window(i)).map((i) => [position.getX(i), position.getY(i), position.getZ(i)])).toEqual([]); // prettier-ignore
+    expect(used.filter((i) => normal.getY(i) > 0.99)).toEqual([]); // no level face: never in a floor's plane
+    // Closed: an edge only one triangle has lies on the wall's face or at the skin's foot (in the frame's head).
+    const key = (i: number) =>
+      [position.getX(i), position.getY(i), position.getZ(i)].map((v) => v.toFixed(5)).join(',');
+    const edges = new Map<string, number[]>();
+    for (let f = 0; f < index.count; f += 3)
+      for (const [a, b] of [
+        [0, 1],
+        [1, 2],
+        [2, 0],
+      ].map(([p, q]) => [index.getX(f + p), index.getX(f + q)])) {
+        const id = [key(a), key(b)].sort().join(' ');
+        edges.set(id, [...(edges.get(id) ?? []), a, b]);
+      }
+    const foot = SHED.openings!.map((opening) => opening.top);
+    const open = [...edges.values()].filter((ends) => ends.length === 2);
+    const loose = open.filter((ends) => !ends.every((i) => (door(i) ? near(position.getZ(i), 3 * t, 4 * t) : near(position.getX(i), 5 * t, 6 * t)) || near(position.getY(i), ...foot))); // prettier-ignore
+    expect([open.length > 0, loose.map((ends) => ends.map(key))]).toEqual([true, []]);
+    const faces = used.filter((i) => Math.abs(normal.getY(i)) < 1e-6); // the faces and the ends: v from the wall's foot
+    for (const i of faces) expect(uv.getY(i)).toBeCloseTo(position.getY(i) + 0.01, 6);
     expect(headsGeometry(SHED, GROUND)).not.toBeNull(); // the head keeps its top, underside and shadow
   });
 

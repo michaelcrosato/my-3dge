@@ -2620,20 +2620,26 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     nothing passing round a shut door, and the swing clears the frame (engine/gfx/level/openings.test.ts).
   - A slab's edge stands `STOREY_SEAM` back into its tile over a wall or a head of the storey under it
     (engine/gfx/level/slabs.ts, meshes.ts).
-  - The wall over an opening in a wall is faced with that wall's sides: its two faces through the wall, a tile at a
-    time as the wall's pieces are, 3 mm out of the head's, their boards' v from the wall's foot so they run on
-    (`heads:<recipe>`, meshes.ts). The head keeps its box, its top (seen in the storey cut, as the walls' tops are),
-    its underside and its shadow, so the facing draws once with no shadow of its own, within the geo QA's 20 draw
-    calls a storey; the storey cut hides it with the heads. Under a pitched roof the heads follow the roof's underside
-    and are not faced (the attic's gable window).
-  - labs/playground/levels/house.test.ts holds the three sweeps; they find every pair named above without the fix.
+  - The wall over an opening in a wall is faced with that wall's sides: on each of the wall's faces a skin 3 mm out of
+    the head's, a tile at a time as the wall's pieces are, their boards' v from the wall's foot so they run on
+    (`heads:<recipe>`, meshes.ts). The skin is closed: capped where its run ends and bevelled back to the wall's face
+    at its top, never level, so never in a floor's plane. Open, as first built, its 3 mm step showed the head's paint
+    behind it at a grazing look, a column of pinholes up each head's edge over the frame (the before-and-after visual
+    review), and 1,786 grazing rays reached the paint. The head keeps its box, its top (seen in the storey cut, as the
+    walls' tops are), its underside and its shadow, so the facing draws once with no shadow of its own, within the geo
+    QA's 20 draw calls a storey; the storey cut hides it with the heads. Under a pitched roof the heads follow the
+    roof's underside and are not faced (the attic's gable window).
+  - labs/playground/levels/house.test.ts holds the four sweeps; they find every pair and every ray named above without
+    the fix.
   - The playground looks' noon thumbnails that show the house's ground heads are re-recorded: first person and the
     shoulder view in the cel and pixel looks (15 cells past the comparison's tolerance, each a head now faced with
     the wall's siding or the upper floor's slab edge now set back, by the thumbnails' own object maps), and the three
     follow views, within the tolerance, so their maps name the facings (`heads:wall`). Under a low ceiling the storey
     cut lifts the facings with their heads, as tests/e2e/playground-cameras.spec.ts now expects.
 - **The rest of the review:** the title backdrop's "hairline in the sky" was the gym's balloon line, a 4 cm cable
-  52 m off with its balloon out of the picture. A balloon's line is now a 12 cm rope (engine/gfx/stageRides.ts). The
+  52 m off with its balloon out of the picture. A balloon's line is now a 12 cm rope beaded up to its balloon, a
+  glowing marker every 6 m in the balloon's mesh, so no draw call more (engine/gfx/stageRides.ts `BEAD`): the
+  before-and-after visual review found the plain rope still read as a scratch down the title's sky, and darker. The
   HUD's lines are one dark chip each with light text: the hint, the readout and the camera line had read 1.0 to 1.9
   to 1 over concrete, grass and sky. The weapon line reads "Holstered · 1/2: draw", the HUD's "key: action", and a
   pad's trigger where it has no 1 or 2. The start and pause menus are as wide as their longest row, so the highlight

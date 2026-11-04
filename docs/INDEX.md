@@ -698,7 +698,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createStageProps`, `StageProps`, `StagePropsOptions`
   - Tests: [`engine/gfx/stageProps.test.ts`](../engine/gfx/stageProps.test.ts)
 - [`stageRides.ts`](../engine/gfx/stageRides.ts): Rides on the stage (PLAN.md WP 13.7): every entity holding the component `zipline`, `ladder` or `launcher` (engine/sim/rides.ts) drawn from it.
-  - Exports: `BALLOON_LINE`, `createStageRides`, `RIDE_KINDS`, `RUNG`, `StageRides`, `StageRidesOptions`
+  - Exports: `BALLOON_LINE`, `BEAD`, `createStageRides`, `RIDE_KINDS`, `RUNG`, `StageRides`, `StageRidesOptions`
   - Tests: [`engine/gfx/stageRides.test.ts`](../engine/gfx/stageRides.test.ts)
 - [`stageShells.ts`](../engine/gfx/stageShells.ts): The stage's outline shells (PLAN.md WP 13.24; docs/PLAYGROUND.md §5.2's cel look): engine/gfx/materials/ outline.ts's inverted hulls, wired to the stage (engine/gfx/stage.ts) round its props and its bodies.
   - Exports: `createStageShells`, `SHELL_LINES`, `ShellLook`, `StageShells`

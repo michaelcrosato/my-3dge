@@ -5,15 +5,18 @@
  * seventeen rooms, one for each marker, each marker inside its own room; and it draws no two surfaces facing one way in
  * one plane (z-fighting): none facing up (a ray down every 0.25 m: the floors fought the walls and heads of the storey
  * under them until engine/gfx/level/meshes.ts's `STOREY_SEAM`, and the window sills the wall under them, WP 13.35),
- * none in a reveal (rays along each opening: its jambs fought the wall's cut ends until they lined it, WP 13.36) and none round a slab's edge (rays at each floor slab, from outside: its edge fought the wall under it,
- * the paint band over the siding, WP 13.36).
+ * none in a reveal (rays along each opening: its jambs fought the wall's cut ends until they lined it, WP 13.36) and
+ * none round a slab's edge (rays at each floor slab, from outside: its edge fought the wall under it, the paint band
+ * over the siding, WP 13.36); and no grazing ray reaches a head's paint past the siding faced over it (rays at each
+ * faced head's ends and top, a tenth off its face: 1,786 did through the facing's open 3 mm step, WP 13.36).
  * @see labs/playground/levels/plan.ts
  * @see labs/playground/levels/house.ts
  */
 import { MeshBasicMaterial, Raycaster, Vector3, type Intersection, type Object3D } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
-import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
+import { createLevelMeshes, STOREY_SEAM } from '../../../engine/gfx/level/meshes';
+import { FRAME } from '../../../engine/gfx/level/openings';
 import { levelLooks } from '../../../engine/gfx/level/runs';
 import { getLevel } from '../../../engine/sim-api';
 import { HOUSE_MARKERS } from './house';
@@ -130,6 +133,39 @@ describe('the house', () => {
       }
     }
     expect(found).toEqual([]);
+    meshes.dispose();
+  });
+
+  it('closes the siding over each opening at its ends and top: no grazing ray reaches the head’s paint behind it', () => {
+    const level = getLevel('level:house');
+    const meshes = houseMeshes();
+    const t = level.tile;
+    const reached: string[] = [];
+    let aimed = 0;
+    for (const { axis, tiles, top, storey: k } of level.openings!) {
+      const { name } = level.storeys![k];
+      const fullTop = level.storeys![k].fullTop - (k + 1 < level.storeys!.length ? STOREY_SEAM : 0); // the head's drawn top
+      if (!meshes.parts.some((part) => part.name.startsWith(`level:house/${name}/heads:`))) continue; // faced: not under a pitched roof
+      const [c0, r0, c1, r1] = tiles;
+      const [a0, a1] = axis === 'x' ? [c0 * t, (c1 + 1) * t] : [r0 * t, (r1 + 1) * t];
+      const faces = axis === 'x' ? [r0 * t, (r1 + 1) * t] : [c0 * t, (c1 + 1) * t];
+      // A point on the head's face 2 mm in from an end or the top, and a ray grazing it at a tenth from that end or
+      // from above: it crosses the facing's 3 mm step 0.2 mm out of the head's face, so only a cap stops it there.
+      const aims: [along: number, y: number, way: [number, number]][] = [];
+      for (let y = top + FRAME + 0.05; y < fullTop - 0.02; y += 0.1) aims.push([a0 + 0.002, y, [1, 0]], [a1 - 0.002, y, [-1, 0]]); // prettier-ignore
+      for (let a = a0 + 0.05; a < a1; a += 0.1) aims.push([a, fullTop - 0.002, [0, -1]]);
+      for (const [s, face] of [-1, 1].map((s, i) => [s, faces[i]] as const))
+        for (const [along, y, [da, dy]] of aims) {
+          const at = axis === 'x' ? new Vector3(along, y, face) : new Vector3(face, y, along);
+          const way = axis === 'x' ? new Vector3(da, dy, -0.1 * s) : new Vector3(-0.1 * s, dy, da);
+          const origin = at.clone().addScaledVector(way.normalize(), -0.2);
+          const [hit] = new Raycaster(origin, way).intersectObject(meshes.root, true);
+          aimed++;
+          if (hit?.object.name.endsWith(`${name}/heads`)) reached.push(`${hit.object.name} at ${hit.point.toArray().map((v) => v.toFixed(3))}`); // prettier-ignore
+        }
+    }
+    expect(aimed).toBeGreaterThan(500);
+    expect(reached).toEqual([]);
     meshes.dispose();
   });
 });

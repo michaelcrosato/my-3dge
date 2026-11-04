@@ -5808,6 +5808,7 @@ For the agents who maintain the engine.
 ### [`engine/gfx/stageRides.ts`](../engine/gfx/stageRides.ts)
 
 - `BALLOON_LINE` (const): A balloon's line, across (m): a rope seen from far off (see the file comment); a cable is 4 cm.
+- `BEAD` (const): A balloon's line's marker beads (see the file comment): one every `gap` metres up it, `radius` across (m).
 - `createStageRides` (function): Makes the rides of a stage (see the file comment).
 - `RIDE_KINDS` (const): The components it draws rides from: the stage reads these entities beside those it places.
 - `RUNG` (const): A rung every this many metres up a ladder.
