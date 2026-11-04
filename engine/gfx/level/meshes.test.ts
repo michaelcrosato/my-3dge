@@ -323,7 +323,7 @@ describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.1
   defineStoreyFixtureGlyphs(registry);
   const house = compileLevel(readFileSync(join(DIR, 'storeys', 'house.txt'), 'utf8'), { file: 'house.txt', registry });
 
-  it("draws each storey's descriptors, then its ceiling, heads and frames, the walls over its openings, the rooms' own floors and the roof", () => {
+  it("draws each storey's descriptors, then its ceiling, heads and frames, its heads' facings, the rooms' own floors and the roof", () => {
     const meshes = createLevelMeshes(house, { materials: materials(), rooms: { kitchen: 'material:planks' } });
     const names = meshes.parts.map((part) => part.name.replace('level:house/', ''));
     expect(names).toEqual([
@@ -343,18 +343,20 @@ describe('a level written as storeys (fixtures/levels/storeys/house.txt, WP 13.1
       'attic/wall',
       'cellar/ceiling',
       'ground/ceiling',
+      'ground/heads',
       'ground/frames',
-      'ground/heads:wall', // the wall over each opening drawn as the wall it stands in (WP 13.36): no head left over
+      'ground/heads:wall', // the wall over its openings faced with its walls' sides (WP 13.36)
       'upper/ceiling',
+      'upper/heads',
       'upper/frames',
       'upper/heads:wall',
       'attic/ceiling',
       'ground/floor:kitchen',
       'attic/roof',
     ]);
-    expect(meshes.parts.map((part) => part.storey)).toEqual([0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 0, 1, 1, 1, 2, 2, 2, 3, 1, 3]); // prettier-ignore
+    expect(meshes.parts.map((part) => part.storey)).toEqual([0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 1, 3]); // prettier-ignore
     for (const part of meshes.parts) expect(part.mesh.userData.storey).toBe(part.storey);
-    expect((meshes.parts[22].mesh.material as Material).name).toBe('material:planks');
+    expect((meshes.parts[24].mesh.material as Material).name).toBe('material:planks');
     expect(meshes.drawCalls(1)).toBeLessThanOrEqual(20 * house.storeys!.length);
     meshes.dispose();
   });

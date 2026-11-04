@@ -32,7 +32,7 @@ import { registry as sharedRegistry, type Registry } from '../core/registry';
 import { Quaternion, Vector3 } from '../core/math';
 import { physicsOf } from '../physics/binding';
 import { driveBody, knock } from '../physics/bodies';
-import { LEVEL_DOOR, leafOpenings, leafSide } from '../world/level/doorways';
+import { DOOR_SWING, LEVEL_DOOR, leafOpenings, leafSide } from '../world/level/doorways';
 import type { CompiledLevel } from '../world/level/types';
 import { propBody } from '../world/props/place';
 import { getProp } from '../world/props/prop';
@@ -42,8 +42,8 @@ import { spawnProp, type ScenePropComponents } from './props';
 import { defineComponent } from './state';
 import type { World } from './world';
 
-/** A door's swing open (rad): a quarter turn and a little more. */
-export const DOOR_SWING = 1.65;
+/** A door's swing open (rad): a quarter turn and a little more (engine/world/level/doorways.ts, which frames read). */
+export { DOOR_SWING } from '../world/level/doorways';
 /** An up-and-over door's turn open (rad): a quarter turn, from upright to flat under its head. */
 export const DOOR_TILT = Math.PI / 2;
 /** How fast a door turns (rad/s), slides (its way open a second) or tilts (rad/s), and how much faster a burst is. */

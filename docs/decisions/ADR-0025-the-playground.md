@@ -2602,23 +2602,31 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   the house's `heads` recipe, paint, where the wall beside them is siding.
 - **Decided:** drawing only; the colliders and the hashes are unchanged.
   - A frame lines its opening's reveal `PROUD` (1 cm) deep, and a window's jambs stand on its sill
-    (engine/gfx/level/openings.ts). The drawn opening is 2 cm narrower than the one bodies pass through, a deviation
-    from WP 13.18's "the opening drawn is the one bodies pass through", taken because the 1 cm lining is under any body's
-    reach and the alternative is z-fighting.
-  - Where a level's door leaf hangs (one rule for the sim and the frames: engine/world/level/doorways.ts), the frame
-    meets it shut: the latch jamb against its edge and the head on its top, through the wall; at the hinge, a barrel
-    3 mm out of the leaf's faces and a 1 cm stop in the wall's middle from the jamb to it, clear of the leaf's sweep.
-    Turned past a quarter, the leaf leans back towards the hinge jamb, so that jamb keeps the lining. A ray grid at
-    the wall's middle finds nothing passing round a shut door, and the swing clears the frame
-    (engine/gfx/level/openings.test.ts).
+    (engine/gfx/level/openings.ts): bodies pass a centimetre inside the drawn jambs, a deviation from WP 13.18's "the
+    opening drawn is the one bodies pass through", taken because a centimetre is under any body's reach and the
+    alternative is z-fighting.
+  - A level entry's `doors` names the prop its scene hangs in its door openings (engine/world/level/level.ts; the
+    house and the shed name `prop:door`, which labs/playground/scenes/site.ts hangs), and only there does a frame meet
+    the leaf (engine/world/level/doorways.ts: one rule for where it hangs, the sim's and the frames'). A level that
+    names none, as `node x new level`'s does, keeps the plain lining.
+  - Meeting it shut: the latch jamb against its edge and the head on its top, through the wall, so where a leaf hangs
+    the opening drawn is the leaf's (0.9 × 2.05 m in the door glyph's 1 × 2.1 m), and bodies pass the open leaf in the
+    collider's. At the hinge, a barrel whose flats stand 3 mm out of the leaf's faces, a 1 cm stop in the wall's middle
+    from the jamb to it, and a lining as deep as the swing leaves room for: turned past a quarter (1.65 rad), the leaf
+    leans back towards that jamb, its straps furthest (3.25 cm from its middle, `doorLeaf` in engine/gfx/level/runs.ts),
+    so the lining is 6 mm in the house's 0.25 m walls and 2 mm, the least, in the shed's 0.5 m wall, where its straps
+    still reach 5 mm past it at a full swing, as they reached the jamb before (the swing is the sim's, its goldens). A
+    door opening too narrow or too low to meet its leaf keeps the plain lining. A ray grid at the wall's middle finds
+    nothing passing round a shut door, and the swing clears the frame (engine/gfx/level/openings.test.ts).
   - A slab's edge stands `STOREY_SEAM` back into its tile over a wall or a head of the storey under it
     (engine/gfx/level/slabs.ts, meshes.ts).
-  - The wall over an opening in a wall is that wall: a box a tile like its pieces in its recipe's sides' material
-    (only its sides show: one draw call, within the geo QA's 20 a storey), its boards' v from the wall's foot so they
-    run on (`heads:<recipe>`; meshes.ts). The `heads` part keeps low ceilings,
-    and openings under a pitched roof, which follow the roof's underside. The storey cut hides only those under a low
-    ceiling.
-  - labs/playground/levels/house.test.ts holds all three sweeps; they find every pair named above without the fix.
+  - The wall over an opening in a wall is faced with that wall's sides: its two faces through the wall, a tile at a
+    time as the wall's pieces are, 3 mm out of the head's, their boards' v from the wall's foot so they run on
+    (`heads:<recipe>`, meshes.ts). The head keeps its box, its top (seen in the storey cut, as the walls' tops are),
+    its underside and its shadow, so the facing draws once with no shadow of its own, within the geo QA's 20 draw
+    calls a storey; the storey cut hides it with the heads. Under a pitched roof the heads follow the roof's underside
+    and are not faced (the attic's gable window).
+  - labs/playground/levels/house.test.ts holds the three sweeps; they find every pair named above without the fix.
 - **The rest of the review:** the title backdrop's "hairline in the sky" was the gym's balloon line, a 4 cm cable
   52 m off with its balloon out of the picture. A balloon's line is now a 12 cm rope (engine/gfx/stageRides.ts). The
   HUD's lines are one dark chip each with light text: the hint, the readout and the camera line had read 1.0 to 1.9

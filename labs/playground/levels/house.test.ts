@@ -5,8 +5,7 @@
  * seventeen rooms, one for each marker, each marker inside its own room; and it draws no two surfaces facing one way in
  * one plane (z-fighting): none facing up (a ray down every 0.25 m: the floors fought the walls and heads of the storey
  * under them until engine/gfx/level/meshes.ts's `STOREY_SEAM`, and the window sills the wall under them, WP 13.35),
- * none in a reveal (rays along each opening: its jambs and head fought the wall's cut ends until they lined it,
- * WP 13.36) and none round a slab's edge (rays at each floor slab, from outside: its edge fought the wall under it,
+ * none in a reveal (rays along each opening: its jambs fought the wall's cut ends until they lined it, WP 13.36) and none round a slab's edge (rays at each floor slab, from outside: its edge fought the wall under it,
  * the paint band over the siding, WP 13.36).
  * @see labs/playground/levels/plan.ts
  * @see labs/playground/levels/house.ts

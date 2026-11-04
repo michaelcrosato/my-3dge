@@ -1,18 +1,20 @@
 /**
  * @file Unit tests for engine/gfx/level/openings.ts (T1; WP 13.14, WP 13.36): the wall over a storey's doors, windows
  * and low ceilings stands from each head to the full top, clipped under a pitched roof, and over an opening in a wall
- * it is that wall's, tile by tile, its boards running on from the wall's foot; each door gets two jambs and a head,
- * each window a sill too, round the opening and out of the wall, lining its reveal `PROUD` and no further, or, where a
- * door's leaf hangs, meeting the leaf, a barrel and a stop at its hinge, so no ray passes round it shut and its swing
- * clears the frame; a railing gets posts at most 1 m apart and two rails as wide as its tiles.
+ * its faces are faced with that wall's, tile by tile, their boards running on from the wall's foot; each door gets two
+ * jambs and a head, each window a sill too, round the opening and out of the wall, lining its reveal `PROUD` and no
+ * further, or, where a door's leaf hangs and there is room, meeting the leaf, a barrel and a stop at its hinge, so no
+ * ray passes round it shut and its swing clears the frame, its fittings too; a railing gets posts at most 1 m apart and
+ * two rails as wide as its tiles.
  * @see engine/gfx/level/openings.ts
  */
 import { Mesh, MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { compileLevel } from '../../world/level/compile';
-import { leafSide } from '../../world/level/doorways';
+import { DOOR_SWING, leafSide, type DoorLeaf } from '../../world/level/doorways';
+import type { OpeningDescriptor } from '../../world/level/types';
 import { frustumGeometry } from '../geometry/frustum';
-import { boxBetween, FRAME, frameInsets, framesGeometry, headsGeometry, KNUCKLE, POST_GAP, PROUD, railingGeometry, STOP, SWING_CLEAR, wallHeads } from './openings'; // prettier-ignore
+import { boxBetween, FACING, FRAME, frameInsets, framesGeometry, headsGeometry, KNUCKLE, LEAST_LINING, POST_GAP, PROUD, railingGeometry, STOP, SWING_CLEAR, wallFacings } from './openings'; // prettier-ignore
 
 const SHED = compileLevel(
   ['---', 'storey: ground', 'base: 0', 'height: 2.5', '---', '######', '#....:', '#....:', '##++##'].join('\n'),
@@ -24,8 +26,21 @@ const HALL = compileLevel(
   ['---', 'tile: 0.25', '---', '---', 'storey: ground', 'base: 0', 'height: 3', '---', '############', '#..........#', '####++++####'].join('\n'), // prettier-ignore
   { file: 'hall.txt' },
 );
-/** The library's `prop:door` leaf, `[width, height, depth]` (m). */
-const LEAF = [0.9, 2.05, 0.045] as const;
+/** The library's `prop:door` leaf: its body, and its straps 1 cm out of its +Z face (engine/gfx/level/runs.ts `doorLeaf`). */
+const LEAF: DoorLeaf = { size: [0.9, 2.05, 0.045], reach: 0.0325 };
+/** A shed's 1 m door in a 0.5 m wall, on 0.5 m tiles (labs/playground/levels/yard.ts's). */
+const SHED_DOOR = compileLevel(['---', 'tile: 0.5', '---', '---', 'storey: ground', 'base: 0', 'height: 2.5', '---', '######', '#....#', '##++##'].join('\n')).openings![0]; // prettier-ignore
+/** Where `leaf`'s points within `depth` (m) of the wall's middle stand along it, from its hinge, turned either way. */
+function swept(leaf: DoorLeaf, depth: number, faces: readonly number[]): { angle: number; x: number; z: number }[] {
+  const points: { angle: number; x: number; z: number }[] = [];
+  for (let angle = -DOOR_SWING; angle <= DOOR_SWING + 1e-9; angle += 0.005)
+    for (let u = 0; u <= leaf.size[0]; u += 0.005)
+      for (const w of faces) {
+        const [x, z] = [u * Math.cos(angle) - w * Math.sin(angle), u * Math.sin(angle) + w * Math.cos(angle)];
+        if (Math.abs(z) < depth / 2 + PROUD) points.push({ angle, x, z });
+      }
+  return points;
+}
 
 /** The lowest and highest y of a geometry's vertices. */
 function ys(geometry: NonNullable<ReturnType<typeof headsGeometry>>): [number, number] {
@@ -42,18 +57,22 @@ describe('headsGeometry', () => {
     expect(heads.getAttribute('position').count).toBe(2 * 24); // two boxes: the door's run and the window's
   });
 
-  it("draws the wall over an opening in a wall as that wall's pieces, its boards running on from the wall's foot", () => {
+  it("faces the wall over an opening in a wall with the wall's sides, out of the head's, its boards running on", () => {
     const wallAt = (c: number, r: number) => (SHED.legend[GROUND.tiles[r * SHED.cols + c]]?.solid ? 'wall' : undefined);
-    const { recipes, tiles } = wallHeads(SHED, GROUND, SHED.openings!, -0.01, wallAt);
-    expect([...recipes.keys()]).toEqual(['wall']);
-    expect(tiles.size).toBe(2 + 2); // the door's two tiles and the window's two
-    const heads = recipes.get('wall')!;
-    expect(heads.getAttribute('position').count).toBe(4 * 24); // a box a tile, as the wall's pieces are
-    expect(heads.groups).toEqual([]); // one draw call: only its sides show, under the floor and over the frame's head
-    const [position, normal, uv] = ['position', 'normal', 'uv'].map((name) => heads.getAttribute(name));
-    for (let i = 0; i < position.count; i++)
-      if (Math.abs(normal.getY(i)) < 1e-6) expect(uv.getY(i)).toBeCloseTo(position.getY(i) + 0.01, 6); // v from the foot
-    expect(headsGeometry(SHED, GROUND, undefined, (c, r) => tiles.has(r * SHED.cols + c))).toBeNull(); // drawn there instead
+    const facings = wallFacings(SHED, GROUND, SHED.openings!, -0.01, wallAt);
+    expect([...facings.keys()]).toEqual(['wall']);
+    const facing = facings.get('wall')!;
+    expect([facing.getIndex()!.count, facing.groups]).toEqual([4 * 2 * 6, []]); // two faces a tile, one draw group
+    const [position, uv] = ['position', 'uv'].map((name) => facing.getAttribute(name));
+    const index = facing.getIndex()!;
+    const used = [...new Set(Array.from({ length: index.count }, (_, i) => index.getX(i)))];
+    const t = SHED.tile;
+    const near = (v: number, ...at: number[]) => at.some((face) => Math.abs(v - face) < 1e-5); // float32 positions
+    // FACING out of the head's faces: the door's (row 3, along x) and the window's (column 5, along z)
+    const off = used.filter((i) => !near(position.getZ(i), 3 * t - FACING, 4 * t + FACING) && !near(position.getX(i), 5 * t - FACING, 6 * t + FACING)); // prettier-ignore
+    expect(off.map((i) => [position.getX(i), position.getY(i), position.getZ(i)])).toEqual([]);
+    for (const i of used) expect(uv.getY(i)).toBeCloseTo(position.getY(i) + 0.01, 6); // v from the wall's foot
+    expect(headsGeometry(SHED, GROUND)).not.toBeNull(); // the head keeps its top, underside and shadow
   });
 
   it('is null for a storey with no head', () => {
@@ -90,16 +109,18 @@ describe('framesGeometry and railingGeometry', () => {
 
   it('frames a door a leaf hangs in to meet it shut, a barrel at its hinge: no ray passes round it, its swing clears', () => {
     const [door] = HALL.openings!;
-    const side = leafSide(door, LEAF);
-    const half = LEAF[2] / 2;
+    const side = leafSide(door, LEAF.size);
+    const half = LEAF.size[2] / 2;
     const insets = frameInsets(door, LEAF);
-    expect(insets).toEqual({ hinge: PROUD, latch: side, head: expect.closeTo(0.05, 9), hung: true });
+    expect(insets).toEqual({ hinge: expect.any(Number), latch: side, head: expect.closeTo(0.05, 9), hung: true });
+    expect(insets.hinge > LEAST_LINING && insets.hinge < PROUD).toBe(true); // as deep as its swing leaves room for
     const frames = framesGeometry(HALL.openings!, HALL.tile, LEAF)!;
-    const barrel = frustumGeometry({ radiusBottom: half + KNUCKLE, radiusTop: half + KNUCKLE, height: LEAF[1], radialSegments: 12 }); // prettier-ignore
+    const radius = (half + KNUCKLE) / Math.cos(Math.PI / 12);
+    const barrel = frustumGeometry({ radiusBottom: radius, radiusTop: radius, height: LEAF.size[1], radialSegments: 12 }); // prettier-ignore
     expect(frames.getAttribute('position').count).toBe(4 * 24 + barrel.getAttribute('position').count); // and its stop
     // The leaf shut, as engine/sim/doors.ts hangs it: centred in the opening, through the wall's middle, on its floor.
     const [a0, a1, mid] = [1, 2, 0.625];
-    const leaf = boxBetween(a0 + side, 0, mid - half, a1 - side, LEAF[1], mid + half);
+    const leaf = boxBetween(a0 + side, 0, mid - half, a1 - side, LEAF.size[1], mid + half);
     const material = new MeshBasicMaterial();
     const solid = [new Mesh(frames, material), new Mesh(leaf, material)];
     // Rays at the wall's middle plane over the opening, straight and slanting both ways, from both sides.
@@ -114,23 +135,39 @@ describe('framesGeometry and railingGeometry', () => {
           [0, 0.6],
           [0, -0.6],
         ])
+          // prettier-ignore
           for (const dz of [1, -1]) {
             const direction = new Vector3(dx, dy, dz).normalize();
             ray.set(new Vector3(x, y, mid).addScaledVector(direction, -1), direction);
             if (!ray.intersectObjects(solid).length) through.push(`(${x.toFixed(2)}, ${y.toFixed(2)}) along ${direction.toArray().map((v) => v.toFixed(2))}`); // prettier-ignore
           }
     expect(through).toEqual([]);
-    // Its swing: every point of the leaf turned about its hinge, either way, stays out of the jambs while it is
-    // within the wall's depth (the frame's 0.25 m and PROUD each side); the head stands over its top.
-    const hinge = a0 + side;
-    const within = HALL.tile / 2 + PROUD;
-    for (let angle = -1.65; angle <= 1.65; angle += 0.01)
-      for (let u = 0; u <= LEAF[0]; u += 0.01)
-        for (const w of [-half, half]) {
-          const [x, z] = [hinge + u * Math.cos(angle) - w * Math.sin(angle), u * Math.sin(angle) + w * Math.cos(angle)];
-          if (Math.abs(z) < within) expect(x > a0 + insets.hinge && x < a1 - insets.latch + 0.001, `the leaf at ${angle.toFixed(2)} rad`).toBe(true); // prettier-ignore
-          if (Math.abs(z) < STOP / 2) expect(x > hinge - half - SWING_CLEAR, `the stop at ${angle.toFixed(2)} rad`).toBe(true); // prettier-ignore
-        }
+    // Its swing: every point of the leaf and its fittings, turned about its hinge either way, stays out of the jambs
+    // within the frame's depth (the latch's 0.28 mm at the first degrees, its corner's arc, under a pixel, allowed),
+    // and out of its stop; the head stands over its top.
+    for (const { angle, x, z } of swept(LEAF, HALL.tile, [-LEAF.reach, LEAF.reach]))
+      expect(x > insets.hinge - side && x < 1 - side - insets.latch + 0.0003 + 1e-9, `the leaf at ${angle.toFixed(3)} rad`).toBe(Math.abs(z) < HALL.tile / 2 + PROUD); // prettier-ignore
+    for (const { angle, x, z } of swept(LEAF, HALL.tile, [-half, half]))
+      if (Math.abs(z) < STOP / 2) expect(x > -half - SWING_CLEAR, `the stop at ${angle.toFixed(3)} rad`).toBe(true);
+  });
+
+  it('meets a leaf in a deep wall as far as its swing leaves room, and frames one with no room to meet as plain', () => {
+    const deep = frameInsets(SHED_DOOR, LEAF); // a 1 m door in a 0.5 m wall, the shed's
+    expect([deep.hung, deep.hinge]).toEqual([true, LEAST_LINING]);
+    const side = leafSide(SHED_DOOR, LEAF.size);
+    for (const { angle, x } of swept(LEAF, SHED_DOOR.depth, [-LEAF.size[2] / 2, LEAF.size[2] / 2]))
+      expect(x > deep.hinge - side, `the leaf at ${angle.toFixed(3)} rad`).toBe(true); // its body clears; its straps reach the lining (ADR-0025 amendment 54)
+    const door = (width: number, top = 2.1) => ({ ...SHED_DOOR, width, top }) as OpeningDescriptor;
+    for (const width of [0.9, 0.95]) expect(frameInsets(door(width), LEAF).hung, `${width} m`).toBe(false); // no room: plain
+    expect(frameInsets(door(0.97), LEAF).hung).toBe(true);
+    expect(frameInsets(door(1, 2.055), LEAF)).toEqual({
+      hinge: LEAST_LINING,
+      latch: expect.closeTo(0.05, 9),
+      head: expect.closeTo(0.005, 9),
+      hung: true,
+    }); // its head on the leaf's top // prettier-ignore // its head on the leaf's top
+    for (const width of [0.9, 0.95, 0.97])
+      expect(() => framesGeometry([door(width)], 0.5, LEAF), `${width} m`).not.toThrow();
   });
 
   it('posts a railing at its ends and at most 1 m apart, its rails as wide as its tiles, as its collider is', () => {

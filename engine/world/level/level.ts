@@ -9,8 +9,9 @@
  * reflects the legend of the registry it reads. Its `materials` swap the materials its meshes' recipes name for a
  * game's own (WP 7.8: the box draws the hall's flagstones with its floor bake), its `rooms` give a storeyed level's
  * rooms floors of their own (WP 13.14), and its `recipes` draw its glyphs and parts with a game's own recipes (WP
- * 13.18: the playground's house in siding and shingles); only the view reads them (engine/app/view.ts, and each of a
- * site's structures, engine/gfx/stageSite.ts), so they never reach the sim or the hash.
+ * 13.18: the playground's house in siding and shingles), and its `doors` names the prop its scene hangs in its door
+ * openings, which their frames meet (WP 13.36); only the view reads them (engine/app/view.ts, and each of a site's
+ * structures, engine/gfx/stageSite.ts), so they never reach the sim or the hash.
  *
  * Invariants: an entry's text compiles against its registry's legend when it is defined (`CORE_BAD_SPEC` naming each
  * structural problem otherwise), so define a level's own glyphs first. `getLevel` compiles afresh on each call, a
@@ -61,6 +62,12 @@ export const LEVEL_FIELDS = {
     description:
       "Mesh recipes for drawing it, presentation only: a recipe its glyphs name that the engine lacks, or one of the engine's drawn otherwise in this level, as engine/gfx/level/recipes.ts writes them ({ roof: { shape: 'roof', materials: ['material:shingles', 'material:wood'], castShadow: true, receiveShadow: true } }).",
   },
+  doors: {
+    type: 'string',
+    default: '',
+    description:
+      "A level written as storeys: the prop its scene hangs in the door openings it fits (engine/sim/doors.ts addLevelDoors hangs 'prop:door'), which their frames are drawn to meet, presentation only; '' for none, plain frames (engine/world/level/doorways.ts).",
+  },
 } as const satisfies Schema;
 
 /** The problems with a level entry's `recipes`: each a recipe as engine/gfx/level/recipes.ts writes one. */
@@ -89,7 +96,7 @@ function levelKind(registry: Registry): void {
     description:
       'Levels: a level text (front matter and a map in legend characters) that compileLevel turns into data.',
     fields: LEVEL_FIELDS,
-    defineWith: "defineLevel('<id>', { text, file, materials, rooms, recipes })",
+    defineWith: "defineLevel('<id>', { text, file, materials, rooms, recipes, doors })",
     check: (entry) => {
       const level = entry as LevelEntry;
       const { problems } = checkLevel(level.text, { file: level.file || level.id, registry });

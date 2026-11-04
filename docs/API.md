@@ -417,7 +417,7 @@ game agent's manual.
 - `DigitigradeLeg` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A digitigrade leg's bones, metres: the thigh, the shin and the long foot.
 - `DigitigradeSolve` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A solved leg: its knee, its hock and its toe (lifted when out of reach), world metres.
 - `direction` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The unit direction of a heading (rad, 0 along +Z) and a rise above the ground (rad).
-- `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
+- `DOOR_SWING` (const from [`engine/world/level/doorways.ts`](../engine/world/level/doorways.ts)): A door's swing open (rad), either way: a quarter turn and a little more (engine/sim/doors.ts turns it so far).
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
@@ -1563,7 +1563,7 @@ game agent's manual.
 - `DigitigradeLeg` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A digitigrade leg's bones, metres: the thigh, the shin and the long foot.
 - `DigitigradeSolve` (interface from [`engine/anim/proc/digitigrade.ts`](../engine/anim/proc/digitigrade.ts)): A solved leg: its knee, its hock and its toe (lifted when out of reach), world metres.
 - `direction` (function from [`engine/world/patterns.ts`](../engine/world/patterns.ts)): The unit direction of a heading (rad, 0 along +Z) and a rise above the ground (rad).
-- `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
+- `DOOR_SWING` (const from [`engine/world/level/doorways.ts`](../engine/world/level/doorways.ts)): A door's swing open (rad), either way: a quarter turn and a little more (engine/sim/doors.ts turns it so far).
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `driveBody` (function from [`engine/physics/bodies.ts`](../engine/physics/bodies.ts)): Sets a kinematic body's velocities so that it reaches `position` and `rotation` when the world steps `dt`.
@@ -5058,17 +5058,19 @@ For the agents who maintain the engine.
 ### [`engine/gfx/level/openings.ts`](../engine/gfx/level/openings.ts)
 
 - `boxBetween` (function): A box from `[x0, y0, z0]` to `[x1, y1, z1]` (m), UVs in metres.
+- `FACING` (const): How far a wall's facing over an opening stands out of the head's faces (m).
 - `FRAME` (const): A frame's width round an opening (m).
-- `frameInsets` (function): How far `opening`'s frame stands into it (m): at its `a0` end (where a leaf's hinge is), its `a1` end and down from its head.
+- `frameInsets` (function): How far `opening`'s frame stands into it (m): at its `a0` end (the lower end along its wall, where a leaf's hinge is), its `a1` end and down from its head; `PROUD` each, lining the reveal, or where `leaf` hangs and there is room (`hung`), meeting it shut (see the file comment).
 - `framesGeometry` (function): The frame round each of `openings` (see the file comment), meeting `leaf` where it hangs; null when there are none.
-- `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one, leaving out the tiles `except` accepts; null when it has none.
-- `KNUCKLE` (const): How far a hung leaf's barrel stands out of its faces at the hinge (m): a hinge's knuckle, never in their planes.
+- `headsGeometry` (function): The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one; null when it has none.
+- `KNUCKLE` (const): How far a hung leaf's barrel's flats stand out of its faces at the hinge (m): a hinge's knuckle.
+- `LEAST_LINING` (const): A frame's least lining (m), where a leaf's swing leaves no more: never in the plane of the wall's cut end.
 - `POST_GAP` (const): How far apart a railing's posts stand, at most (m).
 - `PROUD` (const): How far a frame stands out of the wall's faces and into its opening (m), so its faces never share the wall's.
 - `railingGeometry` (function): A railing along each run of `pieces` (tiles `tile` m wide), from `bottom` to `top` (m); null when there are none.
 - `STOP` (const): A hung leaf's hinge stop, through the wall (m): a strip in its middle, which the leaf turning past a quarter clears.
-- `SWING_CLEAR` (const): How far a hung leaf's hinge stop stands clear of its edge's sweep about the hinge (m).
-- `wallHeads` (function): The wall over each of `openings` (on `storey`) that stands in a wall, as that wall (see the file comment): by the recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands), a geometry of a box a tile, its sides' v in metres from `foot`, the wall's own foot, in one draw group (its top lies under the floor and its underside in the frame's head: only its sides show); and the tiles drawn.
+- `SWING_CLEAR` (const): How far a hung leaf's hinge parts stand clear of its sweep about the hinge (m).
+- `wallFacings` (function): The facing over each of `openings` (on `storey`) in a wall (see the file comment), by the recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands): a geometry each, one draw group.
 
 ### [`engine/gfx/level/ramp.ts`](../engine/gfx/level/ramp.ts)
 
@@ -5089,6 +5091,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/runs.ts`](../engine/gfx/level/runs.ts)
 
+- `doorLeaf` (function): `prop` as a door's leaf its frames meet: its body's size, and how far its drawn parts stand out of its middle.
 - `levelLooks` (function): The looks the level `id` of `registry` gives its meshes; none for an id it lacks.
 - `LevelLooks` (interface): A level's looks, its entry's presentation fields (engine/world/level/level.ts): swaps, rooms' floors, recipes.
 - `runMeshes` (function): The level's meshes, each run named by its tiles (see the file comment).
@@ -6978,7 +6981,7 @@ For the agents who maintain the engine.
 - `addDoor` (function): Hangs a door (see the file comment) and returns its entity.
 - `addLevelDoors` (function): Hangs a door in each door opening of `level` it fits (a site's structure placed at `place.at`, turned `place.turn`), its hinge at the opening's west or north end, the leaf in the opening's middle, and returns their entities.
 - `breakDoor` (function): Breaks `id` off its hinges (see the file comment), knocked away from `from`.
-- `DOOR_SWING` (const): A door's swing open (rad): a quarter turn and a little more.
+- `DOOR_SWING` (const from [`engine/world/level/doorways.ts`](../engine/world/level/doorways.ts)): A door's swing open (rad), either way: a quarter turn and a little more (engine/sim/doors.ts turns it so far).
 - `DOOR_TILT` (const): An up-and-over door's turn open (rad): a quarter turn, from upright to flat under its head.
 - `DoorComponent` (interface): The component `door`.
 - `DoorSpec` (interface): What `addDoor` takes (see the file comment).
@@ -7038,7 +7041,7 @@ For the agents who maintain the engine.
 - `daytimeOf` (function from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): The world's hour (0 up to 24), or null when it has no clock.
 - `defineStrikable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` takes a strike (doors, breakables), on the shared registry: before the default knock; `move`, the move a melee plays on it (a door's kick, `move:breach`), when not the usual.
 - `defineUsable` (function from [`engine/sim/interact.ts`](../engine/sim/interact.ts)): Says how an entity holding `component` is used (see the file comment), on the shared registry the system reads.
-- `DOOR_SWING` (const from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): A door's swing open (rad): a quarter turn and a little more.
+- `DOOR_SWING` (const from [`engine/world/level/doorways.ts`](../engine/world/level/doorways.ts)): A door's swing open (rad), either way: a quarter turn and a little more (engine/sim/doors.ts turns it so far).
 - `DoorComponent` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): The component `door`.
 - `DoorSpec` (interface from [`engine/sim/doors.ts`](../engine/sim/doors.ts)): What `addDoor` takes (see the file comment).
 - `DUSK` (const from [`engine/sim/lights.ts`](../engine/sim/lights.ts)): When a rule's lights go on unless it says: dusk, at 18:30 (hours).
@@ -7592,6 +7595,8 @@ For the agents who maintain the engine.
 
 ### [`engine/world/level/doorways.ts`](../engine/world/level/doorways.ts)
 
+- `DOOR_SWING` (const): A door's swing open (rad), either way: a quarter turn and a little more (engine/sim/doors.ts turns it so far).
+- `DoorLeaf` (interface): A leaf as its frames meet it: its prop's body `size`, `[width, height, depth]` (m), and `reach`, how far its drawn parts stand from its middle plane on its fuller face (m: its fittings, `prop:door`'s straps, 3.25 cm).
 - `leafFits` (function): Whether a leaf of `size` (`[width, height, depth]`, m) hangs in `opening` (see the file comment).
 - `leafOpenings` (function): The openings of `level` a leaf of `size` hangs in (see the file comment), in order.
 - `leafSide` (function): The clearance (m) at each side of a leaf of `size` hung in `opening`: centred, its hinged edge that far from `a0`.

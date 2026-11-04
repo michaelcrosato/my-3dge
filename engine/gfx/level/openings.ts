@@ -1,23 +1,24 @@
 /**
  * @file Openings drawn (PLAN.md WP 13.14, WP 13.36; docs/PLAYGROUND.md §6.1, §7.1): the parts round a storey's doors
- * and windows, and its railings. `headsGeometry(level, storey, roof?, except?)` is the wall over each opening and low
- * ceiling: for every glyph with a head, its tiles merged into few rectangles, each a box from the head up to the
- * storey's full top, or under a pitched roof up to its underside (engine/gfx/level/walls.ts), as the colliders stand
- * (engine/world/level/storeys.ts); tiles `except` accepts are left to `wallHeads(level, storey, openings, foot,
- * wallAt)`, the wall over an opening in a wall drawn as that wall: a box a tile like its pieces, its sides' v from the
- * wall's `foot`, so a siding's boards and a brick's courses run on over the opening, a geometry per wall recipe drawn
- * in its sides' material (one draw call, as the heads are).
+ * and windows, and its railings. `headsGeometry(level, storey, roof?)` is the wall over each opening and low ceiling:
+ * for every glyph with a head, its tiles merged into few rectangles, each a box from the head up to the storey's full
+ * top, or under a pitched roof up to its underside (engine/gfx/level/walls.ts), as the colliders stand
+ * (engine/world/level/storeys.ts). `wallFacings(level, storey, openings, foot, wallAt)` faces the wall over an opening
+ * in a wall with that wall's look: its two faces through the wall, a tile at a time as the wall's pieces are, `FACING`
+ * out of the head's (never in their plane), their v from the wall's `foot`, so a siding's boards and a brick's courses
+ * run on over the opening while the head keeps its top, its underside and its shadow.
  *
  * `framesGeometry(openings, tile, leaf?)` is the frame round each: two jambs and a head of planks `FRAME` wide on the
  * wall round the opening, and a window's sill, standing `PROUD` out of the wall's faces and lining its reveal `PROUD`
- * deep, so no face of the frame lies in the plane of the wall's cut ends (they fought, z-fighting) and the opening
- * drawn is, to a centimetre, the one bodies pass through (WP 13.18: the jambs had stood inside it, 7 cm a side). Where
- * a door's `leaf` hangs (engine/world/level/doorways.ts, as engine/sim/doors.ts hangs it), the frame meets it shut:
- * the latch jamb against its edge and the head on its top, through the wall, and at the hinge a barrel `KNUCKLE` out
- * of its faces and a `STOP` in the wall's middle from the jamb to it, clear of the leaf's sweep (turned past a quarter,
- * it leans back towards the jamb), so no ray passes round a shut door and it swings clear (`frameInsets`). `railingGeometry(tile, pieces, bottom, top)` is a railing along each run of tiles: posts at its
- * ends and at most `POST_GAP` apart, and a top and a bottom rail as wide as its tiles, the railing's collider (a box
- * over them), so what stops a body is drawn.
+ * deep, so no face of the frame lies in the plane of the wall's cut ends (they fought, z-fighting); bodies pass a
+ * centimetre inside the drawn jambs (WP 13.18: they had stood 7 cm inside). Where a level's door `leaf` hangs
+ * (engine/world/level/doorways.ts, as engine/sim/doors.ts hangs it), the frame meets it shut (`frameInsets`): the
+ * latch jamb against its edge and the head on its top, through the wall; at the hinge a barrel whose flats stand
+ * `KNUCKLE` out of its faces, a `STOP` in the wall's middle and a lining as deep as its swing leaves room for (turned
+ * past a quarter it leans back towards that jamb, its fittings furthest), so no ray passes round a shut door and it
+ * swings clear. An opening too narrow or too low to meet its leaf so keeps the plain lining. `railingGeometry(tile,
+ * pieces, bottom, top)` is a railing along each run of tiles: posts at its ends and at most `POST_GAP` apart, and a
+ * top and a bottom rail as wide as its tiles, the railing's collider (a box over them), so what stops a body is drawn.
  *
  * Boxes are engine/gfx/geometry/box.ts's (UVs in metres), merged into one geometry each (one draw call a storey).
  *
@@ -29,7 +30,7 @@
  * @see engine/gfx/level/openings.test.ts
  */
 import type { BufferGeometry } from 'three/webgpu';
-import { leafFits, leafSide } from '../../world/level/doorways';
+import { DOOR_SWING, leafFits, leafSide, type DoorLeaf } from '../../world/level/doorways';
 import { byText } from '../../world/level/grid';
 import { mergeRects } from '../../world/level/rects';
 import { wallUnder } from '../../world/level/roofs';
@@ -50,12 +51,16 @@ import { writeHull } from './walls';
 export const FRAME = 0.07;
 /** How far a frame stands out of the wall's faces and into its opening (m), so its faces never share the wall's. */
 export const PROUD = 0.01;
-/** How far a hung leaf's barrel stands out of its faces at the hinge (m): a hinge's knuckle, never in their planes. */
+/** A frame's least lining (m), where a leaf's swing leaves no more: never in the plane of the wall's cut end. */
+export const LEAST_LINING = 0.002;
+/** How far a hung leaf's barrel's flats stand out of its faces at the hinge (m): a hinge's knuckle. */
 export const KNUCKLE = 0.003;
-/** How far a hung leaf's hinge stop stands clear of its edge's sweep about the hinge (m). */
+/** How far a hung leaf's hinge parts stand clear of its sweep about the hinge (m). */
 export const SWING_CLEAR = 0.001;
 /** A hung leaf's hinge stop, through the wall (m): a strip in its middle, which the leaf turning past a quarter clears. */
 export const STOP = 0.01;
+/** How far a wall's facing over an opening stands out of the head's faces (m). */
+export const FACING = 0.003;
 /** How far apart a railing's posts stand, at most (m). */
 export const POST_GAP = 1;
 /** A railing's post and rails, across (m). */
@@ -74,15 +79,11 @@ function joined(geometries: BufferGeometry[]): BufferGeometry | null {
   return merged;
 }
 
-/**
- * The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one,
- * leaving out the tiles `except` accepts; null when it has none.
- */
+/** The wall over `storey`'s openings and low ceilings (see the file comment), `roof` its pitched roof when it has one; null when it has none. */ // prettier-ignore
 export function headsGeometry(
   level: Pick<CompiledLevel, 'cols' | 'rows' | 'tile' | 'legend'>,
   storey: Pick<StoreyDescriptor, 'tiles' | 'base' | 'fullTop'>,
   roof?: RoofDescriptor,
-  except: (col: number, row: number) => boolean = () => false,
 ): BufferGeometry | null {
   const { cols, rows, tile: t } = level;
   const parts: BufferGeometry[] = [];
@@ -90,12 +91,7 @@ export function headsGeometry(
   const headed = [...new Set(storey.tiles)].map((char) => level.legend[char]).filter((glyph) => (glyph.head ?? 0) > 0);
   for (const glyph of headed.sort((a, b) => byText(a.id, b.id))) {
     const bottom = storey.base + (glyph.head ?? 0);
-    for (const [c0, r0, c1, r1] of mergeRects(
-      cols,
-      rows,
-      (c, r) => storey.tiles[r * cols + c] === glyph.char && !except(c, r),
-    )) {
-      // prettier-ignore
+    for (const [c0, r0, c1, r1] of mergeRects(cols, rows, (c, r) => storey.tiles[r * cols + c] === glyph.char)) {
       const [x0, z0, x1, z1] = [c0 * t, r0 * t, (c1 + 1) * t, (r1 + 1) * t];
       if (roof && roof.kind !== 'flat') {
         const points = wallUnder(roof, [x0, z0, x1, z1], bottom);
@@ -108,21 +104,18 @@ export function headsGeometry(
 }
 
 /**
- * The wall over each of `openings` (on `storey`) that stands in a wall, as that wall (see the file comment): by the
- * recipe `wallAt(col, row)` names for the wall at either end of it (undefined where none stands), a geometry of a box
- * a tile, its sides' v in metres from `foot`, the wall's own foot, in one draw group (its top lies under the floor and
- * its underside in the frame's head: only its sides show); and the tiles drawn.
+ * The facing over each of `openings` (on `storey`) in a wall (see the file comment), by the recipe `wallAt(col, row)`
+ * names for the wall at either end of it (undefined where none stands): a geometry each, one draw group.
  */
-export function wallHeads(
-  level: Pick<CompiledLevel, 'cols' | 'tile'>,
+export function wallFacings(
+  level: Pick<CompiledLevel, 'tile'>,
   storey: Pick<StoreyDescriptor, 'fullTop'>,
   openings: readonly OpeningDescriptor[],
   foot: number,
   wallAt: (col: number, row: number) => string | undefined,
-): { recipes: Map<string, BufferGeometry>; tiles: Set<number> } {
-  const { cols, tile: t } = level;
+): Map<string, BufferGeometry> {
+  const t = level.tile;
   const pieces = new Map<string, BufferGeometry[]>();
-  const tiles = new Set<number>();
   for (const { axis, tiles: rect, top } of openings) {
     const [c0, r0, c1, r1] = rect;
     const ends: [number, number][] = axis === 'x' ? [[c0 - 1, r0], [c1 + 1, r0]] : [[c0, r0 - 1], [c0, r1 + 1]]; // prettier-ignore
@@ -130,46 +123,47 @@ export function wallHeads(
     if (recipe === undefined || storey.fullTop <= top) continue;
     for (let r = r0; r <= r1; r++)
       for (let c = c0; c <= c1; c++) {
-        const piece = boxGeometry({ width: t, height: storey.fullTop - top, depth: t }).translate((c + 0.5) * t, top, (r + 0.5) * t); // prettier-ignore
-        const [normal, uv] = [piece.getAttribute('normal'), piece.getAttribute('uv')];
-        for (let i = 0; i < uv.count; i++) if (normal.getY(i) === 0) uv.setY(i, uv.getY(i) + top - foot); // its boards run on
+        const [width, depth] = axis === 'x' ? [t, t + 2 * FACING] : [t + 2 * FACING, t];
+        const piece = boxGeometry({ width, height: storey.fullTop - top, depth }).translate((c + 0.5) * t, top, (r + 0.5) * t); // prettier-ignore
+        const uv = piece.getAttribute('uv');
+        for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) + top - foot); // its boards run on from the wall's foot
+        // Its faces through the wall alone (box.ts's order: +X, -X, +Y, -Y, +Z, -Z), as the wall's pieces show theirs.
+        const kept = axis === 'x' ? [4, 5] : [0, 1];
+        const index = piece.getIndex()!;
+        piece.setIndex(piece.groups.filter((_, k) => kept.includes(k)).flatMap(({ start, count }) => Array.from({ length: count }, (_, i) => index.getX(start + i)))); // prettier-ignore
+        piece.clearGroups();
         pieces.set(recipe, [...(pieces.get(recipe) ?? []), piece]);
-        tiles.add(r * cols + c);
       }
   }
-  const recipes = new Map<string, BufferGeometry>();
-  for (const [recipe, boxes] of [...pieces].sort(([a], [b]) => byText(a, b))) {
-    const geometry = joined(boxes)!;
-    geometry.clearGroups(); // one draw group: the boxes' faces all take the wall's sides' material
-    recipes.set(recipe, geometry);
-  }
-  return { recipes, tiles };
+  const facings = new Map<string, BufferGeometry>();
+  for (const [recipe, faces] of [...pieces].sort(([a], [b]) => byText(a, b))) facings.set(recipe, joined(faces)!);
+  return facings;
 }
 
 /**
- * How far `opening`'s frame stands into it (m): at its `a0` end (where a leaf's hinge is), its `a1` end and down from
- * its head. `PROUD` each, lining the reveal; where `leaf` (`[width, height, depth]`) hangs (`hung`), meeting it shut
- * (see the file comment).
+ * How far `opening`'s frame stands into it (m): at its `a0` end (the lower end along its wall, where a leaf's hinge
+ * is), its `a1` end and down from its head; `PROUD` each, lining the reveal, or where `leaf` hangs and there is room
+ * (`hung`), meeting it shut (see the file comment).
  */
 export function frameInsets(
   opening: OpeningDescriptor,
-  leaf?: readonly number[],
+  leaf?: DoorLeaf,
 ): { hinge: number; latch: number; head: number; hung: boolean } {
-  if (!leaf || !leafFits(opening, leaf)) return { hinge: PROUD, latch: PROUD, head: PROUD, hung: false };
-  const side = leafSide(opening, leaf);
-  return {
-    hinge: PROUD, // a leaf turned past a quarter leans back towards it: its stop and its barrel close the gap
-    latch: Math.max(PROUD, side),
-    head: Math.max(PROUD, opening.top - opening.bottom - leaf[1]),
-    hung: true,
-  };
+  const plain = { hinge: PROUD, latch: PROUD, head: PROUD, hung: false };
+  if (!leaf || !leafFits(opening, leaf.size)) return plain;
+  const side = leafSide(opening, leaf.size);
+  const head = opening.top - opening.bottom - leaf.size[1];
+  if (side < leaf.size[2] / 2 + SWING_CLEAR + LEAST_LINING || head < LEAST_LINING) return plain; // no room to meet it
+  // Turned past a quarter, the leaf leans back towards the hinge jamb, furthest within the frame's depth.
+  const lean = Math.max(leaf.reach, leaf.reach * Math.sin(DOOR_SWING) - (opening.depth / 2 + PROUD) * Math.min(0, Math.cos(DOOR_SWING))); // prettier-ignore
+  return { hinge: Math.min(PROUD, Math.max(LEAST_LINING, side - lean - SWING_CLEAR)), latch: side, head, hung: true };
 }
 
 /** The frame round each of `openings` (see the file comment), meeting `leaf` where it hangs; null when there are none. */
 export function framesGeometry(
   openings: readonly OpeningDescriptor[],
   tile: number,
-  leaf?: readonly number[],
+  leaf?: DoorLeaf,
 ): BufferGeometry | null {
   const parts: BufferGeometry[] = [];
   for (const opening of openings) {
@@ -187,11 +181,13 @@ export function framesGeometry(
     parts.push(box(a0 - FRAME, b0, a1 + FRAME, b1, lintel, top + FRAME));
     if (opening.kind === 'window') parts.push(box(a0 - FRAME, b0, a1 + FRAME, b1, bottom - FRAME, bottom + PROUD)); // over the wall's top, never in its plane
     if (hung) {
-      const radius = leaf![2] / 2 + KNUCKLE; // the hinge's barrel, round the axis the leaf turns about
-      const [a, b] = [a0 + leafSide(opening, leaf!), (b0 + b1) / 2];
+      const half = leaf!.size[2] / 2;
+      const radius = (half + KNUCKLE) / Math.cos(Math.PI / 12); // the hinge's barrel, round the axis the leaf turns about
+      const [a, b] = [a0 + leafSide(opening, leaf!.size), (b0 + b1) / 2];
       const barrel = frustumGeometry({ radiusBottom: radius, radiusTop: radius, height: lintel - bottom, radialSegments: 12 }); // prettier-ignore
       parts.push(opening.axis === 'x' ? barrel.translate(a, bottom, b) : barrel.translate(b, bottom, a));
-      parts.push(box(a0 + hinge, b - STOP / 2, a - leaf![2] / 2 - SWING_CLEAR, b + STOP / 2, bottom, lintel)); // its stop
+      const stop = a - half - SWING_CLEAR; // its stop, from the jamb to the barrel
+      if (stop - (a0 + hinge) > 1e-6) parts.push(box(a0 + hinge, b - STOP / 2, stop, b + STOP / 2, bottom, lintel));
     }
   }
   return joined(parts);

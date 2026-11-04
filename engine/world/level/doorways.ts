@@ -10,6 +10,9 @@
  * Where one hangs: centred in the opening on its floor, its hinged edge `leafSide(opening, size)` from the opening's
  * west or north end (the lower end along the wall's axis), the same clearance at the other side.
  *
+ * `DOOR_SWING` is how far a door turns open, either way; `DoorLeaf` is a leaf as its frames meet it, a level entry's
+ * `doors` (engine/world/level/level.ts) read by engine/gfx/level/runs.ts's `levelLooks`.
+ *
  * Invariants: pure in the opening and the size; no registry, no sim.
  *
  * @example
@@ -21,6 +24,18 @@ import type { CompiledLevel, OpeningDescriptor } from './types';
 
 /** The prop a level's door openings hang (engine/sim/doors.ts `addLevelDoors`). */
 export const LEVEL_DOOR = 'prop:door';
+
+/** A door's swing open (rad), either way: a quarter turn and a little more (engine/sim/doors.ts turns it so far). */
+export const DOOR_SWING = 1.65;
+
+/**
+ * A leaf as its frames meet it: its prop's body `size`, `[width, height, depth]` (m), and `reach`, how far its drawn
+ * parts stand from its middle plane on its fuller face (m: its fittings, `prop:door`'s straps, 3.25 cm).
+ */
+export interface DoorLeaf {
+  readonly size: readonly number[];
+  readonly reach: number;
+}
 
 /** How much wider than its leaf an opening a door hangs in may be (m). */
 export const PLAY = 0.2;

@@ -7,9 +7,9 @@
  * the ID pass; and the frame is not blank. The 64 × 44 hall fixture then draws in the same 13 calls: instancing keeps
  * the cost flat however many pieces a level has. The storey house (fixtures/levels/storeys/house.txt, WP 13.14) draws
  * its walls, slabs, roof and openings as parts the ID pass tells apart (outside: the roof, the walls, the frames and
- * the heads; storey by storey with what stands above hidden: its floor, walls, railings and flight; from the cellar:
- * the ground floor's ceiling), builds 0 pipelines after the warm-up, in the lambert style and in the toon style both
- * playground looks draw with; so do the shed (its flat roof, walls, the head and frames of its door) and the pavilion
+ * the heads' facings; storey by storey with what stands above hidden: its floor, walls, railings, flight and heads;
+ * from the cellar: the ground floor's ceiling), builds 0 pipelines after the warm-up, in the lambert style and in the
+ * toon style both playground looks draw with; so do the shed (its flat roof, walls, its door head's facing and frames) and the pavilion
  * (its hip roof, its pillars and the crawlspace's head under the eaves, seen low from the west).
  *
  * Invariants: the level's text is read in Node and passed to the page (`__levelPage.show`), which fetches nothing;
@@ -135,7 +135,15 @@ test('the storey house: walls, slabs, roof and openings apart in the ID pass, st
   const outside = await idPixels(page);
   // The upper heads show from here only in a strip under the eaves, which their windows' frames have covered since
   // they stand round the openings (WP 13.18); the view down onto the upper storey checks them below.
-  for (const part of ['attic/roof', 'ground/wall#2', 'upper/wall#2', 'ground/frames', 'upper/frames', 'ground/heads']) {
+  // The ground heads' faces show as their walls' facings (WP 13.36: the wall over an opening faced with its wall's).
+  for (const part of [
+    'attic/roof',
+    'ground/wall#2',
+    'upper/wall#2',
+    'ground/frames',
+    'upper/frames',
+    'ground/heads:wall',
+  ]) {
     expect(outside[part] ?? 0, `${part} from outside`).toBeGreaterThan(30);
   }
   expect(await look(page, 1, [4, 9, 6.5], [4, 0, 3])).toMatchObject({ drawn: true, built: 0 });
@@ -155,7 +163,7 @@ test('the storey house: walls, slabs, roof and openings apart in the ID pass, st
   expect((await harness.readFrame()).blank).toBe(false);
 });
 
-test("the shed's flat roof, walls, door head and frames apart in the ID pass, 0 pipelines after the warm-up", async ({
+test("the shed's flat roof, walls, door head's facing and frames apart in the ID pass, 0 pipelines after the warm-up", async ({
   page,
   harness,
 }) => {
@@ -165,7 +173,8 @@ test("the shed's flat roof, walls, door head and frames apart in the ID pass, 0 
   expect(shed.frame, 'the warm-up built every pipeline the shed needs').toMatchObject({ drawn: true, built: 0 });
   expect(shed.pipelinesAfterWarmUp).toBe(0); // before any ID shot, which builds its own
   const fromSouth = await idPixels(page);
-  for (const part of ['ground/roof', 'ground/wall#2', 'ground/heads', 'ground/frames']) {
+  for (const part of ['ground/roof', 'ground/wall#2', 'ground/heads:wall', 'ground/frames']) {
+    // its door head faced (WP 13.36)
     expect(fromSouth[part] ?? 0, `the shed's ${part}, from the south`).toBeGreaterThan(30);
   }
   const toon = await page.evaluate(() => (window as unknown as LevelWindow).__levelPage.style('toon'));

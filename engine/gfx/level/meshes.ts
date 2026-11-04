@@ -40,15 +40,13 @@
  */
 import { Group, Mesh, type BufferGeometry, type InstancedMesh, type Material } from 'three/webgpu';
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
-import { registry as sharedRegistry } from '../../core/registry';
-import { LEVEL_DOOR } from '../../world/level/doorways';
+import type { DoorLeaf } from '../../world/level/doorways';
 import { storeyView } from '../../world/level/storeys';
-import { getProp } from '../../world/props/prop';
 import type { CompiledLevel, MeshDescriptor, RoofDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
 import { flightGeometry } from './flights';
-import { framesGeometry, headsGeometry, railingGeometry, wallHeads } from './openings';
+import { framesGeometry, headsGeometry, railingGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
 import { roofGeometry } from './roofs';
 import { buildShape, drawnWith, type BuiltShape, type PartCut } from './shapes';
@@ -74,10 +72,10 @@ export interface LevelMeshesOptions {
   /** A level written as storeys: the floor material of each room given one, by room name (`{ kitchen: 'material:tile' }`). */
   rooms?: Readonly<Record<string, string>>;
   /**
-   * The leaf a level's door openings hang, `[width, height, depth]` (m), which their frames meet
-   * (engine/world/level/doorways.ts): by default the body of the shared registry's `LEVEL_DOOR`, none without one.
+   * The leaf the level's scene hangs in its door openings, which their frames meet (engine/world/level/doorways.ts;
+   * the level entry's `doors`, read by engine/gfx/level/runs.ts's `levelLooks`); none, plain frames, by default.
    */
-  leaf?: readonly number[];
+  leaf?: DoorLeaf;
   /** Where advice goes (the shared log by default). */
   log?: Log;
 }
@@ -138,10 +136,10 @@ const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
  * walls up to the storey above (short of its floor by `STOREY_SEAM`) or, under a pitched roof, clipped to the roof's
  * underside in merged runs (walls.ts); its flights of stairs by the riser (flights.ts); its railings as posts and rails
  * (openings.ts). Then each storey's own parts, `ceiling` (its slab's underside and void edges, standing back from the
- * walls under it, slabs.ts), `heads` (the wall over its low ceilings, and its openings under a pitched roof) and
- * `frames` (round its doors and windows, meeting `options.leaf` where it hangs, openings.ts), and `heads:<recipe>`, the
- * wall over its openings drawn as the wall of that recipe it stands in; the floors of the rooms `options.rooms` gives
- * a material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
+ * walls under it, slabs.ts), `heads` (the wall over its openings and low ceilings) and `frames` (round its doors and
+ * windows, meeting `options.leaf` where it hangs, openings.ts), and `heads:<recipe>`, the wall over its openings in a
+ * wall of that recipe faced with its sides' material (one draw call, no shadow of its own: the heads cast it); the
+ * floors of the rooms `options.rooms` gives a material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
  * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts). A part with nothing to draw (a
  * storey's floor whose every piece its rooms' own floors took) keeps its place in `parts`, hidden and out of the root,
  * since an empty mesh in the scene is drawn with no vertices (WP 13.18: Dawn warns of a draw with an index count of 0).
@@ -201,24 +199,23 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       parts.push(place(buildPart(view, drawn, recipe, materialsOf(recipe), single, roof), descriptor.recipe, recipe, descriptor.glyphs, [descriptor.bottom, descriptor.top], storey)); // prettier-ignore
     }
   });
-  const leaf = options.leaf ?? (sharedRegistry.kinds().includes('prop') && sharedRegistry.has('prop', LEVEL_DOOR) ? getProp(LEVEL_DOOR).body.size : undefined); // prettier-ignore
   level.storeys?.forEach((storey, k) => {
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
     const openings = (level.openings ?? []).filter((opening) => opening.storey === k);
     const topped = k + 1 < level.storeys!.length ? { ...storey, fullTop: storey.fullTop - STOREY_SEAM } : storey;
-    // Under a pitched roof the wall over an opening follows the roof's underside, as the heads draw it.
-    const walls = roof ? { recipes: new Map<string, BufferGeometry>(), tiles: new Set<number>() } : wallHeads(level, topped, openings, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes)); // prettier-ignore
     const own: [string, BufferGeometry | null, [number, number]][] = [
       ['ceiling', ceilingGeometry(level, storey, slabBack(level, k, recipes)), [storey.base - storey.slab, storey.base]], // prettier-ignore
-      ['heads', headsGeometry(level, topped, roof, (c, r) => walls.tiles.has(r * level.cols + c)), [storey.base, storey.fullTop]], // prettier-ignore
-      ['frames', framesGeometry(openings, level.tile, leaf), [storey.base, storey.fullTop]],
+      ['heads', headsGeometry(level, topped, roof), [storey.base, storey.fullTop]],
+      ['frames', framesGeometry(openings, level.tile, options.leaf), [storey.base, storey.fullTop]],
     ];
     for (const [name, geometry, heights] of own) {
       const recipe = recipeOf(name);
       if (geometry) parts.push(place(single(geometry, recipe), name, recipe, [], heights, k));
     }
-    for (const [wall, geometry] of walls.recipes) {
-      const recipe = { ...recipeOf('heads'), materials: recipeOf(wall).materials.slice(0, 1) }; // the wall's sides': only they show
+    // The wall over each opening in a wall faced with that wall's sides (under a pitched roof the heads follow the roof).
+    const facings = roof ? new Map<string, BufferGeometry>() : wallFacings(level, topped, openings, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes)); // prettier-ignore
+    for (const [wall, geometry] of facings) {
+      const recipe = { ...recipeOf('heads'), materials: recipeOf(wall).materials.slice(0, 1), castShadow: false }; // the heads cast its shadow
       parts.push(place(single(geometry, recipe), `heads:${wall}`, recipe, [], [storey.base, storey.fullTop], k));
     }
   });

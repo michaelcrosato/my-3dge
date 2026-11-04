@@ -52,6 +52,7 @@ import { createCutaway, type Cutaway } from './cutaway';
 import { boxGeometry } from './geometry/box';
 import type { LevelMeshes } from './level/meshes';
 import type { LevelRecipe } from './level/recipes';
+import type { DoorLeaf } from '../world/level/doorways';
 import { runMeshes } from './level/runs';
 import { createActorPuppets, type ActorPuppets } from './puppets/actors';
 import { createStageCrowd, type StageCrowd } from './stageCrowd';
@@ -90,6 +91,8 @@ export interface StageOptions {
   levelRooms?: Readonly<Record<string, string>>;
   /** The level's own recipes (WP 13.18; the level entry's `recipes`); a site's structures read their entries'. */
   levelRecipes?: Readonly<Record<string, LevelRecipe>>;
+  /** The leaf its door openings hang, which their frames meet (WP 13.36; the level entry's `doors`). */
+  levelLeaf?: DoorLeaf;
 }
 
 /** A running scene's presentation graph (see the file comment). */

@@ -3,9 +3,9 @@
  * top-down: the camera type `view`) leave out of a level written as storeys, so the player shows inside it: every
  * storey above the player's (`storeyBelow`, engine/world/level/heights.ts: a flight is its storey's to its top), the
  * roof while the player is indoors, in a room or under the roof's footprint (a shed with no room marked), and his own
- * storey's heads while he is under a low ceiling (a floor glyph's `head`, not an opening's: the crawlspace), and the
- * heads of its openings under a pitched roof with them, one mesh; the wall over an opening in a wall is that wall's
- * (`heads:<recipe>`, engine/gfx/level/meshes.ts) and stays: `cutPlace(level, x, y, z)` says all three. What stands on a storey the cut
+ * storey's heads while he is under a low ceiling (a floor glyph's `head`, not an opening's: the crawlspace), its door
+ * heads with it, since they are one mesh, and their walls' facings (`heads:<recipe>`, engine/gfx/level/meshes.ts):
+ * `cutPlace(level, x, y, z)` says all three. What stands on a storey the cut
  * takes off goes with it (`aboveStorey`: the stage leaves those props out, engine/gfx/stageProps.ts `hide`). `planStoreys(pieces, storey, indoors)` says which pieces show (pure);
  * `createStoreyCut(meshes)` applies the plan to a level's meshes, the cutaway's twins with their parts (each
  * holds its part's `userData.storey`), by `visible` alone, so no frame builds a pipeline for it. A storey of −1 (the
@@ -88,7 +88,7 @@ export interface StoreyCut {
 /** The cutaway by storey over `meshes` (see the file comment). */
 export function createStoreyCut(meshes: LevelMeshes): StoreyCut {
   const roofs = new Set<object>(meshes.parts.filter((part) => part.shape === 'roof').map((part) => part.mesh));
-  const heads = new Set<object>(meshes.parts.filter((part) => part.recipe === 'heads').map((part) => part.mesh));
+  const heads = new Set<object>(meshes.parts.filter((part) => part.recipe === 'heads' || part.recipe.startsWith('heads:')).map((part) => part.mesh)); // prettier-ignore
   let last = '';
   const set = (storey: number, indoors: boolean, low = false) => {
     const children = meshes.root.children;
