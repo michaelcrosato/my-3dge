@@ -40,12 +40,13 @@
  */
 import { Group, Mesh, type BufferGeometry, type InstancedMesh, type Material } from 'three/webgpu';
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
+import type { DoorLeaf } from '../../world/level/doorways';
 import { storeyView } from '../../world/level/storeys';
 import type { CompiledLevel, MeshDescriptor, RoofDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
 import { flightGeometry } from './flights';
-import { framesGeometry, headsGeometry, railingGeometry } from './openings';
+import { framesGeometry, headsGeometry, railingGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
 import { roofGeometry } from './roofs';
 import { buildShape, drawnWith, type BuiltShape, type PartCut } from './shapes';
@@ -70,6 +71,11 @@ export interface LevelMeshesOptions {
   recipes?: Readonly<Record<string, LevelRecipe>>;
   /** A level written as storeys: the floor material of each room given one, by room name (`{ kitchen: 'material:tile' }`). */
   rooms?: Readonly<Record<string, string>>;
+  /**
+   * The leaf the level's scene hangs in its door openings, which their frames meet (engine/world/level/doorways.ts;
+   * the level entry's `doors`, read by engine/gfx/level/runs.ts's `levelLooks`); none, plain frames, by default.
+   */
+  leaf?: DoorLeaf;
   /** Where advice goes (the shared log by default). */
   log?: Log;
 }
@@ -129,9 +135,11 @@ const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
  * from its view (engine/world/level/storeys.ts's `storeyView`), bottom first, each part with `userData.storey`: its
  * walls up to the storey above (short of its floor by `STOREY_SEAM`) or, under a pitched roof, clipped to the roof's
  * underside in merged runs (walls.ts); its flights of stairs by the riser (flights.ts); its railings as posts and rails
- * (openings.ts). Then each storey's own parts, `ceiling` (its slab's underside and void edges, slabs.ts), `heads` (the
- * wall over its openings and low ceilings) and `frames` (round its doors and windows, openings.ts); the floors of the
- * rooms `options.rooms` gives a material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
+ * (openings.ts). Then each storey's own parts, `ceiling` (its slab's underside and void edges, standing back from the
+ * walls under it, slabs.ts), `heads` (the wall over its openings and low ceilings) and `frames` (round its doors and
+ * windows, meeting `options.leaf` where it hangs, openings.ts), and `heads:<recipe>`, the wall over its openings in a
+ * wall of that recipe faced with its sides' material (one draw call, no shadow of its own: the heads cast it); the
+ * floors of the rooms `options.rooms` gives a material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
  * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts). A part with nothing to draw (a
  * storey's floor whose every piece its rooms' own floors took) keeps its place in `parts`, hidden and out of the root,
  * since an empty mesh in the scene is drawn with no vertices (WP 13.18: Dawn warns of a draw with an index count of 0).
@@ -193,14 +201,22 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
   });
   level.storeys?.forEach((storey, k) => {
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
+    const openings = (level.openings ?? []).filter((opening) => opening.storey === k);
+    const topped = k + 1 < level.storeys!.length ? { ...storey, fullTop: storey.fullTop - STOREY_SEAM } : storey;
     const own: [string, BufferGeometry | null, [number, number]][] = [
-      ['ceiling', ceilingGeometry(level, storey), [storey.base - storey.slab, storey.base]],
-      ['heads', headsGeometry(level, k + 1 < level.storeys!.length ? { ...storey, fullTop: storey.fullTop - STOREY_SEAM } : storey, roof), [storey.base, storey.fullTop]], // prettier-ignore
-      ['frames', framesGeometry((level.openings ?? []).filter((opening) => opening.storey === k), level.tile), [storey.base, storey.fullTop]], // prettier-ignore
+      ['ceiling', ceilingGeometry(level, storey, slabBack(level, k, recipes)), [storey.base - storey.slab, storey.base]], // prettier-ignore
+      ['heads', headsGeometry(level, topped, roof), [storey.base, storey.fullTop]],
+      ['frames', framesGeometry(openings, level.tile, options.leaf), [storey.base, storey.fullTop]],
     ];
     for (const [name, geometry, heights] of own) {
       const recipe = recipeOf(name);
       if (geometry) parts.push(place(single(geometry, recipe), name, recipe, [], heights, k));
+    }
+    // The wall over each opening in a wall faced with that wall's sides (under a pitched roof the heads follow the roof).
+    const facings = roof ? new Map<string, BufferGeometry>() : wallFacings(level, topped, openings, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes)); // prettier-ignore
+    for (const [wall, geometry] of facings) {
+      const recipe = { ...recipeOf('heads'), materials: recipeOf(wall).materials.slice(0, 1), castShadow: false }; // the heads cast its shadow
+      parts.push(place(single(geometry, recipe), `heads:${wall}`, recipe, [], [storey.base, storey.fullTop], k));
     }
   });
   for (const [room, { storey, base, pieces }] of roomPieces) {
@@ -279,8 +295,8 @@ function buildPart(
 /**
  * How far a storey's walls, pillars and heads that rise to the storey above stop under its floor, and its walls and
  * pillars reach down into their own floor's slab (m), so no face of one shares a plane with a floor: the house's patio
- * and porch floors fought the basement's walls and heads under them (z-fighting, WP 13.33). Drawing only: the colliders
- * keep the compiled heights.
+ * and porch floors fought the basement's walls and heads under them (z-fighting, WP 13.35); and how far that floor
+ * slab's edge stands back from them (`slabBack`, WP 13.36). Drawing only: the colliders keep the compiled heights.
  */
 export const STOREY_SEAM = 0.01;
 
@@ -299,6 +315,28 @@ function seamed(level: CompiledLevel, k: number, descriptor: MeshDescriptor, rec
   const over = k > 0 && descriptor.bottom <= storeys[k].base + 1e-9;
   if (!under && !over) return descriptor;
   return { ...descriptor, top: descriptor.top - (under ? STOREY_SEAM : 0), bottom: descriptor.bottom - (over ? STOREY_SEAM : 0) }; // prettier-ignore
+}
+
+/** The recipe of the wall `tiles` stand at (col, row): a full glyph drawn as blocks; undefined elsewhere. */
+function blockAt(level: CompiledLevel, tiles: readonly string[], recipes: Readonly<Record<string, LevelRecipe>>) {
+  return (c: number, r: number): string | undefined => {
+    if (c < 0 || r < 0 || c >= level.cols || r >= level.rows) return undefined;
+    const glyph = level.legend[tiles[r * level.cols + c]];
+    return glyph?.full && Object.hasOwn(recipes, glyph.mesh) && recipes[glyph.mesh].shape === 'block' ? glyph.mesh : undefined; // prettier-ignore
+  };
+}
+
+/**
+ * How far storey `k`'s slab edges stand back into each tile (engine/gfx/level/slabs.ts): `STOREY_SEAM` over a wall of
+ * the storey under it or the wall over an opening, which rise to this floor with their outside face in the edge's
+ * plane (the house's paint band over its siding, z-fighting, WP 13.36); 0 elsewhere and on the lowest storey.
+ */
+function slabBack(level: CompiledLevel, k: number, recipes: Readonly<Record<string, LevelRecipe>>) {
+  const under = level.storeys![k - 1];
+  if (!under) return undefined;
+  const wall = blockAt(level, under.tiles, recipes);
+  return (c: number, r: number) =>
+    wall(c, r) !== undefined || (level.legend[under.tiles[r * level.cols + c]]?.head ?? 0) > 0 ? STOREY_SEAM : 0;
 }
 
 /**

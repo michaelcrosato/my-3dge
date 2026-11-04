@@ -2589,3 +2589,60 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   some angles (depth-ordered pills, the nearer on top); the front yard's spawn faces the street (its replays and the
   tour start there).
 - Plan edit: WP 13.35.
+
+## Amendment 54 (2026-11-04, WP 13.36): the house's frames, slab edges and walls over openings; the HUD's chips
+
+- **Found:** screenshots of main at 86968f0, read by the visual-reviewer and diagnosed by five investigators, each
+  checked by a skeptic. At the house's back wall, a white sliver ran down the back door's jamb, a white comb ran down a
+  window's, a flat lavender band crossed the wall under the upper floor, and flat blocks sat over every door and
+  window. Rays along each opening found 2,000 places where a jamb's wood lay in the plane of the wall's cut end (each
+  jamb ran through the wall from its end), and rays at each floor slab, from outside, found 650 where the slab's edge,
+  drawn in paint, lay in the plane of the wall or head under it; around each shut door 5 cm of clearance (the 0.9 m
+  leaf in the door glyph's 1 m, engine/sim/doors.ts) let the lit hall show through. The blocks were the heads, drawn in
+  the house's `heads` recipe, paint, where the wall beside them is siding.
+- **Decided:** drawing only; the colliders and the hashes are unchanged.
+  - A frame lines its opening's reveal `PROUD` (1 cm) deep, and a window's jambs stand on its sill
+    (engine/gfx/level/openings.ts): bodies pass a centimetre inside the drawn jambs, a deviation from WP 13.18's "the
+    opening drawn is the one bodies pass through", taken because a centimetre is under any body's reach and the
+    alternative is z-fighting.
+  - A level entry's `doors` names the prop its scene hangs in its door openings (engine/world/level/level.ts; the
+    house and the shed name `prop:door`, which labs/playground/scenes/site.ts hangs), and only there does a frame meet
+    the leaf (engine/world/level/doorways.ts: one rule for where it hangs, the sim's and the frames'). A level that
+    names none, as `node x new level`'s does, keeps the plain lining.
+  - Meeting it shut: the latch jamb against its edge and the head on its top, through the wall, so where a leaf hangs
+    the opening drawn is the leaf's (0.9 × 2.05 m in the door glyph's 1 × 2.1 m), and bodies pass the open leaf in the
+    collider's. At the hinge, a barrel whose flats stand 3 mm out of the leaf's faces, a 1 cm stop in the wall's middle
+    from the jamb to it, and a lining as deep as the swing leaves room for: turned past a quarter (1.65 rad), the leaf
+    leans back towards that jamb, its straps furthest (3.25 cm from its middle, `doorLeaf` in engine/gfx/level/runs.ts),
+    so the lining is 6 mm in the house's 0.25 m walls and 2 mm, the least, in the shed's 0.5 m wall, where its straps
+    still reach 5 mm past it at a full swing, as they reached the jamb before (the swing is the sim's, its goldens). A
+    door opening too narrow or too low to meet its leaf keeps the plain lining. A ray grid at the wall's middle finds
+    nothing passing round a shut door, and the swing clears the frame (engine/gfx/level/openings.test.ts).
+  - A slab's edge stands `STOREY_SEAM` back into its tile over a wall or a head of the storey under it
+    (engine/gfx/level/slabs.ts, meshes.ts).
+  - The wall over an opening in a wall is faced with that wall's sides: on each of the wall's faces a skin 3 mm out of
+    the head's, a tile at a time as the wall's pieces are, their boards' v from the wall's foot so they run on
+    (`heads:<recipe>`, meshes.ts). The skin is closed: capped where its run ends and bevelled back to the wall's face
+    at its top, never level, so never in a floor's plane. Open, as first built, its 3 mm step showed the head's paint
+    behind it at a grazing look, a column of pinholes up each head's edge over the frame (the before-and-after visual
+    review), and 1,786 grazing rays reached the paint. The head keeps its box, its top (seen in the storey cut, as the
+    walls' tops are), its underside and its shadow, so the facing draws once with no shadow of its own, within the geo
+    QA's 20 draw calls a storey; the storey cut hides it with the heads. Under a pitched roof the heads follow the
+    roof's underside and are not faced (the attic's gable window).
+  - labs/playground/levels/house.test.ts holds the four sweeps; they find every pair and every ray named above without
+    the fix.
+  - The playground looks' noon thumbnails that show the house's ground heads are re-recorded: first person and the
+    shoulder view in the cel and pixel looks (15 cells past the comparison's tolerance, each a head now faced with
+    the wall's siding or the upper floor's slab edge now set back, by the thumbnails' own object maps), and the three
+    follow views, within the tolerance, so their maps name the facings (`heads:wall`). Under a low ceiling the storey
+    cut lifts the facings with their heads, as tests/e2e/playground-cameras.spec.ts now expects.
+- **The rest of the review:** the title backdrop's "hairline in the sky" was the gym's balloon line, a 4 cm cable
+  52 m off with its balloon out of the picture. A balloon's line is now a 12 cm rope beaded up to its balloon, a
+  glowing marker every 6 m in the balloon's mesh, so no draw call more (engine/gfx/stageRides.ts `BEAD`): the
+  before-and-after visual review found the plain rope still read as a scratch down the title's sky, and darker. The
+  HUD's lines are one dark chip each with light text: the hint, the readout and the camera line had read 1.0 to 1.9
+  to 1 over concrete, grass and sky. The weapon line reads "Holstered · 1/2: draw", the HUD's "key: action", and a
+  pad's trigger where it has no 1 or 2. The start and pause menus are as wide as their longest row, so the highlight
+  stays over the scrim, and the selected row no longer shifts 6 px.
+- Not changed: the shooter camera's readout stays off (WP 13.25's `auto`).
+- Plan edit: WP 13.36.

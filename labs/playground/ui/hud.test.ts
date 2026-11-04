@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for labs/playground/ui/hud.ts (WP 13.25): every camera mode has its HUD, the crosshair only where
  * the screen's centre aims; the feel readout reads the speed over the ground and how the player moves, and shows where
- * `playground.readout` and the mode say; hidden (photo mode), the HUD clears.
+ * `playground.readout` and the mode say; the weapon line names the keys that draw a holstered gun, or a pad's trigger;
+ * hidden (photo mode), the HUD clears.
  * @see labs/playground/ui/hud.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -47,6 +48,20 @@ describe('the playground’s HUD', () => {
     expect(feelLine(player)).toBe('6.0 m/s · sprint');
     expect(feelLine({ actor: { vx: 1, vz: 0 }, motion: { mode: 'zipline', gait: 'idle' } })).toBe('1.0 m/s · zipline');
     expect(feelLine({ actor: { vx: 0, vz: 0 } })).toBe('0.0 m/s'); // the platformer profile has no motion
+  });
+
+  it('names the keys that draw a holstered gun as "key: action": both, the one bound, or a pad’s trigger', () => {
+    const holstered = { ...player, weapons: { ...player.weapons, slot: -1 } };
+    const frame = { mode: 'shooter', look: 'look:playground-cel', where: '', player: holstered, readout: 'auto' };
+    const keys = (bound: Record<string, string>) => ({ ...input('centre'), prompt: (action: string) => bound[action] ?? '—' }) as unknown as Input; // prettier-ignore
+    const weapon = (bound: Record<string, string>) => {
+      const hud = lines();
+      showHud(hud.ui, keys(bound), frame);
+      return hud.shown.weapon;
+    };
+    expect(weapon({ weapon1: '1', weapon2: '2', fire: 'LMB' })).toBe('Holstered · 1/2: draw');
+    expect(weapon({ weapon1: '1', fire: 'LMB' })).toBe('Holstered · 1: draw'); // only one bound
+    expect(weapon({ fire: 'RT' })).toBe('Holstered · RT: draw'); // a pad: its trigger draws one (engine/sim/weapons.ts)
   });
 
   it('shows the lines of the mode, the readout as the setting says, and clears all of it when hidden', () => {

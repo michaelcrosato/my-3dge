@@ -2,7 +2,9 @@
  * @file Rides on the stage (PLAN.md WP 13.7): every entity holding the component `zipline`, `ladder` or `launcher`
  * (engine/sim/rides.ts) drawn from it. A zipline is its cable between its anchors, a pole under each anchor (down to
  * its foot, unless it has none or is a balloon's line) with a pulley block on top, and a balloon over a balloon's
- * upper anchor;
+ * upper anchor, its line `BALLOON_LINE` thick and beaded up to it, a glowing marker `BEAD` every 6 m in the balloon's
+ * mesh: it is seen from far off, its balloon 90 m up out of the picture, and a cable's 4 cm, under a pixel from the
+ * gym's spawn, drew a hairline over the sky with nothing at either end, which a plain rope still drew (WP 13.36);
  * a ladder its two rails and a rung every `RUNG` metres up to its top; a launcher a jump pad's disc flush with its
  * top, or a trampoline's frame on four legs with its mat. Rides stand still, so each is built once, when it first
  * appears (again when its component changes), and removed when its entity goes. Its `root` joins the stage's scene
@@ -24,10 +26,16 @@ import { BufferGeometry, Group, Mesh, Quaternion, SphereGeometry, Vector3, type 
 import type { EntityData } from '../sim/state';
 import { boxGeometry } from './geometry/box';
 import { frustumGeometry } from './geometry/frustum';
+import { mergeGeometries } from './geometry/groups';
 import type { Warmup } from './warmup';
 
 /** A rung every this many metres up a ladder. */
 export const RUNG = 0.3;
+/** A balloon's line, across (m): a rope seen from far off (see the file comment); a cable is 4 cm. */
+export const BALLOON_LINE = 0.12;
+
+/** A balloon's line's marker beads (see the file comment): one every `gap` metres up it, `radius` across (m). */
+export const BEAD = { gap: 6, radius: 0.15 } as const;
 
 /** The materials each part takes, from the library. */
 const LOOK = {
@@ -96,16 +104,23 @@ function block(name: string, look: Part['look'], at: P, size: P, yaw = 0): Part 
 /** A zipline's parts (see the file comment). */
 function ziplineParts(c: Record<string, unknown>): Part[] {
   const [from, to, feet] = [c.from as P, c.to as P, c.feet as P];
-  const parts = [rod('cable', 'cable', from, to, 0.02)];
+  const parts = [rod('cable', 'cable', from, to, c.balloon ? BALLOON_LINE / 2 : 0.02)];
   [from, to].forEach((anchor, k) => {
     if (!c.poles || c.balloon || feet[k] === undefined || anchor[1] - feet[k] <= 0.05) return;
     parts.push(rod(`pole${k}`, 'pole', [anchor[0], feet[k], anchor[2]], anchor, 0.06));
     parts.push(block(`pulley${k}`, 'pole', [anchor[0], anchor[1] - 0.1, anchor[2]], [0.2, 0.2, 0.2]));
   });
   if (c.balloon) {
-    const top = from[1] > to[1] ? from : to;
-    const geometry = new SphereGeometry(2.5, 16, 12);
-    parts.push({ name: 'balloon', geometry, look: 'balloon', at: [top[0], top[1] + 2.5, top[2]] });
+    const [low, top] = from[1] > to[1] ? [to, from] : [from, to];
+    const at = [top[0], top[1] + 2.5, top[2]];
+    const pieces: BufferGeometry[] = [new SphereGeometry(2.5, 16, 12)];
+    for (let y = low[1] + BEAD.gap; y < top[1] - BEAD.gap / 2; y += BEAD.gap) {
+      const f = (y - low[1]) / (top[1] - low[1]); // its beads on the line, below the balloon, in its glow
+      const [x, z] = [low[0] + (top[0] - low[0]) * f, low[2] + (top[2] - low[2]) * f];
+      pieces.push(new SphereGeometry(BEAD.radius, 8, 6).translate(x - at[0], y - at[1], z - at[2]));
+    }
+    parts.push({ name: 'balloon', geometry: mergeGeometries(pieces), look: 'balloon', at });
+    for (const piece of pieces) piece.dispose();
   }
   return parts;
 }

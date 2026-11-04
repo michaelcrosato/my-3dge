@@ -110,7 +110,8 @@ export function showHud(ui: Overlay, input: Input | null, frame: HudFrame, hidde
   if (!input) return;
   const use = hud.prompts ? frame.player?.interactor?.prompt : undefined;
   line('use', use ? `${input.prompt('interact')}: ${use}` : null, { at: 'bottom', keys: true });
-  const draw = `${input.prompt('weapon1')} ${input.prompt('weapon2')}`;
+  const [one, two] = [input.prompt('weapon1'), input.prompt('weapon2')]; // a pad has neither: its trigger draws one
+  const draw = one === '—' ? input.prompt('fire') : two === '—' ? one : `${one}/${two}`;
   line('weapon', hud.ammo && frame.player?.weapons ? weaponLine(frame.player.weapons, draw) : null, { at: 'bottom-right' }); // prettier-ignore
   const centre = input.bindings.map.aimWith === 'centre';
   ui.crosshair(!hidden && hud.crosshair && showsCrosshair(frame.player?.weapons, centre));

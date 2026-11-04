@@ -111,7 +111,7 @@ const looks = {
   roof: { shape: 'roof', materials: ['material:asphalt', 'material:wood'], castShadow: true, receiveShadow: true },
   lowWall: { shape: 'block', materials: ['material:wood', 'material:wood'], castShadow: true, receiveShadow: true },
 } as const;
-defineLevel('level:shed', { text: SHED_TEXT, file: FILE, recipes: looks });
+defineLevel('level:shed', { text: SHED_TEXT, file: FILE, recipes: looks, doors: 'prop:door' }); // its scene hangs it (scenes/site.ts)
 defineLevel('level:treehouse', { text: TREEHOUSE_TEXT, file: FILE, recipes: looks });
 defineLevel('level:lookout', { text: LOOKOUT_TEXT, file: FILE, recipes: looks });
 defineLevel('level:shelter', { text: SHELTER_TEXT, file: FILE, recipes: { ...looks, floor: { ...looks.floor, materials: ['material:concrete'] } } }); // prettier-ignore

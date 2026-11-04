@@ -213,6 +213,7 @@ defineLevel('level:house', {
   text: HOUSE_TEXT,
   file: 'labs/playground/levels/house.ts',
   rooms: HOUSE_ROOMS,
+  doors: 'prop:door', // its scene hangs one in each door it fits (scenes/site.ts): their frames meet them
   recipes: {
     floor: { ...one('surface', 'material:concrete'), castShadow: false },
     wall: block('material:siding', 'material:paint'),

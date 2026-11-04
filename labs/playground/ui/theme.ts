@@ -74,12 +74,13 @@ const THEME_CSS = `
 /* ---- menus (the engine's createMenu, restyled): a column of large rows ---- */
 .pg-ui .pg-screen .ui-menu { position: static; transform: none; background: none; border: none; box-shadow: none;
   padding: 0; min-width: 15em; max-width: 26em; color: var(--pg-text); }
+/* as wide as its longest row, its highlight over the scrim, not out over the world (WP 13.36) */
+.pg-ui .pg-screen:is([data-kind=title], [data-kind=menu]) .ui-menu { width: fit-content; }
 .pg-ui .pg-screen .ui-menu-title { display: none; }
 .pg-ui .pg-screen .ui-menu-item { position: relative; padding: 0.42em 0.9em 0.42em 1.1em; margin: 0.12em 0;
   border-radius: 10px; font-size: 21px; font-weight: 650; letter-spacing: 0.01em; color: rgba(238, 241, 246, 0.82);
-  transition: background 120ms, color 120ms, transform 120ms; }
-.pg-ui .pg-screen .ui-menu-item[data-value=selected] { color: #fff; background: var(--pg-accent-soft);
-  transform: translateX(6px); }
+  transition: background 120ms, color 120ms; }
+.pg-ui .pg-screen .ui-menu-item[data-value=selected] { color: #fff; background: var(--pg-accent-soft); }
 .pg-ui .pg-screen .ui-menu-item[data-value=selected]::before { content: ''; position: absolute; left: 0; top: 18%;
   bottom: 18%; width: 4px; margin: 0; border-radius: 4px; background: var(--pg-accent); }
 .pg-ui .pg-screen .ui-menu-item[data-value=disabled] { font-size: 12px; font-weight: 800; letter-spacing: 0.24em;
@@ -148,25 +149,23 @@ const THEME_CSS = `
   font: 700 13px/1.4 Inter, system-ui, sans-serif; color: var(--pg-text); background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18); border-bottom-width: 2px; white-space: nowrap; }
 
-/* ---- the HUD (labs/playground/ui/hud.ts): small, at the edges, on sky and stone; hidden under a screen but Tune ---- */
+/* ---- the HUD (labs/playground/ui/hud.ts): every line a chip of one dark glass with light text, small, at the edges,
+   readable on sky, stone and grass alike (WP 13.36: grey text with no backing read 1.0 to 1.9 to 1 on them); hidden
+   under a screen but Tune ---- */
 .pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .ui-crosshair, .ui-damage, .pg-card, .ui-label) {
   visibility: hidden; }
 body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel { display: none; }
 /* the touch buttons (engine/ui/touch.css, above the overlay) would take a screen's taps: only the menu button stays */
 body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) .touch-layer .touch-button { visibility: hidden; }
-.pg-ui .ui-hud-block { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); }
-.pg-ui .ui-hud[data-id=room] { font-size: 13px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--pg-text); background: rgba(10, 12, 18, 0.45); padding: 0.35em 0.75em; border-radius: 8px; }
-.pg-ui .ui-hud[data-id=mode] { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--pg-dim);
-  background: rgba(10, 12, 18, 0.45); padding: 0.35em 0.7em; border-radius: 8px; transition: opacity 600ms ease; }
+.pg-ui .ui-hud { font-size: 13px; font-weight: 700; color: var(--pg-text); text-shadow: none;
+  background: rgba(10, 12, 18, 0.72); border: 1px solid var(--pg-line); padding: 0.35em 0.75em; border-radius: 8px; }
+.pg-ui .ui-hud[data-id=room] { font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; }
+.pg-ui .ui-hud[data-id=mode] { font-size: 12px; letter-spacing: 0.08em; transition: opacity 600ms ease; }
 .pg-ui .ui-hud[data-id=mode][data-value=faded] { opacity: 0; }
-.pg-ui .ui-hud[data-id=use] { font-size: 16px; font-weight: 700; background: rgba(10, 12, 18, 0.72);
-  border: 1px solid var(--pg-line); padding: 0.45em 1em; border-radius: 999px; margin-bottom: 9vh; }
-.pg-ui .ui-hud[data-id=weapon] { font-size: 15px; font-weight: 700; background: rgba(10, 12, 18, 0.55);
-  padding: 0.45em 0.9em; border-radius: 10px; }
-.pg-ui .ui-hud[data-id=keys] { font-size: 13px; color: var(--pg-dim); opacity: 0.85; }
-.pg-ui .ui-hud[data-id=readout] { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--pg-dim); }
-.pg-ui .ui-hud[data-id=check] { font-size: 13px; background: var(--pg-accent-soft); padding: 0.35em 0.7em; border-radius: 8px; }
+.pg-ui .ui-hud[data-id=readout] { font-variant-numeric: tabular-nums; min-width: 9.5em; text-align: center; }
+.pg-ui .ui-hud[data-id=use] { font-size: 16px; padding: 0.45em 1em; border-radius: 999px; margin-bottom: 9vh; }
+.pg-ui .ui-hud[data-id=weapon] { font-size: 15px; padding: 0.45em 0.9em; border-radius: 10px; }
+.pg-ui .ui-hud[data-id=check] { border-color: var(--pg-accent); }
 
 /* ---- the area card (labs/playground/ui/areas.ts) ---- */
 .pg-card { position: absolute; left: 1.6vw; top: 9vh; z-index: 20; width: min(25em, 80vw); padding: 16px 20px;
