@@ -15,7 +15,9 @@
  * its broad phase inside the step, so a body added since is seen from the next step on. Sensors never block a query.
  * `groups` names the collision groups a query hits (engine/physics/groups.ts; all of them by default, the ground's
  * `world` and `prop` for `probe`); `exclude` skips one body (the caster's own); `fixed` meets fixed bodies only (the
- * level, never a door, a lift or a prop that moves: a camera's walls). `overlap` lists body ids in id order, each once. A bad argument throws `PHYSICS_BAD_ARGUMENT` naming it.
+ * level, never a door, a lift or a prop that moves: a camera's walls); `also` meets the bodies it names as well,
+ * whatever `groups` and `fixed` say (a shut door, which stops a camera). `overlap` lists body ids in id order, each
+ * once. A bad argument throws `PHYSICS_BAD_ARGUMENT` naming it.
  *
  * Rapier's own names differ, a trap §4.8 measured: `timeOfImpact` on ray hits, `time_of_impact` on shape-cast hits,
  * and `castShape`'s `targetDistance` (here `margin`). This module is the only place that meets them.
@@ -75,6 +77,8 @@ export interface QueryOptions {
   exclude?: number;
   /** Whether it meets fixed bodies only: the level, never what moves (a door, a lift, a prop). False by default. */
   fixed?: boolean;
+  /** Bodies it meets as well, by id, whatever `groups` and `fixed` say: a shut door, which stops a camera. */
+  also?: readonly number[];
 }
 
 /** A raycast's options. */
@@ -253,9 +257,22 @@ function rapierShape(shape: Shape, where: string): RAPIER.Shape {
   return kind === 'capsule' ? new RAPIER.Capsule(a, b) : new RAPIER.Cylinder(a, b);
 }
 
-/** The Rapier filter arguments of query options: flags, groups, the excluded body. */
-function filter(world: RAPIER.World, options: QueryOptions, where: string, groups?: readonly GroupName[]) {
-  const { exclude, fixed } = options;
+/** Rapier's filter arguments: flags, groups, an excluded collider, the excluded body, a predicate. */
+type Filter = [
+  flags: RAPIER.QueryFilterFlags,
+  groups: number | undefined,
+  collider: undefined,
+  body: RAPIER.RigidBody | undefined,
+  meets: ((collider: RAPIER.Collider) => boolean) | undefined,
+];
+
+/**
+ * The Rapier filter arguments of query options: flags, groups, the excluded body and, with `also`, a predicate that
+ * passes those bodies and what the groups and `fixed` let through (in Rapier's encoding a collider's membership is its
+ * groups' high 16 bits, and a query's own low 16 bits name the groups it hits).
+ */
+function filter(world: RAPIER.World, options: QueryOptions, where: string, groups?: readonly GroupName[]): Filter {
+  const { exclude, fixed, also } = options;
   check(fixed === undefined || typeof fixed === 'boolean', `${where}({ fixed })`, fixed, 'true or false');
   let body: RAPIER.RigidBody | undefined;
   if (exclude !== undefined) {
@@ -263,7 +280,15 @@ function filter(world: RAPIER.World, options: QueryOptions, where: string, group
     body = liveBody(world, exclude) ?? undefined;
     check(body !== undefined, `${where}({ exclude })`, exclude, 'the id of a body in this world');
   }
-  return [fixed ? FIXED_FLAGS : FLAGS, queryBits(options.groups ?? groups), undefined, body] as const;
+  const bits = queryBits(options.groups ?? groups);
+  if (also === undefined || also.length === 0) return [fixed ? FIXED_FLAGS : FLAGS, bits, undefined, body, undefined];
+  check(Array.isArray(also) && also.every((id) => Number.isInteger(id) && id >= 0), `${where}({ also })`, also, 'an array of body ids'); // prettier-ignore
+  const extra = new Set(also);
+  const hits = bits & 0xffff;
+  const meets = (collider: RAPIER.Collider) =>
+    extra.has(ownerOf(collider)) ||
+    (((collider.collisionGroups() >>> 16) & hits) !== 0 && (!fixed || collider.parent()!.isFixed()));
+  return [FLAGS, undefined, undefined, body, meets];
 }
 
 /** The id of the body a collider belongs to. */
@@ -318,7 +343,7 @@ export function overlap(world: RAPIER.World, shape: Shape, position: Vec3Like, o
   const at = vec(position, 'overlap(position)');
   const rotation = quat(options.rotation, 'overlap({ rotation })');
   const found = new Set<number>();
-  const [flags, groups, , body] = filter(world, options, 'overlap');
+  const [flags, groups, , body, meets] = filter(world, options, 'overlap');
   world.intersectionsWithShape(
     at,
     rotation,
@@ -328,6 +353,7 @@ export function overlap(world: RAPIER.World, shape: Shape, position: Vec3Like, o
     groups,
     undefined,
     body,
+    meets,
   );
   return [...found].sort((a, b) => a - b);
 }

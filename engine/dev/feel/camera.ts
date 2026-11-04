@@ -2,15 +2,16 @@
  * @file Camera metrics on a feel course (PLAN.md WP 13.4 and WP 13.8, docs/PLAYGROUND.md §4 and §9.1):
  * `createCameraTrack(code)` makes the camera rig the page draws through (engine/gfx/cameras/rig.ts: the camera a code
  * names, its blends and effects), steps it once a sim step at the sim's rate, as the page steps it each frame
- * (following the player's feet, his eye, what he does, the sim's look, the run's query view for the walls; a course
- * gives no device input), switches it with a blend where the course says (`set`), and keeps a frame of each pose.
+ * (following the player's feet, his eye, what he does, the sim's look, the run's query view and its shut doors for the
+ * walls; a course gives no device input), switches it with a blend where the course says (`set`), and keeps a frame of
+ * each pose.
  * `metrics()` reads four numbers off the frames:
  * - `jump`: the most one frame moves the camera beyond what the player's own move, the look and a blend account for (m:
  *   the look's turn, read off the sim's look intents, swings a camera that looks along it, `LOOK_CAMERAS`, round the
  *   player by the turn times its distance from his eye);
  * - `turn`: the most one frame turns the view beyond what the look (for those cameras) and a blend account for (rad);
  * - `inside`: the frames whose camera stands inside the level (a `CAMERA_CHECK.ball` ball overlapping `world`'s fixed
- *   bodies: a door or a lift that moves through the camera is no wall to it, engine/gfx/cameras/collide.ts);
+ *   bodies: a door that moves or stands open, or a lift, passes through the camera, engine/gfx/cameras/collide.ts);
  * - `lost`: the frames whose player (its chest, `CAMERA_CHECK.chest` above the feet) is out of the picture, a frame of
  *   `CAMERA_CHECK.aspect`; in first person, its arms (`TrackFrame.arms`: neither hand in the arms' frame);
  * - `clip`: first person's frames whose arms a wall covers or the near plane cuts where their lens draws them (any of
@@ -75,7 +76,10 @@ export interface ArmsFrame {
 export interface TrackFrame {
   /** The player's eye, m. */
   readonly eye?: Vec3;
+  /** The run's query view, for the walls. */
   readonly queries?: QueryView;
+  /** The doors standing shut, which stop the camera as walls do (engine/sim/doors.ts `shutDoors`). */
+  readonly also?: readonly number[];
   /** Seconds since the last frame (a sim step's, 1/60, by default). */
   readonly dt?: number;
   /** What the player does (engine/gfx/cameras/effects.ts's `cameraPlayer`). */
@@ -144,10 +148,10 @@ export function createCameraTrack(code: string, options: RigOptions = {}) {
     },
     /** Steps the camera `dt` seconds after the player, whose feet are at `feet` (see `TrackFrame`), and keeps the frame. */
     frame(feet: Vec3, options: TrackFrame = {}): CameraFrame {
-      const { eye, queries, dt = 1 / 60, player = null } = options;
+      const { eye, queries, also, dt = 1 / 60, player = null } = options;
       rig.step(player);
       const view = options.look;
-      const pose = rig.update({ follow: feet, player, ...(eye ? { eye } : {}), ...(queries ? { queries } : {}), ...(view ? { view } : {}) }, dt); // prettier-ignore
+      const pose = rig.update({ follow: feet, player, ...(eye ? { eye } : {}), ...(queries ? { queries } : {}), ...(also ? { also } : {}), ...(view ? { view } : {}) }, dt); // prettier-ignore
       const ball = { type: 'ball', radius: CAMERA_CHECK.ball } as const;
       const inside = queries
         ? queries.overlap(ball, pose.position, { groups: 'world', fixed: true }).length > 0

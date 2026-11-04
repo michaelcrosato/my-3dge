@@ -12,7 +12,7 @@
  * seconds; `input.aim` (0 to 1, how far the sights are raised: engine/gfx/cameras/effects.ts) pulls the arm in to
  * `SHOULDER.aim`. The lens is `input.lens` (the player's field of view, engine/gfx/cameras/rig.ts), else its own.
  *
- * Walls (engine/gfx/cameras/collide.ts, their fixed bodies: a door swings through it), WP 13.27's rooms: the arm is no
+ * Walls (engine/gfx/cameras/collide.ts, their fixed bodies and shut doors), WP 13.27's rooms: the arm is no
  * longer than the room toward each side (`SHOULDER_ROOM.sides`) plus what it comes in while a turn of the view at
  * `SHOULDER_ROOM.turn` takes it there, nor than the room back from where the shoulder point is going (by his velocity,
  * `input.player`, and its bend, the pitch turning on, `SHOULDER_ROOM.ahead`) plus a share of what it comes in by then;
@@ -250,7 +250,7 @@ export function stepShoulder(state: ShoulderState, input: ShoulderInput, dt: num
   // in a corner); what the shoulder point does besides (drawn in, a swap) it follows at its pace
   const before = state.ball && state.pivot && !jumped ? { base: state.pivot, yaw: state.yaw, pitch: state.pitch } : null; // prettier-ignore
   const turned = before ? carry(state.ball!.at, before, { base: pivot, yaw, pitch }) : end;
-  const inWall = before !== null && input.queries !== undefined && input.queries.overlap({ type: 'ball', radius: COLLIDE_RADIUS - COLLIDE_SKIN }, turned, { groups: input.groups ?? 'world', exclude: input.exclude, fixed: input.fixed ?? true }).length > 0; // prettier-ignore
+  const inWall = before !== null && input.queries !== undefined && input.queries.overlap({ type: 'ball', radius: COLLIDE_RADIUS - COLLIDE_SKIN }, turned, { groups: input.groups ?? 'world', exclude: input.exclude, fixed: input.fixed ?? true, also: input.also }).length > 0; // prettier-ignore
   const carried = inWall ? carry(state.ball!.at, before!, { ...before!, base: pivot }) : turned;
   const moved = moveCamera(input, before ? state.ball : null, shoulder, carried, end, dt, SHOULDER_KEEP); // never through a wall, at a pace
   const fov = input.lens ?? state.fov;

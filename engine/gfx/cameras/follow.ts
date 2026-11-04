@@ -18,7 +18,7 @@
  * - the lift: while the arm is cut more than `FOLLOW_RIG.room` short (a slope or a wall behind him), the camera tilts down
  *   at `FOLLOW_RIG.raise` rad/s, up to `FOLLOW_RIG.lift`, rising over it, and back at `FOLLOW_RIG.lower` once the arm clears.
  *
- * Walls (engine/gfx/cameras/collide.ts, their fixed bodies): the ball is swept from his eye to the pivot; the camera
+ * Walls (engine/gfx/cameras/collide.ts, their fixed bodies and shut doors): the ball is swept from his eye to the pivot; the camera
  * moves on as `moveCamera` moves it (carried with the arm, then toward the arm's end as far as a sweep back from the
  * pivot clears, along the pivot's trail when it lost sight of it), so it moves at a pace (two cuts left, collide.ts's)
  * and never stands in a wall; held off its arm, it looks off its view toward the pivot (`FollowState.aim`), turning

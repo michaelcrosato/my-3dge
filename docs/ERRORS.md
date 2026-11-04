@@ -281,7 +281,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `the scene {scene} loads the level {level}, which is not registered, so its view cannot be built`
 - Fix: register the level's text before the view starts: in a page, import text from './levels/<name>.txt?raw' and call defineLevel('{level}', { text, file }); in Node, read the file and do the same
-- Registered in: [`engine/app/view.ts` line 67](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 68](../engine/app/view.ts)
 
 ### APP_NO_REPLAY
 
@@ -293,7 +293,7 @@ Raised by the store (engine/app/store.ts) for a bad option, key or value; storag
 
 - Message: `{member} needs the scene drawn as a view, and this engine has none`
 - Fix: start it with createHeadless({ scene, view: true }) in Node; a page always has one
-- Registered in: [`engine/app/view.ts` line 71](../engine/app/view.ts)
+- Registered in: [`engine/app/view.ts` line 72](../engine/app/view.ts)
 
 ### APP_NOT_HEADLESS
 
@@ -615,13 +615,13 @@ Raised by every `__engine` member (engine/dev/inspector.ts) before it runs, when
 
 - Message: `the course {course} measures {measure}, but the player of {scene} has no animator to pose`
 - Fix: spawn the player with an animator (spawnActor with anim: { build }), or drop the animation measure
-- Registered in: [`engine/dev/feel/run.ts` line 47](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 48](../engine/dev/feel/run.ts)
 
 ### DEV_COURSE_NO_PLAYER
 
 - Message: `the course {course} runs {scene}, which has no player actor to measure`
 - Fix: run a scene that spawns a player actor (spawnActor with player: true), or measure another course
-- Registered in: [`engine/dev/feel/run.ts` line 43](../engine/dev/feel/run.ts)
+- Registered in: [`engine/dev/feel/run.ts` line 44](../engine/dev/feel/run.ts)
 
 ### DEV_GALLERY_CLOSED
 
@@ -1297,7 +1297,7 @@ Reported by `validateLevel` (engine/world/level/validate.ts) and `node x qa leve
 
 - Message: `{where} got {value}`
 - Fix: pass {expected}
-- Registered in: [`engine/physics/queries.ts` line 43](../engine/physics/queries.ts)
+- Registered in: [`engine/physics/queries.ts` line 45](../engine/physics/queries.ts)
 
 Raised by bodies and queries (engine/physics/world.ts, engine/physics/queries.ts) for a vector, rotation, shape, size or option that is not of the right kind: non-finite numbers, a zero direction, a size that is not positive, an unknown shape type.
 

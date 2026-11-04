@@ -16,7 +16,7 @@
  * follows the player (WP 3.10): the first player actor's feet as the frame draws them, else the level's middle; so does
  * the stage's sky (engine/gfx/stageSky.ts, flickering at the frames' time, WP 7.8), and the level entry's looks (its
  * swaps, rooms' floors and recipes: `levelLooks`) reach the stage. The rig also gets the sim's read-only `QueryView` in
- * a physics scene (the follow cameras keep out of the walls), the player's eye (the shooter model's height, else his
+ * a physics scene (the follow cameras keep out of the walls and the doors standing shut), the player's eye (the shooter model's height, else his
  * head socket) and what he does each step (`cameraPlayer`); first person draws his arms by their own lens and hides his
  * body, its shadow kept (engine/gfx/viewmodel/, WP 13.12; `cameraInfo().culled`, `.arms`); hard landings shake the
  * screen. Following a player, the cutaways run (the stage's `frame`); `aim(rule, devices)` is his aim from the camera
@@ -54,6 +54,7 @@ import { createStage, type Stage } from '../gfx/stage';
 import type { FirstPersonParts } from '../gfx/viewmodel/body';
 import { armsLens } from '../gfx/viewmodel/lens';
 import { queryViewOf, type QueryView } from '../sim/queryView';
+import { shutDoors } from '../sim/doors';
 import { daytimeOf } from '../sim/lights';
 import { CHEST } from '../sim/weapons';
 import type { Session } from '../sim/session';
@@ -225,6 +226,8 @@ export function createRunView(options: RunViewOptions): RunView {
   let doing: CameraPlayer | null = null;
   /** The player's body, which his aim's ray skips; -1 without one. */
   let body = -1;
+  /** The doors standing shut after the last step, which stop the follow cameras as walls do (engine/sim/doors.ts). */
+  let shut: readonly number[] = [];
   /** Reads the player after a step (`fresh`: after a restart, so nothing he did before counts as a landing), and the
    * looks of the other actors' AIs (their heads along them). */
   const readPlayer = (fresh = false) => {
@@ -234,6 +237,7 @@ export function createRunView(options: RunViewOptions): RunView {
     const aiming = (run.intents.b ?? []).includes('aim');
     doing = entity ? cameraPlayer(entity, aiming) : null;
     body = entity ? Number((entity.actor as { body?: number }).body ?? -1) : -1;
+    shut = run.scene.physics ? shutDoors(run.world, registry) : [];
     const look = run.intents.look; // his head, and his gun, along it (WP 13.11); the sights only with one out (WP 13.20)
     if (entity) stage.actors.look(entity.id, look ? { yaw: look[0], pitch: look[1], aiming: doing?.aiming ?? aiming } : null); // prettier-ignore
     for (const other of run.world.query('actor')) {
@@ -247,11 +251,18 @@ export function createRunView(options: RunViewOptions): RunView {
   /** Whether the run's registry declares the view setting `path`. */
   const declared = (path: string) => registry.kinds().includes('setting') && registry.has('setting', path);
   /** What the camera takes from the run this frame: whom it follows, his eye and what he does, the walls. */
-  const follow = (): { follow: Vec3; eye?: Vec3; queries?: QueryView; player: CameraPlayer | null } => {
+  const follow = (): {
+    follow: Vec3;
+    eye?: Vec3;
+    queries?: QueryView;
+    also: readonly number[];
+    player: CameraPlayer | null;
+  } => {
+    // prettier-ignore
     const player = stage.actors.player();
     const feet = player?.feet ?? stage.centre;
     const eye: Vec3 | undefined = doing?.eye !== undefined ? [feet[0], feet[1] + doing.eye, feet[2]] : player?.posed?.eye; // prettier-ignore
-    return { follow: feet, eye, queries: queries(), player: doing };
+    return { follow: feet, eye, queries: queries(), also: shut, player: doing };
   };
   /** Steps the camera by `dt` with `input`, then draws the player for a first-person camera: his arms, his body hidden. */
   const move = (input: CameraInput | undefined, dt: number): CameraPose => {

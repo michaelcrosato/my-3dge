@@ -1,18 +1,19 @@
 /**
  * @file Tests for doors (engine/sim/doors.ts; WP 13.16) on a floor: a door opens away from whoever uses it, from
- * either side, and closes; a locked one says so and stays shut; a crate in the leaf's way holds it until it goes; a
- * faced strike bursts it open three times as fast and unlocks it, an unfaced one does nothing, the second breaks it
- * into a falling slab with splinters, and a shot breaks it at once; a garage door slides up its way and down, or tilts
- * up and over to lie flat under its head and back, never struck open; a level's door openings each get a door, hung in
- * their middle, but for those the leaf does not fit (a garage's, a crawlspace's).
+ * either side, and closes, listed as shut (`shutDoors`) only while it stands shut; a locked one says so and stays shut;
+ * a crate in the leaf's way holds it until it goes; a faced strike bursts it open three times as fast and unlocks it,
+ * an unfaced one does nothing, the second breaks it into a falling slab with splinters, and a shot breaks it at once; a
+ * garage door slides up its way and down, or tilts up and over to lie flat under its head and back, never struck open;
+ * a level's door openings each get a door, hung in their middle, but for those the leaf does not fit (a garage's, a
+ * crawlspace's).
  * @see engine/sim/doors.ts
  */
 import { describe, expect, it } from 'vitest';
-import { registry } from '../core/registry';
+import { createRegistry, registry } from '../core/registry';
 import { physicsOf } from '../physics/binding';
 import type { CompiledLevel } from '../world/level/types';
 import { Vector3 } from '../core/math';
-import { addDoor, addLevelDoors, breakDoor, DOOR_SWING, DOOR_TILT, strikeDoor, useDoor, type DoorComponent, type DoorSpec } from './doors'; // prettier-ignore
+import { addDoor, addLevelDoors, breakDoor, DOOR_SWING, DOOR_TILT, shutDoors, strikeDoor, useDoor, type DoorComponent, type DoorSpec } from './doors'; // prettier-ignore
 import type { UsableSpec } from './interact';
 import { removeProp, spawnProp, type ScenePropComponents } from './props';
 import { defineScene } from './scene';
@@ -52,6 +53,24 @@ describe('doors', () => {
     steps(session, 60);
     expect([door().door.angle, door().sceneProp.z]).toEqual([DOOR_SWING, expect.closeTo(-0.449, 2)]);
     expect(world.events.trace().filter((e) => e.type === 'door').map((e) => (e.payload as { open: boolean }).open)).toEqual([true, false, true]); // prettier-ignore
+  });
+
+  it('lists its body as shut only while it stands shut: not swinging, open or broken', () => {
+    const { session, world, door } = doorScene('shut');
+    const body = door().sceneProp.body;
+    expect(shutDoors(world)).toEqual([body]);
+    useDoor(world, 1, [0.45, 0, -1]);
+    expect(shutDoors(world)).toEqual([]); // on its way open
+    steps(session, 60);
+    expect(shutDoors(world)).toEqual([]); // open
+    useDoor(world, 1, [0.45, 0, -1]);
+    steps(session, 10);
+    expect(shutDoors(world)).toEqual([]); // swinging shut
+    steps(session, 60);
+    expect(shutDoors(world)).toEqual([body]);
+    breakDoor(world, 1, [0.45, 0, -1]);
+    expect(shutDoors(world)).toEqual([]);
+    expect(shutDoors(world, createRegistry())).toEqual([]); // a registry that never declared doors: none
   });
 
   it('says it is locked and stays shut while it is', () => {
