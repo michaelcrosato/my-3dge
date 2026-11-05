@@ -8,6 +8,10 @@
  * way it faces), so the cutaway (engine/gfx/cutaway.ts) draws only the ranges of the facades it does not cut by facing:
  * one draw group while none is cut, two at most when a classic view cuts two facades side by side.
  *
+ * An opening's rooms are its compiled ones, a side with none found past the low solids beside it (`openingRooms`,
+ * engine/gfx/level/linings.ts's `roomPast`; WP 13.41): a window over the kitchen's counter opens onto the kitchen, so it
+ * stands on the kitchen's facade and its facings take the kitchen's lining.
+ *
  * Invariants: pure in the openings; the ranges cover the geometry's index in order, inside first.
  *
  * @example
@@ -15,11 +19,12 @@
  * @see engine/gfx/level/facades.test.ts
  */
 import type { BufferGeometry } from 'three/webgpu';
+import { sidesOf } from '../../world/level/openings';
 import type { OpeningDescriptor } from '../../world/level/types';
 import type { CutTarget } from '../cutaway';
 import { mergeGeometries } from '../geometry/groups';
 import type { LevelCell } from './cells';
-import { LINING_FACES } from './linings';
+import { LINING_FACES, roomPast, type RoomView } from './linings';
 import type { LevelMeshPart } from './meshes';
 
 /** An opening between two rooms, or none: it faces no way out. */
@@ -39,6 +44,25 @@ export function openingFacade(opening: Pick<OpeningDescriptor, 'axis' | 'rooms'>
   if (low < 0 === high < 0) return INSIDE;
   const names = opening.axis === 'x' ? ['north', 'south'] : ['west', 'east'];
   return LINING_FACES.findIndex((face) => face.name === names[low < 0 ? 0 : 1]);
+}
+
+/** `opening`'s rooms on `view`, the lower x or z side's first, a side with none found past its low solids (see the file comment). */
+export function openingRooms(view: RoomView, opening: OpeningDescriptor): [number, number] {
+  const sides = sidesOf(opening, view.cols, view.rows);
+  const steps =
+    opening.axis === 'x'
+      ? [
+          [0, -1],
+          [0, 1],
+        ]
+      : [
+          [-1, 0],
+          [1, 0],
+        ];
+  return opening.rooms.map((room, k) => {
+    const tile = sides[k];
+    return room >= 0 || !tile ? room : roomPast(view, tile[0], tile[1], steps[k][0], steps[k][1]);
+  }) as [number, number];
 }
 
 /** Each tile of `openings` on a facade, by its index on a map `cols` wide: the facade its opening faces. */

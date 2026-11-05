@@ -1,7 +1,8 @@
 /**
  * @file The house's facades (engine/gfx/level/facades.ts, WP 13.40; the final visual review: in isometric, where the
  * walls facing the camera are cut to stumps, the walls over their windows and doors and their frames stood at full
- * height as loose pillars): in each of isometric's four turns, the heads, frames and facings of a facade are left out
+ * height as loose pillars): every opening in its outer walls stands on a facade, a window over the kitchen's counter
+ * too (WP 13.41: it stood on none, the counter beside it in no room); in each of isometric's four turns, the heads, frames and facings of a facade are left out
  * exactly when its walls are cut by facing; and while nothing is cut each such part draws in one range.
  * @see engine/gfx/level/facades.ts
  */
@@ -10,10 +11,13 @@ import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
 import { createCutaway, planCutaway } from '../../../engine/gfx/cutaway';
+import { INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
 import { LINING_FACES } from '../../../engine/gfx/level/linings';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
 import { levelLooks } from '../../../engine/gfx/level/runs';
 import { getLevel } from '../../../engine/sim-api';
+import { sidesOf } from '../../../engine/world/level/openings';
+import { storeyView } from '../../../engine/world/level/storeys';
 import './house';
 
 /** The house's meshes as the stage draws them (its recipes and rooms), and the level. */
@@ -25,6 +29,19 @@ function house() {
 }
 
 describe('the house’s facades', () => {
+  it('stand every opening in its outer walls on one, the kitchen’s windows over its counter too', () => {
+    const level = getLevel('level:house');
+    const outer = level.openings!.filter((opening) => {
+      const view = storeyView(level, opening.storey);
+      return sidesOf(opening, level.cols, level.rows).some(
+        (tile) => tile && !view.solid[tile[1] * level.cols + tile[0]] && view.room![tile[1] * level.cols + tile[0]] < 0,
+      ); // prettier-ignore the outdoors beside it
+    });
+    const inside = outer.filter((opening) => openingFacade({ ...opening, rooms: openingRooms(storeyView(level, opening.storey), opening) }) === INSIDE); // prettier-ignore
+    expect(outer.length).toBeGreaterThan(20);
+    expect(inside.map(({ kind, storey, tiles }) => `${kind} on ${storey} at ${tiles}`)).toEqual([]);
+  });
+
   it('in each turn of isometric are left out exactly where their walls are cut by facing', () => {
     const { level, meshes } = house();
     const cutaway = createCutaway(meshes);

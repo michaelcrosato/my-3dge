@@ -6,7 +6,9 @@
  * (engine/gfx/level/recipes.ts), one instanced part a face's way (west, east, north, south), size and height a storey.
  * Each lining's cell is its wall piece's, so the cutaway (engine/gfx/cutaway.ts) cuts it exactly when it cuts the wall
  * behind it, to a stump as tall as the wall's, and the storey cut (engine/gfx/storeyCut.ts) lifts it with its storey.
- * A quad's ends reach `FACING` past its piece, so two linings meet in a room's corners.
+ * A quad's ends reach `FACING` past its piece, so two linings meet in a room's corners. A face looks over a solid at
+ * most `LOW_SOLID` over its floor (a counter, WP 13.41: the kitchen's wall behind its counter showed siding) to the room
+ * beyond it (`roomPast`), as engine/gfx/level/facades.ts's openings do.
  *
  * Invariants: pure in the view and the parts; no lining where a recipe has none, nor on a level without rooms.
  *
@@ -63,16 +65,31 @@ export function liningGeometry(face: number, [w, d]: readonly [number, number], 
   return writer.build();
 }
 
-/** Whether `tile` (`[col, row]`) of `view` is open floor in a room. */
-const inRoom = (view: Pick<CompiledLevel, 'cols' | 'rows' | 'solid' | 'room'>, col: number, row: number) =>
-  col >= 0 && row >= 0 && col < view.cols && row < view.rows && !view.solid[row * view.cols + col] && (view.room?.[row * view.cols + col] ?? -1) >= 0; // prettier-ignore
+/** A solid at most this high over its floor (m) is furniture a room's face looks over: a counter (0.9 m), a bath. */
+export const LOW_SOLID = 1.2;
+
+/** What `roomPast` reads of a storey's view: its grids, and its tiles' tops and floors where it has them. */
+export type RoomView = Pick<CompiledLevel, 'cols' | 'rows' | 'solid' | 'room'> & Partial<Pick<CompiledLevel, 'top' | 'floor'>>; // prettier-ignore
+
+/**
+ * The room tile (`col`, `row`) of `view` opens onto, stepping `dc`, `dr` over solids at most `LOW_SOLID` over their
+ * floor: the room of the first tile that is not solid, or −1 (the outdoors, a taller solid, the map's edge).
+ */
+export function roomPast(view: RoomView, col: number, row: number, dc: number, dr: number): number {
+  for (let [c, r] = [col, row]; c >= 0 && r >= 0 && c < view.cols && r < view.rows; [c, r] = [c + dc, r + dr]) {
+    const at = r * view.cols + c;
+    if (!view.solid[at]) return view.room?.[at] ?? -1;
+    if ((view.top?.[at] ?? Infinity) - (view.floor?.[at] ?? 0) > LOW_SOLID) return -1;
+  }
+  return -1;
+}
 
 /**
  * The lining parts of `walls` on `view` (see the file comment): `linings` gives a recipe's lining material, or
  * undefined for one that has none.
  */
 export function liningParts(
-  view: Pick<CompiledLevel, 'cols' | 'rows' | 'solid' | 'room'>,
+  view: RoomView,
   walls: readonly LinedWall[],
   linings: (recipe: string) => string | undefined,
 ): LiningPart[] {
@@ -87,7 +104,7 @@ export function liningParts(
         const side: [number, number][] = dc
           ? Array.from({ length: r1 - r0 + 1 }, (_, i) => [dc < 0 ? c0 - 1 : c1 + 1, r0 + i])
           : Array.from({ length: c1 - c0 + 1 }, (_, i) => [c0 + i, dr < 0 ? r0 - 1 : r1 + 1]);
-        if (!side.some(([col, row]) => inRoom(view, col, row))) return;
+        if (!side.some(([col, row]) => roomPast(view, col, row, dc, dr) >= 0)) return;
         const key = [wall.recipe, face, ...cell.size, wall.bottom, wall.top, wall.cut?.height ?? '', wall.cut?.when ?? ''].join('|'); // prettier-ignore
         const group = groups.get(key) ?? { wall, material, face, size: [...cell.size], cells: [] };
         group.cells.push(cell);

@@ -53,6 +53,26 @@ describe('liningParts', () => {
     expect(parts[0].cut!.when).toBe('either');
   });
 
+  it('lines a face behind a low solid toward a room (a counter), not one behind a tall solid', () => {
+    // a storey 4 × 4: the wall on row 1, under it a row of counters 0.9 m high (columns 0 and 1) and of a tall
+    // cupboard (columns 2 and 3), then room 0; the outdoors to the north
+    const base = view(true) as unknown as { solid: boolean[]; room: number[] };
+    const solid = [...base.solid, false, false, false, false].map((one, i) => one || (i >= 8 && i < 12));
+    const room = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0];
+    const top = solid.map((one, i) => (i >= 8 && i < 10 ? 0.9 : one ? 2.7 : 0));
+    const behind = {
+      cols: 4,
+      rows: 4,
+      tile: 0.5,
+      solid,
+      room,
+      top,
+      floor: solid.map(() => 0),
+    } as unknown as CompiledLevel;
+    const parts = liningParts(behind, [wall], () => 'material:wallpaper');
+    expect(parts.map((part) => [part.name, part.cells.map(({ tiles }) => tiles[0])])).toEqual([['lining:wall:south', [0, 1]]]); // prettier-ignore
+  });
+
   it('lines nothing on a level without rooms', () => {
     expect(liningParts(view(false), [wall], () => 'material:wallpaper')).toEqual([]);
   });

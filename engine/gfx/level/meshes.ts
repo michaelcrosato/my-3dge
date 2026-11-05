@@ -45,7 +45,7 @@ import { storeyView } from '../../world/level/storeys';
 import type { CompiledLevel, MeshDescriptor, OpeningDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
-import { facadeParts, facadeTiles, INSIDE, type FacadeRange } from './facades';
+import { facadeParts, facadeTiles, INSIDE, openingRooms, type FacadeRange } from './facades';
 import { liningParts } from './linings';
 import { framesGeometry, headsGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
@@ -110,6 +110,11 @@ export interface LevelMeshes {
   readonly parts: readonly LevelMeshPart[];
   /** Every block piece's cell, in the order of `parts`, then of instances. */
   readonly cells: readonly LevelCell[];
+  /**
+   * A level written as storeys: by storey, its openings' tiles on a facade (by index on its map) and the facade each
+   * stands on (facades.ts `facadeTiles`), whose panes and doors the stage leaves out with it (engine/gfx/stageSite.ts).
+   */
+  readonly facadeTiles?: readonly ReadonlyMap<number, number>[];
   /** Draw calls a frame costs: each mesh's groups, once in colour and once per shadow map for those that cast. */
   drawCalls(shadowMaps?: number): number;
   /** Registers the meshes with `warmup` as `id` (the root's name by default); `dispose()` unregisters. */
@@ -189,6 +194,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
   const views = level.storeys ? level.storeys.map((_, k) => storeyView(level, k)) : [level];
   const parts: LevelMeshPart[] = [];
   const roomPieces = new Map<string, { storey: number; base: number; pieces: TileRect[] }>();
+  const onFacades: Map<number, number>[] = [];
   views.forEach((view, k) => {
     const storey = level.storeys ? k : undefined;
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
@@ -200,7 +206,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
   });
   level.storeys?.forEach((storey, k) => {
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
-    const openings = (level.openings ?? []).filter((opening) => opening.storey === k);
+    const openings = (level.openings ?? []).filter((opening) => opening.storey === k).map((opening) => ({ ...opening, rooms: openingRooms(views[k], opening) })); // prettier-ignore
     const topped = k + 1 < level.storeys!.length ? { ...storey, fullTop: storey.fullTop - STOREY_SEAM } : storey;
     const ceiling = ceilingGeometry(level, storey, slabBack(level, k, recipes));
     if (ceiling) parts.push(place(single(ceiling, recipeOf('ceiling')), 'ceiling', recipeOf('ceiling'), [], [storey.base - storey.slab, storey.base], k)); // prettier-ignore
@@ -220,6 +226,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       parts.push({ ...part, facades: drawn.facades });
     };
     const onFacade = facadeTiles(level.cols, openings);
+    onFacades[k] = onFacade;
     drawFacades('heads', recipeOf('heads'), (_, face) => headsGeometry(level, topped, roof, (c, r) => (onFacade.get(r * level.cols + c) ?? INSIDE) === face)); // prettier-ignore
     drawFacades('frames', recipeOf('frames'), (own) => framesGeometry(own, level.tile, options.leaf));
     const lining = (name: string) => recipeOf(name).lining;
@@ -259,6 +266,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     root,
     parts,
     cells: parts.flatMap((part) => part.cells),
+    ...(level.storeys ? { facadeTiles: onFacades } : {}),
     drawCalls(shadowMaps = 0) {
       return parts.reduce((sum, { mesh, castShadow }) => sum + meshDrawCalls(mesh, castShadow, shadowMaps), 0);
     },

@@ -1,15 +1,15 @@
 /**
  * @file Unit tests for engine/gfx/level/facades.ts (T1; WP 13.40): an opening faces the side its rooms are not on, or
- * no way between two rooms; a storey's openings draw facade by facade into one geometry, inside first, each facade a
+ * no way between two rooms, a room found past a counter beside it (WP 13.41); a storey's openings draw facade by facade into one geometry, inside first, each facade a
  * range of its index with a cell facing its way; and the draws left standing are the ranges of the facades not cut,
  * run together where they meet, a part with none left hidden.
  * @see engine/gfx/level/facades.ts
  */
 import { Mesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
-import type { OpeningDescriptor } from '../../world/level/types';
+import type { CompiledLevel, OpeningDescriptor } from '../../world/level/types';
 import { boxGeometry } from '../geometry/box';
-import { facadeDraws, facadeParts, INSIDE, openingFacade } from './facades';
+import { facadeDraws, facadeParts, INSIDE, openingFacade, openingRooms } from './facades';
 import { LINING_FACES } from './linings';
 
 /** The index into `LINING_FACES` of the face named `name`. */
@@ -29,6 +29,19 @@ describe('openingFacade', () => {
       openingFacade(opening('x', [0, 0, 1, 0], [1, 2])),
       openingFacade(opening('x', [0, 0, 1, 0], [-1, -1])),
     ]).toEqual([face('north'), face('south'), face('west'), face('east'), INSIDE, INSIDE]);
+  });
+});
+
+describe('openingRooms', () => {
+  it('finds a side’s room past the low solids beside it (a counter), never past a taller one', () => {
+    // a column 1 wide, 5 deep on 1 m tiles: the outdoors, the window, a counter (0.9 m), the kitchen (room 3)
+    const view = (counter: number) => ({ cols: 1, rows: 5, solid: [false, true, true, false, false], room: [-1, -1, -1, 3, 3], top: [0, 3, counter, 0, 0], floor: [0, 0, 0, 0, 0] }) as unknown as CompiledLevel; // prettier-ignore
+    const window = { ...opening('x', [0, 1, 0, 1], [-1, -1]), storey: 0 } as OpeningDescriptor;
+    expect([openingRooms(view(0.9), window), openingRooms(view(2), window)]).toEqual([
+      [-1, 3],
+      [-1, -1],
+    ]);
+    expect(openingFacade({ ...window, rooms: openingRooms(view(0.9), window) })).toBe(face('north'));
   });
 });
 

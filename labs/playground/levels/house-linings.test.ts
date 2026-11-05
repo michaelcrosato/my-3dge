@@ -1,8 +1,9 @@
 /**
  * @file The house's linings (engine/gfx/level/linings.ts, WP 13.40; the final visual review: from inside, its outer
  * walls showed their siding, so a room read as open to the outside): a ray from a room at any face of its walls that
- * opens onto it meets the wall's lining, in the room's wallpaper, never its siding; and the cutaway cuts each lining
- * exactly when it cuts the wall behind it, so no papered sheet stands where a wall is cut to a stump.
+ * opens onto it, over the kitchen's counters too (WP 13.41), meets the wall's lining, in the room's wallpaper, never
+ * its siding; the wall over each window and door is papered on its room's side, a window over the counter too; and the
+ * cutaway cuts each lining exactly when it cuts the wall behind it, so no papered sheet stands where a wall is cut to a stump.
  * @see engine/gfx/level/linings.ts
  * @see labs/playground/levels/house.ts
  */
@@ -11,10 +12,12 @@ import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
 import { lookAt, makePose, type Vec3 } from '../../../engine/gfx/cameras/pose';
 import { createCutaway } from '../../../engine/gfx/cutaway';
+import { openingRooms } from '../../../engine/gfx/level/facades';
 import { LINING_FACES } from '../../../engine/gfx/level/linings';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
 import { levelLooks } from '../../../engine/gfx/level/runs';
 import { getLevel } from '../../../engine/sim-api';
+import { storeyView } from '../../../engine/world/level/storeys';
 import './house';
 
 /** The house's meshes as the stage draws them (its recipes and rooms), placed, and the level. */
@@ -32,15 +35,19 @@ describe('the house’s linings', () => {
     const t = level.tile;
     const [aimed, siding] = [[] as string[], [] as string[]];
     for (const part of meshes.parts.filter((one) => one.recipe === 'wall' && one.cells.length > 0)) {
-      const { solid, room } = level.storeys![part.storey!];
+      const { solid, room, top, floor } = level.storeys![part.storey!];
       for (const { tiles, centre } of part.cells) {
         const [col, row] = tiles;
         for (const { dc, dr } of LINING_FACES) {
-          const [c, r] = [col + dc, row + dr];
+          // the room's first open tile that way, over the kitchen's counters (0.9 m) on the way
+          let [c, r, steps, over] = [col + dc, row + dr, 1, part.bottom];
+          const inside = () => c >= 0 && r >= 0 && c < level.cols && r < level.rows;
+          for (let i = r * level.cols + c; inside() && solid[i] && top[i] - floor[i] <= 1; i = r * level.cols + c) [c, r, steps, over] = [c + dc, r + dr, steps + 1, Math.max(over, top[i])]; // prettier-ignore
           const at = r * level.cols + c;
-          if (c < 0 || r < 0 || c >= level.cols || r >= level.rows || solid[at] || room[at] < 0) continue;
-          // from the room tile's middle, half the wall's height up (a sill under a window is 0.9 m), back at its face
-          const origin = new Vector3(centre[0] + dc * t, centre[1] + (part.top - part.bottom) / 2, centre[2] + dr * t);
+          if (!inside() || solid[at] || room[at] < 0 || part.top <= over) continue; // a sill wall behind a counter: unseen
+          // from the room tile's middle, halfway up the face above what it looks over (a sill under a window is
+          // 0.9 m), back at its face
+          const origin = new Vector3(centre[0] + dc * t * steps, (over + part.top) / 2, centre[2] + dr * t * steps); // prettier-ignore
           const [hit] = new Raycaster(origin, new Vector3(-dc, 0, -dr)).intersectObject(meshes.root, true);
           aimed.push(part.name);
           if (!hit?.object.name.includes('/lining:wall')) siding.push(`${part.name} [${tiles}] from ${dc},${dr}: ${hit?.object.name}`); // prettier-ignore
@@ -48,6 +55,29 @@ describe('the house’s linings', () => {
       }
     }
     expect(aimed.length).toBeGreaterThan(300);
+    expect(siding).toEqual([]);
+  });
+
+  it('paper the wall over each window and door on its room’s side, over the kitchen’s counter too', () => {
+    const { level, meshes } = house();
+    const [aimed, siding] = [[] as string[], [] as string[]];
+    for (const opening of level.openings!) {
+      const storey = level.storeys![opening.storey];
+      const view = storeyView(level, opening.storey);
+      const rooms = openingRooms(view, opening);
+      if (storey.fullTop - opening.top < 0.2 || rooms.filter((room) => room >= 0).length !== 1) continue; // an outer wall's, with a wall over it
+      const [c0, r0, c1, r1] = opening.tiles;
+      const [mx, mz] = [((c0 + c1 + 1) / 2) * level.tile, ((r0 + r1 + 1) / 2) * level.tile];
+      rooms.forEach((room, k) => {
+        if (room < 0) return;
+        const way = (k === 0 ? -1 : 1) * 1.5; // 1.5 m into the room, over a counter, back at the wall
+        const origin = opening.axis === 'x' ? new Vector3(mx, (opening.top + storey.fullTop) / 2, mz + way) : new Vector3(mx + way, (opening.top + storey.fullTop) / 2, mz); // prettier-ignore
+        const [hit] = new Raycaster(origin, new Vector3(opening.axis === 'x' ? 0 : -way, 0, opening.axis === 'x' ? -way : 0).normalize()).intersectObject(meshes.root, true); // prettier-ignore
+        aimed.push(`${opening.kind} [${opening.tiles}]`);
+        if (!hit || /\/(wall(#\d+)?|heads:wall)$/.test(hit.object.name)) siding.push(`${opening.kind} on ${opening.storey} [${opening.tiles}] from ${k}: ${hit?.object.name}`); // prettier-ignore
+      });
+    }
+    expect(aimed.length).toBeGreaterThan(20);
     expect(siding).toEqual([]);
   });
 
