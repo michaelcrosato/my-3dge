@@ -124,6 +124,8 @@ const THEME_CSS = `
 .pg-ui .ui-box input[type=checkbox] { accent-color: var(--pg-accent); width: 18px; height: 18px; }
 .pg-ui .pg-settings .pg-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.6em; align-items: center; }
 .pg-ui .pg-settings [data-ui=binding-note] { grid-column: 1 / -1; font-size: 0.85em; opacity: 0.8; }
+.pg-ui .pg-settings .pg-slider { display: grid; grid-template-columns: 1fr 4.2em; gap: 0.5em; align-items: center; }
+.pg-ui .pg-settings [data-ui=setting-shown] { text-align: right; font-variant-numeric: tabular-nums; color: var(--pg-dim); }
 .pg-ui .pg-checks button { display: block; width: 100%; text-align: left; margin: 0.25em 0; padding: 0.6em 0.8em; }
 .pg-ui .pg-checks p { margin: 0.4em 0; }
 .pg-ui .pg-checks .pg-small { font-size: 0.85em; opacity: 0.8; }

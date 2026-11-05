@@ -20,7 +20,8 @@
  * too, and the keyboard presses and steps what Tab reaches (labs/playground/ui/walk.ts).
  *
  * Elements: `[data-ui=settings]`, a `[data-ui=setting]` per row (`data-id` its id, `data-value` its value, its control
- * an `input` or a `select` inside), a `[data-ui=binding]` per action (`data-id` the action, `data-value` its keys, its
+ * an `input` or a `select` inside, a slider's value read beside it in `[data-ui=setting-shown]`, `shown`'s words at
+ * each step of a drag), a `[data-ui=binding]` per action (`data-id` the action, `data-value` its keys, its
  * button `[data-ui=item][data-id=rebind:<action>]`, its note `[data-ui=binding-note]`), and the buttons
  * `[data-ui=item]` `reset-controls` and `back`.
  *
@@ -47,7 +48,13 @@ export interface SettingRow {
   readonly kind: 'setting' | 'camera' | 'look' | 'volume';
   /** Whether its slider reports once let go (a change that acts on the run), not at each step of a drag. */
   readonly release?: boolean;
+  /** How its slider's value reads beside it, at each step of a drag (`plainNumber` else). */
+  readonly shown?: (value: number) => string;
 }
+
+/** A slider's value as it reads beside it: whole, or to two places. */
+export const plainNumber = (value: number): string =>
+  Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
 
 /** The rows, in the screen's order (see the file comment). */
 export const SETTING_ROWS: readonly SettingRow[] = [
@@ -56,14 +63,14 @@ export const SETTING_ROWS: readonly SettingRow[] = [
   { id: 'input.sensitivity', label: 'Mouse sensitivity', kind: 'setting' },
   { id: 'input.invert', label: 'Invert the mouse', kind: 'setting' },
   { id: 'playground.movement', label: 'Movement (starts the scene again)', kind: 'setting' },
-  { id: 'playground.hour', label: 'Time of day (the hour: 12 noon, 22 night)', kind: 'setting', release: true },
-  { id: 'playground.day', label: 'Minutes a day lasts (0 holds the hour)', kind: 'setting', release: true },
+  { id: 'playground.hour', label: 'Time of day (the hour: 12 noon, 22 night)', kind: 'setting', release: true, shown: (hour) => `${String(hour).padStart(2, '0')}:00` }, // prettier-ignore
+  { id: 'playground.day', label: 'Minutes a day lasts (0 holds the hour)', kind: 'setting', release: true, shown: (minutes) => (minutes ? `${minutes} min` : 'held') }, // prettier-ignore
   { id: 'playground.rain', label: 'Rain', kind: 'setting' },
   { id: 'playground.dust', label: 'Dust indoors', kind: 'setting' },
   { id: 'post.look', label: 'Look', kind: 'look' },
   { id: 'quality', label: 'Quality', kind: 'setting' },
   { id: 'gfx.governor', label: 'Quality follows the frame rate (auto)', kind: 'setting' },
-  ...PREF_BUSES.map((bus): SettingRow => ({ id: `volume:${bus}`, label: `Volume: ${bus}`, kind: 'volume' })),
+  ...PREF_BUSES.map((bus): SettingRow => ({ id: `volume:${bus}`, label: `Volume: ${bus}`, kind: 'volume', shown: (level) => `${Math.round(level * 100)}%` })), // prettier-ignore
 ];
 
 /** The actions the controls list, with their names: the four moves, then those the player answers (controls.ts). */
@@ -129,6 +136,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
     Object.assign(doc.createElement(tag), props) as HTMLElementTagNameMap[K];
   el.append(make('h2', { textContent: 'Settings' }));
   const rows = new Map<string, HTMLElement>();
+  const readouts = new Map<string, () => void>(); // each slider's value beside it, by row
   const pad = options.input.lastDevice === 'gamepad'; // the controls show and rebind a pad's buttons
   for (const row of SETTING_ROWS) {
     const line = make('label', { className: 'pg-row' });
@@ -202,8 +210,16 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
     const step = max - min > 10 ? 1 : (max - min) / 20;
     const slider = make('input', { type: 'range', min: String(min), max: String(max), step: String(step) });
     slider.value = String(value);
+    const readout = make('output');
+    readout.dataset.ui = 'setting-shown';
+    const show = () => void (readout.textContent = (row.shown ?? plainNumber)(Number(slider.value)));
+    show();
+    readouts.set(row.id, show);
+    slider.addEventListener('input', show); // at each step, though a clock row reports only once let go
     slider.addEventListener(row.release ? 'change' : 'input', () => report(Number(slider.value)));
-    return slider;
+    const both = make('span', { className: 'pg-slider' });
+    both.append(slider, readout);
+    return both;
   }
 
   /** Each action's key on the map in use (the keyboard's, or the pad's button), and its keys as the row's value. */
@@ -251,6 +267,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
       const field = line.querySelector('input, select') as HTMLInputElement | HTMLSelectElement | null;
       if (field instanceof HTMLInputElement && field.type === 'checkbox') field.checked = value === true;
       else if (field) field.value = String(value);
+      readouts.get(id)?.();
     },
     remove: () => el.remove(),
   };

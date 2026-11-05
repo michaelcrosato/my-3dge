@@ -6,7 +6,8 @@
  * the day's length, the rain and the dust, each a setting the registry knows, the two clock rows reporting a slider
  * once let go; Time of day and Day length set the block's clock live through its recorded dev action `daytime` (the
  * hour and the rate the scene's own start reads from them), so the street's lamps follow at once and the run's replay
- * plays back to the same hash. Applying a row's change is the front end's (tests/e2e/playground-ui.spec.ts).
+ * plays back to the same hash. Each slider reads its value beside it at each step of a drag, the clock's rows reporting
+ * it only once let go. Applying a row's change is the front end's (tests/e2e/playground-ui.spec.ts).
  * @see labs/playground/ui/settings.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -19,7 +20,7 @@ import '../cast/player';
 import { PLAYGROUND_MAPS } from '../controls';
 import { street } from '../scenes/site';
 import '../weather';
-import { clockAfter, CONTROL_ACTIONS, createSettings, SETTING_ROWS } from './settings';
+import { clockAfter, CONTROL_ACTIONS, createSettings, plainNumber, SETTING_ROWS, type RowSchema } from './settings';
 
 /** The settings screen over a stand-in input whose device used last is `device`, the next code heard `heard`. */
 function screenOn(device: DeviceKind, heard: string | null) {
@@ -49,6 +50,77 @@ function screenOn(device: DeviceKind, heard: string | null) {
   const key = (action: string) => parent.querySelector(`[data-ui=item][data-id=rebind:${action}]`) as FakeElement;
   return { key, listened, rebound };
 }
+
+/** The settings screen over a stand-in input, its rows' values `values`, the changes it reports in `changes`. */
+function rowsOn(values: Record<string, number>) {
+  const { document } = fakePage({ left: 0, top: 0, width: 1280, height: 720 });
+  const parent = document.createElement('div');
+  const changes: string[] = [];
+  const ranges: Record<string, RowSchema> = {
+    'playground.hour': { type: 'number', minimum: 0, maximum: 23 },
+    'playground.day': { type: 'number', minimum: 0, maximum: 1440 },
+  };
+  const bindings = {
+    label: () => '',
+    codes: () => [],
+    actions: () => [],
+    map: { actions: {} },
+    reset: () => undefined,
+  };
+  createSettings(parent as unknown as HTMLElement, {
+    values,
+    schema: (path) => ranges[path] ?? { type: 'number', minimum: 0, maximum: 1 },
+    input: {
+      lastDevice: 'keyboard',
+      bindings,
+      bindingsFor: () => bindings,
+      listen: () => Promise.resolve(null),
+    } as never,
+    onChange: (row, value) => void changes.push(`${row.id}=${value}`),
+    onBack: () => undefined,
+  });
+  /** The row `id`'s slider and the value read beside it. */
+  const row = (id: string) => {
+    const line = parent.querySelectorAll('[data-ui=setting]').find((one) => one.dataset.id === id)!;
+    const [slider, shown] = line.querySelector('.pg-slider')!.children;
+    return { slider: slider as FakeElement & { value: string }, shown };
+  };
+  return { row, changes };
+}
+
+describe('the settings screen’s sliders', () => {
+  it('read their value beside them at each step of a drag, the clock’s rows reporting it only once let go', () => {
+    const { row, changes } = rowsOn({
+      'playground.hour': 12,
+      'playground.day': 0,
+      'volume:master': 0.8,
+      'cam.fov': 0.5,
+    });
+    expect(['playground.hour', 'playground.day', 'volume:master', 'cam.fov'].map((id) => row(id).shown.textContent)).toEqual(['12:00', 'held', '80%', '0.5']); // prettier-ignore
+    const hour = row('playground.hour');
+    hour.slider.value = '21';
+    hour.slider.dispatch('input'); // a step of the drag: read beside it, not yet reported
+    expect([hour.shown.textContent, changes]).toEqual(['21:00', []]);
+    hour.slider.dispatch('change'); // let go
+    const day = row('playground.day');
+    day.slider.value = '20';
+    day.slider.dispatch('input');
+    day.slider.dispatch('change');
+    const volume = row('volume:master');
+    volume.slider.value = '0.35';
+    volume.slider.dispatch('input'); // a view row reports at each step
+    expect([day.shown.textContent, volume.shown.textContent]).toEqual(['20 min', '35%']);
+    expect(changes).toEqual(['playground.hour=21', 'playground.day=20', 'volume:master=0.35']);
+    expect(SETTING_ROWS.filter((one) => one.release).map((one) => one.id)).toEqual([
+      'playground.hour',
+      'playground.day',
+    ]);
+  });
+
+  it('read a number whole or to two places', () => {
+    expect([plainNumber(90), plainNumber(0.35), plainNumber(1 / 3)]).toEqual(['90', '0.35', '0.33']);
+  });
+});
 
 describe('the settings screen’s controls', () => {
   it('show the keys of the device used last: a pad’s buttons on a pad, the keyboard’s else', () => {
