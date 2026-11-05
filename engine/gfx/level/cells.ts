@@ -14,7 +14,8 @@
  * the outdoors on the other faces the outdoors, as a house's thin outer walls do (open both ways, they fell back to
  * the map-centre diagonal: 410 of the house's 925 wall tiles, so a camera north of its east wall cut it, WP 13.39),
  * and so does one open to the outdoors alone (a corner, a thick wall's outer layer, which faced in); one with rooms on
- * both sides, or the outdoors on both, faces nowhere (`out` [0, 0]), so only a line of sight cuts it
+ * both sides, or the outdoors on both, faces nowhere (`out` [0, 0]), so only a line of sight cuts it; a doorway beside
+ * it is neither (WP 13.41: a door's jamb took its doorway for the outdoors, faced across the wall and stood whole)
  * (engine/gfx/cutaway.ts). A piece open on no side faces away from the map's centre, as before. A run of a mesh's
  * pieces (4-connected) whose every open side opens onto a room stands in the rooms (a chimney's breast, a counter,
  * the kitchen's island: WP 13.41, the breast's corner stood whole beside its cut sides, a loose post): its pieces face
@@ -66,9 +67,11 @@ function openAlong(level: CompiledLevel, tiles: [number, number][]): boolean {
 export function levelCells(level: CompiledLevel, pieces: readonly TileRect[], bottom: number): LevelCell[] {
   const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
   const { room } = level;
+  /** Whether tile `at` is an opening's (a doorway's): open, in no room, yet not the outdoors either. */
+  const opening = (at: number) => !['', 'none', undefined].includes(level.legend?.[level.tiles?.[at]]?.opening);
   /** Whether any of `tiles` opens onto a room's floor (`inRoom`), or onto the outdoors, on a building's storey. */
   const opensOnto = (tiles: [number, number][], inRoom: boolean) =>
-    tiles.some(([col, row]) => !solid(level, col, row) && (room?.[row * level.cols + col] ?? -1) >= 0 === inRoom);
+    tiles.some(([col, row]) => !solid(level, col, row) && !opening(row * level.cols + col) && (room?.[row * level.cols + col] ?? -1) >= 0 === inRoom); // prettier-ignore
   /** On a building's storey, the way along an axis from side `a` to side `b`: away from a room, to the outdoors. */
   const lean = (a: [number, number][], b: [number, number][]) =>
     Math.sign(Number(opensOnto(a, true)) - Number(opensOnto(b, true)) + Number(opensOnto(b, false)) - Number(opensOnto(a, false))); // prettier-ignore
@@ -168,8 +171,8 @@ export function cellNeighbours(cells: readonly Pick<LevelCell, 'centre' | 'size'
 
 /**
  * Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a
- * `group` is cut when any of its group's is; one whose neighbours in its list (`cellNeighbours`), two at least, are all
- * cut is cut with them, so no piece stands alone, a post, beside its cut ones; and a cell two lists share (a wall's
+ * `group` is cut when any of its group's is; one whose neighbours in its list (`cellNeighbours`) are all cut is cut
+ * with them, so no piece stands alone, a post, beside its cut ones (a jamb beside its doorway, a partition's end); and a cell two lists share (a wall's
  * piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
  */
 export function settleCuts(
@@ -180,7 +183,7 @@ export function settleCuts(
     const cut = cuts[k];
     const whole = new Set(cells.filter((cell, i) => cut[i] && cell.group !== undefined).map(({ group }) => group));
     const near = cut.some(Boolean) ? cellNeighbours(cells) : [];
-    return cells.map((cell, i) => cut[i] || whole.has(cell.group) || ((near[i]?.length ?? 0) >= 2 && near[i].every((j) => cut[j]))); // prettier-ignore
+    return cells.map((cell, i) => cut[i] || whole.has(cell.group) || ((near[i]?.length ?? 0) > 0 && near[i].every((j) => cut[j]))); // prettier-ignore
   });
   const gone = new Set(lists.flatMap((cells, k) => cells.filter((_, i) => settled[k][i])));
   return lists.map((cells, k) => cells.map((cell, i) => settled[k][i] || gone.has(cell)));

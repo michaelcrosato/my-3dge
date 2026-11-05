@@ -2,8 +2,8 @@
  * @file The house's cut leaves no post (engine/gfx/level/cells.ts's blocks standing in rooms, cut whole by
  * engine/gfx/cutaway.ts; WP 13.41: in isometric the chimney's breast stood as a loose post of siding, its corner left
  * whole beside its cut sides): with the player at each of its rooms' markers, in each of isometric's four turns, no
- * piece of a wall, a partition, a counter or the chimney stands whole alone: its part's pieces beside it, two at least,
- * all cut (the end of a run that goes on whole is no post).
+ * piece of a wall, a partition, a counter or the chimney stands whole alone: its part's pieces beside it all cut (a
+ * door's jamb, beside its doorway, has one; the end of a run that goes on whole is no post).
  * @see engine/gfx/level/cells.ts
  * @see engine/gfx/cutaway.ts
  */
@@ -38,8 +38,8 @@ describe('the house’s cut', () => {
             cut += Number(cutting);
             const [c, r] = key.split(',').map(Number);
             const beside = [`${c - 1},${r}`, `${c + 1},${r}`, `${c},${r - 1}`, `${c},${r + 1}`].map((one) => state.get(one)); // prettier-ignore
-            // a post: whole, its part's pieces beside it cut, two of them at least, and none whole
-            const post = !cutting && beside.filter((one) => one === true).length >= 2 && !beside.includes(false);
+            // a post: whole, its part's pieces beside it all cut (a jamb has one, beside its doorway)
+            const post = !cutting && beside.includes(true) && !beside.includes(false);
             if (post) posts.push(`${room.id} turn ${turn}: ${part.name.replace('level:house/', '')} [${key}]`);
           }
         }

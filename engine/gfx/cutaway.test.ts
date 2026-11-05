@@ -162,12 +162,12 @@ describe('planCutaway on the hall', () => {
   });
 
   it('cuts a group whole when any of its cells is cut, leaving no piece of it alone (WP 13.41)', () => {
-    // A block of three pieces facing nowhere, the middle one on the line from a camera south of it to the focus north.
-    const cells = [-1, 0, 1].map((x) => ({ centre: [x, 0, 4] as [number, number, number], size: [1, 1] as [number, number], out: [0, 0] as [number, number] })); // prettier-ignore
-    const pose = makePose({ position: [0, 1, 20], yaw: Math.PI, pitch: 0 }); // south of it, looking north
+    // A run of five pieces facing nowhere, the middle one on the line from a camera south of it to the focus north.
+    const cells = [-2, -1, 0, 1, 2].map((x) => ({ centre: [x, 0, 4] as [number, number, number], size: [1, 1] as [number, number], out: [0, 0] as [number, number] })); // prettier-ignore
+    const pose = makePose({ position: [0, 1, 20], yaw: Math.PI, pitch: -1.1 }); // south of it: past AIM_STEEP, the head and feet aimed at alone
     const plan = (group?: number) => planCutaway([{ when: 'either', bottom: 0, top: 3, cells: cells.map((cell) => ({ ...cell, group })) }], pose, [0, 0, 0])[0]; // prettier-ignore
-    expect(plan()).toEqual([false, true, false]); // alone, only the piece in the way
-    expect(plan(7)).toEqual([true, true, true]); // a group: whole
+    expect(plan()).toEqual([false, false, true, false, false]); // no group: only the piece in the way
+    expect(plan(7)).toEqual([true, true, true, true, true]); // a group: whole
   });
 
   it('tests a segment against a box by slabs, as the prototype did', () => {

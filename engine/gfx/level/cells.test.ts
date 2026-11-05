@@ -2,7 +2,7 @@
  * @file Unit tests for engine/gfx/level/cells.ts's rooms (WP 13.39): on a storey of a level with rooms, a wall between
  * a room and the outdoors faces the outdoors, one between two rooms faces nowhere, and one open on no side still faces
  * away from the map's centre; a block standing in rooms (WP 13.41) faces nowhere, one group, and a piece alone among
- * cut ones goes with them, in every list it is in; with no room grid (a level without rooms) the old rule holds, the
+ * cut ones goes with them, in every list it is in; a doorway is neither a room nor the outdoors; with no room grid (a level without rooms) the old rule holds, the
  * open-both-ways wall falling back to the diagonal. The common cases are engine/gfx/level/meshes.test.ts's.
  * @see engine/gfx/level/cells.ts
  */
@@ -64,9 +64,32 @@ describe('a building storey’s wall cells', () => {
     const cell = (x: number) => ({ centre: [x, 0, 0] as [number, number, number], size: [1, 1] as [number, number] });
     const row = [cell(0), cell(1), cell(2)];
     expect(settleCuts([row], [[true, false, true]])).toEqual([[true, true, true]]); // the middle stood alone
-    expect(settleCuts([[...row, cell(3)]], [[true, false, true, false]])).toEqual([[true, true, true, false]]);
-    expect(settleCuts([[cell(0), cell(1)]], [[true, false]])).toEqual([[true, false]]); // an end, one neighbour: whole
+    expect(settleCuts([[...row, cell(3)]], [[true, false, true, false]])).toEqual([[true, true, true, true]]); // the end too
+    expect(settleCuts([[cell(0), cell(1)]], [[true, false]])).toEqual([[true, true]]); // an end, its one neighbour cut
+    expect(settleCuts([row], [[true, false, false]])).toEqual([[true, false, false]]); // a neighbour whole: it stands
     const lining = [row[1]]; // the middle's lining, its cell the wall's own
     expect(settleCuts([row, lining], [[true, false, true], [false]])).toEqual([[true, true, true], [true]]);
+  });
+
+  it('take a doorway beside a piece for neither a room nor the outdoors: a jamb faces out of the building (WP 13.41)', () => {
+    // A storey 4 × 3 on 1 m tiles: room 0 in the north row, the wall in the middle row with a doorway (D) at its west
+    // end, the outdoors in the south row. The jamb east of the doorway faces south, out, not west across the wall.
+    const map = ['....', 'DWWW', '....'];
+    const solid = map.flatMap((row) => [...row].map((char) => char === 'W'));
+    const room = [0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1];
+    const legend = { W: { opening: '' }, D: { opening: 'door' }, '.': { opening: '' } };
+    const level = { cols: 4, rows: 3, tile: 1, solid, room, legend, tiles: map.join('').split('') } as unknown as CompiledLevel; // prettier-ignore
+    const [jamb, middle] = levelCells(
+      level,
+      [
+        [1, 1, 1, 1],
+        [2, 1, 2, 1],
+      ],
+      0,
+    );
+    expect([jamb.out, middle.out]).toEqual([
+      [0, 1],
+      [0, 1],
+    ]);
   });
 });
