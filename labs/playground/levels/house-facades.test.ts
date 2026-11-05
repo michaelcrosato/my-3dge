@@ -118,4 +118,15 @@ describe('the house’s facades', () => {
     expect([...states].sort()).toEqual(['false', 'true']); // cut from some places, whole from others
     expect(apart).toEqual([]);
   });
+
+  it('leave the porch’s posts out with the upper storey they hold up, and draw them for a player outdoors', () => {
+    const { meshes } = house();
+    const storeys = createStoreyCut(meshes);
+    const posts = meshes.parts.filter((part) => part.name === 'level:house/ground/pillar');
+    expect(posts.map((part) => part.mesh.userData.holds)).toEqual([2]);
+    storeys.set(1, true); // on the ground floor, indoors: the upper storey and the porch's roof off
+    const indoors = posts.map((part) => part.mesh.visible);
+    storeys.set(-1, false); // outdoors
+    expect([indoors, posts.map((part) => part.mesh.visible)]).toEqual([[false], [true]]);
+  });
 });
