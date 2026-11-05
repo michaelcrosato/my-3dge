@@ -46,10 +46,11 @@ import type { CompiledLevel, MeshDescriptor, RoofDescriptor, TileRect } from '..
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
 import { flightGeometry } from './flights';
+import { liningParts } from './linings';
 import { framesGeometry, headsGeometry, railingGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
 import { roofGeometry } from './roofs';
-import { buildShape, drawnWith, type BuiltShape, type PartCut } from './shapes';
+import { buildShape, drawnWith, instanced, type BuiltShape, type PartCut } from './shapes';
 import { ceilingGeometry } from './slabs';
 import { surfaceGeometry } from './surface';
 import { underRoofGeometry } from './walls';
@@ -214,10 +215,23 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       if (geometry) parts.push(place(single(geometry, recipe), name, recipe, [], heights, k));
     }
     // The wall over each opening in a wall faced with that wall's sides (under a pitched roof the heads follow the roof).
-    const facings = roof ? new Map<string, BufferGeometry>() : wallFacings(level, topped, openings, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes)); // prettier-ignore
+    const lining = (name: string) => recipeOf(name).lining;
+    const facings = roof ? new Map<string, BufferGeometry>() : wallFacings(level, topped, openings, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes), (name) => !!lining(name)); // prettier-ignore
     for (const [wall, geometry] of facings) {
-      const recipe = { ...recipeOf('heads'), materials: recipeOf(wall).materials.slice(0, 1), castShadow: false }; // the heads cast its shadow
+      const [name, lined] = wall.split(':'); // `<recipe>:lining`: its faces toward a room
+      const recipe = {
+        ...recipeOf('heads'),
+        materials: lined ? [lining(name)!] : recipeOf(name).materials.slice(0, 1),
+        castShadow: false,
+      }; // the heads cast its shadow // prettier-ignore
       parts.push(place(single(geometry, recipe), `heads:${wall}`, recipe, [], [storey.base, storey.fullTop], k));
+    }
+    // A lined recipe's walls' faces toward a room, in its lining (linings.ts): the room's side of an outer wall.
+    const walls = parts.filter((part) => part.storey === k && part.shape === 'block' && part.cells.length > 0);
+    for (const one of liningParts(views[k], walls, lining)) {
+      const recipe: LevelRecipe = { shape: 'block', materials: [one.material], castShadow: false, receiveShadow: true };
+      const mesh = instanced(one.geometry, materialsOf(recipe)[0], one.cells);
+      parts.push(place({ mesh, cells: one.cells, cut: one.cut }, one.name, recipe, [], [one.bottom, one.top], k));
     }
   });
   for (const [room, { storey, base, pieces }] of roomPieces) {

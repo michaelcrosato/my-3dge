@@ -99,6 +99,11 @@ export interface LevelRecipe {
   receiveShadow: boolean;
   /** How the cutaway cuts its pieces (`block` and `pillar` only); never, without. */
   cut?: LevelCut;
+  /**
+   * A `block`'s faces toward a room, on a storey of a level with rooms: the material they are lined with (an outer
+   * wall's siding outside, its wallpaper in the room: engine/gfx/level/linings.ts); none, without.
+   */
+  lining?: string;
 }
 
 /** The wall's cut twin (m): the prototype's 7 units. */
