@@ -2174,7 +2174,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createTune`, `LookNow`, `lookText`, `TuneOptions`, `TunePanel`
   - Tests: [`labs/playground/ui/tune.test.ts`](../labs/playground/ui/tune.test.ts), [`tests/e2e/playground-ui.spec.ts`](../tests/e2e/playground-ui.spec.ts)
 - [`walk.ts`](../labs/playground/ui/walk.ts): Working a panel with the menus' keys (docs/PLAYGROUND.md §8.3): the settings screen, Tune and the controls sheet are forms a pointer works (sliders, lists, boxes, folds and buttons); `walkPanel(panel, input)`, run once a frame while one is open (labs/playground/ui/frontEnd.ts), lets a pad work them too, as it works the engine's menus, and the keyboard press and step what Tab reaches.
-  - Exports: `walkable`, `WalkInput`, `walkPanel`
+  - Exports: `SCROLL_STEP`, `walkable`, `WalkInput`, `walkPanel`
   - Tests: [`labs/playground/ui/walk.test.ts`](../labs/playground/ui/walk.test.ts)
 
 ## labs/playground/weapons

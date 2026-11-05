@@ -8986,6 +8986,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/ui/walk.ts`](../labs/playground/ui/walk.ts)
 
+- `SCROLL_STEP` (const): How far a pad's up or down scrolls a panel with nothing to walk to: a share of what shows of it.
 - `walkable` (function): The controls of `panel` the walk visits, in the page's order: those that show and are enabled.
 - `WalkInput` (type): What the walk reads of the input: the menus' keys this frame, and the device used last.
 - `walkPanel` (function): Runs one frame of the menus' keys over `panel` (see the file comment).
