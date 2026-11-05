@@ -9061,13 +9061,16 @@ For the agents who maintain the engine.
 - `checksItem` (const): The owner's checks item, with `left` of them to do.
 - `hud` (const): The HUD's lines that show, by id.
 - `menuLabels` (const): The labels of the open menu `menu`'s items, in order.
+- `PAD` (const): The standard mapping's buttons a test presses: the d-pad's down and right.
 - `pick` (function): Picks the item `id` of the open menu `menu` with a click, then runs a frame.
 - `player` (const): The player's entity.
+- `plugPad` (function): Plugs a pad into slot 0 as the page opens (`page.addInitScript`): `window.__pad`, its buttons a test presses.
 - `press` (function): Presses `key` on the keyboard, then runs two frames, so the front end reads it at a frame as the page's loop does.
 - `recording` (const): The run's recording and its hash, in the page.
 - `screens` (const): The open screens, top last, and whether the run is paused by them.
 - `shown` (const): A setting row's value as the screen shows it.
 - `slide` (function): Sets a slider of the settings screen, as a hand on it would.
+- `tapPad` (function): Presses the pad's `button` for two frames, then lets it go for two (see `plugPad`).
 
 ### [`tests/e2e/post-cases.ts`](../tests/e2e/post-cases.ts)
 
