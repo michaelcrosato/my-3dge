@@ -15,7 +15,7 @@
  *
  * @example
  * spawnPlaces().length; // 25: the block's 8 areas and the house's 17 rooms
- * spawnPlace('area:house')?.label; // 'The house'
+ * spawnPlace('area:house')?.label; // 'House'
  * spawnPlace('room:house/master')?.label; // 'Master bedroom'
  * spawnPlace('room:house/kitchen')?.args.crouch; // false
  * @see labs/playground/ui/spawns.test.ts
