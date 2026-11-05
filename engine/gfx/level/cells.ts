@@ -264,3 +264,29 @@ export function aimsInSight(
     ),
   );
 }
+
+/**
+ * Whether the segment `a` → `b` crosses one of `tris` (3 points, 9 numbers, a triangle) turned toward `b` (a camera:
+ * a level's faces are drawn on their front alone), their heights scaled by `k` as the picture's are
+ * (engine/gfx/cutaway.ts `planCutaway`): Möller and Trumbore's test.
+ */
+export function segmentHitsTriangles(a: Vec3, b: Vec3, tris: Float32Array, k = 1): boolean {
+  const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  for (let t = 0; t < tris.length; t += 9) {
+    const p = [tris[t], tris[t + 1] * k, tris[t + 2]];
+    const e1 = [tris[t + 3] - p[0], tris[t + 4] * k - p[1], tris[t + 5] - p[2]];
+    const e2 = [tris[t + 6] - p[0], tris[t + 7] * k - p[1], tris[t + 8] - p[2]];
+    const h = [d[1] * e2[2] - d[2] * e2[1], d[2] * e2[0] - d[0] * e2[2], d[0] * e2[1] - d[1] * e2[0]];
+    const det = e1[0] * h[0] + e1[1] * h[1] + e1[2] * h[2];
+    if (det > -1e-12) continue; // along its plane, or its back turned to `b` (the camera): not drawn, it hides nothing
+    const s = [a[0] - p[0], a[1] - p[1], a[2] - p[2]];
+    const u = (s[0] * h[0] + s[1] * h[1] + s[2] * h[2]) / det;
+    if (u < 0 || u > 1) continue;
+    const q = [s[1] * e1[2] - s[2] * e1[1], s[2] * e1[0] - s[0] * e1[2], s[0] * e1[1] - s[1] * e1[0]];
+    const v = (d[0] * q[0] + d[1] * q[1] + d[2] * q[2]) / det;
+    if (v < 0 || u + v > 1) continue;
+    const along = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) / det;
+    if (along >= 0 && along <= 1) return true;
+  }
+  return false;
+}

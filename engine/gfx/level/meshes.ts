@@ -45,7 +45,17 @@ import { storeyView } from '../../world/level/storeys';
 import type { CompiledLevel, MeshDescriptor, OpeningDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
-import { facadeParts, facadeTiles, INSIDE, lowCeiling, openingRooms, type FacadeRange } from './facades';
+import {
+  drawnWhole,
+  facadeParts,
+  facadeTiles,
+  INSIDE,
+  lowCeiling,
+  openingRooms,
+  trianglesOf,
+  widen,
+  type FacadeRange,
+} from './facades';
 import { liningParts } from './linings';
 import { framesGeometry, headsGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
@@ -218,16 +228,20 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       const drawn = facadeParts(openings, level.tile, storey.base, build, lowCeiling(level, storey));
       if (!drawn) return;
       const part = place(single(drawn.geometry, recipe), name, recipe, [], [storey.base, storey.fullTop], k);
-      if (!drawn.facades.some(({ key, cell }) => key !== INSIDE || cell.size[0] > 0)) return void parts.push(part);
+      if (!shared && !drawn.facades.some(({ key, cell }) => key !== INSIDE || cell.size[0] > 0)) return void parts.push(part); // prettier-ignore
       part.mesh.material = [part.mesh.material as Material]; // drawn by its facades' ranges, one group while none is cut
-      drawn.geometry.addGroup(
-        0,
-        drawn.facades.reduce((sum, { count }) => sum + count, 0),
-        0,
-      );
-      parts.push({ ...part, facades: drawn.facades });
+      const count = drawn.facades.reduce((sum, one) => sum + one.count, 0);
+      drawn.geometry.addGroup(0, count, 0);
+      // under a pitched roof, its openings go with the walls drawn whole round them, sharing their cell (WP 13.42)
+      if (shared) widen(shared, drawn.geometry);
+      parts.push({ ...part, facades: shared ? [{ face: INSIDE, key: INSIDE, start: 0, count, cell: shared, tris: trianglesOf(drawn.geometry) }] : drawn.facades }); // prettier-ignore
     };
+    const at = roof ? parts.findIndex((one) => one.storey === k && one.shape === 'block' && one.facades?.[0].key === INSIDE) : -1; // prettier-ignore
+    const under = at >= 0 ? parts[at] : undefined;
+    const shared = under && { ...under.facades![0].cell, centre: [...under.facades![0].cell.centre], size: [...under.facades![0].cell.size] } as FacadeRange['cell']; // prettier-ignore
+    if (under && shared) parts[at] = { ...under, facades: [{ ...under.facades![0], cell: shared }] };
     const onFacade = facadeTiles(level.cols, openings);
+    if (under) for (const tile of onFacade.keys()) onFacade.set(tile, INSIDE); // its doors and panes go with them too
     onFacades[k] = onFacade;
     drawFacades('heads', recipeOf('heads'), (_, key) => headsGeometry(level, topped, roof, (c, r) => (onFacade.get(r * level.cols + c) ?? INSIDE) === key)); // prettier-ignore
     drawFacades('frames', recipeOf('frames'), (own) => framesGeometry(own, level.tile, options.leaf));
@@ -369,25 +383,4 @@ function withoutRooms(
     found.set(room, entry);
   }
   return kept.length === descriptor.pieces.length ? descriptor : { ...descriptor, pieces: kept };
-}
-
-/**
- * `part`, drawn as one mesh (a flight, a storey's blocks under a pitched roof), as one range the cutaway leaves out
- * where it stands between the camera and the player (engine/gfx/level/facades.ts, WP 13.42: a flight's top and the
- * attic's walls under its roof hid him): its cell the rectangle its geometry covers on the ground, its heights the
- * geometry's (a flight's descriptor stands at its floor).
- */
-function drawnWhole(part: LevelMeshPart): LevelMeshPart {
-  const geometry = part.mesh.geometry;
-  const count = geometry.getIndex()?.count ?? geometry.getAttribute('position')?.count ?? 0;
-  if (!count || drawsNothing(geometry)) return part;
-  if (!Array.isArray(part.mesh.material)) {
-    part.mesh.material = [part.mesh.material]; // drawn by its range: one group while it is not cut
-    geometry.clearGroups();
-    geometry.addGroup(0, count, 0);
-  }
-  if (!geometry.boundingBox) geometry.computeBoundingBox();
-  const { min, max } = geometry.boundingBox!;
-  const cell = { centre: [(min.x + max.x) / 2, min.y, (min.z + max.z) / 2] as [number, number, number], size: [max.x - min.x, max.z - min.z] as [number, number], out: [0, 0] as [number, number] }; // prettier-ignore
-  return { ...part, bottom: min.y, top: max.y, facades: [{ face: INSIDE, key: INSIDE, start: 0, count, cell }] }; // a flight's own: its floor's
 }

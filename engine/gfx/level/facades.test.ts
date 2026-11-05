@@ -11,7 +11,7 @@ import { Mesh } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import type { CompiledLevel, OpeningDescriptor } from '../../world/level/types';
 import { boxGeometry } from '../geometry/box';
-import { facadeDraws, facadeParts, INSIDE, openingFacade, openingRooms } from './facades';
+import { facadeDraws, facadeParts, INSIDE, openingFacade, openingRooms, trianglesOf } from './facades';
 import { LINING_FACES } from './linings';
 
 /** The index into `LINING_FACES` of the face named `name`. */
@@ -76,5 +76,12 @@ describe('facadeParts', () => {
     const mesh = new Mesh(bare.geometry);
     facadeDraws([{ name: 'frames', mesh, facades: bare.facades, bottom: 0, top: 3 }]).show([[true, true, true]]);
     expect([mesh.geometry.groups.length, mesh.visible]).toEqual([0, true]);
+  });
+});
+
+describe('trianglesOf', () => {
+  it('lists a geometry’s triangles, nine numbers each, by its index', () => {
+    const tris = trianglesOf(boxGeometry());
+    expect([tris.length, tris.length / 9]).toEqual([36 * 3, 12]); // a box: 12 triangles
   });
 });

@@ -43,6 +43,8 @@ export interface FacadeRange {
   readonly start: number;
   readonly count: number;
   readonly cell: Pick<LevelCell, 'centre' | 'size' | 'out'>;
+  /** A part drawn whole: its triangles (`trianglesOf`), which a line to the player must cross to cut it. */
+  readonly tris?: Float32Array;
 }
 
 /** The way `opening`'s wall faces out of the building (see the file comment). */
@@ -132,7 +134,7 @@ export function facadeParts(
  * engine/gfx/cutaway.ts's `planCutaway`, one a part (`either`: its ranges' cells, an opening cut where its facade faces
  * the camera or where it stands on a line of sight, a doorway between rooms by the line alone, with what stands at no
  * opening where that has a rectangle: a low ceiling's heads, a part drawn whole, engine/gfx/level/meshes.ts's flights
- * and blocks under a roof, its own draw groups back when it is not cut); `show(cuts)` draws each part's ranges but
+ * and blocks under a roof, cut only where it hides the player's head or chest, its own draw groups back after); `show(cuts)` draws each part's ranges but
  * those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which
  * is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the
  * ranges left out (their keys), by part.
@@ -148,7 +150,8 @@ export function facadeDraws(
     const cells = facades!.filter((_, j) => slots[i][j] >= 0).map(({ cell }) => cell);
     let n = 0;
     slots[i] = slots[i].map((slot) => (slot < 0 ? -1 : n++));
-    return { when: 'either', cells, bottom, top, storey };
+    const tris = facades!.length === 1 ? facades![0].tris : undefined; // a part drawn whole: cut where it hides him
+    return { when: 'either', cells, bottom, top, storey, ...(tris ? { body: tris } : {}) };
   });
   const cut = drawn.map(({ facades }) => facades!.map(() => false));
   return {
@@ -177,4 +180,54 @@ export function facadeDraws(
     cut: (): Record<string, number[]> =>
       Object.fromEntries(drawn.map(({ name, facades }, i) => [name, facades!.filter((_, j) => cut[i][j]).map(({ key }) => key)])), // prettier-ignore
   };
+}
+
+/**
+ * `part`, drawn as one mesh (a flight, a storey's blocks under a pitched roof), as one range the cutaway leaves out
+ * where it stands between the camera and the player (`facadeDraws`, WP 13.42: a flight's top and the
+ * attic's walls under its roof hid him): its cell the rectangle its geometry covers on the ground, its heights the
+ * geometry's (a flight's descriptor stands at its floor).
+ */
+export function drawnWhole(part: LevelMeshPart): LevelMeshPart {
+  const geometry = part.mesh.geometry;
+  const count = geometry.getIndex()?.count ?? geometry.getAttribute('position')?.count ?? 0;
+  if (!count) return part;
+  if (!Array.isArray(part.mesh.material)) {
+    part.mesh.material = [part.mesh.material]; // drawn by its range: one group while it is not cut
+    geometry.clearGroups();
+    geometry.addGroup(0, count, 0);
+  }
+  if (!geometry.boundingBox) geometry.computeBoundingBox();
+  const { min, max } = geometry.boundingBox!;
+  const cell = { centre: [(min.x + max.x) / 2, min.y, (min.z + max.z) / 2] as [number, number, number], size: [max.x - min.x, max.z - min.z] as [number, number], out: [0, 0] as [number, number] }; // prettier-ignore
+  return {
+    ...part,
+    bottom: min.y,
+    top: max.y,
+    facades: [{ face: INSIDE, key: INSIDE, start: 0, count, cell, tris: trianglesOf(geometry) }],
+  }; // prettier-ignore a flight's own heights: its floor's
+}
+
+/** Widens `cell` (its centre and size on the ground) to hold what `geometry` covers too. */
+export function widen(cell: FacadeRange['cell'], geometry: BufferGeometry): void {
+  if (!geometry.boundingBox) geometry.computeBoundingBox();
+  const { min, max } = geometry.boundingBox!;
+  const [cx, , cz] = cell.centre;
+  const [x0, x1] = [Math.min(cx - cell.size[0] / 2, min.x), Math.max(cx + cell.size[0] / 2, max.x)];
+  const [z0, z1] = [Math.min(cz - cell.size[1] / 2, min.z), Math.max(cz + cell.size[1] / 2, max.z)];
+  Object.assign(cell.centre, [(x0 + x1) / 2, cell.centre[1], (z0 + z1) / 2]);
+  Object.assign(cell.size, [x1 - x0, z1 - z0]);
+}
+
+/** The triangles of `geometry`, 9 numbers each (its index's, or its positions' in threes), as `segmentHitsTriangles` reads. */
+export function trianglesOf(geometry: BufferGeometry): Float32Array {
+  const position = geometry.getAttribute('position');
+  const index = geometry.getIndex();
+  const count = index ? index.count : position.count;
+  const out = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const v = index ? index.getX(i) : i;
+    out.set([position.getX(v), position.getY(v), position.getZ(v)], i * 3);
+  }
+  return out;
 }
