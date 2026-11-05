@@ -364,7 +364,8 @@ export function createInput(options: InputOptions = {}): Input {
     camera() {
       const twin = bindings.map.aimWith === 'pointer'; // the right stick aims (twin sticks), not the camera
       const stick: [number, number] = twin ? [0, 0] : pads.rightStick();
-      const raw = { counts: mouse?.takeLook() ?? [0, 0], stick } as const;
+      const [mouseLook, fingerLook] = [mouse?.takeLook() ?? [0, 0], touch?.takeLook() ?? [0, 0]];
+      const raw = { counts: [mouseLook[0] + fingerLook[0], mouseLook[1] + fingerLook[1]], stick } as const;
       const { look, turn } = scaleLook(raw, options.look?.() ?? DEFAULT_LOOK, heldNow.has('aim'));
       return { look, turn, zoom: mouse?.takeZoom() ?? 0 };
     },

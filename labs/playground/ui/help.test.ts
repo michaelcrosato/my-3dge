@@ -45,11 +45,12 @@ describe('the controls sheet', () => {
     expect(sheet(inputOn(PLAYGROUND_MAPS.shooter, 'gamepad'))['Look around']).toEqual(['Look around', 'R Stick']);
   });
 
-  it('names the stick, the touch buttons and the menu button on touch, and leaves out the rest', () => {
+  it('names the stick, the look drag, the touch buttons and the menu button on touch, and leaves out the rest', () => {
     const keys = (input: HelpInput) =>
       Object.fromEntries(Object.entries(sheet(input)).map(([id, [, key]]) => [id, key]));
-    const touch = { Move: 'Stick: touch and drag', jump: 'Jump', crouch: 'Crouch', interact: 'Use', melee: 'Strike', pause: 'Menu button, top right' }; // prettier-ignore
+    const touch = { Move: 'Left thumb: touch and drag', 'Look around': 'Right thumb: drag', jump: 'Jump', crouch: 'Crouch', interact: 'Use', melee: 'Strike', pause: 'Menu button, top right' }; // prettier-ignore
     expect(keys(inputOn(PLAYGROUND_MAPS.shooter, 'touch'))).toEqual(touch);
+    expect(keys(inputOn(PLAYGROUND_MAPS.isometric, 'touch'))['Look around']).toBeUndefined(); // the pointer aims there, and no drag turns the view
     expect(keys(inputOn(PLAYGROUND_MAPS.shooter, 'keyboard', {}, true))).toEqual(touch); // touch mode, before a finger lands on the game
     expect(keys(inputOn(PLAYGROUND_MAPS.shooter, 'gamepad', {}, true)).Move).toBe('L Stick'); // a pad used last on a touch screen
   });

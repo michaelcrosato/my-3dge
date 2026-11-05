@@ -1303,7 +1303,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createScriptedGamepad`, `parsePadScript`, `ScriptedGamepad`
   - Tests: [`engine/input/devices/devices.test.ts`](../engine/input/devices/devices.test.ts)
 - [`touch.ts`](../engine/input/devices/touch.ts): The touch device (PLAN.md WP 3.12, ADR-0021: built, not tested): fingers on a phone or tablet, read from pointer events whose `pointerType` is not `mouse`, written into the input sink like any device.
-  - Exports: `attachTouch`, `BUTTON_SLOP`, `HOLD_FRAMES`, `HOLD_TIME`, `MOUSE_SLOP`, `STICK_DEAD`, `STICK_FULL`, `STICK_RADIUS`, `stickAxis`, `StickView`, `TAP_SLOP`, `TAP_TIME`, `TOUCH_SETTINGS`, `TouchDevice`, `TouchOptions`, `TouchSetting`, `TouchTargets`
+  - Exports: `attachTouch`, `BUTTON_SLOP`, `HOLD_FRAMES`, `HOLD_TIME`, `MOUSE_SLOP`, `STICK_DEAD`, `STICK_FULL`, `STICK_RADIUS`, `stickAxis`, `StickView`, `TAP_SLOP`, `TAP_TIME`, `TOUCH_LOOK`, `TOUCH_SETTINGS`, `TouchDevice`, `TouchOptions`, `TouchSetting`, `TouchTargets`
 - [`virtual.ts`](../engine/input/devices/virtual.ts): The virtual device (PLAN.md WP 3.3, §8.3; doctrine: Agent-operable): input made by code instead of hands, the one `__engine.input` drives (engine/input/devices/inspector.ts).
   - Exports: `createVirtualDevice`, `playScript`, `VIRTUAL_CODES`, `VirtualDevice`, `virtualIntents`, `VirtualSample`
   - Tests: [`engine/input/devices/virtual.test.ts`](../engine/input/devices/virtual.test.ts)

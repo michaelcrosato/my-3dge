@@ -6,8 +6,8 @@
  * run on its tap, then calls the page's `onMenu` (labs/playground/main.ts), which opens pause, or under a screen goes
  * back one as Escape does (photo mode has no other way out on touch), and a tap before the front end is up opens pause
  * once it is: a tap never strands a phone paused with nothing on screen. Under a screen or photo mode the other
- * buttons hide (ui/theme.ts), so they never take its taps. The floating stick walks the player wherever the other
- * thumb lands.
+ * buttons hide (ui/theme.ts), so they never take its taps. The floating stick walks the player wherever the left
+ * thumb lands on the screen's left half, and the right thumb's drag turns the view (engine/input/devices/touch.ts).
  *
  * Like the rest of the touch layer it has no test, by the owner's order (ADR-0021): only the owner's reports check it.
  * `node x set touch on` opens it on a desktop, for reading through DOM queries.

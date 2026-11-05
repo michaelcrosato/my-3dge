@@ -3,11 +3,14 @@
  * pointer events whose `pointerType` is not `mouse`, written into the input sink like any device. Fingers are routed
  * by the DOM: what a finger first lands on keeps it (pointer capture). A `[data-action]` element is a button writing
  * the code `touch:<action>` (engine/input/codes.ts); a `[data-tap]` element (the menu button) is tapped by name; on
- * the game's element (the canvas) the first finger is the stick and the others can only tap; anything else (open
- * panels, swipeable notices) is the page's.
+ * the game's element (the canvas) the first finger on its left half is the stick, and any other finger turns the view
+ * as the mouse does under pointer lock (the owner's report of 2026-11-05: the left thumb moves the feet, the right one
+ * turns the torso and head); anything else (open panels, swipeable notices) is the page's.
  *
  * The stick floats where the thumb lands: v = (dx, −dy) / `STICK_RADIUS`, so pushing up the screen is forward, then
- * a dead zone and full speed at 0.82 (`stickAxis`); a thumb that runs past the rim drags the centre along. Buttons act
+ * a dead zone and full speed at 0.82 (`stickAxis`); a thumb that runs past the rim drags the centre along. A look
+ * finger gives `TOUCH_LOOK` mouse counts a CSS px it moves, as `[right, up]` (`takeLook()`, added to the mouse's by
+ * engine/input/input.ts, so the view settings `input.*` scale both), and a short still one taps the game. Buttons act
  * the moment they go down and stay held while the finger stays; one marked `data-hold` acts as shardfall's skills do:
  * a tap presses it once on release, a hold (0.32 s and two frames) holds it from then on, and its release taps
  * nothing. A tap control fires on a release within 28 px however long it was down; a tap on the game is shorter than
@@ -53,6 +56,8 @@ export const HOLD_TIME = 0.32;
 export const HOLD_FRAMES = 2;
 /** The mouse ends touch mode once it moves more than this (CSS px) from the last pointer. */
 export const MOUSE_SLOP = 2;
+/** Mouse counts a CSS px of a look drag: 0.22° a px at Apex's default sensitivity, a half-turn across a phone. */
+export const TOUCH_LOOK = 2;
 
 /** The `touch` setting: touch mode as detected (`auto`), or forced `on` or `off`. */
 export type TouchSetting = 'auto' | 'on' | 'off';
@@ -102,6 +107,8 @@ export interface TouchDevice {
   frame(now: number): void;
   /** The stick as `[right, forward]`, length at most 1; `[0, 0]` without a thumb on it. */
   stick(): [number, number];
+  /** What the look fingers moved since the last call, in mouse counts `[right, up]`; then starts again from zero. */
+  takeLook(): [number, number];
   /** Where the stick is drawn, or null without a thumb on it. */
   stickView(): StickView | null;
   /** The controls under a finger now, by name (`data-action` or `data-tap`), for the pressed look. */
@@ -120,8 +127,8 @@ interface FingerEvent extends Event {
   readonly clientY?: number;
 }
 
-/** What a finger landed on. */
-type Owner = 'stick' | 'game' | 'button' | 'tap';
+/** What a finger landed on: the game's element takes the stick and look fingers. */
+type Owner = 'stick' | 'look' | 'button' | 'tap';
 
 /** A finger on the screen. */
 interface Finger {
@@ -172,6 +179,7 @@ export function attachTouch(targets: TouchTargets, sink: InputSink, options: Tou
   let detected = options.coarse ?? coarsePointer();
   let now = 0;
   let last: [number, number] | null = null; // the last pointer, any type
+  let look: [number, number] = [0, 0]; // the look fingers' counts since `takeLook`
   const mode = () => options.mode?.() ?? 'auto';
   const active = () => mode() === 'on' || (mode() === 'auto' && detected);
   const age = (finger: Finger) => (now - finger.t0) / 1000;
@@ -180,6 +188,12 @@ export function attachTouch(targets: TouchTargets, sink: InputSink, options: Tou
   const clear = () => {
     for (const finger of fingers.values()) if (finger.owner === 'button') sink.release(touchCode(finger.name));
     fingers.clear();
+    look = [0, 0];
+  };
+  /** Whether `pos` is on the left half of the game's element (with no box, as in Node, it always is). */
+  const leftHalf = (pos: [number, number]) => {
+    const box = (element as { getBoundingClientRect?: () => { left: number; width: number } }).getBoundingClientRect?.(); // prettier-ignore
+    return !box || !(box.width > 0) || pos[0] < box.left + box.width / 2;
   };
   const track = (finger: Finger, pos: [number, number]) => {
     finger.pos = pos;
@@ -197,7 +211,8 @@ export function attachTouch(targets: TouchTargets, sink: InputSink, options: Tou
     const name = control?.dataset.action ?? control?.dataset.tap;
     let owner: Owner;
     if (control && name) owner = control.dataset.action ? 'button' : 'tap';
-    else if (e.target === element) owner = [...fingers.values()].some((f) => f.owner === 'stick') ? 'game' : 'stick';
+    else if (e.target === element)
+      owner = leftHalf(pos) && ![...fingers.values()].some((f) => f.owner === 'stick') ? 'stick' : 'look'; // prettier-ignore
     else return; // a panel, a notice: the page's
     const captor = (control ?? element) as { setPointerCapture?: (id: number) => void };
     try {
@@ -226,7 +241,12 @@ export function attachTouch(targets: TouchTargets, sink: InputSink, options: Tou
     last = pos;
     const finger = e.pointerId === undefined ? undefined : fingers.get(e.pointerId);
     if (!finger) return;
+    const was = finger.pos;
     track(finger, pos);
+    if (finger.owner === 'look') {
+      look = [look[0] + (pos[0] - was[0]) * TOUCH_LOOK, look[1] + (was[1] - pos[1]) * TOUCH_LOOK]; // up the screen looks up
+      sink.used('touch');
+    }
     if (finger.owner !== 'stick') return;
     const dx = pos[0] - finger.anchor[0];
     const dy = pos[1] - finger.anchor[1];
@@ -285,6 +305,11 @@ export function attachTouch(targets: TouchTargets, sink: InputSink, options: Tou
     stick() {
       const finger = [...fingers.values()].find((f) => f.owner === 'stick');
       return finger ? stickAxis(finger.pos[0] - finger.anchor[0], finger.pos[1] - finger.anchor[1]) : [0, 0];
+    },
+    takeLook() {
+      const out = look;
+      look = [0, 0];
+      return out;
     },
     stickView() {
       const finger = [...fingers.values()].find((f) => f.owner === 'stick');
