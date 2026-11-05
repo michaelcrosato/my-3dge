@@ -3,7 +3,8 @@
  * makes in code spans holds (a setting, file, command, flag, scene, camera code or `__engine` member it names exists),
  * every scene the modules of labs/playground/scenes/ register has a row in its demo index, and every `playground.*`
  * setting a row in its settings table. The checks are tests/unit/readmeClaims.ts's; tests/unit/box-readme.test.ts
- * proves each fails on a fixture README.
+ * proves each fails on a fixture README. Its Controls section points to the controls sheet (labs/playground/ui/help.ts),
+ * with no table of keys to drift from labs/playground/controls.ts.
  * @see labs/playground/README.md
  */
 import { globSync, readFileSync } from 'node:fs';
@@ -36,5 +37,11 @@ describe('labs/playground/README.md', () => {
 
   it('names only settings, files, commands, flags, scenes, cameras and members that exist', async () => {
     expect(await readmeProblems(README, { lab: 'playground', scene: 'playground:gym' })).toEqual([]);
+  });
+
+  it('points to the controls sheet for the keys instead of restating them (AGENTS.md: never restate a fact)', () => {
+    const controls = README.slice(README.indexOf('## Controls\n'), README.indexOf('\n## ', README.indexOf('## Controls\n') + 1)); // prettier-ignore
+    expect(controls).toContain('`labs/playground/ui/help.ts`');
+    expect(controls.split('\n').filter((line) => line.startsWith('|'))).toEqual([]); // no table of keys to drift
   });
 });

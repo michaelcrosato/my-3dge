@@ -105,32 +105,12 @@ top-down snapped to the pixels and gliding, so a pan never shimmers; the perspec
 
 ## Controls
 
-| Action | Keys and mouse | Pad |
-|---|---|---|
-| Move | W A S D, or the arrows | left stick |
-| Jump | Space | A (south) |
-| Sprint (press once to keep it, or hold: `input.sprint`) | Left Shift | a click of the left stick |
-| Walk | Left Alt | |
-| Crouch (hold, or toggle: `input.crouch`) | C | B (east) |
-| Use: a zipline or a ladder | E (G in isometric) | X (west) |
-| Melee, fire, aim down sights | V, the left and right buttons | a click of the right stick, RT, LT |
-| Reload, holster | R, 3 | |
-| Look around (first person, shooter, platformer) | click the game, then the mouse; Esc lets go | right stick |
-| Aim (isometric, top-down) | the pointer, onto the player's floor | right stick |
-| Camera mode | T | view button |
-| Swap the shoulder (shooter) | X | d-pad left |
-| Turn the view (isometric) | Q, E | d-pad right |
-| The look: clean, cel or pixel | P | |
-| Zoom | the wheel | |
-| The feel panel | F | |
-| The controls sheet | H | |
-| Go to another area or room | M | |
-| Pause (Go to, settings, controls, photo mode, tools, restart) | Esc | Start |
-
-Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
-changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
-faces where it moves, and isometric and top-down aim with the pointer. The controls sheet (H) shows the keys of the
-map in use, rebound or on a pad. The site's landing page (`index.html`) opens this page (ADR-0021 amendment 3).
+H in play, or Controls on the start menu and in pause, opens the controls sheet (`labs/playground/ui/help.ts`): every
+action the playground answers, grouped, with its key on the device used last, rebound or on a pad; Settings rebinds
+them. The bindings are `labs/playground/controls.ts`'s (WP 13.9): each camera mode has its own action map, which the
+page swaps as the camera changes: first person and the shooter send the view and aim at what the screen's middle
+points at, the platformer faces where it moves, and isometric and top-down aim with the pointer. The site's landing
+page (`index.html`) opens this page (ADR-0021 amendment 3).
 
 ## Settings
 
