@@ -51,7 +51,11 @@ describe('the player in the house’s classic view', () => {
           lines += 1;
           const part = meshes.parts.find((one) => one.mesh === hit?.object);
           const range = part?.facades?.find(({ start, count }) => hit!.faceIndex! * 3 >= start && hit!.faceIndex! * 3 < start + count); // prettier-ignore
-          const which = range ? ` range ${range.face}` : hit?.instanceId !== undefined ? ` piece ${hit.instanceId}` : '';
+          const which = range
+            ? ` range ${range.face}`
+            : hit?.instanceId !== undefined
+              ? ` piece ${hit.instanceId}`
+              : '';
           if (hit) hidden.push(`${room.id} turn ${turn}, ${height} m: ${hit.object.name}${which} at ${hit.point.toArray().map((v) => v.toFixed(2))}`); // prettier-ignore
         }
       }
