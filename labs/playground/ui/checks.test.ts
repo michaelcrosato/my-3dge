@@ -74,6 +74,8 @@ describe('the owner’s checks', () => {
         continue;
       }
       expect(url.pathname, check.id).toBe('/labs/playground/');
+      // one map: a check opens a scene of the block (the gym's courses on it), never the gym's or the hill's own
+      if (check.go?.query?.scene) expect(SCENES.find((scene) => scene.id === `playground:${check.go?.query?.scene}`)?.site, check.id).toBe('site:block'); // prettier-ignore
       const routes = parseRoutes(url.search, { scenes: SCENES.map((scene) => scene.id) });
       expect(routes.settings['playground.check'], check.id).toBe(check.id);
       expect(routes.settings['playground.title'], check.id).toBe(

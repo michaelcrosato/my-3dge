@@ -5,13 +5,15 @@
  *
  * Invariants: data only. A decide check stands for each escalation awaiting the owner's review (its choices in plain
  * words, the call already taken first), a try check for each item of §9.3's playtest and each thing docs/PROGRESS.md
- * names as not verifiable here; labs/playground/ui/checks.test.ts holds the list to both. A spot to stand (`place`)
- * comes from the gym's courses and the block's data, never as numbers written twice.
+ * names as not verifiable here; labs/playground/ui/checks.test.ts holds the list to both. A check on the playground
+ * opens a scene of the block, never the gym's or the hill's own (one map: the gym's courses are judged in the gym on
+ * the block, `onBlock`). A spot to stand (`place`) comes from the gym's courses and the block's data, never as numbers
+ * written twice.
  *
  * Game code, a page's: it imports only the playground's own files.
  *
  * @example
- * OWNER_CHECKS.find((check) => check.id === 'mantle')?.go?.query; // { scene: 'gym' }
+ * OWNER_CHECKS.find((check) => check.id === 'mantle')?.go?.query; // { scene: 'site-gym' }: the gym on the block
  * OWNER_CHECKS.filter((check) => check.kind === 'decide').map((check) => check.from); // ['ESC-0002', …, 'ESC-0006']
  * @see labs/playground/ui/checks.test.ts
  */
@@ -138,7 +140,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Sprint the strip, in first person',
     what: 'Hold {sprint} and run down the strip of distance markers ({forward} moves). Judge the top speed, how the view widens as you sprint, and how quickly you stop when you let go.', // prettier-ignore
     from: item(1),
-    go: { query: { scene: 'gym', cam3: 'first' }, place: { at: STRIP_START, yaw: 0 } },
+    go: { query: { scene: 'site-gym', cam3: 'first' }, place: { at: onBlock(STRIP_START), yaw: 0 } },
   },
   {
     id: 'slide',
@@ -146,7 +148,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Slide down the 20° ramp',
     what: 'You start on top of the 20° ramp. Sprint ({sprint}) off its edge, hold {crouch} to slide down, and press {jump} near the bottom to slide-jump. Is the speed kept? Does it feel good?', // prettier-ignore
     from: item(2),
-    go: { query: { scene: 'gym' }, place: { at: [slideX, slideDeck, 30.5], yaw: 0 } },
+    go: { query: { scene: 'site-gym' }, place: { at: onBlock([slideX, slideDeck, 30.5]), yaw: 0 } },
   },
   {
     id: 'mantle',
@@ -154,7 +156,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Mantle, vault and climb',
     what: 'Ahead stand walls from 0.5 m to 2.1 m: run at each and press {jump} to climb over the top. Beyond them, fences from 0.6 m to 1.2 m to vault, then climb walls from 3 m to 7.2 m. Which heights feel wrong?', // prettier-ignore
     from: item(3),
-    go: { query: { scene: 'gym' }, place: { at: [mantleX, 0, 8.5], yaw: 0 } },
+    go: { query: { scene: 'site-gym' }, place: { at: onBlock([mantleX, 0, 8.5]), yaw: 0 } },
   },
   {
     id: 'superglide',
@@ -162,7 +164,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Superglide off the 1.5 m wall',
     what: 'Run at the 1.5 m wall ahead and press {jump} to climb it; as you reach the top, press {jump} and then {crouch} almost at once. Done right, you shoot forward at speed. Is the timing fair?', // prettier-ignore
     from: item(4),
-    go: { query: { scene: 'gym' }, place: { at: GLIDE_START, yaw: 0 } },
+    go: { query: { scene: 'site-gym' }, place: { at: onBlock(GLIDE_START), yaw: 0 } },
   },
   {
     id: 'superglide-boost',
@@ -170,7 +172,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Superglide with the mantle boost',
     what: 'With the mantle boost on, one button does it: press {crouch} as you reach the top of the wall ahead, and you glide off at full speed. Easier than the two-button superglide, and does it feel right?', // prettier-ignore
     from: item(4),
-    go: { query: { scene: 'gym', 'movement.mantle.boost': 'true' }, place: { at: GLIDE_START, yaw: 0 } },
+    go: { query: { scene: 'site-gym', 'movement.mantle.boost': 'true' }, place: { at: onBlock(GLIDE_START), yaw: 0 } },
   },
   {
     id: 'zipline',
@@ -178,7 +180,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Ride the zipline and jump off',
     what: 'You stand on the tower by the zipline. Press {interact} to grab the line, ride it down, and press {jump} halfway to jump off. Do the ride and the jump feel right?', // prettier-ignore
     from: item(5),
-    go: { query: { scene: 'gym' }, place: { at: ZIPLINE_STARTS.top, yaw: DOWN_THE_LINE } },
+    go: { query: { scene: 'site-gym' }, place: { at: onBlock(ZIPLINE_STARTS.top), yaw: DOWN_THE_LINE } },
   },
   {
     id: 'balloon',
@@ -361,6 +363,6 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'A gamepad, if you have one',
     what: 'Plug in a gamepad and play: move, jump, sprint, the menus (Start pauses). Does everything work? Skip this one without a pad.', // prettier-ignore
     from: 'docs/PROGRESS.md: pads are not verifiable here',
-    go: { query: { scene: 'gym' } },
+    go: { query: { scene: 'site-gym' } },
   },
 ];

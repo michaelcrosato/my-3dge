@@ -16,8 +16,8 @@
  *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
  * 5. the owner's checks (WP 13.28): the start menu lists them with how many are left; the keys work the panel as a menu; a
  *    check's view names the player's keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps
- *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place`, the
- *    HUD naming the check, and pause answers it.
+ *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place` (the
+ *    mantle walls of the gym on the block), the HUD naming the check, and pause answers it.
  *
  * Invariants: the page is read through `[data-ui]` elements, `__engine` and `__playgroundUi` only; frames are run with
  * the virtual clock (`harness.tick`), so the front end reads each key at a frame as the page's loop samples it.
@@ -318,6 +318,7 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
+    test.setTimeout(1_500_000); // Go there opens the gym on the block: the block's page warms up as Go to's does
     await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
@@ -352,7 +353,7 @@ test.describe('the playground’s front end', () => {
     await panel.locator('[data-ui=item][data-id="check:mantle"]').click();
     await panel.locator('[data-ui=item][data-id=go]').click();
     await page.waitForURL(/playground\.check=mantle/);
-    await harness.ready({ timeout: READY });
+    await harness.ready({ timeout: SITE_READY });
     await harness.tick(2);
     expect(await screens(page)).toEqual({ screens: [], paused: false }); // no start menu on a check's page
     await call(page, 'pause');
