@@ -4666,7 +4666,7 @@ For the agents who maintain the engine.
 - `FADE_THIN` (const): A ride part thinner than this, m (its geometry's least extent): a cable, a rail, a rung or a pole hides no one.
 - `planCutaway` (function): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
-- `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
+- `segmentHitsBox` (re-export): Whether a segment passes through a box (engine/gfx/level/cells.ts, where the cells' tests live with it).
 
 ### [`engine/gfx/daylight.ts`](../engine/gfx/daylight.ts)
 
@@ -5024,12 +5024,15 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)
 
+- `aimsInSight` (function): Of `aims`, those a line from `from` reaches past no piece of `targets` (each piece's box from its target's `bottom` to its `top`): a point on the floor round the hero beyond a wall stands outside his room, where no fight is (engine/gfx/cutaway.ts `planCutaway`).
 - `cellNeighbours` (function): The indexes of the cells of `cells` beside each one: sharing an edge on the ground (their boxes touch along a side, not at a corner).
 - `LevelCell` (interface): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1, or [0, 0] where it faces nowhere: see the file comment).
 - `levelCells` (function): The cells of `pieces` in `level`, standing at height `bottom` (see the file comment).
 - `openingAt` (function): Whether tile `at` of `level` is an opening's (a doorway's): open, in no room, yet not the outdoors either.
-- `settleCuts` (function): Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a `group` is cut when any of its group's is; one whose neighbours in its list (`cellNeighbours`) are all cut is cut with them, so no piece stands alone, a post, beside its cut ones (a jamb beside its doorway, a partition's end); and a cell two lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
+- `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
+- `settleCuts` (function): Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a `group` is cut when any of its group's is; a piece whose neighbours in its list (`cellNeighbours`) are all cut, one or more (a jamb beside its doorway, a partition's end), and a run of whole pieces at most `STUB_LENGTH` long with cut pieces at two ends or more, are cut with them, so no post or stub stands alone among cut pieces; and a cell two lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
 - `STANDING_AREA` (const): The most a block standing in rooms covers (m²): a chimney's breast, a counter, an island (see the file comment).
+- `STUB_LENGTH` (const): The longest run of whole pieces between cut ones that `settleCuts` cuts with them (m): a stub.
 
 ### [`engine/gfx/level/dais.ts`](../engine/gfx/level/dais.ts)
 
