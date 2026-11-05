@@ -2,13 +2,15 @@
  * @file The block's cutaway at the house (engine/gfx/stageSite.ts on the playground's site, WP 13.33; the owner's
  * report of 2026-11-03, "you can see through walls"): the house's map holds its patio and its porch as outdoor floor,
  * and a player standing there, outside the house, cuts none of its walls or storeys in a perspective camera behind him
- * looking at him; in a classic view (isometric, top-down) the house is cut on its whole map, the storeys above him
- * and the roof off and, in isometric, its walls facing the camera; in the hall, inside, the walls facing a perspective
- * camera outside are cut as before; and a perspective camera in the house with him, in first person or 1.5 m off in his
- * room, cuts none of it in any room (every room's walls round him were cut, the kitchen's west wall in first person
- * facing it, so he saw through the wall ahead: WP 13.38). And no terrain skirt hangs between two cut cells, under the
- * block's floors on its chunk lines, where its top lay in a floor's plane and drew a grass hairline across it (the
- * porch path's at z = 64, WP 13.37).
+ * looking at him; in a classic view (isometric, top-down) the house is cut on its whole map, the storeys above him and
+ * the roof off and, in isometric, its walls facing the camera; in the hall, inside, the walls facing a perspective
+ * camera outside are cut as before, and just inside its front, back or garage side door, with a perspective camera
+ * behind him outside, only his storey's (the upper storey's, the attic's and the basement's had been cut too, each step
+ * through the door switching them, WP 13.38); and a perspective camera in the house with him, in first person or 1.5 m
+ * off in his room, cuts none of it in any room (every room's walls round him were cut, the kitchen's west wall in first
+ * person facing it, so he saw through the wall ahead: WP 13.38). And no terrain skirt hangs between two cut cells,
+ * under the block's floors on its chunk lines, where its top lay in a floor's plane and drew a grass hairline across it
+ * (the porch path's at z = 64, WP 13.37).
  * @see engine/gfx/stageSite.ts
  */
 import { MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
@@ -110,6 +112,30 @@ describe('the block’s cutaway at the house', () => {
     tiles['kitchen, first person facing its west wall'] = cut();
     expect(Object.keys(tiles).length).toBeGreaterThan(4 * structure.level.rooms!.length);
     expect(Object.entries(tiles).filter(([, n]) => n > 0)).toEqual([]);
+    drawn.dispose();
+  });
+
+  it('just inside a door, with a perspective camera behind him outside, cuts walls on his storey only', () => {
+    const drawn = createStageSite(SITE, { materials, registry });
+    drawn.follow();
+    const house = drawn.structures[HOUSE];
+    const storeyOf = new Map(house.meshes.parts.map((part) => [part.name, part.mesh.userData.storey as number]));
+    const off: string[] = [];
+    for (const [door, feet, dz] of [
+      ['front', [51.5, 0, 59.2], 3.8], // on the porch behind him
+      ['back', [52, 0, 48.85], -3.8], // on the patio
+      ['garage side', [63.5, 0, 50.85], -3.8],
+    ] as const) {
+      const pose = behind(feet, dz);
+      drawn.update(pose, feet, { fade: true });
+      expect([drawn.where(feet), drawn.where(pose.position)?.indoors ?? false], door).toMatchObject([{ storey: 1, indoors: true }, false]); // prettier-ignore
+      const cut = Object.entries(house.cutaway!.cut()).filter(([, tiles]) => tiles.length > 0);
+      expect(cut.length, door).toBeGreaterThan(0); // his storey's walls facing the camera
+      // The upper storey's, the attic's and the basement's walls facing it hide nothing of him: cut, each step
+      // through the door switched them between whole and stumped (the front door's: 20, 28 and 7 tiles).
+      for (const [name, tiles] of cut) if (storeyOf.get(name) !== 1) off.push(`${door}: ${name}, ${tiles.length}`);
+    }
+    expect(off).toEqual([]);
     drawn.dispose();
   });
 

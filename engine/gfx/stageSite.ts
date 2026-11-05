@@ -1,20 +1,22 @@
 /**
  * @file A site drawn (PLAN.md WP 13.15; docs/PLAYGROUND.md §6.3): `createStageSite(site, options)` draws each of a
  * site's structures, its level's meshes by runs (engine/gfx/level/runs.ts) in its level entry's looks (`registry`'s:
- * its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about
- * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
- * Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player stands on the stage: `follow`) and its
- * cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame. Both cut only the structure the player is in
+ * its swaps, rooms' floors and recipes), in a group standing at the structure's `at`, turned its quarter turns about +Y
+ * as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts). Each
+ * structure has its cutaway (engine/gfx/cutaway.ts, made once a player stands on the stage: `follow`) and its cutaway
+ * by storey (engine/gfx/storeyCut.ts), both run in its own frame. Both cut only the structure the player is in
  * (`where`). A building (one with rooms or a roof) is cut in a perspective camera only while he is indoors and the
  * camera is not indoors in it too (`where` at the camera), so a house he walks past or up to (its map's patio, porch or
  * apron) keeps its walls, and so does one the camera stands in with him (first person, the shooter's or the
  * platformer's arm in his room: the walls round it were cut on the lines to the floor round him, so he saw through the
- * wall ahead); a camera outside looking in cuts its walls facing it. What stands between the camera and him fades
- * where the camera asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map,
- * its walls facing the camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch
- * or patio. `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's
- * frame (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures are faded, never cut.
- * The objects `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
+ * wall ahead); a camera outside looking in cuts the walls of his storey facing it (`storey`, engine/gfx/cutaway.ts:
+ * those of the storeys above and below hide nothing of him, and each step through a door switched them between whole
+ * and stumped), and any wall on its line of sight to him. What stands between the camera and him fades where the camera
+ * asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map, its walls facing the
+ * camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch or patio.
+ * `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's frame
+ * (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures are faded, never cut. The objects
+ * `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
  *
  * Names: a structure's group `site:<site>/<index>` holding its level's meshes (`level:<name>/…`, so the ID pass shows
  * which building and storey a pixel is), the terrain's chunks `terrain:<name>/…`.
@@ -137,7 +139,8 @@ export function createStageSite(
       for (const each of drawn) {
         // only the structure he is in is cut: another's walls facing the camera hide nothing of his
         const own = at?.structure === each.structure;
-        each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade, cut: own });
+        const storey = own && !view ? at.storey : undefined; // a perspective camera: the walls of his storey facing it
+        each.cutaway?.update(localPose(each.structure, pose), localFeet(each.structure, feet), { fade, cut: own, storey }); // prettier-ignore
         if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors, inside.low);
         else each.storeys.clear();
       }

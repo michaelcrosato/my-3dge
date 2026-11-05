@@ -1,14 +1,15 @@
 /**
  * @file Unit tests for the cutaway (engine/gfx/cutaway.ts), in Node on the hall (labs/box/levels/hall.txt) with the
- * engine's own cameras: which walls and pillars cut for a given camera pose. The iso view from the south-east cuts
- * the south and east walls (105 tiles: every one but the north-east and south-west corners, which face across the
- * view) and stumps the pillar between it and the hero; turned 180° it cuts the north and west walls; from straight
- * above, from inside the hall and for a camera the walls face away from, it cuts none; a perspective camera outside
- * the south wall cuts the south walls round it; the height boost decides in the picture's heights. Then the meshes:
- * the twins, pieces moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade
- * (WP 13.8): the pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and
- * come back without. `either` (WP 13.18): a piece facing the camera, or between it and the focus. The GPU half (0 pipelines while the camera turns, the draw-call budget) is
- * tests/e2e/hall.spec.ts.
+ * engine's own cameras: which walls and pillars cut for a given camera pose. The iso view from the south-east cuts the
+ * south and east walls (105 tiles: every one but the north-east and south-west corners, which face across the view) and
+ * stumps the pillar between it and the hero; turned 180° it cuts the north and west walls; from straight above, from
+ * inside the hall and for a camera the walls face away from, it cuts none; a perspective camera outside the south wall
+ * cuts the south walls round it; the height boost decides in the picture's heights. Then the meshes: the twins, pieces
+ * moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade (WP 13.8): the
+ * pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and come back
+ * without. `either` (WP 13.18): a piece facing the camera, or between it and the focus. With a storey (WP 13.38), the
+ * facing rule cuts only that storey's pieces. The GPU half (0 pipelines while the camera turns, the draw-call budget)
+ * is tests/e2e/hall.spec.ts.
  * @see engine/gfx/cutaway.ts
  */
 import { readFileSync } from 'node:fs';
@@ -148,6 +149,16 @@ describe('planCutaway on the hall', () => {
     const plan = (when: CutTarget['when'], out: [number, number]) => planCutaway([wall(when, out)], pose, [0, 0, 0])[0][0]; // prettier-ignore
     expect([plan('facing', [0, 1]), plan('blocking', [0, 1]), plan('either', [0, 1])]).toEqual([false, true, true]); // between them, facing away
     expect([plan('either', [0, -1]), plan('facing', [0, -1])]).toEqual([true, true]); // facing the camera
+  });
+
+  it('with a storey, cuts by facing only that storey’s pieces and those of none, and by blocking any (WP 13.38)', () => {
+    // Walls facing south, a camera south of them looking north: one per storey, one of no storey, one in the way.
+    const wall = (storey: number | undefined, when: CutTarget['when'] = 'facing', z = 9.5): CutTarget => ({ when, bottom: 0, top: 3, storey, cells: [{ centre: [0.5, 0, z], size: [1, 1], out: [0, 1] }] }); // prettier-ignore
+    const targets = [wall(0), wall(1), wall(2), wall(undefined), wall(2, 'blocking', 12)];
+    const pose = makePose({ position: [0.5, 2, 20], yaw: Math.PI, pitch: -0.2 });
+    const plan = (storey?: number) => planCutaway(targets, pose, [0.5, 0, 5], storey).map(([cut]) => cut);
+    expect(plan()).toEqual([true, true, true, true, true]); // no storey given: every storey's, as before
+    expect(plan(1)).toEqual([false, true, false, true, true]); // the blocking piece on storey 2 still cut
   });
 
   it('tests a segment against a box by slabs, as the prototype did', () => {
