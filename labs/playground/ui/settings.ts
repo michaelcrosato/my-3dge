@@ -1,23 +1,22 @@
 /**
  * @file The playground's settings screen (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): a panel over the game, in the
  * look of the engine's menus (engine/ui/widgets.ts's box), with a row for each thing the player sets (`SETTING_ROWS`):
- * the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the block's
- * time of day and the minutes a day lasts (labs/playground/scenes/site.ts), the rain and the dust (weather.ts), the
- * look, the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio
- * levels; then the controls: each action the player answers with its key, a button to rebind it, and one to reset
- * them all.
+ * the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the block's time
+ * of day and the minutes a day lasts (labs/playground/scenes/site.ts), the rain and the dust (weather.ts), the look,
+ * the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio levels;
+ * then the controls: each action the player answers with its key, a button to rebind it, and one to reset them all.
  *
  * A setting's row takes its control from the setting's own schema (`describe('setting', path)`): a slider over its
  * minimum and maximum, a box for a boolean, a list of its `enum`; the camera and the look list the playground's modes
  * and looks (labs/playground/views.ts). A change calls `onChange(row, value)`, which the front end applies and keeps
- * (labs/playground/ui/frontEnd.ts); a row that acts on the run (`release`: the clock's) reports its slider once let
- * go, not at each step of a drag. Time of day and Day length set the block's clock live (`clockAfter`: the `daytime`
- * dev action's hour and rate), the rain and the dust are view settings that show at once. The controls show and
- * rebind the keys of the device used last as the screen opens: the keyboard's, or a pad's buttons. A rebind waits for
- * the next key or button (`input.listen`; Esc, or the pad's Start, keeps the old one) and puts it on that action in
+ * (labs/playground/ui/frontEnd.ts); a row that acts on the run (`release`: the clock's) reports its slider once let go,
+ * not at each step of a drag. Time of day and Day length set the block's clock live (`clockAfter`: the `daytime` dev
+ * action's hour and rate), the rain and the dust are view settings that show at once. The controls show and rebind the
+ * keys of the device used last, followed while the screen is open: the keyboard's, or a pad's buttons. A rebind waits
+ * for the next key or button (`input.listen`; Esc, or the pad's Start, keeps the old one) and puts it on that action in
  * every camera mode's map (`input.bindingsFor`, so each mode keeps its own map and the player's keys hold in all of
- * them); a key another action holds, or one the page keeps, is refused, the row naming why. A pad works the screen
- * too, and the keyboard presses and steps what Tab reaches (labs/playground/ui/walk.ts).
+ * them); a key another action holds, or one the page keeps, is refused, the row naming why. A pad works the screen too,
+ * and the keyboard presses and steps what Tab reaches (labs/playground/ui/walk.ts).
  *
  * Elements: `[data-ui=settings]`, a `[data-ui=setting]` per row (`data-id` its id, `data-value` its value, its control
  * an `input` or a `select` inside, a slider's value read beside it in `[data-ui=setting-shown]`, `shown`'s words at
@@ -124,6 +123,8 @@ export interface SettingsScreen {
   readonly el: HTMLElement;
   /** Shows `value` as `row`'s, as when it changed elsewhere (a key switching the look). */
   show(id: string, value: string | number | boolean): void;
+  /** One drawn frame: the controls follow the device used last, picked up while the screen is open. */
+  update(): void;
   remove(): void;
 }
 
@@ -137,7 +138,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
   el.append(make('h2', { textContent: 'Settings' }));
   const rows = new Map<string, HTMLElement>();
   const readouts = new Map<string, () => void>(); // each slider's value beside it, by row
-  const pad = options.input.lastDevice === 'gamepad'; // the controls show and rebind a pad's buttons
+  const onPad = () => options.input.lastDevice === 'gamepad';
+  let pad = onPad(); // the controls show and rebind a pad's buttons, followed each frame (`update`)
   for (const row of SETTING_ROWS) {
     const line = make('label', { className: 'pg-row' });
     line.dataset.ui = 'setting';
@@ -236,6 +238,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
    * by the first map; the note says why.
    */
   async function rebind(action: string, key: HTMLButtonElement, note: HTMLElement): Promise<void> {
+    pad = onPad(); // the device that pressed it
     key.textContent = pad ? 'Press a button… (Start: keep)' : 'Press a key… (Esc: keep)';
     note.textContent = '';
     const code = await options.input.listen(pad ? 'gamepad' : 'keyboard');
@@ -268,6 +271,11 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
       if (field instanceof HTMLInputElement && field.type === 'checkbox') field.checked = value === true;
       else if (field) field.value = String(value);
       readouts.get(id)?.();
+    },
+    update() {
+      if (onPad() === pad) return;
+      pad = onPad();
+      drawBindings();
     },
     remove: () => el.remove(),
   };

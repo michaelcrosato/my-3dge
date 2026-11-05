@@ -198,11 +198,11 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
    * A panel screen: `make` builds the panel in a frame of `kind`; Esc (or the pad's Start) goes back, and the menus'
    * keys work the panel's controls (walk.ts).
    */
-  const panelScreen = (kind: string, make: (parent: HTMLElement) => { remove(): void }): Screen => {
+  const panelScreen = (kind: string, make: (parent: HTMLElement) => { remove(): void; update?(): void }): Screen => {
     const { el, body, refresh } = createFrame(root, kind, '', kind === 'side' ? '' : () => screenKeys(input, kind));
     const panel = make(body);
     return {
-      update: () => (refresh(), input.pressed('uiCancel') || input.pressed('pause') ? back() : walkPanel(body, input)),
+      update: () => (refresh(), panel.update?.(), input.pressed('uiCancel') || input.pressed('pause') ? back() : walkPanel(body, input)), // prettier-ignore
       remove: () => (panel.remove(), el.remove()),
     };
   };

@@ -29,7 +29,7 @@ function screenOn(device: DeviceKind, heard: string | null) {
   const listened: string[] = [];
   const rebound: string[] = [];
   const input = {
-    lastDevice: device,
+    lastDevice: device as DeviceKind,
     bindings: { label: (action: string, on: DeviceKind) => `${on}:${action}`, codes: () => [] },
     bindingsFor: (map: string) => ({
       map: { actions: { jump: [] } },
@@ -40,7 +40,7 @@ function screenOn(device: DeviceKind, heard: string | null) {
     }),
     listen: (family: 'keyboard' | 'gamepad') => (listened.push(family), Promise.resolve(heard)),
   };
-  createSettings(parent as unknown as HTMLElement, {
+  const screen = createSettings(parent as unknown as HTMLElement, {
     values: {},
     schema: () => ({ type: 'number', minimum: 0, maximum: 1 }),
     input: input as never,
@@ -48,7 +48,7 @@ function screenOn(device: DeviceKind, heard: string | null) {
     onBack: () => undefined,
   });
   const key = (action: string) => parent.querySelector(`[data-ui=item][data-id=rebind:${action}]`) as FakeElement;
-  return { key, listened, rebound };
+  return { key, listened, rebound, input, screen };
 }
 
 /** The settings screen over a stand-in input, its rows' values `values`, the changes it reports in `changes`. */
@@ -135,6 +135,16 @@ describe('the settings screen’s controls', () => {
         device,
       ).toEqual(Object.keys(CONTROL_ACTIONS).map((action) => `${family}:${action}`));
     }
+  });
+
+  it('follow a pad picked up while the screen is open, its labels and its rebind', () => {
+    const open = screenOn('keyboard', null);
+    expect(open.key('jump').textContent).toBe('keyboard:jump');
+    open.input.lastDevice = 'gamepad'; // a pad picked up
+    open.screen.update(); // a drawn frame
+    expect(open.key('jump').textContent).toBe('gamepad:jump');
+    open.key('jump').click();
+    expect(open.listened).toEqual(['gamepad']);
   });
 
   it('rebind on the device used last, in every camera’s map, Start keeping the old button as Esc keeps the key', async () => {
