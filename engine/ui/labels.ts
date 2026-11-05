@@ -36,6 +36,9 @@
 import { codeError, defineCodes } from '../core/log';
 import { Vector3, type Matrix4 } from '../core/math';
 
+/** How far apart two decluttering labels' boxes stay on screen (CSS px): touching pills read as one. */
+export const LABEL_GAP = 6;
+
 /** The error codes of the world-anchored elements. */
 export const LABEL_CODES = defineCodes('ui', {
   UI_BAD_POINT: {
@@ -255,8 +258,9 @@ export function createWorldLayer(labels: HTMLElement, numbers: HTMLElement): Wor
     item.depth = at[2];
   };
   /**
-   * Hides each shown decluttering label whose box overlaps that of a nearer one left showing (`.ui-at` centres a box on
-   * its `--ui-x` and `--ui-y`). Every size is read before any element hides, so the layout is worked out once a frame.
+   * Hides each shown decluttering label whose box, widened `LABEL_GAP` all round, overlaps that of a nearer one left
+   * showing (`.ui-at` centres a box on its `--ui-x` and `--ui-y`). Every size is read before any element hides, so
+   * the layout is worked out once a frame.
    */
   const declutter = (items: readonly Held[]) => {
     const crowd = items.filter((item) => item.shown && item.declutter).sort((a, b) => a.depth - b.depth);
@@ -264,7 +268,7 @@ export function createWorldLayer(labels: HTMLElement, numbers: HTMLElement): Wor
     const boxes = crowd.map((item) => ({ item, x: +item.x, y: +item.y, w: item.el.offsetWidth, h: item.el.offsetHeight })); // prettier-ignore
     const kept: typeof boxes = [];
     for (const box of boxes) {
-      const hit = kept.some((k) => Math.abs(k.x - box.x) * 2 < k.w + box.w && Math.abs(k.y - box.y) * 2 < k.h + box.h);
+      const hit = kept.some((k) => Math.abs(k.x - box.x) * 2 < k.w + box.w + 2 * LABEL_GAP && Math.abs(k.y - box.y) * 2 < k.h + box.h + 2 * LABEL_GAP); // prettier-ignore
       if (hit) show(box.item, false);
       else kept.push(box);
     }

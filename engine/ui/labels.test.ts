@@ -146,7 +146,7 @@ describe('decluttering labels', () => {
     const { place, make, shown } = setup();
     make('a', [0, 0, 0], true);
     make('b', [0, 0.25, -2], true); // 10 px above a, overlapping its box, so it hides
-    make('c', [0, 0.58, -4], true); // 20 px above a, clear of it, and overlapping only the hidden b, so it shows
+    make('c', [0, 0.9, -4], true); // about 31 px above a, clear of it by more than LABEL_GAP, overlapping only the hidden b, so it shows
     make('plain', [0, 0, -1]); // under a, as labels always drew
     make('plain too', [0, 0, -1.5]);
     place();
