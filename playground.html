@@ -1676,12 +1676,10 @@ ${new wE(2,12,qE,"#").map}
   padding: 10px 18px; border-radius: 999px; font-size: 14px; color: var(--pg-dim); width: max-content;
   max-width: calc(100% - 2em); box-sizing: border-box; text-align: center; pointer-events: none; }
 
-/* ---- a panel with more below what shows (scrollCue.ts marks it): its bottom edge fades, saying so ---- */
-.pg-ui .pg-screen .ui-panel[data-more]::after, body > .feel-panel[data-more]::after { content: 'More below ▾';
-  display: block; position: sticky; bottom: -1px; margin-top: -2.6em; padding: 1.4em 0 0.4em; text-align: center;
-  font: 800 11px/1 Inter, system-ui, sans-serif; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--pg-accent); background: linear-gradient(rgba(10, 12, 18, 0), rgba(10, 12, 18, 0.95) 60%);
-  pointer-events: none; }
+/* ---- a panel with more below what shows (scrollCue.ts marks it): its content fades out at its bottom edge ---- */
+.pg-ui .pg-screen .ui-panel[data-more], body > .feel-panel[data-more] {
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 4.5em), rgba(0, 0, 0, 0.12));
+  mask-image: linear-gradient(#000 calc(100% - 4.5em), rgba(0, 0, 0, 0.12)); }
 /* ---- the controls sheet ---- */
 .pg-ui .pg-screen .pg-help { width: min(880px, 94vw); }
 .pg-groups { columns: 2 20em; column-gap: 2.6em; }
@@ -1698,7 +1696,9 @@ ${new wE(2,12,qE,"#").map}
 /* ---- the HUD (labs/playground/ui/hud.ts): every line a chip of one dark glass with light text, small, at the edges,
    readable on sky, stone and grass alike (WP 13.36: grey text with no backing read 1.0 to 1.9 to 1 on them); hidden
    under a screen but Tune ---- */
-.pg-ui:has(> .pg-screen[data-kind=side]) .ui-hud[data-id=mode] { display: none; } /* under Tune's corner */
+/* the camera chip, under Tune's corner or the feel panel's */
+.pg-ui:has(> .pg-screen[data-kind=side]) .ui-hud[data-id=mode],
+  body:has(> .feel-panel:not([hidden])) .pg-ui .ui-hud[data-id=mode] { display: none; }
 .pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .ui-crosshair, .ui-damage, .pg-card, .ui-label) {
   visibility: hidden; }
 body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel { display: none; }
@@ -1724,6 +1724,7 @@ body > .feel-panel { top: 2vh; bottom: 2vh; right: 1.5vw; width: min(420px, 46vw
 body > .feel-panel h2 { margin: 0 0 0.5em; font-size: 24px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
 body > .feel-panel p { margin: 0 0 1em; color: var(--pg-dim); line-height: 1.45; }
 body > .feel-panel header { gap: 0.4em; margin-bottom: 0.8em; }
+body > .feel-panel header button { padding: 0.4em 0.55em; font-size: 13px; }
 body > .feel-panel :is(button, textarea) { font: 650 14px/1.3 Inter, system-ui, sans-serif; color: var(--pg-text);
   background: rgba(255, 255, 255, 0.07); border: 1px solid var(--pg-line); border-radius: 8px; padding: 0.45em 0.7em; }
 body > .feel-panel button { cursor: pointer; }
