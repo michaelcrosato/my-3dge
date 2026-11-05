@@ -10,7 +10,10 @@
  * - **The ring** (`level:ring`): a canvas 6 × 6 m and 1 m up (the engine's gallery glyph) with steps up its south side
  *   and a post at each corner, on a pad 8 × 9 m; the ropes are props (labs/playground/furnish.ts).
  * - **The backstop** (`level:backstop`): a wall 3 m high across the range's east end.
- * The playground's post glyph (`(`, one tile, up to the storey above) holds up the decks and roofs.
+ * The playground's post glyph (`(`, one tile, up to the storey above) holds up the decks and roofs, and its ladder
+ * foot (`*`, the engine's ladder drawing no floor) stands a deck's ladder on the ground: the site leaves the terrain
+ * whole under a tile or two (engine/world/site.ts), so the engine's ladder's floor lay in the grass's plane and
+ * z-fought it (WP 13.38).
  *
  * Game code, sim-side: it imports only engine/sim-api.ts and the playground's own files.
  *
@@ -32,8 +35,11 @@ export const DECK_HEIGHT = { treehouse: 4, lookout: 3 } as const;
 const POST = '(';
 /** A ring post: a block 2.2 m high at a corner of the canvas. */
 const RING_POST = ']';
+/** A ladder whose foot stands on the ground: the engine's ladder (`|`), drawing no floor, the ground being its floor. */
+const FOOT_LADDER = '*';
 
 defineGlyph('glyph:playground-post', { char: POST, description: 'A post, half a metre square, up to the storey above: what holds a deck or a roof.', top: 3, solid: true, collider: 'box', mesh: 'pillar', full: true, nav: { walkable: false } }); // prettier-ignore
+defineGlyph('glyph:playground-footLadder', { char: FOOT_LADDER, description: "A ladder whose foot stands on the ground: the engine's ladder (|) with no floor drawn, the terrain under it being its floor (a floor in the ground's plane z-fought the grass).", mesh: 'none', ladder: true }); // prettier-ignore
 defineGlyph('glyph:playground-ringPost', { char: RING_POST, description: "A corner post of the ring, 2.2 m from the ground: 1.2 m over its canvas.", top: 2.2, solid: true, collider: 'box', mesh: 'pillar', nav: { walkable: false } }); // prettier-ignore
 
 /** A one-storey building's text: its map under a flat roof, `height` m clear. */
@@ -51,7 +57,7 @@ export const SHED_TEXT = flatRoofed(
 function deckText(description: string, height: number): string {
   const posts = new Plan(5, 4.5, YARD_TILE); // the ground: void but the posts and the ladder
   for (const [x, z] of [[0.5, 0.5], [4, 0.5], [0.5, 4], [4, 4], [2, 0.5]] as const) posts.fill([x, z, x + YARD_TILE, z + YARD_TILE], POST); // prettier-ignore
-  posts.fill([2, 0, 2.5, 0.5], '|'); // against the middle post of the north edge, up to the deck
+  posts.fill([2, 0, 2.5, 0.5], FOOT_LADDER); // against the middle post of the north edge, up to the deck
   const deck = new Plan(5, 4.5, YARD_TILE).box([0.5, 0.5, 4.5, 4.5], '!', '.').fill([2, 0.5, 2.5, 1], '.');
   return levelText({ description, tile: YARD_TILE }, [
     { keys: { storey: 'posts', base: 0, height: height - 0.3 }, plan: posts },
