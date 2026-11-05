@@ -2788,11 +2788,11 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   - Left as they are, the reviewers' low findings: the balloon's beaded line in the sky (the ride, by design), the
     ceiling lamps over a cut storey in a classic view, the shoulders at the edges of first person looking down, the
     shooter's camera close in a narrow hall (ESC-0002's bound).
-- **Evidence:** engine/gfx/level/linings.test.ts, facades.test.ts and slabs.test.ts; labs/playground/levels/house-linings
-  .test.ts (801 faces met siding before, none after; each lining cut with its wall) and house-facades.test.ts (each of
-  isometric's turns); engine/ui/labels.test.ts; labs/playground/ui/scrollCue.test.ts, settings.test.ts and walk.test.ts;
-  engine/dev/feel/panel.test.ts. A re-review of the screens and the house confirmed the fixes; the playground's
-  thumbnails were re-recorded where the wood replaced the paint (5ec8b05: seven, every changed cell on the posts, the slab
-  edge or beside them).
+- **Evidence:** engine/gfx/level/linings.test.ts, facades.test.ts and slabs.test.ts;
+  labs/playground/levels/house-linings.test.ts (801 faces met siding before, none after; each lining cut with its wall)
+  and house-facades.test.ts (each of isometric's turns); engine/ui/labels.test.ts; labs/playground/ui/scrollCue.test.ts,
+  settings.test.ts and walk.test.ts; engine/dev/feel/panel.test.ts. A re-review of the screens and the house confirmed
+  the fixes; the playground's thumbnails were re-recorded where the wood replaced the paint (5ec8b05: seven, every
+  changed cell on the posts, the slab edge or beside them).
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.40.
