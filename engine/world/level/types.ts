@@ -372,4 +372,9 @@ export interface CompiledLevel {
   readonly base?: number;
   /** A storey's view: the height its full glyphs rise to (m). */
   readonly fullTop?: number;
+  /**
+   * A storey's view of a level with rooms: per tile, the room it is in (an index into `rooms`), or −1 outside any; the
+   * way a wall between a room and the outdoors faces out (engine/gfx/level/cells.ts).
+   */
+  readonly room?: readonly number[];
 }

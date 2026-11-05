@@ -10,7 +10,8 @@
  * off in his room, cuts none of it in any room (every room's walls round him were cut, the kitchen's west wall in first
  * person facing it, so he saw through the wall ahead: WP 13.38). And no terrain skirt hangs between two cut cells,
  * under the block's floors on its chunk lines, where its top lay in a floor's plane and drew a grass hairline across it
- * (the porch path's at z = 64, WP 13.37).
+ * (the porch path's at z = 64, WP 13.37). From north of the house a camera cuts by facing its north walls, never its
+ * east or west walls, each facing out of its rooms to the outdoors (engine/gfx/level/cells.ts, WP 13.39).
  * @see engine/gfx/stageSite.ts
  */
 import { MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
@@ -19,6 +20,7 @@ import { registry } from '../../../engine/core/registry';
 import { createCamera } from '../../../engine/gfx/cameras/place';
 import { lookAt, makePose, type Vec3 } from '../../../engine/gfx/cameras/pose';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
+import { planCutaway } from '../../../engine/gfx/cutaway';
 import { createStageSite } from '../../../engine/gfx/stageSite';
 import { roomAt, toLocal } from '../../../engine/sim-api';
 import { SITE, SITE_STRUCTURES } from '../levels/site';
@@ -136,6 +138,37 @@ describe('the block’s cutaway at the house', () => {
       for (const [name, tiles] of cut) if (storeyOf.get(name) !== 1) off.push(`${door}: ${name}, ${tiles.length}`);
     }
     expect(off).toEqual([]);
+    drawn.dispose();
+  });
+
+  it('from north of the house, cuts by facing its north walls, never its east or west walls', () => {
+    const drawn = createStageSite(SITE, { materials, registry });
+    const { structure, meshes } = drawn.structures[HOUSE];
+    const { level } = structure;
+    const walls = meshes.parts.filter((part) => part.cut?.when === 'either');
+    const [cx, cz] = [(level.cols * level.tile) / 2, (level.rows * level.tile) / 2];
+    const position: Vec3 = [cx, 8, -60]; // far north of the house, in its own frame, looking south over it
+    const plan = planCutaway(walls.map((part) => ({ ...part, when: 'facing' as const })), makePose({ position, ...lookAt(position, [cx, 1, cz]) }), [cx, 1, cz]); // prettier-ignore
+    const seen = { north: [0, 0], eastWest: [0, 0] }; // [walls, cut]
+    walls.forEach((part, i) => {
+      const { solid, room } = level.storeys![part.mesh.userData.storey as number];
+      const at = (col: number, row: number) => row * level.cols + col;
+      const inside = (col: number, row: number) => col >= 0 && row >= 0 && col < level.cols && row < level.rows;
+      const outdoors = (col: number, row: number) => inside(col, row) && !solid[at(col, row)] && room[at(col, row)] < 0;
+      const indoors = (col: number, row: number) => inside(col, row) && !solid[at(col, row)] && room[at(col, row)] >= 0;
+      part.cells.forEach(({ tiles: [c0, r0] }, j) => {
+        const facade = (a: boolean, b: boolean) => a && b;
+        const north = facade(outdoors(c0, r0 - 1), indoors(c0, r0 + 1));
+        const corner = outdoors(c0, r0 - 1) || outdoors(c0, r0 + 1); // open to the outdoors north or south too
+        const eastWest = !corner && (facade(outdoors(c0 - 1, r0), indoors(c0 + 1, r0)) || facade(indoors(c0 - 1, r0), outdoors(c0 + 1, r0))); // prettier-ignore
+        for (const [kind, is] of [['north', north], ['eastWest', eastWest]] as const) if (is) seen[kind] = [seen[kind][0] + 1, seen[kind][1] + Number(plan[i][j])]; // prettier-ignore
+      });
+    });
+    // Every north wall cut, and no east or west wall: before WP 13.39, 57 of its 115 east and west walls were cut and
+    // 4 of its 114 north walls kept, their tiles facing the map's centre diagonally (410 of the house's 925 walls).
+    // Corners, open to the outdoors north or south too, face both ways and are left out.
+    expect(seen.north[1]).toBe(seen.north[0]);
+    expect([seen.eastWest[0] > 0, seen.eastWest[1]]).toEqual([true, 0]);
     drawn.dispose();
   });
 

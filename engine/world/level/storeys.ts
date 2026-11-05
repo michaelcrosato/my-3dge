@@ -289,5 +289,6 @@ export function storeyView(level: CompiledLevel, index: number): CompiledLevel {
     roofs: level.roofs?.filter((roof) => roof.storey === index),
     base: s.base,
     fullTop: s.fullTop,
+    ...(level.rooms?.length ? { room: s.room } : {}),
   } satisfies CompiledLevel);
 }

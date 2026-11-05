@@ -911,7 +911,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`cells.ts`](../engine/gfx/level/cells.ts): Level cells and the way they face out (PLAN.md WP 2.4): one cell per piece of a block mesh (a wall tile, a pillar's footprint), with its tiles, its centre, its size and its outward direction, the way it faces out of the room, away from the open floor beside it.
   - Exports: `LevelCell`, `levelCells`
-  - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
+  - Tests: [`engine/gfx/level/cells.test.ts`](../engine/gfx/level/cells.test.ts), [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
 - [`dais.ts`](../engine/gfx/level/dais.ts): Daises (PLAN.md WP 4.4): `daisGeometry(tile, daises, pieces, ground)` draws each dais (engine/world/level/ types.ts, `DaisDescriptor`) as its octagonal frustum, built on the very corners of its hull collider (`frustumPoints`, engine/world/level/shapes.ts), so what is drawn is where feet stand: the sloped edge (and an upright skirt below it when the dais stands above the ground) and the flat octagonal top.
   - Exports: `daisGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)

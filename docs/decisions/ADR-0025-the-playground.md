@@ -2730,3 +2730,25 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   facing cut's `out` vectors on corner and counter cells (engine/gfx/level/cells.ts) still decide which walls an outside
   camera cuts.
 - Plan edit: WP 13.38.
+
+## Amendment 57 (2026-11-05, WP 13.39): a building's walls face out of its rooms
+
+- **Found:** WP 13.38's review left open which walls a camera outside the house cuts by facing. A wall piece faces out
+  away from the open floor beside it (engine/gfx/level/cells.ts), and on the house that rule misled two ways: a thin
+  outer wall, a room on one side and the outdoors on the other, is open on both sides of its axis, cancelled out and
+  fell back to a diagonal away from the map's centre; and a piece open to the outdoors alone (a corner, a thick wall's
+  outer layer) faced away from it, into the house. 410 of the house's 925 wall tiles faced so. From north of the house
+  a camera cut 57 of its 115 east and west walls and kept 4 of its 114 north walls; isometric cut the kitchen's north
+  wall.
+- **Decided:** on a storey of a level with rooms (`storeyView` now carries the storey's `room` grid for such a level),
+  a piece faces along each axis away from a room's floor and toward the outdoors, open floor outside every room. One
+  with rooms on both sides, or the outdoors on both, faces nowhere (`out` [0, 0]): the facing rule never cuts it and a
+  line of sight still does (the house's walls cut by `'either'`). A piece open on no side faces away from the map's
+  centre, as before, and a level without rooms (the gym, the shed, the decks, the Stress Box's levels) keeps the old
+  rule. Drawing only; the colliders and the hashes are unchanged.
+- **Evidence:** engine/gfx/level/cells.test.ts; labs/playground/scenes/site-cut.test.ts (from north of the house every
+  north wall cut and no east or west wall, failing without the fix); playground-cameras, playground-looks (no thumbnail
+  moved), level-meshes and playground specs green.
+- **Not verified:** the owner's eye on the house in isometric and top-down, where the walls cut have changed (the
+  `house-views` check).
+- Plan edit: WP 13.39.
