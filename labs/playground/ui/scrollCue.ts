@@ -2,7 +2,7 @@
  * @file A cue that a panel scrolls (the final visual review, WP 13.40: lists cut at a panel's bottom edge, with
  * nothing to say more follow): `cueScroll(root)` marks each of the playground's scrolling panels under `root` (a
  * screen's panel, the feel panel: `SCROLLERS`) `data-more` while some of it lies below what shows, and the theme
- * (theme.ts) fades its bottom edge then, with "More below". labs/playground/main.ts runs it each drawn frame.
+ * (theme.ts) fades its content out at its bottom edge then. labs/playground/main.ts runs it each drawn frame.
  *
  * Invariants: presentation only; it reads sizes, and writes the attribute only when it changes.
  *
