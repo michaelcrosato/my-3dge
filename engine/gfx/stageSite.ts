@@ -13,7 +13,9 @@
  * those of the storeys above and below hide nothing of him, and each step through a door switched them between whole
  * and stumped), and any wall on its line of sight to him. What stands between the camera and him fades where the camera
  * asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map, its walls facing the
- * camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch or patio.
+ * camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch or patio. What
+ * stands in an opening of a facade the cutaway leaves out (its panes, its doors by their hinges) goes with it (`hides`,
+ * WP 13.41: they stood whole over the stumps).
  * `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's frame
  * (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures are faded, never cut. The objects
  * `follow` hands it (the stage's rides) stand in the world, so they fade once, in the world's frame.
@@ -38,6 +40,7 @@ import type { CameraPose, Vec3 } from './cameras/pose';
 import { createCutaway, type Cutaway } from './cutaway';
 import type { LevelMeshes } from './level/meshes';
 import { levelLooks, runMeshes } from './level/runs';
+import { storeyBelow } from '../world/level/heights';
 import { aboveStorey, createStoreyCut, cutPlace, type StoreyCut } from './storeyCut';
 import { createTerrainMeshes, type TerrainMeshes } from './terrain';
 import type { Warmup } from './warmup';
@@ -62,13 +65,19 @@ export interface StageSite {
   update(pose: CameraPose, feet: Vec3, options?: { fade?: boolean; view?: boolean }): void;
   /** The structure and storey `feet` stand on, and whether indoors (`cutPlace` in its frame); null outside them all. */
   where(feet: Vec3): { structure: SiteStructure; storey: number; indoors: boolean } | null;
-  /** Whether world (x, y, z) stands on a storey the last `update` cut off: above the player's, in his structure. */
+  /**
+   * Whether world (x, y, z) stands on a storey the last `update` cut off (above the player's, in his structure), or in
+   * an opening of a facade its cutaway left out there (a pane, a door's hinge: its meshes' `facadeTiles`).
+   */
   hides(x: number, y: number, z: number): boolean;
-  /** What `hides` hides as a key: the structure's index and the player's storey, '' when nothing is cut. */
+  /** What `hides` hides as a key: the structure's index and the player's storey, the facades left out; '' for none. */
   cutKey(): string;
   register(warmup: Pick<Warmup, 'register'>): { dispose(): void };
   dispose(): void;
 }
+
+/** How far over a point the storey under it is sought (m): a door's hinge stands on its floor. */
+const OVER_FLOOR = 0.05;
 
 /** `pose` in structure `s`'s frame: its position carried by `toLocal`, its yaw less the structure's turns. */
 function localPose(s: SiteStructure, pose: CameraPose): CameraPose {
@@ -107,6 +116,17 @@ export function createStageSite(
   let rides: Cutaway | null = null;
   /** The structure and storey the last update cut above, or null. */
   let cut: { structure: SiteStructure; storey: number } | null = null;
+  /** The player's structure and the facades its cutaway left out, by storey, as the last update left them; or null. */
+  let opened: { at: (typeof drawn)[number]; faces: Map<number, Set<number>>; key: string } | null = null;
+  const inOpening = (x: number, y: number, z: number) => {
+    const [lx, ly, lz] = localFeet(opened!.at.structure, [x, y, z]);
+    const { level } = opened!.at.structure;
+    const [col, row] = [Math.floor(lx / level.tile), Math.floor(lz / level.tile)];
+    if (col < 0 || row < 0 || col >= level.cols || row >= level.rows) return false;
+    const storey = storeyBelow(level, lx, ly + OVER_FLOOR, lz);
+    const face = opened!.at.meshes.facadeTiles?.[storey]?.get(row * level.cols + col);
+    return face !== undefined && !!opened!.faces.get(storey)?.has(face);
+  };
   const where = (feet: Vec3) => {
     for (const { structure } of drawn) {
       const [x, y, z] = localFeet(structure, feet);
@@ -144,16 +164,27 @@ export function createStageSite(
         if (inside?.structure === each.structure) each.storeys.set(inside.storey, inside.indoors, inside.low);
         else each.storeys.clear();
       }
+      opened = null;
+      const mine = drawn.find((each) => each.structure === at?.structure && each.cutaway);
+      const left = mine?.cutaway?.facades() ?? {};
+      const faces = new Map<number, Set<number>>();
+      for (const { name, storey = 0 } of mine?.meshes.parts ?? []) for (const face of left[name] ?? []) faces.set(storey, (faces.get(storey) ?? new Set()).add(face)); // prettier-ignore
+      const key = [...faces].map(([storey, ways]) => `${storey}:${[...ways].sort()}`).join(';');
+      if (mine && key) opened = { at: mine, faces, key };
     },
     where,
     hides(x, y, z) {
+      if (opened && inOpening(x, y, z)) return true;
       if (!cut) return false;
       const [lx, ly, lz] = localFeet(cut.structure, [x, y, z]);
       const { level } = cut.structure;
       if (lx < 0 || lz < 0 || lx >= level.cols * level.tile || lz >= level.rows * level.tile) return false;
       return aboveStorey(level, cut.storey, lx, ly, lz);
     },
-    cutKey: () => (cut ? `${drawn.findIndex((each) => each.structure === cut!.structure)}:${cut.storey}` : ''),
+    cutKey: () => {
+      const storeys = cut ? `${drawn.findIndex((each) => each.structure === cut!.structure)}:${cut.storey}` : '';
+      return opened ? `${storeys}|${opened.key}` : storeys;
+    },
     register(warmup) {
       const registrations = [
         ...drawn.map((each) => each.meshes.register(warmup, `${each.group.name}:level`)),
