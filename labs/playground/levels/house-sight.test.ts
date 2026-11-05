@@ -1,9 +1,10 @@
 /**
  * @file The player in sight in the house's classic view (engine/gfx/cutaway.ts and engine/gfx/storeyCut.ts on the
  * house, WP 13.41: in isometric a doorway between two rooms, its lintel, frame and the partition beside it, stood whole
- * between the camera and the player and hid all but his head): with the player at each room's marker, in each of
- * isometric's eight turns, the storey cut and the cutaway as the stage runs them, the lines from the camera to his head
- * and his chest meet nothing the house draws.
+ * between the camera and the player and hid all but his head; WP 13.42: a flight's top, the attic's walls under its
+ * roof, a porch post and a lintel beside him too): with the player at each room's middle and every 2 m of the rooms'
+ * floors, in each of isometric's eight turns, the storey cut and the cutaway as the stage runs them, the lines from the
+ * camera to his head and his chest meet nothing the house draws.
  * @see engine/gfx/cutaway.ts
  * @see labs/playground/levels/house.ts
  */
@@ -43,9 +44,19 @@ describe('the player in the house’s classic view', () => {
     const [cutaway, storeys] = [createCutaway(meshes), createStoreyCut(meshes)];
     const hidden: string[] = [];
     let lines = 0;
-    for (const room of level.rooms!) {
+    // each room's middle, and every 2 m of each storey's rooms' floor: wherever the player stands
+    const places = level.rooms!.map((room) => ({ id: room.id, at: middleOf(level, room) }));
+    level.storeys!.forEach(({ room, solid, floor }) => {
+      for (let row = 2; row < level.rows; row += 8) {
+        for (let col = 2; col < level.cols; col += 8) {
+          const at = row * level.cols + col;
+          if (room[at] >= 0 && !solid[at]) places.push({ id: `${level.rooms![room[at]].id} at [${col},${row}]`, at: [(col + 0.5) * level.tile, floor[at], (row + 0.5) * level.tile] }); // prettier-ignore
+        }
+      }
+    });
+    for (const { id, at: target } of places) {
+      const room = { id };
       for (const turn of TURNS) {
-        const target = middleOf(level, room);
         const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
         const place = cutPlace(level, target[0], target[1], target[2]);
         storeys.set(place.storey, place.indoors, place.low); // as the stage: the storeys above his off, then the cut
@@ -69,13 +80,8 @@ describe('the player in the house’s classic view', () => {
         }
       }
     }
-    expect(lines).toBeGreaterThan(100);
-    // a flight of stairs is one mesh, never cut (ADR-0025 amendment 59): its top hides his chest from two places
-    expect(hidden.filter((line) => !/\/flight /.test(line))).toEqual([]);
-    expect(hidden.filter((line) => /\/flight /.test(line)).map((line) => line.replace(/ at .*/, ''))).toEqual([
-      'room:storage turn 225°, 1 m: level:house/basement/flight',
-      'room:kitchen turn 45°, 1 m: level:house/ground/flight',
-    ]);
+    expect(lines).toBeGreaterThan(1000);
+    expect(hidden).toEqual([]);
   });
 
   it('cuts no piece beyond the player, from every room in every turn of isometric: none behind him opens his room', () => {

@@ -40,15 +40,14 @@
  */
 import { Box3, InstancedMesh, Vector3, type Mesh, type Object3D } from 'three/webgpu';
 import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/pose';
-import { aimsInSight, segmentHitsBox, settleCuts, type LevelCell } from './level/cells';
+import { aimsInSight, segmentHitsBox, segmentHitsTriangles, settleCuts, type LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
 import type { CutWhen } from './level/recipes';
 import { facadeDraws } from './level/facades';
 import { instanceSlots, placeInstances } from './level/shapes';
 import type { Warmup } from './warmup';
 
-/** Whether a segment passes through a box (engine/gfx/level/cells.ts, where the cells' tests live with it). */
-export { segmentHitsBox };
+export { segmentHitsBox }; // whether a segment passes through a box: engine/gfx/level/cells.ts, with the cells' tests
 
 /** A wall is cut when the cosine between its outward direction and the way to the camera is above this. */
 export const CUT_FACING = 0.3;
@@ -58,8 +57,8 @@ export const CUT_STEEP = (85 * Math.PI) / 180;
 export const AIM_STEEP = (60 * Math.PI) / 180;
 /** How far round a blocking piece's box a line of sight still counts as through it (m): 4 prototype units. */
 export const CUT_MARGIN = 0.25;
-/** The points aimed at (m): the head and the feet above the focus, and the floor this far round it. */
-export const CUT_AIMS = Object.freeze({ head: 1.625, feet: 0.125, around: 2.5 });
+/** The points aimed at (m): the head, the chest (a part drawn whole) and the feet above the focus, the floor round it. */
+export const CUT_AIMS = Object.freeze({ head: 1.625, chest: 1, feet: 0.125, around: 2.5 });
 /** The points the fade keeps in sight above the focus (m), and how far inside a box a line must pass to fade it. */
 export const FADE_AIMS = Object.freeze({ head: 1.5, chest: 1, inset: 0.05 });
 
@@ -83,6 +82,8 @@ export interface CutTarget {
   top: number;
   /** A level written as storeys: the storey it stands on (its part's `storey`); none on a level of one storey. */
   storey?: number;
+  /** A part drawn whole: its triangles (3 points a triangle), cut only where a line to the head or chest crosses one. */
+  body?: Float32Array;
 }
 
 /**
@@ -118,11 +119,11 @@ export function cutawayAims(focus: Vec3, pitch: number): Vec3[] {
  *   `CUT_MARGIN` all round (a capital's overhang). An orthographic camera looks from its plane, back along its view; a
  *   perspective one from its position. The test runs in the picture's space, heights scaled by the pose's `boost`
  *   (engine/gfx/cameras/boost.ts), so it is what the frame shows.
- * - `'either'` (a house's walls): when either cuts it.
+ * - `'either'` (a house's walls): when either cuts it. A `body` target (a part drawn whole) is cut where a line to the
+ *   hero's head or chest crosses one of its triangles (WP 13.42: a flight left out by its box opened a pit).
  *
  * Then engine/gfx/level/cells.ts's `settleCuts` (WP 13.41): a group is cut whole, a piece alone among cut ones and a
- * short stub between them go with them, and a cell two targets share (a wall's and its lining's) is cut in both or
- * neither.
+ * short stub between them go with them, a cell two targets share (a wall's and its lining's) in both or neither.
  *
  * With `storey`, the facing rule cuts only that storey's pieces (and those of no storey): a site's building, with the
  * player indoors and a perspective camera outside it (engine/gfx/stageSite.ts), keeps the walls of the storeys above
@@ -141,13 +142,19 @@ export function planCutaway(
   const k = pose.boost;
   const [aims, feet]: [Vec3[], Vec3] = [cutawayAims(focus, pose.pitch), [focus[0], focus[1] + CUT_AIMS.feet, focus[2]]];
   const before = aims.slice(2).filter(([x, , z]) => (x - focus[0]) * forward[0] + (z - focus[2]) * forward[2] <= 0); // prettier-ignore
-  const sights = [...aims.slice(0, 2), ...aimsInSight(before, feet, occluders)].map(([x, y, z]): [Vec3, Vec3] => {
-    const aim: Vec3 = [x, y * k, z];
-    if (!ortho) return [aim, pose.position];
-    // An orthographic camera sees from its plane: back along its view as far as its position stands.
-    const back = Math.max(0, (aim[0] - px) * forward[0] + (aim[1] - py) * forward[1] + (aim[2] - pz) * forward[2]);
-    return [aim, [aim[0] - forward[0] * back, aim[1] - forward[1] * back, aim[2] - forward[2] * back]];
-  });
+  const lists = [
+    [...aims.slice(0, 2), ...aimsInSight(before, feet, occluders)],
+    [aims[0], [focus[0], focus[1] + CUT_AIMS.chest, focus[2]] as Vec3],
+  ]; // prettier-ignore all; a whole part's
+  const [sights, body] = lists.map((list) =>
+    list.map(([x, y, z]): [Vec3, Vec3] => {
+      const aim: Vec3 = [x, y * k, z];
+      if (!ortho) return [aim, pose.position];
+      // An orthographic camera sees from its plane: back along its view as far as its position stands.
+      const back = Math.max(0, (aim[0] - px) * forward[0] + (aim[1] - py) * forward[1] + (aim[2] - pz) * forward[2]);
+      return [aim, [aim[0] - forward[0] * back, aim[1] - forward[1] * back, aim[2] - forward[2] * back]];
+    }),
+  );
   const steep = -pose.pitch > CUT_STEEP;
   const facing = (cell: CutTarget['cells'][number]) => {
     if (steep) return false;
@@ -155,18 +162,19 @@ export function planCutaway(
     const length = Math.hypot(dx, dz);
     return length > 1e-9 && (cell.out[0] * dx + cell.out[1] * dz) / length > CUT_FACING;
   };
-  const planned = targets.map(({ when, cells, bottom, top, storey: on }) => {
-    const cut = cells.map((cell) => {
+  const planned = targets.map(({ when, cells, bottom, top, storey: on, body: tris }) => {
+    const lines = tris ? body : sights;
+    return cells.map((cell) => {
       const mine = storey === undefined || on === undefined || on === storey; // a piece the facing rule may cut
       if (when !== 'blocking' && mine && facing(cell)) return true;
       if (when === 'facing') return false;
+      if (tris) return lines.some(([aim, eye]) => segmentHitsTriangles(aim, eye, tris, k)); // a part drawn whole
       const [cx, , cz] = cell.centre;
       const [hx, hz] = [cell.size[0] / 2 + CUT_MARGIN, cell.size[1] / 2 + CUT_MARGIN];
       const min: Vec3 = [cx - hx, bottom * k, cz - hz];
       const max: Vec3 = [cx + hx, top * k, cz + hz];
-      return sights.some(([aim, eye]) => segmentHitsBox(aim, eye, min, max));
+      return lines.some(([aim, eye]) => segmentHitsBox(aim, eye, min, max));
     });
-    return cut;
   });
   return settleCuts(
     targets.map(({ cells }) => cells),

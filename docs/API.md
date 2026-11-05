@@ -4653,7 +4653,7 @@ For the agents who maintain the engine.
 
 - `AIM_STEEP` (const): Looking down at least this steeply (rad, 60°), only the hero's head and feet are aimed at, not the floor round him.
 - `createCutaway` (function): Gives `meshes`' cutting parts their twins (see the file comment), and fades `options.objects` too.
-- `CUT_AIMS` (const): The points aimed at (m): the head and the feet above the focus, and the floor this far round it.
+- `CUT_AIMS` (const): The points aimed at (m): the head, the chest (a part drawn whole) and the feet above the focus, the floor round it.
 - `CUT_FACING` (const): A wall is cut when the cosine between its outward direction and the way to the camera is above this.
 - `CUT_MARGIN` (const): How far round a blocking piece's box a line of sight still counts as through it (m): 4 prototype units.
 - `CUT_STEEP` (const): Looking down steeper than this (rad, 85°), the camera sees over every wall: none is cut.
@@ -4666,7 +4666,7 @@ For the agents who maintain the engine.
 - `FADE_THIN` (const): A ride part thinner than this, m (its geometry's least extent): a cable, a rail, a rung or a pole hides no one.
 - `planCutaway` (function): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
-- `segmentHitsBox` (re-export): Whether a segment passes through a box (engine/gfx/level/cells.ts, where the cells' tests live with it).
+- `segmentHitsBox` (re-export): (undocumented)
 
 ### [`engine/gfx/daylight.ts`](../engine/gfx/daylight.ts)
 
@@ -5030,6 +5030,7 @@ For the agents who maintain the engine.
 - `levelCells` (function): The cells of `pieces` in `level`, standing at height `bottom` (see the file comment).
 - `openingAt` (function): Whether tile `at` of `level` is an opening's (a doorway's): open, in no room, yet not the outdoors either.
 - `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
+- `segmentHitsTriangles` (function): Whether the segment `a` → `b` crosses one of `tris` (3 points, 9 numbers, a triangle) turned toward `b` (a camera: a level's faces are drawn on their front alone), their heights scaled by `k` as the picture's are (engine/gfx/cutaway.ts `planCutaway`): Möller and Trumbore's test.
 - `settleCuts` (function): Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a `group` is cut when any of its group's is; a piece whose neighbours in its list (`cellNeighbours`) are all cut, one or more (a jamb beside its doorway, a partition's end), and a run of whole pieces at most `STUB_LENGTH` long with cut pieces at two ends or more, are cut with them, so no post or stub stands alone among cut pieces; and a cell two lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it; again while a pass changes anything (a lining's cut reaching its wall can leave a piece beside it alone).
 - `STANDING_AREA` (const): The most a block standing in rooms covers (m²): a chimney's breast, a counter, an island (see the file comment).
 - `STUB_LENGTH` (const): The longest run of whole pieces between cut ones that `settleCuts` cuts with them (m): a stub.
@@ -5040,16 +5041,17 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/facades.ts`](../engine/gfx/level/facades.ts)
 
-- `DOORWAY` (const): The key of a storey's first doorway between two rooms (its own range, cut where it blocks the view); the next +1.
-- `facadeDraws` (function): The parts of `parts` drawn facade by facade, drawn by the ranges left standing: `targets` for engine/gfx/cutaway.ts's `planCutaway`, a part's facades a facing target and its doorways between rooms a blocking one, with its `INSIDE` range where that has a rectangle (a low ceiling's heads: the crawlspace's hid the basement's rooms); `show(cuts)` draws each part's ranges but those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the ranges left out (their keys), by part.
-- `facadeParts` (function): Draws `openings` facade by facade with `build` (a facade's openings and its face to a geometry, or null) into one geometry with a range a facade (see the file comment), at `bottom` m; null when nothing is drawn.
-- `FacadeRange` (interface): One range of a part's index and the cell for it: `face`, the facade's (an index into `LINING_FACES`), a doorway's between two rooms (`DOORWAY` on), or `INSIDE` for what stands at no opening (a low ceiling's heads).
-- `facadeTiles` (function): Each tile of `openings`, by its index on a map `cols` wide: its opening's key (`openingKeys`).
-- `INSIDE` (const): An opening between two rooms, or none: it faces no way out.
+- `drawnWhole` (function): `part`, drawn as one mesh (a flight, a storey's blocks under a pitched roof), as one range the cutaway leaves out where it stands between the camera and the player (`facadeDraws`, WP 13.42: a flight's top and the attic's walls under its roof hid him): its cell the rectangle its geometry covers on the ground, its heights the geometry's (a flight's descriptor stands at its floor).
+- `facadeDraws` (function): The parts of `parts` drawn opening by opening, drawn by the ranges left standing: `targets` for engine/gfx/cutaway.ts's `planCutaway`, one a part (`either`: its ranges' cells, an opening cut where its facade faces the camera or where it stands on a line of sight, a doorway between rooms by the line alone, with what stands at no opening where that has a rectangle: a low ceiling's heads, a part drawn whole, engine/gfx/level/meshes.ts's flights and blocks under a roof, cut only where it hides the player's head or chest, its own draw groups back after); `show(cuts)` draws each part's ranges but those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the ranges left out (their keys), by part.
+- `facadeParts` (function): Draws `openings` opening by opening with `build` (an opening, or none, and its key to a geometry, or null) into one geometry with a range an opening (see the file comment), at `bottom` m; null when nothing is drawn.
+- `FacadeRange` (interface): One range of a part's index and the cell for it: `key`, its opening's index among the storey's openings (`INSIDE` for what stands at no opening: a low ceiling's heads, or a part drawn whole), and `face`, its facade (an index into `LINING_FACES`; `INSIDE` between two rooms or at no opening).
+- `facadeTiles` (function): Each tile of `openings`, by its index on a map `cols` wide: its opening's key, the opening's index.
+- `INSIDE` (const): An opening between two rooms, or none: it faces no way out; and the key of what stands at no opening.
 - `lowCeiling` (function): The rectangle holding `storey`'s tiles under a low ceiling (a glyph's `head` that is not an opening's: the crawlspace's), what a storey's heads draw at no opening; undefined where it has none.
 - `openingFacade` (function): The way `opening`'s wall faces out of the building (see the file comment).
-- `openingKeys` (function): Each of `openings`' key: its facade's, or a doorway's between two rooms (`DOORWAY` on, in their order).
 - `openingRooms` (function): `opening`'s rooms on `view`, the lower x or z side's first, one with none found past its low solids.
+- `trianglesOf` (function): The triangles of `geometry`, 9 numbers each (its index's, or its positions' in threes), as `segmentHitsTriangles` reads.
+- `widen` (function): Widens `cell` (its centre and size on the ground) to hold what `geometry` covers too.
 
 ### [`engine/gfx/level/faces.ts`](../engine/gfx/level/faces.ts)
 

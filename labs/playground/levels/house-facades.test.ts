@@ -3,9 +3,10 @@
  * walls facing the camera are cut to stumps, the walls over their windows and doors and their frames stood at full
  * height as loose pillars): every opening in its outer walls stands on a facade, a window over the kitchen's counter
  * too (WP 13.41: it stood on none, the counter beside it in no room); a storey the storey cut takes off stays hidden as
- * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); in each of isometric's eight turns,
- * the heads, frames and facings of a facade are left out exactly when its walls are cut by facing; and while nothing is
- * cut each such part draws in one range.
+ * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); under the attic's pitched roof its
+ * openings go with the walls round them (WP 13.42: a gable's doorway cut alone left a slit); in each of isometric's
+ * eight turns, the heads, frames and facings of a facade are left out exactly when its walls are cut by facing; and
+ * while nothing is cut each such part draws in one range.
  * @see engine/gfx/level/facades.ts
  */
 import { MeshBasicMaterial } from 'three/webgpu';
@@ -14,7 +15,7 @@ import { registry } from '../../../engine/core/registry';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
 import { createCutaway, planCutaway } from '../../../engine/gfx/cutaway';
 import { createStoreyCut } from '../../../engine/gfx/storeyCut';
-import { DOORWAY, INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
+import { INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
 import { LINING_FACES } from '../../../engine/gfx/level/linings';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
 import { levelLooks } from '../../../engine/gfx/level/runs';
@@ -48,7 +49,7 @@ describe('the house’s facades', () => {
     expect(inside.map(({ kind, storey, tiles }) => `${kind} on ${storey} at ${tiles}`)).toEqual([]);
   });
 
-  it('in each turn of isometric are left out exactly where their walls are cut by facing', () => {
+  it('in each turn of isometric leave out every opening of a facade whose walls the camera cuts by facing', () => {
     const { level, meshes } = house();
     const cutaway = createCutaway(meshes);
     const walls = meshes.parts.filter((part) => part.recipe === 'wall' && part.cells.length > 0);
@@ -65,9 +66,9 @@ describe('the house’s facades', () => {
       expect(walls.some((part) => part.cells.some(({ out }) => ways.has(LINING_FACES.findIndex(({ dc, dr }) => dc === out[0] && dr === out[1]))))).toBe(true); // prettier-ignore
       const left = cutaway.facades();
       for (const part of facaded) {
-        const faces = part.facades!.filter(({ face }) => face >= 0 && face < DOORWAY).map(({ face }) => face);
-        const facades = left[part.name].filter((face) => face < DOORWAY); // a doorway between rooms is cut by blocking
-        expect(facades.sort(), `${part.name}, turn ${Math.round((turn * 180) / Math.PI)}°`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
+        // every opening of a facade facing the camera is left out; another only where it stands on a line of sight
+        const facing = part.facades!.filter(({ face }) => ways.has(face)).map(({ key }) => key);
+        expect(facing.filter((key) => !left[part.name].includes(key)), `${part.name}, turn ${Math.round((turn * 180) / Math.PI)}°`).toEqual([]); // prettier-ignore
       }
       expect(ways.size, `turn ${Math.round((turn * 180) / Math.PI)}°`).toBeGreaterThan(0);
     }
@@ -93,5 +94,28 @@ describe('the house’s facades', () => {
     }
     expect(above.some((part) => part.facades)).toBe(true);
     expect(shown).toEqual([]);
+  });
+
+  it('under the attic’s pitched roof go with the walls drawn whole round them, never alone (WP 13.42)', () => {
+    const { level, meshes } = house();
+    const cutaway = createCutaway(meshes);
+    const attic = level.storeys!.length - 1;
+    const names = meshes.parts.filter((part) => part.storey === attic && part.facades?.length === 1).map(({ name }) => name); // prettier-ignore
+    expect(names.map((name) => name.replace('level:house/attic/', '')).sort()).toEqual(expect.arrayContaining(['frames', 'heads', 'wall#2'])); // prettier-ignore
+    const { room, solid, floor } = level.storeys![attic];
+    const [states, apart]: [Set<string>, string[]] = [new Set(), []];
+    for (let at = 0; at < room.length; at += 37) {
+      if (room[at] < 0 || solid[at]) continue;
+      const target: [number, number, number] = [((at % level.cols) + 0.5) * level.tile, floor[at], (Math.floor(at / level.cols) + 0.5) * level.tile]; // prettier-ignore
+      for (const turn of TURNS) {
+        cutaway.update(viewPose({ ...viewState({ view: 'iso' }), turn, target }), target);
+        const left = cutaway.facades();
+        const cut = names.map((name) => (left[name] ?? []).length > 0);
+        states.add(String(cut[0]));
+        if (cut.some((one) => one !== cut[0])) apart.push(`[${at % level.cols},${Math.floor(at / level.cols)}] ${Math.round((turn * 180) / Math.PI)}°`); // prettier-ignore
+      }
+    }
+    expect([...states].sort()).toEqual(['false', 'true']); // cut from some places, whole from others
+    expect(apart).toEqual([]);
   });
 });

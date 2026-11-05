@@ -10,7 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { CompiledLevel } from '../../world/level/types';
-import { aimsInSight, levelCells, settleCuts } from './cells';
+import { aimsInSight, levelCells, segmentHitsTriangles, settleCuts } from './cells';
 
 /**
  * A storey 5 × 3 on 1 m tiles: its outer rows solid, and along its middle row the outdoors, a wall, room 0, a wall and
@@ -125,5 +125,23 @@ describe('a building storey’s wall cells', () => {
       [-2.5, 0.1, 0],
       [0, 0.1, 2.5],
     ]);
+  });
+
+  it('find a segment crossing a triangle turned toward its end, and none crossing one turned away or beside it', () => {
+    // a triangle in the plane z = 0, its front toward +z (counter-clockwise seen from there)
+    const front = new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]);
+    const back = new Float32Array([0, 0, 0, 0, 1, 0, 1, 0, 0]); // the same, wound the other way
+    const [a, b]: [number, number, number][] = [
+      [0.25, 0.25, -1],
+      [0.25, 0.25, 5],
+    ]; // from behind it toward +z
+    expect([segmentHitsTriangles(a, b, front), segmentHitsTriangles(a, b, back)]).toEqual([true, false]);
+    expect(segmentHitsTriangles([2, 2, -1], [2, 2, 5], front)).toBe(false); // beside it
+    expect(segmentHitsTriangles([0.25, 0.25, -1], [0.25, 0.25, -0.5], front)).toBe(false); // short of it
+    const high: [number, number, number][] = [
+      [0.25, 1.2, -1],
+      [0.25, 1.2, 5],
+    ]; // above it, under it doubled in height
+    expect([segmentHitsTriangles(high[0], high[1], front), segmentHitsTriangles(high[0], high[1], front, 2)]).toEqual([false, true]); // prettier-ignore
   });
 });

@@ -2867,3 +2867,48 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     re-reviews of the house's screenshots, the last finding every high finding fixed.
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.41.
+
+## Amendment 60 (2026-11-05, WP 13.42): nothing the house draws hides the player in isometric
+
+- **Found:** after WP 13.41, a sweep stood the player at every metre of every room of the house, in each of
+  isometric's eight turns, with the storey cut and the cutaway as the stage runs them. It cast the lines from the
+  camera to his head and his chest. 383 of 12,192 lines met something the house draws:
+  - 276 met the attic's blocks under its roof: one mesh, clipped to the roof, which no cut reached.
+  - 98 met a flight's top. A flight is one mesh, and its descriptor stands at its floor, so any cut box was flat.
+  - 3 met a porch post (the house's pillar recipe had no cut).
+  - 6 met a lintel, a frame or a facing over an opening beside him. Such ranges were cut by facing alone, and a
+    narrow doorway's lay between the lines to his head and his feet.
+- **Decided:**
+  - A part drawn as one mesh, a flight or a storey's blocks under a pitched roof, is one range the cutaway leaves out
+    while it hides the player (engine/gfx/level/facades.ts `drawnWhole`). It is cut only where a line to his head or
+    chest crosses one of its triangles turned toward the camera (`segmentHitsTriangles`), not its box and not the lines
+    to his feet or the floor. Left out by its box, the basement's flight (two flights, one mesh) went in 1,221 of 6,096
+    views in which it hid nothing, and the hall's opened a pit to the basement (the re-review). It draws no group while
+    cut and gets its own groups back after, never through `visible`.
+  - Under a pitched roof, a storey's heads, frames and facings go with the walls drawn whole round them: one range
+    each, sharing one cell, widened to hold them all, so the settling cuts them together (the re-review saw a slit
+    where a gable's doorway was cut by facing and the gable was not). Its doors and panes go with them.
+  - The heads, frames and facings over openings are drawn an opening to a range (engine/gfx/level/facades.ts, keyed by
+    the opening's index). Ranges come facade by facade, so a facade cut by facing is one run. Each range is cut by
+    `either` rule: its facade facing the camera, or its opening on a line of sight. A doorway between rooms faces no
+    way, so only a line cuts it. The site hides a prop in an opening whose range is left out.
+  - The house's porch posts are stumped where they stand in the way, as the engine's pillars are.
+- **Evidence:** labs/playground/levels/house-sight.test.ts, now from every room's middle and every 2 m of the rooms'
+  floors: 107 lines met the attic's walls or a flight before, and none do now. The 1 m sweep counts 0 of 12,192 now, a
+  flight left out in 185 of 6,096 views (3 where a line grazes a step's edge). house-facades.test.ts: every opening of
+  a facade facing the camera is left out, and under the attic's roof the openings go with its walls. Also the cells
+  (`segmentHitsTriangles`), facades and stageSite tests, and a re-review of the house's screenshots.
+- **Left as they are** (low, from the two re-reviews of WP 13.42's shots, which found its high findings fixed: the
+  player whole in every shot, no pit, no slit):
+  - the porch's posts stand whole while the porch roof over them is hidden with the upper storey;
+  - a hall wall's faces fall grey when its lamp's light is off the budget;
+  - the attic's walls show their siding inside, and the head over its east window is the heads' paint;
+  - a ladder stands on the ground floor over a cut storey;
+  - the floor before the player can cut a partition off his line, and where the doorway beside it is cut too, a short
+    stretch between them stands alone (the settling sees a doorway's cut in another plan);
+  - through the stairwell beside its railing, the basement's floor shows;
+  - with the ground storey off, the terrain's cut, the whole ground slab's with the porch, shows the background beside
+    the basement.
+- **Not verified:** the owner's eye on the house in every camera (`house-views`).
+- Plan edit: WP 13.42.
+
