@@ -18,8 +18,10 @@
  * `KNUCKLE` out of its faces, a `STOP` in the wall's middle and a lining as deep as its swing leaves room for (turned
  * past a quarter it leans back towards that jamb, its fittings furthest), so no ray passes round a shut door and it
  * swings clear. An opening too narrow or too low to meet its leaf so keeps the plain lining. `railingGeometry(tile,
- * pieces, bottom, top)` is a railing along each run of tiles: posts at its ends and at most `POST_GAP` apart, and a
- * top and a bottom rail as wide as its tiles, the railing's collider (a box over them), so what stops a body is drawn.
+ * pieces, bottom, top)` is a railing along each run of tiles: posts at its ends and at most `POST_GAP` apart, a top
+ * and a bottom rail as wide as its tiles, the railing's collider (a box over them), so what stops a body is drawn, and
+ * its tiles' floor at its foot, welded as a floor is (engine/gfx/level/surface.ts): no other floor is drawn on them,
+ * and under the bottom rail the storey below, the ground or a wall's paint top showed through (WP 13.38).
  *
  * Boxes are engine/gfx/geometry/box.ts's (UVs in metres), merged into one geometry each (one draw call a storey).
  *
@@ -27,7 +29,7 @@
  *
  * @example
  * // headsGeometry(level, level.storeys[1]); // the walls over the ground floor's doors and windows
- * railingGeometry(0.25, [[0, 0, 7, 0]], 0, 1)!.getAttribute('position').count; // 3 posts and 2 rails: 120 vertices
+ * railingGeometry(0.25, [[0, 0, 7, 0]], 0, 1)!.getAttribute('position').count; // 3 posts, 2 rails and its floor: 138 vertices
  * @see engine/gfx/level/openings.test.ts
  */
 import type { BufferGeometry } from 'three/webgpu';
@@ -46,6 +48,7 @@ import { boxGeometry } from '../geometry/box';
 import { frustumGeometry } from '../geometry/frustum';
 import { mergeGeometries } from '../geometry/groups';
 import { createWriter, cross, dot, normalize, type Vec3, type Writer } from '../geometry/writer';
+import { surfaceGeometry } from './surface';
 import { writeHull } from './walls';
 
 /** A frame's width round an opening (m). */
@@ -261,6 +264,9 @@ export function railingGeometry(
       parts.push(box(at, at + BAR, bottom, top - BAR));
     }
     parts.push(box(a0, a1, top - BAR, top, w0, w1), box(a0, a1, bottom + 0.1, bottom + 0.1 + BAR, w0, w1));
+    // Its tiles' floor, seen under the bottom rail: no floor is drawn on a railing's tiles (a hole to the storey or the
+    // ground below, or a wall's paint top showing a centimetre under the floor beside it).
+    parts.push(surfaceGeometry(tile, [[c0, r0, c1, r1]], bottom));
   }
   return joined(parts);
 }

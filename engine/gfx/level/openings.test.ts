@@ -6,7 +6,7 @@
  * level), all of it shaded and textured as the face; each door gets two jambs and a head, each window a sill too, round the opening and out of the wall, lining
  * its reveal `PROUD` and no further, or, where a door's leaf hangs and there is room, meeting the leaf, a barrel and a
  * stop at its hinge, so no ray passes round it shut and its swing clears the frame, its fittings too; a railing gets
- * posts at most 1 m apart and two rails as wide as its tiles.
+ * posts at most 1 m apart and two rails as wide as its tiles, and its tiles' floor at its foot.
  * @see engine/gfx/level/openings.ts
  */
 import { Mesh, MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
@@ -205,12 +205,16 @@ describe('framesGeometry and railingGeometry', () => {
       expect(() => framesGeometry([door(width)], 0.5, LEAF), `${width} m`).not.toThrow();
   });
 
-  it('posts a railing at its ends and at most 1 m apart, its rails as wide as its tiles, as its collider is', () => {
-    expect(railingGeometry(0.25, [[0, 0, 7, 0]], 0, 1)!.getAttribute('position').count).toBe((3 + 2) * 24);
+  it('posts a railing at its ends and at most 1 m apart, its rails as wide as its tiles, as its collider is, on its floor', () => {
+    // 3 posts and 2 rails of 24 vertices, and its 8 tiles' floor, welded (9 × 2 corners); 4 posts, 12 tiles (2 × 13)
+    expect(railingGeometry(0.25, [[0, 0, 7, 0]], 0, 1)!.getAttribute('position').count).toBe((3 + 2) * 24 + 18);
     const along = railingGeometry(0.25, [[0, 0, 0, 11]], 3, 4)!;
-    expect(along.getAttribute('position').count).toBe((4 + 2) * 24);
+    expect(along.getAttribute('position').count).toBe((4 + 2) * 24 + 26);
     along.computeBoundingBox();
     expect([along.boundingBox!.min.x, along.boundingBox!.max.x]).toEqual([0, 0.25]); // the tile's width across
+    // Under the bottom rail, beside the posts, a ray down meets its floor at its foot (WP 13.38: it met nothing).
+    const [floor] = new Raycaster(new Vector3(0.2, 3.09, 0.21), new Vector3(0, -1, 0)).intersectObject(new Mesh(along, new MeshBasicMaterial())); // prettier-ignore
+    expect(floor?.point.y).toBe(3);
     expect(railingGeometry(0.25, [], 0, 1)).toBeNull();
     expect(POST_GAP).toBe(1);
   });
