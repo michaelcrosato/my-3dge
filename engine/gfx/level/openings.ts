@@ -90,6 +90,7 @@ export function headsGeometry(
   level: Pick<CompiledLevel, 'cols' | 'rows' | 'tile' | 'legend'>,
   storey: Pick<StoreyDescriptor, 'tiles' | 'base' | 'fullTop'>,
   roof?: RoofDescriptor,
+  keep: (col: number, row: number) => boolean = () => true,
 ): BufferGeometry | null {
   const { cols, rows, tile: t } = level;
   const parts: BufferGeometry[] = [];
@@ -97,7 +98,7 @@ export function headsGeometry(
   const headed = [...new Set(storey.tiles)].map((char) => level.legend[char]).filter((glyph) => (glyph.head ?? 0) > 0);
   for (const glyph of headed.sort((a, b) => byText(a.id, b.id))) {
     const bottom = storey.base + (glyph.head ?? 0);
-    for (const [c0, r0, c1, r1] of mergeRects(cols, rows, (c, r) => storey.tiles[r * cols + c] === glyph.char)) {
+    for (const [c0, r0, c1, r1] of mergeRects(cols, rows, (c, r) => storey.tiles[r * cols + c] === glyph.char && keep(c, r))) { // prettier-ignore
       const [x0, z0, x1, z1] = [c0 * t, r0 * t, (c1 + 1) * t, (r1 + 1) * t];
       if (roof && roof.kind !== 'flat') {
         const points = wallUnder(roof, [x0, z0, x1, z1], bottom);

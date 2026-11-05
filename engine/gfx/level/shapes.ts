@@ -31,7 +31,7 @@
  * @see engine/gfx/level/meshes.test.ts
  */
 import { InstancedMesh, Matrix4, Mesh, type BufferGeometry, type Material } from 'three/webgpu';
-import type { CompiledLevel, MeshDescriptor, TileRect } from '../../world/level/types';
+import type { CompiledLevel, MeshDescriptor, RoofDescriptor, TileRect } from '../../world/level/types';
 import { boxGeometry } from '../geometry/box';
 import { mergeGeometries, sidesThenTops } from '../geometry/groups';
 import { pillarGeometry, pillarParts } from '../geometry/pillar';
@@ -39,11 +39,14 @@ import { PAGE_SLOTS } from '../instancing';
 import { brazierGeometry } from './brazier';
 import { levelCells, type LevelCell } from './cells';
 import { daisGeometry } from './dais';
+import { flightGeometry } from './flights';
+import { railingGeometry } from './openings';
 import type { CutWhen, LevelRecipe } from './recipes';
 import { slabGeometry } from './slab';
 import { rampGeometry } from './ramp';
 import { stairsGeometry } from './stairs';
 import { surfaceGeometry } from './surface';
+import { underRoofGeometry } from './walls';
 
 /** How the cutaway cuts a part: its recipe's cut, and the geometry of its twin (a new one each call). */
 export interface PartCut {
@@ -174,4 +177,37 @@ export function buildShape(
       },
     },
   };
+}
+
+/**
+ * One descriptor's mesh: a storey's full blocks under a pitched roof clipped to it, its flights by the riser, its
+ * railings as posts and rails over their tiles' floor; everything else in its recipe's shape
+ * (`buildShape`).
+ */
+export function buildPart(
+  view: CompiledLevel,
+  descriptor: MeshDescriptor,
+  recipe: LevelRecipe,
+  materials: readonly Material[],
+  single: (geometry: BufferGeometry, recipe: LevelRecipe) => BuiltShape,
+  roof: RoofDescriptor | undefined,
+): BuiltShape {
+  const t = view.tile;
+  const { pieces, bottom, top } = descriptor;
+  const full = descriptor.glyphs.some((id) => Object.values(view.legend).find((glyph) => glyph.id === id)?.full);
+  if (roof && full && (recipe.shape === 'block' || recipe.shape === 'pillar')) {
+    const merged = recipe.shape === 'block' ? descriptor.rects : pieces;
+    const rects = merged.map(([c0, r0, c1, r1]) => [c0 * t, r0 * t, (c1 + 1) * t, (r1 + 1) * t] as const);
+    const geometry = underRoofGeometry(roof, rects, bottom);
+    if (geometry) return single(geometry, recipe);
+  }
+  if (recipe.shape === 'flight') {
+    const ramps = view.ramps.filter((ramp) => holdsTile(pieces, ramp.tiles[0], ramp.tiles[1]));
+    return single(flightGeometry(t, ramps, bottom), recipe);
+  }
+  if (recipe.shape === 'railing') {
+    const geometry = railingGeometry(t, descriptor.rects, bottom, top);
+    if (geometry) return single(geometry, recipe);
+  }
+  return buildShape(view, descriptor, recipe, materials);
 }

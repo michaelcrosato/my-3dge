@@ -1,0 +1,57 @@
+/**
+ * @file The house's facades (engine/gfx/level/facades.ts, WP 13.40; the final visual review: in isometric, where the
+ * walls facing the camera are cut to stumps, the walls over their windows and doors and their frames stood at full
+ * height as loose pillars): in each of isometric's four turns, the heads, frames and facings of a facade are left out
+ * exactly when its walls are cut by facing; and while nothing is cut each such part draws in one range.
+ * @see engine/gfx/level/facades.ts
+ */
+import { MeshBasicMaterial } from 'three/webgpu';
+import { describe, expect, it } from 'vitest';
+import { registry } from '../../../engine/core/registry';
+import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
+import { createCutaway, planCutaway } from '../../../engine/gfx/cutaway';
+import { LINING_FACES } from '../../../engine/gfx/level/linings';
+import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
+import { levelLooks } from '../../../engine/gfx/level/runs';
+import { getLevel } from '../../../engine/sim-api';
+import './house';
+
+/** The house's meshes as the stage draws them (its recipes and rooms), and the level. */
+function house() {
+  const level = getLevel('level:house');
+  const { levelRecipes: recipes, levelRooms: rooms } = levelLooks(registry, 'level:house');
+  const meshes = createLevelMeshes(level, { materials: { get: () => new MeshBasicMaterial() }, recipes, rooms });
+  return { level, meshes };
+}
+
+describe('the house’s facades', () => {
+  it('in each turn of isometric are left out exactly where their walls are cut by facing', () => {
+    const { level, meshes } = house();
+    const cutaway = createCutaway(meshes);
+    const walls = meshes.parts.filter((part) => part.recipe === 'wall' && part.cells.length > 0);
+    const facaded = meshes.parts.filter((part) => part.facades?.some(({ face }) => face >= 0));
+    expect(facaded.map((part) => part.name.replace('level:house/', '')).sort()).toEqual(expect.arrayContaining(['ground/frames', 'ground/heads', 'upper/frames', 'upper/heads'])); // prettier-ignore
+    for (const part of facaded) expect(part.mesh.geometry.groups, part.name).toHaveLength(1); // nothing cut: one range
+    const target: [number, number, number] = [(level.cols * level.tile) / 2, 1, (level.rows * level.tile) / 2];
+    for (const turn of [0, 90, 180, 270]) {
+      const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
+      cutaway.update(pose, target);
+      // the ways its walls face that the camera cuts by facing alone: in isometric, the same for every wall facing so
+      const plan = planCutaway(
+        walls.map((part) => ({ ...part, when: 'facing' })),
+        pose,
+        target,
+      );
+      const ways = new Set(walls.flatMap((part, i) => part.cells.filter((_, j) => plan[i][j]).map(({ out }) => LINING_FACES.findIndex(({ dc, dr }) => dc === out[0] && dr === out[1])))); // prettier-ignore
+      ways.delete(-1); // a corner's diagonal
+      const left = cutaway.facades();
+      for (const part of facaded) {
+        const faces = part.facades!.filter(({ face }) => face >= 0).map(({ face }) => face);
+        expect(left[part.name].sort(), `${part.name}, turn ${turn}`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
+      }
+      expect(ways.size, `turn ${turn}`).toBeGreaterThan(0);
+    }
+    cutaway.clear();
+    for (const part of facaded) expect(part.mesh.geometry.groups, part.name).toHaveLength(1);
+  });
+});

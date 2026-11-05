@@ -42,18 +42,17 @@ import { Group, Mesh, type BufferGeometry, type InstancedMesh, type Material } f
 import { defineCodes, log as sharedLog, type Log } from '../../core/log';
 import type { DoorLeaf } from '../../world/level/doorways';
 import { storeyView } from '../../world/level/storeys';
-import type { CompiledLevel, MeshDescriptor, RoofDescriptor, TileRect } from '../../world/level/types';
+import type { CompiledLevel, MeshDescriptor, OpeningDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
-import { flightGeometry } from './flights';
+import { facadeParts, facadeTiles, INSIDE, type FacadeRange } from './facades';
 import { liningParts } from './linings';
-import { framesGeometry, headsGeometry, railingGeometry, wallFacings } from './openings';
+import { framesGeometry, headsGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
 import { roofGeometry } from './roofs';
-import { buildShape, drawnWith, instanced, type BuiltShape, type PartCut } from './shapes';
+import { buildPart, drawnWith, instanced, type BuiltShape, type PartCut } from './shapes';
 import { ceilingGeometry } from './slabs';
 import { surfaceGeometry } from './surface';
-import { underRoofGeometry } from './walls';
 
 /** The codes the level meshes raise, with their fixes. */
 export const LEVEL_MESH_CODES = defineCodes('gfx', {
@@ -99,6 +98,8 @@ export interface LevelMeshPart {
   castShadow: boolean;
   /** A level written as storeys: the storey it draws (an index into `level.storeys`). */
   storey?: number;
+  /** A storey's heads, frames or facings drawn facade by facade: each facade's range and cell (facades.ts). */
+  facades?: readonly FacadeRange[];
 }
 
 /** A level's meshes (see the file comment). */
@@ -126,10 +127,6 @@ export function meshDrawCalls(mesh: Mesh | InstancedMesh, castShadow: boolean, s
   const groups = Array.isArray(mesh.material) ? mesh.geometry.groups.length : 1;
   return groups * (1 + (castShadow ? shadowMaps : 0));
 }
-
-/** Whether `pieces` holds tile (col, row). */
-const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
-  pieces.some(([c0, r0, c1, r1]) => col >= c0 && col <= c1 && row >= r0 && row <= r1);
 
 /**
  * Draws `level`'s mesh descriptors (see the file comment). A level written as storeys draws each storey's descriptors
@@ -205,26 +202,40 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     const roof = level.roofs?.find((each) => each.storey === k && each.kind !== 'flat');
     const openings = (level.openings ?? []).filter((opening) => opening.storey === k);
     const topped = k + 1 < level.storeys!.length ? { ...storey, fullTop: storey.fullTop - STOREY_SEAM } : storey;
-    const own: [string, BufferGeometry | null, [number, number]][] = [
-      ['ceiling', ceilingGeometry(level, storey, slabBack(level, k, recipes)), [storey.base - storey.slab, storey.base]], // prettier-ignore
-      ['heads', headsGeometry(level, topped, roof), [storey.base, storey.fullTop]],
-      ['frames', framesGeometry(openings, level.tile, options.leaf), [storey.base, storey.fullTop]],
-    ];
-    for (const [name, geometry, heights] of own) {
-      const recipe = recipeOf(name);
-      if (geometry) parts.push(place(single(geometry, recipe), name, recipe, [], heights, k));
-    }
-    // The wall over each opening in a wall faced with that wall's sides (under a pitched roof the heads follow the roof).
+    const ceiling = ceilingGeometry(level, storey, slabBack(level, k, recipes));
+    if (ceiling) parts.push(place(single(ceiling, recipeOf('ceiling')), 'ceiling', recipeOf('ceiling'), [], [storey.base - storey.slab, storey.base], k)); // prettier-ignore
+    // Its heads, frames and walls over openings faced with their walls' sides (facings: under a pitched roof the heads
+    // follow the roof), each drawn facade by facade (facades.ts), so the cutaway leaves out a facade it cuts.
+    const drawFacades = (name: string, recipe: LevelRecipe, build: Parameters<typeof facadeParts>[3]) => {
+      const drawn = facadeParts(openings, level.tile, storey.base, build);
+      if (!drawn) return;
+      const part = place(single(drawn.geometry, recipe), name, recipe, [], [storey.base, storey.fullTop], k);
+      if (!drawn.facades.some(({ face }) => face !== INSIDE)) return void parts.push(part);
+      part.mesh.material = [part.mesh.material as Material]; // drawn by its facades' ranges, one group while none is cut
+      drawn.geometry.addGroup(
+        0,
+        drawn.facades.reduce((sum, { count }) => sum + count, 0),
+        0,
+      );
+      parts.push({ ...part, facades: drawn.facades });
+    };
+    const onFacade = facadeTiles(level.cols, openings);
+    drawFacades('heads', recipeOf('heads'), (_, face) => headsGeometry(level, topped, roof, (c, r) => (onFacade.get(r * level.cols + c) ?? INSIDE) === face)); // prettier-ignore
+    drawFacades('frames', recipeOf('frames'), (own) => framesGeometry(own, level.tile, options.leaf));
     const lining = (name: string) => recipeOf(name).lining;
-    const facings = roof ? new Map<string, BufferGeometry>() : wallFacings(level, topped, openings, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes), (name) => !!lining(name)); // prettier-ignore
-    for (const [wall, geometry] of facings) {
+    const faced = new Map<number, Map<string, BufferGeometry>>();
+    const facings = (own: readonly OpeningDescriptor[], face: number) => {
+      if (!faced.has(face)) faced.set(face, roof ? new Map() : wallFacings(level, topped, own, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes), (name) => !!lining(name))); // prettier-ignore
+      return faced.get(face)!;
+    };
+    for (const wall of facings(openings, Number.NaN).keys()) {
       const [name, lined] = wall.split(':'); // `<recipe>:lining`: its faces toward a room
-      const recipe = {
-        ...recipeOf('heads'),
-        materials: lined ? [lining(name)!] : recipeOf(name).materials.slice(0, 1),
-        castShadow: false,
-      }; // the heads cast its shadow // prettier-ignore
-      parts.push(place(single(geometry, recipe), `heads:${wall}`, recipe, [], [storey.base, storey.fullTop], k));
+      const materials = lined ? [lining(name)!] : recipeOf(name).materials.slice(0, 1);
+      drawFacades(
+        `heads:${wall}`,
+        { ...recipeOf('heads'), materials, castShadow: false },
+        (own, face) => facings(own, face).get(wall) ?? null,
+      ); // prettier-ignore the heads cast its shadow
     }
     // A lined recipe's walls' faces toward a room, in its lining (linings.ts): the room's side of an outer wall.
     const walls = parts.filter((part) => part.storey === k && part.shape === 'block' && part.cells.length > 0);
@@ -273,39 +284,6 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
 /** Whether `geometry` has no vertex to draw: no index, or no position, to draw. */
 function drawsNothing(geometry: BufferGeometry): boolean {
   return (geometry.index ? geometry.index.count : (geometry.getAttribute('position')?.count ?? 0)) === 0;
-}
-
-/**
- * One descriptor's mesh: a storey's full blocks under a pitched roof clipped to it, its flights by the riser, its
- * railings as posts and rails over their tiles' floor; everything else in its recipe's shape
- * (engine/gfx/level/shapes.ts).
- */
-function buildPart(
-  view: CompiledLevel,
-  descriptor: MeshDescriptor,
-  recipe: LevelRecipe,
-  materials: readonly Material[],
-  single: (geometry: BufferGeometry, recipe: LevelRecipe) => BuiltShape,
-  roof: RoofDescriptor | undefined,
-): BuiltShape {
-  const t = view.tile;
-  const { pieces, bottom, top } = descriptor;
-  const full = descriptor.glyphs.some((id) => Object.values(view.legend).find((glyph) => glyph.id === id)?.full);
-  if (roof && full && (recipe.shape === 'block' || recipe.shape === 'pillar')) {
-    const merged = recipe.shape === 'block' ? descriptor.rects : pieces;
-    const rects = merged.map(([c0, r0, c1, r1]) => [c0 * t, r0 * t, (c1 + 1) * t, (r1 + 1) * t] as const);
-    const geometry = underRoofGeometry(roof, rects, bottom);
-    if (geometry) return single(geometry, recipe);
-  }
-  if (recipe.shape === 'flight') {
-    const ramps = view.ramps.filter((ramp) => holdsTile(pieces, ramp.tiles[0], ramp.tiles[1]));
-    return single(flightGeometry(t, ramps, bottom), recipe);
-  }
-  if (recipe.shape === 'railing') {
-    const geometry = railingGeometry(t, descriptor.rects, bottom, top);
-    if (geometry) return single(geometry, recipe);
-  }
-  return buildShape(view, descriptor, recipe, materials);
 }
 
 /**
