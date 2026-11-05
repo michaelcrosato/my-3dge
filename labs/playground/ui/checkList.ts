@@ -133,6 +133,17 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     ],
   },
   {
+    id: 'esc-0007',
+    kind: 'decide',
+    title: 'The engine’s Stress Box and labs: beside the block, or on it?',
+    what: 'Every playground demo is on the block now. The engine’s own Stress Box (crowds of up to 5,000, a 1,000-agent fight, prop halls, ragdolls, the clip library) and its seven labs (animation, materials, props, effects, cameras, physics, the library) stay separate pages, opened from Tools.', // prettier-ignore
+    from: 'ESC-0007',
+    options: [
+      { id: 'beside', label: 'Keep them beside the block, opened from Tools (they test the engine at scales the block can’t)', option: 1 }, // prettier-ignore
+      { id: 'on', label: 'Bring them onto the block: a crowd yard, a prop hall, an animation stage and a gallery', option: 2 }, // prettier-ignore
+    ],
+  },
+  {
     id: 'sprint',
     kind: 'try',
     title: 'Sprint the strip, in first person',
