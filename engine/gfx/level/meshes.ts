@@ -45,7 +45,7 @@ import { storeyView } from '../../world/level/storeys';
 import type { CompiledLevel, MeshDescriptor, OpeningDescriptor, TileRect } from '../../world/level/types';
 import type { Warmup } from '../warmup';
 import type { LevelCell } from './cells';
-import { facadeParts, facadeTiles, INSIDE, openingRooms, type FacadeRange } from './facades';
+import { facadeParts, facadeTiles, INSIDE, lowCeiling, openingRooms, type FacadeRange } from './facades';
 import { liningParts } from './linings';
 import { framesGeometry, headsGeometry, wallFacings } from './openings';
 import { FALLBACK_RECIPE, LEVEL_RECIPES, type LevelRecipe, type LevelShape } from './recipes';
@@ -213,7 +213,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     // Its heads, frames and walls over openings faced with their walls' sides (facings: under a pitched roof the heads
     // follow the roof), each drawn facade by facade (facades.ts), so the cutaway leaves out a facade it cuts.
     const drawFacades = (name: string, recipe: LevelRecipe, build: Parameters<typeof facadeParts>[3]) => {
-      const drawn = facadeParts(openings, level.tile, storey.base, build);
+      const drawn = facadeParts(openings, level.tile, storey.base, build, lowCeiling(level, storey));
       if (!drawn) return;
       const part = place(single(drawn.geometry, recipe), name, recipe, [], [storey.base, storey.fullTop], k);
       if (!drawn.facades.some(({ face }) => face !== INSIDE)) return void parts.push(part);

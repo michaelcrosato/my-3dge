@@ -14,7 +14,7 @@ import { registry } from '../../../engine/core/registry';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
 import { createCutaway, planCutaway } from '../../../engine/gfx/cutaway';
 import { createStoreyCut } from '../../../engine/gfx/storeyCut';
-import { INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
+import { DOORWAY, INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
 import { LINING_FACES } from '../../../engine/gfx/level/linings';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
 import { levelLooks } from '../../../engine/gfx/level/runs';
@@ -66,8 +66,9 @@ describe('the house’s facades', () => {
       ways.delete(-1); // a corner's diagonal
       const left = cutaway.facades();
       for (const part of facaded) {
-        const faces = part.facades!.filter(({ face }) => face >= 0).map(({ face }) => face);
-        expect(left[part.name].sort(), `${part.name}, turn ${turn}`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
+        const faces = part.facades!.filter(({ face }) => face >= 0 && face < DOORWAY).map(({ face }) => face);
+        const facades = left[part.name].filter((face) => face < DOORWAY); // a doorway between rooms is cut by blocking
+        expect(facades.sort(), `${part.name}, turn ${turn}`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
       }
       expect(ways.size, `turn ${turn}`).toBeGreaterThan(0);
     }
