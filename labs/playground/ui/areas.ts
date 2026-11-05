@@ -5,7 +5,8 @@
  * try there, the keys named by their actions so a rebound key reads right); `areaAt`, the area a point of the block is
  * in; `locationLine`, the HUD's top-left line (the area, and the room indoors, by `roomName`); and `createAreaCard`,
  * the card that slides in for a few seconds when the player walks into another area, as a room's card does in
- * riftlight (its seconds count only while it can show).
+ * riftlight (its seconds count only while it can show), and again on the page's card key, I, as riftlight's I shows
+ * the room's card again (`show`; a second press puts it away).
  *
  * Where: the house's walls hold the house at any height (`HOUSE_WALLS`; above its box too, on the chimney's top), its
  * rooms wherever they lie (the crawlspace under the patio), and its map above the ground floor (`HOUSE_UPPER`: the
@@ -159,8 +160,12 @@ export const CARD_SECONDS = 7;
 
 /** The area card (see the file comment). */
 export interface AreaCardView {
+  /** The card: `[data-ui=area-card]`, `data-id` its area, `data-value` `shown` while it shows. */
+  readonly el: HTMLElement;
   /** One drawn frame: the area the player is in (null off the block), and whether the card must stay hidden. */
   update(area: SiteArea | null, dt: number, hidden: boolean): void;
+  /** Shows the card of the area the player is in again, for `CARD_SECONDS`; while it shows, puts it away. */
+  show(): void;
   remove(): void;
 }
 
@@ -186,6 +191,7 @@ export function createAreaCard(parent: HTMLElement, key: (action: string) => str
     el.dataset.id = area;
   };
   return {
+    el,
     update(area, dt, hidden) {
       if (area !== shown) {
         shown = area;
@@ -194,6 +200,7 @@ export function createAreaCard(parent: HTMLElement, key: (action: string) => str
       } else if (!hidden) left = Math.max(0, left - dt); // its seconds count only while it can show
       el.dataset.value = !hidden && shown && left > 0 ? 'shown' : '';
     },
+    show: () => void (shown && (left = left > 0 ? 0 : CARD_SECONDS)),
     remove: () => el.remove(),
   };
 }

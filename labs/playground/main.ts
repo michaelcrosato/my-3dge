@@ -16,7 +16,7 @@
  * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
  * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
  * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P steps through the looks; H opens the controls
- * sheet, M Go to, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F shows and hides the feel panel
+ * sheet, M Go to, I shows the area's card again, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F shows and hides the feel panel
  * (labs/playground/feel.ts, WP 13.4). A click takes the pointer for mouse look in the three perspective cameras
  * (isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
  *
@@ -55,7 +55,7 @@ import { areaAt, createAreaCard, locationLine, type AreaCardView } from './ui/ar
 import { createAttract, TOUR_REPLAY, type Attract } from './ui/attract';
 import { checkLine, ownerCheck, placeOnOpen } from './ui/checks';
 import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
-import { GOTO_KEY, HELP_KEY } from './ui/help';
+import { CARD_KEY, GOTO_KEY, HELP_KEY } from './ui/help';
 import { showHud, type HudPlayer } from './ui/hud';
 import { runReplays } from './ui/runs';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
@@ -312,6 +312,7 @@ addEventListener('keydown', (event) => {
     frontEnd.open(event.code === HELP_KEY ? 'help' : 'spawns');
     return;
   }
+  if (frontEnd && !frontEnd.modal() && event.code === CARD_KEY) return void card?.show(); // the area's card again
   if (event.code === LOOK_KEY) {
     const look = nextLook(showing.look);
     inspector.set('post.look', look);

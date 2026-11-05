@@ -17,7 +17,7 @@
  * under pointer lock; the platformer moves relative to the camera, the mouse turning it, and faces its move;
  * isometric and top-down move relative to the screen and aim with the free pointer onto the player's floor (the right
  * stick on a pad). The camera keys are view actions (`view`): rebound like the others, never in the intents, and the
- * page hears them (`onView`, labs/playground/main.ts). The page keeps P, F, M and H for itself (`reserved`).
+ * page hears them (`onView`, labs/playground/main.ts). The page keeps P, F, M, H and I for itself (`reserved`).
  *
  * Invariants: data only; the buttons the intents carry are the actions the shooter model reads (`jump`, `sprint`,
  * `walk`, `crouch`, `interact`, engine/sim/actors.ts; `melee`, the strike, engine/sim/melee.ts), and the firearms'
@@ -34,7 +34,7 @@
  */
 import { defineActionMap, type ActionMapSpec } from '../../engine';
 import { FEEL_KEY } from './feel';
-import { GOTO_KEY, HELP_KEY } from './ui/help';
+import { CARD_KEY, GOTO_KEY, HELP_KEY } from './ui/help';
 import { cameraMode, LOOK_KEY } from './views';
 
 /** The action maps, by camera mode (labs/playground/views.ts `PLAYGROUND_CAMERAS`' names). */
@@ -63,8 +63,8 @@ export const PLAYGROUND_ACTIONS: Readonly<Record<string, string>> = {
   holster: 'Holster, or draw again',
 };
 
-/** The keys the page keeps for itself: the look (P), the feel panel (F), Go to (M) and the controls sheet (H). */
-const PAGE_KEYS = [LOOK_KEY, FEEL_KEY, GOTO_KEY, HELP_KEY];
+/** The keys the page keeps for itself: the look (P), the feel panel (F), Go to (M), the controls sheet (H) and the area's card (I). */ // prettier-ignore
+const PAGE_KEYS = [LOOK_KEY, FEEL_KEY, GOTO_KEY, HELP_KEY, CARD_KEY];
 
 /** Every mode's bindings (see the file comment). */
 const ACTIONS: Readonly<Record<string, readonly string[]>> = {

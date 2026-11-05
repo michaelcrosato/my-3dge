@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for the playground's controls (labs/playground/controls.ts, WP 13.9): every camera mode's map passes
  * the bindings tests (no code on two actions, no reserved or system code, nothing on Ctrl, which with W closes the tab,
- * the page's P, F, M and H refused by rebinding, view actions rebound like the others), each binds Apex's default keys
+ * the page's P, F, M, H and I refused by rebinding, view actions rebound like the others), each binds Apex's default keys
  * where the browser allows, and each mode's own rules: the view sent and the centre aimed in first person and the
  * shooter, the platformer facing its move, isometric and top-down aiming with the pointer, Q and E turning isometric
  * (so G uses there). `playgroundMap` picks a camera's map.
@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { createBindings, getActionMap, RESERVED_CODES } from '../../engine';
 import { PLAYGROUND_ACTIONS, PLAYGROUND_MAPS, playgroundMap } from './controls';
 import { FEEL_KEY } from './feel';
-import { GOTO_KEY, HELP_KEY } from './ui/help';
+import { CARD_KEY, GOTO_KEY, HELP_KEY } from './ui/help';
 import { LOOK_KEY, PLAYGROUND_CAMERAS } from './views';
 
 /** Every mode's map, by mode. */
@@ -28,7 +28,7 @@ describe('the playground’s action maps', () => {
         all.filter((code) => RESERVED_CODES.includes(code) || code.startsWith('Control')),
         id,
       ).toEqual([]);
-      expect(map.reserved, id).toEqual([LOOK_KEY, FEEL_KEY, GOTO_KEY, HELP_KEY]); // the page's own keys
+      expect(map.reserved, id).toEqual([LOOK_KEY, FEEL_KEY, GOTO_KEY, HELP_KEY, CARD_KEY]); // the page's own keys
       expect(Object.keys(map.actions), id).toEqual(expect.arrayContaining([...map.move, ...map.view]));
       const bindings = createBindings(id);
       expect(bindings.rebind('jump', LOOK_KEY), id).toMatchObject({ ok: false, reason: 'reserved' });

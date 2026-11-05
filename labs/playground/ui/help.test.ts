@@ -3,7 +3,8 @@
  * map every other mode's shares its actions with) or the system layer's (pause), and every touch button's; every group
  * has lines; and the keys follow the map in use and the device used last: the move keys or the left stick, the
  * mouse's or the right stick's look, or their aim where the map aims with the pointer, the shoulder only in the
- * shooter, the turn only in isometric and only its halves the device has, the page's keys on a keyboard alone, and on
+ * shooter, the turn only in isometric and only its halves the device has, the page's keys on a keyboard alone (the
+ * area card's I among them), and on
  * touch the stick, the touch buttons and the menu button.
  */
 import { describe, expect, it } from 'vitest';
@@ -36,7 +37,7 @@ describe('the controls sheet', () => {
 
   it('works out the move, the look and the view keys from the map in use and the device', () => {
     const keys = sheet(inputOn(PLAYGROUND_MAPS.shooter, 'keyboard'));
-    expect(keys).toMatchObject({ Move: ['Move', 'forward left back right'], 'Look around': ['Look around', 'Click, then mouse'], 'Swap shoulder': ['Swap shoulder', 'shoulder'], P: ['Next look', 'P'] }); // prettier-ignore
+    expect(keys).toMatchObject({ Move: ['Move', 'forward left back right'], 'Look around': ['Look around', 'Click, then mouse'], 'Swap shoulder': ['Swap shoulder', 'shoulder'], P: ['Next look', 'P'], I: ['This area’s card again', 'I'] }); // prettier-ignore
     expect(keys['Turn the view']).toBeUndefined();
     const iso = sheet(inputOn(PLAYGROUND_MAPS.isometric, 'mouse'));
     expect([iso['Look around'], iso['Swap shoulder'], iso['Turn the view']]).toEqual([['Aim', 'Mouse'], undefined, ['Turn the view', 'turnLeft turnRight']]); // prettier-ignore

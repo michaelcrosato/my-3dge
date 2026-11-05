@@ -3,13 +3,15 @@
  * the block's map; every area has a card whose keys are actions; the location line names the room indoors, as a
  * player reads it; the street reads as the street across its whole width, sidewalks and bus stop too, the house over
  * its walls at any height and over its map above the ground floor (the roof to its eaves, the porch roof, the deck),
- * and the patio, the porch and the apron, on the house's map but outside it, as the yards.
+ * and the patio, the porch and the apron, on the house's map but outside it, as the yards; the area card slides in
+ * on entering an area and again on the card key (I, a second press putting it away), never while a screen is up, and
+ * none off the block.
  */
 import { describe, expect, it } from 'vitest';
 import { getSite, siteStructureAt } from '../../../engine/sim-api';
 import { HOUSE_RECTS } from '../levels/house';
 import { SITE_AREAS, SITE_STRUCTURES, type SiteArea } from '../levels/site';
-import { AREA_OF_STRUCTURE, AREAS, areaAt, HOUSE_WALLS, locationLine } from './areas';
+import { AREA_OF_STRUCTURE, AREAS, areaAt, CARD_SECONDS, createAreaCard, HOUSE_WALLS, locationLine } from './areas';
 
 const site = getSite('site:block');
 
@@ -66,4 +68,59 @@ describe('the block’s areas', () => {
     ]);
     expect(HOUSE_WALLS).toEqual(walls); // the level's own, at the house's place
   });
+
+  it('slides the card in on entering an area, and again on the card key, never over a screen', () => {
+    const card = createAreaCard(fakeParent(), (action) => action.toUpperCase());
+    const shown = () => card.el.dataset.value === 'shown';
+    card.update('gym', 0.1, false);
+    expect([shown(), card.el.dataset.id]).toEqual([true, 'gym']); // walked in
+    card.update('gym', CARD_SECONDS, false);
+    expect(shown()).toBe(false); // its seconds spent
+    card.show();
+    card.update('gym', 0.1, false);
+    expect(shown()).toBe(true); // the card key: the area's card again
+    card.show();
+    card.update('gym', 0.1, false);
+    expect(shown()).toBe(false); // again: put away
+    card.show();
+    card.update('gym', 0.1, true);
+    expect(shown()).toBe(false); // a screen is up: it waits
+    card.update('gym', 0.1, false);
+    expect(shown()).toBe(true);
+    card.update(null, 0.1, false);
+    card.show();
+    card.update(null, 0.1, false);
+    expect(shown()).toBe(false); // off the block: no area, no card
+  });
 });
+
+/** An element as the card uses one: its data, its children and its text. */
+interface FakeElement {
+  dataset: Record<string, string>;
+  children: FakeElement[];
+  className?: string;
+  textContent?: string;
+  readonly lastElementChild: FakeElement | undefined;
+  append(...children: FakeElement[]): void;
+  replaceChildren(...children: FakeElement[]): void;
+  remove(): void;
+}
+
+/** A parent in a stand-in for the few DOM calls the card makes. */
+function fakeParent(): HTMLElement {
+  const element = (): FakeElement => ({
+    dataset: {},
+    children: [],
+    get lastElementChild() {
+      return this.children.at(-1);
+    },
+    append(...children) {
+      this.children.push(...children);
+    },
+    replaceChildren(...children) {
+      this.children = children;
+    },
+    remove() {},
+  });
+  return Object.assign(element(), { ownerDocument: { createElement: element } }) as unknown as HTMLElement;
+}
