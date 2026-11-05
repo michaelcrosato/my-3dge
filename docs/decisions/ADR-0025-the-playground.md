@@ -2898,9 +2898,17 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   flight left out in 185 of 6,096 views (3 where a line grazes a step's edge). house-facades.test.ts: every opening of
   a facade facing the camera is left out, and under the attic's roof the openings go with its walls. Also the cells
   (`segmentHitsTriangles`), facades and stageSite tests, and a re-review of the house's screenshots.
-- **Left as they are** (low, from the re-review): the porch's posts stand whole while the porch roof over them is
-  hidden with the upper storey; a hall wall's faces fall grey when its lamp's light is off the budget; the attic's
-  walls show their siding inside; a ladder stands on the ground floor over a cut storey.
+- **Left as they are** (low, from the two re-reviews of WP 13.42's shots, which found its high findings fixed: the
+  player whole in every shot, no pit, no slit):
+  - the porch's posts stand whole while the porch roof over them is hidden with the upper storey;
+  - a hall wall's faces fall grey when its lamp's light is off the budget;
+  - the attic's walls show their siding inside, and the head over its east window is the heads' paint;
+  - a ladder stands on the ground floor over a cut storey;
+  - the floor before the player can cut a partition off his line, and where the doorway beside it is cut too, a short
+    stretch between them stands alone (the settling sees a doorway's cut in another plan);
+  - through the stairwell beside its railing, the basement's floor shows;
+  - with the ground storey off, the terrain's cut, the whole ground slab's with the porch, shows the background beside
+    the basement.
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.42.
 
