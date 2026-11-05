@@ -5,9 +5,12 @@
  * +Y as its bodies are (engine/world/site.ts), and the site's terrain with its cut left out (engine/gfx/terrain.ts).
  * Each structure has its cutaway (engine/gfx/cutaway.ts, made once a player stands on the stage: `follow`) and its
  * cutaway by storey (engine/gfx/storeyCut.ts), both run in its own frame. Both cut only the structure the player is in
- * (`where`). A building (one with rooms or a roof) is cut in a perspective camera only while he is indoors, so a house
- * he walks past or up to (its map's patio, porch or apron) keeps its walls, and what stands between the camera and him
- * fades where the camera asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map,
+ * (`where`). A building (one with rooms or a roof) is cut in a perspective camera only while he is indoors and the
+ * camera is not indoors in it too (`where` at the camera), so a house he walks past or up to (its map's patio, porch or
+ * apron) keeps its walls, and so does one the camera stands in with him (first person, the shooter's or the
+ * platformer's arm in his room: the walls round it were cut on the lines to the floor round him, so he saw through the
+ * wall ahead); a camera outside looking in cuts its walls facing it. What stands between the camera and him fades
+ * where the camera asks (`fade`); in a classic view (`view`), looking down from afar, it is cut on its whole map,
  * its walls facing the camera and, by `cutPlace`, the storeys above his and the roof, which would hide him on its porch
  * or patio. `update(pose, feet, { fade, view })` carries the camera's pose and the player's feet into each structure's
  * frame (`toLocal`, the yaw less its turns) and cuts and fades there; the other structures are faded, never cut.
@@ -123,7 +126,11 @@ export function createStageSite(
     update(pose, feet, { fade = false, view = false } = {}) {
       const found = where(feet);
       const { rooms, roofs } = found?.structure.level ?? {};
-      const at = found && (view || found.indoors || !(rooms?.length || roofs?.length)) ? found : null; // see the file comment
+      // A perspective camera indoors in his building (first person, an arm in his room) has none of its walls to cut:
+      // what stands between it and him fades (`fade`). One outside it, while he is indoors, cuts as below.
+      const eye = view || !found?.indoors ? null : where(pose.position);
+      const looksIn = !!found?.indoors && !(eye?.structure === found.structure && eye.indoors);
+      const at = found && (view || looksIn || !(rooms?.length || roofs?.length)) ? found : null; // see the file comment
       const inside = view ? at : null;
       cut = inside ? { structure: inside.structure, storey: inside.storey } : null;
       rides?.update(pose, feet, { fade });
