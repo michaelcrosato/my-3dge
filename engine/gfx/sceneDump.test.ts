@@ -1,7 +1,7 @@
 /**
  * @file Unit tests for engine/gfx/sceneDump.ts (T1, PLAN.md §8.3's `scene.dump`, WP 2.7): one line per object with
  * its name or type and id, type, hidden flag, position, size, material, triangles, instances and entity, a light's
- * intensity and whether it casts (WP 13.23); `depth` cuts
+ * intensity and whether it casts (WP 13.23), the storey a post holds up (WP 13.43); `depth` cuts
  * the tree and counts what it cut; `filter` keeps matches with their ancestors; the dump never changes the tree.
  * @see engine/gfx/sceneDump.ts
  */
@@ -37,6 +37,13 @@ describe('dumpScene', () => {
     Object.assign(out, { name: 'out', castShadow: true });
     root.add(lamp, out);
     expect(dumpScene(root).split('\n').slice(1)).toEqual(['  lamp PointLight at 0,0,0 lit 3.26', '  out PointLight at 0,0,0 lit 0 shadow']); // prettier-ignore
+  });
+
+  it('names the storey a post holds up', () => {
+    const post = new Mesh(new BoxGeometry(0.25, 3, 0.25), new MeshBasicMaterial());
+    Object.assign(post, { name: 'post' });
+    post.userData.holds = 2;
+    expect(dumpScene(post)).toBe('post Mesh at 0,0,0 size 0.25×3×0.25 MeshBasicMaterial tris 12 holds 2');
   });
 
   it('writes one line per object, indented by depth', () => {

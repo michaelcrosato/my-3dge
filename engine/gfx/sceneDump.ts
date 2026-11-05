@@ -8,7 +8,8 @@
  * and `×n` instances for an instanced mesh. `lit n` gives a light's intensity (0 for one put out: a pool's slot with no
  * source, a lamp's switch off, WP 13.23). `shadow` marks a light that casts shadows (`shadow ×3 cascades` when it
  * casts through cascades, engine/gfx/enhanced/csm.ts: the cascades made, 0 before their first build); `entity n`
- * names the sim entity an object stands for.
+ * names the sim entity an object stands for, and `holds n` the storey a level's post holds up, which the storey cut
+ * shows it with (engine/gfx/storeyCut.ts).
  *
  * `filter` keeps the objects whose name or type contains it (any case), with their ancestors for context; `depth`
  * cuts the tree below that depth (the root is depth 0). A cut or filtered subtree is counted on its parent's line.
@@ -86,6 +87,7 @@ function line(object: Object3D, hidden: number): string {
     parts.push(typeof node?.cascades === 'number' ? `shadow ×${node.lights?.length ?? 0} cascades` : 'shadow');
   }
   if (typeof object.userData.entity === 'number') parts.push(`entity ${object.userData.entity}`);
+  if (typeof object.userData.holds === 'number') parts.push(`holds ${object.userData.holds}`);
   if (hidden) parts.push(`(+${hidden} below)`);
   return parts.join(' ');
 }

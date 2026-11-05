@@ -25210,7 +25210,7 @@ function $oe(e, t) {
     const u = l.shadow?.shadowNode;
     o.push(typeof u?.cascades == "number" ? `shadow ×${u.lights?.length ?? 0} cascades` : "shadow");
   }
-  return typeof e.userData.entity == "number" && o.push(`entity ${e.userData.entity}`), t && o.push(`(+${t} below)`), o.join(" ");
+  return typeof e.userData.entity == "number" && o.push(`entity ${e.userData.entity}`), typeof e.userData.holds == "number" && o.push(`holds ${e.userData.holds}`), t && o.push(`(+${t} below)`), o.join(" ");
 }
 function zoe(e) {
   let t = -1;
