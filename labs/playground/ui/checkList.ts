@@ -306,7 +306,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'touch',
     kind: 'try',
     title: 'On a phone or a tablet',
-    what: 'Open playground.html on a phone or a tablet, held sideways. Tap to start, then Play. Does the stick walk the player where your thumb lands, do Jump, Use, Crouch and Strike work, and does the menu button open pause (and Resume carry on)? Do the screens fit and read?', // prettier-ignore
+    what: 'Open playground.html on a phone or a tablet, held sideways. Tap to start, then Play. Does the stick walk the player where your left thumb lands, does a drag of your right thumb turn the view (shooter, first person and platformer), do Jump, Use, Crouch and Strike work, and does the menu button open pause (and Resume carry on)? Do the screens fit and read?', // prettier-ignore
     from: 'ADR-0021: the touch controls are built, never tested, and checked by your reports',
   },
   {

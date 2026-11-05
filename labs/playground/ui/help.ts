@@ -8,7 +8,8 @@
  * swap on a keyboard: `UNBOUND`), and a group left with none. The page's own keys (the look, the feel panel, the menus,
  * the area's card) are as written, on a keyboard only: a pad reaches them through pause (the area's card too: This
  * area's card). On a touch screen (`onTouch`: touch mode on, or a finger used last, and no pad) the sheet names the
- * stick, the touch layout's buttons (labs/playground/touch.ts) and the menu button, and leaves out the rest. The front
+ * stick (the left thumb), the look drag (the right thumb, where the map looks), the touch layout's buttons
+ * (labs/playground/touch.ts) and the menu button, and leaves out the rest. The front
  * end opens it from H, the start menu and pause (frontEnd.ts).
  *
  * Elements: `[data-ui=help]`, a `[data-ui=key]` per line (`data-id` the action, else the page key or the label), and
@@ -76,7 +77,7 @@ export const HELP_GROUPS: readonly { readonly title: string; readonly lines: rea
   {
     title: 'Move',
     lines: [
-      { label: 'Move', keys: (input) => (touch(input) ? 'Stick: touch and drag' : pad(input) ? 'L Stick' : ['forward', 'left', 'back', 'right'].map((action) => input.prompt(action)).join(' ')) }, // prettier-ignore
+      { label: 'Move', keys: (input) => (touch(input) ? 'Left thumb: touch and drag' : pad(input) ? 'L Stick' : ['forward', 'left', 'back', 'right'].map((action) => input.prompt(action)).join(' ')) }, // prettier-ignore
       { label: 'Jump, mantle, climb', action: 'jump' },
       { label: 'Sprint (hold, or tap to keep)', action: 'sprint' },
       { label: 'Walk', action: 'walk' },
@@ -105,7 +106,7 @@ export const HELP_GROUPS: readonly { readonly title: string; readonly lines: rea
   {
     title: 'View',
     lines: [
-      { label: 'Look around', says: (input) => (aims(input) ? 'Aim' : 'Look around'), keys: (input) => (touch(input) ? null : pad(input) ? 'R Stick' : aims(input) ? 'Mouse' : 'Click, then mouse') }, // prettier-ignore
+      { label: 'Look around', says: (input) => (aims(input) ? 'Aim' : 'Look around'), keys: (input) => (touch(input) ? (aims(input) ? null : 'Right thumb: drag') : pad(input) ? 'R Stick' : aims(input) ? 'Mouse' : 'Click, then mouse') }, // prettier-ignore
       { label: 'Next camera', action: 'camera' },
       { label: 'Swap shoulder', keys: viewKey('shoulder') },
       { label: 'Turn the view', keys: viewKey('turnLeft', 'turnRight') },
