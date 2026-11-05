@@ -2867,3 +2867,30 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     re-reviews of the house's screenshots, the last finding every high finding fixed.
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.41.
+
+## Amendment 60 (2026-11-05, WP 13.42): nothing the house draws hides the player in isometric
+
+- **Found:** after WP 13.41, a sweep stood the player at every metre of every room of the house, in each of
+  isometric's eight turns, with the storey cut and the cutaway as the stage runs them. It cast the lines from the
+  camera to his head and his chest. 383 of 12,192 lines met something the house draws:
+  - 276 met the attic's blocks under its roof: one mesh, clipped to the roof, which no cut reached.
+  - 98 met a flight's top. A flight is one mesh, and its descriptor stands at its floor, so any cut box was flat.
+  - 3 met a porch post (the house's pillar recipe had no cut).
+  - 6 met a lintel, a frame or a facing over an opening beside him. Such ranges were cut by facing alone, and a
+    narrow doorway's lay between the lines to his head and his feet.
+- **Decided:**
+  - A part drawn as one mesh, a flight or a storey's blocks under a pitched roof, is one range the cutaway leaves out
+    while it stands between the camera and the player (engine/gfx/level/meshes.ts `drawnWhole`). Its cell is the
+    rectangle its geometry covers, its heights the geometry's. It draws no group while cut and gets its own groups back
+    after, never through `visible`.
+  - The heads, frames and facings over openings are drawn an opening to a range (engine/gfx/level/facades.ts, keyed by
+    the opening's index). Ranges come facade by facade, so a facade cut by facing is one run. Each range is cut by
+    `either` rule: its facade facing the camera, or its opening on a line of sight. A doorway between rooms faces no
+    way, so only a line cuts it. The site hides a prop in an opening whose range is left out.
+  - The house's porch posts are stumped where they stand in the way, as the engine's pillars are.
+- **Evidence:** labs/playground/levels/house-sight.test.ts, now from every room's middle and every 2 m of the rooms'
+  floors: 107 lines met the attic's walls or a flight before, and none do now. The 1 m sweep counts 0 of 12,192 now.
+  house-facades.test.ts: every opening of a facade facing the camera is left out. Also the facades and stageSite tests.
+- **Not verified:** the owner's eye on the house in every camera (`house-views`).
+- Plan edit: WP 13.42.
+
