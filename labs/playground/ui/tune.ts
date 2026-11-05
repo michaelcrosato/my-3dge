@@ -30,6 +30,46 @@
  */
 import { FILTER_FIELDS, FILTER_NAMES, type FilterName, type FilterSpec } from '../../../engine';
 
+/** Each filter by the name a player reads, beside its id (engine/gfx/post/filters.ts `FILTER_NAMES`). */
+export const FILTER_LABELS: Readonly<Record<FilterName, string>> = {
+  ao: 'Ambient occlusion',
+  gi: 'Bounced light',
+  ssr: 'Reflections',
+  air: 'Haze',
+  bloom: 'Bloom',
+  aa: 'Anti-aliasing',
+  lens: 'Lens',
+  dof: 'Depth of field',
+  tiltshift: 'Tilt-shift',
+  flare: 'Lens flare',
+  streaks: 'Light streaks',
+  sharpen: 'Sharpen',
+  misregister: 'Misregistration',
+  cel: 'Cel shading',
+  pixel: 'Pixel art',
+  palette: 'Palette',
+  watercolor: 'Watercolour',
+  outline: 'Outline',
+  stylize: 'Stylise',
+  paper: 'Paper',
+  grade: 'Colour grade',
+  split: 'Split toning',
+  selective: 'Selective colour',
+  duotone: 'Duotone',
+  scanlines: 'Scanlines',
+  crt: 'CRT screen',
+  vhs: 'VHS tape',
+  speedlines: 'Speed lines',
+  vignette: 'Vignette',
+  grain: 'Film grain',
+  chroma: 'Chromatic aberration',
+  letterbox: 'Letterbox',
+  screen: 'Screen',
+};
+
+/** A look's id as a player reads it: `look:playground-clean` → `clean`. */
+const lookName = (look: string) => look.replace(/^look:(playground-)?/, '');
+
 /** The look drawn now, as the inspector's `look` gives it. */
 export interface LookNow {
   look: string;
@@ -112,7 +152,7 @@ export function createTune(parent: HTMLElement, options: TuneOptions): TunePanel
 
   el.append(make('h2', { textContent: 'Tune the look' }));
   const base = make('p');
-  shows.push(() => void (base.textContent = `Drawing ${now.look}: every change shows at once.`));
+  shows.push(() => void (base.textContent = `Drawing the ${lookName(now.look)} look: every change shows at once.`));
   el.append(base);
 
   // the strength
@@ -257,7 +297,7 @@ export function createTune(parent: HTMLElement, options: TuneOptions): TunePanel
     const fold = make('details');
     fold.dataset.ui = 'tune-filter';
     fold.dataset.id = name;
-    const summary = make('summary', { textContent: name, title: FILTER_FIELDS[name].description });
+    const summary = make('summary', { textContent: FILTER_LABELS[name], title: FILTER_FIELDS[name].description });
     fold.append(summary);
     shows.push(() => {
       const on = Boolean(now.filters[name]);

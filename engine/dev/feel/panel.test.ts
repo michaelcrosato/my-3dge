@@ -6,7 +6,7 @@
  * @see engine/dev/feel/panel.ts
  */
 import { describe, expect, it } from 'vitest';
-import { sliderRange } from './panel';
+import { plainWords, sliderRange } from './panel';
 
 describe('the feel panel’s sliders', () => {
   it('run to three times the default, within the declared range, in round steps', () => {
@@ -17,5 +17,11 @@ describe('the feel panel’s sliders', () => {
     expect(sliderRange({ value: 20, default: 6.604, minimum: 0, maximum: 100 })[1]).toBe(20); // past it: up to the value
     expect(sliderRange({ value: -2, default: 1 })[0]).toBe(-2); // no minimum: down to the value
     expect(sliderRange({ value: 1, default: 1, minimum: -100 })[0]).toBe(-3); // a wide minimum: three times the default
+  });
+});
+
+describe('plainWords', () => {
+  it('spells a field’s or group’s id out as words a person reads', () => {
+    expect(['armsFov', 'fov', 'accel', 'decel', 'hop', 'land', 'maxSpeed'].map(plainWords)).toEqual(['Arms field of view', 'Field of view', 'Acceleration', 'Deceleration', 'Hop', 'Land', 'Max speed']); // prettier-ignore
   });
 });

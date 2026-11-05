@@ -242,7 +242,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'looks-night',
     kind: 'try',
     title: 'The three looks at night',
-    what: 'The same at 10 at night, in isometric; P steps through the looks, and Settings’ Time of day row moves the hour (Minutes a day lasts lets the day run). Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
+    what: 'The same at 10 at night, in isometric; P steps through the looks, and Settings’ Time of day row moves the hour (Day length lets the day run). Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
     from: item(10),
     go: { query: { scene: 'site', cam: 'iso', 'playground.hour': '22', 'playground.day': '0' } },
   },

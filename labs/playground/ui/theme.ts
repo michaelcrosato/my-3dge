@@ -88,11 +88,12 @@ const THEME_CSS = `
   bottom: 18%; width: 4px; margin: 0; border-radius: 4px; background: var(--pg-accent); }
 .pg-ui .pg-screen .ui-menu-item[data-value=disabled] { font-size: 12px; font-weight: 800; letter-spacing: 0.24em;
   text-transform: uppercase; color: var(--pg-accent); padding-top: 1em; cursor: default; }
-.pg-ui .pg-screen[data-kind=list] .ui-menu { columns: 3 11em; column-gap: 1.6em; max-width: 46em; }
+.pg-ui .pg-screen[data-kind=list] .ui-menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(11em, 1fr));
+  column-gap: 1.6em; max-width: 46em; }
 .pg-ui .pg-screen[data-kind=list] .ui-menu-item { font-size: 17px; padding-top: 0.32em; padding-bottom: 0.32em;
   break-inside: avoid; }
 .pg-ui .pg-screen[data-kind=list] .ui-menu-item[data-value=disabled],
-.pg-ui .pg-screen[data-kind=list] .ui-menu-item[data-id=back] { column-span: all; }
+.pg-ui .pg-screen[data-kind=list] .ui-menu-item[data-id=back] { grid-column: 1 / -1; }
 .pg-ui .pg-screen[data-kind=list] .ui-menu-item[data-value=disabled] { padding-top: 1.1em; font-size: 12px; }
 .pg-ui .pg-screen[data-kind=list] .ui-menu-item[data-value=disabled]:first-child { padding-top: 0.2em; }
 
@@ -124,6 +125,7 @@ const THEME_CSS = `
 .pg-ui .ui-box input[type=checkbox] { accent-color: var(--pg-accent); width: 18px; height: 18px; }
 .pg-ui .pg-settings .pg-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.6em; align-items: center; }
 .pg-ui .pg-settings [data-ui=binding-note] { grid-column: 1 / -1; font-size: 0.85em; opacity: 0.8; }
+.pg-ui .pg-settings > [data-ui=item] { margin: 1em 0.6em 0 0; }
 .pg-ui .pg-settings .pg-slider { display: grid; grid-template-columns: 1fr 4.2em; gap: 0.5em; align-items: center; }
 .pg-ui .pg-settings [data-ui=setting-shown] { text-align: right; font-variant-numeric: tabular-nums; color: var(--pg-dim); }
 .pg-ui .pg-checks button { display: block; width: 100%; text-align: left; margin: 0.25em 0; padding: 0.6em 0.8em; }
@@ -142,10 +144,17 @@ const THEME_CSS = `
   padding: 10px 18px; border-radius: 999px; font-size: 14px; color: var(--pg-dim); width: max-content;
   max-width: calc(100% - 2em); box-sizing: border-box; text-align: center; pointer-events: none; }
 
+/* ---- a panel with more below what shows (scrollCue.ts marks it): its bottom edge fades, saying so ---- */
+.pg-ui .pg-screen .ui-panel[data-more]::after, body > .feel-panel[data-more]::after { content: 'More below ▾';
+  display: block; position: sticky; bottom: -1px; margin-top: -2.6em; padding: 1.4em 0 0.4em; text-align: center;
+  font: 800 11px/1 Inter, system-ui, sans-serif; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--pg-accent); background: linear-gradient(rgba(10, 12, 18, 0), rgba(10, 12, 18, 0.95) 60%);
+  pointer-events: none; }
 /* ---- the controls sheet ---- */
 .pg-ui .pg-screen .pg-help { width: min(880px, 94vw); }
 .pg-groups { columns: 2 20em; column-gap: 2.6em; }
-.pg-group { break-inside: avoid; }
+.pg-group h3 { break-after: avoid; }
+.pg-key { break-inside: avoid; }
 .pg-group h3:first-child { margin-top: 0.4em; }
 .pg-keys { display: grid; gap: 0.1em; }
 .pg-key { display: flex; align-items: center; justify-content: space-between; gap: 1em; padding: 0.3em 0;
@@ -157,6 +166,7 @@ const THEME_CSS = `
 /* ---- the HUD (labs/playground/ui/hud.ts): every line a chip of one dark glass with light text, small, at the edges,
    readable on sky, stone and grass alike (WP 13.36: grey text with no backing read 1.0 to 1.9 to 1 on them); hidden
    under a screen but Tune ---- */
+.pg-ui:has(> .pg-screen[data-kind=side]) .ui-hud[data-id=mode] { display: none; } /* under Tune's corner */
 .pg-ui:has(> .pg-screen:not([data-kind=side])) :is(.ui-hud, .ui-crosshair, .ui-damage, .pg-card, .ui-label) {
   visibility: hidden; }
 body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel { display: none; }

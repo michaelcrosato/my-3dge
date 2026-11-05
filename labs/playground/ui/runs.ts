@@ -39,7 +39,7 @@ export const RECORDED_RUNS: readonly RecordedRun[] = [
   { id: 'block-gym', replay: 'playground-gym', label: 'The gym’s course', about: 'A lap of the gym: over the mantle wall, between the fences and round the climb walls.' }, // prettier-ignore
   { id: 'block-moves', replay: 'playground-moves', label: 'Moves', about: 'Sprints, hops, a walk and a crouch-walk, air-strafes and a bunny hop, then a slide and a slide-jump.' }, // prettier-ignore
   { id: 'block-climb', replay: 'playground-climb', label: 'Mantles and climbs', about: 'A superglide off the 1.5 m wall, the tall walls climbed, and a hang from the 3 m wall’s lip.' }, // prettier-ignore
-  { id: 'block-rides', replay: 'playground-rides', label: 'Ladder, zipline, pad and balloon', about: 'Up the tower’s ladder, down the zipline, off the jump pad, then up the balloon’s line and a skydive.' }, // prettier-ignore
+  { id: 'block-rides', replay: 'playground-rides', label: 'The rides', about: 'Up the tower’s ladder, down the zipline, off the jump pad, then up the balloon’s line and a skydive.' }, // prettier-ignore
   { id: 'playground-site', replay: 'playground-site', label: 'The house', about: 'The front door, the hall’s light, a door kicked in, a chair through a window and the garage door.' }, // prettier-ignore
   { id: 'playground-melee', replay: 'playground-melee', label: 'The ring', about: 'The shed’s door kicked in, then the dummies punched, kicked from a jump and uppercut from a slide.' }, // prettier-ignore
   { id: 'playground-range', replay: 'playground-range', label: 'The range', about: 'The pistol down the sights and from the hip, then the rifle’s bursts at the pop-ups and the movers.' }, // prettier-ignore

@@ -26,7 +26,7 @@ export interface ToolsItem {
 export const toolsItems = (has: { replays: boolean; feel: boolean }): ToolsItem[] => [
   { label: 'Tune the look…', id: 'tune' },
   { label: 'Recorded runs…', id: 'replays', disabled: !has.replays },
-  { label: 'Feel panel', id: 'feel', disabled: !has.feel },
+  { label: 'Tune the feel', id: 'feel', disabled: !has.feel },
   { label: 'The Stress Box and the labs…', id: 'pages' },
   { label: 'Back', id: 'back' },
 ];

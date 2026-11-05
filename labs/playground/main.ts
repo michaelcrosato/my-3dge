@@ -59,6 +59,7 @@ import { CARD_KEY, GOTO_KEY, HELP_KEY } from './ui/help';
 import { showHud, type HudPlayer } from './ui/hud';
 import { runReplays } from './ui/runs';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
+import { cueScroll } from './ui/scrollCue';
 import { signShown } from './ui/signs';
 import { createSplash, splashOnOpen } from './ui/splash';
 import { installTheme } from './ui/theme';
@@ -202,6 +203,7 @@ function showFrame({ world, scene, setting, dt }: EngineFrame): void {
   const gymScene = scene.id === gym.id;
   const stand = { gymScene, structure: player && !gymScene ? placeAt(scene, player)?.structure.name : undefined };
   for (const sign of signs) sign.label.visible = signShown(sign.at, player, stand, photo || modal); // never over a screen
+  cueScroll(document); // a panel with more below what shows says so (labs/playground/ui/scrollCue.ts)
   // the camera in use, however it changed (T, settings, the tour, `__engine.camera.set`), so the HUD never names another
   showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? (showing.camera || 'custom') };
   const now = `${showing.camera} ${showing.look}`;
