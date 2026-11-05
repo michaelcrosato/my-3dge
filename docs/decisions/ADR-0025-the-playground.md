@@ -2900,7 +2900,7 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   (`segmentHitsTriangles`), facades and stageSite tests, and a re-review of the house's screenshots.
 - **Left as they are** (low, from the two re-reviews of WP 13.42's shots, which found its high findings fixed: the
   player whole in every shot, no pit, no slit):
-  - the porch's posts stand whole while the porch roof over them is hidden with the upper storey;
+  - the porch's posts stood whole while the porch roof over them was hidden with the upper storey (amendment 61);
   - a hall wall's faces fall grey when its lamp's light is off the budget;
   - the attic's walls show their siding inside, and the head over its east window is the heads' paint;
   - a ladder stands on the ground floor over a cut storey;
@@ -2911,4 +2911,16 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     the basement.
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.42.
+
+## Amendment 61 (2026-11-05, WP 13.43): a post goes with the storey it holds up
+
+- **Found:** the re-reviews of WP 13.42's shots saw the porch's posts stand bare in every isometric shot of the house's
+  front. The storey cut took the upper storey off, the porch's roof with it, and left the ground floor's posts that
+  held it up.
+- **Decided:** a pillar that reaches the storey above holds it up (engine/gfx/level/meshes.ts, the mesh's `holds`, its
+  stump twin's too). The storey cut shows it only while the storey it holds shows (engine/gfx/storeyCut.ts
+  `planStoreys`), so the posts go with the porch's roof, and stand for a player outdoors.
+- **Evidence:** engine/gfx/storeyCut.test.ts and labs/playground/levels/house-facades.test.ts, each failing on the code
+  before.
+- Plan edit: WP 13.43.
 
