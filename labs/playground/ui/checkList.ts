@@ -113,7 +113,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'esc-0005',
     kind: 'decide',
     title: 'The 5,000-person crowd’s speed',
-    what: 'The plan asked the 5,000-person crowd to take half the processor time to draw. Culling it on the GPU halved its draw calls, but the processor time stayed the same: it goes on posing the bodies, not on drawing them. See the crowd (the Stress Box opens in a new tab), then pick what comes next.', // prettier-ignore
+    what: 'The plan asked the 5,000-person crowd to take half the processor time to draw. Culling it on the GPU halved its draw calls, but the processor time stayed the same: it goes on posing the bodies, not on drawing them. See the crowd (the Stress Box opens in a new tab; from playground.html, run npm run dev in the repository first), then pick what comes next.', // prettier-ignore
     from: 'ESC-0005',
     go: { page: 'labs/box/', query: { scene: 'crowd-5000' } },
     options: [
@@ -290,7 +290,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'labs',
     kind: 'try',
     title: 'The labs index',
-    what: 'The labs index opens in a new tab. In the Animation Lab, pick a move, scrub through it and show the bones; in the Library Lab, search for a clip and Apply it. Easy to use?', // prettier-ignore
+    what: 'The labs index opens in a new tab (Tools, then The Stress Box and the labs, opens each lab too; from playground.html, run npm run dev in the repository first). In the Animation Lab, pick a move, scrub through it and show the bones; in the Library Lab, search for a clip and Apply it. Easy to use?', // prettier-ignore
     from: item(12),
     go: { page: 'labs/index/' },
   },

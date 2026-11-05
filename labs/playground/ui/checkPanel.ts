@@ -4,7 +4,8 @@
  * - the list (`list`): a line on what the checks are for, then the decisions and the try checks, each marked by its
  *   answer (✓ settled, ✗ needs work, – skipped, • to do), then Copy my answers and Back;
  * - a check (`check:<id>`): what to try and judge (its `{action}`s as the player's keys, `key`), where it comes from,
- *   for a decision the call already taken, Go there when it has a place to go, the verdicts (a decision's choices,
+ *   for a decision the call already taken, Go there when it has a place to go (for another page, from playground.html,
+ *   first the line `away` gives on what to run, the button naming it), the verdicts (a decision's choices,
  *   or labs/playground/ui/checks.ts's `TRY_VERDICTS`), a note, Next check (the next one to do) and Back;
  * - the answers (`answers`): `answersText` in a box, a Copy button (the clipboard, else the text selected for the
  *   player's own copy) and Forget my answers, which asks again before it forgets.
@@ -43,6 +44,8 @@ export interface ChecksPanelOptions {
   today(): string;
   onAnswer(id: string, answer: CheckAnswer | null): void;
   onGo(check: OwnerCheck): void;
+  /** What to run first for `check`'s Go there to open (another page, from playground.html); undefined where none. */
+  away?(check: OwnerCheck): string | undefined;
   onBack(): void;
   /** The check it opens on; the list when none. */
   open?: string;
@@ -150,7 +153,9 @@ export function createChecksPanel(parent: HTMLElement, options: ChecksPanelOptio
     make('p', { textContent: words(check.what) });
     make('p', { className: 'pg-small', textContent: `From ${check.from}.` });
     if (check.options) make('p', { textContent: `Done while you were away: ${check.options[0].label}.` });
-    if (check.go) button('go', check.go.page ? 'Open it (a new tab)' : 'Go there', () => options.onGo(check));
+    const away = options.away?.(check);
+    if (away) make('p', { className: 'pg-small', textContent: away }); // the page is not here: say what to run first
+    if (check.go) button('go', check.go.page ? (away ? 'Open it (needs npm run dev)' : 'Open it (a new tab)') : 'Go there', () => options.onGo(check)); // prettier-ignore
     make('h3', { textContent: check.kind === 'decide' ? 'Your call' : 'Your verdict' });
     const note = field(Object.assign(doc.createElement('textarea'), { placeholder: 'A note (optional): what felt off, what you would change', value: answer?.note ?? '' })); // prettier-ignore
     note.dataset.ui = 'check-note';

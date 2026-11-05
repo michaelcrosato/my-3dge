@@ -25,10 +25,13 @@ export const ABOUT: Readonly<Record<string, string>> = {
   photo: 'A free camera: fly it with the move keys, turn it with a drag.',
   tour: 'Sit back: a recorded tour of everything on the block, the view stepping through the cameras and the looks.',
   checks: 'What only you can judge: try each thing it names and say how it feels or looks.',
-  tools: 'For tuning and testing: the look’s filters, recorded runs, the movement numbers.',
+  tools:
+    'For tuning and testing: the look’s filters, recorded runs, the movement numbers, and the Stress Box and the labs.',
   tune: 'Every filter of the look, its scope and amount, and looks laid on: changes show at once.',
   replays: 'Play a recorded run of the block, then take over the controls.',
   feel: 'The movement numbers, live (F shows and hides it).',
+  pages:
+    'The engine’s own pages beside the block, each in a new tab: the Stress Box’s crowds, fights, props and ragdolls, and the seven labs.',
   restart: 'Start the block again from the beginning, on the same seed.',
   title: 'Back to the start menu.',
   check: 'Say how the check under way went.',
