@@ -72,7 +72,9 @@ export function lowCeiling(
   const [cols, rows] = [[] as number[], [] as number[]];
   storey.tiles.forEach((char, at) => {
     const glyph = level.legend[char];
-    if ((glyph?.head ?? 0) > 0 && ['', 'none', undefined].includes(glyph.opening)) [cols.push(at % level.cols), rows.push(Math.floor(at / level.cols))]; // prettier-ignore
+    if (!((glyph?.head ?? 0) > 0) || !['', 'none', undefined].includes(glyph.opening)) return;
+    cols.push(at % level.cols);
+    rows.push(Math.floor(at / level.cols));
   });
   return cols.length ? [Math.min(...cols), Math.min(...rows), Math.max(...cols), Math.max(...rows)] : undefined;
 }
