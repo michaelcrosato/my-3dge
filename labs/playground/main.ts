@@ -21,14 +21,14 @@
  * (isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
  *
  * Each drawn frame (`onFrame`) it runs the front end (pause on Escape; the attract mode, the tour with the view
- * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where
- * the player is on the block, `whereOn`; the camera and look for `MODE_SECONDS` after either changes), the area card
- * as he walks into an area (labs/playground/ui/areas.ts), the gym's signs within `SIGN_RANGE` of him while he is in the
- * gym and no screen is open (labels draw over walls), the frame's sound (labs/playground/sounds/page.ts, WP 13.22),
- * silent until the first key, click or touch, and the weather (labs/playground/weather.ts, WP 11.3). It changes the
- * run only through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's
- * spot (`playground.check`, labs/playground/ui/checks.ts, WP 13.28), whose answers keep in a store that a replay
- * leaves on too.
+ * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where the
+ * player is on the block, `whereOn`; the camera and look for `MODE_SECONDS` after either changes), the area card as he
+ * walks into an area (labs/playground/ui/areas.ts), the gym's signs near him while he is in the gym and no screen is
+ * open (labs/playground/ui/signs.ts: labels draw over walls), the frame's sound (labs/playground/sounds/page.ts, WP
+ * 13.22), silent until the first key, click or touch, and the weather (labs/playground/weather.ts, WP 11.3). It changes
+ * the run only through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's
+ * spot (`playground.check`, labs/playground/ui/checks.ts, WP 13.28), whose answers keep in a store that a replay leaves
+ * on too.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's. The ground's materials (labs/playground/ground.ts) register when it loads.
@@ -58,11 +58,9 @@ import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/fr
 import { GOTO_KEY, HELP_KEY } from './ui/help';
 import { showHud, type HudPlayer } from './ui/hud';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
+import { signShown } from './ui/signs';
 import { createSplash } from './ui/splash';
 import { installTheme } from './ui/theme';
-
-/** How near the player a sign shows (m): the features around him, not the whole gym at once. */
-const SIGN_RANGE = 24;
 
 /** How long the HUD shows the camera and the look after either changes (s). */
 const MODE_SECONDS = 3;
@@ -194,13 +192,10 @@ function showFrame({ world, scene, setting, dt }: EngineFrame): void {
   const player = entity?.actor;
   const photo = frontEnd?.state().screens.at(-1) === 'photo';
   const modal = frontEnd?.modal() ?? false;
-  // on the block, only inside the gym: the labels draw over everything, so from the yard or the house they would
-  // show through its walls
-  const inGym = !player || scene.id === gym.id || `level:${placeAt(scene, player)?.structure.name}` === SITE_STRUCTURES.gym.level; // prettier-ignore
-  for (const sign of signs) {
-    const near = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
-    sign.label.visible = !photo && !modal && inGym && near; // never over a screen
-  }
+  // on the block, only inside the gym and near him (labs/playground/ui/signs.ts): the labels draw over everything
+  const gymScene = scene.id === gym.id;
+  const stand = { gymScene, structure: player && !gymScene ? placeAt(scene, player)?.structure.name : undefined };
+  for (const sign of signs) sign.label.visible = signShown(sign.at, player, stand, photo || modal); // never over a screen
   // the camera in use, however it changed (T, settings, the tour, `__engine.camera.set`), so the HUD never names another
   showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? (showing.camera || 'custom') };
   const now = `${showing.camera} ${showing.look}`;
