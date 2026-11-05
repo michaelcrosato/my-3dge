@@ -5024,8 +5024,11 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)
 
+- `cellNeighbours` (function): The indexes of the cells of `cells` beside each one: sharing an edge on the ground (their boxes touch along a side, not at a corner).
 - `LevelCell` (interface): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1, or [0, 0] where it faces nowhere: see the file comment).
 - `levelCells` (function): The cells of `pieces` in `level`, standing at height `bottom` (see the file comment).
+- `settleCuts` (function): Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a `group` is cut when any of its group's is; one whose neighbours in its list (`cellNeighbours`), two at least, are all cut is cut with them, so no piece stands alone, a post, beside its cut ones; and a cell two lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
+- `STANDING_AREA` (const): The most a block standing in rooms covers (m²): a chimney's breast, a counter, an island (see the file comment).
 
 ### [`engine/gfx/level/dais.ts`](../engine/gfx/level/dais.ts)
 
@@ -5039,6 +5042,7 @@ For the agents who maintain the engine.
 - `facadeTiles` (function): Each tile of `openings` on a facade, by its index on a map `cols` wide: the facade its opening faces.
 - `INSIDE` (const): An opening between two rooms, or none: it faces no way out.
 - `openingFacade` (function): The way `opening`'s wall faces out of the building (see the file comment).
+- `openingRooms` (function): `opening`'s rooms on `view`, the lower x or z side's first, a side with none found past its low solids (see the file comment).
 
 ### [`engine/gfx/level/faces.ts`](../engine/gfx/level/faces.ts)
 
@@ -5062,6 +5066,9 @@ For the agents who maintain the engine.
 - `liningGeometry` (function): The quad lining face `face` (an index into `LINING_FACES`) of a piece `size` across ([x, z], m) and `height` tall from its foot, `FACING` out of it, its ends `FACING` past it, u along it and v up in metres.
 - `LiningPart` (interface): One lining part: a face's way of a recipe's walls, its quad and stump, the cells it lines and its material.
 - `liningParts` (function): The lining parts of `walls` on `view` (see the file comment): `linings` gives a recipe's lining material, or undefined for one that has none.
+- `LOW_SOLID` (const): A solid at most this high over its floor (m) is furniture a room's face looks over: a counter (0.9 m), a bath.
+- `roomPast` (function): The room tile (`col`, `row`) of `view` opens onto, stepping `dc`, `dr` over solids at most `LOW_SOLID` over their floor: the room of the first tile that is not solid, or −1 (the outdoors, a taller solid, the map's edge).
+- `RoomView` (type): What `roomPast` reads of a storey's view: its grids, and its tiles' tops and floors where it has them.
 
 ### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
 
