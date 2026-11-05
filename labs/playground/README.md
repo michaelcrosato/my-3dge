@@ -19,10 +19,11 @@ modes and three looks, clean, cel-shaded and pixel art. Every claim below is che
 2. The splash screen shows while the block loads (`labs/playground/ui/splash.ts`); press any key for the start menu
    (`labs/playground/ui/frontEnd.ts`): Play, Go to (any area of the block or room of the house), Settings, Controls,
    Photo mode, Watch the tour, Owner checks and Tools (the Tune panel for the look's filters, the recorded runs, the
-   feel panel). Esc pauses, with the same screens, Restart and Main menu.
+   feel panel, and the Stress Box and the labs, pages of their own that `npm run dev` serves). Esc pauses, with the
+   same screens, This area's card, Restart and Main menu.
 3. Play: click the game to look around with the mouse. As you walk into an area, a card names it and what to try
-   there (`labs/playground/ui/areas.ts`); the top-left names where you are. H shows every control with its key
-   (`labs/playground/ui/help.ts`) and M is Go to. The essentials: WASD moves, Space jumps (and mantles and climbs),
+   there (`labs/playground/ui/areas.ts`), and I shows it again; the top-left names where you are. H shows every
+   control with its key (`labs/playground/ui/help.ts`) and M is Go to. The essentials: WASD moves, Space jumps (and mantles and climbs),
    Shift sprints, C crouches (a slide at a sprint), E uses what the HUD names (a door, a switch, a zipline, a ladder,
    a chair to throw), V strikes, 1 and 2 draw the pistol and the rifle, the left button fires and the right aims; T
    steps through the cameras and P through the looks. Settings rebinds any key in every camera at once; the settings
@@ -38,7 +39,7 @@ pixel look, `labs/playground/?playground.spawn=area:range` starts at the range, 
 `?replay=playground-rides` the rides, `?replay=playground-site` the house's doors, lights, windows and garage,
 `?replay=playground-melee` the shed's door kicked in and the ring's dummies punched and kicked, `?replay=playground-range`
 the range's targets shot down with the pistol and the rifle), then hands you the controls; Tools, then Recorded runs,
-lists them. `labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`):
+lists them by name, the gym's played on the block (`labs/playground/ui/runs.ts`). `labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`):
 those runs in turn on the block, with the view stepping through the five cameras and the looks; the start menu's Watch
 the tour opens it, and an idle start menu does after a minute.
 
