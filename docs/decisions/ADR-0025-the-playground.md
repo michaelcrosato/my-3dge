@@ -2796,3 +2796,41 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   changed cell on the posts, the slab edge or beside them).
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.40.
+
+## Amendment 59 (2026-11-05, WP 13.41): the house in isometric
+
+- **Found:** after WP 13.40 a visual reviewer read the house from the kitchen and the hall, in first person and in the
+  classic views, each finding checked against the code and an ID pass.
+  - **The kitchen's counter wall showed siding inside.** The counter is a solid 0.9 m high, in no room, so the wall
+    behind it opened onto no room: no lining. The windows over it stood between no rooms, so they were on no facade.
+    Their facings showed siding too, and the cutaway never left them out with their facade.
+  - **Loose posts.** The chimney's breast, a block of wall between the living room and the room north of it, faced
+    into itself, away from its rooms. In isometric its sides were cut by a line of sight and its corner stood whole: a
+    post of siding, on the ground floor and the upper one.
+  - **Panes and doors stood whole over the stumps.** They are props, not wall: no cut reached them. An open door, its
+    leaf edge-on, read as another post, and the garage's door as a slab.
+  - The reviewer's player hidden behind a hall wall was a resident in the next room: the player stood on the porch,
+    in plain view. Not a defect.
+- **Decided:**
+  - A face looks over a solid at most `LOW_SOLID` (1.2 m) over its floor to the room beyond (engine/gfx/level/linings.ts
+    `roomPast`), and so does an opening's side (engine/gfx/level/facades.ts `openingRooms`). This is presentation
+    only: the compiled level's rooms and openings are unchanged.
+  - A block standing in rooms faces nowhere and is cut whole (engine/gfx/level/cells.ts). It is a run of a mesh's
+    pieces opening onto rooms alone, never the outdoors, holding a 2 × 2 square, and at most `STANDING_AREA` (4 m²).
+    That covers a chimney's breast, a counter and an island. The basement's earth between its rooms, written as
+    partitions, is larger.
+  - The cutaway settles its plan (`settleCuts`): a group is cut whole, and a piece whose neighbours in its part, two at
+    least, are all cut goes with them. A cell two parts share (a wall's piece and its lining) is cut in both or neither.
+  - The level meshes say which of a storey's opening tiles stand on which facade (`facadeTiles`). The site hides a prop
+    in an opening of a facade its cutaway leaves out on the player's storey (engine/gfx/stageSite.ts `hides`; the props'
+    key carries the facades). A hanging door is tested by its hinge, which stays in its opening as the leaf swings
+    (engine/gfx/stageProps.ts); a broken one is tested by its leaf.
+  - A lone level (not a site's structure) keeps the storey cut alone: the house is drawn only through the block's site.
+- **Evidence:**
+  - labs/playground/levels/house-linings.test.ts: 13 pieces of the counter wall and 2 walls over its windows met
+    siding; none do now.
+  - house-facades.test.ts: 2 outer openings stood on no facade; none do now.
+  - house-posts.test.ts: 19 posts from the house's rooms in isometric's four turns, none now.
+  - The cells, cutaway, linings, facades, stageSite and stageProps tests.
+- **Not verified:** the owner's eye on the house in every camera (`house-views`).
+- Plan edit: WP 13.41.
