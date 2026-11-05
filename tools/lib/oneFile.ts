@@ -12,8 +12,9 @@
  *
  * Invariants: the page fetches nothing (`externalRefs` is empty); a `</script` inside the script is written
  * `<\/script`, which means the same in a string, a template, a regular expression or a comment, and a `<!--` in it, which
- * no such rewrite makes safe, fails the build. The links to the other pages (the labs index, the Stress Box) lead
- * nowhere from the file: only the playground is in it.
+ * no such rewrite makes safe, fails the build. Only the playground is in it: its links to the engine's other pages
+ * (the Stress Box, the labs index, the labs) are the dev server's from the file, each saying in plain words to run
+ * npm run dev first (labs/playground/ui/pages.ts).
  *
  * @example
  * inlineBuild('<script type="module" crossorigin src="./a.js"></script>', { 'a.js': 'go()' }); // '<script type="module">go()</script>'

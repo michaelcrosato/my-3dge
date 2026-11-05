@@ -50,7 +50,8 @@
  * - `brazier`: a stone foot and a bowl of glowing coals on each piece, sized to its glyph's radius and top, with the
  *   ground under its tile. [foot and bowl, coals, ground]
  * - `railing` (WP 13.14): along each run of its pieces, posts at its ends and at most 1 m apart, a top rail and a
- *   bottom rail, its top the glyph's (engine/gfx/level/openings.ts). [posts and rails]
+ *   bottom rail, its top the glyph's, and its tiles' floor at its foot (engine/gfx/level/openings.ts, WP 13.38).
+ *   [posts, rails and floor]
  * - `flight` (WP 13.14): each ramp under the pieces drawn as a flight of steps rising about 0.18 m each, as a house's
  *   stairs do, from its storey's floor to the next one's (engine/gfx/level/flights.ts). [risers and sides, treads]
  * - `ceiling`, `heads`, `frames`, `roof`: a storey's own parts (engine/gfx/level/{slabs,openings,roofs}.ts), drawn

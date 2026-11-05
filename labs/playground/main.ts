@@ -6,29 +6,29 @@
  * (`createEngine`, engine/app/engine.ts) on the block unless `?scene` names another (the gym's and the hill's
  * calibration scenes, and the block opened at an area, stay for the tests and replays), in the shooter camera and the
  * clean look unless the query names others, warming up only what it draws (`gfx.warmUp: asked`), with the
- * playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
+ * playground's replays (tests/replays/playground-*) and Tools' recorded runs (`runs`) offered to `?replay=<name>`.
  *
- * A person opening the page sees the splash screen while it loads (labs/playground/ui/splash.ts), then the start menu
- * over the block (labs/playground/ui/frontEnd.ts: Play, Go to, Settings, Controls, Photo mode, the tour, the owner's
- * checks, Tools); automation, a replay and `playground.title=off` go straight to play. The page wears one theme
- * (labs/playground/ui/theme.ts, the overlay's `pg-ui` class).
+ * A person sees the splash screen while any page loads (labs/playground/ui/splash.ts `splashOnOpen`), then the start
+ * menu over the block (labs/playground/ui/frontEnd.ts); a replay, the tour and `playground.title=off` fade from it
+ * into play, and automation sees it only with the start menu. The page wears one theme (labs/playground/ui/theme.ts,
+ * the overlay's `pg-ui` class).
  *
- * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
- * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
+ * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and the
+ * maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
  * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P steps through the looks; H opens the controls
- * sheet, M Go to, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F shows and hides the feel panel
- * (labs/playground/feel.ts, WP 13.4). A click takes the pointer for mouse look in the three perspective cameras
- * (isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
+ * sheet, M Go to, I the area's card, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F the feel
+ * panel (labs/playground/feel.ts, WP 13.4). A click takes the pointer for mouse look in the perspective cameras
+ * (isometric and top-down keep the cursor to aim). They are view state: no camera, look or switch changes the hash.
  *
  * Each drawn frame (`onFrame`) it runs the front end (pause on Escape; the attract mode, the tour with the view
- * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where
- * the player is on the block, `whereOn`; the camera and look for `MODE_SECONDS` after either changes), the area card
- * as he walks into an area (labs/playground/ui/areas.ts), the gym's signs within `SIGN_RANGE` of him while he is in the
- * gym and no screen is open (labels draw over walls), the frame's sound (labs/playground/sounds/page.ts, WP 13.22),
- * silent until the first key, click or touch, and the weather (labs/playground/weather.ts, WP 11.3). It changes the
- * run only through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's
- * spot (`playground.check`, labs/playground/ui/checks.ts, WP 13.28), whose answers keep in a store that a replay
- * leaves on too.
+ * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where the
+ * player is on the block, `whereOn`; the camera and look for `MODE_SECONDS` after either changes), the area card as he
+ * walks into an area (labs/playground/ui/areas.ts), the gym's signs near him while he is in the gym and no screen is
+ * open (labs/playground/ui/signs.ts: labels draw over walls), the frame's sound (labs/playground/sounds/page.ts, WP
+ * 13.22), silent until the first key, click or touch, and the weather (labs/playground/weather.ts, WP 11.3). It changes
+ * the run only through the front end's recorded picks (a spawn, a restart, the movement profile) and an owner's check's
+ * spot (`playground.check`, labs/playground/ui/checks.ts, WP 13.28), whose answers keep in a store that a replay leaves
+ * on too.
  *
  * The gym's text is computed from its features, so the page registers the text the scene compiles (`GYM_TEXT`), as the
  * starter game registers its arena's. The ground's materials (labs/playground/ground.ts) register when it loads.
@@ -55,14 +55,13 @@ import { areaAt, createAreaCard, locationLine, type AreaCardView } from './ui/ar
 import { createAttract, TOUR_REPLAY, type Attract } from './ui/attract';
 import { checkLine, ownerCheck, placeOnOpen } from './ui/checks';
 import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
-import { GOTO_KEY, HELP_KEY } from './ui/help';
+import { CARD_KEY, GOTO_KEY, HELP_KEY } from './ui/help';
 import { showHud, type HudPlayer } from './ui/hud';
+import { runReplays } from './ui/runs';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
-import { createSplash } from './ui/splash';
+import { signShown } from './ui/signs';
+import { createSplash, splashOnOpen } from './ui/splash';
 import { installTheme } from './ui/theme';
-
-/** How near the player a sign shows (m): the features around him, not the whole gym at once. */
-const SIGN_RANGE = 24;
 
 /** How long the HUD shows the camera and the look after either changes (s). */
 const MODE_SECONDS = 3;
@@ -96,6 +95,8 @@ const replays = Object.fromEntries(
     import.meta.glob<string>('../../tests/replays/playground-*.replay.json', { query: '?raw', import: 'default' }),
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
+/** Tools' recorded runs, by id, every one on the block (labs/playground/ui/runs.ts: the gym's moved onto it). */
+const runs = runReplays(replays);
 
 /**
  * The page's query: the player's kept preferences where it names none (labs/playground/ui/prefs.ts; a replay's page
@@ -120,7 +121,9 @@ if (!search.has('cam.wholeZoom')) search.set('cam.wholeZoom', 'true');
 if (!search.has('gfx.warmUp')) search.set('gfx.warmUp', 'asked'); // its looks draw through the chain, never plain
 /** Whether the page opens on its start menu, behind the splash screen (labs/playground/ui/splash.ts). */
 const showsTitle = titleOnOpen(search.get('playground.title') ?? 'auto', search, navigator.webdriver);
-const splash = showsTitle ? createSplash(document) : null;
+/** The splash while the page loads: for a person on every load, waiting for a key only over the start menu. */
+const opensWith = splashOnOpen(showsTitle, navigator.webdriver);
+const splash = opensWith.show ? createSplash(document) : null;
 for (const type of ['error', 'unhandledrejection']) addEventListener(type, () => splash?.remove()); // the error shows
 
 /** The camera member of the inspector (engine/app/viewMembers.ts). */
@@ -186,7 +189,8 @@ function showFrame({ world, scene, setting, dt }: EngineFrame): void {
     signs = GYM_FEATURES.map((feature) => {
       const [x, y, z] = feature.sign;
       const at = [x + origin[0], y + origin[1], z + origin[2]] as const;
-      return { label: ui.label(feature.label, { at, id: `sign:${feature.id}` }), at };
+      // decluttered: of two signs that overlap on screen the nearer shows, so none is read through another
+      return { label: ui.label(feature.label, { at, id: `sign:${feature.id}`, declutter: true }), at };
     });
   }
   const players = world.query('actor') as unknown as PlayerEntity[];
@@ -194,13 +198,10 @@ function showFrame({ world, scene, setting, dt }: EngineFrame): void {
   const player = entity?.actor;
   const photo = frontEnd?.state().screens.at(-1) === 'photo';
   const modal = frontEnd?.modal() ?? false;
-  // on the block, only inside the gym: the labels draw over everything, so from the yard or the house they would
-  // show through its walls
-  const inGym = !player || scene.id === gym.id || `level:${placeAt(scene, player)?.structure.name}` === SITE_STRUCTURES.gym.level; // prettier-ignore
-  for (const sign of signs) {
-    const near = !player || Math.hypot(sign.at[0] - player.x, sign.at[2] - player.z) <= SIGN_RANGE;
-    sign.label.visible = !photo && !modal && inGym && near; // never over a screen
-  }
+  // on the block, only inside the gym and near him (labs/playground/ui/signs.ts): the labels draw over everything
+  const gymScene = scene.id === gym.id;
+  const stand = { gymScene, structure: player && !gymScene ? placeAt(scene, player)?.structure.name : undefined };
+  for (const sign of signs) sign.label.visible = signShown(sign.at, player, stand, photo || modal); // never over a screen
   // the camera in use, however it changed (T, settings, the tour, `__engine.camera.set`), so the HUD never names another
   showing = { ...showing, camera: cameraMode(camera()?.get().code ?? '')?.name ?? (showing.camera || 'custom') };
   const now = `${showing.camera} ${showing.look}`;
@@ -252,7 +253,7 @@ engine = await createEngine({
   onView,
   scenes: sceneEntries.map((entry) => entry.id),
   levels,
-  replays,
+  replays: { ...replays, ...runs },
   search: `?${search}`,
   store,
   modal: () => frontEnd?.modal() ?? false,
@@ -293,8 +294,9 @@ if (engine.ready && engine.inspector && engine.ui && engine.input) {
     attract: (search.get('playground.attract') ?? 'auto') === 'auto' && !navigator.webdriver,
     checkStore,
     check,
-    replays: Object.keys(replays),
+    replays: Object.keys(runs),
     toggleFeel: feel ? () => feel.toggle() : undefined,
+    showCard: () => card?.show(),
   });
   if (search.get('playground.attract') === 'on' && replays[TOUR_REPLAY]) {
     const { steps } = JSON.parse(await replays[TOUR_REPLAY]()) as { steps: number };
@@ -304,7 +306,7 @@ if (engine.ready && engine.inspector && engine.ui && engine.input) {
     frontEnd.open('title'); // under the splash, which fades to show it
   else if (menuAsked) frontEnd.open('pause'); // the menu button, tapped while the page loaded
 }
-if (engine.ready) await splash?.ready(!navigator.webdriver);
+if (engine.ready) await splash?.ready(opensWith.wait);
 else splash?.remove(); // a failed start: its error and fix show at once (the page's #msg)
 
 addEventListener('keydown', (event) => {
@@ -314,6 +316,7 @@ addEventListener('keydown', (event) => {
     frontEnd.open(event.code === HELP_KEY ? 'help' : 'spawns');
     return;
   }
+  if (frontEnd && !frontEnd.modal() && event.code === CARD_KEY) return void card?.show(); // the area's card again
   if (event.code === LOOK_KEY) {
     const look = nextLook(showing.look);
     inspector.set('post.look', look);

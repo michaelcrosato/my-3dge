@@ -6,25 +6,30 @@
  *    camera's map and refuses one another action holds, naming it; Play resumes; Escape pauses, and a key the menu reads
  *    reaches no intent (Space picks Resume and the player never jumps); photo mode flies the free camera on the move
  *    keys with the HUD hidden and puts the camera back on leaving; after a reload the settings and the rebind are kept;
+ *    the menus' footers name the keys, and a pad walks Settings and steps a slider, the footer and the controls naming
+ *    its buttons;
  * 2. the Tune panel (WP 13.32) lists every filter; turning one on, sliding its numbers, laying a look on and sliding the
  *    strength reach the look drawn (`__engine.look()`) with no pipeline built after the first frame through the chain;
- *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back;
+ *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back; Tools' feel panel opens in the
+ *    theme (the type and the accent), headed, and its Close button closes it; Tools lists the recorded runs by their
+ *    plain names and the engine's pages beside the block;
  * 3. the movement profile from settings starts the scene again on it, and the run's replay holds it and plays back to
  *    its hash in Node; Restart starts it again on its seed;
  * 4. Go to, from the gym, opens the block at the area picked; on the block it puts the player in the room
  *    picked through the recorded dev action `place`, the HUD naming the room; the run replays to its hash in Node; the
- *    HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
+ *    I shows the area's card and puts it away, and so does pause's This area's card; Settings' Time of day sets the block's clock once let go, its value read
+ *    beside it; the HUD of each camera mode: the crosshair in the shooter with a gun out, the feel readout in isometric;
  * 5. the owner's checks (WP 13.28): the start menu lists them with how many are left; the keys work the panel as a menu; a
  *    check's view names the player's keys, takes a verdict and a note (keys typed in it reach nothing else) and keeps
- *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place`, the
- *    HUD naming the check, and pause answers it.
+ *    them; the answers come out as text; Go there opens the check's page at its spot through the recorded `place` (the
+ *    mantle walls of the gym on the block), the HUD naming the check, and pause answers it.
  *
  * Invariants: the page is read through `[data-ui]` elements, `__engine` and `__playgroundUi` only; frames are run with
  * the virtual clock (`harness.tick`), so the front end reads each key at a frame as the page's loop samples it.
  */
 import type { Page } from '@playwright/test';
 import { FILTER_NAMES } from '../../engine/gfx/post/filters';
-import { playReplay, type Replay } from '../../engine/sim/replay';
+import { playReplay } from '../../engine/sim/replay';
 import '../../labs/playground/cast/player';
 import '../../labs/playground/scenes/gym';
 import '../../labs/playground/scenes/site';
@@ -32,7 +37,11 @@ import { CONTROL_ACTIONS, SETTING_ROWS } from '../../labs/playground/ui/settings
 import { spawnPlaces } from '../../labs/playground/ui/spawns';
 import { OWNER_CHECKS, ownerCheck } from '../../labs/playground/ui/checks';
 import { AREAS } from '../../labs/playground/ui/areas';
+import { ENGINE_PAGES } from '../../labs/playground/ui/pages';
+import { RECORDED_RUNS } from '../../labs/playground/ui/runs';
 import { expect, test } from './fixtures';
+// prettier-ignore
+import { call, checksItem, hud, menuLabels, PAD, plugPad, pick, player, press, READY, recording, screens, shown, SITE_READY, slide, tapPad } from './playground-page';
 
 /** The page's engine and front end, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
@@ -40,58 +49,6 @@ declare const __playgroundUi: {
   state(): { screens: string[]; paused: boolean };
   checks(): { id: string; verdict: string; note: string }[];
 };
-
-/** How long the gym's page and the site's may take to warm up (ms): playground.spec.ts's. */
-const [READY, SITE_READY] = [120_000, 420_000];
-
-/** Calls the `__engine` member at `path` with `args`. */
-function call<T = unknown>(page: Page, path: string, ...args: unknown[]): Promise<T> {
-  return page.evaluate(
-    ([name, rest]) => {
-      const fn = name.split('.').reduce<unknown>((at, part) => (at as Record<string, unknown>)[part], __engine);
-      return (fn as (...a: unknown[]) => unknown)(...rest) as T;
-    },
-    [path, args] as const,
-  );
-}
-
-/** The open screens, top last, and whether the run is paused by them. */
-const screens = (page: Page) => page.evaluate(() => __playgroundUi.state());
-
-/** The HUD's lines that show, by id. */
-const hud = (page: Page): Promise<Record<string, string>> =>
-  page.locator('[data-ui=hud]').evaluateAll((lines) => Object.fromEntries(lines.filter((line) => !(line as HTMLElement).hidden && line.textContent).map((line) => [line.getAttribute('data-id'), line.textContent]))); // prettier-ignore
-
-/** Picks the item `id` of the open menu `menu` with a click, then runs a frame. */
-async function pick(page: Page, harness: { tick(n?: number): Promise<void> }, menu: string, id: string): Promise<void> {
-  await page.locator(`[data-ui=menu][data-id="${menu}"] [data-ui=item][data-id="${id}"]`).click();
-  await harness.tick(2);
-}
-
-/** The owner's checks item, with `left` of them to do. */
-const checksItem = (left: number) => `Owner checks (${left} to do)…`;
-
-/** A setting row's value as the screen shows it. */
-const shown = (page: Page, id: string) => page.locator(`[data-ui=setting][data-id="${id}"]`).getAttribute('data-value');
-
-/** Sets a slider of the settings screen, as a hand on it would. */
-async function slide(page: Page, id: string, value: number): Promise<void> {
-  await page.locator(`[data-ui=setting][data-id="${id}"] input`).evaluate((input: HTMLInputElement, v) => {
-    input.value = String(v);
-    input.dispatchEvent(new Event('input'));
-  }, value);
-}
-
-/** The player's entity. */
-const player = (page: Page) =>
-  call<{ actor: { x: number; y: number; z: number; vx: number; vz: number }; motion?: unknown }>(page, 'get', 1);
-
-/** The run's recording and its hash, in the page. */
-const recording = (page: Page) =>
-  page.evaluate(() => ({
-    replay: (__engine.input as unknown as { record(): unknown }).record() as Replay,
-    hash: __engine.hash() as unknown as string,
-  }));
 
 test.describe('the playground’s front end', () => {
   test.setTimeout(900_000);
@@ -107,6 +64,8 @@ test.describe('the playground’s front end', () => {
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
     expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Go to…', 'Settings', 'Controls', 'Photo mode', 'Watch the tour', checksItem(OWNER_CHECKS.length), 'Tools…']); // prettier-ignore
+    const footer = (kind: string) => page.locator(`.pg-screen[data-kind=${kind}] .pg-footer[data-keyboard]`); // a key hint: none on touch
+    await expect(footer('title')).toHaveText('Enter: select · Esc: play');
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -135,26 +94,23 @@ test.describe('the playground’s front end', () => {
     const elsewhere = await rebind('jump', 'KeyG'); // free in the shooter's map, isometric's use: refused in every map
     await expect(elsewhere.locator('[data-ui=binding-note]')).toContainText("interact's in the isometric camera");
     await expect(elsewhere).toHaveAttribute('data-value', /KeyK/);
-    await page.keyboard.press('Escape'); // back to the title
-    await harness.tick(2);
+    await press(page, harness, 'Escape'); // back to the title
     expect((await screens(page)).screens).toEqual(['title']);
     await pick(page, harness, 'title', 'play');
     expect(await screens(page)).toEqual({ screens: [], paused: false });
     expect((await hud(page)).mode).toBe('Camera: shooter · Look: pixel');
 
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     expect((await screens(page)).screens).toEqual(['pause']);
-    expect(await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents()).toEqual(['Resume', 'Go to…', 'Settings', 'Controls', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Tools…', 'Restart', 'Main menu']); // prettier-ignore
+    expect(await menuLabels(page, 'pause')).toEqual(['Resume', 'Go to…', 'Settings', 'Controls', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Tools…', 'Restart', 'Main menu']); // prettier-ignore
+    await expect(footer('menu')).toHaveText('Enter: select · Esc: back');
     const before = await player(page);
-    await page.keyboard.press('Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
-    await harness.tick(2);
+    await press(page, harness, 'Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
     expect(await screens(page)).toEqual({ screens: [], paused: false });
     await harness.tick(20);
     expect((await player(page)).actor.y).toBeCloseTo(before.actor.y, 2);
 
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     const still = await player(page);
     await pick(page, harness, 'pause', 'photo');
     expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=fly,/);
@@ -167,18 +123,24 @@ test.describe('the playground’s front end', () => {
     const to = (await call<{ pose: { position: number[] } }>(page, 'camera.get')).pose.position;
     expect(Math.hypot(to[0] - from[0], to[2] - from[2])).toBeGreaterThan(1); // flown, at 4 m/s for half a second
     expect((await player(page)).actor).toMatchObject({ x: still.actor.x, z: still.actor.z }); // the run still paused
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     expect((await screens(page)).screens).toEqual(['pause']);
     expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=shoulder/);
     await pick(page, harness, 'pause', 'play');
 
+    await page.addInitScript(plugPad); // a pad in slot 0, untouched until a test presses it
     await page.reload();
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'settings');
     expect([await shown(page, 'cam.fov'), await shown(page, 'post.look'), await shown(page, 'volume:music')]).toEqual(['104', 'look:playground-pixel', '0.25']); // prettier-ignore
     await expect(page.locator('[data-ui=binding][data-id=jump]')).toHaveAttribute('data-value', /KeyK/);
+    // A pad works the panel (labs/playground/ui/walk.ts, WP 13.38): its d-pad walks to the field of view and steps it,
+    // and the footer and the controls name its buttons.
+    for (const button of [PAD.down, PAD.down, PAD.right]) await tapPad(page, harness, button); // the camera, the field of view, +1
+    expect(await shown(page, 'cam.fov')).toBe('105');
+    await expect(footer('panel')).toHaveText('B: back');
+    await expect(page.locator('[data-ui=item][data-id="rebind:jump"]')).toHaveText('A');
     expect(harness.advice()).toEqual([]);
   });
 
@@ -232,9 +194,22 @@ test.describe('the playground’s front end', () => {
     await expect(panel.locator('[data-ui=tune-layer]')).toHaveCount(0);
     await panel.locator('[data-ui=item][data-id=reset]').click();
     expect(await look()).toEqual(before);
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     expect((await screens(page)).screens).toEqual(['title', 'tools']);
+    // Tools' recorded runs by their plain names, and the engine's pages beside the block (WP 13.38)
+    await pick(page, harness, 'tools', 'replays');
+    expect(await menuLabels(page, 'replays')).toEqual([...RECORDED_RUNS.map((run) => run.label), 'Back']);
+    await pick(page, harness, 'replays', 'back');
+    await pick(page, harness, 'tools', 'pages');
+    expect(await menuLabels(page, 'pages')).toEqual([...ENGINE_PAGES.map((one) => one.label), 'Back']); // on the dev server: no note
+    await pick(page, harness, 'pages', 'back');
+    expect((await screens(page)).screens).toEqual(['title', 'tools']);
+    await pick(page, harness, 'tools', 'feel'); // the feel panel, beside the overlay, in the theme (WP 13.38)
+    const feel = page.locator('[data-ui=feel]');
+    await expect(feel.getByRole('heading', { name: 'Tune the feel' })).toBeVisible();
+    expect(await feel.evaluate((el) => [getComputedStyle(el).fontFamily, getComputedStyle(el.querySelector('input')!).accentColor])).toEqual([expect.stringMatching(/^Inter,/), 'rgb(255, 181, 71)']); // prettier-ignore
+    await feel.locator('[data-feel=close]').click();
+    await expect(feel).toBeHidden();
     expect(harness.advice()).toEqual([]);
   });
 
@@ -250,16 +225,14 @@ test.describe('the playground’s front end', () => {
     await harness.tick(2);
     expect((await player(page)).motion).toBeUndefined(); // the box hero's controller: no shooter model
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(0); // started again, paused under the screen
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     await pick(page, harness, 'title', 'play');
     await call(page, 'pause');
     await call(page, 'step', 60, { move: [-1, 0] });
     const { replay, hash } = await recording(page);
     expect(replay.settings).toMatchObject({ 'playground.movement': 'movement:platformer' });
     expect(playReplay(replay).hashes[String(replay.steps)]).toBe(hash);
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     await pick(page, harness, 'pause', 'restart');
     expect((await call<{ tick: number }>(page, 'info')).tick).toBeLessThan(5);
     expect((await player(page)).motion).toBeUndefined(); // the setting kept over the restart
@@ -275,7 +248,7 @@ test.describe('the playground’s front end', () => {
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'spawns');
-    const items = await page.locator('[data-ui=menu][data-id=spawns] [data-ui=item]').allTextContents();
+    const items = await menuLabels(page, 'spawns');
     const [areas, rooms] = ['area', 'room'].map((group) => spawnPlaces().filter((place) => place.group === group).map((place) => place.label)); // prettier-ignore
     expect(items).toEqual(['Areas of the block', ...areas, 'Rooms of the house', ...rooms, 'Back']);
     expect(areas).toEqual(Object.values(AREAS).map((card) => card.name)); // each area by its card's name
@@ -300,6 +273,35 @@ test.describe('the playground’s front end', () => {
     expect(replay.inputs.filter(([, change]) => JSON.stringify(change).includes('"place"'))).toHaveLength(2);
     expect(playReplay(replay).hashes[String(replay.steps)]).toBe(hash);
 
+    // I shows the area's card again, a second press putting it away (WP 13.38)
+    const card = page.locator('[data-ui=area-card]');
+    const cardNow = async () => (await call(page, 'render', 1), (await card.getAttribute('data-value')) ?? '');
+    const before = await cardNow();
+    await press(page, harness, 'KeyI');
+    const toggled = await cardNow();
+    await press(page, harness, 'KeyI');
+    expect([toggled, await cardNow()]).toEqual([before === 'shown' ? '' : 'shown', before]);
+    await press(page, harness, 'Escape'); // pause's This area's card: I's, for a pad
+    await pick(page, harness, 'pause', 'card');
+    expect([(await screens(page)).screens, await cardNow()]).toEqual([[], toggled]);
+    // Settings' Time of day sets the block's clock, once the slider is let go (WP 13.38)
+    await press(page, harness, 'Escape');
+    await pick(page, harness, 'pause', 'settings');
+    await page.locator('[data-ui=setting][data-id="playground.hour"] input').evaluate((input: HTMLInputElement) => {
+      input.value = '22';
+      input.dispatchEvent(new Event('input')); // a step of the drag: read beside it
+      input.dispatchEvent(new Event('change')); // let go: reported
+    });
+    await expect(page.locator('[data-ui=setting][data-id="playground.hour"] [data-ui=setting-shown]')).toHaveText(
+      '22:00',
+    );
+    await press(page, harness, 'Escape');
+    await press(page, harness, 'Escape');
+    await call(page, 'pause');
+    await call(page, 'step', 2);
+    const clock = await page.evaluate(() => (__engine.state('daytime') as { entities: { daytime: { hour: number } }[] }).entities[0].daytime.hour); // prettier-ignore
+    expect(Math.floor(clock)).toBe(22);
+
     await page.keyboard.press('Digit1'); // the pistol out: the shooter's crosshair
     await call(page, 'resume');
     await harness.tick(40);
@@ -318,6 +320,7 @@ test.describe('the playground’s front end', () => {
     page,
     harness,
   }) => {
+    test.setTimeout(1_500_000); // Go there opens the gym on the block: the block's page warms up as Go to's does
     await page.goto('labs/playground/?scene=gym&playground.title=on');
     await harness.ready({ timeout: READY });
     await harness.tick(2);
@@ -331,8 +334,7 @@ test.describe('the playground’s front end', () => {
     }
     await expect(panel).toHaveAttribute('data-value', 'check:esc-0003');
     await expect(panel.locator('[data-ui=item][data-id="verdict:without"]')).toHaveAttribute('data-value', 'selected');
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
+    await press(page, harness, 'Escape');
     await expect(panel).toHaveAttribute('data-value', 'list');
     await panel.locator('[data-ui=item][data-id="check:mantle"]').click();
     await expect(panel).toHaveAttribute('data-value', 'check:mantle');
@@ -346,13 +348,12 @@ test.describe('the playground’s front end', () => {
     await expect(panel.locator('[data-ui=item][data-id="check:mantle"]')).toHaveAttribute('data-value', 'needs-work');
     await panel.locator('[data-ui=item][data-id=answers]').click();
     await expect(panel.locator('[data-ui=answers-text]')).toHaveValue(/- mantle \(docs\/PLAYGROUND\.md §9\.3, item 3\), Mantle, vault and climb: Needs work \(say what in the note\)\. Note: pause/); // prettier-ignore
-    await page.keyboard.press('Escape'); // back to the list
-    await harness.tick(2);
+    await press(page, harness, 'Escape'); // back to the list
     await expect(panel).toHaveAttribute('data-value', 'list');
     await panel.locator('[data-ui=item][data-id="check:mantle"]').click();
     await panel.locator('[data-ui=item][data-id=go]').click();
     await page.waitForURL(/playground\.check=mantle/);
-    await harness.ready({ timeout: READY });
+    await harness.ready({ timeout: SITE_READY });
     await harness.tick(2);
     expect(await screens(page)).toEqual({ screens: [], paused: false }); // no start menu on a check's page
     await call(page, 'pause');
@@ -366,9 +367,8 @@ test.describe('the playground’s front end', () => {
     expect(places).toMatchObject([[expect.any(Number), { dev: 'place', args: { at: [...spot], yaw: 0 } }]]);
     expect(playReplay(replay).hashes[String(replay.steps)]).toBe(hash);
     await call(page, 'resume');
-    await page.keyboard.press('Escape');
-    await harness.tick(2);
-    const items = await page.locator('[data-ui=menu][data-id=pause] [data-ui=item]').allTextContents();
+    await press(page, harness, 'Escape');
+    const items = await menuLabels(page, 'pause');
     expect(items.slice(0, 2)).toEqual(['Resume', 'Answer this check…']);
     expect(items).toContain(checksItem(OWNER_CHECKS.length - 2)); // esc-0003 and mantle answered
     await pick(page, harness, 'pause', 'check');

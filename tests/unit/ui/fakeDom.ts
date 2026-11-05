@@ -1,10 +1,13 @@
 /**
  * @file A stand-in for the few DOM calls the overlay makes (engine/ui/{overlay,labels,state}.ts, and WP 10.6's
- * widgets.ts, dialog.ts and menu.ts), for their unit tests in Node (T1), where there is no page: elements with
- * attributes, `dataset`, `hidden`, `style` (properties and custom properties), classes, text and children;
- * `querySelector(All)` and `closest` for class, attribute and descendant selectors; listeners, `dispatch(type, init)`
- * (every event bubbles, `init`'s fields on it) and `click()`; and a canvas whose client rect a test sets. Nothing lays the page out, so only the canvas has a
- * `getBoundingClientRect`, and `ui.state()` gives null boxes (the browser half is tests/e2e/overlay.spec.ts).
+ * widgets.ts, dialog.ts and menu.ts) and the feel panel (engine/dev/feel/panel.ts, as labs/playground/feel.ts mounts
+ * it), for their unit tests in Node (T1), where there is no page: elements with attributes, `dataset`, `hidden`,
+ * `style` (properties and custom properties), classes, text and children (`append`, `prepend`, `replaceChildren`,
+ * `insertBefore`, `after`, `remove`); `querySelector(All)` and `closest` for class, attribute and descendant
+ * selectors; listeners, `dispatch(type, init)` (every event bubbles, `init`'s fields on it) and `click()`; and a canvas
+ * whose client rect a test sets. Nothing lays the page out, so only the canvas has a `getBoundingClientRect`,
+ * `ui.state()` gives null boxes (the browser half is tests/e2e/overlay.spec.ts), and an element's `offsetWidth` and
+ * `offsetHeight` are 0 unless a test sets them (a label's size, for its declutter).
  *
  * Invariants: it models only what those modules use; anything else is missing, so a new DOM call fails loudly.
  *
@@ -73,6 +76,9 @@ export class FakeElement {
   private readonly attributes = new Map<string, string>();
   private ownText = '';
   readonly dataset: Record<string, string | undefined>;
+  /** Its laid-out size, CSS px: 0, as nothing lays the fake out, unless a test sets it. */
+  offsetWidth = 0;
+  offsetHeight = 0;
   readonly ownerDocument: FakeDocument;
   readonly tagName: string;
   constructor(ownerDocument: FakeDocument, tagName: string) {
@@ -138,6 +144,14 @@ export class FakeElement {
   }
   append(...children: FakeElement[]): void {
     for (const child of children) this.insertBefore(child, null);
+  }
+  prepend(...children: FakeElement[]): void {
+    const first = this.children.find((child) => !children.includes(child)) ?? null;
+    for (const child of children) this.insertBefore(child, first);
+  }
+  replaceChildren(...children: FakeElement[]): void {
+    for (const child of [...this.children]) child.remove();
+    this.append(...children);
   }
   insertBefore(child: FakeElement, before: FakeElement | null): FakeElement {
     child.remove();

@@ -2,11 +2,19 @@
  * @file Unit tests for skies (engine/gfx/sky.ts): the presets as data, the backdrop bake (reproducible, tiling,
  * clear above its skylines), and a sky on the hall whose presets and quality tiers change only who casts shadows,
  * never how many lights the scene holds; an entry shown as a preset is (the hour's sky, WP 13.23), its backdrop tinted
- * and baked again only when its silhouettes change.
+ * and baked again only when its silhouettes change; the dome is a sphere of small triangles, not SkyMesh's box (a
+ * wedge of the sky came out the horizon's colour, WP 13.38).
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PerspectiveCamera, Scene, type MeshBasicNodeMaterial, type Object3D } from 'three/webgpu';
+import {
+  PerspectiveCamera,
+  Scene,
+  SphereGeometry,
+  type Mesh,
+  type MeshBasicNodeMaterial,
+  type Object3D,
+} from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { hashNumbers } from '../core/hash';
 import { createRegistry } from '../core/registry';
@@ -123,6 +131,17 @@ describe('createSky', () => {
       expect(casting(), tier).toBe(casters);
     }
     expect(lightKey(scene).map((key) => key.replace('s', ''))).toEqual(ids);
+  });
+
+  it('draws the dome on a sphere of small triangles, not SkyMesh’s box (WP 13.38)', () => {
+    // The box's faces beside the camera, cut at the near plane, gave the daylight model a world position so imprecise
+    // that a wedge of the sky came out the horizon's colour (the playground, 2026-11-03). keepNearPlane's clamp to the
+    // far plane is a TSL vertex node, which Node cannot evaluate without a renderer: it is not covered here.
+    const { sky } = make();
+    const geometry = (sky.dome as unknown as Mesh).geometry;
+    expect(geometry).toBeInstanceOf(SphereGeometry);
+    const { widthSegments, heightSegments } = (geometry as SphereGeometry).parameters;
+    expect([widthSegments >= 32, heightSegments >= 16]).toEqual([true, true]);
   });
 
   it('follows the camera with the dome and backdrop, and the focus with the fog and the pool', () => {

@@ -2,8 +2,8 @@
  * @file The playground's preferences (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what its settings screen changes and
  * the page's store keeps across sessions (`createStore`, engine/app/store.ts, under `PREFS_PREFIX`): the camera mode
  * the page opens in, the settings of `PREF_SETTINGS` by path (the field of view, the mouse, the look, the quality, the
- * movement profile) and the audio buses' levels. The engine keeps the bindings in the same store
- * (`createEngine({ store })`).
+ * movement profile, the block's time of day and day's length, the rain and the dust) and the audio buses' levels. The
+ * engine keeps the bindings in the same store (`createEngine({ store })`).
  *
  * Only what the player changed is kept, never a default, so no number here restates a setting's schema.
  * `readPrefs(store)` reads them back, dropping what is not of their shape. `prefsQuery(prefs, search, scenes)` writes
@@ -12,8 +12,9 @@
  * kept setting is checked by the engine's own routes (`parseRoutes`) first, and one the schema refuses (a kept value
  * an older page wrote) is left out, so a stale preference never stops the page.
  *
- * Invariants: presentation only, but for the movement profile, a sim setting (`playground.movement`) that enters the
- * run's settings as the page opens, so the run's replay holds it. The store keeps nothing in the modes that leave a
+ * Invariants: presentation only, but for the movement profile, the time of day and the day's length, sim settings
+ * (`playground.movement`, `playground.hour`, `playground.day`) that enter the run's settings as the page opens, so the
+ * run's replay holds them (a replay's page plays the replay's own). The store keeps nothing in the modes that leave a
  * player's saves alone: the page opens its store in `demo` while a replay plays.
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's own files.
@@ -45,6 +46,10 @@ export const PREF_SETTINGS = [
   'quality',
   'gfx.governor',
   'playground.movement',
+  'playground.hour',
+  'playground.day',
+  'playground.rain',
+  'playground.dust',
 ] as const;
 
 /** One of `PREF_SETTINGS`. */

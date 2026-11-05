@@ -77,6 +77,8 @@ export interface CutTarget {
   cells: readonly Pick<LevelCell, 'centre' | 'size' | 'out'>[];
   bottom: number;
   top: number;
+  /** A level written as storeys: the storey it stands on (its part's `storey`); none on a level of one storey. */
+  storey?: number;
 }
 
 /**
@@ -128,8 +130,17 @@ export function segmentHitsBox(a: Vec3, b: Vec3, min: Vec3, max: Vec3): boolean 
  *   its plane, back along its view; a perspective one from its position. The test runs in the picture's space,
  *   heights scaled by the pose's `boost` (engine/gfx/cameras/boost.ts), so it is what the frame shows.
  * - `'either'` (a house's walls): when either cuts it.
+ *
+ * With `storey`, the facing rule cuts only that storey's pieces (and those of no storey): a site's building, with the
+ * player indoors and a perspective camera outside it (engine/gfx/stageSite.ts), keeps the walls of the storeys above
+ * and below his, which hide nothing of him. The blocking rule still cuts a piece of any storey on a line of sight.
  */
-export function planCutaway(targets: readonly CutTarget[], pose: CameraPose, focus: Vec3): boolean[][] {
+export function planCutaway(
+  targets: readonly CutTarget[],
+  pose: CameraPose,
+  focus: Vec3,
+  storey?: number,
+): boolean[][] {
   const ortho = pose.projection === 'orthographic';
   const forward = poseForward(pose);
   const [px, py, pz] = pose.position;
@@ -148,9 +159,10 @@ export function planCutaway(targets: readonly CutTarget[], pose: CameraPose, foc
     const length = Math.hypot(dx, dz);
     return length > 1e-9 && (cell.out[0] * dx + cell.out[1] * dz) / length > CUT_FACING;
   };
-  return targets.map(({ when, cells, bottom, top }) =>
+  return targets.map(({ when, cells, bottom, top, storey: on }) =>
     cells.map((cell) => {
-      if (when !== 'blocking' && facing(cell)) return true;
+      const mine = storey === undefined || on === undefined || on === storey; // a piece the facing rule may cut
+      if (when !== 'blocking' && mine && facing(cell)) return true;
       if (when === 'facing') return false;
       const [cx, , cz] = cell.centre;
       const [hx, hz] = [cell.size[0] / 2 + CUT_MARGIN, cell.size[1] / 2 + CUT_MARGIN];
@@ -206,9 +218,10 @@ export interface Cutaway {
    * Cuts what `pose` needs cut to see `focus` (the pose's target by default), and with `fade` takes out of the picture
    * what still stands between them (see the file comment); says what is cut and faded. With `cut: false` it cuts
    * nothing and only fades: a site's structure the player stands outside of (engine/gfx/stageSite.ts), whose walls
-   * facing the camera hide nothing of his.
+   * facing the camera hide nothing of his. With `storey`, the walls facing the camera are cut on that storey only
+   * (`planCutaway`).
    */
-  update(pose: CameraPose, focus?: Vec3, options?: { fade?: boolean; cut?: boolean }): CutawayReport;
+  update(pose: CameraPose, focus?: Vec3, options?: { fade?: boolean; cut?: boolean; storey?: number }): CutawayReport;
   /** Puts every piece back whole. */
   clear(): CutawayReport;
   /** The tiles of each part's cut pieces, by part name. */
@@ -252,7 +265,7 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
       return { part, twin, cuts: none, fades: none };
     });
   const cutting = entries.filter((entry) => entry.twin !== null);
-  const targets: CutTarget[] = cutting.map(({ part }) => ({ ...part, when: part.cut!.when }));
+  const targets: CutTarget[] = cutting.map(({ part }) => ({ ...part, when: part.cut!.when })); // its storey with it
   const boxes = new WeakMap<Object3D, Box3>();
   const hidden = new Set<Object3D>();
   const registrations = new Set<{ dispose(): void }>();
@@ -324,8 +337,8 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
   };
   return {
     twins: cutting.map(({ twin }) => twin!),
-    update(pose, focus = poseTarget(pose), { fade = false, cut = true } = {}) {
-      const cuts = cut ? planCutaway(targets, pose, focus) : targets.map(({ cells }) => cells.map(() => false));
+    update(pose, focus = poseTarget(pose), { fade = false, cut = true, storey } = {}) {
+      const cuts = cut ? planCutaway(targets, pose, focus, storey) : targets.map(({ cells }) => cells.map(() => false)); // prettier-ignore
       if (!fade) return apply(cuts, none(), new Set());
       return apply(
         cuts,

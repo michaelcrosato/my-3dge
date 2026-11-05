@@ -4,17 +4,21 @@
  * left; `menu`; `list`: a long menu in columns; `panel`: a panel in the middle; `side`: a panel at the side over the
  * open world), headed by the playground's name (`heading` null), a heading, or nothing (''), with a body for the
  * screen's menu or panel, a line under it that says what the selected item does (`detail`, `ABOUT`'s words), and the
- * keys in the footer. `brand(doc, sub)` is the playground's name as the start menu and the splash head it.
+ * keys in the footer: `footer`, a string or a function read again at each `refresh()` (the front end's screens call
+ * it each frame), for `screenKeys`, the menus' keys on the device used last; marked `data-keyboard`, so a touch screen
+ * hides it (engine/ui/overlay.ts). `brand(doc, sub)` is the playground's name as the start menu and the splash head it.
  *
- * Invariants: presentation only; it reads nothing and the caller removes `el`.
+ * Invariants: presentation only; it reads nothing but what `footer` reads, and the caller removes `el`.
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's own files.
  *
  * @example
  * ABOUT.play; // 'Walk the block: …'
+ * screenKeys({ prompt: (action) => (action === 'uiAccept' ? 'A' : 'B') }, 'title'); // 'A: select · B: play'
  * // const { el, body, detail } = createFrame(ui.root, 'menu', 'Paused');
  * @see tests/e2e/playground-ui.spec.ts
  */
+import type { Input } from '../../../engine';
 
 /** What each menu item is for, shown under the menu as the cursor rests on it. */
 export const ABOUT: Readonly<Record<string, string>> = {
@@ -23,12 +27,16 @@ export const ABOUT: Readonly<Record<string, string>> = {
   settings: 'The camera, the mouse, the movement, the look and quality, the volumes, and every key.',
   help: 'Every control, with its key.',
   photo: 'A free camera: fly it with the move keys, turn it with a drag.',
+  card: 'Back to play, the card of the area you are in shown again: what it is and what to try (I).',
   tour: 'Sit back: a recorded tour of everything on the block, the view stepping through the cameras and the looks.',
   checks: 'What only you can judge: try each thing it names and say how it feels or looks.',
-  tools: 'For tuning and testing: the look’s filters, recorded runs, the movement numbers.',
+  tools:
+    'For tuning and testing: the look’s filters, recorded runs, the movement numbers, and the Stress Box and the labs.',
   tune: 'Every filter of the look, its scope and amount, and looks laid on: changes show at once.',
   replays: 'Play a recorded run of the block, then take over the controls.',
   feel: 'The movement numbers, live (F shows and hides it).',
+  pages:
+    'The engine’s own pages beside the block, each in a new tab: the Stress Box’s crowds, fights, props and ragdolls, and the seven labs.',
   restart: 'Start the block again from the beginning, on the same seed.',
   title: 'Back to the start menu.',
   check: 'Say how the check under way went.',
@@ -45,13 +53,22 @@ export function brand(doc: Document, sub: string): HTMLElement {
   return el;
 }
 
-/** A screen's frame, made in `root` (see the file comment). */
+/**
+ * The footer of a screen of `kind`, naming the menus' keys (`uiAccept`, `uiCancel`) on the device used last: on the
+ * start menu cancelling plays, on every other screen it goes back; a panel names only that, a side panel nothing.
+ */
+export function screenKeys(input: Pick<Input, 'prompt'>, kind: string): string {
+  const cancel = `${input.prompt('uiCancel')}: ${kind === 'title' ? 'play' : 'back'}`;
+  return kind === 'side' ? '' : kind === 'panel' ? cancel : `${input.prompt('uiAccept')}: select · ${cancel}`;
+}
+
+/** A screen's frame, made in `root` (see the file comment); `refresh()` writes a function footer again. */
 export function createFrame(
   root: HTMLElement,
   kind: string,
   heading: string | null,
-  footer = 'Enter: select · Esc: back',
-): { el: HTMLElement; body: HTMLElement; detail: HTMLElement } {
+  footer: string | (() => string) = '',
+): { el: HTMLElement; body: HTMLElement; detail: HTMLElement; refresh(): void } {
   const doc = root.ownerDocument;
   const el = Object.assign(doc.createElement('div'), { className: 'pg-screen' });
   el.dataset.kind = kind;
@@ -62,7 +79,16 @@ export function createFrame(
   const body = Object.assign(doc.createElement('div'), { className: 'pg-body' });
   const detail = text('pg-detail', '');
   el.append(body, detail);
-  if (footer) el.append(text('pg-footer', footer));
+  const foot = footer ? text('pg-footer', '') : null;
+  if (foot) {
+    foot.dataset.keyboard = ''; // a key hint
+    el.append(foot);
+  }
+  const refresh = () => {
+    const now = typeof footer === 'function' ? footer() : footer;
+    if (foot && foot.textContent !== now) foot.textContent = now;
+  };
+  refresh();
   root.append(el);
-  return { el, body, detail };
+  return { el, body, detail, refresh };
 }

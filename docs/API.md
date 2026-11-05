@@ -8577,9 +8577,10 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/feel.ts`](../labs/playground/feel.ts)
 
+- `FEEL_HEADING` (const): The heading and the line the playground puts over the panel's buttons.
 - `FEEL_KEY` (const): The key that shows and hides the panel.
 - `feelOpens` (const): Whether the query (`?playground.feel=on`) opens the panel.
-- `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`: open when the query asks, F toggling it unless `held` (a screen of the page's is open, under which the panel hides: F would toggle it out of sight).
+- `mountFeelPanel` (function): Mounts the panel on `document` over `inspector`, headed and with a Close button (see the file comment): open when the query asks, F toggling it unless `held` (a screen of the page's is open, under which the panel hides: F would toggle it out of sight).
 - `PLAYGROUND_FEEL_SETTINGS` (const): The playground's feel setting: whether the panel shows when the page opens.
 
 ### [`labs/playground/furnish.ts`](../labs/playground/furnish.ts)
@@ -8706,6 +8707,7 @@ For the agents who maintain the engine.
 
 - `areaStart` (function): Where `area`'s spawn stands: its point, on the highest floor at or under it.
 - `backyard` (const): The block, the player in the backyard.
+- `dayRate` (const): The clock's rate (hours a sim second) for a day of `minutes` minutes (`playground.day`); 0 holds the hour.
 - `default` (default): The block's scenes (docs/PLAYGROUND.md §2, PLAN.md WP 13.18): `playground:site`, the whole block with the player in the front yard, and a scene per area (`playground:site-<area>`: the house, the backyard, the street, the gym, the hill, the range, the ring), the same block with the player at that area's spawn (`SITE_AREAS`, labs/playground/levels/site.ts).
 - `HEAD_HEIGHT` (const): How high over his feet a standing player's head reaches, m: where that is solid, he is put ducked.
 - `house` (const): The block, the player in the hall.
@@ -8833,6 +8835,7 @@ For the agents who maintain the engine.
 - `answersText` (function): The answers as text to paste back to an agent: the decisions, then the try checks, then what is left.
 - `CHECK_SETTINGS` (const): The view setting naming the check under way (see the file comment).
 - `CheckAnswer` (interface): An answer: the verdict (a try check's `TRY_VERDICTS` id, a decide check's option id), a note, and its day.
+- `checkAway` (const): What to run first for `check`'s link to open from the playground at `here` (another page, from the file); else undefined.
 - `checkLine` (const): The HUD's line while `check` is under way.
 - `CHECKS_KEY` (const): The store's key for the answers.
 - `checkUrl` (function): The link that opens `check` where it is judged, from the playground page at `here` (see the file comment).
@@ -8849,7 +8852,8 @@ For the agents who maintain the engine.
 
 - `ABOUT` (const): What each menu item is for, shown under the menu as the cursor rests on it.
 - `brand` (function): The playground's name as the start menu and the splash head it: a kicker, the title and `sub` under it.
-- `createFrame` (function): A screen's frame, made in `root` (see the file comment).
+- `createFrame` (function): A screen's frame, made in `root` (see the file comment); `refresh()` writes a function footer again.
+- `screenKeys` (function): The footer of a screen of `kind`, naming the menus' keys (`uiAccept`, `uiCancel`) on the device used last: on the start menu cancelling plays, on every other screen it goes back; a panel names only that, a side panel nothing.
 - `textDiv` (const): A `div` of `className` holding `textContent`, made in `doc`.
 
 ### [`labs/playground/ui/frontEnd.ts`](../labs/playground/ui/frontEnd.ts)
@@ -8864,6 +8868,7 @@ For the agents who maintain the engine.
 
 ### [`labs/playground/ui/help.ts`](../labs/playground/ui/help.ts)
 
+- `CARD_KEY` (const): The page's key that shows the area's card again (labs/playground/ui/areas.ts), kept from rebinding as the sheet's.
 - `createHelp` (function): Makes the controls sheet in `parent` (see the file comment).
 - `GOTO_KEY` (const): The page's key for Go to, kept from rebinding as the sheet's.
 - `HELP_GROUPS` (const): The sheet's groups, in order (see the file comment).
@@ -8895,6 +8900,17 @@ For the agents who maintain the engine.
 - `replayLink` (const): The page playing the recorded run `id`, the view kept.
 - `VIEW_KEYS` (const): The query keys of the view a player chose, which a link to another page keeps (see the file comment).
 
+### [`labs/playground/ui/pages.ts`](../labs/playground/ui/pages.ts)
+
+- `awayNote` (function): What to run for a page's link to open, in plain words, from the playground at `here`; undefined where it opens.
+- `DEV_SERVER` (const): Where the repository's dev server serves its pages (`npm run dev`, `PORT` unset: vite.config.ts's host and port).
+- `ENGINE_PAGES` (const): The engine's pages Tools lists, the Stress Box first, then the labs index and the seven labs.
+- `EnginePage` (interface): One of the engine's pages: its path from the repository's root, its plain name and what it shows.
+- `fromFile` (const): Whether the page at `here` is the one file opened from disk, which holds only the playground.
+- `pageAbout` (function): What the page `page` shows, the line under the menu, from the playground at `here` (from the file, what to run).
+- `pageItems` (function): The items of Tools' pages screen from the playground at `here`, each page by its name (its id the page's path); from playground.html, first a line no cursor rests on saying what to run, so it shows however short the window is.
+- `pageUrl` (function): The link to the engine's page `page` (`labs/box/`) with `query` (`?scene=…`, or ''), from the playground `here`.
+
 ### [`labs/playground/ui/photo.ts`](../labs/playground/ui/photo.ts)
 
 - `createPhoto` (function): Makes photo mode, closed: its hint in `parent`, its drag over `canvas`.
@@ -8914,15 +8930,29 @@ For the agents who maintain the engine.
 - `readPrefs` (function): The preferences `store` keeps, or none; whatever is not of their shape is dropped.
 - `savePrefs` (function): Keeps `prefs` in `store`; false when the store refused it.
 
+### [`labs/playground/ui/runs.ts`](../labs/playground/ui/runs.ts)
+
+- `RECORDED_RUNS` (const): The runs, in the tour's order: the gym's four under ids of their own, played on the block (see the file comment).
+- `RecordedRun` (interface): One run of the list: its id (`?replay=<id>`), the committed replay it plays, its name and what it shows.
+- `runReplays` (function): The list's runs by id, from the page's `replays` by name (see the file comment); a run whose replay is missing is left out.
+
 ### [`labs/playground/ui/settings.ts`](../labs/playground/ui/settings.ts)
 
+- `clockAfter` (function): The block's clock once Time of day or Day length (`id`) changed to `value`, the other read through `setting`: the `daytime` dev action's `{ hour, rate }` (labs/playground/scenes/site.ts), as the scene's start reads them; null for another row.
 - `CONTROL_ACTIONS` (const): The actions the controls list, with their names: the four moves, then those the player answers (controls.ts).
 - `createSettings` (function): Makes the settings screen in `parent` (see the file comment).
+- `plainNumber` (const): A slider's value as it reads beside it: whole, or to two places.
 - `RowSchema` (interface): A setting's schema as the screen reads it: its type, range and choices.
 - `SETTING_ROWS` (const): The rows, in the screen's order (see the file comment).
 - `SettingRow` (interface): What a row sets: a setting by path, the camera mode, or a bus's level.
 - `SettingsOptions` (interface): How the screen is made.
 - `SettingsScreen` (interface): The settings screen.
+
+### [`labs/playground/ui/signs.ts`](../labs/playground/ui/signs.ts)
+
+- `SIGN_RANGE` (const): How near the player a sign shows (m): the features around him, not the whole gym at once.
+- `SignPlace` (interface): Where the player stands, for the signs: on the gym's own scene, and in which of the block's structures, by name.
+- `signShown` (function): Whether the sign at `sign` (world, m) shows for `player` standing at `where`, unless `covered` (see the file comment).
 
 ### [`labs/playground/ui/spawns.ts`](../labs/playground/ui/spawns.ts)
 
@@ -8935,10 +8965,16 @@ For the agents who maintain the engine.
 
 - `createSplash` (function): Shows the splash in `doc` (see the file comment).
 - `Splash` (interface): The splash (see the file comment).
+- `splashOnOpen` (const): Whether the page shows the splash as it opens, and whether it then waits for a player (see the file comment), from whether the page opens on its start menu (`title`, frontEnd.ts `titleOnOpen`) and whether automation drives it.
 
 ### [`labs/playground/ui/theme.ts`](../labs/playground/ui/theme.ts)
 
 - `installTheme` (function): Adds the theme's stylesheet to `doc` once (see the file comment).
+
+### [`labs/playground/ui/tools.ts`](../labs/playground/ui/tools.ts)
+
+- `ToolsItem` (interface): One of Tools' items, as the engine's menu takes it.
+- `toolsItems` (const): Tools' items (see the file comment): the recorded runs and the feel panel offered where the page has them.
 
 ### [`labs/playground/ui/tune.ts`](../labs/playground/ui/tune.ts)
 
@@ -8947,6 +8983,12 @@ For the agents who maintain the engine.
 - `lookText` (function): The filters drawn now as a `defineLook` to paste (see the file comment): each filter that is on with its scope and the fields off their defaults, so the look draws the same picture.
 - `TuneOptions` (interface): How the panel is made.
 - `TunePanel` (interface): The Tune panel.
+
+### [`labs/playground/ui/walk.ts`](../labs/playground/ui/walk.ts)
+
+- `walkable` (function): The controls of `panel` the walk visits, in the page's order: those that show and are enabled.
+- `WalkInput` (type): What the walk reads of the input: the menus' keys this frame, and the device used last.
+- `walkPanel` (function): Runs one frame of the menus' keys over `panel` (see the file comment).
 
 ### [`labs/playground/views.ts`](../labs/playground/views.ts)
 
@@ -9012,6 +9054,23 @@ For the agents who maintain the engine.
 - `replay` (const): A replay file's name and text.
 - `Stage` (interface): A box stage's scene and its replays, and live play to record in it (inside `evaluate`, ticking the virtual clock).
 - `STAGES` (const): The stages and what each proves the contract with.
+
+### [`tests/e2e/playground-page.ts`](../tests/e2e/playground-page.ts)
+
+- `call` (function): Calls the `__engine` member at `path` with `args`.
+- `checksItem` (const): The owner's checks item, with `left` of them to do.
+- `hud` (const): The HUD's lines that show, by id.
+- `menuLabels` (const): The labels of the open menu `menu`'s items, in order.
+- `PAD` (const): The standard mapping's buttons a test presses: the d-pad's down and right.
+- `pick` (function): Picks the item `id` of the open menu `menu` with a click, then runs a frame.
+- `player` (const): The player's entity.
+- `plugPad` (function): Plugs a pad into slot 0 as the page opens (`page.addInitScript`): `window.__pad`, its buttons a test presses.
+- `press` (function): Presses `key` on the keyboard, then runs two frames, so the front end reads it at a frame as the page's loop does.
+- `recording` (const): The run's recording and its hash, in the page.
+- `screens` (const): The open screens, top last, and whether the run is paused by them.
+- `shown` (const): A setting row's value as the screen shows it.
+- `slide` (function): Sets a slider of the settings screen, as a hand on it would.
+- `tapPad` (function): Presses the pad's `button` for two frames, then lets it go for two (see `plugPad`).
 
 ### [`tests/e2e/post-cases.ts`](../tests/e2e/post-cases.ts)
 

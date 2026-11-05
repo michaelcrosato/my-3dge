@@ -3,13 +3,16 @@
  * the block's map; every area has a card whose keys are actions; the location line names the room indoors, as a
  * player reads it; the street reads as the street across its whole width, sidewalks and bus stop too, the house over
  * its walls at any height and over its map above the ground floor (the roof to its eaves, the porch roof, the deck),
- * and the patio, the porch and the apron, on the house's map but outside it, as the yards.
+ * and the patio, the porch and the apron, on the house's map but outside it, as the yards; the area card slides in
+ * on entering an area and again on the card key (I, a second press putting it away), never while a screen is up, and
+ * none off the block.
  */
 import { describe, expect, it } from 'vitest';
 import { getSite, siteStructureAt } from '../../../engine/sim-api';
+import { fakePage, type FakeElement } from '../../../tests/unit/ui/fakeDom';
 import { HOUSE_RECTS } from '../levels/house';
 import { SITE_AREAS, SITE_STRUCTURES, type SiteArea } from '../levels/site';
-import { AREA_OF_STRUCTURE, AREAS, areaAt, HOUSE_WALLS, locationLine } from './areas';
+import { AREA_OF_STRUCTURE, AREAS, areaAt, CARD_SECONDS, createAreaCard, HOUSE_WALLS, locationLine } from './areas';
 
 const site = getSite('site:block');
 
@@ -65,5 +68,32 @@ describe('the block’s areas', () => {
       z1 + hz,
     ]);
     expect(HOUSE_WALLS).toEqual(walls); // the level's own, at the house's place
+  });
+
+  it('slides the card in on entering an area, and again on the card key, never over a screen', () => {
+    const parent = fakePage({ left: 0, top: 0, width: 1280, height: 720 }).document.createElement('div');
+    const card = createAreaCard(parent as unknown as HTMLElement, (action) => action.toUpperCase());
+    const shown = () => card.el.dataset.value === 'shown';
+    card.update('gym', 0.1, false);
+    expect([shown(), card.el.dataset.id]).toEqual([true, 'gym']); // walked in
+    const el = card.el as unknown as FakeElement;
+    expect([el.querySelector('.pg-card-title')?.textContent, el.children.at(-1)?.children.length]).toEqual([AREAS.gym.name, AREAS.gym.tries.length]); // prettier-ignore
+    card.update('gym', CARD_SECONDS, false);
+    expect(shown()).toBe(false); // its seconds spent
+    card.show();
+    card.update('gym', 0.1, false);
+    expect(shown()).toBe(true); // the card key: the area's card again
+    card.show();
+    card.update('gym', 0.1, false);
+    expect(shown()).toBe(false); // again: put away
+    card.show();
+    card.update('gym', 0.1, true);
+    expect(shown()).toBe(false); // a screen is up: it waits
+    card.update('gym', 0.1, false);
+    expect(shown()).toBe(true);
+    card.update(null, 0.1, false);
+    card.show();
+    card.update(null, 0.1, false);
+    expect(shown()).toBe(false); // off the block: no area, no card
   });
 });

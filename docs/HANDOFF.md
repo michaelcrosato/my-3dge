@@ -124,12 +124,13 @@ GitHub on 2026-10-14; the PRs' pages keep each stage's commits; the owner delete
 ADR-0023). The owner's testing budget is ADR-0022, with what the stage runs learned in its amendment 1; ADR-0023 keeps
 long tests from holding up work: merges wait on the quick gate, and the full run follows on GitHub.
 
-## What a person sees, against my-3d2dge's stress-world
+## The box against my-3d2dge's stress-world
 
-https://my-3d2dge.vercel.app/stress-world (about 2,600 lines, a temporary lab built in hours) shows most of what the
-box shows: the hall, the hero's moves, the walker, slime and wisp crowd with flow fields and attack tokens, the cel,
-pixel, bloom and FXAA filters, 5,000 bodies. It is the better demo for a person: a full panel with presets, live fps
-and a bottleneck readout, a benchmark button, monster skins, waves, the card characters and a WebGL fallback. What
-my-3dge adds is underneath: audio, the 1,218-clip animation library with reactions, replays with the same golden
-hashes in Node and Chromium, over 5,000 tests, and a documented public API for game code. That only pays off once
-agents build games on it. The box's menu (labs/box/menu.ts) is the first step toward the panel.
+What a person opens is the playground, `playground.html` (labs/playground/README.md); this compares the Stress Box, an
+engine tool, with stress-world. https://my-3d2dge.vercel.app/stress-world (about 2,600 lines, a temporary lab built in
+hours) shows most of what the box shows: the hall, the hero's moves, the walker, slime and wisp crowd with flow fields
+and attack tokens, the cel, pixel, bloom and FXAA filters, 5,000 bodies. It shows more on the surface: a full panel
+with presets, live fps and a bottleneck readout, a benchmark button, monster skins, waves, the card characters and a
+WebGL fallback. What my-3dge adds is underneath: audio, the 1,218-clip animation library with reactions, replays with
+the same golden hashes in Node and Chromium, over 5,000 tests, and a documented public API for game code. That only
+pays off once agents build games on it. The box's menu (labs/box/menu.ts) is the first step toward the panel.

@@ -8,7 +8,10 @@
  * none in a reveal (rays along each opening: its jambs fought the wall's cut ends until they lined it, WP 13.36) and
  * none round a slab's edge (rays at each floor slab, from outside: its edge fought the wall under it, the paint band
  * over the siding, WP 13.36); and no grazing ray reaches a head's paint past the siding faced over it (rays at each
- * faced head's ends and top, a tenth off its face: 1,786 did through the facing's open 3 mm step, WP 13.36).
+ * faced head's ends and top, a tenth off its face: 1,786 did through the facing's open 3 mm step, WP 13.36). And it
+ * draws a floor at its storey's base under every tile one is seen on, a railing's too, as the yard's decks do (rays
+ * down under its rails: through a railing's tiles they met the storey below, the ground or a wall's paint top a seam
+ * under the floor, WP 13.38).
  * @see labs/playground/levels/plan.ts
  * @see labs/playground/levels/house.ts
  */
@@ -20,6 +23,7 @@ import { FRAME } from '../../../engine/gfx/level/openings';
 import { levelLooks } from '../../../engine/gfx/level/runs';
 import { getLevel } from '../../../engine/sim-api';
 import { HOUSE_MARKERS } from './house';
+import './yard'; // the tree house's and the lookout's decks
 import { levelText, Plan } from './plan';
 
 describe('a storey plan', () => {
@@ -94,6 +98,35 @@ describe('the house', () => {
       }
     expect(shared).toEqual([]);
     meshes.dispose();
+  });
+
+  it('draws a floor at its storey’s base under every tile one is seen on, a railing’s too (the house and the decks)', () => {
+    // Under a railing's bottom rail nothing faced up: the landing's showed the hall 3 m below, the bulkhead's and the
+    // garage deck's the paint tops of the walls a centimetre under them, the decks' the ground (WP 13.38).
+    const holes: Record<string, number> = {};
+    const [ray, down] = [new Raycaster(), new Vector3(0, -1, 0)];
+    for (const name of ['level:house', 'level:treehouse', 'level:lookout']) {
+      const level = getLevel(name);
+      const { levelRecipes: recipes, levelRooms: rooms } = levelLooks(registry, name);
+      const meshes = createLevelMeshes(level, { materials: { get: () => new MeshBasicMaterial() }, recipes, rooms });
+      meshes.root.updateMatrixWorld(true);
+      const t = level.tile;
+      for (const [k, { name: storey, base, tiles, floored }] of level.storeys!.entries()) {
+        const own = meshes.parts.filter((part) => part.storey === k).map((part) => part.mesh); // its storey's meshes
+        tiles.forEach((ch, i) => {
+          if (!floored[i] || !['floor', 'railing'].includes(level.legend[ch].mesh ?? '')) return; // a floor shows on it
+          const [x, z] = [((i % level.cols) + 0.5) * t, (Math.floor(i / level.cols) + 0.5) * t];
+          ray.set(new Vector3(x + 0.09, base + 0.09, z + 0.09), down); // under its rails, off its posts
+          const [floor] = ray.intersectObjects(own, false); // the faces facing up, as the camera sees them
+          if (floor && Math.abs(floor.point.y - base) < STOREY_SEAM / 5) return; // its storey's floor at its base
+          const [hit] = ray.intersectObject(meshes.root, true); // what shows there instead
+          const key = `${name}/${storey} '${ch}': ${hit ? `${hit.object.name.replace(/@.*/, '')} ${(base - hit.point.y).toFixed(3)} m down` : 'nothing'}`; // prettier-ignore
+          holes[key] = (holes[key] ?? 0) + 1;
+        });
+      }
+      meshes.dispose();
+    }
+    expect(holes).toEqual({});
   });
 
   it('lines every door’s and window’s reveal with its frame: no wood in the plane of the wall’s cut end', () => {

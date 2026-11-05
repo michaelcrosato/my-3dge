@@ -19,8 +19,9 @@ import { hill } from '../scenes/hill';
 import { SITE_SCENES } from '../scenes/site';
 import '../weather';
 import './attract';
-import { answersText, CHECKS_KEY, checkUrl, OWNER_CHECKS, ownerCheck, readAnswers, saveAnswer } from './checks';
+import { answersText, checkAway, CHECKS_KEY, checkUrl, OWNER_CHECKS, ownerCheck, readAnswers, saveAnswer } from './checks'; // prettier-ignore
 import './frontEnd';
+import { DEV_SERVER } from './pages';
 import { PREFS_PREFIX } from './prefs';
 
 /** The repository's root. */
@@ -74,6 +75,8 @@ describe('the owner’s checks', () => {
         continue;
       }
       expect(url.pathname, check.id).toBe('/labs/playground/');
+      // one map: a check opens a scene of the block (the gym's courses on it), never the gym's or the hill's own
+      if (check.go?.query?.scene) expect(SCENES.find((scene) => scene.id === `playground:${check.go?.query?.scene}`)?.site, check.id).toBe('site:block'); // prettier-ignore
       const routes = parseRoutes(url.search, { scenes: SCENES.map((scene) => scene.id) });
       expect(routes.settings['playground.check'], check.id).toBe(check.id);
       expect(routes.settings['playground.title'], check.id).toBe(
@@ -84,6 +87,19 @@ describe('the owner’s checks', () => {
     expect(checkUrl(ownerCheck('labs')!, `${HERE}?scene=site#x`)).toBe('http://127.0.0.1:5173/labs/index/');
     expect(checkUrl(ownerCheck('esc-0005')!, HERE)).toBe('http://127.0.0.1:5173/labs/box/?scene=crowd-5000');
     expect(() => parseRoutes('?playground.check=nowhere', { scenes: [gym.id] })).toThrow(/playground\.check/);
+  });
+
+  it('opens another page from playground.html at the dev server, saying to run it; the playground as is', () => {
+    const file = 'file:///home/me/my-3dge/playground.html';
+    for (const check of OWNER_CHECKS.filter((one) => one.go?.page)) {
+      const query = new URLSearchParams(check.go?.query ?? {});
+      expect(checkUrl(check, file), check.id).toBe(`${DEV_SERVER}${check.go!.page}${query.size ? `?${query}` : ''}`);
+      expect(checkAway(check, file), check.id).toMatch(/npm run dev/);
+      expect(checkAway(check, HERE), check.id).toBeUndefined();
+    }
+    expect(checkUrl(ownerCheck('esc-0005')!, file)).toBe('http://127.0.0.1:5173/labs/box/?scene=crowd-5000');
+    expect(new URL(checkUrl(ownerCheck('mantle')!, file)).pathname).toBe('/home/me/my-3dge/playground.html');
+    expect(checkAway(ownerCheck('mantle')!, file)).toBeUndefined();
   });
 
   it('holds the player at each spot through the scene’s recorded dev action place', async () => {

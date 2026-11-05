@@ -7,12 +7,14 @@
  * - `try`: a feel, a look, a sound or a device no number here judges (docs/PLAYGROUND.md §9.3's playtest, and what
  *   docs/PROGRESS.md names as not verifiable here), judged good, needing work (with a note) or skipped.
  *
- * A check's `go` names where it is judged: the playground's own page with a query (a scene, a camera, a look, a
- * setting) and a spot to stand (`place`, the block's and the gym's dev action, run as the page's first operation, so
- * the run records it), or another page of the repository, opened in a new tab. `checkUrl` builds the link: on the
+ * A check's `go` names where it is judged: the playground's own page with a query (a scene of the block, a camera, a
+ * look, a setting) and a spot to stand (`place`, the block's dev action, run as the page's first operation, so the run
+ * records it), or another page of the repository, opened in a new tab. `checkUrl` builds the link: on the
  * playground it adds the view setting `playground.check`, which names the check under way (the HUD's line, pause's
- * Answer item), and leaves the start menu off unless the check is about it. A check's text names keys as
- * `{action}`, which the panel shows as the player's own binding (`input.prompt`).
+ * Answer item), and leaves the start menu off unless the check is about it; another page's is labs/playground/ui/
+ * pages.ts's `pageUrl`, the dev server's from playground.html (file:, which holds only the playground), where
+ * `checkAway` says in plain words what to run first. A check's text names keys as `{action}`, which the panel shows
+ * as the player's own binding (`input.prompt`).
  *
  * The answers stay in the page's store under `CHECKS_KEY` (`readAnswers`, `saveAnswer`), never in the run; the panel
  * (labs/playground/ui/checkPanel.ts) shows them, and `answersText` writes them as text to paste back to an agent, who
@@ -27,8 +29,10 @@
  *
  * @example
  * checkUrl(ownerCheck('sprint')!, 'http://127.0.0.1:5173/labs/playground/');
- * // 'http://127.0.0.1:5173/labs/playground/?scene=gym&cam3=first&playground.title=off&playground.check=sprint'
+ * // 'http://127.0.0.1:5173/labs/playground/?scene=site-gym&cam3=first&playground.title=off&playground.check=sprint'
  * checkUrl(ownerCheck('labs')!, 'http://127.0.0.1:5173/labs/playground/'); // 'http://127.0.0.1:5173/labs/index/'
+ * checkUrl(ownerCheck('labs')!, 'file:///home/me/my-3dge/playground.html'); // the same: the dev server's
+ * checkAway(ownerCheck('labs')!, 'file:///home/me/my-3dge/playground.html'); // '… run npm run dev, …'
  * answersText(OWNER_CHECKS, { sprint: { verdict: 'good', note: '', at: '2026-10-26' } }).split('\n')[2];
  * // '- sprint (docs/PLAYGROUND.md §9.3, item 1), Sprint the strip, in first person: Good as it is (2026-10-26)'
  * @see labs/playground/ui/checks.test.ts
@@ -36,6 +40,7 @@
 import type { Engine, EngineFrame, Store } from '../../../engine';
 import { defineSettings } from '../../../engine/sim-api';
 import { OWNER_CHECKS, type OwnerCheck } from './checkList';
+import { awayNote, pageUrl } from './pages';
 
 export { OWNER_CHECKS, type OwnerCheck } from './checkList';
 
@@ -77,13 +82,17 @@ export function ownerCheck(id: string | null | undefined): OwnerCheck | undefine
 /** The link that opens `check` where it is judged, from the playground page at `here` (see the file comment). */
 export function checkUrl(check: OwnerCheck, here: string): string {
   const query = new URLSearchParams(check.go?.query ?? {});
-  if (check.go?.page) return new URL(`../../${check.go.page}${query.size ? `?${query}` : ''}`, here).href;
+  if (check.go?.page) return pageUrl(check.go.page, here, query.size ? `?${query}` : '');
   if (!query.has('playground.title')) query.set('playground.title', 'off');
   query.set('playground.check', check.id);
   const url = new URL(here);
   [url.search, url.hash] = [`?${query}`, ''];
   return url.href;
 }
+
+/** What to run first for `check`'s link to open from the playground at `here` (another page, from the file); else undefined. */ // prettier-ignore
+export const checkAway = (check: OwnerCheck, here: string): string | undefined =>
+  check.go?.page ? awayNote(here) : undefined;
 
 /** The answers kept in `store`, each of a known check and of its shape. */
 export function readAnswers(store: Store): Record<string, CheckAnswer> {

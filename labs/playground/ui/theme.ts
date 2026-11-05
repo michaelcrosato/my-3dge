@@ -2,21 +2,24 @@
  * @file The playground's look for its UI (docs/PLAYGROUND.md §8.3; the owner's call of 2026-11-03, "a UI that looks
  * decent"): one stylesheet, added once (`installTheme`), that every screen of the front end (labs/playground/ui/
  * frontEnd.ts), its panels (settings, Go to, Tune, the owner's checks, photo mode, the controls), the splash screen
- * (splash.ts), the HUD (hud.ts), the area card (areas.ts), the tour's banner (attract.ts) and the world's signs wear,
- * none of them with a sheet of its own. The engine's widgets keep their own stylesheet (engine/ui/widgets.ts) for
- * every other page; here everything sits under the overlay's `pg-ui` class, so this sheet wins without touching the
- * engine.
+ * (splash.ts), the HUD (hud.ts), the area card (areas.ts), the tour's banner (attract.ts), the world's signs and the
+ * feel panel (labs/playground/feel.ts) wear, none of them with a sheet of its own. The engine's widgets and its feel
+ * panel keep their own stylesheets (engine/ui/widgets.ts, engine/dev/feel/panel.ts) for every other page; here
+ * everything but the feel panel sits under the overlay's `pg-ui` class, so this sheet wins without touching the
+ * engine; the feel panel, a child of the body beside the overlay, has a block of its own (`body > .feel-panel`: one
+ * element more than the engine panel's selectors, so it wins whichever sheet comes first).
  *
  * The look: dark glass panels over the world (a blurred, dimmed backdrop), one warm accent (`--pg-accent`) for what is
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
- * browser. Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
- * too), the area card and the feel panel, all hidden under a screen (under the Tune panel, at the side so the world
- * shows, the HUD with its crosshair and damage numbers stays); a screen and its panels, scrolling where the window is
- * too short for them (in windows 720 px tall or less the start menu's brand and the items shrink, and at 460 px or less
- * the detail line under a menu goes; the splash keeps its own); the touch buttons, hidden under a screen or photo mode
- * but for the menu button; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`, `--pg-accent`,
- * `--pg-good`), the radius, the shadow and the font are custom properties on `.pg-ui` and `.pg-splash`; the type sizes
- * and the backdrops' shades are written where they are used.
+ * browser, the focused one outlined in the accent (a pad walks them: walk.ts). Layers, low to high: the world's labels
+ * (the gym's signs), the HUD (the crosshair and the damage numbers too), the area card and the feel panel, all hidden
+ * under a screen (under the Tune panel, at the side so the world shows, the HUD with its crosshair and damage numbers
+ * stays); a screen and its panels, scrolling where the window is too short for them (in windows 720 px tall or less the
+ * start menu's brand and the items shrink, and at 460 px or less the detail line under a menu goes; the splash keeps
+ * its own); the touch buttons, hidden under a screen or photo mode but for the menu button; the splash. The palette
+ * (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`, `--pg-accent`, `--pg-good`), the radius, the shadow and the font
+ * are custom properties on `.pg-ui`, `.pg-splash` and `.feel-panel`; the type sizes and the backdrops' shades are
+ * written where they are used.
  *
  * Invariants: presentation only; one `<style id="pg-theme">` in the page however often it is called, moved after the
  * engine's sheets each time (so it wins their ties whether the splash or the engine came first); it names no element
@@ -34,7 +37,7 @@ const THEME_ID = 'pg-theme';
 
 /** The theme's stylesheet (see the file comment). */
 const THEME_CSS = `
-.pg-ui, .pg-splash {
+.pg-ui, .pg-splash, .feel-panel {
   --pg-glass: rgba(13, 16, 23, 0.84); --pg-glass-strong: rgba(10, 12, 18, 0.94); --pg-line: rgba(255, 255, 255, 0.1);
   --pg-text: #eef1f6; --pg-dim: #9ba4b4; --pg-accent: #ffb547; --pg-accent-soft: rgba(255, 181, 71, 0.16);
   --pg-good: #6fd18b; --pg-radius: 14px; --pg-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
@@ -111,7 +114,7 @@ const THEME_CSS = `
 .pg-ui .ui-box select, .pg-ui .ui-box button, .pg-ui .ui-box textarea, .pg-ui .ui-box input[type=text] {
   font: 500 15px/1.3 Inter, system-ui, sans-serif; color: var(--pg-text); background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--pg-line); border-radius: 8px; padding: 0.45em 0.7em; }
-.pg-ui .ui-box select:focus, .pg-ui .ui-box button:focus, .pg-ui .ui-box textarea:focus { outline: 2px solid var(--pg-accent);
+.pg-ui .ui-box :is(select, button, textarea, input, summary):focus { outline: 2px solid var(--pg-accent);
   outline-offset: 1px; }
 .pg-ui .ui-box select option { background: #1a1e28; color: var(--pg-text); }
 .pg-ui .ui-box button { cursor: pointer; font-weight: 650; }
@@ -121,6 +124,8 @@ const THEME_CSS = `
 .pg-ui .ui-box input[type=checkbox] { accent-color: var(--pg-accent); width: 18px; height: 18px; }
 .pg-ui .pg-settings .pg-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 0.6em; align-items: center; }
 .pg-ui .pg-settings [data-ui=binding-note] { grid-column: 1 / -1; font-size: 0.85em; opacity: 0.8; }
+.pg-ui .pg-settings .pg-slider { display: grid; grid-template-columns: 1fr 4.2em; gap: 0.5em; align-items: center; }
+.pg-ui .pg-settings [data-ui=setting-shown] { text-align: right; font-variant-numeric: tabular-nums; color: var(--pg-dim); }
 .pg-ui .pg-checks button { display: block; width: 100%; text-align: left; margin: 0.25em 0; padding: 0.6em 0.8em; }
 .pg-ui .pg-checks p { margin: 0.4em 0; }
 .pg-ui .pg-checks .pg-small { font-size: 0.85em; opacity: 0.8; }
@@ -166,6 +171,28 @@ body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) .touch-lay
 .pg-ui .ui-hud[data-id=use] { font-size: 16px; padding: 0.45em 1em; border-radius: 999px; margin-bottom: 9vh; }
 .pg-ui .ui-hud[data-id=weapon] { font-size: 15px; padding: 0.45em 0.9em; border-radius: 10px; }
 .pg-ui .ui-hud[data-id=check] { border-color: var(--pg-accent); }
+
+/* ---- the feel panel (engine/dev/feel/panel.ts, a child of the body; labs/playground/feel.ts heads it): a glass panel at
+   the right, as Tune's ---- */
+body > .feel-panel { top: 2vh; bottom: 2vh; right: 1.5vw; width: min(420px, 46vw); padding: 22px 26px;
+  font: var(--pg-font); font-size: 14px; color: var(--pg-text); background: var(--pg-glass);
+  border: 1px solid var(--pg-line); border-radius: var(--pg-radius); box-shadow: var(--pg-shadow);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent; }
+body > .feel-panel h2 { margin: 0 0 0.5em; font-size: 24px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+body > .feel-panel p { margin: 0 0 1em; color: var(--pg-dim); line-height: 1.45; }
+body > .feel-panel header { gap: 0.4em; margin-bottom: 0.8em; }
+body > .feel-panel :is(button, textarea) { font: 650 14px/1.3 Inter, system-ui, sans-serif; color: var(--pg-text);
+  background: rgba(255, 255, 255, 0.07); border: 1px solid var(--pg-line); border-radius: 8px; padding: 0.45em 0.7em; }
+body > .feel-panel button { cursor: pointer; }
+body > .feel-panel button:hover { background: rgba(255, 255, 255, 0.13); }
+body > .feel-panel :is(button, textarea, input):focus-visible { outline: 2px solid var(--pg-accent); outline-offset: 1px; }
+body > .feel-panel textarea { box-sizing: border-box; height: 9em; font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; }
+body > .feel-panel input[type=range] { accent-color: var(--pg-accent); width: 100%; }
+body > .feel-panel details { border-top: 1px solid var(--pg-line); padding: 0.3em 0; }
+body > .feel-panel summary { margin: 0; padding: 0.2em 0; font-weight: 650; }
+body > .feel-panel label { grid-template-columns: 7.5em 1fr 4.5em; gap: 0.4em; padding: 0.15em 0; color: var(--pg-dim); }
+body > .feel-panel output { color: var(--pg-text); }
 
 /* ---- the area card (labs/playground/ui/areas.ts) ---- */
 .pg-card { position: absolute; left: 1.6vw; top: 9vh; z-index: 20; width: min(25em, 80vw); padding: 16px 20px;

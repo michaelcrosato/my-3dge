@@ -1,14 +1,15 @@
 /**
- * @file The controls sheet (the owner's call of 2026-11-03: a clear way to play and test, not a line of keys across
- * the screen): every action the playground answers, grouped (`HELP_GROUPS`), with its key as the input names it for
- * the map in use on the device used last (rebound or on a pad, through `input.prompt`): the move keys, or the left
- * stick; the mouse's look under the pointer lock, or the right stick's, and where the map aims with the pointer
- * (isometric, top-down) the mouse's or the right stick's aim; the view's own keys only where the map has them (the
- * shooter's shoulder, isometric's turn, each half the device has); a line the device has no key for is left out (the
- * pad's weapon swap on a keyboard: `UNBOUND`), and a group left with none. The page's own keys (the look, the feel
- * panel, the menus) are as written, on a keyboard only: a pad reaches them through pause. On a touch screen (`onTouch`:
- * touch mode on, or a finger used last, and no pad) the sheet names the stick, the touch layout's buttons
- * (labs/playground/touch.ts) and the menu button, and leaves out the rest. The front end opens it from H, the start menu and pause (frontEnd.ts).
+ * @file The controls sheet (the owner's call of 2026-11-03: a clear way to play and test, not a line of keys across the
+ * screen): every action the playground answers, grouped (`HELP_GROUPS`), with its key as the input names it for the map
+ * in use on the device used last (rebound or on a pad, through `input.prompt`): the move keys, or the left stick; the
+ * mouse's look under the pointer lock, or the right stick's, and where the map aims with the pointer (isometric,
+ * top-down) the mouse's or the right stick's aim; the view's own keys only where the map has them (the shooter's
+ * shoulder, isometric's turn, each half the device has); a line the device has no key for is left out (the pad's weapon
+ * swap on a keyboard: `UNBOUND`), and a group left with none. The page's own keys (the look, the feel panel, the menus,
+ * the area's card) are as written, on a keyboard only: a pad reaches them through pause (the area's card too: This
+ * area's card). On a touch screen (`onTouch`: touch mode on, or a finger used last, and no pad) the sheet names the
+ * stick, the touch layout's buttons (labs/playground/touch.ts) and the menu button, and leaves out the rest. The front
+ * end opens it from H, the start menu and pause (frontEnd.ts).
  *
  * Elements: `[data-ui=help]`, a `[data-ui=key]` per line (`data-id` the action, else the page key or the label), and
  * the Back button (`[data-ui=item][data-id=back]`). Invariants: presentation only; it reads the input when made.
@@ -27,6 +28,8 @@ import { PLAYGROUND_TOUCH_BUTTONS } from '../touch';
 export const HELP_KEY = 'KeyH';
 /** The page's key for Go to, kept from rebinding as the sheet's. */
 export const GOTO_KEY = 'KeyM';
+/** The page's key that shows the area's card again (labs/playground/ui/areas.ts), kept from rebinding as the sheet's. */
+export const CARD_KEY = 'KeyI';
 
 /** The input's prompt for an action the device has no key for (engine/input/bindings.ts `pickLabel`). */
 export const UNBOUND = '—';
@@ -114,6 +117,7 @@ export const HELP_GROUPS: readonly { readonly title: string; readonly lines: rea
     lines: [
       { label: 'Pause', action: 'pause' },
       { label: 'Go to another area', page: 'M' },
+      { label: 'This area’s card again', page: 'I' },
       { label: 'This sheet', page: 'H' },
       { label: 'Feel panel (movement numbers)', page: 'F' },
     ],

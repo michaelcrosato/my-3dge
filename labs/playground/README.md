@@ -19,10 +19,11 @@ modes and three looks, clean, cel-shaded and pixel art. Every claim below is che
 2. The splash screen shows while the block loads (`labs/playground/ui/splash.ts`); press any key for the start menu
    (`labs/playground/ui/frontEnd.ts`): Play, Go to (any area of the block or room of the house), Settings, Controls,
    Photo mode, Watch the tour, Owner checks and Tools (the Tune panel for the look's filters, the recorded runs, the
-   feel panel). Esc pauses, with the same screens, Restart and Main menu.
+   feel panel, and the Stress Box and the labs, pages of their own that `npm run dev` serves). Esc pauses, with the
+   same screens, This area's card, Restart and Main menu.
 3. Play: click the game to look around with the mouse. As you walk into an area, a card names it and what to try
-   there (`labs/playground/ui/areas.ts`); the top-left names where you are. H shows every control with its key
-   (`labs/playground/ui/help.ts`) and M is Go to. The essentials: WASD moves, Space jumps (and mantles and climbs),
+   there (`labs/playground/ui/areas.ts`), and I shows it again; the top-left names where you are. H shows every
+   control with its key (`labs/playground/ui/help.ts`) and M is Go to. The essentials: WASD moves, Space jumps (and mantles and climbs),
    Shift sprints, C crouches (a slide at a sprint), E uses what the HUD names (a door, a switch, a zipline, a ladder,
    a chair to throw), V strikes, 1 and 2 draw the pistol and the rifle, the left button fires and the right aims; T
    steps through the cameras and P through the looks. Settings rebinds any key in every camera at once; the settings
@@ -38,7 +39,7 @@ pixel look, `labs/playground/?playground.spawn=area:range` starts at the range, 
 `?replay=playground-rides` the rides, `?replay=playground-site` the house's doors, lights, windows and garage,
 `?replay=playground-melee` the shed's door kicked in and the ring's dummies punched and kicked, `?replay=playground-range`
 the range's targets shot down with the pistol and the rifle), then hands you the controls; Tools, then Recorded runs,
-lists them. `labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`):
+lists them by name, the gym's played on the block (`labs/playground/ui/runs.ts`). `labs/playground/?replay=playground-tour&playground.attract=on` is the tour (`labs/playground/tour.ts`):
 those runs in turn on the block, with the view stepping through the five cameras and the looks; the start menu's Watch
 the tour opens it, and an idle start menu does after a minute.
 
@@ -105,32 +106,12 @@ top-down snapped to the pixels and gliding, so a pan never shimmers; the perspec
 
 ## Controls
 
-| Action | Keys and mouse | Pad |
-|---|---|---|
-| Move | W A S D, or the arrows | left stick |
-| Jump | Space | A (south) |
-| Sprint (press once to keep it, or hold: `input.sprint`) | Left Shift | a click of the left stick |
-| Walk | Left Alt | |
-| Crouch (hold, or toggle: `input.crouch`) | C | B (east) |
-| Use: a zipline or a ladder | E (G in isometric) | X (west) |
-| Melee, fire, aim down sights | V, the left and right buttons | a click of the right stick, RT, LT |
-| Reload, holster | R, 3 | |
-| Look around (first person, shooter, platformer) | click the game, then the mouse; Esc lets go | right stick |
-| Aim (isometric, top-down) | the pointer, onto the player's floor | right stick |
-| Camera mode | T | view button |
-| Swap the shoulder (shooter) | X | d-pad left |
-| Turn the view (isometric) | Q, E | d-pad right |
-| The look: clean, cel or pixel | P | |
-| Zoom | the wheel | |
-| The feel panel | F | |
-| The controls sheet | H | |
-| Go to another area or room | M | |
-| Pause (Go to, settings, controls, photo mode, tools, restart) | Esc | Start |
-
-Each camera mode has its own action map (`labs/playground/controls.ts`, WP 13.9), which the page swaps as the camera
-changes: first person and the shooter send the view and aim at what the screen's middle points at, the platformer
-faces where it moves, and isometric and top-down aim with the pointer. The controls sheet (H) shows the keys of the
-map in use, rebound or on a pad. The site's landing page (`index.html`) opens this page (ADR-0021 amendment 3).
+H in play, or Controls on the start menu and in pause, opens the controls sheet (`labs/playground/ui/help.ts`): every
+action the playground answers, grouped, with its key on the device used last, rebound or on a pad; Settings rebinds
+them. The bindings are `labs/playground/controls.ts`'s (WP 13.9): each camera mode has its own action map, which the
+page swaps as the camera changes: first person and the shooter send the view and aim at what the screen's middle
+points at, the platformer faces where it moves, and isometric and top-down aim with the pointer. The site's landing
+page (`index.html`) opens this page (ADR-0021 amendment 3).
 
 ## Settings
 

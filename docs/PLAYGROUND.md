@@ -6,8 +6,9 @@ page is its design: the site, the move set with its reference values, the camera
 there, and how agents and the owner know it feels and looks right. The work packages that build it are PLAN.md
 Phase 13 and the on-demand WPs it fires; their **Done when** lists take their numbers from here.
 
-Play it: `npm run dev`, then `http://localhost:5173/labs/playground/` in Chrome or Edge (WebGPU); `PORT=5174` before
-the command when another server holds 5173.
+Play it: open `playground.html` at the repository's root (the whole playground in one file: double-click it) in Chrome
+or Edge (WebGPU), or run `npm run dev` and open `http://localhost:5173/labs/playground/`; `PORT=5174` before the
+command when another server holds 5173.
 
 ## 1. Why
 
@@ -401,15 +402,19 @@ yard, ambient occlusion the rooms; rain and dust are GPU particles (WP 11.3).
 
 ### 8.3 The front end
 
-(WP 10.6, WP 10.9, WP 13.25, WP 13.33.) The block is the game: the page opens on it (§2), behind a splash screen while
-it loads, then the start menu; Go to (each area of the block and each room of the house); pause; settings (camera mode
-and field of view, controls and rebinding, sensitivity, the movement profile, the look, audio levels, graphics and
-quality), kept across sessions by the store; the controls sheet (every action with its key); the HUD for each camera
-(where the player is, crosshair, prompts, ammo, the feel readout) and a card naming each area and what to try there as
-the player walks in; photo mode (the free camera and the looks); the owner's checks (WP 13.28, §9.3); and the tools for
-tuning and testing (Tune the look, §8.4; the recorded runs; the feel panel). One theme dresses every screen
-(labs/playground/ui/theme.ts). The gym and the hill stay scenes of their own, as calibrated courses for the tests and
-the replays; the menus never list scenes.
+(WP 10.6, WP 10.9, WP 13.25, WP 13.33, WP 13.38.) The block is the game: the page opens on it (§2), behind a splash
+screen on every load, then the start menu; Go to (each area of the block and each room of the house); pause; settings
+(camera mode and field of view, controls and rebinding on the keyboard or a pad, sensitivity, the movement profile, the
+block's time of day and the day's length, the rain and the dust, the look, audio levels, graphics and quality), kept
+across sessions by the store, each slider reading its value beside it; the controls sheet (every action with the key of
+the device in use); the HUD for each camera (where the player is, crosshair, prompts, ammo, the feel readout) and a card
+naming each area and what to try there as the player walks in, shown again on I or pause's This area's card; photo mode
+(the free camera and the looks); the owner's checks (WP 13.28, §9.3); and the tools for tuning and testing (Tune the
+look, §8.4; the recorded runs, each by its name and played on the block; the feel panel; and the engine's own pages
+beside the block, the Stress Box and the seven labs, each in a new tab, from playground.html once `npm run dev` runs:
+ESC-0007). A pad works every screen, and each menu's footer names the keys of the device in use. One theme dresses every
+screen (labs/playground/ui/theme.ts). The gym and the hill stay scenes of their own, as calibrated courses for the tests
+and the replays; the menus never list scenes.
 
 ### 8.4 Tuning the look
 
@@ -459,11 +464,12 @@ in plain words what to try and judge, opens the place it is judged in, and keeps
    clips a wall.
 8. In the platformer camera: run and jump around the yard; does the recentring help or fight?
 9. In isometric and top-down: walk every storey; the right floors cut away; aim with the pointer.
-10. Everything in each look, clean, cel and pixel, at noon and at night.
-11. A downpour (`?playground.rain=1`) on the street, and the dust indoors (`playground.dust=1`): does the frame rate
-    hold? `__engine.stats().gpuMs` should rise by under 1 ms (`GPU_RING.budgetMs`, WP 11.3).
-12. The labs index at /labs/index/ (WP 10.8): the Animation Lab's row, scrubbing a move, the bones; the Library
-    Lab's search and Apply.
+10. Everything in each look, clean, cel and pixel, at noon and at night (Settings' Time of day moves the hour).
+11. A downpour on the street, and the dust indoors (Settings' Rain and Dust indoors, or `?playground.rain=1` and
+    `playground.dust=1`): does the frame rate hold? `__engine.stats().gpuMs` should rise by under 1 ms
+    (`GPU_RING.budgetMs`, WP 11.3).
+12. The labs index at /labs/index/ (WP 10.8; Tools' The Stress Box and the labs, which from playground.html needs
+    `npm run dev`): the Animation Lab's row, scrubbing a move, the bones; the Library Lab's search and Apply.
 13. The front end (WP 13.25, WP 13.33): the splash, the start menu, pause (Esc), Go to, settings (rebind a key, the
     field of view, the movement profile, the volumes), the controls sheet and photo mode; do they look good and read
     clearly? Reload: are the settings and the key kept?

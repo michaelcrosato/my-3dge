@@ -1,9 +1,10 @@
 /**
  * @file Unit tests for the block (labs/playground/scenes/site.ts, levels/site.ts, levels/house.ts; PLAN.md WP 13.18):
  * every level on it validates clean; each structure stands where the site puts it, the ground cut under every floor;
- * each area's scene stands the player at its spawn, on its floor; the house's things are there: a door in every door
- * opening it fits, two panes in every window, the garage's door on its switches, a lamp and a switch in every room;
- * and its replay (tests/replays/playground-site.replay.json) plays the story in its order, each step's prompt the
+ * none of its floors drawn on ground it leaves whole, in the grass's plane (the decks' ladder feet z-fought it, WP
+ * 13.38); each area's scene stands the player at its spawn, on its floor; the house's things are there: a door in every
+ * door opening it fits, two panes in every window, the garage's door on its switches, a lamp and a switch in every
+ * room; and its replay (tests/replays/playground-site.replay.json) plays the story in its order, each step's prompt the
  * HUD's: the front door opens away from the player, the hall's light goes off and on at its switch, two door kicks
  * burst the living room's door open and break it, a chair is picked up and thrown through the dining room's window,
  * both its panes breaking, and the garage's switch raises its door.
@@ -14,7 +15,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { playReplay } from '../../../engine/sim/replay';
 import { createSession } from '../../../engine/sim/session';
-import { validateLevel } from '../../../engine/sim-api';
+import { toWorld, validateLevel } from '../../../engine/sim-api';
 import { registry } from '../../../engine/core/registry';
 import { HOUSE_LIGHTS } from '../furnish';
 import { SITE, SITE_AREAS, SITE_STRUCTURES, type SiteArea } from '../levels/site';
@@ -45,6 +46,25 @@ describe('the block', () => {
     const { cols } = SITE.terrain!;
     const cut = (x: number, z: number) => SITE.cut![Math.floor(z) * cols + Math.floor(x)];
     expect([cut(20, 50), cut(50, 50), cut(60, 90), cut(56, 30), cut(80, 30)]).toEqual([1, 1, 1, 0, 0]); // gym, house, street; lawn, hill
+  });
+
+  it('draws no floor on uncut ground: a floor tile standing on the terrain would z-fight its grass', () => {
+    // A tile drawing a floor (a railing draws its tiles') at or under the ground's height, in a terrain cell the site
+    // leaves whole (its quarters not all floored): the tree house's and the lookout's ladder feet were (WP 13.38).
+    const { cols, rows, cell, origin } = SITE.terrain!;
+    const uncut: string[] = [];
+    for (const s of SITE.structures)
+      for (const storey of s.level.storeys ?? []) {
+        if (storey.base > 0) continue;
+        const t = s.level.tile;
+        storey.tiles.forEach((ch, i) => {
+          if (!storey.floored[i] || !['floor', 'railing'].includes(s.level.legend[ch].mesh ?? '')) return;
+          const [x, z] = toWorld(s, ((i % s.level.cols) + 0.5) * t, (Math.floor(i / s.level.cols) + 0.5) * t);
+          const [c, r] = [Math.floor((x - origin[0]) / cell), Math.floor((z - origin[2]) / cell)];
+          if (c >= 0 && r >= 0 && c < cols && r < rows && !SITE.cut![r * cols + c]) uncut.push(`${s.level.name}/${storey.name} at (${x}, ${z})`); // prettier-ignore
+        });
+      }
+    expect(uncut).toEqual([]);
   });
 
   for (const area of Object.keys(SITE_AREAS) as SiteArea[]) {

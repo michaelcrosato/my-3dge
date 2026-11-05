@@ -1,9 +1,11 @@
 /**
  * @file Unit tests for labs/playground/ui/spawns.ts (WP 13.25): Go to lists the block's 8 areas, each at its
- * spawn, and the house's 17 rooms, the crawlspace ducked; and a pick is the block's recorded dev action `place`: the
- * player stands in the room picked, and the run's replay holds the pick and plays back to the same hash.
+ * spawn, and the house's 17 rooms, the crawlspace ducked, labelled in the file comment's example as it labels them; and
+ * a pick is the block's recorded dev action `place`: the player stands in the room picked, and the run's replay holds
+ * the pick and plays back to the same hash.
  * @see labs/playground/ui/spawns.ts
  */
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createHeadless, siteStructureAt } from '../../../engine';
 import { playReplay } from '../../../engine/sim/replay';
@@ -21,6 +23,13 @@ describe('Go to’s places', () => {
     expect(spawnPlace('area:backyard')?.args).toEqual({ at: areaStart('backyard'), yaw: SITE_AREAS.backyard.yaw, crouch: false }); // prettier-ignore
     expect(spawnPlace('room:house/crawlspace')?.args.crouch).toBe(true);
     expect(spawnPlace('room:house/nowhere')).toBeUndefined();
+  });
+
+  it('labels each place in its file comment’s example as Go to labels it', () => {
+    const source = readFileSync(new URL('./spawns.ts', import.meta.url), 'utf8');
+    const claims = [...source.matchAll(/spawnPlace\('([^']+)'\)\?\.label; \/\/ '([^']+)'/g)];
+    expect(claims.length).toBeGreaterThan(1);
+    for (const [, id, label] of claims) expect(spawnPlace(id)?.label, id).toBe(label);
   });
 
   it('puts the player in the room picked, through the recorded place action, which the replay plays back', async () => {

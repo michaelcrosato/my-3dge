@@ -25,11 +25,13 @@ Waiting for an answer until the deadline; then the agent decides and records the
 
 None.
 
-## Answered (0)
+## Answered (1)
 
 The owner answered: the agent acts on it, then closes the record.
 
-None.
+| Record                                                                   | Principle  | Raised               | Question                                                                                                                                                                                                                                                                                                                                                                                                 | Answer                                                                                                                                                                                            |
+| ------------------------------------------------------------------------ | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [ESC-0007](ESC-0007-your-direction-was-all-the-demo-stuff-on-one-map.md) | Escalation | 2026-11-05T01:01:42Z | Your direction was all the demo stuff on one map. The playground's demos are all on the block now, but the engine's own Stress Box (crowds of 100 to 5,000, a 1,000-agent fight, prop halls, ragdolls, the clip library) and its seven labs (Animation, Materials, Props, Effects, Cameras, Physics, Library) are separate pages, reached from Tools. Should they stay separate, or come onto the block? | Option 1, beside the block (the owner in the session's chat, 2026-11-05): the Stress Box and the seven labs stay separate pages opened from Tools, their links made to work from playground.html. |
 
 ## Closed (1)
 

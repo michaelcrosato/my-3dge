@@ -2,21 +2,27 @@
  * @file The block's cutaway at the house (engine/gfx/stageSite.ts on the playground's site, WP 13.33; the owner's
  * report of 2026-11-03, "you can see through walls"): the house's map holds its patio and its porch as outdoor floor,
  * and a player standing there, outside the house, cuts none of its walls or storeys in a perspective camera behind him
- * looking at him; in a classic view (isometric, top-down) the house is cut on its whole map, the storeys above him
- * and the roof off and, in isometric, its walls facing the camera; in the hall, inside, the walls facing a perspective
- * camera outside are cut as before. And no terrain skirt hangs between two cut cells, under the block's floors on its
- * chunk lines, where its top lay in a floor's plane and drew a grass hairline across it (the porch path's at z = 64,
- * WP 13.37).
+ * looking at him; in a classic view (isometric, top-down) the house is cut on its whole map, the storeys above him and
+ * the roof off and, in isometric, its walls facing the camera; in the hall, inside, the walls facing a perspective
+ * camera outside are cut as before, and just inside its front, back or garage side door, with a perspective camera
+ * behind him outside, only his storey's (the upper storey's, the attic's and the basement's had been cut too, each step
+ * through the door switching them, WP 13.38); and a perspective camera in the house with him, in first person or 1.5 m
+ * off in his room, cuts none of it in any room (every room's walls round him were cut, the kitchen's west wall in first
+ * person facing it, so he saw through the wall ahead: WP 13.38). And no terrain skirt hangs between two cut cells,
+ * under the block's floors on its chunk lines, where its top lay in a floor's plane and drew a grass hairline across it
+ * (the porch path's at z = 64, WP 13.37).
  * @see engine/gfx/stageSite.ts
  */
 import { MeshBasicMaterial, Raycaster, Vector3 } from 'three/webgpu';
 import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
+import { createCamera } from '../../../engine/gfx/cameras/place';
 import { lookAt, makePose, type Vec3 } from '../../../engine/gfx/cameras/pose';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
 import { createStageSite } from '../../../engine/gfx/stageSite';
+import { roomAt, toLocal } from '../../../engine/sim-api';
 import { SITE, SITE_STRUCTURES } from '../levels/site';
-import { areaStart } from './site';
+import { areaStart, roomPlace } from './site';
 
 const materials = { get: () => new MeshBasicMaterial() };
 const HOUSE = Object.keys(SITE_STRUCTURES).indexOf('house');
@@ -26,6 +32,8 @@ const behind = ([x, y, z]: Vec3, dz: number) => {
   const position: Vec3 = [x, y + 1.9, z + dz];
   return makePose({ position, ...lookAt(position, [x, y + 1.2, z]) });
 };
+/** Four ways 1.5 m off along the ground, east, west, south and north. */
+const AROUND = [[1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]] as const; // prettier-ignore
 /** A classic view's pose (`iso`, `overhead`) on the feet, as the page's view camera frames him. */
 const classic = (view: 'iso' | 'overhead', [x, y, z]: Vec3) => viewPose({ ...viewState({ view }), target: [x, y + 0.5, z] }); // prettier-ignore
 
@@ -66,6 +74,68 @@ describe('the block’s cutaway at the house', () => {
       'porch, overhead': [false, false], // the porch roof off
     });
     expect(cut()).toBeGreaterThan(0);
+    drawn.dispose();
+  });
+
+  it('cuts none of the house from a perspective camera in it with him: first person, or one 1.5 m off in his room', () => {
+    const drawn = createStageSite(SITE, { materials, registry });
+    drawn.follow();
+    const house = drawn.structures[HOUSE];
+    const { structure } = house;
+    const cut = () => Object.values(house.cutaway!.cut()).flat().length;
+    const roomOf = ([x, y, z]: Vec3) => {
+      const [lx, lz] = toLocal(structure, x, z);
+      return roomAt(structure.level, lx, y - structure.at[1] + 0.1, lz)?.name;
+    };
+    const tiles: Record<string, number> = {};
+    for (const room of structure.level.rooms!) {
+      const { at: feet, crouch } = roomPlace(structure, room);
+      const [eye, chest] = crouch ? [1, 0.6] : [1.6, 1.2]; // ducked under the crawlspace's 1.4 m ceiling
+      let cameras = 0;
+      for (const [dx, dz] of AROUND) {
+        const position: Vec3 = [feet[0] + dx, feet[1] + eye, feet[2] + dz];
+        if (roomOf([position[0], feet[1], position[2]]) !== room.name) continue; // past a wall: not in his room
+        cameras++;
+        drawn.update(makePose({ position, ...lookAt(position, [feet[0], feet[1] + chest, feet[2]]) }), feet, { fade: true }); // prettier-ignore
+        tiles[`${room.name}, 1.5 m off (${dx}, ${dz})`] = cut();
+      }
+      expect(cameras, room.name).toBeGreaterThan(0);
+      for (const yaw of [0, 90, 180, -90]) {
+        drawn.update(createCamera(`cam3=first,${yaw},0`).update({ follow: feet }), feet);
+        tiles[`${room.name}, first person at ${yaw}°`] = cut();
+      }
+    }
+    // In the kitchen 1.5 m from its west wall, facing it: its sill walls and its counter ahead were cut (126 tiles).
+    const kitchen: Vec3 = [45.75, 0, 51.5];
+    expect([drawn.where(kitchen)?.indoors, roomOf(kitchen)]).toEqual([true, 'kitchen']);
+    drawn.update(createCamera('cam3=first,-90,0').update({ follow: kitchen }), kitchen);
+    tiles['kitchen, first person facing its west wall'] = cut();
+    expect(Object.keys(tiles).length).toBeGreaterThan(4 * structure.level.rooms!.length);
+    expect(Object.entries(tiles).filter(([, n]) => n > 0)).toEqual([]);
+    drawn.dispose();
+  });
+
+  it('just inside a door, with a perspective camera behind him outside, cuts walls on his storey only', () => {
+    const drawn = createStageSite(SITE, { materials, registry });
+    drawn.follow();
+    const house = drawn.structures[HOUSE];
+    const storeyOf = new Map(house.meshes.parts.map((part) => [part.name, part.mesh.userData.storey as number]));
+    const off: string[] = [];
+    for (const [door, feet, dz] of [
+      ['front', [51.5, 0, 59.2], 3.8], // on the porch behind him
+      ['back', [52, 0, 48.85], -3.8], // on the patio
+      ['garage side', [63.5, 0, 50.85], -3.8],
+    ] as const) {
+      const pose = behind(feet, dz);
+      drawn.update(pose, feet, { fade: true });
+      expect([drawn.where(feet), drawn.where(pose.position)?.indoors ?? false], door).toMatchObject([{ storey: 1, indoors: true }, false]); // prettier-ignore
+      const cut = Object.entries(house.cutaway!.cut()).filter(([, tiles]) => tiles.length > 0);
+      expect(cut.length, door).toBeGreaterThan(0); // his storey's walls facing the camera
+      // The upper storey's, the attic's and the basement's walls facing it hide nothing of him: cut, each step
+      // through the door switched them between whole and stumped (the front door's: 20, 28 and 7 tiles).
+      for (const [name, tiles] of cut) if (storeyOf.get(name) !== 1) off.push(`${door}: ${name}, ${tiles.length}`);
+    }
+    expect(off).toEqual([]);
     drawn.dispose();
   });
 

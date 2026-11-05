@@ -7,7 +7,9 @@
  * engine/gfx/cameras/boost.ts, moves the label where the picture draws the point), to CSS px from the overlay's top
  * left, which every element carries as `--ui-x` and `--ui-y` (its centre, by the overlay's `.ui-at` rule). A point
  * nearer than the camera's `near` or beyond its `far` hides its element (`CSS2DRenderer`'s cull), as does one under
- * the touch buttons (`blocked`). The nearer of two elements draws on top (`z-index` by depth).
+ * the touch buttons (`blocked`). The nearer of two elements draws on top (`z-index` by depth). Labels made with
+ * `declutter` give way instead: of two whose boxes overlap on screen, the nearer shows and the farther hides, for that
+ * frame only (every label that may show is placed again each frame, so a hidden one comes back once it is clear).
  *
  * Damage numbers, carried as behaviour: each rises `DAMAGE_NUMBERS.rise` m/s, slowing by `slow` m/s², for `life`
  * seconds, popping in and blinking twice in its last quarter (CSS keyframes, driven by the overlay's clock through
@@ -148,6 +150,8 @@ export interface LabelOptions {
   id?: string;
   /** Its text colour (CSS). */
   color?: string;
+  /** Whether it hides while its box overlaps a nearer decluttering label's on screen (false: it draws under it). */
+  declutter?: boolean;
 }
 
 /** A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame. */
@@ -215,6 +219,7 @@ interface Pooled extends Placed {
 /** A label's own state. */
 interface Held extends Placed {
   label: Label;
+  readonly declutter: boolean;
 }
 
 /** Writes `--name: value` on `el` when it changed; returns the value. */
@@ -248,6 +253,21 @@ export function createWorldLayer(labels: HTMLElement, numbers: HTMLElement): Wor
     item.x = write(item.el, '--ui-x', css(at[0]), item.x);
     item.y = write(item.el, '--ui-y', css(at[1]), item.y);
     item.depth = at[2];
+  };
+  /**
+   * Hides each shown decluttering label whose box overlaps that of a nearer one left showing (`.ui-at` centres a box on
+   * its `--ui-x` and `--ui-y`). Every size is read before any element hides, so the layout is worked out once a frame.
+   */
+  const declutter = (items: readonly Held[]) => {
+    const crowd = items.filter((item) => item.shown && item.declutter).sort((a, b) => a.depth - b.depth);
+    if (crowd.length < 2) return;
+    const boxes = crowd.map((item) => ({ item, x: +item.x, y: +item.y, w: item.el.offsetWidth, h: item.el.offsetHeight })); // prettier-ignore
+    const kept: typeof boxes = [];
+    for (const box of boxes) {
+      const hit = kept.some((k) => Math.abs(k.x - box.x) * 2 < k.w + box.w && Math.abs(k.y - box.y) * 2 < k.h + box.h);
+      if (hit) show(box.item, false);
+      else kept.push(box);
+    }
   };
   /** Nearer elements on top: `z-index` by depth among the shown ones. */
   const stack = (items: readonly Placed[]) => {
@@ -302,7 +322,7 @@ export function createWorldLayer(labels: HTMLElement, numbers: HTMLElement): Wor
           el.remove();
         },
       };
-      held.push({ el, label, shown: false, x: '', y: '', z: 0, depth: 0 });
+      held.push({ el, label, declutter: options.declutter === true, shown: false, x: '', y: '', z: 0, depth: 0 });
       labels.append(el);
       return label;
     },
@@ -347,6 +367,7 @@ export function createWorldLayer(labels: HTMLElement, numbers: HTMLElement): Wor
         const [x, y, z] = worldPoint(point, `label "${label.id}"'s at`);
         put(item, frame, x, y, z, label.visible);
       }
+      declutter(held);
       for (const item of pool) {
         if (!item.live) continue;
         item.age += frame.dt;
