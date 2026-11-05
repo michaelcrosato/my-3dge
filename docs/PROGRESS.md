@@ -15,14 +15,14 @@ past 40 lines). The integrator rewrites it at each gate; every WP's status and n
   to ESC-0006's calls (the Quaternius GLBs, model access for the live evals, the crowd's CPU render, the mutants outside
   the sample), answered from Copy my answers. Their go-ahead (2026-10-22): a bot may play with infinite health and ammo.
 
-## Where things stand (2026-11-04)
+## Where things stand (2026-11-05)
 
 - Phases 0–9 and 13 are done (G10–G13: PR #22 to #34). The playground (`npm run dev`) is one map, the block, behind a
-  splash and a start menu (WP 13.33), shut doors walls to its cameras (13.34), no z-fighting (13.35–13.37); the player
-  moves as Apex in five cameras (doors, pickups, melee, guns, ragdolls, neighbours, a dog, sound, day and night, GPU
-  rain; clean, cel and pixel looks); Watch the tour plays it all. Agents drive it through `node x`, `__engine` or
-  `x mcp`. Games: lean/. Shipped as playground.html. Faster starts (ADR-0008 amendments 11, 12; Owner: a move still
-  re-keys lit pipelines); Style Lab's filters in Tune the look.
+  splash and a start menu (WP 13.33), shut doors walls to its cameras (13.34), no z-fighting (13.35–13.37), the audit's
+  gaps closed (13.38); the player moves as Apex in five cameras (doors, pickups, melee, guns, ragdolls, neighbours, a
+  dog, sound, day and night, GPU rain; clean, cel and pixel looks); Watch the tour plays it all. Agents drive it through
+  `node x`, `__engine` or `x mcp`. Games: lean/. Shipped as playground.html. Faster starts (ADR-0008 amendments 11, 12;
+  Owner: a move still re-keys lit pipelines); Style Lab's filters in Tune the look.
 
 ## What waits, and the open issues
 

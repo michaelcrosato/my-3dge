@@ -2670,3 +2670,63 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   (engine/gfx/level/openings.ts `writeSkin`), so its 3 mm read as the wall's siding; the geometry is unchanged, closed
   as it was. engine/gfx/level/openings.test.ts holds it (64 of the shed's skin vertices were shaded otherwise).
 - Plan edit: WP 13.37.
+
+## Amendment 56 (2026-11-05, WP 13.38): the completeness audit's gaps
+
+- **Found:** a read-only audit of main at 931f3e6 checked each clause of the owner's goal (a UI that looks decent, every
+  menu reworked, a proper splash and start menu, the demos on one map as shardfall and riftlight have it, files removed
+  and consolidated, docs current, a clear way to test, the house's glitches), with four auditors (the UI, the one map,
+  files and docs, the house) and a skeptic on every gap they claimed. Most held. The gaps that held:
+  - **The house.** A perspective camera inside the player's building cut its walls on the lines to the floor round him,
+    so walking toward a wall dropped it to a 0.44 m stump: 182 of 182 placements cut walls of his own room, and first
+    person cut 58 to 105 tiles (126 facing the kitchen's west wall). A camera trailing outside through a door cut the
+    walls facing it on every storey, so whole facades flipped as he crossed a threshold (50 parts at the front door: 20
+    basement, 28 upper and 7 attic tiles). Railing tiles drew no floor (232 tiles: 3 m drops to the hall or the
+    basement, nothing under the decks, paint tops a centimetre down). The decks' ladder feet drew a floor in the grass's
+    plane and z-fought it. The sky dome and the gym-only signs had no tests.
+  - **The map.** Seven of the owner's feel checks opened the gym's own walled scene, not the gym on the block; Tools'
+    recorded runs were file names and four played off the block; the time of day, the rain and the dust could be set
+    only by a link; the area card could not be called back; the splash showed only on a first load. The Stress Box and
+    the seven labs were pages apart, their links leading nowhere from playground.html: ESC-0007.
+  - **The UI.** The feel panel wore the engine's look, not the theme; the gym's signs overlapped (amendment 53's "Not
+    changed"); a pad could not work Settings, the controls sheet or Tune; the menus' footers named keyboard keys on a
+    pad and on touch.
+  - **Docs.** The playground README's controls table had drifted from labs/playground/controls.ts; the Play it line put
+    the dev server before playground.html; overview lines in README.md and docs/HANDOFF.md were stale.
+- **Decided:**
+  - A building is cut in a perspective camera only while he is indoors and the camera is not indoors in it with him
+    (engine/gfx/stageSite.ts, `where` at the camera): first person and an arm in his room keep his room's walls, what
+    stands between it and him fading as before. A camera outside looking in cuts by facing only the walls of his storey
+    (engine/gfx/cutaway.ts `planCutaway`'s `storey`), and any wall of any storey on its line of sight to him. This
+    replaces amendment 51's "in a perspective camera a building is cut only while he is indoors".
+  - A railing draws its tiles' floor at its foot, welded as a floor is (engine/gfx/level/openings.ts `railingGeometry`),
+    in the railing's material. A deck's ladder whose foot stands on the ground is the playground's `*` glyph, the
+    engine's ladder with no floor drawn (labs/playground/levels/yard.ts).
+  - The gym's signs give way: of two whose boxes overlap on screen the nearer shows (engine/ui/labels.ts `declutter`),
+    and which show is labs/playground/ui/signs.ts's rule, tested.
+  - **ESC-0007, answered by the owner (2026-11-05): beside the block.** The Stress Box and the seven labs stay pages of
+    their own, opened from Tools in a new tab (labs/playground/ui/pages.ts). From playground.html each link is the dev
+    server's and says in plain words to run `npm run dev` first; an owner's check of another page says the same.
+  - Tools' recorded runs are each a plain name and a line, the gym's four moved onto the block as the tour moves them
+    (labs/playground/ui/runs.ts); the committed replays and their goldens are unchanged. Settings sets the block's time
+    of day and day's length (live, through the recorded dev action `daytime`), the rain and the dust, each slider
+    reading its value beside it; the day's length is kept, so the noon and night checks pin it to 0. I shows the area's
+    card again, and pause's This area's card does for a pad. The splash shows for a person on every load. A pad works
+    Settings, the controls sheet and Tune (labs/playground/ui/walk.ts), Settings following a pad picked up while it is
+    open; each menu's footer names the keys of the device in use and hides on touch, and photo mode's hint drops the
+    mouse's words on a pad; the feel panel wears the theme, with a heading and a Close button.
+- **Evidence:** each lane ran its new tests against the code without its fix and saw them fail: site-cut.test.ts (two
+  cases), cutaway.test.ts, openings.test.ts, house.test.ts (a floor under every tile one is seen on), site.test.ts (no
+  floor on uncut ground), sky.test.ts, signs.test.ts, labels.test.ts, feel.test.ts, theme.test.ts, frame.test.ts,
+  photo.test.ts, walk.test.ts, settings.test.ts, checks.test.ts, pages.test.ts, runs.test.ts, areas.test.ts,
+  splash.test.ts, help.test.ts, controls.test.ts, spawns.test.ts and tests/unit/playground-readme.test.ts. Each lane's
+  verifier review passed but the UI lane's, which found the footers and a pad's walk unproven in either tier: the page's
+  wiring is now checked in playground-ui.spec.ts (the footers, a scripted pad walking Settings, Tools' screens, I and
+  pause's card, Time of day on the block's clock) and one-file.spec.ts (the pages' note from the file). The rides,
+  climb, site and tour replays keep their goldens.
+- **Not verified:** the owner's eye on the house as the camera moves (the `house-views` check), including the railing's
+  floor, which reads as the railing's wood beside a room's floor (a different material is the owner's call); no pad was
+  driven but the spec's scripted one. Still open: a pad cannot scroll a controls sheet taller than the window; the
+  facing cut's `out` vectors on corner and counter cells (engine/gfx/level/cells.ts) still decide which walls an outside
+  camera cuts.
+- Plan edit: WP 13.38.
