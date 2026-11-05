@@ -8,10 +8,10 @@
  * clean look unless the query names others, warming up only what it draws (`gfx.warmUp: asked`), with the
  * playground's replays (tests/replays/playground-*) and Tools' recorded runs (`runs`) offered to `?replay=<name>`.
  *
- * A person opening the page sees the splash screen while it loads (labs/playground/ui/splash.ts), then the start menu
- * over the block (labs/playground/ui/frontEnd.ts: Play, Go to, Settings, Controls, Photo mode, the tour, the owner's
- * checks, Tools); automation, a replay and `playground.title=off` go straight to play. The page wears one theme
- * (labs/playground/ui/theme.ts, the overlay's `pg-ui` class).
+ * A person sees the splash screen while any page loads (labs/playground/ui/splash.ts `splashOnOpen`), then the start
+ * menu over the block (labs/playground/ui/frontEnd.ts); a replay, the tour and `playground.title=off` fade from it
+ * into play, and automation sees it only with the start menu. The page wears one theme (labs/playground/ui/theme.ts,
+ * the overlay's `pg-ui` class).
  *
  * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
  * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
@@ -60,7 +60,7 @@ import { showHud, type HudPlayer } from './ui/hud';
 import { runReplays } from './ui/runs';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
 import { signShown } from './ui/signs';
-import { createSplash } from './ui/splash';
+import { createSplash, splashOnOpen } from './ui/splash';
 import { installTheme } from './ui/theme';
 
 /** How long the HUD shows the camera and the look after either changes (s). */
@@ -121,7 +121,9 @@ if (!search.has('cam.wholeZoom')) search.set('cam.wholeZoom', 'true');
 if (!search.has('gfx.warmUp')) search.set('gfx.warmUp', 'asked'); // its looks draw through the chain, never plain
 /** Whether the page opens on its start menu, behind the splash screen (labs/playground/ui/splash.ts). */
 const showsTitle = titleOnOpen(search.get('playground.title') ?? 'auto', search, navigator.webdriver);
-const splash = showsTitle ? createSplash(document) : null;
+/** The splash while the page loads: for a person on every load, waiting for a key only over the start menu. */
+const opensWith = splashOnOpen(showsTitle, navigator.webdriver);
+const splash = opensWith.show ? createSplash(document) : null;
 for (const type of ['error', 'unhandledrejection']) addEventListener(type, () => splash?.remove()); // the error shows
 
 /** The camera member of the inspector (engine/app/viewMembers.ts). */
@@ -302,7 +304,7 @@ if (engine.ready && engine.inspector && engine.ui && engine.input) {
     frontEnd.open('title'); // under the splash, which fades to show it
   else if (menuAsked) frontEnd.open('pause'); // the menu button, tapped while the page loaded
 }
-if (engine.ready) await splash?.ready(!navigator.webdriver);
+if (engine.ready) await splash?.ready(opensWith.wait);
 else splash?.remove(); // a failed start: its error and fix show at once (the page's #msg)
 
 addEventListener('keydown', (event) => {
