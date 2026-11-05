@@ -9,8 +9,8 @@
  * one draw group while none is cut, two at most when a classic view cuts two facades side by side.
  *
  * An opening's rooms are its compiled ones, a side with none found past the low solids beside it (`openingRooms`,
- * engine/gfx/level/linings.ts's `roomPast`; WP 13.41): a window over the kitchen's counter opens onto the kitchen, so it
- * stands on the kitchen's facade and its facings take the kitchen's lining.
+ * engine/gfx/level/linings.ts's `roomBeside`; WP 13.41): a window over the kitchen's counter opens onto the kitchen, so
+ * it stands on the kitchen's facade and its facings take the kitchen's lining.
  *
  * Invariants: pure in the openings; the ranges cover the geometry's index in order, inside first.
  *
@@ -24,7 +24,7 @@ import type { OpeningDescriptor } from '../../world/level/types';
 import type { CutTarget } from '../cutaway';
 import { mergeGeometries } from '../geometry/groups';
 import type { LevelCell } from './cells';
-import { LINING_FACES, roomPast, type RoomView } from './linings';
+import { LINING_FACES, roomBeside, type RoomView } from './linings';
 import type { LevelMeshPart } from './meshes';
 
 /** An opening between two rooms, or none: it faces no way out. */
@@ -46,22 +46,12 @@ export function openingFacade(opening: Pick<OpeningDescriptor, 'axis' | 'rooms'>
   return LINING_FACES.findIndex((face) => face.name === names[low < 0 ? 0 : 1]);
 }
 
-/** `opening`'s rooms on `view`, the lower x or z side's first, a side with none found past its low solids (see the file comment). */
+/** `opening`'s rooms on `view`, the lower x or z side's first, one with none found past its low solids. */
 export function openingRooms(view: RoomView, opening: OpeningDescriptor): [number, number] {
   const sides = sidesOf(opening, view.cols, view.rows);
-  const steps =
-    opening.axis === 'x'
-      ? [
-          [0, -1],
-          [0, 1],
-        ]
-      : [
-          [-1, 0],
-          [1, 0],
-        ];
   return opening.rooms.map((room, k) => {
     const tile = sides[k];
-    return room >= 0 || !tile ? room : roomPast(view, tile[0], tile[1], steps[k][0], steps[k][1]);
+    return room >= 0 || !tile ? room : roomBeside(view, tile[0], tile[1]);
   }) as [number, number];
 }
 

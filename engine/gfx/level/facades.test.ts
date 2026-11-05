@@ -1,8 +1,9 @@
 /**
  * @file Unit tests for engine/gfx/level/facades.ts (T1; WP 13.40): an opening faces the side its rooms are not on, or
- * no way between two rooms, a room found past a counter beside it (WP 13.41); a storey's openings draw facade by facade into one geometry, inside first, each facade a
- * range of its index with a cell facing its way; and the draws left standing are the ranges of the facades not cut,
- * run together where they meet, a part with none left drawing no group, its `visible` untouched.
+ * no way between two rooms, a room found past a counter beside it (WP 13.41); a storey's openings draw facade by facade
+ * into one geometry, inside first, each facade a range of its index with a cell facing its way; and the draws left
+ * standing are the ranges of the facades not cut, run together where they meet, a part with none left drawing no group,
+ * its `visible` untouched.
  * @see engine/gfx/level/facades.ts
  */
 import { Mesh } from 'three/webgpu';

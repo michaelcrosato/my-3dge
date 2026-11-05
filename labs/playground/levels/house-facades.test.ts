@@ -3,8 +3,9 @@
  * walls facing the camera are cut to stumps, the walls over their windows and doors and their frames stood at full
  * height as loose pillars): every opening in its outer walls stands on a facade, a window over the kitchen's counter
  * too (WP 13.41: it stood on none, the counter beside it in no room); a storey the storey cut takes off stays hidden as
- * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); in each of isometric's four turns, the heads, frames and facings of a facade are left out
- * exactly when its walls are cut by facing; and while nothing is cut each such part draws in one range.
+ * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); in each of isometric's four turns,
+ * the heads, frames and facings of a facade are left out exactly when its walls are cut by facing; and while nothing is
+ * cut each such part draws in one range.
  * @see engine/gfx/level/facades.ts
  */
 import { MeshBasicMaterial } from 'three/webgpu';

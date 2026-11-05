@@ -1,9 +1,10 @@
 /**
  * @file The house's linings (engine/gfx/level/linings.ts, WP 13.40; the final visual review: from inside, its outer
  * walls showed their siding, so a room read as open to the outside): a ray from a room at any face of its walls that
- * opens onto it, over the kitchen's counters too (WP 13.41), meets the wall's lining, in the room's wallpaper, never
- * its siding; the wall over each window and door is papered on its room's side, a window over the counter too; and the
- * cutaway cuts each lining exactly when it cuts the wall behind it, so no papered sheet stands where a wall is cut to a stump.
+ * opens onto it, over the kitchen's counters too, along them into its corners (WP 13.41), meets the wall's lining, in
+ * the room's wallpaper, never its siding; the wall over each window and door is papered on its room's side, a window
+ * over the counter too; and the cutaway cuts each lining exactly when it cuts the wall behind it, so no papered sheet
+ * stands where a wall is cut to a stump.
  * @see engine/gfx/level/linings.ts
  * @see labs/playground/levels/house.ts
  */
@@ -35,16 +36,44 @@ describe('the house’s linings', () => {
     const t = level.tile;
     const [aimed, siding] = [[] as string[], [] as string[]];
     for (const part of meshes.parts.filter((one) => one.recipe === 'wall' && one.cells.length > 0)) {
-      const { solid, room, top, floor } = level.storeys![part.storey!];
+      const { solid, room, top, floor, tiles: chars } = level.storeys![part.storey!];
+      const low = (i: number) =>
+        solid[i] && top[i] - floor[i] <= 1 && !level.legend[chars[i]]?.opening?.match(/door|window/); // prettier-ignore a counter, 0.9 m: a window's sill is none
+      /** Whether the run of low solids holding tile `i` stands in a room: beside a room's floor, never the outdoors. */
+      const inRoom = (i: number) => {
+        const [run, seen, rooms] = [[i], new Set([i]), new Set<number>()];
+        for (let k = 0; k < run.length; k++) {
+          const [c, r] = [run[k] % level.cols, Math.floor(run[k] / level.cols)];
+          for (const [x, z] of [
+            [c - 1, r],
+            [c + 1, r],
+            [c, r - 1],
+            [c, r + 1],
+          ]) {
+            const next = z * level.cols + x;
+            if (x < 0 || z < 0 || x >= level.cols || z >= level.rows || seen.has(next)) continue;
+            seen.add(next);
+            if (low(next)) run.push(next);
+            else if (!solid[next] && !level.legend[chars[next]]?.opening?.match(/door|window/)) rooms.add(room[next]); // a doorway is neither
+          }
+        }
+        return rooms.size > 0 && !rooms.has(-1);
+      };
       for (const { tiles, centre } of part.cells) {
         const [col, row] = tiles;
         for (const { dc, dr } of LINING_FACES) {
           // the room's first open tile that way, over the kitchen's counters (0.9 m) on the way
           let [c, r, steps, over] = [col + dc, row + dr, 1, part.bottom];
           const inside = () => c >= 0 && r >= 0 && c < level.cols && r < level.rows;
-          for (let i = r * level.cols + c; inside() && solid[i] && top[i] - floor[i] <= 1; i = r * level.cols + c) [c, r, steps, over] = [c + dc, r + dr, steps + 1, Math.max(over, top[i])]; // prettier-ignore
+          for (let i = r * level.cols + c; inside() && low(i); i = r * level.cols + c) [c, r, steps, over] = [c + dc, r + dr, steps + 1, Math.max(over, top[i])]; // prettier-ignore
           const at = r * level.cols + c;
-          if (!inside() || solid[at] || room[at] < 0 || part.top <= over) continue; // a sill wall behind a counter: unseen
+          if (!inside() || solid[at] || room[at] < 0) {
+            // no room that way: a counter running along the face to a wall (the kitchen's corner) is still in its room
+            const beside = (row + dr) * level.cols + col + dc;
+            if (steps === 1 || !inRoom(beside)) continue;
+            [steps, over] = [1, Math.max(part.bottom, top[beside])]; // from over the counter beside it
+          }
+          if (part.top <= over) continue; // a sill wall behind a counter: unseen
           // from the room tile's middle, halfway up the face above what it looks over (a sill under a window is
           // 0.9 m), back at its face
           const origin = new Vector3(centre[0] + dc * t * steps, (over + part.top) / 2, centre[2] + dr * t * steps); // prettier-ignore

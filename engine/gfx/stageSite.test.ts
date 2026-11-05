@@ -3,9 +3,10 @@
  * each structure drawn in its level entry's looks, in a group at its place and turn, its level's meshes inside; the
  * terrain with the cut left out, its chunk holding the cut at its finest level only; in a classic view the storeys
  * above the player's and the roof indoors hidden in the structure the player stands in, the others whole, nothing
- * hidden in another camera or with the player outside, and what stands on a cut storey or in an opening of a facade
- * the cutaway left out said to be hidden (`hides`, its key `cutKey`); the cutaways made once a player stands, their twins registered with the warm-up; a ride faded in the
- * world's frame, when it stands between the camera and the player and never off their line.
+ * hidden in another camera or with the player outside, and what stands on a cut storey or in an opening of a facade the
+ * cutaway left out said to be hidden (`hides`, its key `cutKey`); the cutaways made once a player stands, their twins
+ * registered with the warm-up; a ride faded in the world's frame, when it stands between the camera and the player and
+ * never off their line.
  * @see engine/gfx/stageSite.ts
  */
 import { BoxGeometry, Mesh, MeshBasicMaterial } from 'three/webgpu';

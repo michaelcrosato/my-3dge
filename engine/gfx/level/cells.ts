@@ -52,6 +52,11 @@ export interface LevelCell {
 /** The most a block standing in rooms covers (m²): a chimney's breast, a counter, an island (see the file comment). */
 export const STANDING_AREA = 4;
 
+/** Whether tile `at` of `level` is an opening's (a doorway's): open, in no room, yet not the outdoors either. */
+export function openingAt(level: Partial<Pick<CompiledLevel, 'legend' | 'tiles'>>, at: number): boolean {
+  return !['', 'none', undefined].includes(level.legend?.[level.tiles?.[at] ?? '']?.opening);
+}
+
 /** Whether tile (col, row) of `level` is solid; outside the map counts as solid. */
 function solid(level: CompiledLevel, col: number, row: number): boolean {
   if (col < 0 || row < 0 || col >= level.cols || row >= level.rows) return true;
@@ -67,11 +72,9 @@ function openAlong(level: CompiledLevel, tiles: [number, number][]): boolean {
 export function levelCells(level: CompiledLevel, pieces: readonly TileRect[], bottom: number): LevelCell[] {
   const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
   const { room } = level;
-  /** Whether tile `at` is an opening's (a doorway's): open, in no room, yet not the outdoors either. */
-  const opening = (at: number) => !['', 'none', undefined].includes(level.legend?.[level.tiles?.[at]]?.opening);
   /** Whether any of `tiles` opens onto a room's floor (`inRoom`), or onto the outdoors, on a building's storey. */
   const opensOnto = (tiles: [number, number][], inRoom: boolean) =>
-    tiles.some(([col, row]) => !solid(level, col, row) && !opening(row * level.cols + col) && (room?.[row * level.cols + col] ?? -1) >= 0 === inRoom); // prettier-ignore
+    tiles.some(([col, row]) => !solid(level, col, row) && !openingAt(level, row * level.cols + col) && (room?.[row * level.cols + col] ?? -1) >= 0 === inRoom); // prettier-ignore
   /** On a building's storey, the way along an axis from side `a` to side `b`: away from a room, to the outdoors. */
   const lean = (a: [number, number][], b: [number, number][]) =>
     Math.sign(Number(opensOnto(a, true)) - Number(opensOnto(b, true)) + Number(opensOnto(b, false)) - Number(opensOnto(a, false))); // prettier-ignore

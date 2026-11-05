@@ -8,8 +8,8 @@
  * moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade (WP 13.8): the
  * pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and come back
  * without. `either` (WP 13.18): a piece facing the camera, or between it and the focus. With a storey (WP 13.38), the
- * facing rule cuts only that storey's pieces. A group (WP 13.41) is cut whole. The GPU half (0 pipelines while the camera turns, the draw-call budget)
- * is tests/e2e/hall.spec.ts.
+ * facing rule cuts only that storey's pieces. A group (WP 13.41) is cut whole. The GPU half (0 pipelines while the
+ * camera turns, the draw-call budget) is tests/e2e/hall.spec.ts.
  * @see engine/gfx/cutaway.ts
  */
 import { readFileSync } from 'node:fs';

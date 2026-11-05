@@ -2,8 +2,9 @@
  * @file Unit tests for engine/gfx/level/cells.ts's rooms (WP 13.39): on a storey of a level with rooms, a wall between
  * a room and the outdoors faces the outdoors, one between two rooms faces nowhere, and one open on no side still faces
  * away from the map's centre; a block standing in rooms (WP 13.41) faces nowhere, one group, and a piece alone among
- * cut ones goes with them, in every list it is in; a doorway is neither a room nor the outdoors; with no room grid (a level without rooms) the old rule holds, the
- * open-both-ways wall falling back to the diagonal. The common cases are engine/gfx/level/meshes.test.ts's.
+ * cut ones goes with them, in every list it is in; a doorway is neither a room nor the outdoors; with no room grid (a
+ * level without rooms) the old rule holds, the open-both-ways wall falling back to the diagonal. The common cases are
+ * engine/gfx/level/meshes.test.ts's.
  * @see engine/gfx/level/cells.ts
  */
 import { describe, expect, it } from 'vitest';
