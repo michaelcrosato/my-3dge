@@ -8,7 +8,8 @@
  *    keys with the HUD hidden and puts the camera back on leaving; after a reload the settings and the rebind are kept;
  * 2. the Tune panel (WP 13.32) lists every filter; turning one on, sliding its numbers, laying a look on and sliding the
  *    strength reach the look drawn (`__engine.look()`) with no pipeline built after the first frame through the chain;
- *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back;
+ *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back; Tools' feel panel opens in the
+ *    theme (the type and the accent), headed, and its Close button closes it;
  * 3. the movement profile from settings starts the scene again on it, and the run's replay holds it and plays back to
  *    its hash in Node; Restart starts it again on its seed;
  * 4. Go to, from the gym, opens the block at the area picked; on the block it puts the player in the room
@@ -235,6 +236,12 @@ test.describe('the playground’s front end', () => {
     await page.keyboard.press('Escape');
     await harness.tick(2);
     expect((await screens(page)).screens).toEqual(['title', 'tools']);
+    await pick(page, harness, 'tools', 'feel'); // the feel panel, beside the overlay, in the theme (WP 13.38)
+    const feel = page.locator('[data-ui=feel]');
+    await expect(feel.getByRole('heading', { name: 'Tune the feel' })).toBeVisible();
+    expect(await feel.evaluate((el) => [getComputedStyle(el).fontFamily, getComputedStyle(el.querySelector('input')!).accentColor])).toEqual([expect.stringMatching(/^Inter,/), 'rgb(255, 181, 71)']); // prettier-ignore
+    await feel.locator('[data-feel=close]').click();
+    await expect(feel).toBeHidden();
     expect(harness.advice()).toEqual([]);
   });
 
