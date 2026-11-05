@@ -201,7 +201,9 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     for (const descriptor of view.meshes) {
       const recipe = recipeOf(descriptor.recipe);
       const drawn = storey === undefined ? descriptor : seamed(level, k, withoutRooms(level, k, descriptor, recipe, options.rooms, roomPieces), recipe); // prettier-ignore
-      parts.push(place(buildPart(view, drawn, recipe, materialsOf(recipe), single, roof), descriptor.recipe, recipe, descriptor.glyphs, [descriptor.bottom, descriptor.top], storey)); // prettier-ignore
+      const part = place(buildPart(view, drawn, recipe, materialsOf(recipe), single, roof), descriptor.recipe, recipe, descriptor.glyphs, [descriptor.bottom, descriptor.top], storey); // prettier-ignore
+      const whole = recipe.shape === 'flight' || (!!recipe.cut && part.cells.length === 0); // one mesh: a flight, blocks under a roof
+      parts.push(whole && storey !== undefined ? drawnWhole(part) : part);
     }
   });
   level.storeys?.forEach((storey, k) => {
@@ -216,7 +218,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       const drawn = facadeParts(openings, level.tile, storey.base, build, lowCeiling(level, storey));
       if (!drawn) return;
       const part = place(single(drawn.geometry, recipe), name, recipe, [], [storey.base, storey.fullTop], k);
-      if (!drawn.facades.some(({ face }) => face !== INSIDE)) return void parts.push(part);
+      if (!drawn.facades.some(({ key, cell }) => key !== INSIDE || cell.size[0] > 0)) return void parts.push(part);
       part.mesh.material = [part.mesh.material as Material]; // drawn by its facades' ranges, one group while none is cut
       drawn.geometry.addGroup(
         0,
@@ -227,13 +229,13 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
     };
     const onFacade = facadeTiles(level.cols, openings);
     onFacades[k] = onFacade;
-    drawFacades('heads', recipeOf('heads'), (_, face) => headsGeometry(level, topped, roof, (c, r) => (onFacade.get(r * level.cols + c) ?? INSIDE) === face)); // prettier-ignore
+    drawFacades('heads', recipeOf('heads'), (_, key) => headsGeometry(level, topped, roof, (c, r) => (onFacade.get(r * level.cols + c) ?? INSIDE) === key)); // prettier-ignore
     drawFacades('frames', recipeOf('frames'), (own) => framesGeometry(own, level.tile, options.leaf));
     const lining = (name: string) => recipeOf(name).lining;
     const faced = new Map<number, Map<string, BufferGeometry>>();
-    const facings = (own: readonly OpeningDescriptor[], face: number) => {
-      if (!faced.has(face)) faced.set(face, roof ? new Map() : wallFacings(level, topped, own, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes), (name) => !!lining(name))); // prettier-ignore
-      return faced.get(face)!;
+    const facings = (own: readonly OpeningDescriptor[], key: number) => {
+      if (!faced.has(key)) faced.set(key, roof ? new Map() : wallFacings(level, topped, own, storey.base - (k > 0 ? STOREY_SEAM : 0), blockAt(level, storey.tiles, recipes), (name) => !!lining(name))); // prettier-ignore
+      return faced.get(key)!;
     };
     for (const wall of facings(openings, Number.NaN).keys()) {
       const [name, lined] = wall.split(':'); // `<recipe>:lining`: its faces toward a room
@@ -241,7 +243,7 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       drawFacades(
         `heads:${wall}`,
         { ...recipeOf('heads'), materials, castShadow: false },
-        (own, face) => facings(own, face).get(wall) ?? null,
+        (own, key) => facings(own, key).get(wall) ?? null,
       ); // prettier-ignore the heads cast its shadow
     }
     // A lined recipe's walls' faces toward a room, in its lining (linings.ts): the room's side of an outer wall.
@@ -367,4 +369,25 @@ function withoutRooms(
     found.set(room, entry);
   }
   return kept.length === descriptor.pieces.length ? descriptor : { ...descriptor, pieces: kept };
+}
+
+/**
+ * `part`, drawn as one mesh (a flight, a storey's blocks under a pitched roof), as one range the cutaway leaves out
+ * where it stands between the camera and the player (engine/gfx/level/facades.ts, WP 13.42: a flight's top and the
+ * attic's walls under its roof hid him): its cell the rectangle its geometry covers on the ground, its heights the
+ * geometry's (a flight's descriptor stands at its floor).
+ */
+function drawnWhole(part: LevelMeshPart): LevelMeshPart {
+  const geometry = part.mesh.geometry;
+  const count = geometry.getIndex()?.count ?? geometry.getAttribute('position')?.count ?? 0;
+  if (!count || drawsNothing(geometry)) return part;
+  if (!Array.isArray(part.mesh.material)) {
+    part.mesh.material = [part.mesh.material]; // drawn by its range: one group while it is not cut
+    geometry.clearGroups();
+    geometry.addGroup(0, count, 0);
+  }
+  if (!geometry.boundingBox) geometry.computeBoundingBox();
+  const { min, max } = geometry.boundingBox!;
+  const cell = { centre: [(min.x + max.x) / 2, min.y, (min.z + max.z) / 2] as [number, number, number], size: [max.x - min.x, max.z - min.z] as [number, number], out: [0, 0] as [number, number] }; // prettier-ignore
+  return { ...part, bottom: min.y, top: max.y, facades: [{ face: INSIDE, key: INSIDE, start: 0, count, cell }] }; // a flight's own: its floor's
 }

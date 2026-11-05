@@ -14,7 +14,7 @@ import { registry } from '../../../engine/core/registry';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
 import { createCutaway, planCutaway } from '../../../engine/gfx/cutaway';
 import { createStoreyCut } from '../../../engine/gfx/storeyCut';
-import { DOORWAY, INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
+import { INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
 import { LINING_FACES } from '../../../engine/gfx/level/linings';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
 import { levelLooks } from '../../../engine/gfx/level/runs';
@@ -48,7 +48,7 @@ describe('the house’s facades', () => {
     expect(inside.map(({ kind, storey, tiles }) => `${kind} on ${storey} at ${tiles}`)).toEqual([]);
   });
 
-  it('in each turn of isometric are left out exactly where their walls are cut by facing', () => {
+  it('in each turn of isometric leave out every opening of a facade whose walls the camera cuts by facing', () => {
     const { level, meshes } = house();
     const cutaway = createCutaway(meshes);
     const walls = meshes.parts.filter((part) => part.recipe === 'wall' && part.cells.length > 0);
@@ -65,9 +65,9 @@ describe('the house’s facades', () => {
       expect(walls.some((part) => part.cells.some(({ out }) => ways.has(LINING_FACES.findIndex(({ dc, dr }) => dc === out[0] && dr === out[1]))))).toBe(true); // prettier-ignore
       const left = cutaway.facades();
       for (const part of facaded) {
-        const faces = part.facades!.filter(({ face }) => face >= 0 && face < DOORWAY).map(({ face }) => face);
-        const facades = left[part.name].filter((face) => face < DOORWAY); // a doorway between rooms is cut by blocking
-        expect(facades.sort(), `${part.name}, turn ${Math.round((turn * 180) / Math.PI)}°`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
+        // every opening of a facade facing the camera is left out; another only where it stands on a line of sight
+        const facing = part.facades!.filter(({ face }) => ways.has(face)).map(({ key }) => key);
+        expect(facing.filter((key) => !left[part.name].includes(key)), `${part.name}, turn ${Math.round((turn * 180) / Math.PI)}°`).toEqual([]); // prettier-ignore
       }
       expect(ways.size, `turn ${Math.round((turn * 180) / Math.PI)}°`).toBeGreaterThan(0);
     }

@@ -3,16 +3,18 @@
  * camera are cut to stumps, the walls over their windows and doors, and their frames, stood at full height as loose
  * pillars). `openingFacade(opening)` names the way an opening's wall faces out of the building (an index into
  * engine/gfx/level/linings.ts's `LINING_FACES`: the side its rooms are not on), `INSIDE` for one between two rooms or
- * none; `facadeParts(openings, build)` draws a storey's heads, frames or facings facade by facade into one geometry,
- * inside first, each facade a range of its index with a cell standing for it (its openings' middle, their extent, the
- * way it faces), so the cutaway (engine/gfx/cutaway.ts) draws only the ranges of the facades it does not cut by facing:
- * one draw group while none is cut, two at most when a classic view cuts two facades side by side.
+ * none; `facadeParts(openings, build)` draws a storey's heads, frames or facings opening by opening into one geometry,
+ * what stands at no opening first, then the openings facade by facade, each a range of its index with its cell (its
+ * tiles, the way its facade faces), so the cutaway (engine/gfx/cutaway.ts) draws only the ranges it does not cut: an
+ * opening's facade facing the camera, or the opening on a line of sight to the player (WP 13.41: a doorway between two
+ * rooms, its own facade none, hid him; a lintel over a window beside him did too). One draw group while none is cut; a
+ * facade cut by facing is one run of its ranges.
  *
  * An opening's rooms are its compiled ones, a side with none found past the low solids beside it (`openingRooms`,
  * engine/gfx/level/linings.ts's `roomBeside`; WP 13.41): a window over the kitchen's counter opens onto the kitchen, so
  * it stands on the kitchen's facade and its facings take the kitchen's lining.
  *
- * Invariants: pure in the openings; the ranges cover the geometry's index in order, inside first.
+ * Invariants: pure in the openings; the ranges cover the geometry's index in order, what stands at no opening first.
  *
  * @example
  * openingFacade({ axis: 'x', rooms: [-1, 2] } as never); // 2: the outdoors to its north, a north wall's opening
@@ -27,18 +29,17 @@ import type { LevelCell } from './cells';
 import { LINING_FACES, roomBeside, type RoomView } from './linings';
 import type { LevelMeshPart } from './meshes';
 
-/** An opening between two rooms, or none: it faces no way out. */
+/** An opening between two rooms, or none: it faces no way out; and the key of what stands at no opening. */
 export const INSIDE = -1;
 
-/** The key of a storey's first doorway between two rooms (its own range, cut where it blocks the view); the next +1. */
-export const DOORWAY = LINING_FACES.length;
-
 /**
- * One range of a part's index and the cell for it: `face`, the facade's (an index into `LINING_FACES`), a doorway's
- * between two rooms (`DOORWAY` on), or `INSIDE` for what stands at no opening (a low ceiling's heads).
+ * One range of a part's index and the cell for it: `key`, its opening's index among the storey's openings (`INSIDE`
+ * for what stands at no opening: a low ceiling's heads, or a part drawn whole), and `face`, its facade (an index into
+ * `LINING_FACES`; `INSIDE` between two rooms or at no opening).
  */
 export interface FacadeRange {
   readonly face: number;
+  readonly key: number;
   readonly start: number;
   readonly count: number;
   readonly cell: Pick<LevelCell, 'centre' | 'size' | 'out'>;
@@ -79,52 +80,44 @@ export function lowCeiling(
   return cols.length ? [Math.min(...cols), Math.min(...rows), Math.max(...cols), Math.max(...rows)] : undefined;
 }
 
-/** Each of `openings`' key: its facade's, or a doorway's between two rooms (`DOORWAY` on, in their order). */
-export function openingKeys(openings: readonly Pick<OpeningDescriptor, 'axis' | 'rooms'>[]): number[] {
-  let doorways = 0;
-  return openings.map((opening) => {
-    const face = openingFacade(opening);
-    return face === INSIDE ? DOORWAY + doorways++ : face;
-  });
-}
-
-/** Each tile of `openings`, by its index on a map `cols` wide: its opening's key (`openingKeys`). */
+/** Each tile of `openings`, by its index on a map `cols` wide: its opening's key, the opening's index. */
 export function facadeTiles(cols: number, openings: readonly OpeningDescriptor[]): Map<number, number> {
   const tiles = new Map<number, number>();
-  const keys = openingKeys(openings);
   openings.forEach(({ tiles: [c0, r0, c1, r1] }, i) => {
-    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) tiles.set(r * cols + c, keys[i]);
+    for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) tiles.set(r * cols + c, i);
   });
   return tiles;
 }
 
 /**
- * Draws `openings` facade by facade with `build` (a facade's openings and its face to a geometry, or null) into one
- * geometry with a range a facade (see the file comment), at `bottom` m; null when nothing is drawn. What stands at no
- * opening (`INSIDE`: a low ceiling's heads) takes `inside`, the rectangle of its tiles, as its cell.
+ * Draws `openings` opening by opening with `build` (an opening, or none, and its key to a geometry, or null) into one
+ * geometry with a range an opening (see the file comment), at `bottom` m; null when nothing is drawn. What stands at
+ * no opening (`INSIDE`: a low ceiling's heads) takes `inside`, the rectangle of its tiles, as its cell.
  */
 export function facadeParts(
   openings: readonly OpeningDescriptor[],
   tile: number,
   bottom: number,
-  build: (openings: readonly OpeningDescriptor[], face: number) => BufferGeometry | null,
+  build: (openings: readonly OpeningDescriptor[], key: number) => BufferGeometry | null,
   inside?: TileRect,
 ): { geometry: BufferGeometry; facades: FacadeRange[] } | null {
   const geometries: BufferGeometry[] = [];
   const facades: FacadeRange[] = [];
   let start = 0;
-  const keys = openingKeys(openings);
-  for (const face of [INSIDE, ...LINING_FACES.keys(), ...keys.filter((key) => key >= DOORWAY)]) {
-    const own = openings.filter((_, i) => keys[i] === face);
-    const geometry = face === INSIDE || own.length ? build(own, face) : null;
+  const faces = openings.map(openingFacade);
+  const order = (face: number) => (face === INSIDE ? LINING_FACES.length : face); // facade by facade, doorways last
+  const keys = [...openings.keys()].sort((a, b) => order(faces[a]) - order(faces[b]) || a - b);
+  for (const key of [INSIDE, ...keys]) {
+    const own = key === INSIDE ? [] : [openings[key]];
+    const geometry = build(own, key);
     if (!geometry) continue;
     const count = geometry.getIndex()?.count ?? geometry.getAttribute('position').count;
-    const rects = [...own.map(({ tiles }) => tiles), ...(face === INSIDE && inside ? [inside] : [])].map(([c0, r0, c1, r1]) => [c0 * tile, r0 * tile, (c1 + 1) * tile, (r1 + 1) * tile]); // prettier-ignore
-    const [x0, z0] = [Math.min(...rects.map((r) => r[0])), Math.min(...rects.map((r) => r[1]))];
-    const [x1, z1] = [Math.max(...rects.map((r) => r[2])), Math.max(...rects.map((r) => r[3]))];
-    const { dc, dr } = face >= 0 && face < DOORWAY ? LINING_FACES[face] : { dc: 0, dr: 0 };
-    const cell = rects.length ? { centre: [(x0 + x1) / 2, bottom, (z0 + z1) / 2] as [number, number, number], size: [x1 - x0, z1 - z0] as [number, number], out: [dc, dr] as [number, number] } : { centre: [0, bottom, 0] as [number, number, number], size: [0, 0] as [number, number], out: [0, 0] as [number, number] }; // prettier-ignore
-    facades.push({ face, start, count, cell });
+    const rect = key === INSIDE ? inside : openings[key].tiles;
+    const face = key === INSIDE ? INSIDE : faces[key];
+    const { dc, dr } = face >= 0 ? LINING_FACES[face] : { dc: 0, dr: 0 };
+    const [x0, z0, x1, z1] = rect ? [rect[0] * tile, rect[1] * tile, (rect[2] + 1) * tile, (rect[3] + 1) * tile] : [0, 0, 0, 0]; // prettier-ignore
+    const cell = { centre: [(x0 + x1) / 2, bottom, (z0 + z1) / 2] as [number, number, number], size: [x1 - x0, z1 - z0] as [number, number], out: [dc, dr] as [number, number] }; // prettier-ignore
+    facades.push({ face, key, start, count, cell });
     geometries.push(geometry);
     start += count;
   }
@@ -135,37 +128,41 @@ export function facadeParts(
 }
 
 /**
- * The parts of `parts` drawn facade by facade, drawn by the ranges left standing: `targets` for engine/gfx/cutaway.ts's
- * `planCutaway`, a part's facades a facing target and its doorways between rooms a blocking one, with its `INSIDE`
- * range where that has a rectangle (a low ceiling's heads: the crawlspace's hid the basement's rooms); `show(cuts)` draws each part's ranges but those `cuts` marks, run together where they meet, a part
- * with none left drawing no group (never its `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper
- * storey's frames came back over a cut storey); `cut()` names the ranges left out (their keys), by part.
+ * The parts of `parts` drawn opening by opening, drawn by the ranges left standing: `targets` for
+ * engine/gfx/cutaway.ts's `planCutaway`, one a part (`either`: its ranges' cells, an opening cut where its facade faces
+ * the camera or where it stands on a line of sight, a doorway between rooms by the line alone, with what stands at no
+ * opening where that has a rectangle: a low ceiling's heads, a part drawn whole, engine/gfx/level/meshes.ts's flights
+ * and blocks under a roof, its own draw groups back when it is not cut); `show(cuts)` draws each part's ranges but
+ * those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which
+ * is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the
+ * ranges left out (their keys), by part.
  */
 export function facadeDraws(
   parts: readonly Pick<LevelMeshPart, 'name' | 'mesh' | 'facades' | 'bottom' | 'top' | 'storey'>[],
 ) {
-  const drawn = parts.filter((part) => part.facades?.some(({ face }) => face !== INSIDE));
-  const targets: CutTarget[] = [];
-  // where each range's cut comes from: its target and its cell there, or none (`INSIDE`)
-  const slots = drawn.map(({ facades, bottom, top, storey }) => {
-    const first = targets.length; // this part's targets: those from here on
-    return facades!.map(({ face, cell }) => {
-      if (face === INSIDE && !(cell.size[0] > 0)) return null; // nothing at no opening: never cut
-      const when = face >= 0 && face < DOORWAY ? 'facing' : 'blocking';
-      let target = targets.findIndex((one, k) => k >= first && one.when === when);
-      if (target < 0) [target] = [targets.push({ when, cells: [], bottom, top, storey }) - 1];
-      (targets[target].cells as CutTarget['cells'][number][]).push(cell);
-      return [target, targets[target].cells.length - 1] as const;
-    });
+  const drawn = parts.filter((part) => part.facades?.some(({ key, cell }) => key !== INSIDE || cell.size[0] > 0));
+  const own = drawn.map(({ mesh }) => mesh.geometry.groups.map((group) => ({ ...group }))); // a part drawn whole: its own
+  // each part's target, and each range's cell in it (none for what stands at no opening without a rectangle: never cut)
+  const slots: number[][] = drawn.map(({ facades }) => facades!.map(({ key, cell }) => (key === INSIDE && !(cell.size[0] > 0) ? -1 : 0))); // prettier-ignore
+  const targets: CutTarget[] = drawn.map(({ facades, bottom, top, storey }, i) => {
+    const cells = facades!.filter((_, j) => slots[i][j] >= 0).map(({ cell }) => cell);
+    let n = 0;
+    slots[i] = slots[i].map((slot) => (slot < 0 ? -1 : n++));
+    return { when: 'either', cells, bottom, top, storey };
   });
   const cut = drawn.map(({ facades }) => facades!.map(() => false));
   return {
     targets,
     show(cuts: readonly (readonly boolean[])[]): void {
       drawn.forEach((part, i) => {
-        const now = slots[i].map((slot) => !!slot && cuts[slot[0]][slot[1]]);
+        const now = slots[i].map((slot) => slot >= 0 && cuts[i][slot]);
         if (now.every((one, j) => one === cut[i][j])) return;
         cut[i] = now;
+        if (part.facades!.length === 1) {
+          part.mesh.geometry.clearGroups(); // drawn whole (a flight, the blocks under a roof): its own groups, or none
+          if (!now[0]) for (const { start, count, materialIndex } of own[i]) part.mesh.geometry.addGroup(start, count, materialIndex); // prettier-ignore
+          return;
+        }
         const ranges: [number, number][] = [];
         part.facades!.forEach(({ start, count }, j) => {
           if (now[j]) return;
@@ -178,6 +175,6 @@ export function facadeDraws(
       });
     },
     cut: (): Record<string, number[]> =>
-      Object.fromEntries(drawn.map(({ name, facades }, i) => [name, facades!.filter((_, j) => cut[i][j]).map(({ face }) => face)])), // prettier-ignore
+      Object.fromEntries(drawn.map(({ name, facades }, i) => [name, facades!.filter((_, j) => cut[i][j]).map(({ key }) => key)])), // prettier-ignore
   };
 }

@@ -220,7 +220,7 @@ defineLevel('level:house', {
     partition: block('material:wallpaper', 'material:paint', 'blocking'), // an inner wall faces no way out
     lowWall: block('material:wood', 'material:tiles'),
     chimney: block('material:brick', 'material:stone'),
-    pillar: one('pillar', 'material:wood', 'material:wood'), // the porch's posts, as its trim
+    pillar: { ...one('pillar', 'material:wood', 'material:wood'), cut: { height: 0.4375, when: 'blocking' } }, // the porch's posts, as its trim, stumped in the way
     heads: one('heads', 'material:paint'),
     frames: one('frames', 'material:wood'),
     railing: one('railing', 'material:wood'),

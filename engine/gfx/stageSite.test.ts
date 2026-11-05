@@ -103,7 +103,7 @@ describe('a site drawn', () => {
     };
     const [gone, kept] = [tiles.filter(([, face]) => faces.has(face)), tiles.filter(([, face]) => !faces.has(face))];
     expect([gone.length > 0, kept.length > 0]).toEqual([true, true]);
-    expect([gone.every(middle), kept.some(middle), drawn.cutKey()]).toEqual([true, false, expect.stringMatching(/^0:1\|1:/)]); // prettier-ignore
+    expect([gone.every(middle), kept.some(middle), drawn.cutKey()]).toEqual([true, false, expect.stringMatching(/^0:1\|(.*;)?1:/)]); // prettier-ignore
     drawn.dispose();
   });
 
