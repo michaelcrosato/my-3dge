@@ -236,7 +236,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'The three looks at noon',
     what: 'Walk around the block at noon. P steps through the clean, cel and pixel looks, {camera} the camera. Anything ugly, hard to read or broken?', // prettier-ignore
     from: item(10),
-    go: { query: { scene: 'site', 'playground.hour': '12' } },
+    go: { query: { scene: 'site', 'playground.hour': '12', 'playground.day': '0' } }, // a kept running day would drift
   },
   {
     id: 'looks-night',
@@ -244,7 +244,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'The three looks at night',
     what: 'The same at 10 at night, in isometric; P steps through the looks, and Settings’ Time of day row moves the hour (Minutes a day lasts lets the day run). Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
     from: item(10),
-    go: { query: { scene: 'site', cam: 'iso', 'playground.hour': '22' } },
+    go: { query: { scene: 'site', cam: 'iso', 'playground.hour': '22', 'playground.day': '0' } },
   },
   {
     id: 'clean-look',
@@ -260,7 +260,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     title: 'Full resolution for clean and cel',
     what: 'The clean and cel looks now draw at your screen’s full resolution with smooth textures; only the pixel look keeps its big pixels and crisp texels. P steps through the three: do they look different enough now? And does the game stay smooth on your device?', // prettier-ignore
     from: item(10),
-    go: { query: { scene: 'site', 'playground.hour': '12' } },
+    go: { query: { scene: 'site', 'playground.hour': '12', 'playground.day': '0' } }, // a kept running day would drift
   },
   {
     id: 'cel-brick',

@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { getSite, siteStructureAt } from '../../../engine/sim-api';
+import { fakePage, type FakeElement } from '../../../tests/unit/ui/fakeDom';
 import { HOUSE_RECTS } from '../levels/house';
 import { SITE_AREAS, SITE_STRUCTURES, type SiteArea } from '../levels/site';
 import { AREA_OF_STRUCTURE, AREAS, areaAt, CARD_SECONDS, createAreaCard, HOUSE_WALLS, locationLine } from './areas';
@@ -70,10 +71,13 @@ describe('the block’s areas', () => {
   });
 
   it('slides the card in on entering an area, and again on the card key, never over a screen', () => {
-    const card = createAreaCard(fakeParent(), (action) => action.toUpperCase());
+    const parent = fakePage({ left: 0, top: 0, width: 1280, height: 720 }).document.createElement('div');
+    const card = createAreaCard(parent as unknown as HTMLElement, (action) => action.toUpperCase());
     const shown = () => card.el.dataset.value === 'shown';
     card.update('gym', 0.1, false);
     expect([shown(), card.el.dataset.id]).toEqual([true, 'gym']); // walked in
+    const el = card.el as unknown as FakeElement;
+    expect([el.querySelector('.pg-card-title')?.textContent, el.children.at(-1)?.children.length]).toEqual([AREAS.gym.name, AREAS.gym.tries.length]); // prettier-ignore
     card.update('gym', CARD_SECONDS, false);
     expect(shown()).toBe(false); // its seconds spent
     card.show();
@@ -93,34 +97,3 @@ describe('the block’s areas', () => {
     expect(shown()).toBe(false); // off the block: no area, no card
   });
 });
-
-/** An element as the card uses one: its data, its children and its text. */
-interface FakeElement {
-  dataset: Record<string, string>;
-  children: FakeElement[];
-  className?: string;
-  textContent?: string;
-  readonly lastElementChild: FakeElement | undefined;
-  append(...children: FakeElement[]): void;
-  replaceChildren(...children: FakeElement[]): void;
-  remove(): void;
-}
-
-/** A parent in a stand-in for the few DOM calls the card makes. */
-function fakeParent(): HTMLElement {
-  const element = (): FakeElement => ({
-    dataset: {},
-    children: [],
-    get lastElementChild() {
-      return this.children.at(-1);
-    },
-    append(...children) {
-      this.children.push(...children);
-    },
-    replaceChildren(...children) {
-      this.children = children;
-    },
-    remove() {},
-  });
-  return Object.assign(element(), { ownerDocument: { createElement: element } }) as unknown as HTMLElement;
-}

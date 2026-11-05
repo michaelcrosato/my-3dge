@@ -180,14 +180,14 @@ export function createAreaCard(parent: HTMLElement, key: (action: string) => str
   const fill = (area: SiteArea) => {
     const card = AREAS[area];
     const keyed = (text: string) => text.replace(/\{(\w+)\}/g, (_, action: string) => key(action));
+    const list = doc.createElement('ul');
+    for (const line of card.tries) list.append(Object.assign(doc.createElement('li'), { textContent: keyed(line) }));
     el.replaceChildren(
       Object.assign(doc.createElement('div'), { className: 'pg-card-kicker', textContent: card.kind }),
       Object.assign(doc.createElement('div'), { className: 'pg-card-title', textContent: card.name }),
       Object.assign(doc.createElement('div'), { className: 'pg-card-text', textContent: card.text }),
-      doc.createElement('ul'),
+      list,
     );
-    const list = el.lastElementChild as HTMLUListElement;
-    for (const line of card.tries) list.append(Object.assign(doc.createElement('li'), { textContent: keyed(line) }));
     el.dataset.id = area;
   };
   return {

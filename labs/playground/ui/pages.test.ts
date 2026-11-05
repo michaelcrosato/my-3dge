@@ -50,6 +50,6 @@ describe('the engine’s pages beside the playground', () => {
     expect(note).toMatchObject({ disabled: true, label: expect.stringMatching(/npm run dev/) });
     expect(rest).toEqual(served);
     expect(pageAbout('labs/box/', HERE)).toBe(ENGINE_PAGES[0].about);
-    expect(pageAbout('labs/box/', FILES[0])).toMatch(/^A scene for each .* npm run dev, then this opens at http:\/\/127\.0\.0\.1:5173\/\.$/); // prettier-ignore
+    expect(pageAbout('labs/box/', FILES[0])).toMatch(/^A scene for each .* npm run dev \(on its default port, with no PORT set\), then this opens at http:\/\/127\.0\.0\.1:5173\/\.$/); // prettier-ignore
   });
 });

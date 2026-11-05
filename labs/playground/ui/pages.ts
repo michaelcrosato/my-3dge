@@ -24,7 +24,7 @@
  * @see labs/playground/ui/pages.test.ts
  */
 
-/** Where the repository's dev server serves its pages (`npm run dev`; vite.config.ts's host and default port). */
+/** Where the repository's dev server serves its pages (`npm run dev`, `PORT` unset: vite.config.ts's host and port). */
 export const DEV_SERVER = 'http://127.0.0.1:5173/';
 
 /** One of the engine's pages: its path from the repository's root, its plain name and what it shows. */
@@ -62,7 +62,7 @@ export function pageUrl(page: string, here: string, query = ''): string {
 /** What to run for a page's link to open, in plain words, from the playground at `here`; undefined where it opens. */
 export function awayNote(here: string): string | undefined {
   if (!fromFile(here)) return undefined;
-  return `playground.html holds only the playground: this page is the repository's. In a checkout of it run npm run dev, then this opens at ${DEV_SERVER}.`; // prettier-ignore
+  return `playground.html holds only the playground: this page is the repository's. In a checkout of it run npm run dev (on its default port, with no PORT set), then this opens at ${DEV_SERVER}.`; // prettier-ignore
 }
 
 /**
