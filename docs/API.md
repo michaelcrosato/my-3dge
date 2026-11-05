@@ -5040,15 +5040,13 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/facades.ts`](../engine/gfx/level/facades.ts)
 
-- `DOORWAY` (const): The key of a storey's first doorway between two rooms (its own range, cut where it blocks the view); the next +1.
-- `facadeDraws` (function): The parts of `parts` drawn facade by facade, drawn by the ranges left standing: `targets` for engine/gfx/cutaway.ts's `planCutaway`, a part's facades a facing target and its doorways between rooms a blocking one, with its `INSIDE` range where that has a rectangle (a low ceiling's heads: the crawlspace's hid the basement's rooms); `show(cuts)` draws each part's ranges but those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the ranges left out (their keys), by part.
-- `facadeParts` (function): Draws `openings` facade by facade with `build` (a facade's openings and its face to a geometry, or null) into one geometry with a range a facade (see the file comment), at `bottom` m; null when nothing is drawn.
-- `FacadeRange` (interface): One range of a part's index and the cell for it: `face`, the facade's (an index into `LINING_FACES`), a doorway's between two rooms (`DOORWAY` on), or `INSIDE` for what stands at no opening (a low ceiling's heads).
-- `facadeTiles` (function): Each tile of `openings`, by its index on a map `cols` wide: its opening's key (`openingKeys`).
-- `INSIDE` (const): An opening between two rooms, or none: it faces no way out.
+- `facadeDraws` (function): The parts of `parts` drawn opening by opening, drawn by the ranges left standing: `targets` for engine/gfx/cutaway.ts's `planCutaway`, one a part (`either`: its ranges' cells, an opening cut where its facade faces the camera or where it stands on a line of sight, a doorway between rooms by the line alone, with what stands at no opening where that has a rectangle: a low ceiling's heads, a part drawn whole, engine/gfx/level/meshes.ts's flights and blocks under a roof, its own draw groups back when it is not cut); `show(cuts)` draws each part's ranges but those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the ranges left out (their keys), by part.
+- `facadeParts` (function): Draws `openings` opening by opening with `build` (an opening, or none, and its key to a geometry, or null) into one geometry with a range an opening (see the file comment), at `bottom` m; null when nothing is drawn.
+- `FacadeRange` (interface): One range of a part's index and the cell for it: `key`, its opening's index among the storey's openings (`INSIDE` for what stands at no opening: a low ceiling's heads, or a part drawn whole), and `face`, its facade (an index into `LINING_FACES`; `INSIDE` between two rooms or at no opening).
+- `facadeTiles` (function): Each tile of `openings`, by its index on a map `cols` wide: its opening's key, the opening's index.
+- `INSIDE` (const): An opening between two rooms, or none: it faces no way out; and the key of what stands at no opening.
 - `lowCeiling` (function): The rectangle holding `storey`'s tiles under a low ceiling (a glyph's `head` that is not an opening's: the crawlspace's), what a storey's heads draw at no opening; undefined where it has none.
 - `openingFacade` (function): The way `opening`'s wall faces out of the building (see the file comment).
-- `openingKeys` (function): Each of `openings`' key: its facade's, or a doorway's between two rooms (`DOORWAY` on, in their order).
 - `openingRooms` (function): `opening`'s rooms on `view`, the lower x or z side's first, one with none found past its low solids.
 
 ### [`engine/gfx/level/faces.ts`](../engine/gfx/level/faces.ts)

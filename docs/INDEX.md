@@ -916,7 +916,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `daisGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`facades.ts`](../engine/gfx/level/facades.ts): A building's facades (PLAN.md WP 13.40; the final visual review: in isometric, where the walls facing the camera are cut to stumps, the walls over their windows and doors, and their frames, stood at full height as loose pillars).
-  - Exports: `DOORWAY`, `facadeDraws`, `facadeParts`, `FacadeRange`, `facadeTiles`, `INSIDE`, `lowCeiling`, `openingFacade`, `openingKeys`, `openingRooms`
+  - Exports: `facadeDraws`, `facadeParts`, `FacadeRange`, `facadeTiles`, `INSIDE`, `lowCeiling`, `openingFacade`, `openingRooms`
   - Tests: [`engine/gfx/level/facades.test.ts`](../engine/gfx/level/facades.test.ts)
 - [`faces.ts`](../engine/gfx/level/faces.ts): Faces for the level's shapes (PLAN.md WP 4.4): what the stairs, gallery, dais and brazier builders (engine/gfx/level/{stairs,slab,dais,brazier}.ts) write their faces with.
   - Exports: `Ground`, `polygon`, `slotted`, `Slotted`, `tread`, `upright`
