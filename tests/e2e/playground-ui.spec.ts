@@ -6,6 +6,8 @@
  *    camera's map and refuses one another action holds, naming it; Play resumes; Escape pauses, and a key the menu reads
  *    reaches no intent (Space picks Resume and the player never jumps); photo mode flies the free camera on the move
  *    keys with the HUD hidden and puts the camera back on leaving; after a reload the settings and the rebind are kept;
+ *    the menus' footers name the keys, and a pad walks Settings and steps a slider, the footer and the controls naming
+ *    its buttons;
  * 2. the Tune panel (WP 13.32) lists every filter; turning one on, sliding its numbers, laying a look on and sliding the
  *    strength reach the look drawn (`__engine.look()`) with no pipeline built after the first frame through the chain;
  *    Copy as look gives a `defineLook` of the filters drawn; Reset puts the look back; Tools' feel panel opens in the
@@ -38,21 +40,8 @@ import { AREAS } from '../../labs/playground/ui/areas';
 import { ENGINE_PAGES } from '../../labs/playground/ui/pages';
 import { RECORDED_RUNS } from '../../labs/playground/ui/runs';
 import { expect, test } from './fixtures';
-import {
-  call,
-  checksItem,
-  hud,
-  menuLabels,
-  pick,
-  player,
-  press,
-  READY,
-  recording,
-  screens,
-  shown,
-  SITE_READY,
-  slide,
-} from './playground-page';
+// prettier-ignore
+import { call, checksItem, hud, menuLabels, PAD, plugPad, pick, player, press, READY, recording, screens, shown, SITE_READY, slide, tapPad } from './playground-page';
 
 /** The page's engine and front end, inside `evaluate`. */
 declare const __engine: Record<string, unknown> & { [name: string]: (...args: unknown[]) => unknown };
@@ -75,6 +64,8 @@ test.describe('the playground’s front end', () => {
     const title = page.locator('[data-ui=menu][data-id=title]');
     await expect(title).toBeVisible();
     expect(await title.locator('[data-ui=item]').allTextContents()).toEqual(['Play', 'Go to…', 'Settings', 'Controls', 'Photo mode', 'Watch the tour', checksItem(OWNER_CHECKS.length), 'Tools…']); // prettier-ignore
+    const footer = (kind: string) => page.locator(`.pg-screen[data-kind=${kind}] .pg-footer[data-keyboard]`); // a key hint: none on touch
+    await expect(footer('title')).toHaveText('Enter: select · Esc: play');
     const tick = (await call<{ tick: number }>(page, 'info')).tick;
     await harness.tick(30);
     expect((await call<{ tick: number }>(page, 'info')).tick).toBe(tick); // paused under the title
@@ -112,6 +103,7 @@ test.describe('the playground’s front end', () => {
     await press(page, harness, 'Escape');
     expect((await screens(page)).screens).toEqual(['pause']);
     expect(await menuLabels(page, 'pause')).toEqual(['Resume', 'Go to…', 'Settings', 'Controls', 'Photo mode', checksItem(OWNER_CHECKS.length), 'Tools…', 'Restart', 'Main menu']); // prettier-ignore
+    await expect(footer('menu')).toHaveText('Enter: select · Esc: back');
     const before = await player(page);
     await press(page, harness, 'Space'); // the menu's accept picks Resume; never the player's jump, though it is his key
     expect(await screens(page)).toEqual({ screens: [], paused: false });
@@ -136,12 +128,19 @@ test.describe('the playground’s front end', () => {
     expect((await call<{ code: string }>(page, 'camera.get')).code).toMatch(/^cam3=shoulder/);
     await pick(page, harness, 'pause', 'play');
 
+    await page.addInitScript(plugPad); // a pad in slot 0, untouched until a test presses it
     await page.reload();
     await harness.ready({ timeout: READY });
     await harness.tick(2);
     await pick(page, harness, 'title', 'settings');
     expect([await shown(page, 'cam.fov'), await shown(page, 'post.look'), await shown(page, 'volume:music')]).toEqual(['104', 'look:playground-pixel', '0.25']); // prettier-ignore
     await expect(page.locator('[data-ui=binding][data-id=jump]')).toHaveAttribute('data-value', /KeyK/);
+    // A pad works the panel (labs/playground/ui/walk.ts, WP 13.38): its d-pad walks to the field of view and steps it,
+    // and the footer and the controls name its buttons.
+    for (const button of [PAD.down, PAD.down, PAD.right]) await tapPad(page, harness, button); // the camera, the field of view, +1
+    expect(await shown(page, 'cam.fov')).toBe('105');
+    await expect(footer('panel')).toHaveText('B: back');
+    await expect(page.locator('[data-ui=item][data-id="rebind:jump"]')).toHaveText('A');
     expect(harness.advice()).toEqual([]);
   });
 

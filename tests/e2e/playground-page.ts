@@ -1,8 +1,9 @@
 /**
  * @file The playground's page, as tests/e2e/playground-ui.spec.ts drives it: how long its scenes may warm up, the
  * `__engine` member a test calls, the screens open (`__playgroundUi.state()`), the HUD's lines, a menu's items and one
- * picked, a setting row's value and its slider set as a hand would, the player's entity, and the run's recording with
- * its hash. Every read goes through `[data-ui]` elements, `__engine` and `__playgroundUi`.
+ * picked, a setting row's value and its slider set as a hand would, a scripted pad plugged in and its buttons tapped,
+ * the player's entity, and the run's recording with its hash. Every read goes through `[data-ui]` elements, `__engine`
+ * and `__playgroundUi`.
  */
 import type { Page } from '@playwright/test';
 import type { Replay } from '../../engine/sim/replay';
@@ -49,6 +50,33 @@ export async function pick(
 /** Presses `key` on the keyboard, then runs two frames, so the front end reads it at a frame as the page's loop does. */
 export async function press(page: Page, harness: { tick(n?: number): Promise<void> }, key: string): Promise<void> {
   await page.keyboard.press(key);
+  await harness.tick(2);
+}
+
+/** The standard mapping's buttons a test presses: the d-pad's down and right. */
+export const PAD = { down: 13, right: 15 } as const;
+
+/** Plugs a pad into slot 0 as the page opens (`page.addInitScript`): `window.__pad`, its buttons a test presses. */
+export function plugPad(): void {
+  const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }));
+  const pad = { id: 'Xbox Wireless Controller (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons }; // prettier-ignore
+  Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [pad, null, null, null] });
+  (window as unknown as { __pad: typeof pad }).__pad = pad;
+}
+
+/** Presses the pad's `button` for two frames, then lets it go for two (see `plugPad`). */
+export async function tapPad(page: Page, harness: { tick(n?: number): Promise<void> }, button: number): Promise<void> {
+  const set = (down: boolean) =>
+    page.evaluate(
+      ([b, d]) => {
+        const pad = (window as unknown as { __pad: { buttons: { pressed: boolean; value: number }[] } }).__pad;
+        Object.assign(pad.buttons[b as number], { pressed: d, value: d ? 1 : 0 });
+      },
+      [button, down] as const,
+    );
+  await set(true);
+  await harness.tick(2);
+  await set(false);
   await harness.tick(2);
 }
 
