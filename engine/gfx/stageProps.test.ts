@@ -113,6 +113,17 @@ describe('props on the stage', () => {
     expect([hidden, crates(), ...moved]).toEqual([1, 2, true, false, true]);
   });
 
+  it('tests a hanging door by its hinge, which stays in its opening as the leaf swings, and a broken one by its leaf', () => {
+    const props = createStageProps({ scene: new Scene(), materials: createMaterialLibrary() });
+    const door = (id: number, broken: boolean) => ({ ...entity(id, 'prop:door', [0.45, 1, 0.45]), door: { hinge: [0, 0, 0], broken } }) as EntityData; // prettier-ignore
+    props.capture([door(1, false), door(2, true)], 1 / 60); // both swung open, their leaves 0.45 m out of the opening
+    const opening = (x: number, _y: number, z: number) => Math.abs(x) < 0.2 && Math.abs(z) < 0.2; // the opening's tile
+    props.hide(opening, 'cut');
+    props.draw(1);
+    const counts = props.meshes!.batches().filter((batch) => batch.name.startsWith('prop:door/')).map((batch) => batch.count); // prettier-ignore
+    expect([counts.length > 0, [...new Set(counts)]]).toEqual([true, [1]]); // the broken one's parts alone
+  });
+
   it('registers batches made after the warm-up, and puts their arrival in the shader key', () => {
     const props = createStageProps({ scene: new Scene(), materials: createMaterialLibrary() });
     const warmup = fakeWarmup();

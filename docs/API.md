@@ -4666,7 +4666,7 @@ For the agents who maintain the engine.
 - `FADE_THIN` (const): A ride part thinner than this, m (its geometry's least extent): a cable, a rail, a rung or a pole hides no one.
 - `planCutaway` (function): For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
 - `planFade` (function): For each target, for each cell, whether a line from `pose` to the head or the chest over `focus` (`FADE_AIMS`) passes through the cell's box, shrunk by `FADE_AIMS.inset`: an orthographic camera looks from its plane, as in `planCutaway`.
-- `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
+- `segmentHitsBox` (re-export): Whether a segment passes through a box (engine/gfx/level/cells.ts, where the cells' tests live with it).
 
 ### [`engine/gfx/daylight.ts`](../engine/gfx/daylight.ts)
 
@@ -5024,8 +5024,15 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/cells.ts`](../engine/gfx/level/cells.ts)
 
+- `aimsInSight` (function): Of `aims`, those a line from `from` reaches past no piece of `targets` (each piece's box from its target's `bottom` to its `top`): a point on the floor round the hero beyond a wall stands outside his room, where no fight is (engine/gfx/cutaway.ts `planCutaway`).
+- `cellNeighbours` (function): The indexes of the cells of `cells` beside each one: sharing an edge on the ground (their boxes touch along a side, not at a corner).
 - `LevelCell` (interface): One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out ([x, z], length 1, or [0, 0] where it faces nowhere: see the file comment).
 - `levelCells` (function): The cells of `pieces` in `level`, standing at height `bottom` (see the file comment).
+- `openingAt` (function): Whether tile `at` of `level` is an opening's (a doorway's): open, in no room, yet not the outdoors either.
+- `segmentHitsBox` (function): Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`).
+- `settleCuts` (function): Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a `group` is cut when any of its group's is; a piece whose neighbours in its list (`cellNeighbours`) are all cut, one or more (a jamb beside its doorway, a partition's end), and a run of whole pieces at most `STUB_LENGTH` long with cut pieces at two ends or more, are cut with them, so no post or stub stands alone among cut pieces; and a cell two lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it; again while a pass changes anything (a lining's cut reaching its wall can leave a piece beside it alone).
+- `STANDING_AREA` (const): The most a block standing in rooms covers (m²): a chimney's breast, a counter, an island (see the file comment).
+- `STUB_LENGTH` (const): The longest run of whole pieces between cut ones that `settleCuts` cuts with them (m): a stub.
 
 ### [`engine/gfx/level/dais.ts`](../engine/gfx/level/dais.ts)
 
@@ -5033,12 +5040,16 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/facades.ts`](../engine/gfx/level/facades.ts)
 
-- `facadeDraws` (function): The parts of `parts` drawn facade by facade, drawn by the facades left standing: `targets`, a facing target a part (its facades' cells) for engine/gfx/cutaway.ts's `planCutaway`; `show(cuts)` draws each part's ranges but those of the facades `cuts` marks, run together where they meet, and hides a part with none left; `cut()` names the facades left out, by part.
+- `DOORWAY` (const): The key of a storey's first doorway between two rooms (its own range, cut where it blocks the view); the next +1.
+- `facadeDraws` (function): The parts of `parts` drawn facade by facade, drawn by the ranges left standing: `targets` for engine/gfx/cutaway.ts's `planCutaway`, a part's facades a facing target and its doorways between rooms a blocking one, with its `INSIDE` range where that has a rectangle (a low ceiling's heads: the crawlspace's hid the basement's rooms); `show(cuts)` draws each part's ranges but those `cuts` marks, run together where they meet, a part with none left drawing no group (never its `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey); `cut()` names the ranges left out (their keys), by part.
 - `facadeParts` (function): Draws `openings` facade by facade with `build` (a facade's openings and its face to a geometry, or null) into one geometry with a range a facade (see the file comment), at `bottom` m; null when nothing is drawn.
-- `FacadeRange` (interface): One facade's range of a part's index (`face` an index into `LINING_FACES`, or `INSIDE`) and the cell for it.
-- `facadeTiles` (function): Each tile of `openings` on a facade, by its index on a map `cols` wide: the facade its opening faces.
+- `FacadeRange` (interface): One range of a part's index and the cell for it: `face`, the facade's (an index into `LINING_FACES`), a doorway's between two rooms (`DOORWAY` on), or `INSIDE` for what stands at no opening (a low ceiling's heads).
+- `facadeTiles` (function): Each tile of `openings`, by its index on a map `cols` wide: its opening's key (`openingKeys`).
 - `INSIDE` (const): An opening between two rooms, or none: it faces no way out.
+- `lowCeiling` (function): The rectangle holding `storey`'s tiles under a low ceiling (a glyph's `head` that is not an opening's: the crawlspace's), what a storey's heads draw at no opening; undefined where it has none.
 - `openingFacade` (function): The way `opening`'s wall faces out of the building (see the file comment).
+- `openingKeys` (function): Each of `openings`' key: its facade's, or a doorway's between two rooms (`DOORWAY` on, in their order).
+- `openingRooms` (function): `opening`'s rooms on `view`, the lower x or z side's first, one with none found past its low solids.
 
 ### [`engine/gfx/level/faces.ts`](../engine/gfx/level/faces.ts)
 
@@ -5062,6 +5073,9 @@ For the agents who maintain the engine.
 - `liningGeometry` (function): The quad lining face `face` (an index into `LINING_FACES`) of a piece `size` across ([x, z], m) and `height` tall from its foot, `FACING` out of it, its ends `FACING` past it, u along it and v up in metres.
 - `LiningPart` (interface): One lining part: a face's way of a recipe's walls, its quad and stump, the cells it lines and its material.
 - `liningParts` (function): The lining parts of `walls` on `view` (see the file comment): `linings` gives a recipe's lining material, or undefined for one that has none.
+- `LOW_SOLID` (const): A solid at most this high over its floor (m) is furniture a room's face looks over: a counter (0.9 m), a bath.
+- `roomBeside` (function): The room tile (`col`, `row`) of `view` opens onto: its own when it is open floor; past a solid at most `LOW_SOLID` over its floor, the room beside the run of such solids it stands in (the first found, none where the run meets the outdoors; an opening, a doorway or a window's sill, is neither); −1 for a taller solid, the outdoors or the map's edge.
+- `RoomView` (type): What `roomBeside` reads of a storey's view: its grids, and its tiles' tops, floors and legend where it has them.
 
 ### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
 

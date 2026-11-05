@@ -3,9 +3,10 @@
  * each structure drawn in its level entry's looks, in a group at its place and turn, its level's meshes inside; the
  * terrain with the cut left out, its chunk holding the cut at its finest level only; in a classic view the storeys
  * above the player's and the roof indoors hidden in the structure the player stands in, the others whole, nothing
- * hidden in another camera or with the player outside, and what stands on a cut storey said to be hidden (`hides`, its
- * key `cutKey`); the cutaways made once a player stands, their twins registered with the warm-up; a ride faded in the
- * world's frame, when it stands between the camera and the player and never off their line.
+ * hidden in another camera or with the player outside, and what stands on a cut storey or in an opening of a facade the
+ * cutaway left out said to be hidden (`hides`, its key `cutKey`); the cutaways made once a player stands, their twins
+ * registered with the warm-up; a ride faded in the world's frame, when it stands between the camera and the player and
+ * never off their line.
  * @see engine/gfx/stageSite.ts
  */
 import { BoxGeometry, Mesh, MeshBasicMaterial } from 'three/webgpu';
@@ -84,6 +85,25 @@ describe('a site drawn', () => {
     const cut = [drawn.hides(...above), drawn.hides(...hall), drawn.hides(x, 0.5, z), drawn.cutKey()];
     drawn.update(pose, hall, { view: false }); // another camera: nothing cut
     expect([...cut, drawn.hides(...above), drawn.cutKey()]).toEqual([true, false, false, '0:1', false, '']);
+    drawn.dispose();
+  });
+
+  it('says what stands in an opening of a facade its cutaway left out is hidden, and keys the facades (WP 13.41)', () => {
+    const drawn = createStageSite(site, { materials });
+    drawn.follow();
+    drawn.update(pose, hall, { view: true });
+    const [{ structure, meshes, cutaway }] = drawn.structures;
+    const left = cutaway!.facades();
+    const faces = new Set(meshes.parts.flatMap(({ name, storey }) => (storey === 1 ? (left[name] ?? []) : [])));
+    const tiles = [...meshes.facadeTiles![1]]; // the ground floor's openings on a facade: [index, facade]
+    const middle = ([index]: [number, number]) => {
+      const { tile, cols } = structure.level;
+      const [x, z] = toWorld(structure, ((index % cols) + 0.5) * tile, (Math.floor(index / cols) + 0.5) * tile);
+      return drawn.hides(x, 1.2, z); // a pane's middle, or a door's
+    };
+    const [gone, kept] = [tiles.filter(([, face]) => faces.has(face)), tiles.filter(([, face]) => !faces.has(face))];
+    expect([gone.length > 0, kept.length > 0]).toEqual([true, true]);
+    expect([gone.every(middle), kept.some(middle), drawn.cutKey()]).toEqual([true, false, expect.stringMatching(/^0:1\|1:/)]); // prettier-ignore
     drawn.dispose();
   });
 

@@ -40,12 +40,15 @@
  */
 import { Box3, InstancedMesh, Vector3, type Mesh, type Object3D } from 'three/webgpu';
 import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/pose';
-import type { LevelCell } from './level/cells';
+import { aimsInSight, segmentHitsBox, settleCuts, type LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
 import type { CutWhen } from './level/recipes';
 import { facadeDraws } from './level/facades';
 import { instanceSlots, placeInstances } from './level/shapes';
 import type { Warmup } from './warmup';
+
+/** Whether a segment passes through a box (engine/gfx/level/cells.ts, where the cells' tests live with it). */
+export { segmentHitsBox };
 
 /** A wall is cut when the cosine between its outward direction and the way to the camera is above this. */
 export const CUT_FACING = 0.3;
@@ -75,7 +78,7 @@ function thin(mesh: Mesh): boolean {
 /** What the cutaway decides over: the pieces of one part, how they cut, and their heights (m). */
 export interface CutTarget {
   when: CutWhen;
-  cells: readonly Pick<LevelCell, 'centre' | 'size' | 'out'>[];
+  cells: readonly Pick<LevelCell, 'centre' | 'size' | 'out' | 'group'>[];
   bottom: number;
   top: number;
   /** A level written as storeys: the storey it stands on (its part's `storey`); none on a level of one storey. */
@@ -103,34 +106,23 @@ export function cutawayAims(focus: Vec3, pitch: number): Vec3[] {
   ];
 }
 
-/** Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`). */
-export function segmentHitsBox(a: Vec3, b: Vec3, min: Vec3, max: Vec3): boolean {
-  let [t0, t1] = [0, 1];
-  for (let k = 0; k < 3; k++) {
-    const d = b[k] - a[k];
-    if (Math.abs(d) < 1e-9) {
-      if (a[k] < min[k] || a[k] > max[k]) return false;
-      continue;
-    }
-    let [u, v] = [(min[k] - a[k]) / d, (max[k] - a[k]) / d];
-    if (u > v) [u, v] = [v, u];
-    [t0, t1] = [Math.max(t0, u), Math.min(t1, v)];
-    if (t0 > t1) return false;
-  }
-  return true;
-}
-
 /**
  * For each target, for each cell: whether `pose`, looking at `focus`, cuts it.
  * - `'facing'` (walls): when the camera stands on the side the cell faces out to (engine/gfx/level/cells.ts: `out`),
  *   by more than `CUT_FACING` (the cosine between `out` and the way to the camera, along the ground): an orthographic
  *   camera's way back along its view, a perspective camera's way from the cell to it. A camera inside the room is on
  *   the inner side of every wall, so nothing is cut for it; nor for one looking down steeper than `CUT_STEEP`.
- * - `'blocking'` (pillars): when a line of sight from the camera to the focus (`cutawayAims`) passes through the
- *   cell's box, widened by `CUT_MARGIN` all round (so a capital's overhang counts). An orthographic camera looks from
- *   its plane, back along its view; a perspective one from its position. The test runs in the picture's space,
- *   heights scaled by the pose's `boost` (engine/gfx/cameras/boost.ts), so it is what the frame shows.
+ * - `'blocking'` (pillars): when a line of sight from the camera to the focus (`cutawayAims`; a point on the floor
+ *   round him only on the camera's side of him, and where no piece of `occluders` stands between it and his feet: WP
+ *   13.41, the floor behind him and beyond his room's walls cut the walls) passes through the cell's box, widened by
+ *   `CUT_MARGIN` all round (a capital's overhang). An orthographic camera looks from its plane, back along its view; a
+ *   perspective one from its position. The test runs in the picture's space, heights scaled by the pose's `boost`
+ *   (engine/gfx/cameras/boost.ts), so it is what the frame shows.
  * - `'either'` (a house's walls): when either cuts it.
+ *
+ * Then engine/gfx/level/cells.ts's `settleCuts` (WP 13.41): a group is cut whole, a piece alone among cut ones and a
+ * short stub between them go with them, and a cell two targets share (a wall's and its lining's) is cut in both or
+ * neither.
  *
  * With `storey`, the facing rule cuts only that storey's pieces (and those of no storey): a site's building, with the
  * player indoors and a perspective camera outside it (engine/gfx/stageSite.ts), keeps the walls of the storeys above
@@ -141,12 +133,15 @@ export function planCutaway(
   pose: CameraPose,
   focus: Vec3,
   storey?: number,
+  occluders: readonly CutTarget[] = targets,
 ): boolean[][] {
   const ortho = pose.projection === 'orthographic';
   const forward = poseForward(pose);
   const [px, py, pz] = pose.position;
   const k = pose.boost;
-  const sights = cutawayAims(focus, pose.pitch).map(([x, y, z]): [Vec3, Vec3] => {
+  const [aims, feet]: [Vec3[], Vec3] = [cutawayAims(focus, pose.pitch), [focus[0], focus[1] + CUT_AIMS.feet, focus[2]]];
+  const before = aims.slice(2).filter(([x, , z]) => (x - focus[0]) * forward[0] + (z - focus[2]) * forward[2] <= 0); // prettier-ignore
+  const sights = [...aims.slice(0, 2), ...aimsInSight(before, feet, occluders)].map(([x, y, z]): [Vec3, Vec3] => {
     const aim: Vec3 = [x, y * k, z];
     if (!ortho) return [aim, pose.position];
     // An orthographic camera sees from its plane: back along its view as far as its position stands.
@@ -160,8 +155,8 @@ export function planCutaway(
     const length = Math.hypot(dx, dz);
     return length > 1e-9 && (cell.out[0] * dx + cell.out[1] * dz) / length > CUT_FACING;
   };
-  return targets.map(({ when, cells, bottom, top, storey: on }) =>
-    cells.map((cell) => {
+  const planned = targets.map(({ when, cells, bottom, top, storey: on }) => {
+    const cut = cells.map((cell) => {
       const mine = storey === undefined || on === undefined || on === storey; // a piece the facing rule may cut
       if (when !== 'blocking' && mine && facing(cell)) return true;
       if (when === 'facing') return false;
@@ -170,7 +165,12 @@ export function planCutaway(
       const min: Vec3 = [cx - hx, bottom * k, cz - hz];
       const max: Vec3 = [cx + hx, top * k, cz + hz];
       return sights.some(([aim, eye]) => segmentHitsBox(aim, eye, min, max));
-    }),
+    });
+    return cut;
+  });
+  return settleCuts(
+    targets.map(({ cells }) => cells),
+    planned,
   );
 }
 
@@ -347,7 +347,7 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
     twins: cutting.map(({ twin }) => twin!),
     update(pose, focus = poseTarget(pose), { fade = false, cut = true, storey } = {}) {
       const cuts = cut ? planCutaway(targets, pose, focus, storey) : targets.map(({ cells }) => cells.map(() => false)); // prettier-ignore
-      facades.show(cut ? planCutaway(facades.targets, pose, focus, storey) : facades.targets.map(({ cells }) => cells.map(() => false))); // prettier-ignore
+      facades.show(cut ? planCutaway(facades.targets, pose, focus, storey, targets) : facades.targets.map(({ cells }) => cells.map(() => false))); // prettier-ignore
       if (!fade) return apply(cuts, none(), new Set());
       return apply(
         cuts,

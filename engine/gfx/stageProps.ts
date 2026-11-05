@@ -9,7 +9,8 @@
  * the turn the shorter way round), at presentation time (the steps captured, `alpha` of a step on), on which the
  * flames dance; each prop is drawn under its entity id, so its flames keep their own phase, and on or off as its
  * `propLight` says (a lamp its switch turned off: WP 13.16); `hide(test, key)` leaves out those on a storey the cut
- * takes off (engine/gfx/storeyCut.ts), lights and all, and says when its key changed. `lights()` lists this frame's
+ * takes off (engine/gfx/storeyCut.ts) or in an opening of a facade it leaves out (a pane, a door by its hinge:
+ * engine/gfx/stageSite.ts, WP 13.41), lights and all, and says when its key changed. `lights()` lists this frame's
  * light spots in world space (the brazier's torch, the lamps that are on), for the light pool (WP 7.1). `carry(guns)`
  * adds the guns in the actors' hands (engine/gfx/puppets/actors.ts `carried`, WP 13.20) to the draws after it, each as
  * its weapon's prop where its grip stands, never hidden by the cut (its actor is not).
@@ -51,12 +52,16 @@ interface Pose {
   q: [number, number, number, number];
 }
 
-/** What the module keeps of one prop: its poses, and whether it is on (its `propLight`'s; true without one). */
+/**
+ * What the module keeps of one prop: its poses, whether it is on (its `propLight`'s; true without one), and a door's
+ * hinge while it hangs (engine/sim/doors.ts), where `hide` tests it: a leaf swung open stands out of its opening.
+ */
 interface Held {
   prop: string;
   before: Pose;
   after: Pose;
   on: boolean;
+  hinge: readonly number[] | null;
 }
 
 /** Props drawn on the stage (see the file comment). */
@@ -133,7 +138,9 @@ export function createStageProps(options: StagePropsOptions): StageProps {
         const last = held.get(entity.id);
         const prop = data.prop as string;
         const on = (entity.propLight as { on?: unknown } | undefined)?.on !== false;
-        held.set(entity.id, { prop, before: last && last.prop === prop ? last.after : pose, after: pose, on });
+        const door = entity.door as { hinge?: readonly number[]; broken?: boolean } | undefined;
+        const hinge = door?.hinge && !door.broken ? door.hinge : null;
+        held.set(entity.id, { prop, before: last && last.prop === prop ? last.after : pose, after: pose, on, hinge });
         ids.set(entity.id, prop);
       }
       for (const id of [...held.keys()]) {
@@ -148,10 +155,10 @@ export function createStageProps(options: StagePropsOptions): StageProps {
       if (!meshes) return;
       const k = Math.min(1, Math.max(0, alpha));
       meshes.begin(time - step + k * step);
-      for (const [id, { prop, before, after, on }] of held) {
+      for (const [id, { prop, before, after, on, hinge }] of held) {
         const [p0, p1] = [before.p, after.p];
         at.set(p0[0] + (p1[0] - p0[0]) * k, p0[1] + (p1[1] - p0[1]) * k, p0[2] + (p1[2] - p0[2]) * k);
-        if (hidden?.(at.x, at.y, at.z)) continue;
+        if (hidden && (hinge ? hidden(hinge[0], hinge[1], hinge[2]) : hidden(at.x, at.y, at.z))) continue;
         a.fromArray(before.q).slerp(b.fromArray(after.q), k);
         meshes.add(prop, { position: at, rotation: a, on }, id);
       }

@@ -910,13 +910,13 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `brazierGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`cells.ts`](../engine/gfx/level/cells.ts): Level cells and the way they face out (PLAN.md WP 2.4): one cell per piece of a block mesh (a wall tile, a pillar's footprint), with its tiles, its centre, its size and its outward direction, the way it faces out of the room, away from the open floor beside it.
-  - Exports: `LevelCell`, `levelCells`
+  - Exports: `aimsInSight`, `cellNeighbours`, `LevelCell`, `levelCells`, `openingAt`, `segmentHitsBox`, `settleCuts`, `STANDING_AREA`, `STUB_LENGTH`
   - Tests: [`engine/gfx/level/cells.test.ts`](../engine/gfx/level/cells.test.ts), [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts)
 - [`dais.ts`](../engine/gfx/level/dais.ts): Daises (PLAN.md WP 4.4): `daisGeometry(tile, daises, pieces, ground)` draws each dais (engine/world/level/ types.ts, `DaisDescriptor`) as its octagonal frustum, built on the very corners of its hull collider (`frustumPoints`, engine/world/level/shapes.ts), so what is drawn is where feet stand: the sloped edge (and an upright skirt below it when the dais stands above the ground) and the flat octagonal top.
   - Exports: `daisGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`facades.ts`](../engine/gfx/level/facades.ts): A building's facades (PLAN.md WP 13.40; the final visual review: in isometric, where the walls facing the camera are cut to stumps, the walls over their windows and doors, and their frames, stood at full height as loose pillars).
-  - Exports: `facadeDraws`, `facadeParts`, `FacadeRange`, `facadeTiles`, `INSIDE`, `openingFacade`
+  - Exports: `DOORWAY`, `facadeDraws`, `facadeParts`, `FacadeRange`, `facadeTiles`, `INSIDE`, `lowCeiling`, `openingFacade`, `openingKeys`, `openingRooms`
   - Tests: [`engine/gfx/level/facades.test.ts`](../engine/gfx/level/facades.test.ts)
 - [`faces.ts`](../engine/gfx/level/faces.ts): Faces for the level's shapes (PLAN.md WP 4.4): what the stairs, gallery, dais and brazier builders (engine/gfx/level/{stairs,slab,dais,brazier}.ts) write their faces with.
   - Exports: `Ground`, `polygon`, `slotted`, `Slotted`, `tread`, `upright`
@@ -925,7 +925,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `flightGeometry`, `RISER`, `risersOf`
   - Tests: [`engine/gfx/level/flights.test.ts`](../engine/gfx/level/flights.test.ts)
 - [`linings.ts`](../engine/gfx/level/linings.ts): A building's linings (PLAN.md WP 13.40; the final visual review: from inside, the house's outer walls showed their siding, so a room read as open to the outside): `liningParts(view, walls, linings)` lines each face of a lined recipe's wall pieces that opens onto a room's floor (on a storey of a level with rooms: its view's `room` grid, engine/world/level/storeys.ts) with a quad `FACING` out of it in the recipe's `lining` material (engine/gfx/level/recipes.ts), one instanced part a face's way (west, east, north, south), size and height a storey.
-  - Exports: `LinedWall`, `LINING_FACES`, `liningGeometry`, `LiningPart`, `liningParts`
+  - Exports: `LinedWall`, `LINING_FACES`, `liningGeometry`, `LiningPart`, `liningParts`, `LOW_SOLID`, `roomBeside`, `RoomView`
   - Tests: [`engine/gfx/level/linings.test.ts`](../engine/gfx/level/linings.test.ts)
 - [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts).
   - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`, `STOREY_SEAM`

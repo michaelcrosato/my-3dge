@@ -8,8 +8,9 @@
  * moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade (WP 13.8): the
  * pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and come back
  * without. `either` (WP 13.18): a piece facing the camera, or between it and the focus. With a storey (WP 13.38), the
- * facing rule cuts only that storey's pieces. The GPU half (0 pipelines while the camera turns, the draw-call budget)
- * is tests/e2e/hall.spec.ts.
+ * facing rule cuts only that storey's pieces. A group (WP 13.41) is cut whole, and the floor round the hero is aimed
+ * at only on the camera's side of him. The GPU half (0 pipelines while the
+ * camera turns, the draw-call budget) is tests/e2e/hall.spec.ts.
  * @see engine/gfx/cutaway.ts
  */
 import { readFileSync } from 'node:fs';
@@ -159,6 +160,23 @@ describe('planCutaway on the hall', () => {
     const plan = (storey?: number) => planCutaway(targets, pose, [0.5, 0, 5], storey).map(([cut]) => cut);
     expect(plan()).toEqual([true, true, true, true, true]); // no storey given: every storey's, as before
     expect(plan(1)).toEqual([false, true, false, true, true]); // the blocking piece on storey 2 still cut
+  });
+
+  it('cuts a group whole when any of its cells is cut, leaving no piece of it alone (WP 13.41)', () => {
+    // A run of five pieces facing nowhere, the middle one on the line from a camera south of it to the focus north.
+    const cells = [-2, -1, 0, 1, 2].map((x) => ({ centre: [x, 0, 4] as [number, number, number], size: [1, 1] as [number, number], out: [0, 0] as [number, number] })); // prettier-ignore
+    const pose = makePose({ position: [0, 1, 20], yaw: Math.PI, pitch: -1.1 }); // south of it: past AIM_STEEP, the head and feet aimed at alone
+    const plan = (group?: number) => planCutaway([{ when: 'either', bottom: 0, top: 3, cells: cells.map((cell) => ({ ...cell, group })) }], pose, [0, 0, 0])[0]; // prettier-ignore
+    expect(plan()).toEqual([false, false, true, false, false]); // no group: only the piece in the way
+    expect(plan(7)).toEqual([true, true, true, true, true]); // a group: whole
+  });
+
+  it('aims at the floor round the hero only on the camera’s side of him, so a wall behind him stays (WP 13.41)', () => {
+    // A camera south of the hero, looking north and down 30°: a wall just past the floor 2.5 m behind him (north),
+    // which the line to that floor reaches within CUT_MARGIN, and one 2 m before him.
+    const wall = (z: number): CutTarget => ({ when: 'blocking', bottom: 0, top: 3, cells: [{ centre: [0, 0, z], size: [4, 0.25], out: [0, 0] }] }); // prettier-ignore
+    const pose = makePose({ position: [0, 12, 20], yaw: Math.PI, pitch: -0.5 });
+    expect(planCutaway([wall(-2.7), wall(2)], pose, [0, 0, 0]).map(([cut]) => cut)).toEqual([false, true]);
   });
 
   it('tests a segment against a box by slabs, as the prototype did', () => {
