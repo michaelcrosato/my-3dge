@@ -2922,5 +2922,9 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   `planStoreys`), so the posts go with the porch's roof, and stand for a player outdoors.
 - **Evidence:** engine/gfx/storeyCut.test.ts and labs/playground/levels/house-facades.test.ts, each failing on the code
   before.
+- **The cameras' cutaway spec** (tests/e2e/playground-cameras.spec.ts) held that only what stands on a storey above the
+  player's is hidden, so it failed in the hall on the four posts. The scene dump now names the storey a post holds up
+  (`holds n`, engine/gfx/sceneDump.ts), and the spec counts a post above when that storey is: both of its rules, hidden
+  only when above and above only when hidden, stay in force.
 - Plan edit: WP 13.43.
 
