@@ -7,9 +7,10 @@
  *   under the splash screen (splash.ts) as the page opens while `playground.title` says so (`auto`: unless a replay
  *   plays or automation drives the browser; `on`, `off`); Escape plays; left idle `ATTRACT.idle` seconds, it opens
  *   the attract mode (attract.ts) while `playground.attract` is `auto` and no automation drives the browser;
- * - pause (`pause`: Resume, Answer this check while one is under way, Go to, Settings, Controls, Photo mode, Owner
- *   checks, Tools, Restart, Main menu), opened by the system layer's `pause` (Escape, the pad's Start) or by the
- *   pointer lock let go while the map wants it (a browser spends the first Escape on the lock);
+ * - pause (`pause`: Resume, Answer this check while one is under way, Go to, Settings, Controls, Photo mode, This
+ *   area's card where the page has one (`showCard`, I's, for a pad), Owner checks, Tools, Restart, Main menu), opened
+ *   by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a
+ *   browser spends the first Escape on the lock);
  * - Go to (`spawns`: the block's areas and the house's rooms, spawns.ts; M opens it in play), settings (`settings`,
  *   settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks
  *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
@@ -101,6 +102,8 @@ export interface FrontEndOptions {
   replays?: readonly string[];
   /** Shows or hides the feel panel (labs/playground/feel.ts). */
   toggleFeel?: () => void;
+  /** Shows the area's card again (labs/playground/ui/areas.ts; I on a keyboard): pause's item, for a pad. */
+  showCard?: () => void;
 }
 
 /** The front end (see the file comment). */
@@ -266,6 +269,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
         { label: 'Settings', id: 'settings' },
         { label: 'Controls', id: 'help' },
         { label: 'Photo mode', id: 'photo' },
+        ...(!title && options.showCard && options.scene()?.site ? [{ label: 'This area’s card', id: 'card' }] : []), // I's, for a pad, on the block
         ...(title ? [{ label: 'Watch the tour', id: 'tour' }] : []),
         checksItem(),
         { label: 'Tools…', id: 'tools' },
@@ -279,6 +283,7 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
       return menuScreen(name, title ? null : 'Paused', items, (id) => {
         if (id === 'tour') return location.assign(attractPage(location.pathname));
         if (id === 'restart') restart();
+        if (id === 'card') return (closeAll(), options.showCard?.());
         if (id === 'play' || id === 'restart' || id === 'title') closeAll();
         if (id === 'title') show('title');
         else if (id !== 'play' && id !== 'restart') show(id as ScreenName);

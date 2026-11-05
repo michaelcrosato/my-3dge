@@ -27,6 +27,7 @@ export const ABOUT: Readonly<Record<string, string>> = {
   settings: 'The camera, the mouse, the movement, the look and quality, the volumes, and every key.',
   help: 'Every control, with its key.',
   photo: 'A free camera: fly it with the move keys, turn it with a drag.',
+  card: 'Back to play, the card of the area you are in shown again: what it is and what to try (I).',
   tour: 'Sit back: a recorded tour of everything on the block, the view stepping through the cameras and the looks.',
   checks: 'What only you can judge: try each thing it names and say how it feels or looks.',
   tools:

@@ -297,6 +297,7 @@ if (engine.ready && engine.inspector && engine.ui && engine.input) {
     check,
     replays: Object.keys(runs),
     toggleFeel: feel ? () => feel.toggle() : undefined,
+    showCard: () => card?.show(),
   });
   if (search.get('playground.attract') === 'on' && replays[TOUR_REPLAY]) {
     const { steps } = JSON.parse(await replays[TOUR_REPLAY]()) as { steps: number };
