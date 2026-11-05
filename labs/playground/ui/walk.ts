@@ -7,7 +7,9 @@
  * press focusing the first control while the focus is outside the panel; on either, accept (`uiAccept`: the pad's A,
  * Enter, Space) presses the focused button, box or fold, and left and right (`uiLeft`, `uiRight`) step the focused
  * slider by its step, or the focused list by one choice it may take, firing the events a hand's change fires (`input`
- * and `change`, bubbling).
+ * and `change`, bubbling). A panel with one control or none to walk to (the controls sheet, its Back alone) that is
+ * taller than shows scrolls instead, `SCROLL_STEP` of what shows a press, focusing its Back (a pad had no way to read
+ * the rest of a sheet taller than the window).
  *
  * Invariants: presentation only: it acts on the controls as a hand would, so what a control reports goes the way a
  * click or a drag sends it. Each press acts once: the keyboard device keeps a bound key's default from the page
@@ -64,6 +66,19 @@ function nudge(el: HTMLElement, by: number): void {
   }
 }
 
+/** How far a pad's up or down scrolls a panel with nothing to walk to: a share of what shows of it. */
+export const SCROLL_STEP = 0.6;
+
+/** What scrolls `panel`'s content: the first of it, its own panels and its screen that has more than shows, or none. */
+function scroller(panel: HTMLElement): HTMLElement | null {
+  const boxes = [
+    panel,
+    ...panel.querySelectorAll<HTMLElement>('.ui-panel'),
+    panel.closest?.<HTMLElement>('.pg-screen'),
+  ];
+  return boxes.find((box): box is HTMLElement => !!box && box.scrollHeight > box.clientHeight + 1) ?? null;
+}
+
 /** Runs one frame of the menus' keys over `panel` (see the file comment). */
 export function walkPanel(panel: HTMLElement, input: WalkInput): void {
   const pad = input.lastDevice === 'gamepad';
@@ -73,6 +88,11 @@ export function walkPanel(panel: HTMLElement, input: WalkInput): void {
   if (!step && !turn && !accept) return;
   const controls = walkable(panel);
   const at = controls.indexOf(panel.ownerDocument.activeElement as HTMLElement);
+  const scrolls = step && controls.length <= 1 ? scroller(panel) : null; // a sheet to read with its Back alone
+  if (scrolls) {
+    scrolls.scrollTop += step * scrolls.clientHeight * SCROLL_STEP;
+    return void (at < 0 && controls[0]?.focus({ preventScroll: true }));
+  }
   if (at < 0) return void (pad && controls[0]?.focus());
   if (step) return void controls[(at + step + controls.length) % controls.length].focus();
   if (turn) nudge(controls[at], turn);
