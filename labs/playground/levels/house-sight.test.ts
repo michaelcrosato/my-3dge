@@ -12,15 +12,25 @@ import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
 import { poseForward } from '../../../engine/gfx/cameras/pose';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
-import { createCutaway } from '../../../engine/gfx/cutaway';
+import { createCutaway, CUT_FACING } from '../../../engine/gfx/cutaway';
+import { cellNeighbours } from '../../../engine/gfx/level/cells';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
 import { levelLooks } from '../../../engine/gfx/level/runs';
 import { createStoreyCut, cutPlace } from '../../../engine/gfx/storeyCut';
 import { getLevel } from '../../../engine/sim-api';
+import type { CompiledLevel, RoomDescriptor } from '../../../engine/world/level/types';
 import './house';
 
 /** Whether `object` is drawn: it and every parent visible. */
 const drawn = (object: Object3D | null): boolean => !object || (object.visible && drawn(object.parent));
+
+/** `room`'s middle where it is its floor, else its marker: where a player stands, not a corner. */
+function middleOf(level: CompiledLevel, room: RoomDescriptor): [number, number, number] {
+  const [c0, r0, c1, r1] = room.rect;
+  const [col, row] = [Math.floor((c0 + c1) / 2), Math.floor((r0 + r1) / 2)];
+  const middle = level.storeys![room.storey].room[row * level.cols + col] === level.rooms!.indexOf(room);
+  return middle ? [(col + 0.5) * level.tile, room.position[1], (row + 0.5) * level.tile] : [...room.position] as [number, number, number]; // prettier-ignore
+}
 
 describe('the player in the house’s classic view', () => {
   it('is in sight from every room in every turn of isometric: nothing drawn on the lines to his head and chest', () => {
@@ -32,11 +42,7 @@ describe('the player in the house’s classic view', () => {
     let lines = 0;
     for (const room of level.rooms!) {
       for (const turn of [0, 90, 180, 270]) {
-        // the room's middle where it is its floor (else its marker): where a player stands, not a corner
-        const [c0, r0, c1, r1] = room.rect;
-        const [col, row] = [Math.floor((c0 + c1) / 2), Math.floor((r0 + r1) / 2)];
-        const middle = level.storeys![room.storey].room[row * level.cols + col] === level.rooms!.indexOf(room);
-        const target: [number, number, number] = middle ? [(col + 0.5) * level.tile, room.position[1], (row + 0.5) * level.tile] : [...room.position] as [number, number, number]; // prettier-ignore
+        const target = middleOf(level, room);
         const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
         const place = cutPlace(level, target[0], target[1], target[2]);
         storeys.set(place.storey, place.indoors, place.low); // as the stage: the storeys above his off, then the cut
@@ -62,5 +68,38 @@ describe('the player in the house’s classic view', () => {
     }
     expect(lines).toBeGreaterThan(100);
     expect(hidden).toEqual([]);
+  });
+
+  it('cuts no piece beyond the player, from every room in every turn of isometric: none behind him opens his room', () => {
+    const level = getLevel('level:house');
+    const { levelRecipes: recipes, levelRooms: rooms } = levelLooks(registry, 'level:house');
+    const meshes = createLevelMeshes(level, { materials: { get: () => new MeshBasicMaterial() }, recipes, rooms });
+    const cutaway = createCutaway(meshes);
+    const blocks = meshes.parts.filter((part) => part.cut && part.shape === 'block' && !part.recipe.startsWith('lining:')); // prettier-ignore
+    const beyond: string[] = [];
+    for (const room of level.rooms!) {
+      for (const turn of [0, 90, 180, 270]) {
+        const target = middleOf(level, room);
+        const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
+        cutaway.update(pose, target);
+        const [fx, , fz] = poseForward(pose);
+        const depth = (x: number, z: number) => (x - target[0]) * fx + (z - target[2]) * fz; // along the view, from him
+        const facingOut = ({ out }: { out: readonly number[] }) => -(out[0] * fx + out[1] * fz) / Math.hypot(fx, fz) > CUT_FACING; // prettier-ignore
+        const cuts = cutaway.cut();
+        for (const part of blocks.filter((one) => one.storey === room.storey)) {
+          const gone = new Set((cuts[part.name] ?? []).map((tiles) => tiles.join()));
+          const near = cellNeighbours(part.cells);
+          for (const [i, { tiles, centre, out }] of part.cells.entries()) {
+            const facing = facingOut({ out }); // the facing rule's
+            const settled =
+              near[i].length > 0 &&
+              near[i].every((j) => gone.has(part.cells[j].tiles.join())) &&
+              near[i].some((j) => facingOut(part.cells[j])); // prettier-ignore a lone piece on a cut line facing the camera, gone with it
+            if (gone.has(tiles.join()) && !facing && !settled && depth(centre[0], centre[2]) > 1) beyond.push(`${room.id} turn ${turn}: ${part.name.replace('level:house/', '')} [${tiles}]`); // prettier-ignore
+          }
+        }
+      }
+    }
+    expect(beyond).toEqual([]);
   });
 });

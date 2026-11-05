@@ -36,6 +36,9 @@
  */
 import type { CompiledLevel, TileRect } from '../../world/level/types';
 
+/** A point in metres. */
+type Vec3 = readonly [number, number, number];
+
 /**
  * One piece of a block mesh: its tiles, its centre on the ground (m), its size across (m), and the way it faces out
  * ([x, z], length 1, or [0, 0] where it faces nowhere: see the file comment).
@@ -48,6 +51,9 @@ export interface LevelCell {
   /** A run of pieces standing in one room (see the file comment): its first tile's index; none for any other piece. */
   group?: number;
 }
+
+/** The longest run of whole pieces between cut ones that `settleCuts` cuts with them (m): a stub. */
+export const STUB_LENGTH = 2;
 
 /** The most a block standing in rooms covers (m²): a chimney's breast, a counter, an island (see the file comment). */
 export const STANDING_AREA = 4;
@@ -174,20 +180,74 @@ export function cellNeighbours(cells: readonly Pick<LevelCell, 'centre' | 'size'
 
 /**
  * Settles the cuts `cuts` planned for each list of `lists` (engine/gfx/cutaway.ts's `planCutaway`): a cell of a
- * `group` is cut when any of its group's is; one whose neighbours in its list (`cellNeighbours`) are all cut is cut
- * with them, so no piece stands alone, a post, beside its cut ones (a jamb beside its doorway, a partition's end); and a cell two lists share (a wall's
- * piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
+ * `group` is cut when any of its group's is; a piece whose neighbours in its list (`cellNeighbours`) are all cut, one
+ * or more (a jamb beside its doorway, a partition's end), and a run of whole pieces at most `STUB_LENGTH` long with cut
+ * pieces at two ends or more, are cut with them, so no post or stub stands alone among cut pieces; and a cell two
+ * lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
  */
 export function settleCuts(
   lists: readonly (readonly Pick<LevelCell, 'centre' | 'size' | 'group'>[])[],
   cuts: readonly (readonly boolean[])[],
 ): boolean[][] {
   const settled = lists.map((cells, k) => {
-    const cut = cuts[k];
-    const whole = new Set(cells.filter((cell, i) => cut[i] && cell.group !== undefined).map(({ group }) => group));
-    const near = cut.some(Boolean) ? cellNeighbours(cells) : [];
-    return cells.map((cell, i) => cut[i] || whole.has(cell.group) || ((near[i]?.length ?? 0) > 0 && near[i].every((j) => cut[j]))); // prettier-ignore
+    const whole = new Set(cells.filter((cell, i) => cuts[k][i] && cell.group !== undefined).map(({ group }) => group));
+    const cut = cells.map((cell, i) => cuts[k][i] || whole.has(cell.group));
+    if (!cut.some(Boolean)) return cut;
+    const [near, out, seen] = [cellNeighbours(cells), [...cut], new Set<number>()];
+    cells.forEach((_, i) => {
+      if (cut[i] || seen.has(i)) return;
+      const [run, ends] = [[i], new Set<number>()]; // a run of whole pieces, and the cut ones at its ends
+      seen.add(i);
+      for (let n = 0; n < run.length; n++) {
+        for (const j of near[run[n]]) {
+          if (cut[j]) ends.add(j);
+          else if (!seen.has(j)) {
+            seen.add(j);
+            run.push(j);
+          }
+        }
+      }
+      const length = run.reduce((sum, j) => sum + Math.max(...cells[j].size), 0);
+      // a piece alone among cut ones (a jamb, its doorway beside it), or a stub between cut pieces at both its ends
+      if ((run.length === 1 && ends.size > 0) || (ends.size > 1 && length <= STUB_LENGTH)) for (const j of run) out[j] = true; // prettier-ignore
+    });
+    return out;
   });
   const gone = new Set(lists.flatMap((cells, k) => cells.filter((_, i) => settled[k][i])));
   return lists.map((cells, k) => cells.map((cell, i) => settled[k][i] || gone.has(cell)));
+}
+
+/** Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`). */
+export function segmentHitsBox(a: Vec3, b: Vec3, min: Vec3, max: Vec3): boolean {
+  let [t0, t1] = [0, 1];
+  for (let k = 0; k < 3; k++) {
+    const d = b[k] - a[k];
+    if (Math.abs(d) < 1e-9) {
+      if (a[k] < min[k] || a[k] > max[k]) return false;
+      continue;
+    }
+    let [u, v] = [(min[k] - a[k]) / d, (max[k] - a[k]) / d];
+    if (u > v) [u, v] = [v, u];
+    [t0, t1] = [Math.max(t0, u), Math.min(t1, v)];
+    if (t0 > t1) return false;
+  }
+  return true;
+}
+
+/**
+ * Of `aims`, those a line from `from` reaches past no piece of `targets` (each piece's box from its target's `bottom`
+ * to its `top`): a point on the floor round the hero beyond a wall stands outside his room, where no fight is
+ * (engine/gfx/cutaway.ts `planCutaway`).
+ */
+export function aimsInSight(
+  aims: readonly Vec3[],
+  from: Vec3,
+  targets: readonly { cells: readonly Pick<LevelCell, 'centre' | 'size'>[]; bottom: number; top: number }[],
+): Vec3[] {
+  return aims.filter((aim) =>
+    targets.every(
+      ({ cells, bottom, top }) =>
+      cells.every(({ centre: [x, , z], size: [w, d] }) => !segmentHitsBox(from, aim, [x - w / 2, bottom, z - d / 2], [x + w / 2, top, z + d / 2])), // prettier-ignore
+    ),
+  );
 }
