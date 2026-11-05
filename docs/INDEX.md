@@ -915,6 +915,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`dais.ts`](../engine/gfx/level/dais.ts): Daises (PLAN.md WP 4.4): `daisGeometry(tile, daises, pieces, ground)` draws each dais (engine/world/level/ types.ts, `DaisDescriptor`) as its octagonal frustum, built on the very corners of its hull collider (`frustumPoints`, engine/world/level/shapes.ts), so what is drawn is where feet stand: the sloped edge (and an upright skirt below it when the dais stands above the ground) and the flat octagonal top.
   - Exports: `daisGeometry`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
+- [`facades.ts`](../engine/gfx/level/facades.ts): A building's facades (PLAN.md WP 13.40; the final visual review: in isometric, where the walls facing the camera are cut to stumps, the walls over their windows and doors, and their frames, stood at full height as loose pillars).
+  - Exports: `facadeDraws`, `facadeParts`, `FacadeRange`, `facadeTiles`, `INSIDE`, `openingFacade`
+  - Tests: [`engine/gfx/level/facades.test.ts`](../engine/gfx/level/facades.test.ts)
 - [`faces.ts`](../engine/gfx/level/faces.ts): Faces for the level's shapes (PLAN.md WP 4.4): what the stairs, gallery, dais and brazier builders (engine/gfx/level/{stairs,slab,dais,brazier}.ts) write their faces with.
   - Exports: `Ground`, `polygon`, `slotted`, `Slotted`, `tread`, `upright`
   - Tests: [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
@@ -943,7 +946,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `doorLeaf`, `levelLooks`, `LevelLooks`, `runMeshes`, `RunMeshesOptions`, `splitRuns`
   - Tests: [`engine/gfx/stage.test.ts`](../engine/gfx/stage.test.ts)
 - [`shapes.ts`](../engine/gfx/level/shapes.ts): The level's shapes (PLAN.md WP 2.4, WP 4.4): `buildShape(level, descriptor, recipe, materials)` builds the mesh of one mesh descriptor (engine/world/level/types.ts) in its recipe's shape (engine/gfx/level/recipes.ts): a welded surface (the floor), instanced blocks (walls, low walls) or pillars (plinth, shaft and capital, engine/gfx/geometry/pillar.ts), or one mesh for a slab (a gallery, slab.ts), the stairs (stairs.ts), smooth ramps (ramp.ts), a dais (dais.ts) or brazier stands (brazier.ts).
-  - Exports: `buildShape`, `BuiltShape`, `drawnWith`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
+  - Exports: `buildPart`, `buildShape`, `BuiltShape`, `drawnWith`, `instanced`, `instanceSlots`, `PartCut`, `placeInstances`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`engine/gfx/level/shapes.test.ts`](../engine/gfx/level/shapes.test.ts)
 - [`slab.ts`](../engine/gfx/level/slab.ts): Slabs (PLAN.md WP 4.4): `slabGeometry(tile, pieces, bottom, top)` draws a raised block of tiles as one solid, a gallery: its walk, one welded surface over every tile at `top` (engine/gfx/level/surface.ts), and its sides, upright faces from `bottom` to `top` along the outline only, where a piece's tile meets a tile that is not one of the pieces' (or the map's edge).
   - Exports: `slabGeometry`

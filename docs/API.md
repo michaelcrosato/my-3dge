@@ -5031,6 +5031,15 @@ For the agents who maintain the engine.
 
 - `daisGeometry` (function): The daises `daises`, and the ground at `ground` over `pieces` (see the file comment).
 
+### [`engine/gfx/level/facades.ts`](../engine/gfx/level/facades.ts)
+
+- `facadeDraws` (function): The parts of `parts` drawn facade by facade, drawn by the facades left standing: `targets`, a facing target a part (its facades' cells) for engine/gfx/cutaway.ts's `planCutaway`; `show(cuts)` draws each part's ranges but those of the facades `cuts` marks, run together where they meet, and hides a part with none left; `cut()` names the facades left out, by part.
+- `facadeParts` (function): Draws `openings` facade by facade with `build` (a facade's openings and its face to a geometry, or null) into one geometry with a range a facade (see the file comment), at `bottom` m; null when nothing is drawn.
+- `FacadeRange` (interface): One facade's range of a part's index (`face` an index into `LINING_FACES`, or `INSIDE`) and the cell for it.
+- `facadeTiles` (function): Each tile of `openings` on a facade, by its index on a map `cols` wide: the facade its opening faces.
+- `INSIDE` (const): An opening between two rooms, or none: it faces no way out.
+- `openingFacade` (function): The way `opening`'s wall faces out of the building (see the file comment).
+
 ### [`engine/gfx/level/faces.ts`](../engine/gfx/level/faces.ts)
 
 - `Ground` (type): A point on the ground (m): `[x, z]`.
@@ -5109,6 +5118,7 @@ For the agents who maintain the engine.
 
 ### [`engine/gfx/level/shapes.ts`](../engine/gfx/level/shapes.ts)
 
+- `buildPart` (function): One descriptor's mesh: a storey's full blocks under a pitched roof clipped to it, its flights by the riser, its railings as posts and rails over their tiles' floor; everything else in its recipe's shape (`buildShape`).
 - `buildShape` (function): Builds `descriptor`'s mesh in `recipe`'s shape, with `materials` (the recipe's, compiled).
 - `BuiltShape` (interface): One descriptor's mesh, its cells (one per instance; none for a single mesh) and its cut.
 - `drawnWith` (function): Each slot's material: `materials` one per slot, a slot past the last taking the last; the first for the whole when there is one, or the geometry has no slots (a surface).
