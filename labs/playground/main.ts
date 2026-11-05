@@ -189,7 +189,8 @@ function showFrame({ world, scene, setting, dt }: EngineFrame): void {
     signs = GYM_FEATURES.map((feature) => {
       const [x, y, z] = feature.sign;
       const at = [x + origin[0], y + origin[1], z + origin[2]] as const;
-      return { label: ui.label(feature.label, { at, id: `sign:${feature.id}` }), at };
+      // decluttered: of two signs that overlap on screen the nearer shows, so none is read through another
+      return { label: ui.label(feature.label, { at, id: `sign:${feature.id}`, declutter: true }), at };
     });
   }
   const players = world.query('actor') as unknown as PlayerEntity[];

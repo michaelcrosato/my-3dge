@@ -1,7 +1,7 @@
 /**
  * @file T2 for the playground's page (labs/playground/main.ts, PLAN.md WP 13.1), by DOM queries and `window.__engine`:
  * 1. the gym opens on WebGPU in the shooter camera and the clean look, its HUD names them and the keys, and the signs
- *    of the features near the player show while the far ones hide;
+ *    of the features near the player show, none over another (labels.ts `declutter`), while the far ones hide;
  * 2. T cycles the five camera modes and P steps through the three looks, live, while the player runs, building 0
  *    pipelines after the warm-up: in the gym, on the hill, and on the site from each of its areas' spawns (WP 13.18:
  *    the site's scenes are one block, each placing the player at an area's spawn, so one page placing it at each
@@ -179,6 +179,9 @@ test.describe('the playground', () => {
     });
     expect(await signShown(page, 'mantle-1')).toBe(true); // 12 m south of the spawn, in front of the camera
     expect(await signShown(page, 'tower-6')).toBe(false); // 59 m away
+    const signs = await page.locator('[data-ui=label][data-id^="sign:"]:not([hidden])').evaluateAll((all) => all.map((sign) => ({ ...sign.getBoundingClientRect().toJSON(), id: sign.getAttribute('data-id') }) as DOMRect & { id: string })); // prettier-ignore
+    const over = (a: DOMRect, b: DOMRect) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1; // prettier-ignore
+    expect(signs.flatMap((a, i) => signs.filter((b, j) => j > i && over(a, b)).map((b) => `${a.id} × ${b.id}`)), 'no sign over another: 3 pairs at 931f3e6').toEqual([]); // prettier-ignore
     expect(harness.advice()).toEqual([]);
   });
 
