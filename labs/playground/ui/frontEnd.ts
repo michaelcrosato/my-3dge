@@ -22,7 +22,9 @@
  * Picks that change play are the run's recorded operations, so a replay of the run holds them: a Go to place is the
  * block's dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
  * (links.ts `goToLink`, run as its first operation: `spawnOnOpen`); Restart starts the scene again on its seed
- * (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again.
+ * (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again; the time
+ * of day and the day's length (`playground.hour`, `playground.day`) are set and, on the block, put on its clock at once
+ * by its dev action `daytime` (settings.ts `clockAfter`).
  * The camera mode, the view settings and the audio levels change the view alone; the store keeps them (prefs.ts).
  * `state()`, `window.__playgroundUi.state()` in the page, names the open screens for the tests;
  * `__playgroundUi.checks()` lists the owner's checks with their answers, and `__playgroundUi.answers()` gives them as
@@ -44,7 +46,7 @@ import { createChecksPanel } from './checkPanel';
 import { answered, answersText, checkAway, checkUrl, OWNER_CHECKS, readAnswers, saveAnswer, type OwnerCheck } from './checks'; // prettier-ignore
 import { createPhoto, type PhotoCamera } from './photo';
 import { PREF_BUSES, PREF_SETTINGS, savePrefs, type Prefs } from './prefs';
-import { createSettings, type RowSchema, type SettingRow } from './settings';
+import { clockAfter, createSettings, type RowSchema, type SettingRow } from './settings';
 import { createTune, type LookNow } from './tune';
 import { spawnPlace, spawnPlaces } from './spawns';
 import { ABOUT, createFrame } from './frame';
@@ -215,6 +217,8 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
       inspector.set(row.id, value);
       if (row.id === 'post.look') options.onView({ look: String(value) });
       if (row.id === 'playground.movement') restart(); // a sim setting read as the scene starts: recorded, replayed
+      const clock = clockAfter(row.id, value, options.setting); // Time of day, Day length: the block's clock, live, recorded
+      if (clock && options.scene()?.site === 'site:block') (inspector.actions as { run(name: string, args: unknown): unknown }).run('daytime', clock); // prettier-ignore
     }
     keep();
   };

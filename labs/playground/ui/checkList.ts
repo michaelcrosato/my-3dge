@@ -242,7 +242,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'looks-night',
     kind: 'try',
     title: 'The three looks at night',
-    what: 'The same at 10 at night, in isometric; P steps through the looks. Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
+    what: 'The same at 10 at night, in isometric; P steps through the looks, and Settings’ Time of day row moves the hour (Minutes a day lasts lets the day run). Noted so far: the yellow accent reads weak from isometric, and the cel look’s night is very dark there.', // prettier-ignore
     from: item(10),
     go: { query: { scene: 'site', cam: 'iso', 'playground.hour': '22' } },
   },
@@ -274,7 +274,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'rain',
     kind: 'try',
     title: 'A downpour on the street',
-    what: 'Heavy rain on the street. Does it look right, and does the game stay smooth?',
+    what: 'Heavy rain on the street (Settings’ Rain row sets it any time). Does it look right, and does the game stay smooth?', // prettier-ignore
     from: item(11),
     go: { query: { scene: 'site-street', 'playground.rain': '1' } },
   },
@@ -282,7 +282,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'dust',
     kind: 'try',
     title: 'Dust in the house',
-    what: 'Dust floating in the house’s light. Does it look right, and does the game stay smooth?',
+    what: 'Dust floating in the house’s light (Settings’ Dust indoors row sets it any time). Does it look right, and does the game stay smooth?', // prettier-ignore
     from: item(11),
     go: { query: { scene: 'site-house', 'playground.dust': '1' } },
   },

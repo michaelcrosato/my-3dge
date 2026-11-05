@@ -1,14 +1,18 @@
 /**
  * @file The playground's settings screen (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): a panel over the game, in the
  * look of the engine's menus (engine/ui/widgets.ts's box), with a row for each thing the player sets (`SETTING_ROWS`):
- * the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the look, the
- * quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio levels;
- * then the controls: each action the player answers with its key, a button to rebind it, and one to reset them all.
+ * the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the block's
+ * time of day and the minutes a day lasts (labs/playground/scenes/site.ts), the rain and the dust (weather.ts), the
+ * look, the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio
+ * levels; then the controls: each action the player answers with its key, a button to rebind it, and one to reset
+ * them all.
  *
  * A setting's row takes its control from the setting's own schema (`describe('setting', path)`): a slider over its
  * minimum and maximum, a box for a boolean, a list of its `enum`; the camera and the look list the playground's modes
  * and looks (labs/playground/views.ts). A change calls `onChange(row, value)`, which the front end applies and keeps
- * (labs/playground/ui/frontEnd.ts). A rebind waits for the next key (`input.listen`) and puts it on that action in
+ * (labs/playground/ui/frontEnd.ts); a row that acts on the run (`release`: the clock's) reports its slider once let
+ * go, not at each step of a drag. Time of day and Day length set the block's clock live (`clockAfter`: the `daytime`
+ * dev action's hour and rate), the rain and the dust are view settings that show at once. A rebind waits for the next key (`input.listen`) and puts it on that action in
  * every camera mode's map (`input.bindingsFor`, so each mode keeps its own map and the player's keys hold in all of
  * them); a key another action holds, or one the page keeps, is refused, the row naming why.
  *
@@ -29,6 +33,7 @@
  */
 import type { Input } from '../../../engine';
 import { PLAYGROUND_ACTIONS, PLAYGROUND_MAPS } from '../controls';
+import { dayRate } from '../scenes/site';
 import { PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from '../views';
 import { PREF_BUSES } from './prefs';
 
@@ -37,6 +42,8 @@ export interface SettingRow {
   readonly id: string;
   readonly label: string;
   readonly kind: 'setting' | 'camera' | 'look' | 'volume';
+  /** Whether its slider reports once let go (a change that acts on the run), not at each step of a drag. */
+  readonly release?: boolean;
 }
 
 /** The rows, in the screen's order (see the file comment). */
@@ -46,6 +53,10 @@ export const SETTING_ROWS: readonly SettingRow[] = [
   { id: 'input.sensitivity', label: 'Mouse sensitivity', kind: 'setting' },
   { id: 'input.invert', label: 'Invert the mouse', kind: 'setting' },
   { id: 'playground.movement', label: 'Movement (starts the scene again)', kind: 'setting' },
+  { id: 'playground.hour', label: 'Time of day (the hour: 12 noon, 22 night)', kind: 'setting', release: true },
+  { id: 'playground.day', label: 'Minutes a day lasts (0 holds the hour)', kind: 'setting', release: true },
+  { id: 'playground.rain', label: 'Rain', kind: 'setting' },
+  { id: 'playground.dust', label: 'Dust indoors', kind: 'setting' },
   { id: 'post.look', label: 'Look', kind: 'look' },
   { id: 'quality', label: 'Quality', kind: 'setting' },
   { id: 'gfx.governor', label: 'Quality follows the frame rate (auto)', kind: 'setting' },
@@ -60,6 +71,23 @@ export const CONTROL_ACTIONS: Readonly<Record<string, string>> = {
   right: 'Move right',
   ...Object.fromEntries(Object.entries(PLAYGROUND_ACTIONS).map(([action, what]) => [action, what.split(/[:(]/)[0].trim()])), // prettier-ignore
 };
+
+/**
+ * The block's clock once Time of day or Day length (`id`) changed to `value`, the other read through `setting`: the
+ * `daytime` dev action's `{ hour, rate }` (labs/playground/scenes/site.ts), as the scene's start reads them; null for
+ * another row.
+ */
+export function clockAfter(
+  id: string,
+  value: unknown,
+  setting: (path: string) => unknown,
+): { hour: number; rate: number } | null {
+  // prettier-ignore
+  if (id !== 'playground.hour' && id !== 'playground.day') return null;
+  const [hour, day] =
+    id === 'playground.hour' ? [value, setting('playground.day')] : [setting('playground.hour'), value];
+  return { hour: Number(hour), rate: dayRate(Number(day)) };
+}
 
 /** A setting's schema as the screen reads it: its type, range and choices. */
 export interface RowSchema {
@@ -170,7 +198,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
     const step = max - min > 10 ? 1 : (max - min) / 20;
     const slider = make('input', { type: 'range', min: String(min), max: String(max), step: String(step) });
     slider.value = String(value);
-    slider.addEventListener('input', () => report(Number(slider.value)));
+    slider.addEventListener(row.release ? 'change' : 'input', () => report(Number(slider.value)));
     return slider;
   }
 

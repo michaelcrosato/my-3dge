@@ -161,10 +161,12 @@ function litAtStart(w: World, group: string): boolean {
   return !DUSK_GROUPS.includes(group) || litAt({ on: DUSK, off: DAWN }, w.settings.get<number>('playground.hour'));
 }
 
+/** The clock's rate (hours a sim second) for a day of `minutes` minutes (`playground.day`); 0 holds the hour. */
+export const dayRate = (minutes: number): number => (minutes > 0 ? 24 / (minutes * 60) : 0);
+
 /** The block's clock at `playground.hour`, a day in `playground.day` minutes, and the lamps it lights at dusk. */
 function startClock(w: World): void {
-  const day = w.settings.get<number>('playground.day');
-  setDaytime(w, { hour: w.settings.get<number>('playground.hour'), rate: day > 0 ? 24 / (day * 60) : 0 });
+  setDaytime(w, { hour: w.settings.get<number>('playground.hour'), rate: dayRate(w.settings.get<number>('playground.day')) }); // prettier-ignore
   for (const group of DUSK_GROUPS) lightsAtDusk(w, group);
 }
 
