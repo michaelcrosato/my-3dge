@@ -3,7 +3,7 @@
  * walls facing the camera are cut to stumps, the walls over their windows and doors and their frames stood at full
  * height as loose pillars): every opening in its outer walls stands on a facade, a window over the kitchen's counter
  * too (WP 13.41: it stood on none, the counter beside it in no room); a storey the storey cut takes off stays hidden as
- * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); in each of isometric's four turns,
+ * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); in each of isometric's eight turns,
  * the heads, frames and facings of a facade are left out exactly when its walls are cut by facing; and while nothing is
  * cut each such part draws in one range.
  * @see engine/gfx/level/facades.ts
@@ -31,6 +31,9 @@ function house() {
   return { level, meshes };
 }
 
+/** The isometric view's turns, rad: its eight 45° steps (engine/gfx/cameras/presets.ts). */
+const TURNS = Array.from({ length: 8 }, (_, k) => (k * Math.PI) / 4);
+
 describe('the house’s facades', () => {
   it('stand every opening in its outer walls on one, the kitchen’s windows over its counter too', () => {
     const level = getLevel('level:house');
@@ -53,24 +56,20 @@ describe('the house’s facades', () => {
     expect(facaded.map((part) => part.name.replace('level:house/', '')).sort()).toEqual(expect.arrayContaining(['ground/frames', 'ground/heads', 'upper/frames', 'upper/heads'])); // prettier-ignore
     for (const part of facaded) expect(part.mesh.geometry.groups, part.name).toHaveLength(1); // nothing cut: one range
     const target: [number, number, number] = [(level.cols * level.tile) / 2, 1, (level.rows * level.tile) / 2];
-    for (const turn of [0, 90, 180, 270]) {
+    for (const turn of TURNS) {
       const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
       cutaway.update(pose, target);
-      // the ways its walls face that the camera cuts by facing alone: in isometric, the same for every wall facing so
-      const plan = planCutaway(
-        walls.map((part) => ({ ...part, when: 'facing' })),
-        pose,
-        target,
-      );
-      const ways = new Set(walls.flatMap((part, i) => part.cells.filter((_, j) => plan[i][j]).map(({ out }) => LINING_FACES.findIndex(({ dc, dr }) => dc === out[0] && dr === out[1])))); // prettier-ignore
-      ways.delete(-1); // a corner's diagonal
+      // the ways a wall faces that the camera cuts by facing alone: in isometric, the same for every wall facing so
+      const plan = planCutaway([{ when: 'facing', bottom: 0, top: 3, cells: LINING_FACES.map(({ dc, dr }) => ({ centre: [0, 0, 0], size: [0.25, 0.25], out: [dc, dr] })) }], pose, target)[0]; // prettier-ignore
+      const ways = new Set([...LINING_FACES.keys()].filter((face) => plan[face]));
+      expect(walls.some((part) => part.cells.some(({ out }) => ways.has(LINING_FACES.findIndex(({ dc, dr }) => dc === out[0] && dr === out[1]))))).toBe(true); // prettier-ignore
       const left = cutaway.facades();
       for (const part of facaded) {
         const faces = part.facades!.filter(({ face }) => face >= 0 && face < DOORWAY).map(({ face }) => face);
         const facades = left[part.name].filter((face) => face < DOORWAY); // a doorway between rooms is cut by blocking
-        expect(facades.sort(), `${part.name}, turn ${turn}`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
+        expect(facades.sort(), `${part.name}, turn ${Math.round((turn * 180) / Math.PI)}°`).toEqual(faces.filter((face) => ways.has(face)).sort()); // prettier-ignore
       }
-      expect(ways.size, `turn ${turn}`).toBeGreaterThan(0);
+      expect(ways.size, `turn ${Math.round((turn * 180) / Math.PI)}°`).toBeGreaterThan(0);
     }
     cutaway.clear();
     for (const part of facaded) expect(part.mesh.geometry.groups, part.name).toHaveLength(1);
@@ -83,10 +82,14 @@ describe('the house’s facades', () => {
     storeys.set(1, true); // the player on the ground floor, indoors: the upper floor and the attic off
     const above = meshes.parts.filter((part) => (part.storey ?? 0) > 1);
     const shown: string[] = [];
-    for (const turn of [0, 90, 180, 270, 0]) {
+    for (const turn of [...TURNS, 0]) {
       cutaway.update(viewPose({ ...viewState({ view: 'iso' }), turn, target }), target);
       storeys.set(1, true); // as the stage does each frame: its plan unchanged, it writes nothing
-      shown.push(...above.filter((part) => part.mesh.visible).map((part) => `${part.name}, turn ${turn}`));
+      shown.push(
+        ...above
+          .filter((part) => part.mesh.visible)
+          .map((part) => `${part.name}, turn ${Math.round((turn * 180) / Math.PI)}°`),
+      );
     }
     expect(above.some((part) => part.facades)).toBe(true);
     expect(shown).toEqual([]);

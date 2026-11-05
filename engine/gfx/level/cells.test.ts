@@ -103,6 +103,17 @@ describe('a building storey’s wall cells', () => {
     expect(settleCuts([row(4)], [[true, false, false, false]])).toEqual([[true, false, false, false]]); // one cut end
   });
 
+  it('settle again while a pass changes anything: a lining’s cut reaching its wall leaves no piece alone', () => {
+    const cell = (x: number, z = 0) => ({
+      centre: [x, 0, z] as [number, number, number],
+      size: [1, 1] as [number, number],
+    });
+    const wall = [cell(0), cell(1), cell(2)];
+    const lining = [wall[1], cell(1, 1)]; // the middle's lining shares its cell, beside one of its own, cut
+    // the lining's middle stands alone in its list, so goes; its wall piece with it; then the wall's last stands alone
+    expect(settleCuts([wall, lining], [[true, false, false], [false, true]])).toEqual([[true, true, true], [true, true]]); // prettier-ignore
+  });
+
   it('aim only at the points a line from the feet reaches past no piece: the floor beyond a wall is none (WP 13.41)', () => {
     const wall = { cells: [{ centre: [1.5, 0, 0] as [number, number, number], size: [0.25, 4] as [number, number] }], bottom: 0, top: 3 }; // prettier-ignore
     const aims: [number, number, number][] = [

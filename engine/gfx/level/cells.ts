@@ -183,38 +183,51 @@ export function cellNeighbours(cells: readonly Pick<LevelCell, 'centre' | 'size'
  * `group` is cut when any of its group's is; a piece whose neighbours in its list (`cellNeighbours`) are all cut, one
  * or more (a jamb beside its doorway, a partition's end), and a run of whole pieces at most `STUB_LENGTH` long with cut
  * pieces at two ends or more, are cut with them, so no post or stub stands alone among cut pieces; and a cell two
- * lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it.
+ * lists share (a wall's piece and its lining, engine/gfx/level/linings.ts) is cut in both when either cuts it; again
+ * while a pass changes anything (a lining's cut reaching its wall can leave a piece beside it alone).
  */
 export function settleCuts(
   lists: readonly (readonly Pick<LevelCell, 'centre' | 'size' | 'group'>[])[],
   cuts: readonly (readonly boolean[])[],
 ): boolean[][] {
-  const settled = lists.map((cells, k) => {
-    const whole = new Set(cells.filter((cell, i) => cuts[k][i] && cell.group !== undefined).map(({ group }) => group));
-    const cut = cells.map((cell, i) => cuts[k][i] || whole.has(cell.group));
-    if (!cut.some(Boolean)) return cut;
-    const [near, out, seen] = [cellNeighbours(cells), [...cut], new Set<number>()];
-    cells.forEach((_, i) => {
-      if (cut[i] || seen.has(i)) return;
-      const [run, ends] = [[i], new Set<number>()]; // a run of whole pieces, and the cut ones at its ends
-      seen.add(i);
-      for (let n = 0; n < run.length; n++) {
-        for (const j of near[run[n]]) {
-          if (cut[j]) ends.add(j);
-          else if (!seen.has(j)) {
-            seen.add(j);
-            run.push(j);
-          }
+  let state = cuts.map((cut) => [...cut]);
+  for (let pass = 0; pass < SETTLE_PASSES; pass++) {
+    const settled = lists.map((cells, k) => settleList(cells, state[k]));
+    const gone = new Set(lists.flatMap((cells, k) => cells.filter((_, i) => settled[k][i])));
+    const next = lists.map((cells, k) => cells.map((cell, i) => settled[k][i] || gone.has(cell)));
+    if (next.every((cut, k) => cut.every((one, i) => one === state[k][i]))) return next;
+    state = next; // a cut one list's settling made reaches another's through a shared cell: settle again
+  }
+  return state;
+}
+
+/** How often `settleCuts` settles again while a pass still changes something (its cuts only grow). */
+const SETTLE_PASSES = 4;
+
+/** One list's cuts settled: its groups whole, its posts and stubs cut (see `settleCuts`). */
+function settleList(cells: readonly Pick<LevelCell, 'centre' | 'size' | 'group'>[], cuts: readonly boolean[]) {
+  const whole = new Set(cells.filter((cell, i) => cuts[i] && cell.group !== undefined).map(({ group }) => group));
+  const cut = cells.map((cell, i) => cuts[i] || whole.has(cell.group));
+  if (!cut.some(Boolean)) return cut;
+  const [near, out, seen] = [cellNeighbours(cells), [...cut], new Set<number>()];
+  cells.forEach((_, i) => {
+    if (cut[i] || seen.has(i)) return;
+    const [run, ends] = [[i], new Set<number>()]; // a run of whole pieces, and the cut ones at its ends
+    seen.add(i);
+    for (let n = 0; n < run.length; n++) {
+      for (const j of near[run[n]]) {
+        if (cut[j]) ends.add(j);
+        else if (!seen.has(j)) {
+          seen.add(j);
+          run.push(j);
         }
       }
-      const length = run.reduce((sum, j) => sum + Math.max(...cells[j].size), 0);
-      // a piece alone among cut ones (a jamb, its doorway beside it), or a stub between cut pieces at both its ends
-      if ((run.length === 1 && ends.size > 0) || (ends.size > 1 && length <= STUB_LENGTH)) for (const j of run) out[j] = true; // prettier-ignore
-    });
-    return out;
+    }
+    const length = run.reduce((sum, j) => sum + Math.max(...cells[j].size), 0);
+    // a piece alone among cut ones (a jamb, its doorway beside it), or a stub between cut pieces at both its ends
+    if ((run.length === 1 && ends.size > 0) || (ends.size > 1 && length <= STUB_LENGTH)) for (const j of run) out[j] = true; // prettier-ignore
   });
-  const gone = new Set(lists.flatMap((cells, k) => cells.filter((_, i) => settled[k][i])));
-  return lists.map((cells, k) => cells.map((cell, i) => settled[k][i] || gone.has(cell)));
+  return out;
 }
 
 /** Whether the segment `a` → `b` passes through the box `min`–`max` (slabs; the prototype's `segBox`). */

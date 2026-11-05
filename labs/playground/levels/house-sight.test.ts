@@ -2,7 +2,7 @@
  * @file The player in sight in the house's classic view (engine/gfx/cutaway.ts and engine/gfx/storeyCut.ts on the
  * house, WP 13.41: in isometric a doorway between two rooms, its lintel, frame and the partition beside it, stood whole
  * between the camera and the player and hid all but his head): with the player at each room's marker, in each of
- * isometric's four turns, the storey cut and the cutaway as the stage runs them, the lines from the camera to his head
+ * isometric's eight turns, the storey cut and the cutaway as the stage runs them, the lines from the camera to his head
  * and his chest meet nothing the house draws.
  * @see engine/gfx/cutaway.ts
  * @see labs/playground/levels/house.ts
@@ -32,6 +32,9 @@ function middleOf(level: CompiledLevel, room: RoomDescriptor): [number, number, 
   return middle ? [(col + 0.5) * level.tile, room.position[1], (row + 0.5) * level.tile] : [...room.position] as [number, number, number]; // prettier-ignore
 }
 
+/** The isometric view's turns, rad: its eight 45° steps (engine/gfx/cameras/presets.ts). */
+const TURNS = Array.from({ length: 8 }, (_, k) => (k * Math.PI) / 4);
+
 describe('the player in the house’s classic view', () => {
   it('is in sight from every room in every turn of isometric: nothing drawn on the lines to his head and chest', () => {
     const level = getLevel('level:house');
@@ -41,7 +44,7 @@ describe('the player in the house’s classic view', () => {
     const hidden: string[] = [];
     let lines = 0;
     for (const room of level.rooms!) {
-      for (const turn of [0, 90, 180, 270]) {
+      for (const turn of TURNS) {
         const target = middleOf(level, room);
         const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
         const place = cutPlace(level, target[0], target[1], target[2]);
@@ -62,12 +65,17 @@ describe('the player in the house’s classic view', () => {
             : hit?.instanceId !== undefined
               ? ` piece ${hit.instanceId}`
               : '';
-          if (hit) hidden.push(`${room.id} turn ${turn}, ${height} m: ${hit.object.name}${which} at ${hit.point.toArray().map((v) => v.toFixed(2))}`); // prettier-ignore
+          if (hit) hidden.push(`${room.id} turn ${Math.round((turn * 180) / Math.PI)}°, ${height} m: ${hit.object.name}${which} at ${hit.point.toArray().map((v) => v.toFixed(2))}`); // prettier-ignore
         }
       }
     }
     expect(lines).toBeGreaterThan(100);
-    expect(hidden).toEqual([]);
+    // a flight of stairs is one mesh, never cut (ADR-0025 amendment 59): its top hides his chest from two places
+    expect(hidden.filter((line) => !/\/flight /.test(line))).toEqual([]);
+    expect(hidden.filter((line) => /\/flight /.test(line)).map((line) => line.replace(/ at .*/, ''))).toEqual([
+      'room:storage turn 225°, 1 m: level:house/basement/flight',
+      'room:kitchen turn 45°, 1 m: level:house/ground/flight',
+    ]);
   });
 
   it('cuts no piece beyond the player, from every room in every turn of isometric: none behind him opens his room', () => {
@@ -78,7 +86,7 @@ describe('the player in the house’s classic view', () => {
     const blocks = meshes.parts.filter((part) => part.cut && part.shape === 'block' && !part.recipe.startsWith('lining:')); // prettier-ignore
     const beyond: string[] = [];
     for (const room of level.rooms!) {
-      for (const turn of [0, 90, 180, 270]) {
+      for (const turn of TURNS) {
         const target = middleOf(level, room);
         const pose = viewPose({ ...viewState({ view: 'iso' }), turn, target });
         cutaway.update(pose, target);
@@ -95,7 +103,7 @@ describe('the player in the house’s classic view', () => {
               near[i].length > 0 &&
               near[i].every((j) => gone.has(part.cells[j].tiles.join())) &&
               near[i].some((j) => facingOut(part.cells[j])); // prettier-ignore a lone piece on a cut line facing the camera, gone with it
-            if (gone.has(tiles.join()) && !facing && !settled && depth(centre[0], centre[2]) > 1) beyond.push(`${room.id} turn ${turn}: ${part.name.replace('level:house/', '')} [${tiles}]`); // prettier-ignore
+            if (gone.has(tiles.join()) && !facing && !settled && depth(centre[0], centre[2]) > 1) beyond.push(`${room.id} turn ${Math.round((turn * 180) / Math.PI)}°: ${part.name.replace('level:house/', '')} [${tiles}]`); // prettier-ignore
           }
         }
       }
