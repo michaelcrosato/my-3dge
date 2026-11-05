@@ -18,7 +18,8 @@
  *   window 460 px tall or less.
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one,
- * and plays on the start menu; each screen's footer names its keys on the device used last (frame.ts `screenKeys`).
+ * and plays on the start menu; each screen's footer names its keys on the device used last (frame.ts `screenKeys`),
+ * and a pad works the panels as it works the menus (walk.ts: settings, the controls, Tune).
  *
  * Picks that change play are the run's recorded operations, so a replay of the run holds them: a Go to place is the
  * block's dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
@@ -51,6 +52,7 @@ import { clockAfter, createSettings, type RowSchema, type SettingRow } from './s
 import { createTune, type LookNow } from './tune';
 import { spawnPlace, spawnPlaces } from './spawns';
 import { ABOUT, createFrame, screenKeys } from './frame';
+import { walkPanel } from './walk';
 import { createHelp } from './help';
 import { goToLink, replayLink } from './links';
 import { pageAbout, pageItems, pageUrl } from './pages';
@@ -192,12 +194,15 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
     return { update: (dt) => (refresh(), void menu.update(dt)), remove: () => (menu.remove(), el.remove()) };
   };
 
-  /** A panel screen: `make` builds the panel in a frame of `kind`; Esc (or the pad's Start) goes back. */
+  /**
+   * A panel screen: `make` builds the panel in a frame of `kind`; Esc (or the pad's Start) goes back, and the menus'
+   * keys work the panel's controls (walk.ts).
+   */
   const panelScreen = (kind: string, make: (parent: HTMLElement) => { remove(): void }): Screen => {
     const { el, body, refresh } = createFrame(root, kind, '', kind === 'side' ? '' : () => screenKeys(input, kind));
     const panel = make(body);
     return {
-      update: () => (refresh(), void ((input.pressed('uiCancel') || input.pressed('pause')) && back())),
+      update: () => (refresh(), input.pressed('uiCancel') || input.pressed('pause') ? back() : walkPanel(body, input)),
       remove: () => (panel.remove(), el.remove()),
     };
   };

@@ -1,19 +1,85 @@
 /**
- * @file Unit tests for labs/playground/ui/settings.ts (WP 13.38): the settings screen offers the block's time of day,
+ * @file Unit tests for labs/playground/ui/settings.ts (WP 13.38). The controls, over tests/unit/ui/fakeDom.ts and a
+ * stand-in input: they show the keys of the device used last as the screen opens (a pad's buttons on a pad, the
+ * keyboard's keys else), and a rebind listens on that device, says so, and puts what it hears on the action in every
+ * camera's map, the pad's Start keeping the old one as Esc does. The rows: the screen offers the block's time of day,
  * the day's length, the rain and the dust, each a setting the registry knows, the two clock rows reporting a slider
  * once let go; Time of day and Day length set the block's clock live through its recorded dev action `daytime` (the
  * hour and the rate the scene's own start reads from them), so the street's lamps follow at once and the run's replay
- * plays back to the same hash.
+ * plays back to the same hash. Applying a row's change is the front end's (tests/e2e/playground-ui.spec.ts).
  * @see labs/playground/ui/settings.ts
  */
 import { describe, expect, it } from 'vitest';
 import { createHeadless } from '../../../engine';
 import { registry } from '../../../engine/core/registry';
+import type { DeviceKind } from '../../../engine/input/codes';
 import { playReplay } from '../../../engine/sim/replay';
+import { fakePage, type FakeElement } from '../../../tests/unit/ui/fakeDom';
 import '../cast/player';
+import { PLAYGROUND_MAPS } from '../controls';
 import { street } from '../scenes/site';
 import '../weather';
-import { clockAfter, SETTING_ROWS } from './settings';
+import { clockAfter, CONTROL_ACTIONS, createSettings, SETTING_ROWS } from './settings';
+
+/** The settings screen over a stand-in input whose device used last is `device`, the next code heard `heard`. */
+function screenOn(device: DeviceKind, heard: string | null) {
+  const { document } = fakePage({ left: 0, top: 0, width: 1280, height: 720 });
+  const parent = document.createElement('div');
+  const listened: string[] = [];
+  const rebound: string[] = [];
+  const input = {
+    lastDevice: device,
+    bindings: { label: (action: string, on: DeviceKind) => `${on}:${action}`, codes: () => [] },
+    bindingsFor: (map: string) => ({
+      map: { actions: { jump: [] } },
+      actions: () => ['jump'],
+      codes: () => [],
+      rebind: (action: string, code: string) => (rebound.push(`${map} ${action} ${code}`), { ok: true }),
+      reset: () => undefined,
+    }),
+    listen: (family: 'keyboard' | 'gamepad') => (listened.push(family), Promise.resolve(heard)),
+  };
+  createSettings(parent as unknown as HTMLElement, {
+    values: {},
+    schema: () => ({ type: 'number', minimum: 0, maximum: 1 }),
+    input: input as never,
+    onChange: () => undefined,
+    onBack: () => undefined,
+  });
+  const key = (action: string) => parent.querySelector(`[data-ui=item][data-id=rebind:${action}]`) as FakeElement;
+  return { key, listened, rebound };
+}
+
+describe('the settings screen’s controls', () => {
+  it('show the keys of the device used last: a pad’s buttons on a pad, the keyboard’s else', () => {
+    for (const [device, family] of [
+      ['gamepad', 'gamepad'],
+      ['keyboard', 'keyboard'],
+      ['mouse', 'keyboard'],
+    ] as const) {
+      const { key } = screenOn(device, null);
+      expect(
+        Object.keys(CONTROL_ACTIONS).map((action) => key(action).textContent),
+        device,
+      ).toEqual(Object.keys(CONTROL_ACTIONS).map((action) => `${family}:${action}`));
+    }
+  });
+
+  it('rebind on the device used last, in every camera’s map, Start keeping the old button as Esc keeps the key', async () => {
+    const pad = screenOn('gamepad', 'PadNorth');
+    pad.key('jump').click();
+    expect([pad.key('jump').textContent, pad.listened]).toEqual(['Press a button… (Start: keep)', ['gamepad']]);
+    await Promise.resolve();
+    expect(pad.rebound).toEqual(Object.values(PLAYGROUND_MAPS).map((map) => `${map} jump PadNorth`));
+    const kept = screenOn('gamepad', 'PadStart');
+    kept.key('jump').click();
+    await Promise.resolve();
+    expect([kept.rebound, kept.key('jump').textContent]).toEqual([[], 'gamepad:jump']);
+    const keys = screenOn('keyboard', 'KeyJ');
+    keys.key('jump').click();
+    expect([keys.key('jump').textContent, keys.listened]).toEqual(['Press a key… (Esc: keep)', ['keyboard']]);
+  });
+});
 
 /** The block's clock and the street's lamps in a headless run. */
 type Live = Awaited<ReturnType<typeof createHeadless>>;

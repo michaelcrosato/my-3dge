@@ -11,7 +11,7 @@
  *
  * The look: dark glass panels over the world (a blurred, dimmed backdrop), one warm accent (`--pg-accent`) for what is
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
- * browser. Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
+ * browser, the focused one outlined in the accent (a pad walks them: walk.ts). Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
  * too), the area card and the feel panel, all hidden under a screen (under the Tune panel, at the side so the world
  * shows, the HUD with its crosshair and damage numbers stays); a screen and its panels, scrolling where the window is
  * too short for them (in windows 720 px tall or less the start menu's brand and the items shrink, and at 460 px or less
@@ -113,7 +113,7 @@ const THEME_CSS = `
 .pg-ui .ui-box select, .pg-ui .ui-box button, .pg-ui .ui-box textarea, .pg-ui .ui-box input[type=text] {
   font: 500 15px/1.3 Inter, system-ui, sans-serif; color: var(--pg-text); background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--pg-line); border-radius: 8px; padding: 0.45em 0.7em; }
-.pg-ui .ui-box select:focus, .pg-ui .ui-box button:focus, .pg-ui .ui-box textarea:focus { outline: 2px solid var(--pg-accent);
+.pg-ui .ui-box :is(select, button, textarea, input, summary):focus { outline: 2px solid var(--pg-accent);
   outline-offset: 1px; }
 .pg-ui .ui-box select option { background: #1a1e28; color: var(--pg-text); }
 .pg-ui .ui-box button { cursor: pointer; font-weight: 650; }

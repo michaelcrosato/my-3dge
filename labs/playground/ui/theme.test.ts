@@ -2,8 +2,9 @@
  * @file Unit tests for the playground's theme (labs/playground/ui/theme.ts), read as the sheet `installTheme` adds
  * (over tests/unit/ui/fakeDom.ts): the feel panel, a child of the body beside the overlay, gets the theme's custom
  * properties and a block of its own, in the theme's glass, type and accent, every rule of it under `body >` so it
- * outranks the engine panel's sheet (engine/dev/feel/panel.ts, `.feel-panel …`) whichever comes first; and the sheet is
- * added once however often it is installed. How it looks is checked in the page (tests/e2e/playground-ui.spec.ts).
+ * outranks the engine panel's sheet (engine/dev/feel/panel.ts, `.feel-panel …`) whichever comes first; a panel's
+ * focused control is outlined for every kind a pad walks to (walk.ts); and the sheet is added once however often it
+ * is installed. How it looks is checked in the page (tests/e2e/playground-ui.spec.ts).
  * @see labs/playground/ui/theme.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -53,5 +54,12 @@ describe('the playground’s theme', () => {
       '.feel-panel', // the custom properties, which the engine's sheet never sets
       'body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel', // hidden under a screen
     ]);
+  });
+
+  it('outlines a panel’s focused control of every kind a pad walks to (walk.ts), so the pad shows where it is', () => {
+    const focus = themeRules().find((rule) => rule.selectors.some((one) => /^\.pg-ui \.ui-box .*:focus$/.test(one)));
+    expect(focus?.body).toMatch(/outline: 2px solid var\(--pg-accent\)/);
+    const kinds = focus?.selectors[0].match(/:is\(([^)]*)\)/)?.[1].split(', ');
+    expect(kinds).toEqual(expect.arrayContaining(['button', 'select', 'summary', 'input']));
   });
 });

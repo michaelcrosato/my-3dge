@@ -12,9 +12,12 @@
  * and looks (labs/playground/views.ts). A change calls `onChange(row, value)`, which the front end applies and keeps
  * (labs/playground/ui/frontEnd.ts); a row that acts on the run (`release`: the clock's) reports its slider once let
  * go, not at each step of a drag. Time of day and Day length set the block's clock live (`clockAfter`: the `daytime`
- * dev action's hour and rate), the rain and the dust are view settings that show at once. A rebind waits for the next key (`input.listen`) and puts it on that action in
+ * dev action's hour and rate), the rain and the dust are view settings that show at once. The controls show and
+ * rebind the keys of the device used last as the screen opens: the keyboard's, or a pad's buttons. A rebind waits for
+ * the next key or button (`input.listen`; Esc, or the pad's Start, keeps the old one) and puts it on that action in
  * every camera mode's map (`input.bindingsFor`, so each mode keeps its own map and the player's keys hold in all of
- * them); a key another action holds, or one the page keeps, is refused, the row naming why.
+ * them); a key another action holds, or one the page keeps, is refused, the row naming why. A pad works the screen
+ * too, and the keyboard presses and steps what Tab reaches (labs/playground/ui/walk.ts).
  *
  * Elements: `[data-ui=settings]`, a `[data-ui=setting]` per row (`data-id` its id, `data-value` its value, its control
  * an `input` or a `select` inside), a `[data-ui=binding]` per action (`data-id` the action, `data-value` its keys, its
@@ -31,7 +34,7 @@
  * // document.querySelector('[data-ui=setting][data-id="cam.fov"] input').value; // '90'
  * @see tests/e2e/playground.spec.ts
  */
-import type { Input } from '../../../engine';
+import { SYSTEM_ACTIONS, type Input } from '../../../engine';
 import { PLAYGROUND_ACTIONS, PLAYGROUND_MAPS } from '../controls';
 import { dayRate } from '../scenes/site';
 import { PLAYGROUND_CAMERAS, PLAYGROUND_LOOKS } from '../views';
@@ -103,8 +106,8 @@ export interface SettingsOptions {
   values: Readonly<Record<string, string | number | boolean>>;
   /** A setting's schema, by path (the inspector's `describe`). */
   schema(path: string): RowSchema;
-  /** The page's input: the keys' labels, listening for a key, and every mode's bindings. */
-  input: Pick<Input, 'listen' | 'bindingsFor' | 'bindings'>;
+  /** The page's input: the keys' labels, listening for a key, every mode's bindings, and the device used last. */
+  input: Pick<Input, 'listen' | 'bindingsFor' | 'bindings' | 'lastDevice'>;
   onChange(row: SettingRow, value: string | number | boolean): void;
   onBack(): void;
 }
@@ -126,6 +129,7 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
     Object.assign(doc.createElement(tag), props) as HTMLElementTagNameMap[K];
   el.append(make('h2', { textContent: 'Settings' }));
   const rows = new Map<string, HTMLElement>();
+  const pad = options.input.lastDevice === 'gamepad'; // the controls show and rebind a pad's buttons
   for (const row of SETTING_ROWS) {
     const line = make('label', { className: 'pg-row' });
     line.dataset.ui = 'setting';
@@ -202,10 +206,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
     return slider;
   }
 
-  /** Each action's keyboard key on the map in use, and its keys as the row's value. */
+  /** Each action's key on the map in use (the keyboard's, or the pad's button), and its keys as the row's value. */
   function drawBindings(): void {
     for (const { action, line, button: key } of bindingRows) {
-      key.textContent = options.input.bindings.label(action, 'keyboard');
+      key.textContent = options.input.bindings.label(action, pad ? 'gamepad' : 'keyboard');
       line.dataset.value = options.input.bindings.codes(action).join(' ');
     }
   }
@@ -216,10 +220,10 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
    * by the first map; the note says why.
    */
   async function rebind(action: string, key: HTMLButtonElement, note: HTMLElement): Promise<void> {
-    key.textContent = 'Press a key… (Esc: keep)';
+    key.textContent = pad ? 'Press a button… (Start: keep)' : 'Press a key… (Esc: keep)';
     note.textContent = '';
-    const code = await options.input.listen('keyboard');
-    if (code) {
+    const code = await options.input.listen(pad ? 'gamepad' : 'keyboard');
+    if (code && !SYSTEM_ACTIONS.pause.includes(code)) {
       const modes = Object.entries(PLAYGROUND_MAPS).map(([mode, map]) => ({ mode, bindings: options.input.bindingsFor(map) })); // prettier-ignore
       const taking = modes.filter(({ bindings }) => action in bindings.map.actions);
       const holder = taking.flatMap(({ mode, bindings }) => bindings.actions().filter((other) => other !== action && bindings.codes(other).includes(code)).map((other) => ({ mode, other }))); // prettier-ignore
