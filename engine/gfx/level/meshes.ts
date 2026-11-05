@@ -135,14 +135,15 @@ const holdsTile = (pieces: readonly TileRect[], col: number, row: number) =>
  * from its view (engine/world/level/storeys.ts's `storeyView`), bottom first, each part with `userData.storey`: its
  * walls up to the storey above (short of its floor by `STOREY_SEAM`) or, under a pitched roof, clipped to the roof's
  * underside in merged runs (walls.ts); its flights of stairs by the riser (flights.ts); its railings as posts and rails
- * (openings.ts). Then each storey's own parts, `ceiling` (its slab's underside and void edges, standing back from the
- * walls under it, slabs.ts), `heads` (the wall over its openings and low ceilings) and `frames` (round its doors and
- * windows, meeting `options.leaf` where it hangs, openings.ts), and `heads:<recipe>`, the wall over its openings in a
- * wall of that recipe faced with its sides' material (one draw call, no shadow of its own: the heads cast it); the
- * floors of the rooms `options.rooms` gives a material of their own; and the roofs (roofs.ts). They come after every descriptor's mesh, so `parts[i]` is still the
- * i-th descriptor's, storey by storey, for the stage's runs (engine/gfx/stage.ts). A part with nothing to draw (a
- * storey's floor whose every piece its rooms' own floors took) keeps its place in `parts`, hidden and out of the root,
- * since an empty mesh in the scene is drawn with no vertices (WP 13.18: Dawn warns of a draw with an index count of 0).
+ * over their tiles' floor (openings.ts). Then each storey's own parts, `ceiling` (its slab's underside and void edges,
+ * standing back from the walls under it, slabs.ts), `heads` (the wall over its openings and low ceilings) and `frames`
+ * (round its doors and windows, meeting `options.leaf` where it hangs, openings.ts), and `heads:<recipe>`, the wall
+ * over its openings in a wall of that recipe faced with its sides' material (one draw call, no shadow of its own: the
+ * heads cast it); the floors of the rooms `options.rooms` gives a material of their own; and the roofs (roofs.ts). They
+ * come after every descriptor's mesh, so `parts[i]` is still the i-th descriptor's, storey by storey, for the stage's
+ * runs (engine/gfx/stage.ts). A part with nothing to draw (a storey's floor whose every piece its rooms' own floors
+ * took) keeps its place in `parts`, hidden and out of the root, since an empty mesh in the scene is drawn with no
+ * vertices (WP 13.18: Dawn warns of a draw with an index count of 0).
  */
 export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOptions): LevelMeshes {
   const recipes = { ...LEVEL_RECIPES, ...options.recipes };
@@ -262,7 +263,8 @@ function drawsNothing(geometry: BufferGeometry): boolean {
 
 /**
  * One descriptor's mesh: a storey's full blocks under a pitched roof clipped to it, its flights by the riser, its
- * railings as posts and rails; everything else in its recipe's shape (engine/gfx/level/shapes.ts).
+ * railings as posts and rails over their tiles' floor; everything else in its recipe's shape
+ * (engine/gfx/level/shapes.ts).
  */
 function buildPart(
   view: CompiledLevel,

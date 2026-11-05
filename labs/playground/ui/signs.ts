@@ -12,7 +12,7 @@
  *
  * @example
  * const [x, z] = [20, 30]; // a sign's place on the block, in the gym
- * signShown([x, 1, z], { x: x + 2, z }, { gymScene: false, structure: 'gym-site' }, false); // true: in the gym, 2 m off
+ * signShown([x, 1, z], { x: x + 2, z }, { gymScene: false, structure: 'gym-site' }, false); // true: in the gym
  * signShown([x, 1, z], { x: x + 2, z }, { gymScene: false, structure: 'house' }, false); // false: from the house
  * signShown([x, 1, z], { x: x + 2, z }, { gymScene: false, structure: null }, false); // false: outdoors, in the yard
  * @see labs/playground/ui/signs.test.ts

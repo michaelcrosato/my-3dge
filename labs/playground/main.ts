@@ -13,12 +13,13 @@
  * into play, and automation sees it only with the start menu. The page wears one theme (labs/playground/ui/theme.ts,
  * the overlay's `pg-ui` class).
  *
- * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and
- * the maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
+ * Controls (labs/playground/controls.ts, WP 13.9): each camera mode reads its own action map (`playgroundMap`), and the
+ * maps' view actions switch the views live (`onView`, labs/playground/views.ts): T cycles the five camera modes
  * (blending), X swaps the shooter's shoulder, Q and E turn isometric; P steps through the looks; H opens the controls
- * sheet, M Go to, I shows the area's card again, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F shows and hides the feel panel
- * (labs/playground/feel.ts, WP 13.4). A click takes the pointer for mouse look in the three perspective cameras
- * (isometric and top-down keep the cursor to aim). They are view state, so no camera, look or switch changes the hash.
+ * sheet, M Go to, I shows the area's card again, Esc pause (a touch screen's menu button, labs/playground/touch.ts); F
+ * shows and hides the feel panel (labs/playground/feel.ts, WP 13.4). A click takes the pointer for mouse look in the
+ * three perspective cameras (isometric and top-down keep the cursor to aim). They are view state, so no camera, look or
+ * switch changes the hash.
  *
  * Each drawn frame (`onFrame`) it runs the front end (pause on Escape; the attract mode, the tour with the view
  * cycling, at `?replay=playground-tour&playground.attract=on`, WP 13.26), the HUD (labs/playground/ui/hud.ts: where the

@@ -32,7 +32,7 @@
  * // 'http://127.0.0.1:5173/labs/playground/?scene=site-gym&cam3=first&playground.title=off&playground.check=sprint'
  * checkUrl(ownerCheck('labs')!, 'http://127.0.0.1:5173/labs/playground/'); // 'http://127.0.0.1:5173/labs/index/'
  * checkUrl(ownerCheck('labs')!, 'file:///home/me/my-3dge/playground.html'); // the same: the dev server's
- * checkAway(ownerCheck('labs')!, 'file:///home/me/my-3dge/playground.html'); // '… run npm run dev, then this opens …'
+ * checkAway(ownerCheck('labs')!, 'file:///home/me/my-3dge/playground.html'); // '… run npm run dev, …'
  * answersText(OWNER_CHECKS, { sprint: { verdict: 'good', note: '', at: '2026-10-26' } }).split('\n')[2];
  * // '- sprint (docs/PLAYGROUND.md §9.3, item 1), Sprint the strip, in first person: Good as it is (2026-10-26)'
  * @see labs/playground/ui/checks.test.ts

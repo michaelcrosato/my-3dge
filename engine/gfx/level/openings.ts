@@ -29,7 +29,7 @@
  *
  * @example
  * // headsGeometry(level, level.storeys[1]); // the walls over the ground floor's doors and windows
- * railingGeometry(0.25, [[0, 0, 7, 0]], 0, 1)!.getAttribute('position').count; // 3 posts, 2 rails and its floor: 138 vertices
+ * railingGeometry(0.25, [[0, 0, 7, 0]], 0, 1)!.getAttribute('position').count; // 138: 3 posts, 2 rails, its floor
  * @see engine/gfx/level/openings.test.ts
  */
 import type { BufferGeometry } from 'three/webgpu';

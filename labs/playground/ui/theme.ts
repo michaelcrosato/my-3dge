@@ -11,14 +11,15 @@
  *
  * The look: dark glass panels over the world (a blurred, dimmed backdrop), one warm accent (`--pg-accent`) for what is
  * selected, the title in heavy capitals, large type a player reads at a glance, form controls drawn alike in every
- * browser, the focused one outlined in the accent (a pad walks them: walk.ts). Layers, low to high: the world's labels (the gym's signs), the HUD (the crosshair and the damage numbers
- * too), the area card and the feel panel, all hidden under a screen (under the Tune panel, at the side so the world
- * shows, the HUD with its crosshair and damage numbers stays); a screen and its panels, scrolling where the window is
- * too short for them (in windows 720 px tall or less the start menu's brand and the items shrink, and at 460 px or less
- * the detail line under a menu goes; the splash keeps its own); the touch buttons, hidden under a screen or photo mode
- * but for the menu button; the splash. The palette (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`, `--pg-accent`,
- * `--pg-good`), the radius, the shadow and the font are custom properties on `.pg-ui`, `.pg-splash` and `.feel-panel`;
- * the type sizes and the backdrops' shades are written where they are used.
+ * browser, the focused one outlined in the accent (a pad walks them: walk.ts). Layers, low to high: the world's labels
+ * (the gym's signs), the HUD (the crosshair and the damage numbers too), the area card and the feel panel, all hidden
+ * under a screen (under the Tune panel, at the side so the world shows, the HUD with its crosshair and damage numbers
+ * stays); a screen and its panels, scrolling where the window is too short for them (in windows 720 px tall or less the
+ * start menu's brand and the items shrink, and at 460 px or less the detail line under a menu goes; the splash keeps
+ * its own); the touch buttons, hidden under a screen or photo mode but for the menu button; the splash. The palette
+ * (`--pg-glass`, `--pg-line`, `--pg-text`, `--pg-dim`, `--pg-accent`, `--pg-good`), the radius, the shadow and the font
+ * are custom properties on `.pg-ui`, `.pg-splash` and `.feel-panel`; the type sizes and the backdrops' shades are
+ * written where they are used.
  *
  * Invariants: presentation only; one `<style id="pg-theme">` in the page however often it is called, moved after the
  * engine's sheets each time (so it wins their ties whether the splash or the engine came first); it names no element

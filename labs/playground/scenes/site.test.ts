@@ -2,9 +2,9 @@
  * @file Unit tests for the block (labs/playground/scenes/site.ts, levels/site.ts, levels/house.ts; PLAN.md WP 13.18):
  * every level on it validates clean; each structure stands where the site puts it, the ground cut under every floor;
  * none of its floors drawn on ground it leaves whole, in the grass's plane (the decks' ladder feet z-fought it, WP
- * 13.38); each area's scene stands the player at its spawn, on its floor; the house's things are there: a door in every door
- * opening it fits, two panes in every window, the garage's door on its switches, a lamp and a switch in every room;
- * and its replay (tests/replays/playground-site.replay.json) plays the story in its order, each step's prompt the
+ * 13.38); each area's scene stands the player at its spawn, on its floor; the house's things are there: a door in every
+ * door opening it fits, two panes in every window, the garage's door on its switches, a lamp and a switch in every
+ * room; and its replay (tests/replays/playground-site.replay.json) plays the story in its order, each step's prompt the
  * HUD's: the front door opens away from the player, the hall's light goes off and on at its switch, two door kicks
  * burst the living room's door open and break it, a chair is picked up and thrown through the dining room's window,
  * both its panes breaking, and the garage's switch raises its door.

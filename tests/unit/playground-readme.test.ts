@@ -3,8 +3,8 @@
  * makes in code spans holds (a setting, file, command, flag, scene, camera code or `__engine` member it names exists),
  * every scene the modules of labs/playground/scenes/ register has a row in its demo index, and every `playground.*`
  * setting a row in its settings table. The checks are tests/unit/readmeClaims.ts's; tests/unit/box-readme.test.ts
- * proves each fails on a fixture README. Its Controls section points to the controls sheet (labs/playground/ui/help.ts),
- * with no table of keys to drift from labs/playground/controls.ts.
+ * proves each fails on a fixture README. Its Controls section points to the controls sheet
+ * (labs/playground/ui/help.ts), with no table of keys to drift from labs/playground/controls.ts.
  * @see labs/playground/README.md
  */
 import { globSync, readFileSync } from 'node:fs';

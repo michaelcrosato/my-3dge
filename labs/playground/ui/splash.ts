@@ -4,12 +4,13 @@
  * that moves while it loads, and then "Press any key to start". A person sees it on every load (`splashOnOpen`): the
  * start menu's, and a page that opens on play (a recorded run, the tour, an owner's check), which it fades into at
  * once; automation sees it only where the start menu is asked for. `createSplash(doc)` shows it; `ready(waitForPlayer)`
- * says the engine is up: with `waitForPlayer` (a person at the start menu) it waits for a key, a click or a touch, which it
- * keeps from the game (the key that starts never reaches a menu or the run), or for the page to call `start()` (a
- * pad's A or Start, which fire no event: labs/playground/main.ts polls them while `waiting()`, the start menu under
- * it reading nothing until then), then fades away; without (automation: the tests and the x commands; a page that
- * opens on play), it fades away at once. A failed start removes it (`remove`), so the page's error shows. The start menu opens under it first, so
- * the fade shows it. The first key also wakes the page's sound, which waits for one (labs/playground/sounds/page.ts).
+ * says the engine is up: with `waitForPlayer` (a person at the start menu) it waits for a key, a click or a touch,
+ * which it keeps from the game (the key that starts never reaches a menu or the run), or for the page to call `start()`
+ * (a pad's A or Start, which fire no event: labs/playground/main.ts polls them while `waiting()`, the start menu under
+ * it reading nothing until then), then fades away; without (automation: the tests and the x commands; a page that opens
+ * on play), it fades away at once. A failed start removes it (`remove`), so the page's error shows. The start menu
+ * opens under it first, so the fade shows it. The first key also wakes the page's sound, which waits for one
+ * (labs/playground/sounds/page.ts).
  *
  * Elements: `[data-ui=splash]`, `data-value` `loading`, `ready` or `gone`. Invariants: presentation only; `ready`
  * resolves once, `remove` is safe at any time.

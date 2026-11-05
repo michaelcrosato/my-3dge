@@ -1,11 +1,11 @@
 /**
  * @file Unit tests for the playground's controls (labs/playground/controls.ts, WP 13.9): every camera mode's map passes
  * the bindings tests (no code on two actions, no reserved or system code, nothing on Ctrl, which with W closes the tab,
- * the page's P, F, M, H and I refused by rebinding, view actions rebound like the others), each binds Apex's default keys
- * where the browser allows, and each mode's own rules: the view sent and the centre aimed in first person and the
+ * the page's P, F, M, H and I refused by rebinding, view actions rebound like the others), each binds Apex's default
+ * keys where the browser allows, and each mode's own rules: the view sent and the centre aimed in first person and the
  * shooter, the platformer facing its move, isometric and top-down aiming with the pointer, Q and E turning isometric
- * (so G uses there). `playgroundMap` picks a camera's map.
- * WP 13.20: the firearms' keys (1, 2, R, 3) and the pad's, Y to swap and X and Y held to reload and holster.
+ * (so G uses there). `playgroundMap` picks a camera's map. WP 13.20: the firearms' keys (1, 2, R, 3) and the pad's, Y
+ * to swap and X and Y held to reload and holster.
  * @see labs/playground/controls.ts
  */
 import { describe, expect, it } from 'vitest';

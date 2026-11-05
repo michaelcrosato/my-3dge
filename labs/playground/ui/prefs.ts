@@ -2,8 +2,8 @@
  * @file The playground's preferences (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): what its settings screen changes and
  * the page's store keeps across sessions (`createStore`, engine/app/store.ts, under `PREFS_PREFIX`): the camera mode
  * the page opens in, the settings of `PREF_SETTINGS` by path (the field of view, the mouse, the look, the quality, the
- * movement profile, the block's time of day and day's length, the rain and the dust) and the audio buses' levels. The engine keeps the bindings in the same store
- * (`createEngine({ store })`).
+ * movement profile, the block's time of day and day's length, the rain and the dust) and the audio buses' levels. The
+ * engine keeps the bindings in the same store (`createEngine({ store })`).
  *
  * Only what the player changed is kept, never a default, so no number here restates a setting's schema.
  * `readPrefs(store)` reads them back, dropping what is not of their shape. `prefsQuery(prefs, search, scenes)` writes

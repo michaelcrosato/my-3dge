@@ -1,11 +1,10 @@
 /**
- * @file The controls sheet (labs/playground/ui/help.ts): every action it names is one the shooter's map binds (the
- * map every other mode's shares its actions with) or the system layer's (pause), and every touch button's; every group
- * has lines; and the keys follow the map in use and the device used last: the move keys or the left stick, the
- * mouse's or the right stick's look, or their aim where the map aims with the pointer, the shoulder only in the
- * shooter, the turn only in isometric and only its halves the device has, the page's keys on a keyboard alone (the
- * area card's I among them), and on
- * touch the stick, the touch buttons and the menu button.
+ * @file The controls sheet (labs/playground/ui/help.ts): every action it names is one the shooter's map binds (the map
+ * every other mode's shares its actions with) or the system layer's (pause), and every touch button's; every group has
+ * lines; and the keys follow the map in use and the device used last: the move keys or the left stick, the mouse's or
+ * the right stick's look, or their aim where the map aims with the pointer, the shoulder only in the shooter, the turn
+ * only in isometric and only its halves the device has, the page's keys on a keyboard alone (the area card's I among
+ * them), and on touch the stick, the touch buttons and the menu button.
  */
 import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
