@@ -6,8 +6,9 @@ page is its design: the site, the move set with its reference values, the camera
 there, and how agents and the owner know it feels and looks right. The work packages that build it are PLAN.md
 Phase 13 and the on-demand WPs it fires; their **Done when** lists take their numbers from here.
 
-Play it: `npm run dev`, then `http://localhost:5173/labs/playground/` in Chrome or Edge (WebGPU); `PORT=5174` before
-the command when another server holds 5173.
+Play it: open `playground.html` at the repository's root (the whole playground in one file: double-click it) in Chrome
+or Edge (WebGPU), or run `npm run dev` and open `http://localhost:5173/labs/playground/`; `PORT=5174` before the
+command when another server holds 5173.
 
 ## 1. Why
 

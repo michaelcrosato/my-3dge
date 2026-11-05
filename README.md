@@ -47,7 +47,8 @@ it into the rules every change follows; [`PLAN.md`](PLAN.md) §3 lists the check
 The engine's integration target is the *Stress test: 3D world* of
 [my-3d2dge](https://github.com/michaelcrosato/my-3d2dge), rebuilt from the ground up in six stages, from a small room
 to a hall with a crowd of 5,000 (`PLAN.md` §9.0). Each stage adds engine systems, not game content, and ends with a box
-that runs, is measured and is proved. The game that will run on the engine lives elsewhere and comes later.
+that runs, is measured and is proved. The game is the Playground (below); games that agents make live in repositories
+of their own.
 
 ## The Playground
 
