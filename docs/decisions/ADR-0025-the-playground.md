@@ -2816,6 +2816,10 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   - **A doorway hid the player.** In the hall, the doorway in the partition before him (its lintel, frame and door)
     stood whole: every opening between two rooms was in one range, which no cut reached. The basement's low ceiling,
     over the crawlspace, hid its rooms from the north in the same way.
+  - **Walls behind the player were cut** (the second re-review): a slot in the kitchen's far west wall, the kitchen open
+    into the bathroom, gaps in far partitions. The blocking rule aims at four points of the floor 2.5 m round him, and
+    a line to one behind him or beyond his room's walls cut the walls on it; one that ends just inside a wall reaches
+    it within `CUT_MARGIN`. Stretches of partition stood whole between cut pieces beside the hall's doorway.
 - **Decided:**
   - A face looks over a run of solids at most `LOW_SOLID` (1.2 m) over its floor to the room beside the run
     (engine/gfx/level/linings.ts `roomBeside`), never where the run meets the outdoors. An opening's tile (a doorway,
@@ -2825,9 +2829,14 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
     pieces opening onto rooms alone, holding a 2 × 2 square and at most `STANDING_AREA` (4 m²): a chimney's breast, a
     counter, an island. The basement's earth between its rooms, written as partitions, is larger. A doorway beside a
     piece is neither room nor outdoors (`openingAt`).
-  - The cutaway settles its plan (`settleCuts`): a group is cut whole, and a piece whose neighbours in its part are
-    all cut (one or more: a jamb, a partition's end) goes with them. A cell two parts share (a wall's piece and its
-    lining) is cut in both or neither.
+  - The cutaway settles its plan (`settleCuts`): a group is cut whole; a piece whose neighbours in its part are all
+    cut (one or more: a jamb, a partition's end) goes with them, and so does a stub, a run of whole pieces at most
+    `STUB_LENGTH` (2 m) long with cut pieces at two ends. A cell two parts share (a wall's piece and its lining) is cut
+    in both or neither.
+  - The blocking rule aims at a point of the floor round the player only on the camera's side of him, and only where
+    no piece stands between it and his feet (engine/gfx/level/cells.ts `aimsInSight`; the facades' plan takes the
+    walls as occluders). The floor behind him is in sight unless something behind him hides it, and cutting that opened
+    his room into the next.
   - Each doorway between two rooms is a range of its own (`DOORWAY` on), and so is what stands at no opening (a low
     ceiling's heads, its cell the rectangle of its tiles: `lowCeiling`). A part's doorways and low ceiling form a
     blocking target beside its facing one. A part with no range left draws no group and keeps its `visible`, which is
@@ -2845,9 +2854,9 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   - house-linings.test.ts: 15 pieces of the kitchen's walls and the 2 walls over its counter windows met siding.
   - house-facades.test.ts: 2 outer openings stood on no facade, and the upper storey's heads, frames and facings showed
     again over a cut storey in every turn.
-  - house-posts.test.ts: 77 pieces stood whole with their part's neighbours all cut.
+  - house-posts.test.ts: 77 pieces stood whole with their part's neighbours all cut, and 15 stubs.
   - house-sight.test.ts: from each room's middle in isometric's four turns, 6 lines to the player's head or chest met
-    a doorway or the low ceiling.
+    a doorway or the low ceiling, and 274 pieces behind him were cut (not facing the camera, not on a cut line).
   - Their counts are 0 now. Also the cells, cutaway, linings, facades, stageSite and stageProps tests, and a re-review
     of the house's screenshots.
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
