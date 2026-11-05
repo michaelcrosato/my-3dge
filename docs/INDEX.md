@@ -603,7 +603,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `ANIM_METRICS`, `CAMERA_METRICS`, `Course`, `COURSE_FIELDS`, `courseKind`, `defineCourse`, `getCourse`, `listCourses`, `Measure`, `MEASURE_FIELDS`, `Metric`, `METRICS`, `MOVE_METRICS`, `UNTILS`
   - Tests: [`engine/dev/feel/course.test.ts`](../engine/dev/feel/course.test.ts)
 - [`panel.ts`](../engine/dev/feel/panel.ts): The owner's feel panel (PLAN.md WP 13.4, docs/PLAYGROUND.md §3.4): a page's sliders over the settings whose paths start with `movement.` (the shooter model's numbers, engine/physics/movement/settings.ts) or `cam.` (the cameras', WP 13.8), live through the inspector, so each change is a recorded `set` that replays; and two buttons that bring a playtest back as data: Copy as profile (`__engine.tune.profile()`: a `defineMovement` call holding every number off Apex's, and the camera settings that differ as a preset) and Save the replay (the run so far, `__engine.input.record()`, as a `.replay.json` file for tests/replays/).
-  - Exports: `createFeelPanel`, `FeelInspector`, `FeelPanel`, `FeelRow`, `sliderRange`
+  - Exports: `createFeelPanel`, `FeelInspector`, `FeelPanel`, `FeelRow`, `plainWords`, `sliderRange`
   - Tests: [`engine/dev/feel/panel.test.ts`](../engine/dev/feel/panel.test.ts)
 - [`profile.ts`](../engine/dev/feel/profile.ts): Copy as profile (PLAN.md WP 13.4, docs/PLAYGROUND.md §3.4): the feel panel's tuning as data.
   - Exports: `profileText`, `tunedSpec`
@@ -921,6 +921,9 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`flights.ts`](../engine/gfx/level/flights.ts): Flights of stairs between storeys (PLAN.md WP 13.14; docs/PLAYGROUND.md §6.1): `flightGeometry(tile, ramps, ground)` draws each ramp a flight glyph makes (engine/world/level/storeys.ts: a storey's floor to the next one's) as a house's stairs: `risersOf(ramp)` steps rising about `RISER` metres each, so 3 m between floors climb in 17 steps of 0.176 m, the flight's run shared out as their treads.
   - Exports: `flightGeometry`, `RISER`, `risersOf`
   - Tests: [`engine/gfx/level/flights.test.ts`](../engine/gfx/level/flights.test.ts)
+- [`linings.ts`](../engine/gfx/level/linings.ts): A building's linings (PLAN.md WP 13.40; the final visual review: from inside, the house's outer walls showed their siding, so a room read as open to the outside): `liningParts(view, walls, linings)` lines each face of a lined recipe's wall pieces that opens onto a room's floor (on a storey of a level with rooms: its view's `room` grid, engine/world/level/storeys.ts) with a quad `FACING` out of it in the recipe's `lining` material (engine/gfx/level/recipes.ts), one instanced part a face's way (west, east, north, south), size and height a storey.
+  - Exports: `LinedWall`, `LINING_FACES`, `liningGeometry`, `LiningPart`, `liningParts`
+  - Tests: [`engine/gfx/level/linings.test.ts`](../engine/gfx/level/linings.test.ts)
 - [`meshes.ts`](../engine/gfx/level/meshes.ts): The level meshes (PLAN.md WP 2.4, WP 4.4, §6.1 "data descriptors"): `createLevelMeshes(level, { materials })` draws a compiled level (engine/world/level/compile.ts) from its mesh descriptors: one mesh per descriptor, built in the shape of the recipe its glyphs name (engine/gfx/level/recipes.ts, shapes.ts).
   - Exports: `createLevelMeshes`, `LEVEL_MESH_CODES`, `LevelMeshes`, `LevelMeshesOptions`, `LevelMeshPart`, `meshDrawCalls`, `STOREY_SEAM`
   - Tests: [`engine/gfx/level/meshes.test.ts`](../engine/gfx/level/meshes.test.ts), [`tests/e2e/hall.spec.ts`](../tests/e2e/hall.spec.ts), [`tests/e2e/level-meshes.spec.ts`](../tests/e2e/level-meshes.spec.ts)
@@ -1529,7 +1532,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `createDialog`, `Dialog`, `DIALOG_CODES`, `DialogOptions`, `DialogPlace`, `SayOptions`
   - Tests: [`engine/ui/dialog.test.ts`](../engine/ui/dialog.test.ts), [`tests/e2e/ui.spec.ts`](../tests/e2e/ui.spec.ts)
 - [`labels.ts`](../engine/ui/labels.ts): The overlay's world-anchored elements (PLAN.md §6.7, WP 6.5; doctrine: WebGPU only): labels that follow a point in the world and damage numbers, HTML placed each frame from projected coordinates, as three.js's `CSS2DRenderer` places its `CSS2DObject`s.
-  - Exports: `Anchor`, `createWorldLayer`, `DAMAGE_NUMBERS`, `DamageColumn`, `DamageOptions`, `damageRise`, `Label`, `LABEL_CODES`, `LabelOptions`, `OverlayCamera`, `projectToOverlay`, `stackDamage`, `WorldFrame`, `WorldLayer`, `worldPoint`, `WorldPoint`
+  - Exports: `Anchor`, `createWorldLayer`, `DAMAGE_NUMBERS`, `DamageColumn`, `DamageOptions`, `damageRise`, `Label`, `LABEL_CODES`, `LABEL_GAP`, `LabelOptions`, `OverlayCamera`, `projectToOverlay`, `stackDamage`, `WorldFrame`, `WorldLayer`, `worldPoint`, `WorldPoint`
   - Tests: [`engine/ui/labels.test.ts`](../engine/ui/labels.test.ts)
 - [`menu.ts`](../engine/ui/menu.ts): The menu (PLAN.md §6.7, WP 10.6, I-50): a list with a cursor, for title screens, pause menus, settings and shops, as HTML/CSS over the overlay.
   - Exports: `createMenu`, `Menu`, `MENU_CODES`, `MenuItem`, `MenuOptions`, `MenuPlace`
@@ -2152,8 +2155,11 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
 - [`runs.ts`](../labs/playground/ui/runs.ts): The recorded runs Tools lists (labs/playground/ui/frontEnd.ts's `replays` screen, docs/PLAYGROUND.md §8.3): `RECORDED_RUNS`, each by a plain name and one line on what it shows, in the tour's order, every one played on the block.
   - Exports: `RECORDED_RUNS`, `RecordedRun`, `runReplays`
   - Tests: [`labs/playground/ui/runs.test.ts`](../labs/playground/ui/runs.test.ts)
+- [`scrollCue.ts`](../labs/playground/ui/scrollCue.ts): A cue that a panel scrolls (the final visual review, WP 13.40: lists cut at a panel's bottom edge, with nothing to say more follow): `cueScroll(root)` marks each of the playground's scrolling panels under `root` (a screen's panel, the feel panel: `SCROLLERS`) `data-more` while some of it lies below what shows, and the theme (theme.ts) fades its bottom edge then, with "More below".
+  - Exports: `cueScroll`, `hasMore`, `SCROLLERS`
+  - Tests: [`labs/playground/ui/scrollCue.test.ts`](../labs/playground/ui/scrollCue.test.ts)
 - [`settings.ts`](../labs/playground/ui/settings.ts): The playground's settings screen (docs/PLAYGROUND.md §8.3, PLAN.md WP 13.25): a panel over the game, in the look of the engine's menus (engine/ui/widgets.ts's box), with a row for each thing the player sets (`SETTING_ROWS`): the camera mode, the field of view, the mouse's sensitivity and its inversion, the movement profile, the block's time of day and the minutes a day lasts (labs/playground/scenes/site.ts), the rain and the dust (weather.ts), the look, the quality and whether the frame rate may move it (the governor, engine/dev/governor.ts), and the four audio levels; then the controls: each action the player answers with its key, a button to rebind it, and one to reset them all.
-  - Exports: `clockAfter`, `CONTROL_ACTIONS`, `createSettings`, `plainNumber`, `RowSchema`, `SETTING_ROWS`, `SettingRow`, `SettingsOptions`, `SettingsScreen`
+  - Exports: `choiceName`, `clockAfter`, `CONTROL_ACTIONS`, `createSettings`, `plainNumber`, `RowSchema`, `SETTING_ROWS`, `SettingRow`, `SettingsOptions`, `SettingsScreen`
   - Tests: [`labs/playground/ui/settings.test.ts`](../labs/playground/ui/settings.test.ts), [`tests/e2e/playground.spec.ts`](../tests/e2e/playground.spec.ts)
 - [`signs.ts`](../labs/playground/ui/signs.ts): Which of the gym's signs show (docs/PLAYGROUND.md §2; labs/playground/main.ts labels them, WP 13.38): `signShown(sign, player, where, covered)`.
   - Exports: `SIGN_RANGE`, `SignPlace`, `signShown`
@@ -2171,7 +2177,7 @@ Every registry kind (PLAN.md §6.6), from its `defineKind` call: `node x describ
   - Exports: `ToolsItem`, `toolsItems`
   - Tests: [`labs/playground/ui/frontEnd.test.ts`](../labs/playground/ui/frontEnd.test.ts)
 - [`tune.ts`](../labs/playground/ui/tune.ts): The playground's Tune panel (docs/PLAYGROUND.md §8.4, PLAN.md WP 13.32): the look drawn now, tuned and combined live, as an agent does it with `x set` and `__engine.look()`.
-  - Exports: `createTune`, `LookNow`, `lookText`, `TuneOptions`, `TunePanel`
+  - Exports: `createTune`, `FILTER_LABELS`, `LookNow`, `lookText`, `TuneOptions`, `TunePanel`
   - Tests: [`labs/playground/ui/tune.test.ts`](../labs/playground/ui/tune.test.ts), [`tests/e2e/playground-ui.spec.ts`](../tests/e2e/playground-ui.spec.ts)
 - [`walk.ts`](../labs/playground/ui/walk.ts): Working a panel with the menus' keys (docs/PLAYGROUND.md §8.3): the settings screen, Tune and the controls sheet are forms a pointer works (sliders, lists, boxes, folds and buttons); `walkPanel(panel, input)`, run once a frame while one is open (labs/playground/ui/frontEnd.ts), lets a pad work them too, as it works the engine's menus, and the keyboard press and step what Tab reaches.
   - Exports: `SCROLL_STEP`, `walkable`, `WalkInput`, `walkPanel`

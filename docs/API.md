@@ -4149,6 +4149,7 @@ For the agents who maintain the engine.
 - `FeelInspector` (interface): What the panel calls on the inspector (`window.__engine`).
 - `FeelPanel` (type): The feel panel: what `createFeelPanel` returns.
 - `FeelRow` (interface): A row of the panel: a setting's path, value and declared range, as `__engine.tune.settings()` reads it.
+- `plainWords` (function): A field's or group's id as words a person reads: `armsFov` → `Arms field of view`, `hop` → `Hop`.
 - `sliderRange` (function): A slider's `[low, high, step]` for `row`: the declared range, cut to three times the default (or 1, or the value) either side of 0.
 
 ### [`engine/dev/feel/profile.ts`](../engine/dev/feel/profile.ts)
@@ -5044,6 +5045,14 @@ For the agents who maintain the engine.
 - `flightGeometry` (function): The flights of `ramps`, standing on their storey's floor at `ground` (m), tiles `tile` metres wide.
 - `RISER` (const): A house stair's riser (m): about 7 inches.
 - `risersOf` (function): How many steps a flight climbs: its rise in `RISER`s, at least one.
+
+### [`engine/gfx/level/linings.ts`](../engine/gfx/level/linings.ts)
+
+- `LinedWall` (interface): A wall part to line: its recipe's name, its pieces' cells, its height range, and its cut's height and rule.
+- `LINING_FACES` (const): A piece's four faces: the step to the neighbour each opens onto, and the face's normal and u along it.
+- `liningGeometry` (function): The quad lining face `face` (an index into `LINING_FACES`) of a piece `size` across ([x, z], m) and `height` tall from its foot, `FACING` out of it, its ends `FACING` past it, u along it and v up in metres.
+- `LiningPart` (interface): One lining part: a face's way of a recipe's walls, its quad and stump, the cells it lines and its material.
+- `liningParts` (function): The lining parts of `walls` on `view` (see the file comment): `linings` gives a recipe's lining material, or undefined for one that has none.
 
 ### [`engine/gfx/level/meshes.ts`](../engine/gfx/level/meshes.ts)
 
@@ -7457,6 +7466,7 @@ For the agents who maintain the engine.
 - `damageRise` (function): How far above its anchor a damage number is `age` seconds after it appeared, m.
 - `Label` (interface): A world-anchored label: change its text, anchor or visibility at any time; it shows them at the next frame.
 - `LABEL_CODES` (const): The error codes of the world-anchored elements.
+- `LABEL_GAP` (const): How far apart two decluttering labels' boxes stay on screen (CSS px): touching pills read as one.
 - `LabelOptions` (interface): How a label is made.
 - `OverlayCamera` (interface): What the overlay reads of a camera: any three.js camera (without `near` and `far`, it culls only behind it).
 - `projectToOverlay` (function): Where the point (x, y, z) shows on an overlay `width` × `height` CSS px over `camera`'s picture: writes its centre (px from the top left) and its depth (m in front of the camera) into `out`, or returns false, writing nothing, when it is nearer than `near` or beyond `far`.
@@ -8936,8 +8946,15 @@ For the agents who maintain the engine.
 - `RecordedRun` (interface): One run of the list: its id (`?replay=<id>`), the committed replay it plays, its name and what it shows.
 - `runReplays` (function): The list's runs by id, from the page's `replays` by name (see the file comment); a run whose replay is missing is left out.
 
+### [`labs/playground/ui/scrollCue.ts`](../labs/playground/ui/scrollCue.ts)
+
+- `cueScroll` (function): Marks each panel under `root` that has more below what shows `data-more` (see the file comment).
+- `hasMore` (const): Whether `box` has more below what shows (2 CSS px of slack for rounding).
+- `SCROLLERS` (const): The playground's panels that scroll: a screen's panel (settings, the controls, Tune, the checks) and the feel panel.
+
 ### [`labs/playground/ui/settings.ts`](../labs/playground/ui/settings.ts)
 
+- `choiceName` (function): A list's choice as the player reads it: a camera mode by its label's name (`Third-person shooter`), anything else without its kind's prefix, capitalised (`look:playground-clean` → `Clean`, `movement:apex` → `Apex`).
 - `clockAfter` (function): The block's clock once Time of day or Day length (`id`) changed to `value`, the other read through `setting`: the `daytime` dev action's `{ hour, rate }` (labs/playground/scenes/site.ts), as the scene's start reads them; null for another row.
 - `CONTROL_ACTIONS` (const): The actions the controls list, with their names: the four moves, then those the player answers (controls.ts).
 - `createSettings` (function): Makes the settings screen in `parent` (see the file comment).
@@ -8979,6 +8996,7 @@ For the agents who maintain the engine.
 ### [`labs/playground/ui/tune.ts`](../labs/playground/ui/tune.ts)
 
 - `createTune` (function): Makes the Tune panel in `parent` (see the file comment).
+- `FILTER_LABELS` (const): Each filter by the name a player reads, beside its id (engine/gfx/post/filters.ts `FILTER_NAMES`).
 - `LookNow` (interface): The look drawn now, as the inspector's `look` gives it.
 - `lookText` (function): The filters drawn now as a `defineLook` to paste (see the file comment): each filter that is on with its scope and the fields off their defaults, so the look draws the same picture.
 - `TuneOptions` (interface): How the panel is made.

@@ -831,7 +831,7 @@ Advice from `createInstancedBatch` (engine/gfx/instancing.ts), once, when three.
 
 - Message: `level {level} uses the mesh recipe {recipe}, which no level recipe defines: its tiles are grey blocks`
 - Fix: pass createLevelMeshes a recipe named {recipe} in its recipes option (shape, materials, castShadow and receiveShadow, as engine/gfx/level/recipes.ts writes them), or give the glyph a recipe the engine has: {known}
-- Registered in: [`engine/gfx/level/meshes.ts` line 59](../engine/gfx/level/meshes.ts)
+- Registered in: [`engine/gfx/level/meshes.ts` line 60](../engine/gfx/level/meshes.ts)
 
 Advice from `createLevelMeshes` (engine/gfx/level/meshes.ts) when a glyph names a mesh recipe that neither the engine (engine/gfx/level/recipes.ts) nor the `recipes` option defines: its tiles are drawn as grey boxes from their floor to their top, so the level still shows where they are.
 
@@ -1503,4 +1503,4 @@ Raised by the menu (engine/ui/menu.ts) for an item that is neither a string nor 
 
 - Message: `{what} is {got}, not a point in the world`
 - Fix: pass [x, y, z] in metres, a Vector3 or { x, y, z }, or a function returning one
-- Registered in: [`engine/ui/labels.ts` line 41](../engine/ui/labels.ts)
+- Registered in: [`engine/ui/labels.ts` line 44](../engine/ui/labels.ts)
