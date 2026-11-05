@@ -7,10 +7,9 @@
  *   under the splash screen (splash.ts) as the page opens while `playground.title` says so (`auto`: unless a replay
  *   plays or automation drives the browser; `on`, `off`); Escape plays; left idle `ATTRACT.idle` seconds, it opens
  *   the attract mode (attract.ts) while `playground.attract` is `auto` and no automation drives the browser;
- * - pause (`pause`: Resume, Answer this check while one is under way, Go to, Settings, Controls, Photo mode, This
- *   area's card where the page has one (`showCard`, I's, for a pad), Owner checks, Tools, Restart, Main menu), opened
- *   by the system layer's `pause` (Escape, the pad's Start) or by the pointer lock let go while the map wants it (a
- *   browser spends the first Escape on the lock);
+ * - pause (`pause`: Resume, Answer this check under way, Go to, Settings, Controls, Photo mode, This area's card on
+ *   the block (`showCard`: I's, for a pad), Owner checks, Tools, Restart, Main menu), opened by the system layer's
+ *   `pause` (Escape, the pad's Start) or the pointer lock let go while the map wants it (the first Escape frees it);
  * - Go to (`spawns`: the block's areas and the house's rooms, spawns.ts; M opens it in play), settings (`settings`,
  *   settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks
  *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
@@ -26,11 +25,10 @@
  * (links.ts `goToLink`, run as its first operation: `spawnOnOpen`); Restart starts the scene again on its seed
  * (`seed`); the movement profile is the sim setting `playground.movement`, set, then the scene started again; the time
  * of day and the day's length (`playground.hour`, `playground.day`) are set and, on the block, put on its clock at once
- * by its dev action `daytime` (settings.ts `clockAfter`).
- * The camera mode, the view settings and the audio levels change the view alone; the store keeps them (prefs.ts).
- * `state()`, `window.__playgroundUi.state()` in the page, names the open screens for the tests;
- * `__playgroundUi.checks()` lists the owner's checks with their answers, and `__playgroundUi.answers()` gives them as
- * the text to paste.
+ * by its dev action `daytime` (settings.ts `clockAfter`). The camera mode, the view settings and the audio levels
+ * change the view alone; the store keeps them (prefs.ts).
+ * `state()` (`__playgroundUi.state()` in the page) names the open screens for the tests; `__playgroundUi.checks()`
+ * lists the owner's checks with their answers, and `__playgroundUi.answers()` gives them as the text to paste.
  *
  * Game code, a page's: it imports only the engine's public API (engine/index.ts) and the playground's own files.
  *
