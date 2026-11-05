@@ -2832,7 +2832,7 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   - The cutaway settles its plan (`settleCuts`): a group is cut whole; a piece whose neighbours in its part are all
     cut (one or more: a jamb, a partition's end) goes with them, and so does a stub, a run of whole pieces at most
     `STUB_LENGTH` (2 m) long with cut pieces at two ends. A cell two parts share (a wall's piece and its lining) is cut
-    in both or neither.
+    in both or neither, and it settles again while a pass changes anything.
   - The blocking rule aims at a point of the floor round the player only on the camera's side of him, and only where
     no piece stands between it and his feet (engine/gfx/level/cells.ts `aimsInSight`; the facades' plan takes the
     walls as occluders). The floor behind him is in sight unless something behind him hides it, and cutting that opened
@@ -2849,15 +2849,21 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   - The reviewer's first "player hidden behind a hall wall" was a resident in the next room; the second, behind the
     hall's doorway, was the player, and is fixed above.
   - Left as they are: a player in a room's very corner, with the camera looking along its wall, can have a lintel on
-    the line to his chest; the attic's gable, drawn as one mesh, is never cut.
-- **Evidence:** in labs/playground/levels/, each failing on the code before its fix:
+    the line to his chest; the attic's gable and a flight of stairs, each drawn as one mesh, are never cut (from the
+    kitchen at 45° and the basement's storage at 225°, a flight's top hides the player's chest); the floor round the
+    player on the camera's side still cuts a partition's junction off his line (the third re-review's low notch by the
+    chimney). That review's two low stubs beside a cut junction are not reproduced: a sweep of every metre of every
+    room in all eight turns (6,096 views) finds no stub or post.
+- **Evidence:** in labs/playground/levels/, each failing on the code before its fix (the counts before were taken
+  over four turns that, by a slip, were not isometric's quarter turns, 0°, 117°, 233° and 350°; the tests now take all
+  eight 45° steps, and every 2 m of the rooms' floors for posts and stubs):
   - house-linings.test.ts: 15 pieces of the kitchen's walls and the 2 walls over its counter windows met siding.
   - house-facades.test.ts: 2 outer openings stood on no facade, and the upper storey's heads, frames and facings showed
     again over a cut storey in every turn.
   - house-posts.test.ts: 77 pieces stood whole with their part's neighbours all cut, and 15 stubs.
   - house-sight.test.ts: from each room's middle in isometric's four turns, 6 lines to the player's head or chest met
     a doorway or the low ceiling, and 274 pieces behind him were cut (not facing the camera, not on a cut line).
-  - Their counts are 0 now. Also the cells, cutaway, linings, facades, stageSite and stageProps tests, and a re-review
-    of the house's screenshots.
+  - Their counts are 0 now. Also the cells, cutaway, linings, facades, stageSite and stageProps tests, and three
+    re-reviews of the house's screenshots, the last finding every high finding fixed.
 - **Not verified:** the owner's eye on the house in every camera (`house-views`).
 - Plan edit: WP 13.41.
