@@ -5,6 +5,8 @@ node_modules/
 test-results/
 .env*
 .claude/settings.local.json
+# Agents' git worktrees (Claude Code's worktree isolation puts them here): never part of the repository
+.claude/worktrees/
 
 # TypeScript build info (tsc -b writes it)
 *.tsbuildinfo

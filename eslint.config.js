@@ -44,7 +44,10 @@ const AGENT_READABLE = [
 /** Builds the whole config; `switches` defaults to `SWITCHES` (tests turn every switch on). */
 export function configure(switches = SWITCHES) {
   return [
-    { name: 'ignores', ignores: ['out/**', 'dist/**', '.cache/**', 'test-results/**', 'lean/**'] },
+    {
+      name: 'ignores',
+      ignores: ['out/**', 'dist/**', '.cache/**', 'test-results/**', 'lean/**', '.claude/worktrees/**'],
+    },
     ...tseslint.configs.recommended,
     {
       name: 'typescript: unused names',
