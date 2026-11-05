@@ -1,11 +1,14 @@
 /**
  * @file Unit tests for the front end (labs/playground/ui/frontEnd.ts): the start menu shows unless a replay plays or
- * automation drives the browser, or the page asks; Tools names the engine's own pages, the Stress Box and the labs.
+ * automation drives the browser, or the page asks; Tools (tools.ts) names the engine's own pages, the Stress Box and
+ * the labs, and `ABOUT` says what each of its items does.
  * @see labs/playground/ui/frontEnd.ts
+ * @see labs/playground/ui/tools.ts
  */
 import { describe, expect, it } from 'vitest';
 import { ABOUT } from './frame';
-import { titleOnOpen, toolsItems } from './frontEnd';
+import { titleOnOpen } from './frontEnd';
+import { toolsItems } from './tools';
 
 describe('the front end’s opening', () => {
   it('opens on the start menu for a person, never under a replay or automation unless asked', () => {

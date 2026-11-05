@@ -6,7 +6,7 @@
  * (`createEngine`, engine/app/engine.ts) on the block unless `?scene` names another (the gym's and the hill's
  * calibration scenes, and the block opened at an area, stay for the tests and replays), in the shooter camera and the
  * clean look unless the query names others, warming up only what it draws (`gfx.warmUp: asked`), with the
- * playground's replays (tests/replays/playground-*) offered to `?replay=<name>`.
+ * playground's replays (tests/replays/playground-*) and Tools' recorded runs (`runs`) offered to `?replay=<name>`.
  *
  * A person opening the page sees the splash screen while it loads (labs/playground/ui/splash.ts), then the start menu
  * over the block (labs/playground/ui/frontEnd.ts: Play, Go to, Settings, Controls, Photo mode, the tour, the owner's
@@ -57,6 +57,7 @@ import { checkLine, ownerCheck, placeOnOpen } from './ui/checks';
 import { createFrontEnd, spawnOnOpen, titleOnOpen, type FrontEnd } from './ui/frontEnd';
 import { GOTO_KEY, HELP_KEY } from './ui/help';
 import { showHud, type HudPlayer } from './ui/hud';
+import { runReplays } from './ui/runs';
 import { PREF_BUSES, PREFS_PREFIX, prefsQuery, readPrefs } from './ui/prefs';
 import { signShown } from './ui/signs';
 import { createSplash } from './ui/splash';
@@ -94,6 +95,8 @@ const replays = Object.fromEntries(
     import.meta.glob<string>('../../tests/replays/playground-*.replay.json', { query: '?raw', import: 'default' }),
   ).map(([path, load]) => [path.replace(/^.*\/|\.replay\.json$/g, ''), load]),
 );
+/** Tools' recorded runs, by id, every one on the block (labs/playground/ui/runs.ts: the gym's moved onto it). */
+const runs = runReplays(replays);
 
 /**
  * The page's query: the player's kept preferences where it names none (labs/playground/ui/prefs.ts; a replay's page
@@ -247,7 +250,7 @@ engine = await createEngine({
   onView,
   scenes: sceneEntries.map((entry) => entry.id),
   levels,
-  replays,
+  replays: { ...replays, ...runs },
   search: `?${search}`,
   store,
   modal: () => frontEnd?.modal() ?? false,
@@ -288,7 +291,7 @@ if (engine.ready && engine.inspector && engine.ui && engine.input) {
     attract: (search.get('playground.attract') ?? 'auto') === 'auto' && !navigator.webdriver,
     checkStore,
     check,
-    replays: Object.keys(replays),
+    replays: Object.keys(runs),
     toggleFeel: feel ? () => feel.toggle() : undefined,
   });
   if (search.get('playground.attract') === 'on' && replays[TOUR_REPLAY]) {

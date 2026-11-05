@@ -14,7 +14,7 @@
  *   settings.ts), the controls sheet (`help`, help.ts; H in play), photo mode (`photo`, photo.ts), the owner's checks
  *   (`checks` on the list, `check` on the one under way: checkPanel.ts, answers to `checkStore`, Go there opening
  *   checks.ts `checkUrl`, from playground.html saying what to run for another page: `checkAway`), and Tools (`tools`,
- *   `toolsItems`). Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`), but in a
+ *   tools.ts). Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`), but in a
  *   window 460 px tall or less.
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
  * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one.
@@ -51,6 +51,8 @@ import { ABOUT, createFrame } from './frame';
 import { createHelp } from './help';
 import { goToLink, replayLink } from './links';
 import { pageAbout, pageItems, pageUrl } from './pages';
+import { RECORDED_RUNS } from './runs';
+import { toolsItems } from './tools';
 
 /** The start menu's view setting (see the file comment). */
 export const FRONT_END_SETTINGS = defineSettings({
@@ -90,7 +92,7 @@ export interface FrontEndOptions {
   checkStore: Store;
   /** The owner's check under way (`playground.check`); none without one. */
   check?: OwnerCheck;
-  /** The recorded runs the page plays (`?replay=<name>`). */
+  /** Tools' recorded runs the page plays (`?replay=<id>`), by their ids in labs/playground/ui/runs.ts. */
   replays?: readonly string[];
   /** Shows or hides the feel panel (labs/playground/feel.ts). */
   toggleFeel?: () => void;
@@ -118,20 +120,6 @@ interface Screen {
 export function titleOnOpen(setting: string, search: URLSearchParams, webdriver: boolean): boolean {
   return setting === 'on' || (setting === 'auto' && !webdriver && !search.has('replay'));
 }
-
-/**
- * Tools' items: the Tune panel (`tune`, tune.ts, WP 13.32), the recorded runs (`replays`, each opened as
- * `?replay=<name>`, the view kept: links.ts) and the feel panel where the page has them, and the engine's own pages
- * beside the block (`pages`, pages.ts: the Stress Box and the seven labs in new tabs; from playground.html, saying to
- * run npm run dev).
- */
-export const toolsItems = (has: { replays: boolean; feel: boolean }): Exclude<MenuItem, string>[] => [
-  { label: 'Tune the look…', id: 'tune' },
-  { label: 'Recorded runs…', id: 'replays', disabled: !has.replays },
-  { label: 'Feel panel', id: 'feel', disabled: !has.feel },
-  { label: 'The Stress Box and the labs…', id: 'pages' },
-  { label: 'Back', id: 'back' },
-];
 
 /** Runs `search`'s spawn pick (`playground.spawn`) on a scene of the block once the page is up; false when none ran. */
 export function spawnOnOpen(engine: Engine, search: URLSearchParams, scene: EngineFrame['scene']): boolean {
@@ -295,8 +283,9 @@ export function createFrontEnd(options: FrontEndOptions): FrontEnd {
       });
     }
     if (name === 'replays') {
-      const items: MenuItem[] = [...(options.replays ?? []).map((run) => ({ label: run.replace(/^playground-/, ''), id: run })), { label: 'Back', id: 'back' }]; // prettier-ignore
-      const about = (id: string) => (id === 'back' ? '' : `Plays tests/replays/${id}.replay.json, then hands you the controls.`); // prettier-ignore
+      const runs = RECORDED_RUNS.filter((run) => options.replays?.includes(run.id)); // each by its name, on the block
+      const items: MenuItem[] = [...runs.map(({ label, id }) => ({ label, id })), { label: 'Back', id: 'back' }];
+      const about = (id: string) => runs.find((run) => run.id === id)?.about ?? '';
       return menuScreen('replays', 'Recorded runs', items, (id) => {
         if (id === 'back') return back();
         location.assign(replayLink(location, id));
