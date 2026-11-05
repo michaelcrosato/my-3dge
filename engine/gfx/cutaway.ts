@@ -43,6 +43,7 @@ import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/p
 import type { LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
 import type { CutWhen } from './level/recipes';
+import { facadeDraws } from './level/facades';
 import { instanceSlots, placeInstances } from './level/shapes';
 import type { Warmup } from './warmup';
 
@@ -224,6 +225,8 @@ export interface Cutaway {
   update(pose: CameraPose, focus?: Vec3, options?: { fade?: boolean; cut?: boolean; storey?: number }): CutawayReport;
   /** Puts every piece back whole. */
   clear(): CutawayReport;
+  /** The facades left out of each part drawn facade by facade (engine/gfx/level/facades.ts), by part name. */
+  facades(): Record<string, number[]>;
   /** The tiles of each part's cut pieces, by part name. */
   cut(): Record<string, LevelCell['tiles'][]>;
   /** Draw calls the twins cost a frame, as `LevelMeshes.drawCalls` counts them. */
@@ -310,12 +313,17 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
     return report(changed);
   };
   const none = () => entries.map(({ part }) => part.cells.map(() => false));
-  const clear = () =>
-    apply(
+  // A storey's heads, frames and facings drawn facade by facade (engine/gfx/level/facades.ts): one cut by facing, as
+  // its walls are, is left out of the draw.
+  const facades = facadeDraws(meshes.parts);
+  const clear = () => {
+    facades.show(facades.targets.map(({ cells }) => cells.map(() => false)));
+    return apply(
       cutting.map(({ part }) => part.cells.map(() => false)),
       none(),
       new Set(),
     );
+  };
   /** The meshes of the objects standing between `pose` and `focus`, each by its own world box, thin ones never. */
   const blocking = (pose: CameraPose, focus: Vec3): Set<Object3D> => {
     const [x, y, z] = focus;
@@ -339,6 +347,7 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
     twins: cutting.map(({ twin }) => twin!),
     update(pose, focus = poseTarget(pose), { fade = false, cut = true, storey } = {}) {
       const cuts = cut ? planCutaway(targets, pose, focus, storey) : targets.map(({ cells }) => cells.map(() => false)); // prettier-ignore
+      facades.show(cut ? planCutaway(facades.targets, pose, focus, storey) : facades.targets.map(({ cells }) => cells.map(() => false))); // prettier-ignore
       if (!fade) return apply(cuts, none(), new Set());
       return apply(
         cuts,
@@ -351,6 +360,7 @@ export function createCutaway(meshes: Pick<LevelMeshes, 'root' | 'parts'>, optio
       );
     },
     clear,
+    facades: () => facades.cut(),
     cut() {
       return Object.fromEntries(
         cutting.map(({ part, cuts }) => [part.name, part.cells.filter((_, j) => cuts[j]).map((cell) => cell.tiles)]),

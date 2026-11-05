@@ -10,7 +10,8 @@
  * along it and v up in metres (engine/gfx/level/faces.ts), standing `back(col, row)` metres back into its tile: a
  * wall of the storey below that rises to the slab has its outside face in the edge's plane, and the two fought
  * (z-fighting: the house's paint band over its siding, WP 13.36), so engine/gfx/level/meshes.ts stands it back
- * `STOREY_SEAM` there. One draw group.
+ * `STOREY_SEAM` there. Two draw groups, the underside's then the edges' (a recipe's second material, if it has one:
+ * the house's slab edges, a band across its front over the porch, read as flat untextured paint, WP 13.40).
  *
  * Invariants: pure in the level and the storey; null when the storey draws nothing (the lowest storey with no edge).
  *
@@ -21,6 +22,7 @@
 import type { BufferGeometry } from 'three/webgpu';
 import { mergeRects } from '../../world/level/rects';
 import type { CompiledLevel, StoreyDescriptor } from '../../world/level/types';
+import { mergeGeometries } from '../geometry/groups';
 import { createWriter, type Vec3 } from '../geometry/writer';
 import { upright } from './faces';
 
@@ -74,7 +76,7 @@ export function ceilingGeometry(
   back: (col: number, row: number) => number = () => 0,
 ): BufferGeometry | null {
   const { cols, rows, tile: t } = level;
-  const writer = createWriter();
+  const [writer, edges] = [createWriter(), createWriter()]; // the underside, then the edges: a draw group each
   const [bottom, top] = [storey.base - storey.slab, storey.base];
   const floored = (c: number, r: number) => c >= 0 && r >= 0 && c < cols && r < rows && storey.floored[r * cols + c];
   if (storey.index > 0) {
@@ -97,9 +99,15 @@ export function ceilingGeometry(
       for (const { dc, dr, edge } of SIDES) {
         if (floored(c + dc, r + dr)) continue;
         const [a, b] = edge(x0, z0, x1, z1);
-        upright(writer, [a[0] - dc * d, a[1] - dr * d], [b[0] - dc * d, b[1] - dr * d], bottom, top);
+        upright(edges, [a[0] - dc * d, a[1] - dr * d], [b[0] - dc * d, b[1] - dr * d], bottom, top);
       }
     }
   }
-  return writer.count ? writer.build() : null;
+  const parts = [writer, edges].flatMap((each, slot) => {
+    if (!each.count) return [];
+    const geometry = each.build();
+    geometry.addGroup(0, geometry.getIndex()!.count, slot);
+    return [geometry];
+  });
+  return parts.length ? mergeGeometries(parts) : null;
 }

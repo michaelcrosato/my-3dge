@@ -64,6 +64,19 @@ export function sliderRange(row: Pick<FeelRow, 'value' | 'default' | 'minimum' |
 /** A value for reading: four significant digits at most. */
 const shown = (value: number) => String(Number(value.toPrecision(4)));
 
+/** The short words of the profiles' fields spelled out (`fov` → `field of view`). */
+const SPELLED: Readonly<Record<string, string>> = { fov: 'field of view', accel: 'acceleration', decel: 'deceleration', vel: 'speed' }; // prettier-ignore
+
+/** A field's or group's id as words a person reads: `armsFov` → `Arms field of view`, `hop` → `Hop`. */
+export function plainWords(id: string): string {
+  const words = id
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .split(/[\s_-]+/);
+  const text = words.map((word) => SPELLED[word] ?? word).join(' ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /** The panel's look, added once as `<style id="feel-panel-style">`. */
 const STYLE = `
 .feel-panel { position: fixed; right: 8px; top: 40px; bottom: 40px; width: 340px; overflow-y: auto; z-index: 30;
@@ -113,7 +126,7 @@ export function createFeelPanel(document: Document, inspector: FeelInspector) {
     label.dataset.path = row.path;
     label.title = row.description ?? row.path;
     const name = document.createElement('span');
-    name.textContent = row.path.split('.').at(-1)!;
+    name.textContent = plainWords(row.path.split('.').at(-1)!);
     const input = document.createElement('input');
     const [low, high, step] = sliderRange(row);
     Object.assign(input, { type: 'range', min: String(low), max: String(high), step: String(step), value: String(row.value) }); // prettier-ignore
@@ -135,7 +148,7 @@ export function createFeelPanel(document: Document, inspector: FeelInspector) {
     for (const [group, members] of groups) {
       const details = document.createElement('details');
       const summary = document.createElement('summary');
-      summary.textContent = group;
+      summary.textContent = plainWords(group);
       details.append(summary, ...members.map(rowOf));
       rows.append(details);
     }

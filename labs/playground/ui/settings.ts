@@ -51,6 +51,17 @@ export interface SettingRow {
   readonly shown?: (value: number) => string;
 }
 
+/**
+ * A list's choice as the player reads it: a camera mode by its label's name (`Third-person shooter`), anything else
+ * without its kind's prefix, capitalised (`look:playground-clean` → `Clean`, `movement:apex` → `Apex`).
+ */
+export function choiceName(row: Pick<SettingRow, 'kind'>, choice: string): string {
+  const mode = row.kind === 'camera' ? PLAYGROUND_CAMERAS.find((one) => one.name === choice) : undefined;
+  if (mode) return mode.label.split(':')[0];
+  const plain = choice.replace(/^look:playground-|^[a-z]+:/, '').replace(/-/g, ' ');
+  return plain.charAt(0).toUpperCase() + plain.slice(1);
+}
+
 /** A slider's value as it reads beside it: whole, or to two places. */
 export const plainNumber = (value: number): string =>
   Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
@@ -62,13 +73,13 @@ export const SETTING_ROWS: readonly SettingRow[] = [
   { id: 'input.sensitivity', label: 'Mouse sensitivity', kind: 'setting' },
   { id: 'input.invert', label: 'Invert the mouse', kind: 'setting' },
   { id: 'playground.movement', label: 'Movement (starts the scene again)', kind: 'setting' },
-  { id: 'playground.hour', label: 'Time of day (the hour: 12 noon, 22 night)', kind: 'setting', release: true, shown: (hour) => `${String(hour).padStart(2, '0')}:00` }, // prettier-ignore
-  { id: 'playground.day', label: 'Minutes a day lasts (0 holds the hour)', kind: 'setting', release: true, shown: (minutes) => (minutes ? `${minutes} min` : 'held') }, // prettier-ignore
+  { id: 'playground.hour', label: 'Time of day', kind: 'setting', release: true, shown: (hour) => `${String(hour).padStart(2, '0')}:00` }, // prettier-ignore
+  { id: 'playground.day', label: 'Day length', kind: 'setting', release: true, shown: (minutes) => (minutes ? `${minutes} min` : 'held') }, // prettier-ignore
   { id: 'playground.rain', label: 'Rain', kind: 'setting' },
   { id: 'playground.dust', label: 'Dust indoors', kind: 'setting' },
   { id: 'post.look', label: 'Look', kind: 'look' },
   { id: 'quality', label: 'Quality', kind: 'setting' },
-  { id: 'gfx.governor', label: 'Quality follows the frame rate (auto)', kind: 'setting' },
+  { id: 'gfx.governor', label: 'Adaptive quality', kind: 'setting' },
   ...PREF_BUSES.map((bus): SettingRow => ({ id: `volume:${bus}`, label: `Volume: ${bus}`, kind: 'volume', shown: (level) => `${Math.round(level * 100)}%` })), // prettier-ignore
 ];
 
@@ -196,7 +207,8 @@ export function createSettings(parent: HTMLElement, options: SettingsOptions): S
             : undefined;
     if (choices) {
       const select = make('select');
-      for (const choice of choices) select.append(make('option', { value: choice, textContent: choice.replace(/^look:playground-|^movement:/, '') })); // prettier-ignore
+      for (const choice of choices)
+        select.append(make('option', { value: choice, textContent: choiceName(row, choice) }));
       select.value = String(value);
       select.addEventListener('change', () => report(select.value));
       return select;

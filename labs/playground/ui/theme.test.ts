@@ -52,6 +52,7 @@ describe('the playground’s theme', () => {
     expect(outranking.length).toBeGreaterThan(10);
     expect(panel.filter((selector) => !outranking.includes(selector))).toEqual([
       '.feel-panel', // the custom properties, which the engine's sheet never sets
+      'body:has(> .feel-panel:not([hidden])) .pg-ui .ui-hud[data-id=mode]', // the HUD's camera chip, off its corner
       'body:has(.pg-ui > .pg-screen, .pg-ui > [data-ui=photo]:not([hidden])) > .feel-panel', // hidden under a screen
     ]);
   });

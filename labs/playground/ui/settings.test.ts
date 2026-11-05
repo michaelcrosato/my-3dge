@@ -20,7 +20,15 @@ import '../cast/player';
 import { PLAYGROUND_MAPS } from '../controls';
 import { street } from '../scenes/site';
 import '../weather';
-import { clockAfter, CONTROL_ACTIONS, createSettings, plainNumber, SETTING_ROWS, type RowSchema } from './settings';
+import {
+  choiceName,
+  clockAfter,
+  CONTROL_ACTIONS,
+  createSettings,
+  plainNumber,
+  SETTING_ROWS,
+  type RowSchema,
+} from './settings';
 
 /** The settings screen over a stand-in input whose device used last is `device`, the next code heard `heard`. */
 function screenOn(device: DeviceKind, heard: string | null) {
@@ -115,6 +123,10 @@ describe('the settings screen’s sliders', () => {
       'playground.hour',
       'playground.day',
     ]);
+  });
+
+  it('name a list’s choices as a player reads them: a camera by its mode’s name, else capitalised, no prefix', () => {
+    expect([choiceName({ kind: 'camera' }, 'shooter'), choiceName({ kind: 'look' }, 'look:playground-clean'), choiceName({ kind: 'setting' }, 'movement:apex'), choiceName({ kind: 'setting' }, 'auto')]).toEqual(['Third-person shooter', 'Clean', 'Apex', 'Auto']); // prettier-ignore
   });
 
   it('read a number whole or to two places', () => {

@@ -90,6 +90,7 @@ export function headsGeometry(
   level: Pick<CompiledLevel, 'cols' | 'rows' | 'tile' | 'legend'>,
   storey: Pick<StoreyDescriptor, 'tiles' | 'base' | 'fullTop'>,
   roof?: RoofDescriptor,
+  keep: (col: number, row: number) => boolean = () => true,
 ): BufferGeometry | null {
   const { cols, rows, tile: t } = level;
   const parts: BufferGeometry[] = [];
@@ -97,7 +98,7 @@ export function headsGeometry(
   const headed = [...new Set(storey.tiles)].map((char) => level.legend[char]).filter((glyph) => (glyph.head ?? 0) > 0);
   for (const glyph of headed.sort((a, b) => byText(a.id, b.id))) {
     const bottom = storey.base + (glyph.head ?? 0);
-    for (const [c0, r0, c1, r1] of mergeRects(cols, rows, (c, r) => storey.tiles[r * cols + c] === glyph.char)) {
+    for (const [c0, r0, c1, r1] of mergeRects(cols, rows, (c, r) => storey.tiles[r * cols + c] === glyph.char && keep(c, r))) { // prettier-ignore
       const [x0, z0, x1, z1] = [c0 * t, r0 * t, (c1 + 1) * t, (r1 + 1) * t];
       if (roof && roof.kind !== 'flat') {
         const points = wallUnder(roof, [x0, z0, x1, z1], bottom);
@@ -119,10 +120,11 @@ export function wallFacings(
   openings: readonly OpeningDescriptor[],
   foot: number,
   wallAt: (col: number, row: number) => string | undefined,
+  lined: (recipe: string) => boolean = () => false,
 ): Map<string, BufferGeometry> {
   const t = level.tile;
   const pieces = new Map<string, BufferGeometry[]>();
-  for (const { axis, tiles: rect, top } of openings) {
+  for (const { axis, tiles: rect, top, rooms } of openings) {
     const [c0, r0, c1, r1] = rect;
     const ends: [number, number][] = axis === 'x' ? [[c0 - 1, r0], [c1 + 1, r0]] : [[c0, r0 - 1], [c0, r1 + 1]]; // prettier-ignore
     const recipe = ends.map(([c, r]) => wallAt(c, r)).find((name) => name !== undefined);
@@ -130,14 +132,19 @@ export function wallFacings(
     const [lo, hi] = axis === 'x' ? [c0, c1] : [r0, r1]; // its tiles along the wall
     const faces = axis === 'x' ? [r0 * t, (r1 + 1) * t] : [c0 * t, (c1 + 1) * t]; // the wall's two faces
     const at = (a: number, y: number, b: number): Vec3 => (axis === 'x' ? [a, y, b] : [b, y, a]);
-    const writer = createWriter();
-    for (let i = lo; i <= hi; i++)
-      for (const [s, face] of [[-1, faces[0]], [1, faces[1]]] as const)
-        writeSkin(writer, at, [i * t, (i + 1) * t], [face, face + s * FACING], [top, storey.fullTop], [i === lo, i === hi]); // prettier-ignore
-    const piece = writer.build();
-    const uv = piece.getAttribute('uv');
-    for (let v = 0; v < uv.count; v++) uv.setY(v, uv.getY(v) + top - foot); // its boards run on from the wall's foot
-    pieces.set(recipe, [...(pieces.get(recipe) ?? []), piece]);
+    // a face toward a room of a lined recipe's wall takes its lining (`<recipe>:lining`), the other its sides'
+    for (const [k, s, face] of [
+      [0, -1, faces[0]],
+      [1, 1, faces[1]],
+    ] as const) {
+      const key = lined(recipe) && rooms[k] >= 0 ? `${recipe}:lining` : recipe;
+      const writer = createWriter();
+      for (let i = lo; i <= hi; i++) writeSkin(writer, at, [i * t, (i + 1) * t], [face, face + s * FACING], [top, storey.fullTop], [i === lo, i === hi]); // prettier-ignore
+      const piece = writer.build();
+      const uv = piece.getAttribute('uv');
+      for (let v = 0; v < uv.count; v++) uv.setY(v, uv.getY(v) + top - foot); // its boards run on from the wall's foot
+      pieces.set(key, [...(pieces.get(key) ?? []), piece]);
+    }
   }
   const facings = new Map<string, BufferGeometry>();
   for (const [recipe, faces] of [...pieces].sort(([a], [b]) => byText(a, b))) facings.set(recipe, joined(faces)!);

@@ -2752,3 +2752,47 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
 - **Not verified:** the owner's eye on the house in isometric and top-down, where the walls cut have changed (the
   `house-views` check).
 - Plan edit: WP 13.39.
+
+## Amendment 58 (2026-11-05, WP 13.40): the final visual review
+
+- **Found:** with WP 13.39 merged, 27 screenshots of every screen and of the house from the cameras the owner named
+  were read by two visual reviewers, each finding checked against the code before it was acted on.
+  - **The house.** Its outer walls drew their siding on every face, inside too, so from a room the wall read as the
+    outside of the house: the owner's "you can see through walls" from inside (801 faces toward a room showed siding).
+    In isometric the walls over the near facade's windows and doors, and their frames, stood at full height as loose
+    pillars where the walls round them were cut to stumps: one mesh a storey, which no cut reached. The band at the
+    upper floor's line over the porch (the slab's edge) and the porch posts were the ceiling's plain white paint, which
+    the sky's light turns lavender in shade.
+  - **The screens.** Settings' labels carried developer asides and its lists showed ids (`apex`, `look:playground-clean`);
+    the list menus flowed column by column and left holes; a panel cut at its bottom edge gave no cue that more
+    followed; Tune named its filters by id (`ao`, `ssr`), its look by id, and the HUD's camera chip sat on its corner;
+    the feel panel showed its fields' ids (`armsFov`) and its Close button wrapped; the gym's signs still touched.
+- **Decided:**
+  - A level recipe's `lining` lines each face of its block pieces that opens onto a room's floor, on a storey of a level
+    with rooms (engine/gfx/level/linings.ts): a quad 3 mm out of the face, one instanced part a face's way a storey, each
+    cell its wall piece's, so the cutaway cuts it exactly when it cuts the wall; the facings over openings take it on
+    their room side. The house's walls are papered inside.
+  - A storey's heads, frames and facings are drawn facade by facade (engine/gfx/level/facades.ts: an opening's facade is
+    the side its rooms are not on), each a range of one geometry with a cell for the facade, and the cutaway leaves out
+    the ranges of the facades it cuts by facing, as their walls: one draw group while none is cut, at most two when a
+    classic view cuts two facades side by side (the fixture house's 60 of 80 draw calls left no room for a part a
+    facade).
+  - A slab's edges are a draw group of their own (`ceilingGeometry`), the house's trimmed in wood, and its porch posts
+    are wood.
+  - Decluttering labels keep `LABEL_GAP` (6 px) apart; from one spot in the gym 8 of its 12 signs show, the nearer of
+    two that crowd.
+  - The screens: plain labels and choices, buttons apart, list menus filled row by row, a panel with more below what
+    shows fading out at its bottom edge (labs/playground/ui/scrollCue.ts), plain filter names in Tune
+    (`FILTER_LABELS`), the feel panel's fields spelled out (`plainWords`), the camera chip hidden under Tune and the feel
+    panel, a pad scrolling a panel with its Back alone.
+  - Left as they are, the reviewers' low findings: the balloon's beaded line in the sky (the ride, by design), the
+    ceiling lamps over a cut storey in a classic view, the shoulders at the edges of first person looking down, the
+    shooter's camera close in a narrow hall (ESC-0002's bound).
+- **Evidence:** engine/gfx/level/linings.test.ts, facades.test.ts and slabs.test.ts;
+  labs/playground/levels/house-linings.test.ts (801 faces met siding before, none after; each lining cut with its wall)
+  and house-facades.test.ts (each of isometric's turns); engine/ui/labels.test.ts; labs/playground/ui/scrollCue.test.ts,
+  settings.test.ts and walk.test.ts; engine/dev/feel/panel.test.ts. A re-review of the screens and the house confirmed
+  the fixes; the playground's thumbnails were re-recorded where the wood replaced the paint (5ec8b05: seven, every
+  changed cell on the posts, the slab edge or beside them).
+- **Not verified:** the owner's eye on the house in every camera (`house-views`).
+- Plan edit: WP 13.40.

@@ -56,7 +56,7 @@ export function mountFeelPanel(
   const panel = createFeelPanel(document, inspector as FeelInspector);
   const make = (tag: string, text: string) => Object.assign(document.createElement(tag), { textContent: text });
   panel.root.prepend(make('h2', FEEL_HEADING.title), make('p', FEEL_HEADING.text)); // the panel redraws only its rows
-  const close = Object.assign(make('button', 'Close (F)'), { type: 'button' });
+  const close = Object.assign(make('button', 'Close'), { type: 'button', title: 'F shows and hides it' });
   close.dataset.feel = 'close';
   close.addEventListener('click', () => panel.hide());
   panel.root.querySelector('[data-feel=reset]')?.after(close);

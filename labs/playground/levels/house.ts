@@ -216,16 +216,16 @@ defineLevel('level:house', {
   doors: 'prop:door', // its scene hangs one in each door it fits (scenes/site.ts): their frames meet them
   recipes: {
     floor: { ...one('surface', 'material:concrete'), castShadow: false },
-    wall: block('material:siding', 'material:paint'),
+    wall: { ...block('material:siding', 'material:paint'), lining: 'material:wallpaper' }, // its rooms' sides papered
     partition: block('material:wallpaper', 'material:paint', 'blocking'), // an inner wall faces no way out
     lowWall: block('material:wood', 'material:tiles'),
     chimney: block('material:brick', 'material:stone'),
-    pillar: one('pillar', 'material:paint', 'material:paint'),
+    pillar: one('pillar', 'material:wood', 'material:wood'), // the porch's posts, as its trim
     heads: one('heads', 'material:paint'),
     frames: one('frames', 'material:wood'),
     railing: one('railing', 'material:wood'),
     flight: one('flight', 'material:paint', 'material:wood'),
-    ceiling: one('ceiling', 'material:paint'),
+    ceiling: one('ceiling', 'material:paint', 'material:wood'), // the slab's edges trimmed as the frames
     roof: one('roof', 'material:shingles', 'material:wood'),
   },
 });

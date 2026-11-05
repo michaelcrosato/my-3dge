@@ -1503,4 +1503,4 @@ Raised by the menu (engine/ui/menu.ts) for an item that is neither a string nor 
 
 - Message: `{what} is {got}, not a point in the world`
 - Fix: pass [x, y, z] in metres, a Vector3 or { x, y, z }, or a function returning one
-- Registered in: [`engine/ui/labels.ts` line 41](../engine/ui/labels.ts)
+- Registered in: [`engine/ui/labels.ts` line 44](../engine/ui/labels.ts)

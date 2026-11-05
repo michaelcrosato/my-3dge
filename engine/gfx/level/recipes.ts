@@ -55,7 +55,8 @@
  * - `flight` (WP 13.14): each ramp under the pieces drawn as a flight of steps rising about 0.18 m each, as a house's
  *   stairs do, from its storey's floor to the next one's (engine/gfx/level/flights.ts). [risers and sides, treads]
  * - `ceiling`, `heads`, `frames`, `roof`: a storey's own parts (engine/gfx/level/{slabs,openings,roofs}.ts), drawn
- *   from its descriptors rather than a glyph's pieces. [one slot; a roof's: top, underside and edges]
+ *   from its descriptors rather than a glyph's pieces. [one slot; a ceiling's: underside, edges; a roof's: top,
+ *   underside and edges]
  */
 export type LevelShape =
   | 'surface'
@@ -98,6 +99,11 @@ export interface LevelRecipe {
   receiveShadow: boolean;
   /** How the cutaway cuts its pieces (`block` and `pillar` only); never, without. */
   cut?: LevelCut;
+  /**
+   * A `block`'s faces toward a room, on a storey of a level with rooms: the material they are lined with (an outer
+   * wall's siding outside, its wallpaper in the room: engine/gfx/level/linings.ts); none, without.
+   */
+  lining?: string;
 }
 
 /** The wall's cut twin (m): the prototype's 7 units. */

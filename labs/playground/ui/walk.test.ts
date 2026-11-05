@@ -3,12 +3,13 @@
  * pad, the first press focuses the first control, then up and down walk round both ends past the disabled and the
  * hidden; the keyboard leaves the walking to Tab; accept presses the focused button, box or fold, never a slider or a
  * list; left and right step the focused slider by its step and the list by a choice it may take, firing what a hand's
- * change fires, and nothing at their ends.
+ * change fires, and nothing at their ends; a sheet taller than shows with its Back alone scrolls on a pad's up and
+ * down.
  * @see labs/playground/ui/walk.ts
  */
 import { describe, expect, it } from 'vitest';
 import type { DeviceKind } from '../../../engine/input/codes';
-import { walkPanel, type WalkInput } from './walk';
+import { SCROLL_STEP, walkPanel, type WalkInput } from './walk';
 
 /** A stand-in control: what the walk reads and calls, and what it did (`events`, `clicks`). */
 interface Control {
@@ -49,6 +50,22 @@ function panelOf(specs: Partial<Control>[]) {
   };
   const focused = () => controls.indexOf(doc.activeElement as (typeof controls)[number]);
   return { controls, press, focused };
+}
+
+/** A sheet with `controls` to walk to, its text `scroll` px taller than the 400 px that show, on a pad. */
+function sheetOf(controls: number, scroll: number) {
+  const doc = { activeElement: null as unknown };
+  const back = { tagName: 'BUTTON', type: '', disabled: false, getClientRects: () => [{}], focus: () => void (doc.activeElement = back) }; // prettier-ignore
+  const panel = {
+    ownerDocument: doc,
+    scrollTop: 0,
+    clientHeight: 400,
+    scrollHeight: 400 + scroll,
+    querySelectorAll: (selector: string) => (selector === '.ui-panel' ? [] : Array(controls).fill(back)),
+    closest: () => null,
+  };
+  const press = (...actions: string[]) => walkPanel(panel as unknown as HTMLElement, { lastDevice: 'gamepad', pressed: (action) => actions.includes(action) }); // prettier-ignore
+  return { panel, press, focused: () => doc.activeElement === back };
 }
 
 describe('working a panel with the menus’ keys', () => {
@@ -101,5 +118,18 @@ describe('working a panel with the menus’ keys', () => {
     press('gamepad', 'uiLeft');
     press('gamepad', 'uiLeft');
     expect([list.selectedIndex, list.events]).toEqual([0, ['change', 'change']]);
+  });
+});
+
+describe('a sheet taller than shows, with its Back alone', () => {
+  it('scrolls on a pad’s up and down, focusing its Back; with more to walk to, or nothing to scroll, it walks', () => {
+    const sheet = sheetOf(1, 1000);
+    sheet.press('uiDown');
+    expect([sheet.panel.scrollTop, sheet.focused()]).toEqual([400 * SCROLL_STEP, true]);
+    sheet.press('uiUp');
+    expect(sheet.panel.scrollTop).toBe(0);
+    const short = sheetOf(1, 0); // all of it shows: the first press focuses its Back, as on any panel
+    short.press('uiDown');
+    expect([short.panel.scrollTop, short.focused()]).toEqual([0, true]);
   });
 });

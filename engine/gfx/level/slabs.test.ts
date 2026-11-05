@@ -1,7 +1,8 @@
 /**
- * @file Unit tests for engine/gfx/level/slabs.ts (T1; WP 13.14, WP 13.36): a storey's slab draws its underside under
- * its floored tiles (not the lowest storey's) and an edge wherever a floored tile meets void or the map's edge, each
- * facing out, standing back into its tile as far as `back` says (out of the plane of a wall under it).
+ * @file Unit tests for engine/gfx/level/slabs.ts (T1; WP 13.14, WP 13.36, WP 13.40): a storey's slab draws its
+ * underside under its floored tiles (not the lowest storey's) and an edge wherever a floored tile meets void or the
+ * map's edge, each facing out, standing back into its tile as far as `back` says (out of the plane of a wall under it),
+ * in two draw groups, the underside's then the edges'.
  * @see engine/gfx/level/slabs.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -39,11 +40,15 @@ describe('ceilingGeometry', () => {
     const position = geometry.getAttribute('position');
     const ys = new Set(Array.from({ length: position.count }, (_, i) => Math.round(position.getY(i) * 1000) / 1000));
     expect([...ys].sort((a, b) => a - b)).toEqual([2.7, 3]);
+    // two draw groups, the underside's then the edges', so a recipe can trim its edges in a material of their own
+    expect(geometry.groups.map(({ count, materialIndex }) => [count / 3, materialIndex])).toEqual([[down, 0], [out, 1]]); // prettier-ignore
   });
 
   it("leaves the lowest storey's underside out, drawing only its slab's rim, and nothing for a storey with no floor", () => {
-    const [down, out] = faces(ceilingGeometry(LEVEL, storey(0, 0))!);
+    const rim = ceilingGeometry(LEVEL, storey(0, 0))!;
+    const [down, out] = faces(rim);
     expect([down, out]).toEqual([0, 2 * 14]);
+    expect(rim.groups).toEqual([{ start: 0, count: 3 * out, materialIndex: 1 }]); // the edges' slot alone
     expect(ceilingGeometry(LEVEL, { index: 0, base: 0, slab: 0.3, floored: new Array(12).fill(false) })).toBeNull();
   });
 
