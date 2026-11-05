@@ -225,7 +225,7 @@ defineLevel('level:house', {
     frames: one('frames', 'material:wood'),
     railing: one('railing', 'material:wood'),
     flight: one('flight', 'material:paint', 'material:wood'),
-    ceiling: one('ceiling', 'material:paint'),
+    ceiling: one('ceiling', 'material:paint', 'material:wood'), // the slab's edges trimmed as the frames
     roof: one('roof', 'material:shingles', 'material:wood'),
   },
 });
