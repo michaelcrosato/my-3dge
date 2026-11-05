@@ -18,9 +18,8 @@
  *   tools.ts). Each item says what it does under the menu as the cursor rests on it (frame.ts `ABOUT`), but in a
  *   window 460 px tall or less.
  * While one is open the run is paused (`__engine.pause()`) and the front end is modal (`modal()`, which the page gives
- * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one,
- * and plays on the start menu; each screen's footer names its keys on the device used last (frame.ts `screenKeys`),
- * and a pad works the panels as it works the menus (walk.ts: settings, the controls, Tune).
+ * `createEngine`), so no key it reads reaches the run; the last closing resumes it. Escape (`uiCancel`) goes back one
+ * (on the start menu it plays); the footers name the device's keys (frame.ts), and a pad works the panels (walk.ts).
  *
  * Picks that change play are the run's recorded operations, so a replay of the run holds them: a Go to place is the
  * block's dev action `place` (`actions.run`) on a scene of the block, else the block's page opened with the pick
