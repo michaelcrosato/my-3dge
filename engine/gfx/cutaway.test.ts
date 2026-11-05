@@ -8,7 +8,7 @@
  * moving between a part and its twin, the draw calls, `clear`, the warm-up and `dispose`. The fade (WP 13.8): the
  * pieces a line to the hero's head or chest crosses, and the objects, leave the picture with `fade` and come back
  * without. `either` (WP 13.18): a piece facing the camera, or between it and the focus. With a storey (WP 13.38), the
- * facing rule cuts only that storey's pieces. The GPU half (0 pipelines while the camera turns, the draw-call budget)
+ * facing rule cuts only that storey's pieces. A group (WP 13.41) is cut whole. The GPU half (0 pipelines while the camera turns, the draw-call budget)
  * is tests/e2e/hall.spec.ts.
  * @see engine/gfx/cutaway.ts
  */
@@ -159,6 +159,15 @@ describe('planCutaway on the hall', () => {
     const plan = (storey?: number) => planCutaway(targets, pose, [0.5, 0, 5], storey).map(([cut]) => cut);
     expect(plan()).toEqual([true, true, true, true, true]); // no storey given: every storey's, as before
     expect(plan(1)).toEqual([false, true, false, true, true]); // the blocking piece on storey 2 still cut
+  });
+
+  it('cuts a group whole when any of its cells is cut, leaving no piece of it alone (WP 13.41)', () => {
+    // A block of three pieces facing nowhere, the middle one on the line from a camera south of it to the focus north.
+    const cells = [-1, 0, 1].map((x) => ({ centre: [x, 0, 4] as [number, number, number], size: [1, 1] as [number, number], out: [0, 0] as [number, number] })); // prettier-ignore
+    const pose = makePose({ position: [0, 1, 20], yaw: Math.PI, pitch: 0 }); // south of it, looking north
+    const plan = (group?: number) => planCutaway([{ when: 'either', bottom: 0, top: 3, cells: cells.map((cell) => ({ ...cell, group })) }], pose, [0, 0, 0])[0]; // prettier-ignore
+    expect(plan()).toEqual([false, true, false]); // alone, only the piece in the way
+    expect(plan(7)).toEqual([true, true, true]); // a group: whole
   });
 
   it('tests a segment against a box by slabs, as the prototype did', () => {

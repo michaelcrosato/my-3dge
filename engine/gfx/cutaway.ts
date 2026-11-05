@@ -40,7 +40,7 @@
  */
 import { Box3, InstancedMesh, Vector3, type Mesh, type Object3D } from 'three/webgpu';
 import { poseForward, poseTarget, type CameraPose, type Vec3 } from './cameras/pose';
-import type { LevelCell } from './level/cells';
+import { settleCuts, type LevelCell } from './level/cells';
 import { meshDrawCalls, type LevelMeshes, type LevelMeshPart } from './level/meshes';
 import type { CutWhen } from './level/recipes';
 import { facadeDraws } from './level/facades';
@@ -75,7 +75,7 @@ function thin(mesh: Mesh): boolean {
 /** What the cutaway decides over: the pieces of one part, how they cut, and their heights (m). */
 export interface CutTarget {
   when: CutWhen;
-  cells: readonly Pick<LevelCell, 'centre' | 'size' | 'out'>[];
+  cells: readonly Pick<LevelCell, 'centre' | 'size' | 'out' | 'group'>[];
   bottom: number;
   top: number;
   /** A level written as storeys: the storey it stands on (its part's `storey`); none on a level of one storey. */
@@ -132,6 +132,9 @@ export function segmentHitsBox(a: Vec3, b: Vec3, min: Vec3, max: Vec3): boolean 
  *   heights scaled by the pose's `boost` (engine/gfx/cameras/boost.ts), so it is what the frame shows.
  * - `'either'` (a house's walls): when either cuts it.
  *
+ * Then engine/gfx/level/cells.ts's `settleCuts` (WP 13.41): a group is cut whole, a piece alone among cut ones goes
+ * with them, and a cell two targets share (a wall's and its lining's) is cut in both or neither.
+ *
  * With `storey`, the facing rule cuts only that storey's pieces (and those of no storey): a site's building, with the
  * player indoors and a perspective camera outside it (engine/gfx/stageSite.ts), keeps the walls of the storeys above
  * and below his, which hide nothing of him. The blocking rule still cuts a piece of any storey on a line of sight.
@@ -160,8 +163,8 @@ export function planCutaway(
     const length = Math.hypot(dx, dz);
     return length > 1e-9 && (cell.out[0] * dx + cell.out[1] * dz) / length > CUT_FACING;
   };
-  return targets.map(({ when, cells, bottom, top, storey: on }) =>
-    cells.map((cell) => {
+  const planned = targets.map(({ when, cells, bottom, top, storey: on }) => {
+    const cut = cells.map((cell) => {
       const mine = storey === undefined || on === undefined || on === storey; // a piece the facing rule may cut
       if (when !== 'blocking' && mine && facing(cell)) return true;
       if (when === 'facing') return false;
@@ -170,7 +173,12 @@ export function planCutaway(
       const min: Vec3 = [cx - hx, bottom * k, cz - hz];
       const max: Vec3 = [cx + hx, top * k, cz + hz];
       return sights.some(([aim, eye]) => segmentHitsBox(aim, eye, min, max));
-    }),
+    });
+    return cut;
+  });
+  return settleCuts(
+    targets.map(({ cells }) => cells),
+    planned,
   );
 }
 
