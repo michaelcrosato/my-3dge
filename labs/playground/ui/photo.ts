@@ -6,9 +6,9 @@
  * hidden; the looks switched with P, as ever. Leaving puts the camera back as it was.
  *
  * `createPhoto(canvas, input, camera)` makes it closed. `enter()` switches to the free camera and shows the hint (a
- * `[data-ui=photo]` element in `parent` naming the keys of the map in use); `leave()` switches back and hides it; each
- * drawn frame `cameraInput()` is what the front end hands the engine (`createEngine({ cameraInput })`): the keys' move
- * and the drag's look, nothing while closed.
+ * `[data-ui=photo]` element in `parent` naming the keys of the map in use on the device used last, the one that
+ * leaves too); `leave()` switches back and hides it; each drawn frame `cameraInput()` is what the front end hands the
+ * engine (`createEngine({ cameraInput })`): the keys' move and the drag's look, nothing while closed.
  *
  * Invariants: presentation only: a camera is view state, so photo mode never reaches the run or the hash, and the run
  * stays paused under it (the front end's).
@@ -76,7 +76,7 @@ export function createPhoto(
       member.set('cam3=fly');
       const key = (action: string) => input.prompt(action);
       const fly = ['forward', 'left', 'back', 'right'].map(key).join('');
-      hint.textContent = `Photo mode · ${fly}: fly · ${key('jump')} ${key('crouch')}: up, down · ${key('sprint')}: fast · drag: look · wheel: zoom · P: look · Esc: leave`; // prettier-ignore
+      hint.textContent = `Photo mode · ${fly}: fly · ${key('jump')} ${key('crouch')}: up, down · ${key('sprint')}: fast · drag: look · wheel: zoom · P: look · ${key('uiCancel')}: leave`; // prettier-ignore
       hint.hidden = false;
     },
     leave() {
