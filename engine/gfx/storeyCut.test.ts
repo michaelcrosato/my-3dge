@@ -26,6 +26,14 @@ describe('planStoreys', () => {
     expect(planStoreys([{ roof: false }], 0, true)).toEqual([true]); // a level of one storey
   });
 
+  it('shows a post holding up a storey only while that storey shows: a porch’s posts go with its roof (WP 13.42)', () => {
+    const posts = [
+      { storey: 1, roof: false, holds: 2 },
+      { storey: 1, roof: false },
+    ];
+    expect([planStoreys(posts, 1, true), planStoreys(posts, 2, true), planStoreys(posts, -1, true)]).toEqual([[false, true], [true, true], [true, true]]); // prettier-ignore
+  });
+
   it('takes the heads of the player’s own storey off under a low ceiling, not those below', () => {
     const heads = [0, 1].map((storey) => ({ storey, roof: false, heads: true }));
     expect([planStoreys(heads, 1, true, true), planStoreys(heads, 1, true)]).toEqual([

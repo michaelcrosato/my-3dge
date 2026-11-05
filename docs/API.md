@@ -5883,7 +5883,7 @@ For the agents who maintain the engine.
 - `cutPlace` (function): Where feet at (x, y, z) of `level`'s own frame stand for the cut: the storey (−1 outside or on a roof), indoors, and `low`, under a low ceiling of that storey.
 - `planStoreys` (function): Which of `pieces` show with the player on `storey` (−1 outside or on a roof), `indoors` or not, under a `low` ceiling or not (see the file comment).
 - `StoreyCut` (interface): A level's cutaway by storey (see the file comment).
-- `StoreyPiece` (interface): What the plan reads of a mesh: its storey (none in a level of one storey), whether it is a roof, or its heads.
+- `StoreyPiece` (interface): What the plan reads of a mesh: its storey (none in a level of one storey), whether it is a roof, or its heads, and the storey it holds up (a post up to the porch's roof, engine/gfx/level/meshes.ts `holds`): shown only with it.
 
 ### [`engine/gfx/terrain.ts`](../engine/gfx/terrain.ts)
 

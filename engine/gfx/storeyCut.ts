@@ -24,11 +24,15 @@ import { roomAt, storeyBelow, tileAt } from '../world/level/heights';
 import type { CompiledLevel } from '../world/level/types';
 import type { LevelMeshes } from './level/meshes';
 
-/** What the plan reads of a mesh: its storey (none in a level of one storey), whether it is a roof, or its heads. */
+/**
+ * What the plan reads of a mesh: its storey (none in a level of one storey), whether it is a roof, or its heads, and
+ * the storey it holds up (a post up to the porch's roof, engine/gfx/level/meshes.ts `holds`): shown only with it.
+ */
 export interface StoreyPiece {
   readonly storey?: number;
   readonly roof: boolean;
   readonly heads?: boolean;
+  readonly holds?: number;
 }
 
 /** How far over the feet a floor still counts as theirs (m): a body's feet sink a hair into it, drawn between steps. */
@@ -73,7 +77,8 @@ export function aboveStorey(level: CompiledLevel, storey: number, x: number, y: 
 export function planStoreys(pieces: readonly StoreyPiece[], storey: number, indoors: boolean, low = false): boolean[] {
   return pieces.map((piece) => {
     const own = piece.storey ?? 0;
-    return storey < 0 || (own <= storey && !(indoors && piece.roof) && !(low && piece.heads && own === storey));
+    const held = piece.holds === undefined || piece.holds <= storey; // what it holds up shows: WP 13.42's porch posts
+    return storey < 0 || (own <= storey && held && !(indoors && piece.roof) && !(low && piece.heads && own === storey));
   });
 }
 
@@ -95,7 +100,7 @@ export function createStoreyCut(meshes: LevelMeshes): StoreyCut {
     const key = `${storey < 0 ? -1 : storey}|${storey >= 0 && indoors}|${storey >= 0 && low}|${children.length}`;
     if (key === last) return false;
     last = key;
-    const pieces = children.map((child) => ({ storey: child.userData.storey as number | undefined, roof: roofs.has(child), heads: heads.has(child) })); // prettier-ignore
+    const pieces = children.map((child) => ({ storey: child.userData.storey as number | undefined, roof: roofs.has(child), heads: heads.has(child), holds: child.userData.holds as number | undefined })); // prettier-ignore
     let changed = false;
     planStoreys(pieces, storey, indoors, low).forEach((shown, i) => {
       if (children[i].visible !== shown) [children[i].visible, changed] = [shown, true];

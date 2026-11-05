@@ -212,6 +212,9 @@ export function createLevelMeshes(level: CompiledLevel, options: LevelMeshesOpti
       const recipe = recipeOf(descriptor.recipe);
       const drawn = storey === undefined ? descriptor : seamed(level, k, withoutRooms(level, k, descriptor, recipe, options.rooms, roomPieces), recipe); // prettier-ignore
       const part = place(buildPart(view, drawn, recipe, materialsOf(recipe), single, roof), descriptor.recipe, recipe, descriptor.glyphs, [descriptor.bottom, descriptor.top], storey); // prettier-ignore
+      const above = level.storeys?.[k + 1];
+      if (recipe.shape === 'pillar' && above && descriptor.top >= above.base - STOREY_SEAM)
+        part.mesh.userData.holds = k + 1; // a post up to the storey above holds it: it goes with it (storeyCut.ts) // prettier-ignore
       const whole = recipe.shape === 'flight' || (!!recipe.cut && part.cells.length === 0); // one mesh: a flight, blocks under a roof
       parts.push(whole && storey !== undefined ? drawnWhole(part) : part);
     }
