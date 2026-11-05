@@ -2,7 +2,8 @@
  * @file The house's facades (engine/gfx/level/facades.ts, WP 13.40; the final visual review: in isometric, where the
  * walls facing the camera are cut to stumps, the walls over their windows and doors and their frames stood at full
  * height as loose pillars): every opening in its outer walls stands on a facade, a window over the kitchen's counter
- * too (WP 13.41: it stood on none, the counter beside it in no room); in each of isometric's four turns, the heads, frames and facings of a facade are left out
+ * too (WP 13.41: it stood on none, the counter beside it in no room); a storey the storey cut takes off stays hidden as
+ * its facades are cut and drawn again (WP 13.41: its frames came back over the cut); in each of isometric's four turns, the heads, frames and facings of a facade are left out
  * exactly when its walls are cut by facing; and while nothing is cut each such part draws in one range.
  * @see engine/gfx/level/facades.ts
  */
@@ -11,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { registry } from '../../../engine/core/registry';
 import { viewPose, viewState } from '../../../engine/gfx/cameras/presets';
 import { createCutaway, planCutaway } from '../../../engine/gfx/cutaway';
+import { createStoreyCut } from '../../../engine/gfx/storeyCut';
 import { INSIDE, openingFacade, openingRooms } from '../../../engine/gfx/level/facades';
 import { LINING_FACES } from '../../../engine/gfx/level/linings';
 import { createLevelMeshes } from '../../../engine/gfx/level/meshes';
@@ -70,5 +72,21 @@ describe('the house’s facades', () => {
     }
     cutaway.clear();
     for (const part of facaded) expect(part.mesh.geometry.groups, part.name).toHaveLength(1);
+  });
+
+  it('leave the storeys the storey cut takes off hidden as their facades are cut and drawn again (WP 13.41)', () => {
+    const { level, meshes } = house();
+    const [cutaway, storeys] = [createCutaway(meshes), createStoreyCut(meshes)];
+    const target: [number, number, number] = [(level.cols * level.tile) / 2, 0, (level.rows * level.tile) / 2];
+    storeys.set(1, true); // the player on the ground floor, indoors: the upper floor and the attic off
+    const above = meshes.parts.filter((part) => (part.storey ?? 0) > 1);
+    const shown: string[] = [];
+    for (const turn of [0, 90, 180, 270, 0]) {
+      cutaway.update(viewPose({ ...viewState({ view: 'iso' }), turn, target }), target);
+      storeys.set(1, true); // as the stage does each frame: its plan unchanged, it writes nothing
+      shown.push(...above.filter((part) => part.mesh.visible).map((part) => `${part.name}, turn ${turn}`));
+    }
+    expect(above.some((part) => part.facades)).toBe(true);
+    expect(shown).toEqual([]);
   });
 });

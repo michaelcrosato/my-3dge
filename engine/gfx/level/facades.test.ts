@@ -2,7 +2,7 @@
  * @file Unit tests for engine/gfx/level/facades.ts (T1; WP 13.40): an opening faces the side its rooms are not on, or
  * no way between two rooms, a room found past a counter beside it (WP 13.41); a storey's openings draw facade by facade into one geometry, inside first, each facade a
  * range of its index with a cell facing its way; and the draws left standing are the ranges of the facades not cut,
- * run together where they meet, a part with none left hidden.
+ * run together where they meet, a part with none left drawing no group, its `visible` untouched.
  * @see engine/gfx/level/facades.ts
  */
 import { Mesh } from 'three/webgpu';
@@ -60,7 +60,7 @@ describe('facadeParts', () => {
     ]);
   });
 
-  it('leaves out the ranges of the facades cut, run together where they meet, and hides a part with none left', () => {
+  it('leaves out the ranges of the facades cut, run together where they meet, a part with none left drawing no group', () => {
     const mesh = new Mesh(drawn.geometry);
     const draws = facadeDraws([{ name: 'heads', mesh, facades: drawn.facades, bottom: 0, top: 3 }]);
     draws.show([[false, true, false]]); // the west facade cut
@@ -72,6 +72,6 @@ describe('facadeParts', () => {
     draws.show([[false, false, true]]); // the north one: inside and west run together
     expect(mesh.geometry.groups.map(({ start, count }) => [start, count])).toEqual([[0, 72]]);
     draws.show([[true, true, true]]);
-    expect(mesh.visible).toBe(false);
+    expect([mesh.geometry.groups.length, mesh.visible]).toEqual([0, true]); // its `visible` is the storey cut's
   });
 });

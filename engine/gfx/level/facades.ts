@@ -112,8 +112,9 @@ export function facadeParts(
 /**
  * The parts of `parts` drawn facade by facade, drawn by the facades left standing: `targets`, a facing target a part
  * (its facades' cells) for engine/gfx/cutaway.ts's `planCutaway`; `show(cuts)` draws each part's ranges but those of
- * the facades `cuts` marks, run together where they meet, and hides a part with none left; `cut()` names the facades
- * left out, by part.
+ * the facades `cuts` marks, run together where they meet, a part with none left drawing no group (never its
+ * `visible`, which is engine/gfx/storeyCut.ts's: WP 13.41, the upper storey's frames came back over a cut storey);
+ * `cut()` names the facades left out, by part.
  */
 export function facadeDraws(
   parts: readonly Pick<LevelMeshPart, 'name' | 'mesh' | 'facades' | 'bottom' | 'top' | 'storey'>[],
@@ -134,9 +135,8 @@ export function facadeDraws(
           if (last && last[0] + last[1] === start) last[1] += count;
           else ranges.push([start, count]);
         });
-        part.mesh.geometry.clearGroups();
+        part.mesh.geometry.clearGroups(); // none left: no group, so it draws nothing (its `visible` is the storey cut's)
         for (const [start, count] of ranges) part.mesh.geometry.addGroup(start, count, 0);
-        part.mesh.visible = ranges.length > 0;
       });
     },
     cut: (): Record<string, number[]> =>
