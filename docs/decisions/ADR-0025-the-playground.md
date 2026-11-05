@@ -2928,3 +2928,11 @@ The owner asked for a tidy-up of what an agent can close alone. docs/PROGRESS.md
   only when above and above only when hidden, stay in force.
 - Plan edit: WP 13.43.
 
+## Amendment 62 (2026-11-05): the owner's eye on the house
+
+- **The owner's answer (2026-11-05, in the session's chat):** "The house doesn't have any gaps any more." It answers
+  the walls seen through in their report of 2026-11-03, which amendments 51 to 61 fixed and left for their eye
+  (`house-views`).
+- **Decided:** the owner check `house-views` keeps the rest of that report, the ground and the sky as the camera
+  moves, which the answer did not name; its words now ask only that, and say the walls were judged.
+- Plan edit: none.

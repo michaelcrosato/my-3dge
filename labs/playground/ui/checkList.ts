@@ -313,7 +313,7 @@ export const OWNER_CHECKS: readonly OwnerCheck[] = [
     id: 'house-views',
     kind: 'try',
     title: 'The house from every camera',
-    what: 'Walk through the house and round it in each camera ({camera}), turning on the spot and backing into walls. Can you ever see through a wall you should not, or does the ground or the sky look wrong as you move?', // prettier-ignore
+    what: 'Walk through the house and round it in each camera ({camera}), turning on the spot and backing into walls. Does the ground or the sky ever look wrong as you move (a flicker, a stripe, a seam)? The walls you judged on 2026-11-05: no gaps left.', // prettier-ignore
     from: "The owner's report of 2026-11-03: walls seen through and the ground looking wrong round the house",
     go: { query: { 'playground.spawn': 'area:house' } },
   },
