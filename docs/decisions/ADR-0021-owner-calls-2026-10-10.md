@@ -61,3 +61,15 @@ The owner's call of 2026-11-02 ends the Vercel deployment (decision 1, amendment
 the engine is distributed and tested as `playground.html`, the playground as one self-contained page that the quick
 gate keeps current (ADR-0023 amendment 5). The touch controls stay built and untested, as decision 1 has them.
 Amendment 3's landing page stays for the dev server and `npx vite preview`; what the owner opens is the file.
+
+## Amendment 5 (2026-11-05, WP-13.44): the right thumb turns the view
+
+The owner, playing `playground.html` on a phone (a Galaxy S25, in Chrome), found no way to turn: the first finger on
+the game was the stick and any other could only tap. They asked for the left thumb to move the feet and the right one
+to turn the torso and head. Now the first finger on the game's left half is the stick, and any other finger on the
+game turns the view as the mouse does under pointer lock: `TOUCH_LOOK` (2) mouse counts a CSS px, added to the mouse's
+before the view settings `input.*` scale them (engine/input/devices/touch.ts `takeLook`, engine/input/input.ts), so
+a drag across half a phone held sideways turns the view about 90° at the default sensitivity. A short still touch is
+still a tap on the game. The controls sheet names both thumbs on touch, and the touch check asks about the drag.
+Reproduced once under emulated touch, as decision 1 allows, with no standing suite: a 200 px drag turned the shooter's
+view 44° and a 40 px rise raised it 8.8°, and the stick walked the player 4.9 m without turning it.

@@ -6344,6 +6344,7 @@ For the agents who maintain the engine.
 - `StickView` (interface): Where the stick is drawn, in client CSS px: its centre and its knob.
 - `TAP_SLOP` (const): A tap on the game moves less than this (CSS px).
 - `TAP_TIME` (const): A tap on the game is shorter than this (s), or seen by a single frame.
+- `TOUCH_LOOK` (const): Mouse counts a CSS px of a look drag: 0.22° a px at Apex's default sensitivity, a half-turn across a phone.
 - `TOUCH_SETTINGS` (const): The touch settings: view settings, never in the hash.
 - `TouchDevice` (interface): The touch device.
 - `TouchOptions` (interface): How the device behaves beyond its targets.
