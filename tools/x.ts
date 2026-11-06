@@ -6,7 +6,7 @@
  *
  * In a game made from the engine (tools/game/new-game.mjs: its root holds engine-lock.json, `isGame`), the engine
  * repository's own commands (`ENGINE_ONLY_COMMANDS`: its gate, pins, generated docs, escalation records, one-file
- * playground, port references and source checkouts) are not commands: `x help` leaves them out, `x check` runs none of their plugins,
+ * playground, port references, source checkouts and version) are not commands: `x help` leaves them out, `x check` runs none of their plugins,
  * and naming one says what a game runs instead (ADR-0024).
  *
  * Invariants: exit 0 when the command passes, 1 when it fails (a crash included, the import of its module too), 2 on
@@ -99,7 +99,7 @@ export const MAX_LINES = 20;
 export const CHILD_TIMEOUT_MS = 120_000;
 
 /** The engine repository's own commands, which a game made from it does not have (see the file comment). */
-export const ENGINE_ONLY_COMMANDS: readonly string[] = ['ci', 'deps', 'docs', 'esc', 'html', 'port', 'src'];
+export const ENGINE_ONLY_COMMANDS: readonly string[] = ['ci', 'deps', 'docs', 'esc', 'html', 'port', 'src', 'version'];
 
 /** What naming one of the engine's own commands in a game says: what a game runs instead. */
 export function engineOnly(name: string): string {

@@ -139,10 +139,11 @@ Errors name their fix, and docs/ERRORS.md in the engine's repository lists every
 
 ## Versions
 
-The head's URLs pin three.js and Rapier, and take the engine at `@main`, its latest: jsDelivr serves a new commit
-within 12 hours, and a browser may keep the copy it loaded for up to 7 days (jsDelivr's cache header). To freeze a
-game on one engine, replace `main` with a commit of https://github.com/michaelcrosato/my-3dge in its two engine URLs
-(`my3dge.js`, `my3dge.css`).
+The head's URLs pin three.js, Rapier and the engine. The engine's name a release, `@v` and its version, the one this
+file describes: each version is a tag of https://github.com/michaelcrosato/my-3dge, which jsDelivr serves as it was,
+so a game keeps the engine it was made with. To move a game to a newer engine, put a newer version in its two engine
+URLs (`my3dge.js`, `my3dge.css`); the tags list the releases. Below 1.0 a new minor version may change the API: read
+this file at that tag first (its URL with the tag in place of `main`).
 
 More: the engine's repository has the full guide (docs/GAME-GUIDE.md), every export (docs/API.md) and the source. An
 agent that can run commands and wants the engine's checks too can start from the repository's README instead.
@@ -164,11 +165,11 @@ License: MIT; `my3dge.js` carries @stdlib functions (Apache-2.0): see LICENSE be
       folder. The block below loads the engine, three.js and Rapier from jsDelivr; keep it as it is.
     -->
     <!-- lean:head:start -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/michaelcrosato/my-3dge@main/lean/my3dge.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/michaelcrosato/my-3dge@v0.1.0/lean/my3dge.css" />
     <script type="importmap">
       {
         "imports": {
-          "my3dge": "https://cdn.jsdelivr.net/gh/michaelcrosato/my-3dge@main/lean/my3dge.js",
+          "my3dge": "https://cdn.jsdelivr.net/gh/michaelcrosato/my-3dge@v0.1.0/lean/my3dge.js",
           "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
           "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js",
           "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.tsl.js",
@@ -850,4 +851,7 @@ types `EngineStats`.
 
 **The rig a view steps (WP 13.8)**: blends on live switches, the view effects, the view settings cam.*.
 `createCameraRig`, `rigOptions`, `CAMERA_SETTINGS`, `blendCameras`, `BLEND_TIME`, `createCameraEffects`, `applyEffects`, `cameraPlayer`, `apexFov`, `EFFECTS`; types `CameraRig`, `RigOptions`, `RigInput`, `CameraPlayer`, `EffectWeights`, `EffectsFrame`.
+
+The engine's version (WP 13.45, ADR-0026), which every merge bumps.
+`ENGINE_VERSION`.
 <!-- lean:api:end -->

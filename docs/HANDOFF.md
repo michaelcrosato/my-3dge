@@ -53,7 +53,8 @@ take a file: the ZIP of main (about 13 MB), https://github.com/michaelcrosato/my
 **Many games at once.**
 
 - Lean games need nothing but a browser that reaches jsDelivr: a chat can write one, and you open it. They take the
-  engine at `@main`; a game pins today's engine by putting a commit in place of `main` in its two engine URLs.
+  engine at the version the guide names, its tag (ADR-0026), so a game keeps the engine it was made with; it moves up
+  by putting a newer version in its two engine URLs.
 - One repository per game in the full workspace. Agents in cloud sandboxes need somewhere to push, and this repository
   takes no games: its AGENTS.md sends a game agent to the README.
 - Games share nothing while they run (a workspace carries its own pinned engine, about 20 MB), so ten or a hundred

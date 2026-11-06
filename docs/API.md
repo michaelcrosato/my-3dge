@@ -440,6 +440,7 @@ game agent's manual.
 - `EmitterSpec` (type from [`engine/gfx/fx/emitters.ts`](../engine/gfx/fx/emitters.ts)): What `defineEmitter` takes: any field; of `ring` and `light`, any key.
 - `emptyClipState` (function from [`engine/anim/clip/clipsets.ts`](../engine/anim/clip/clipsets.ts)): An empty clip layer's state: nothing plays.
 - `Engine` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): A started engine.
+- `ENGINE_VERSION` (const from [`engine/core/version.ts`](../engine/core/version.ts)): The engine's version, `major.minor.patch` as package.json gives it; its release is the git tag `v` + this.
 - `EngineFrame` (interface from [`engine/app/drawing.ts`](../engine/app/drawing.ts)): What `onFrame` gets once per drawn frame: the run to read, never to change (presentation only: nothing reaches the hash), the camera the frame was drawn from, and the emitters to run.
 - `EngineInfo` (interface from [`engine/dev/inspector.ts`](../engine/dev/inspector.ts)): What `info()` reports: the engine's identity and health, and the run.
 - `EngineOptions` (interface from [`engine/app/engine.ts`](../engine/app/engine.ts)): How a page starts the engine.
@@ -4045,6 +4046,10 @@ For the agents who maintain the engine.
 - `Timers` (interface): Timers in sim time; the world steps them once per sim step.
 - `TimersCapture` (interface): The timers with their callbacks, for `restore` in the same process.
 - `TimersState` (interface): The timers as plain numbers, for the hash, in firing order: `[id, due tick, period in ticks (0 for one-shot), start tick, firings so far]`.
+
+### [`engine/core/version.ts`](../engine/core/version.ts)
+
+- `ENGINE_VERSION` (const): The engine's version, `major.minor.patch` as package.json gives it; its release is the git tag `v` + this.
 
 ### [`engine/dev/actions.ts`](../engine/dev/actions.ts)
 
@@ -8888,7 +8893,7 @@ For the agents who maintain the engine.
 ### [`labs/playground/ui/frame.ts`](../labs/playground/ui/frame.ts)
 
 - `ABOUT` (const): What each menu item is for, shown under the menu as the cursor rests on it.
-- `brand` (function): The playground's name as the start menu and the splash head it: a kicker, the title and `sub` under it.
+- `brand` (function): The playground's name as the start menu and the splash head it: a kicker (the engine and its version), the title and `sub` under it.
 - `createFrame` (function): A screen's frame, made in `root` (see the file comment); `refresh()` writes a function footer again.
 - `screenKeys` (function): The footer of a screen of `kind`, naming the menus' keys (`uiAccept`, `uiCancel`) on the device used last: on the start menu cancelling plays, on every other screen it goes back; a panel names only that, a side panel nothing.
 - `textDiv` (const): A `div` of `className` holding `textContent`, made in `doc`.
@@ -10014,6 +10019,10 @@ For the agents who maintain the engine.
 
 - `default` (default): Prints and checks the read-only source checkouts, `$MY3D2DGE_SRC` and `$SHARDFALL_SRC`, at their pins.
 
+### [`tools/cmd/version.ts`](../tools/cmd/version.ts)
+
+- `default` (default): Prints and checks the engine's version (PLAN.md WP 13.45, ADR-0026): package.json's, a semantic version that every merge bumps and main's push tags `v<version>` (.github/workflows/release.yml).
+
 ### [`tools/eslint/askTheEntry.ts`](../tools/eslint/askTheEntry.ts)
 
 - `default` (default): The local rule "ask the entry, never the id" (PLAN.md §6.6, ADR-0012): shared code reads an entry's hooks and fields, each with a default on the kind's schema, and never compares a registered id, so new content works without editing the code that uses it.
@@ -10419,7 +10428,7 @@ For the agents who maintain the engine.
 - `EXTERNAL` (const): The imports the bundle leaves to the page's import map: three.js and Rapier, by their npm names.
 - `LEAN` (const): The package's folder.
 - `LEAN_README_BUDGET_BYTES` (const): The most lean/README.md may weigh, in bytes (about 20,000 tokens): every lean agent reads it whole, often in a chat, and docs/HANDOFF.md cites the budget.
-- `LEAN_URL` (const): Where pages load the package from: jsDelivr's copy of this repository's main branch.
+- `LEAN_URL` (const): Where pages load the package from: jsDelivr's copy of this repository at the engine's version tag.
 - `leanBundle` (function): The engine as one ES module, with its banner: Vite's library mode on engine/index.ts, in memory.
 - `leanFiles` (function): Every file of the package as `x docs --write` leaves it, by repository path.
 - `leanFindings` (function): The package's stale files, and its README over its budget, as findings; none in a game made from the engine.
@@ -10584,6 +10593,14 @@ For the agents who maintain the engine.
 - `TIERS` (const): The tiers of PLAN.md §8.2.
 - `Trigger` (interface): A path whose change runs a whole tier: a file, or a directory when it ends in `/`.
 - `vitestRerunTriggers` (function): `T1_FULL` as Vitest's `forceRerunTriggers` globs, so `vitest --changed` and `vitest related` agree with `selectT1`.
+
+### [`tools/lib/version.ts`](../tools/lib/version.ts)
+
+- `above` (function): Whether version `a` is above `b`: a higher major, else minor, else patch; false when either is no version.
+- `BUMP_FIX` (const): The fix for a version not above main's.
+- `parseVersion` (function): A version's three numbers, or null when `text` is not `major.minor.patch`.
+- `versionCheck` (function): Compares package.json's version in `root` with origin/main's (see the file comment).
+- `VersionCheck` (interface): What the check found.
 
 ### [`tools/lib/vite.ts`](../tools/lib/vite.ts)
 

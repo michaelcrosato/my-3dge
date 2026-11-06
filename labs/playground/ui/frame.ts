@@ -6,7 +6,8 @@
  * screen's menu or panel, a line under it that says what the selected item does (`detail`, `ABOUT`'s words), and the
  * keys in the footer: `footer`, a string or a function read again at each `refresh()` (the front end's screens call
  * it each frame), for `screenKeys`, the menus' keys on the device used last; marked `data-keyboard`, so a touch screen
- * hides it (engine/ui/overlay.ts). `brand(doc, sub)` is the playground's name as the start menu and the splash head it.
+ * hides it (engine/ui/overlay.ts). `brand(doc, sub)` is the playground's name as the start menu and the splash head it,
+ * the engine's version beside its name (`[data-ui=version]`, `ENGINE_VERSION`).
  *
  * Invariants: presentation only; it reads nothing but what `footer` reads, and the caller removes `el`.
  *
@@ -18,7 +19,7 @@
  * // const { el, body, detail } = createFrame(ui.root, 'menu', 'Paused');
  * @see tests/e2e/playground-ui.spec.ts
  */
-import type { Input } from '../../../engine';
+import { ENGINE_VERSION, type Input } from '../../../engine';
 
 /** What each menu item is for, shown under the menu as the cursor rests on it. */
 export const ABOUT: Readonly<Record<string, string>> = {
@@ -46,10 +47,15 @@ export const ABOUT: Readonly<Record<string, string>> = {
 export const textDiv = (doc: Document, className: string, textContent: string): HTMLElement =>
   Object.assign(doc.createElement('div'), { className, textContent });
 
-/** The playground's name as the start menu and the splash head it: a kicker, the title and `sub` under it. */
+/** The playground's name as the start menu and the splash head it: a kicker (the engine and its version), the title
+ * and `sub` under it. */
 export function brand(doc: Document, sub: string): HTMLElement {
   const el = textDiv(doc, 'pg-brand', '');
-  el.append(textDiv(doc, 'pg-brand-kicker', 'my-3dge'), textDiv(doc, 'pg-brand-title', 'The Playground'), textDiv(doc, 'pg-brand-sub', sub)); // prettier-ignore
+  const kicker = textDiv(doc, 'pg-brand-kicker', 'my-3dge ');
+  const version = Object.assign(doc.createElement('span'), { textContent: ENGINE_VERSION });
+  version.dataset.ui = 'version';
+  kicker.append(version);
+  el.append(kicker, textDiv(doc, 'pg-brand-title', 'The Playground'), textDiv(doc, 'pg-brand-sub', sub));
   return el;
 }
 

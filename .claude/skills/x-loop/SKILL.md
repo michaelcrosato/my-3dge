@@ -39,5 +39,7 @@ The Stop hook runs `npm run check` when you end a turn and sends you back once i
 
 ## Finishing
 
-After a new `@file` comment or export doc: `node x docs --write`, then `node x docs --check`. The rest is AGENTS.md's
+After a new `@file` comment or export doc: `node x docs --write`, then `node x docs --check`. Before the PR, bump the
+version once (`npm version patch --no-git-tag-version`, `minor` for a feature or an API change; then `x docs --write`
+and `x html --write`): the quick gate's `x version --check` holds it above main's (ADR-0026). The rest is AGENTS.md's
 "Done means"; owner approval: the `escalation` skill.

@@ -3,7 +3,8 @@
  * used last, the engine's labels of the system actions (Enter and Esc on the keyboard and the mouse, A and B on a pad),
  * cancelling plays on the start menu and goes back on every other screen, a panel names only that and a side panel
  * nothing; made (over tests/unit/ui/fakeDom.ts), the footer is a key hint (`data-keyboard`: a touch screen hides it)
- * that follows a change of device at the next `refresh()`, and a frame without one has none.
+ * that follows a change of device at the next `refresh()`, and a frame without one has none; the brand names the
+ * engine's version.
  * @see labs/playground/ui/frame.ts
  */
 import { describe, expect, it } from 'vitest';
@@ -11,7 +12,8 @@ import { SYSTEM_ACTIONS } from '../../../engine/input/actionMaps';
 import { pickLabel } from '../../../engine/input/bindings';
 import type { DeviceKind } from '../../../engine/input/codes';
 import { fakePage, type FakeElement } from '../../../tests/unit/ui/fakeDom';
-import { createFrame, screenKeys } from './frame';
+import { ENGINE_VERSION } from '../../../engine/core/version';
+import { brand, createFrame, screenKeys } from './frame';
 
 /** An input whose prompts are the engine's labels of the system actions on `device()`. */
 const on = (device: () => DeviceKind) => ({
@@ -36,6 +38,13 @@ describe('a screen’s frame', () => {
       'B: back',
       '',
     ]);
+  });
+
+  it('heads the start menu and the splash with the engine and its version', () => {
+    const { document } = fakePage({ left: 0, top: 0, width: 1280, height: 720 });
+    const head = brand(document as unknown as Document, 'sub') as unknown as FakeElement;
+    expect(head.querySelector('.pg-brand-kicker')?.textContent).toBe(`my-3dge ${ENGINE_VERSION}`);
+    expect(head.querySelector('[data-ui=version]')?.textContent).toBe(ENGINE_VERSION);
   });
 
   it('marks its footer a key hint that follows the device at each refresh, and makes none when there is none', () => {

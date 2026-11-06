@@ -41,7 +41,8 @@ goldens are recorded on 24. npm's warning that an .npmrc allow-scripts setting i
 9. Mastery: only the pins tools/deps.json records, and an upgrade is a work package of its own; write the pinned
    release's idioms (docs/THREE-DELTA.md). → x deps --check, banned names
 10. Discovery first: target this container (Node 24, Chromium 153, WebGPU on SwiftShader); no production hardening
-    outside Phase H, except ADR-0021's touch controls and the one-file playground (ADR-0023 amendment 5).
+    outside Phase H, except ADR-0021's touch controls, the one-file playground (ADR-0023 amendment 5) and the
+    engine's version (ADR-0026).
 
 ## Escalate, don't stall
 Owner approval needed (a binary asset, a new dependency, spending money, a repo setting, any other outward action;
@@ -73,6 +74,10 @@ sound, devices) a try check there, never a checklist in prose alone; their paste
   main's last one went: a red main is fixed before other work.
 - At each gate and at the end of a goal: push, open the stage's PR, merge it, then wait for main's full run and
   report it. Start the next stage from the updated main (PLAN.md §11.1).
+- Every PR bumps the engine's version (ADR-0026, the owner's call of 2026-11-06): npm version patch
+  --no-git-tag-version for a fix, minor for a feature or a change to the public API, then node x docs --write and
+  node x html --write. The quick gate fails until it is above main's (x version --check); main's push tags it
+  v<version>, the tag lean games load, and a red full run is fixed by the next version.
 - No deployment: the engine is distributed and tested as playground.html, the playground in one self-contained page
   (ADR-0023 amendment 5, the owner's call of 2026-11-02; Vercel is gone). A change that alters it commits it rebuilt
   (node x html --write); the quick gate fails while it is stale (x html --check). The touch controls have no tests
