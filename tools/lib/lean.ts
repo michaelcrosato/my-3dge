@@ -22,8 +22,9 @@
  * bundle makes and that each mapped file is in node_modules at the pinned version, and tests/e2e/lean.spec.ts plays
  * game.html with the CDN's URLs served from node_modules and lean/.
  *
- * Pages take the engine at `@main` (jsDelivr serves a branch's latest commit within 12 hours); a game pins one by
- * replacing `main` with a commit in its two engine URLs.
+ * Pages take the engine at its version's tag, `@v<version>` (ADR-0026: main's push tags each version, and jsDelivr
+ * serves a tag as it was, for good), so a game keeps the engine it was made with; it moves to a newer engine by
+ * putting a newer version in its two engine URLs.
  *
  * @example
  * leanImports(process.cwd()).three; // 'https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.webgpu.js'
@@ -33,6 +34,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Rollup } from 'vite';
+import { ENGINE_VERSION } from '../../engine/core/version';
 import { ENGINE_REPOSITORY } from '../game/files.mjs';
 import { apiMap } from './docsGameApi';
 import { idsCatalog } from './docsIds';
@@ -42,8 +44,8 @@ import type { Finding } from './report';
 /** The package's folder. */
 export const LEAN = 'lean';
 
-/** Where pages load the package from: jsDelivr's copy of this repository's main branch. */
-export const LEAN_URL = `${ENGINE_REPOSITORY.replace('https://github.com/', 'https://cdn.jsdelivr.net/gh/')}@main/${LEAN}/`;
+/** Where pages load the package from: jsDelivr's copy of this repository at the engine's version tag. */
+export const LEAN_URL = `${ENGINE_REPOSITORY.replace('https://github.com/', 'https://cdn.jsdelivr.net/gh/')}@v${ENGINE_VERSION}/${LEAN}/`;
 
 /** The imports the bundle leaves to the page's import map: three.js and Rapier, by their npm names. */
 export const EXTERNAL = /^(three|@dimforge\/)/;
@@ -52,7 +54,7 @@ export const EXTERNAL = /^(three|@dimforge\/)/;
 const RAPIER = '@dimforge/rapier3d-simd-compat';
 
 /** The first lines of lean/my3dge.js. */
-const BANNER = `/*! my3dge: the my-3dge engine as one ES module (${ENGINE_REPOSITORY}, MIT; it carries @stdlib functions, Apache-2.0: see LICENSE). It imports three.js and Rapier by name: lean/README.md gives the import map. Written by node x docs --write from engine/index.ts. */`; // prettier-ignore
+const BANNER = `/*! my3dge ${ENGINE_VERSION}: the my-3dge engine as one ES module (${ENGINE_REPOSITORY}, MIT; it carries @stdlib functions, Apache-2.0: see LICENSE). It imports three.js and Rapier by name: lean/README.md gives the import map. Written by node x docs --write from engine/index.ts. */`; // prettier-ignore
 
 /** How lean/README.md introduces the API: every name comes from one module. */
 const API_WORDS = {

@@ -1,0 +1,35 @@
+# .github/workflows/release.yml: each version of the engine tagged on main (PLAN.md WP 13.45, ADR-0026; the owner's
+# call of 2026-11-06). Every merge bumps package.json's version (`node x version --check` in the quick gate holds it
+# above main's), and this job tags the pushed commit `v<version>` at once, before the two-hour full run
+# (.github/workflows/ci.yml): the lean guide on main names that tag in its engine URLs, so it must exist as soon as
+# main does. A full run that fails is fixed by the next version. A tag that exists already is left as it is; the job
+# never moves or deletes one, since jsDelivr serves a tag for good and games pin to it.
+#
+# actions/checkout v5 follows PLAN.md §6.10's version rule, as ci.yml's does.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out my-3dge
+        uses: actions/checkout@v5
+
+      - name: Tag the version
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "$tag is tagged already: left as it is"
+          else
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+            echo "tagged $GITHUB_SHA $tag"
+          fi

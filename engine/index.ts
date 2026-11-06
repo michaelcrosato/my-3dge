@@ -348,3 +348,6 @@ export type { FeelInspector } from './dev/feel/panel';
 export { tunedSpec } from './dev/feel/profile';
 export { profileText } from './dev/feel/profile';
 export * from './gfx/cameras/api';
+
+// The engine's version (WP 13.45, ADR-0026), which every merge bumps.
+export { ENGINE_VERSION } from './core/version';

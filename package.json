@@ -1,6 +1,6 @@
 {
   "name": "my-3dge",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "A fully 3D web game engine written and maintained only by AI coding agents: three.js on WebGPU, Rapier physics, gameplay reproducible on the CPU.",
   "license": "MIT",
