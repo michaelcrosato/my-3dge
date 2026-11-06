@@ -475,4 +475,7 @@ types `EngineStats`.
 
 **The rig a view steps (WP 13.8)**: blends on live switches, the view effects, the view settings cam.*.
 `createCameraRig`, `rigOptions`, `CAMERA_SETTINGS`, `blendCameras`, `BLEND_TIME`, `createCameraEffects`, `applyEffects`, `cameraPlayer`, `apexFov`, `EFFECTS`; types `CameraRig`, `RigOptions`, `RigInput`, `CameraPlayer`, `EffectWeights`, `EffectsFrame`.
+
+The engine's version (WP 13.45, ADR-0026), which every merge bumps.
+`ENGINE_VERSION`.
 <!-- api-map:end -->
